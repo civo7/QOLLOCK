@@ -2277,6 +2277,22 @@ function SaveAndSync() {
     var root = FindRootPanel();
     var hud = null;
     try { hud = (root && root.FindChildTraverse) ? root.FindChildTraverse("Hud") : null; } catch (eHud) { hud = null; }
+    if (!hud && panel && panel.GetParent) {
+        var cur = panel.GetParent();
+        while (cur) {
+            if (cur.id === "Hud" || (cur.paneltype && cur.paneltype === "CitadelHud") || (cur.BHasClass && cur.BHasClass("WindowRoot") && cur !== root)) {
+                hud = cur;
+                break;
+            }
+            cur = (cur.GetParent && typeof cur.GetParent === "function") ? cur.GetParent() : null;
+        }
+    }
+    if (!hud && root && (root.id === "Hud" || (root.paneltype && root.paneltype === "CitadelHud"))) {
+        hud = root;
+    }
+    if (!hud && typeof QOL !== "undefined" && QOL.core && QOL.core.PanelHelpers && typeof QOL.core.PanelHelpers.findHud === "function") {
+        try { hud = QOL.core.PanelHelpers.findHud(panel) || QOL.core.PanelHelpers.findHud(root); } catch(ePh) {}
+    }
     NormalizeConfig(MOD_CONFIG, MOD_CONFIG);
     RefreshActivePresetConfigMarkerBeforeSave();
     var data = WrapConfigForStorage(MOD_CONFIG);

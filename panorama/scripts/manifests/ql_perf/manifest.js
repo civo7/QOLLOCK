@@ -25,7 +25,7 @@
     FR.register({
         id: "ql_perf",
         enabledByDefault: false,
-        enableKeys: ["ENABLE_PERF_DEBUG", "ENABLE_PERF_OVERLAY"],
+        enableKeys: ["ENABLE_PERF_DEBUG", "ENABLE_PERF_DEBUG_DETAIL", "ENABLE_PERF_OVERLAY"],
         settings: [
             { key: "ENABLE_PERF_DEBUG", type: "toggle", default: false },
             { key: "ENABLE_PERF_DEBUG_DETAIL", type: "toggle", default: false },
@@ -49,7 +49,10 @@
 
                 const stats = perfStats || {};
                 const keys = Object.keys(stats);
-                if (keys.length === 0) return;
+                if (keys.length === 0) {
+                    $.Msg("[QOLLock][Perf] (collecting samples...)");
+                    return;
+                }
 
                 keys.sort((a, b) => {
                     const ea = stats[a], eb = stats[b];
@@ -81,9 +84,10 @@
                 const state = _getState();
                 const cfg = (ctx && ctx.config && ctx.config.all) ? ctx.config.all() : (state.lastConfig || {});
 
-                const consoleEnabled = !!(cfg && (cfg.ENABLE_PERF_DEBUG === true || Number(cfg.ENABLE_PERF_DEBUG) === 1));
+                const consoleDebug = !!(cfg && (cfg.ENABLE_PERF_DEBUG === true || Number(cfg.ENABLE_PERF_DEBUG) === 1));
+                const detailed = !!(cfg && (cfg.ENABLE_PERF_DEBUG_DETAIL === true || Number(cfg.ENABLE_PERF_DEBUG_DETAIL) === 1));
+                const consoleEnabled = consoleDebug || detailed;
                 const overlayEnabled = !!(cfg && (cfg.ENABLE_PERF_OVERLAY === true || Number(cfg.ENABLE_PERF_OVERLAY) === 1));
-                const detailed = !!(consoleEnabled && (cfg.ENABLE_PERF_DEBUG_DETAIL === true || Number(cfg.ENABLE_PERF_DEBUG_DETAIL) === 1));
 
                 state.perfEnabled = consoleEnabled || overlayEnabled;
                 state.perfDetailed = detailed;

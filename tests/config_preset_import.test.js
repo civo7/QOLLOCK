@@ -206,3 +206,88 @@ test("enabling ENABLE_SHOW_BUILD_ID activates ql_show_build_id and updates HUD b
     assert.strictEqual(container.style.visibility, "collapse", "selected_build_info should be collapsed when disabled");
 });
 
+test("multi-surface config propagation: updating root panel with revision propagates to hudPanel and ConfigStore", () => {
+    const hud = sim.createHud();
+    hud.assertLoaded();
+    const QOL = hud.sandbox.global.QOL;
+    const CS = QOL.core.ConfigStore;
+    const defaultCfg = hud.sandbox.global.QOL_DEFAULT_CONFIG;
+
+    // Simulate settings menu / EscapeMenu writing config and revision to root panel
+    const newConfig = Object.assign({}, defaultCfg, {
+        SOULS_X_OFFSET: 520,
+        SOULS_Y_OFFSET: 180
+    });
+    const raw = JSON.stringify({ schema: "3.1.9", data: newConfig });
+
+    hud.doc.absRoot.SetAttributeString("Deadlock_Mod_Settings_v1", raw);
+    hud.doc.absRoot.SetAttributeString("QOL_USER_EDIT_REV", "15");
+
+    // Advance clock to trigger poll
+    hud.clock.advance(1000);
+
+    // 1. ConfigStore must have updated values
+    assert.strictEqual(CS.get("ql_souls", "SOULS_X_OFFSET"), 520, "SOULS_X_OFFSET must be updated from root panel");
+    assert.strictEqual(CS.get("ql_souls", "SOULS_Y_OFFSET"), 180, "SOULS_Y_OFFSET must be updated from root panel");
+
+    // 2. hud.root must have received synced attributes
+    assert.strictEqual(hud.root.GetAttributeString("Deadlock_Mod_Settings_v1", ""), raw, "hud.root must be synced with config");
+    assert.strictEqual(hud.root.GetAttributeString("QOL_USER_EDIT_REV", ""), "15", "hud.root must be synced with revision");
+});
+
+test("perf timing tracking: Scheduler poll loop records timings into QOL.state.perfStats when perfEnabled", () => {
+    const hud = sim.createHud();
+    hud.assertLoaded();
+    const QOL = hud.sandbox.global.QOL;
+    const State = hud.sandbox.global.State;
+    const Scheduler = QOL.core.Scheduler;
+
+    // QOL.state must reference State
+    assert.strictEqual(QOL.state, State, "QOL.state must reference State object");
+
+    // Enable perf
+    State.perfEnabled = true;
+    if (!State.perfStats) State.perfStats = {};
+
+    let executed = 0;
+    const loop = Scheduler.createPollLoop(() => {
+        executed++;
+    }, 0.1, "test_perf_feature");
+
+    // Advance virtual clock
+    hud.clock.advance(500);
+
+    assert.ok(executed > 0, "Poll loop callback must have executed");
+    assert.ok(State.perfStats["mf.test_perf_feature"], "Timing must be recorded in State.perfStats");
+    assert.ok(State.perfStats["mf.test_perf_feature"].count > 0, "Stats count must be > 0");
+
+    const timings = Scheduler.getTimings("test_perf_feature");
+    assert.ok(timings, "Scheduler.getTimings must return data for test_perf_feature");
+    assert.strictEqual(timings.calls, executed, "timings.calls must match loop executions");
+
+    loop.stop();
+});
+
+test("enabling ENABLE_PERF_DEBUG_DETAIL alone activates ql_perf manifest and enables perf", () => {
+    const hud = sim.createHud();
+    hud.assertLoaded();
+    const QOL = hud.sandbox.global.QOL;
+    const FR = QOL.core.FeatureRegistry;
+    const State = hud.sandbox.global.State;
+    const defaultCfg = hud.sandbox.global.QOL_DEFAULT_CONFIG;
+
+    assert.strictEqual(FR.isEnabled("ql_perf"), false, "ql_perf should initially be disabled");
+
+    const perfConfig = Object.assign({}, defaultCfg, {
+        ENABLE_PERF_DEBUG: 0,
+        ENABLE_PERF_DEBUG_DETAIL: 1
+    });
+    hud.root.SetAttributeString("Deadlock_Mod_Settings_v1", JSON.stringify({ schema: "3.1.9", data: perfConfig }));
+    hud.clock.advance(1000);
+
+    assert.strictEqual(FR.isEnabled("ql_perf"), true, "ql_perf should be enabled by ENABLE_PERF_DEBUG_DETAIL alone");
+    assert.strictEqual(State.perfEnabled, true, "State.perfEnabled should be true");
+    assert.strictEqual(State.perfDetailed, true, "State.perfDetailed should be true");
+});
+
+

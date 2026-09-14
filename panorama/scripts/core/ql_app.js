@@ -35,10 +35,13 @@
     var _hudPanel = null;
     var _booted = false;
     var _lastConfigRaw = "";
+    var _lastRevision = 0;
     var _configPollTimer = null;
     var _enableKeyMap = null;
     // Step 0a: during migration, read from old system's attribute
     var _CONFIG_ATTRIBUTE = "Deadlock_Mod_Settings_v1";
+    var _REV_ATTRIBUTE = (typeof QOL_USER_EDIT_REV_ATTR !== "undefined") ? QOL_USER_EDIT_REV_ATTR :
+                         ((typeof USER_EDIT_REV_ATTR !== "undefined") ? USER_EDIT_REV_ATTR : "QOL_USER_EDIT_REV");
 
     // Build featureId → enableKey map from registered manifests.
     // A manifest declares either enableKey (single legacy toggle) or enableKeys
@@ -130,53 +133,115 @@
         return null;
     }
 
+    function _parseRev(v) {
+        var n = Number(v);
+        if (!isFinite(n) || n < 0) return 0;
+        return Math.floor(n);
+    }
+
+    function _getSearchPanels(hudPanel) {
+        var panels = [];
+        var seen = [];
+        function add(p) {
+            if (!p || typeof p.GetAttributeString !== "function") return;
+            if (seen.indexOf(p) !== -1) return;
+            seen.push(p);
+            panels.push(p);
+        }
+        add(hudPanel);
+        if (typeof $.GetContextPanel === "function") {
+            var ctx = $.GetContextPanel();
+            add(ctx);
+            var cur = ctx;
+            var depth = 0;
+            while (cur && cur.GetParent && depth < 64) {
+                cur = cur.GetParent();
+                add(cur);
+                depth++;
+            }
+        }
+        return panels;
+    }
+
+    function _readBestConfig(hudPanel) {
+        var panels = _getSearchPanels(hudPanel);
+        var bestRaw = "";
+        var bestRev = -1;
+        var bestPanel = null;
+
+        for (var i = 0; i < panels.length; i++) {
+            var p = panels[i];
+            try {
+                var raw = p.GetAttributeString(_CONFIG_ATTRIBUTE, "");
+                var rev = _parseRev(p.GetAttributeString(_REV_ATTRIBUTE, "0"));
+                if (raw) {
+                    if (rev > bestRev) {
+                        bestRev = rev;
+                        bestRaw = raw;
+                        bestPanel = p;
+                    } else if (rev === bestRev && !bestRaw) {
+                        bestRaw = raw;
+                        bestPanel = p;
+                    }
+                }
+            } catch (e) {}
+        }
+        return { raw: bestRaw, rev: bestRev > 0 ? bestRev : 0, sourcePanel: bestPanel };
+    }
+
+    function _applyConfigUpdate(raw, rev, hudPanel, sourcePanel) {
+        _lastConfigRaw = raw;
+        if (rev > _lastRevision) _lastRevision = rev;
+
+        // Propagate the latest config & revision down to hudPanel if read from an ancestor
+        if (hudPanel && sourcePanel && sourcePanel !== hudPanel && typeof hudPanel.SetAttributeString === "function") {
+            try {
+                hudPanel.SetAttributeString(_CONFIG_ATTRIBUTE, raw);
+                hudPanel.SetAttributeString(_REV_ATTRIBUTE, String(_lastRevision));
+            } catch (eSync) {}
+        }
+
+        var flatConfig = _unwrapEnvelope(raw);
+        if (flatConfig) {
+            var globalState = (typeof State !== "undefined" && State) ? State :
+                              ((typeof globalThis !== "undefined" && globalThis.State) ? globalThis.State : null);
+            if (globalState) {
+                globalState.lastConfig = flatConfig;
+            }
+            if (ConfigAdapter) {
+                try {
+                    // Step 0d: use loadFromFlat which handles flat→nested mapping
+                    ConfigAdapter.loadFromFlat(flatConfig, _enableKeyMap);
+                    // Runtime toggle detection: sync FeatureRegistry enabled state
+                    // with ConfigStore after legacy enableKey injection
+                    _syncFeatureEnabledState();
+                    if (Logger) Logger.logDebug("App", "config: applied revision " + _lastRevision);
+                } catch (e) {
+                    if (Logger) Logger.logWarn("App", "config adapter failed: " + (e.message || e));
+                }
+            }
+        }
+    }
+
     function _startConfigPolling(hud) {
         if (_configPollTimer) return;
-        try {
-            if (typeof hud.GetAttributeString === "function") {
-                _lastConfigRaw = hud.GetAttributeString(_CONFIG_ATTRIBUTE, "");
-            }
-        } catch (e) { /* will poll on next tick */ }
 
         function poll() {
             if (!_booted) return;
             var hudPanel = _findHud();
-            if (!hudPanel) {
-                _configPollTimer = $.Schedule(0.5, poll);
-                return;
+            var best = _readBestConfig(hudPanel);
+            var raw = best.raw;
+            var rev = best.rev;
+
+            var changed = false;
+            if (raw && rev > _lastRevision) {
+                changed = true;
+            } else if (raw && raw !== _lastConfigRaw) {
+                changed = true;
             }
-            var raw = "";
-            try {
-                if (typeof hudPanel.GetAttributeString === "function") {
-                    raw = hudPanel.GetAttributeString(_CONFIG_ATTRIBUTE, "");
-                }
-            } catch (e) {
-                _configPollTimer = $.Schedule(0.5, poll);
-                return;
-            }
-            // Step 0d: only reprocess if raw changed (caching guard)
-            if (raw !== _lastConfigRaw) {
-                _lastConfigRaw = raw;
-                var flatConfig = _unwrapEnvelope(raw);
-                if (flatConfig) {
-                    var globalState = (typeof State !== "undefined" && State) ? State :
-                                      ((typeof globalThis !== "undefined" && globalThis.State) ? globalThis.State : null);
-                    if (globalState) {
-                        globalState.lastConfig = flatConfig;
-                    }
-                    if (ConfigAdapter) {
-                        try {
-                            // Step 0d: use loadFromFlat which handles flat→nested mapping
-                            ConfigAdapter.loadFromFlat(flatConfig, _enableKeyMap);
-                            // Runtime toggle detection: sync FeatureRegistry enabled state
-                            // with ConfigStore after legacy enableKey injection
-                            _syncFeatureEnabledState();
-                            if (Logger) Logger.logDebug("App", "config poll: updated from attribute");
-                        } catch (e) {
-                            if (Logger) Logger.logWarn("App", "config poll adapter failed: " + (e.message || e));
-                        }
-                    }
-                }
+
+            if (changed) {
+                _applyConfigUpdate(raw, rev, hudPanel, best.sourcePanel);
             }
             _configPollTimer = $.Schedule(0.5, poll);
         }
@@ -207,18 +272,19 @@
         var storedConfig = null;
         var flatConfig = null;
         try {
-            if (typeof hud.GetAttributeString === "function") {
-                var raw = hud.GetAttributeString(_CONFIG_ATTRIBUTE, "");
-                if (raw) {
-                    flatConfig = _unwrapEnvelope(raw);
-                    if (flatConfig && ConfigAdapter) {
-                        // Step 0c: use loadFromFlat for flat→nested transformation
-                        // Pass enableKeyMap so legacy ENABLE_X keys inject "enabled: true"
-                        ConfigAdapter.loadFromFlat(flatConfig, _enableKeyMap);
-                        if (Logger) Logger.logInfo("App", "config loaded via ConfigAdapter");
-                    }
-                    storedConfig = JSON.parse(raw);
+            var best = _readBestConfig(hud);
+            var raw = best.raw;
+            _lastRevision = best.rev;
+            if (raw) {
+                _lastConfigRaw = raw;
+                flatConfig = _unwrapEnvelope(raw);
+                if (flatConfig && ConfigAdapter) {
+                    // Step 0c: use loadFromFlat for flat→nested transformation
+                    // Pass enableKeyMap so legacy ENABLE_X keys inject "enabled: true"
+                    ConfigAdapter.loadFromFlat(flatConfig, _enableKeyMap);
+                    if (Logger) Logger.logInfo("App", "config loaded via ConfigAdapter");
                 }
+                storedConfig = JSON.parse(raw);
             }
         } catch (e) {
             if (Logger) Logger.logWarn("App", "config load failed, using defaults: " + (e.message || e));

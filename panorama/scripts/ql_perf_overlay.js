@@ -34,24 +34,47 @@
      * Walk up from $.GetContextPanel() to find the "Hud" root panel.
      * Adapted from QLC's _resolveHud() and QoL Lock's GetUIRoot() pattern.
      */
-    function _resolveHud() {
+    function _resolveHud(preferredRoot) {
         try {
+            if (preferredRoot && IsPanelValid(preferredRoot)) {
+                if (preferredRoot.id === "Hud" || (preferredRoot.paneltype && preferredRoot.paneltype === "CitadelHud")) {
+                    return preferredRoot;
+                }
+                if (typeof QOL !== "undefined" && QOL.core && QOL.core.PanelHelpers && typeof QOL.core.PanelHelpers.findHud === "function") {
+                    var found = QOL.core.PanelHelpers.findHud(preferredRoot);
+                    if (found && IsPanelValid(found)) return found;
+                }
+                if (preferredRoot.FindChildTraverse && typeof preferredRoot.FindChildTraverse === "function") {
+                    var childHud = preferredRoot.FindChildTraverse("Hud");
+                    if (childHud && IsPanelValid(childHud)) return childHud;
+                }
+                return preferredRoot;
+            }
+
             if (typeof $.GetContextPanel !== "function") return null;
             var ctx = $.GetContextPanel();
             if (!ctx || !IsPanelValid(ctx)) return null;
+
+            if (ctx.id === "Hud" || (ctx.paneltype && ctx.paneltype === "CitadelHud")) return ctx;
+
+            if (typeof QOL !== "undefined" && QOL.core && QOL.core.PanelHelpers && typeof QOL.core.PanelHelpers.findHud === "function") {
+                var foundCtx = QOL.core.PanelHelpers.findHud(ctx);
+                if (foundCtx && IsPanelValid(foundCtx)) return foundCtx;
+            }
 
             // Walk to absolute root
             while (ctx.GetParent && typeof ctx.GetParent === "function") {
                 var parent = ctx.GetParent();
                 if (!parent || !IsPanelValid(parent)) break;
                 ctx = parent;
+                if (ctx.id === "Hud" || (ctx.paneltype && ctx.paneltype === "CitadelHud")) return ctx;
             }
 
             // Find the Hud panel by traversal
             if (ctx.FindChildTraverse && typeof ctx.FindChildTraverse === "function") {
-                return ctx.FindChildTraverse("Hud") || null;
+                return ctx.FindChildTraverse("Hud") || ctx;
             }
-            return null;
+            return ctx;
         } catch (e) {
             return null;
         }
@@ -66,7 +89,7 @@
      *
      * Returns the container panel, or null if creation fails.
      */
-    function _ensureOverlay() {
+    function _ensureOverlay(preferredRoot) {
         // Return cached if still alive
         if (_overlayPanel && IsPanelValid(_overlayPanel)) {
             return _overlayPanel;
@@ -77,7 +100,7 @@
         _titleLabel = null;
         _bodyLabel = null;
 
-        var hud = _resolveHud();
+        var hud = _resolveHud(preferredRoot);
         if (!hud) return null;
 
         try {
@@ -263,7 +286,7 @@
      */
     function UpdateOverlay(root, cfg, perfStats) {
         try {
-            var visible = !!(cfg && Number(cfg.ENABLE_PERF_OVERLAY) === 1);
+            var visible = !!(cfg && (cfg.ENABLE_PERF_OVERLAY === true || cfg.ENABLE_PERF_OVERLAY === "true" || Number(cfg.ENABLE_PERF_OVERLAY) === 1));
 
             // ---- hide path ----
             if (!visible) {
@@ -284,7 +307,7 @@
             _captureWindowSnapshots(stats, nowMs);
 
             // ---- show path ----
-            var overlay = _ensureOverlay();
+            var overlay = _ensureOverlay(root);
             if (!overlay) return;
 
             // Show if transitioning from hidden

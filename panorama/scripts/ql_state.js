@@ -817,6 +817,7 @@ var State;
 
     // ── Publish to QOL namespace ──
     if (typeof QOL !== "undefined") {
+        QOL.state = State;
         QOL.getCachedPanel = GetCachedPanel;
         QOL.setCachedPanel = SetCachedPanel;
         QOL.clearPanelCache = ClearPanelCache;

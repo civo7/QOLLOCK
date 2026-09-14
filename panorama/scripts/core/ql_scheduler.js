@@ -39,13 +39,21 @@
         return Date.now ? Date.now() : (new Date()).getTime();
     }
 
+    function _getState() {
+        if (typeof QOL !== "undefined" && QOL.state) return QOL.state;
+        if (typeof State !== "undefined" && State) return State;
+        if (typeof globalThis !== "undefined" && globalThis.State) return globalThis.State;
+        return null;
+    }
+
     // Unified perf recording — writes directly to State.perfStats with "mf." prefix,
     // same accumulator that PerfRecord uses. ResetPerfWindow() naturally gives both
     // dispatch features and manifest poll loops the same rolling window.
     function _recordTiming(featureId, elapsedMs) {
         try {
-            if (typeof QOL === "undefined" || !QOL.state || !QOL.state.perfEnabled) return;
-            var stats = QOL.state.perfStats;
+            var state = _getState();
+            if (!state || !state.perfEnabled) return;
+            var stats = state.perfStats;
             if (!stats) return;
             var key = "mf." + featureId;
             var entry = stats[key];
@@ -86,7 +94,10 @@
         function tick() {
             if (_stopped) return;
             var perfActive = false;
-            try { perfActive = !!(QOL && QOL.state && QOL.state.perfEnabled); } catch(ePerf) {}
+            try {
+                var s = _getState();
+                perfActive = !!(s && s.perfEnabled);
+            } catch(ePerf) {}
             var t0 = perfActive ? _nowMs() : 0;
             var _threw = false;
             try {
@@ -152,7 +163,8 @@
     }
 
     function getTimings(featureId) {
-        var stats = (typeof QOL !== "undefined" && QOL.state && QOL.state.perfStats) || {};
+        var state = _getState();
+        var stats = (state && state.perfStats) || {};
         if (featureId) {
             var key = "mf." + featureId;
             var e = stats[key];
@@ -175,7 +187,8 @@
 
     function resetTimings(featureId) {
         try {
-            var stats = (typeof QOL !== "undefined" && QOL.state && QOL.state.perfStats);
+            var state = _getState();
+            var stats = state && state.perfStats;
             if (!stats) return;
             if (featureId) { delete stats["mf." + featureId]; }
             else {

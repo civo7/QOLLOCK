@@ -60,30 +60,50 @@
     // on the next one.
     var _cachedHud = null;
 
-    function findHud() {
-        if (isPanelAlive(_cachedHud)) return _cachedHud;
-        _cachedHud = null;
+    function findHud(preferredRoot) {
+        if (!preferredRoot && isPanelAlive(_cachedHud)) return _cachedHud;
 
         var MAX_DEPTH = 64;
         try {
-            var ctx = $.GetContextPanel();
+            var ctx = preferredRoot || $.GetContextPanel();
             if (!isPanelAlive(ctx)) return null;
-            var hud = ctx.FindChildTraverse("Hud");
-            if (isPanelAlive(hud)) { _cachedHud = hud; return hud; }
+            if (ctx.id === "Hud" || (ctx.paneltype && ctx.paneltype === "CitadelHud")) {
+                if (!preferredRoot) _cachedHud = ctx;
+                return ctx;
+            }
+            var hud = ctx.FindChildTraverse ? ctx.FindChildTraverse("Hud") : null;
+            if (isPanelAlive(hud)) {
+                if (!preferredRoot) _cachedHud = hud;
+                return hud;
+            }
             var absRoot = ctx;
             var depth = 0;
             while (depth < MAX_DEPTH) {
-                var parent = absRoot.GetParent();
+                var parent = absRoot.GetParent ? absRoot.GetParent() : null;
                 if (!parent || !isPanelAlive(parent)) break;
                 absRoot = parent;
                 depth++;
             }
-            hud = absRoot.FindChildTraverse("Hud");
-            if (isPanelAlive(hud)) { _cachedHud = hud; return hud; }
+            if (absRoot && (absRoot.id === "Hud" || (absRoot.paneltype && absRoot.paneltype === "CitadelHud"))) {
+                if (!preferredRoot) _cachedHud = absRoot;
+                return absRoot;
+            }
+            hud = (absRoot && absRoot.FindChildTraverse) ? absRoot.FindChildTraverse("Hud") : null;
+            if (isPanelAlive(hud)) {
+                if (!preferredRoot) _cachedHud = hud;
+                return hud;
+            }
             // The context panel IS the Hud in the HUD context, where neither search
             // can return it. Recognise that rather than reporting no Hud at all.
-            if (ctx.id === "Hud") { _cachedHud = ctx; return ctx; }
-            return null;
+            if (ctx.id === "Hud" || (ctx.paneltype && ctx.paneltype === "CitadelHud") || (ctx.BHasClass && ctx.BHasClass("WindowRoot"))) {
+                if (!preferredRoot) _cachedHud = ctx;
+                return ctx;
+            }
+            if (!preferredRoot) {
+                _cachedHud = absRoot || ctx;
+                return _cachedHud;
+            }
+            return absRoot || ctx;
         } catch (e) {
             return null;
         }
