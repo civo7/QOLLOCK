@@ -315,7 +315,6 @@ module.exports = [
             "build_mod/**",
             "scripts/simulator/perf/runs/**",
             "tools/local_chat_translation/**",
-            "panorama/scripts/legacy/**",
             "_restore_*/**",
             "backup_*/**",
         ],
