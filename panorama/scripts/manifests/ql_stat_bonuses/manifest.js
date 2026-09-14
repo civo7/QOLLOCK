@@ -301,6 +301,7 @@
     FR.register({
         id: "ql_stat_bonuses",
         enabledByDefault: false,
+        enableKey: "ENABLE_STAT_BONUSES",
         settings: [
             { key: "ENABLE_STAT_BONUSES", type: "toggle", default: false },
             { key: "STAT_BONUSES_SCALE", type: "slider", min: 50, max: 200, step: 1, default: 100 },

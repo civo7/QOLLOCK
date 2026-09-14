@@ -29,7 +29,7 @@
 
     var _schemas = {};
     var _values = {};
-    var VALID_TYPES = ["toggle", "slider", "dropdown", "text", "palette", "action"];
+    var VALID_TYPES = ["toggle", "slider", "dropdown", "text", "palette", "action", "number", "buttongroup"];
 
     function _validateSetting(schemaEntry) {
         if (!schemaEntry || typeof schemaEntry.key !== "string") return "key must be a string";
@@ -41,8 +41,8 @@
             if (schemaEntry.min >= schemaEntry.max) return "min must be < max";
         }
         if (schemaEntry.type === "dropdown") {
-            if (!(schemaEntry.options instanceof Array) || schemaEntry.options.length === 0)
-                return "dropdown requires options array";
+            if (schemaEntry.options !== undefined && (!Array.isArray(schemaEntry.options) || schemaEntry.options.length === 0))
+                return "dropdown options must be a non-empty array";
         }
         return null;
     }
@@ -51,13 +51,20 @@
         switch (schemaEntry.type) {
             case "toggle": return (typeof value === "boolean") ? null : "must be boolean";
             case "slider":
+            case "number":
                 if (typeof value !== "number" || isNaN(value)) return "must be number";
-                if (value < schemaEntry.min || value > schemaEntry.max)
+                if (schemaEntry.type === "slider" && (value < schemaEntry.min || value > schemaEntry.max))
                     return "must be between " + schemaEntry.min + " and " + schemaEntry.max;
                 return null;
             case "dropdown":
-                return (schemaEntry.options.indexOf(value) !== -1) ? null :
-                    "must be one of: " + schemaEntry.options.join(", ");
+                if (Array.isArray(schemaEntry.options) && schemaEntry.options.length > 0) {
+                    var strVal = String(value);
+                    var match = schemaEntry.options.some(function(opt) { return String(opt) === strVal; });
+                    return match ? null : "must be one of: " + schemaEntry.options.join(", ");
+                }
+                return null;
+            case "buttongroup":
+                return (typeof value === "string" || typeof value === "number" || typeof value === "boolean") ? null : "must be primitive";
             case "text": return (typeof value === "string") ? null : "must be string";
             case "palette":
                 if (typeof value !== "number" || isNaN(value)) return "must be number";
@@ -76,7 +83,7 @@
     function registerSchema(featureId, schema) {
         if (typeof featureId !== "string" || !featureId) return false;
         if (_schemas.hasOwnProperty(featureId)) return false;
-        if (!schema || !(schema.settings instanceof Array)) return false;
+        if (!schema || !Array.isArray(schema.settings)) return false;
         for (var i = 0; i < schema.settings.length; i++) {
             if (_validateSetting(schema.settings[i]) !== null) return false;
         }
@@ -159,7 +166,12 @@
                 for (var i = 0; i < schema.settings.length; i++) {
                     if (schema.settings[i].key === key &&
                         _validateValue(schema.settings[i], featureData[key]) === null) {
-                        _values[featureId][key] = featureData[key];
+                        var oldVal = _values[featureId][key];
+                        var newVal = featureData[key];
+                        _values[featureId][key] = newVal;
+                        if (oldVal !== newVal) {
+                            EventBus.emit("config:changed", { featureId: featureId, key: key, value: newVal });
+                        }
                         break;
                     }
                 }

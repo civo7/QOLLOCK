@@ -77,6 +77,7 @@
         "zipBoost": "ql_zipboost",
         "betterUnsecuredHud": "ql_better_unsecured_hud",
         "healthbarRuntimeHelpers": "ql_healthbar",
+        "perf": "ql_perf",
         // Permanent exceptions — no new manifest, keep in old system
         "buildBridge": "_legacy",
         "coreRoot": "_legacy",

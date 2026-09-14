@@ -19,6 +19,7 @@
     FR.register({
         id: "ql_bottom_bar",
         enabledByDefault: true,
+        enableKey: "HUD_BOTTOM_BAR_ENABLED",
         settings: [
             { key: "HUD_BOTTOM_BAR_ENABLED", type: "toggle", default: true },
             { key: "BOTTOM_BAR_OPACITY", type: "slider", min: 0, max: 1, step: 0.05, default: 1.0 },

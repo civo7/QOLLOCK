@@ -20,6 +20,7 @@
     FR.register({
         id: "ql_damage_impact",
         enabledByDefault: false,
+        enableKey: "ENABLE_DAMAGE_IMPACT",
         settings: [
             { key: "ENABLE_DAMAGE_IMPACT", type: "toggle", default: true },
             { key: "DAMAGE_IMPACT_SCALE", type: "slider", min: 0.5, max: 2.0, step: 0.05, default: 1.0 },

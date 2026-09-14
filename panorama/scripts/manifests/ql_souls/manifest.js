@@ -18,6 +18,7 @@
     FR.register({
         id: "ql_souls",
         enabledByDefault: true,
+        enableKey: "HUD_SOULS_ENABLED",
         settings: [
             { key: "HUD_SOULS_ENABLED", type: "toggle", default: true },
             { key: "SOULS_OPACITY", type: "slider", min: 0, max: 1, step: 0.05, default: 1.0 },

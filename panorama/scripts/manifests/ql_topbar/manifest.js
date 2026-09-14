@@ -20,6 +20,7 @@
     FR.register({
         id: "ql_topbar",
         enabledByDefault: false,
+        enableKey: "HUD_TOP_BAR_ENABLED",
         settings: [
             { key: "HUD_TOP_BAR_ENABLED", type: "toggle", default: true },
             { key: "TOP_BAR_OPACITY", type: "slider", min: 0, max: 1, step: 0.05, default: 1.0 },

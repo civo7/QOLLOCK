@@ -195,6 +195,7 @@
 		<include src="s2r://panorama/scripts/manifests/ql_healthbar/variants/fg.vjs_c" />
 		<include src="s2r://panorama/scripts/manifests/ql_healthbar/variants/mc.vjs_c" />
 		<include src="s2r://panorama/scripts/manifests/ql_healthbar/manifest.vjs_c" />
+		<include src="s2r://panorama/scripts/manifests/ql_perf/manifest.vjs_c" />
 		<!-- App: loads LAST, after all feature manifests -->
 		<include src="s2r://panorama/scripts/core/ql_app.vjs_c" />
 	</scripts>

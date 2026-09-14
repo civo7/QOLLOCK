@@ -19,6 +19,7 @@
     FR.register({
         id: "ql_items",
         enabledByDefault: true,
+        enableKey: "HUD_ITEMS_ENABLED",
         settings: [
             { key: "HUD_ITEMS_ENABLED", type: "toggle", default: true },
             { key: "ITEMS_OPACITY", type: "slider", min: 0, max: 1, step: 0.05, default: 1.0 },

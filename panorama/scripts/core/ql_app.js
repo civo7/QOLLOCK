@@ -51,8 +51,24 @@
         for (var i = 0; i < ids.length; i++) {
             var m = FeatureRegistry.getManifest(ids[i]);
             if (!m) continue;
-            if (m.enableKeys && m.enableKeys.length > 0) map[ids[i]] = m.enableKeys;
-            else if (m.enableKey) map[ids[i]] = m.enableKey;
+            if (m.enableKeys && m.enableKeys.length > 0) {
+                map[ids[i]] = m.enableKeys;
+            } else if (m.enableKey) {
+                map[ids[i]] = m.enableKey;
+            } else if (m.settings && m.settings.length > 0) {
+                var detected = [];
+                for (var s = 0; s < m.settings.length; s++) {
+                    var k = m.settings[s].key;
+                    if (m.settings[s].type === "toggle" && (k.indexOf("ENABLE") !== -1 || k.indexOf("ENABLED") !== -1 || k.indexOf("HUD_") === 0)) {
+                        detected.push(k);
+                    }
+                }
+                if (detected.length === 1) {
+                    map[ids[i]] = detected[0];
+                } else if (detected.length > 1) {
+                    map[ids[i]] = detected;
+                }
+            }
         }
         return map;
     }
@@ -142,16 +158,23 @@
             if (raw !== _lastConfigRaw) {
                 _lastConfigRaw = raw;
                 var flatConfig = _unwrapEnvelope(raw);
-                if (flatConfig && ConfigAdapter) {
-                    try {
-                        // Step 0d: use loadFromFlat which handles flat→nested mapping
-                        ConfigAdapter.loadFromFlat(flatConfig, _enableKeyMap);
-                        // Runtime toggle detection: sync FeatureRegistry enabled state
-                        // with ConfigStore after legacy enableKey injection
-                        _syncFeatureEnabledState();
-                        if (Logger) Logger.logDebug("App", "config poll: updated from attribute");
-                    } catch (e) {
-                        if (Logger) Logger.logWarn("App", "config poll adapter failed: " + (e.message || e));
+                if (flatConfig) {
+                    var globalState = (typeof State !== "undefined" && State) ? State :
+                                      ((typeof globalThis !== "undefined" && globalThis.State) ? globalThis.State : null);
+                    if (globalState) {
+                        globalState.lastConfig = flatConfig;
+                    }
+                    if (ConfigAdapter) {
+                        try {
+                            // Step 0d: use loadFromFlat which handles flat→nested mapping
+                            ConfigAdapter.loadFromFlat(flatConfig, _enableKeyMap);
+                            // Runtime toggle detection: sync FeatureRegistry enabled state
+                            // with ConfigStore after legacy enableKey injection
+                            _syncFeatureEnabledState();
+                            if (Logger) Logger.logDebug("App", "config poll: updated from attribute");
+                        } catch (e) {
+                            if (Logger) Logger.logWarn("App", "config poll adapter failed: " + (e.message || e));
+                        }
                     }
                 }
             }
@@ -182,11 +205,12 @@
         // Step 0a+0c: Load config from old system's attribute, unwrap envelope,
         // use ConfigAdapter to handle flat→nested mapping
         var storedConfig = null;
+        var flatConfig = null;
         try {
             if (typeof hud.GetAttributeString === "function") {
                 var raw = hud.GetAttributeString(_CONFIG_ATTRIBUTE, "");
                 if (raw) {
-                    var flatConfig = _unwrapEnvelope(raw);
+                    flatConfig = _unwrapEnvelope(raw);
                     if (flatConfig && ConfigAdapter) {
                         // Step 0c: use loadFromFlat for flat→nested transformation
                         // Pass enableKeyMap so legacy ENABLE_X keys inject "enabled: true"
@@ -198,6 +222,15 @@
             }
         } catch (e) {
             if (Logger) Logger.logWarn("App", "config load failed, using defaults: " + (e.message || e));
+        }
+
+        var globalState = (typeof State !== "undefined" && State) ? State :
+                          ((typeof globalThis !== "undefined" && globalThis.State) ? globalThis.State : null);
+        if (globalState) {
+            if (!flatConfig && ConfigAdapter) {
+                flatConfig = ConfigAdapter.exportToFlat();
+            }
+            globalState.lastConfig = flatConfig || {};
         }
 
         // Step 0c: Pass reconstructed per-feature config to FeatureRegistry
