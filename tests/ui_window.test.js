@@ -64,6 +64,7 @@ function createTestEnvironment() {
         GetContextPanel: () => emRoot,
         DispatchEvent: () => {},
         Localize: (s) => s,
+        RegisterForUnhandledEvent: () => {},
     };
 
     const sandbox = {
@@ -95,6 +96,7 @@ function createTestEnvironment() {
     vm.runInNewContext(windowCode, sandbox);
 
     return {
+        doc,
         emRoot,
         win,
         closeBtn,
@@ -122,6 +124,17 @@ test("window: exports all public window manager API functions", () => {
         "toggle",
         "isOpen",
         "boot",
+        "buildUI",
+        "toggleSettingsWindow",
+        "forceCloseModSettings",
+        "closeOpenSettingsDropdowns",
+        "syncTabActiveStates",
+        "setActiveTabAndRefresh",
+        "renderCurrentTabContent",
+        "updateListContent",
+        "buildSettingsListRenderSignature",
+        "getSettingsListPanel",
+        "closeSettingsSideModalsIfOpen",
     ];
 
     for (const fn of expectedFns) {
@@ -290,5 +303,46 @@ test("window: registerSettingsListRowSync and runSettingsListRowSync invoke regi
     windowApi.runSettingsListRowSync();
     assert.strictEqual(called, false);
 });
+
+test("window: buildSettingsListRenderSignature formats tab|lang|theme", () => {
+    const { windowApi } = createTestEnvironment();
+    const sig = windowApi.buildSettingsListRenderSignature();
+    assert.ok(typeof sig === "string");
+    assert.ok(sig.includes("|"));
+});
+
+test("window: closeOpenSettingsDropdowns removes DropDownMenuVisible class", () => {
+    const { windowApi, emRoot } = createTestEnvironment();
+    emRoot.AddClass("DropDownMenuVisible");
+    assert.strictEqual(emRoot.BHasClass("DropDownMenuVisible"), true);
+
+    windowApi.closeOpenSettingsDropdowns(emRoot);
+    assert.strictEqual(emRoot.BHasClass("DropDownMenuVisible"), false);
+});
+
+test("window: syncTabActiveStates updates active class on window and tab buttons", () => {
+    const { windowApi, doc, win } = createTestEnvironment();
+    const tabBar = doc.create("Panel", { id: "SettingsTabBar" });
+    const tabBtn = doc.create("Button", { id: "TabButton_Crosshair" });
+    tabBar.addChild(tabBtn);
+    win.addChild(tabBar);
+
+    windowApi.setActiveTab("Crosshair");
+    windowApi.syncTabActiveStates(tabBar);
+
+    assert.strictEqual(win.BHasClass("SettingsTabActive_Crosshair"), true);
+    assert.strictEqual(tabBtn.BHasClass("Active"), true);
+});
+
+test("window: buildUI initializes navigation structure and attaches events", () => {
+    const { windowApi, win } = createTestEnvironment();
+    windowApi.buildUI();
+
+    const tabBar = win.FindChildTraverse("SettingsTabBar");
+    assert.ok(tabBar, "SettingsTabBar should be created by buildUI");
+    const searchWrap = win.FindChildTraverse("SettingsSearchWrap");
+    assert.ok(searchWrap, "SettingsSearchWrap should be created in header by buildUI");
+});
+
 
 
