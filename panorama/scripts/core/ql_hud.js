@@ -560,6 +560,269 @@
         return max;
     };
 
+    // -------------------------------------------------------------------------
+    // Urn Tracker / Net Worth Difference Overlay
+    // -------------------------------------------------------------------------
+    const URN_TRACKER_SAMPLE_INTERVAL_MS = 280;
+    const URN_TRACKER_PANEL_CACHE_REFRESH_MS = 4200;
+
+    const findFirstPanelByClass = (root, className) => {
+        if (!root) return null;
+        if (root.BHasClass && root.BHasClass(className)) return root;
+        if (root.FindChildrenWithClassTraverse) {
+            const matches = root.FindChildrenWithClassTraverse(className);
+            if (matches && matches.length > 0) return matches[0];
+        }
+        return null;
+    };
+
+    const refreshUrnTrackerScoreCache = (root, nowMs) => {
+        if (!root) return;
+        const state = getState();
+        const nextSearchMs = Number(state.urnTrackerNextPanelSearchMs) || 0;
+
+        let teamsContainer = getCachedPanel("urnTrackerTeamsContainer");
+        let friendlyTeamPanel = getCachedPanel("urnTrackerFriendlyTeamPanel");
+        let enemyTeamPanel = getCachedPanel("urnTrackerEnemyTeamPanel");
+        let friendlyLabels = Array.isArray(state.cachedPanels?.urnTrackerFriendlyGoldLabels)
+            ? state.cachedPanels.urnTrackerFriendlyGoldLabels
+            : null;
+        let enemyLabels = Array.isArray(state.cachedPanels?.urnTrackerEnemyGoldLabels)
+            ? state.cachedPanels.urnTrackerEnemyGoldLabels
+            : null;
+
+        const friendlyLabelsOk = friendlyLabels && friendlyLabels.length > 0 && friendlyLabels.every((p) => isAlive(p));
+        const enemyLabelsOk = enemyLabels && enemyLabels.length > 0 && enemyLabels.every((p) => isAlive(p));
+
+        const shouldRescan = nowMs >= nextSearchMs || !teamsContainer || !friendlyTeamPanel || !enemyTeamPanel || !friendlyLabelsOk || !enemyLabelsOk;
+        if (!shouldRescan) return;
+
+        let topBar = getCachedPanel("topBarPanel");
+        if (!topBar && root.FindChildTraverse) {
+            topBar = root.FindChildTraverse(PANEL_ID_TOP_BAR) || null;
+            setCachedPanel("topBarPanel", topBar);
+        }
+        if (!topBar) return;
+
+        teamsContainer = topBar.FindChildTraverse ? (topBar.FindChildTraverse("TeamsContainer") || null) : null;
+        setCachedPanel("urnTrackerTeamsContainer", teamsContainer);
+
+        if (!teamsContainer) {
+            state.urnTrackerNextPanelSearchMs = nowMs + URN_TRACKER_PANEL_CACHE_REFRESH_MS;
+            return;
+        }
+
+        let friendlyCandidates = teamsContainer.FindChildrenWithClassTraverse ? (teamsContainer.FindChildrenWithClassTraverse("friend") || []) : [];
+        if (friendlyCandidates.length === 0 && teamsContainer.FindChildrenWithClassTraverse) {
+            friendlyCandidates = teamsContainer.FindChildrenWithClassTraverse("team1") || [];
+        }
+        let enemyCandidates = teamsContainer.FindChildrenWithClassTraverse ? (teamsContainer.FindChildrenWithClassTraverse("enemy") || []) : [];
+        if (enemyCandidates.length === 0 && teamsContainer.FindChildrenWithClassTraverse) {
+            enemyCandidates = teamsContainer.FindChildrenWithClassTraverse("team2") || [];
+        }
+
+        friendlyTeamPanel = friendlyCandidates.length > 0 ? friendlyCandidates[0] : null;
+        enemyTeamPanel = enemyCandidates.length > 0 ? enemyCandidates[0] : null;
+        friendlyLabels = (friendlyTeamPanel && friendlyTeamPanel.FindChildrenWithClassTraverse) ? (friendlyTeamPanel.FindChildrenWithClassTraverse("hiddenGoldValue") || []) : [];
+        enemyLabels = (enemyTeamPanel && enemyTeamPanel.FindChildrenWithClassTraverse) ? (enemyTeamPanel.FindChildrenWithClassTraverse("hiddenGoldValue") || []) : [];
+
+        setCachedPanel("urnTrackerFriendlyTeamPanel", friendlyTeamPanel);
+        setCachedPanel("urnTrackerEnemyTeamPanel", enemyTeamPanel);
+        if (!state.cachedPanels) state.cachedPanels = {};
+        state.cachedPanels.urnTrackerFriendlyGoldLabels = friendlyLabels;
+        state.cachedPanels.urnTrackerEnemyGoldLabels = enemyLabels;
+        state.urnTrackerNextPanelSearchMs = nowMs + URN_TRACKER_PANEL_CACHE_REFRESH_MS;
+    };
+
+    const getCachedUrnTeamNetworthValue = (labelsKey) => {
+        const state = getState();
+        const labels = Array.isArray(state.cachedPanels?.[labelsKey]) ? state.cachedPanels[labelsKey] : [];
+        if (labels.length === 0) return 0;
+        let total = 0;
+        for (let i = 0; i < labels.length; i++) {
+            if (!isAlive(labels[i])) return 0;
+            const v = parseInt(String(labels[i].text).replace(/,/g, ""), 10);
+            if (Number.isFinite(v)) total += v;
+        }
+        return total;
+    };
+
+    const ensureUrnTrackerOverlay = (root) => {
+        let panel = getCachedPanel("urnTrackerPanel");
+        let label = getCachedPanel("urnTrackerLabel");
+        if (panel && label && label.GetParent && label.GetParent() === panel) return panel;
+
+        panel = root?.FindChildTraverse ? root.FindChildTraverse("UrnTracker") : null;
+        if (!panel) {
+            let parent = null;
+            const topBar = root?.FindChildTraverse ? root.FindChildTraverse(PANEL_ID_TOP_BAR) : null;
+            if (topBar) {
+                parent = findFirstPanelByClass(topBar, "TeamNetworth");
+            }
+            if (!parent && root) {
+                parent = findFirstPanelByClass(root, "TeamNetworth");
+            }
+            if (!parent && topBar) {
+                parent = topBar;
+            }
+            if (!parent) return null;
+            panel = $.CreatePanel("Panel", parent, "UrnTracker", {
+                "class": "UrnTracker",
+                hittest: "false",
+                hittestchildren: "false",
+                visible: "true"
+            });
+        }
+        if (!panel) return null;
+
+        label = panel.FindChildTraverse ? panel.FindChildTraverse("UrnTrackerLabel") : null;
+        if (!label) {
+            label = $.CreatePanel("Label", panel, "UrnTrackerLabel", {
+                "class": "UrnTrackerLabel",
+                text: "--"
+            });
+        }
+
+        let soulIcon = panel.FindChildTraverse ? panel.FindChildTraverse("UrnTrackerSoulIcon") : null;
+        if (!soulIcon) {
+            soulIcon = $.CreatePanel("Panel", panel, "UrnTrackerSoulIcon", {
+                "class": "UrnTrackerSoulIcon",
+                hittest: "false"
+            });
+        }
+
+        setCachedPanel("urnTrackerPanel", panel);
+        setCachedPanel("urnTrackerLabel", label);
+        return panel;
+    };
+
+    const setUrnTrackerVisual = (panel, label, text, moodClass) => {
+        if (!panel || !label) return;
+        const state = getState();
+        const nextText = (text === undefined || text === null) ? "--" : String(text);
+        if (state.urnTrackerLastText !== nextText) {
+            label.text = nextText;
+            state.urnTrackerLastText = nextText;
+        }
+
+        const nextMood = moodClass || "neutral";
+        if (state.urnTrackerLastClass !== nextMood) {
+            panel.RemoveClass("good");
+            panel.RemoveClass("bad");
+            panel.RemoveClass("neutral");
+            panel.AddClass(nextMood);
+            state.urnTrackerLastClass = nextMood;
+        }
+
+        if (!panel.BHasClass || !panel.BHasClass("show")) panel.AddClass("show");
+        panel.visible = true;
+    };
+
+    const hideUrnTrackerOverlay = (root) => {
+        let panel = getCachedPanel("urnTrackerPanel");
+        if (!panel && root?.FindChildTraverse) {
+            panel = root.FindChildTraverse("UrnTracker");
+            if (isAlive(panel)) {
+                setCachedPanel("urnTrackerPanel", panel);
+            }
+        }
+        if (isAlive(panel)) panel.visible = false;
+    };
+
+    const computeUrnTrackerState = (root, nowMs) => {
+        const state = getState();
+        const now = Number.isFinite(Number(nowMs)) ? Number(nowMs) : (Date.now ? Date.now() : (new Date()).getTime());
+        if (now < (state.urnTrackerNextSampleMs || 0) && state.urnTrackerCachedState) {
+            return state.urnTrackerCachedState;
+        }
+
+        refreshUrnTrackerScoreCache(root, now);
+        const friendlyVal = getCachedUrnTeamNetworthValue("urnTrackerFriendlyGoldLabels");
+        const enemyVal = getCachedUrnTeamNetworthValue("urnTrackerEnemyGoldLabels");
+        const gameSec = Q.core?.time?.readGameTime ? Q.core.time.readGameTime(root) : (Q.getGameSecondsForUrn ? Q.getGameSecondsForUrn(root) : 0);
+        const gameMin = gameSec / 60.0;
+        let mood = "neutral";
+        let display = "--";
+        let result = null;
+
+        if (friendlyVal <= 0 && enemyVal <= 0) {
+            result = { friendlyVal, enemyVal, mood: "neutral", display: "--", debugText: "--" };
+            state.urnTrackerCachedState = result;
+            state.urnTrackerNextSampleMs = now + URN_TRACKER_SAMPLE_INTERVAL_MS;
+            return result;
+        }
+
+        if (friendlyVal > 0 && enemyVal <= 0) {
+            result = { friendlyVal, enemyVal, mood: "good", display: "100%", debugText: "100%" };
+            state.urnTrackerCachedState = result;
+            state.urnTrackerNextSampleMs = now + URN_TRACKER_SAMPLE_INTERVAL_MS;
+            return result;
+        }
+
+        if (enemyVal > 0 && friendlyVal <= 0) {
+            result = { friendlyVal, enemyVal, mood: "bad", display: "-100.0%", debugText: "-inf" };
+            state.urnTrackerCachedState = result;
+            state.urnTrackerNextSampleMs = now + URN_TRACKER_SAMPLE_INTERVAL_MS;
+            return result;
+        }
+
+        const higher = Math.max(friendlyVal, enemyVal);
+        const lower = Math.min(friendlyVal, enemyVal);
+        let diffPct = 0;
+        if (higher > 0) {
+            diffPct = ((higher - lower) / higher) * 100;
+            if (friendlyVal < enemyVal) diffPct *= -1;
+        }
+
+        const threshold = (gameMin < 15) ? 15 : 10;
+        if (diffPct >= threshold) mood = "good";
+        else if (diffPct <= -threshold) mood = "bad";
+
+        display = (diffPct > 0 ? "+" : "") + diffPct.toFixed(1) + "%";
+        result = { friendlyVal, enemyVal, mood, display, debugText: display };
+        state.urnTrackerCachedState = result;
+        state.urnTrackerNextSampleMs = now + URN_TRACKER_SAMPLE_INTERVAL_MS;
+        return result;
+    };
+
+    const updateUrnTrackerOverlay = (root, cfg, nowMs) => {
+        if (!root) return;
+        const state = getState();
+        const enabledVal = Number(cfg ? cfg.ENABLE_URN_DIFF : 0);
+        const enabled = (Number.isFinite(enabledVal) && enabledVal === 1);
+        const inHideout = isInHideout(root);
+
+        if (!enabled || inHideout) {
+            hideUrnTrackerOverlay(root);
+            state.urnTrackerDisplayMode = inHideout ? "hideout" : "disabled";
+            state.urnTrackerNextSampleMs = 0;
+            state.urnTrackerCachedState = null;
+            return;
+        }
+
+        const urnState = computeUrnTrackerState(root, nowMs);
+        const panel = ensureUrnTrackerOverlay(root);
+        const label = getCachedPanel("urnTrackerLabel");
+        if (!panel || !label) {
+            return;
+        }
+
+        setUrnTrackerVisual(panel, label, urnState.display, urnState.mood);
+        state.urnTrackerDisplayMode = "active";
+    };
+
+    const needsUrnTrackerRuntimeWork = (cfg) => {
+        const enabled = (typeof QOL !== "undefined" && QOL.utils?.IsCfgEnabled)
+            ? QOL.utils.IsCfgEnabled(cfg, "ENABLE_URN_DIFF")
+            : (Number(cfg?.ENABLE_URN_DIFF) === 1);
+        if (enabled) return true;
+        const state = getState();
+        return Boolean(
+            state?.urnTrackerDisplayMode === "active" ||
+            (getCachedPanel("urnTrackerPanel") && state?.urnTrackerDisplayMode !== "disabled")
+        );
+    };
+
     /**
      * Root CSS classes synchronizer for HUD.
      */
@@ -730,8 +993,8 @@
                 ["hide_cosmetic_ability_active", notDevTestMode && cfg?.ENABLE_HIDE_COSMETIC_ABILITY === 1],
                 ["simplify_ability_icons_active", notDevTestMode && cfg?.ENABLE_SIMPLIFY_ABILITY_ICONS === 1],
                 ["hide_behavior_summary_active", cfg?.ENABLE_HIDE_BEHAVIOR_SUMMARY === 1],
-                ["buff_hud_disabled", cfg?.ENABLE_BUFF_HUD === 0],
-                ["rejuv_hud_disabled", cfg?.ENABLE_REJUV_HUD === 0],
+                ["buff_hud_disabled", Number(cfg?.ENABLE_BUFF_HUD) !== 1],
+                ["rejuv_hud_disabled", Number(cfg?.ENABLE_REJUV_HUD) !== 1],
                 ["minimap_buff_timer_disabled", Number(cfg?.ENABLE_MINIMAP_BUFF_TIMER) !== 1],
                 ["minimap_rejuv_timer_disabled", Number(cfg?.ENABLE_MINIMAP_REJUV_TIMER) !== 1],
                 ["bhop_gamemode_active", false],
@@ -763,7 +1026,7 @@
                 ["min_souls_disabled", cfg?.ENABLE_MIN_SOULS === 0],
                 ["obj_dmg_disabled", cfg?.ENABLE_OBJ_DMG === 0],
                 ["obj_map_disabled", cfg?.ENABLE_OBJ_MAP === 0],
-                ["urn_diff_disabled", cfg?.ENABLE_URN_DIFF === 0],
+                ["urn_diff_disabled", Number(cfg?.ENABLE_URN_DIFF) !== 1],
                 ["rift_timer_disabled", cfg?.ENABLE_URN_TIMER === 0],
                 ["missing_hero_disabled", cfg?.ENABLE_MISSING_HERO === 0],
                 ["nicknames_active", Number(cfg?.ENABLE_NICKNAMES) === 1],
@@ -904,8 +1167,8 @@
         if (needsDamageReportOffsetWork(cfg)) {
             updateDamageReportOffsets(root, cfg);
         }
-        if (typeof QOL.updateUrnTrackerOverlay === "function" && QOL.needsUrnTrackerRuntimeWork?.(cfg)) {
-            QOL.updateUrnTrackerOverlay(root, cfg, nowMsLoop);
+        if (needsUrnTrackerRuntimeWork(cfg)) {
+            updateUrnTrackerOverlay(root, cfg, nowMsLoop);
         }
 
         return redDiamondEnabled;
@@ -938,6 +1201,13 @@
         isHudVisibleForTopBarRuntime,
         isColorWarningEnabled,
         updateReloadCircleExceptionState,
+        ensureUrnTrackerOverlay,
+        updateUrnTrackerOverlay,
+        needsUrnTrackerRuntimeWork,
+        computeUrnTrackerState,
+        hideUrnTrackerOverlay,
+        refreshUrnTrackerScoreCache,
+        getCachedUrnTeamNetworthValue,
         PANEL_ID_GAMEPLAY_HUD,
         PANEL_ID_TOP_BAR,
         PANEL_ID_GOLD_AP_CONTAINER
@@ -973,6 +1243,11 @@
     Q.isCustomHudContextActive = isCustomHudContextActive;
     Q.isHudVisibleForTopBarRuntime = isHudVisibleForTopBarRuntime;
     Q.isColorWarningEnabled = isColorWarningEnabled;
+    Q.ensureUrnTrackerOverlay = ensureUrnTrackerOverlay;
+    Q.updateUrnTrackerOverlay = updateUrnTrackerOverlay;
+    Q.needsUrnTrackerRuntimeWork = needsUrnTrackerRuntimeWork;
+    Q.computeUrnTrackerState = computeUrnTrackerState;
+    Q.hideUrnTrackerOverlay = hideUrnTrackerOverlay;
     Q.panelIdTopBar = PANEL_ID_TOP_BAR;
     Q.panelIdGoldApContainer = PANEL_ID_GOLD_AP_CONTAINER;
 

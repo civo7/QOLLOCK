@@ -23,6 +23,7 @@
         enableKey: "HUD_TOP_BAR_ENABLED",
         settings: [
             { key: "HUD_TOP_BAR_ENABLED", type: "toggle", default: true },
+            { key: "ENABLE_URN_DIFF", type: "toggle", default: false },
             { key: "TOP_BAR_OPACITY", type: "slider", min: 0, max: 1, step: 0.05, default: 1.0 },
             { key: "TOP_BAR_SCALE", type: "slider", min: 0.5, max: 1.5, step: 0.05, default: 1.0 },
             { key: "TOP_BAR_X_OFFSET", type: "slider", min: -1500, max: 1500, step: 5, default: 0 },

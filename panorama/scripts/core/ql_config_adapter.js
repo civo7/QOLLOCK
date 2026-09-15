@@ -92,11 +92,23 @@
         if (!map[key].includes(featureId)) map[key].push(featureId);
     };
 
+    const KNOWN_TOGGLE_KEYS = new Set([
+        "MINIMAP_FLIP",
+        "MINIMAP_ROTATE_WITH_PLAYER",
+        "AUTO_CORRUPT_REPAIR",
+        "ALT_ZOOM_DRAW_OVER_UI",
+        "TAB_ZOOM_DRAW_OVER_UI",
+        "RECENT_PURCHASES_QUICK_REJUV",
+        "RECENT_PURCHASES_QUICK_SCOREBOARD",
+        "STATS_POSITION_HIDE_NORMAL",
+        "STATS_POSITION_HIDE_SCOREBOARD"
+    ]);
+
     const coerceType = (key, value) => {
         // Toggle keys: numeric 0/1 → boolean
         if (typeof value === "number" && (value === 0 || value === 1)) {
             const toggleKeys = /^ENABLE_|^DISABLE_|^HUD_|^SHOW_|^SUPPORT_|^MINIMAL_|^DRAG_|^PREVIEWS_|^BHOP_|^ON_DEATH_GAME_|^ITEM_FILTER_/;
-            if (toggleKeys.test(key)) return !!value;
+            if (toggleKeys.test(key) || KNOWN_TOGGLE_KEYS.has(key)) return !!value;
         }
         // Palette keys: ensure number 0-29
         if (/_COLOR$|_WASH_COLOR$|AMMO_TEXT_COLOR|MINIMAP_ICON_COLOR/.test(key)) {
@@ -117,16 +129,27 @@
             for (let i = 0; i < ids.length; i++) {
                 const m = FR.getManifest(ids[i]);
                 if (!m) continue;
-                if (m.enableKey) appendFeatureOwner(map, m.enableKey, ids[i]);
+                if (m.enableKey) {
+                    appendFeatureOwner(map, m.enableKey, ids[i]);
+                    KNOWN_TOGGLE_KEYS.add(m.enableKey);
+                }
                 if (m.enableKeys) {
                     for (let e = 0; e < m.enableKeys.length; e++) {
-                        if (m.enableKeys[e]) appendFeatureOwner(map, m.enableKeys[e], ids[i]);
+                        if (m.enableKeys[e]) {
+                            appendFeatureOwner(map, m.enableKeys[e], ids[i]);
+                            KNOWN_TOGGLE_KEYS.add(m.enableKeys[e]);
+                        }
                     }
                 }
                 if (m.settings) {
                     for (let s = 0; s < m.settings.length; s++) {
                         const sk = m.settings[s].key;
-                        if (sk) appendFeatureOwner(map, sk, ids[i]);
+                        if (sk) {
+                            appendFeatureOwner(map, sk, ids[i]);
+                            if (m.settings[s].type === "toggle") {
+                                KNOWN_TOGGLE_KEYS.add(sk);
+                            }
+                        }
                     }
                 }
             }

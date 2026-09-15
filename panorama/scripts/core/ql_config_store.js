@@ -52,7 +52,7 @@
     const validateValue = (schemaEntry, value) => {
         switch (schemaEntry.type) {
             case "toggle":
-                return (typeof value === "boolean") ? null : "must be boolean";
+                return (typeof value === "boolean" || value === 0 || value === 1) ? null : "must be boolean";
             case "slider":
             case "number":
                 if (typeof value !== "number" || isNaN(value)) return "must be number";
@@ -126,7 +126,9 @@
             return false;
         }
         let stored = value;
-        if (def.type === "slider") {
+        if (def.type === "toggle" && typeof value === "number") {
+            stored = value === 1;
+        } else if (def.type === "slider") {
             const decimals = (typeof def.decimals === "number") ? def.decimals : 2;
             stored = Number(Number(value).toFixed(decimals));
         }
@@ -167,7 +169,10 @@
                 for (let i = 0; i < schema.settings.length; i++) {
                     if (schema.settings[i].key === key && validateValue(schema.settings[i], featureData[key]) === null) {
                         const oldVal = values[featureId][key];
-                        const newVal = featureData[key];
+                        let newVal = featureData[key];
+                        if (schema.settings[i].type === "toggle" && typeof newVal === "number") {
+                            newVal = newVal === 1;
+                        }
                         values[featureId][key] = newVal;
                         if (oldVal !== newVal) {
                             EventBus.emit("config:changed", { featureId, key, value: newVal });

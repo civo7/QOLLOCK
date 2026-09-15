@@ -52,7 +52,14 @@
             var SetPanelClassCached = QOL.setPanelClassCached || function(p, c, cls, val) { if (p && p.SetHasClass) p.SetHasClass(cls, !!val); };
             var IsHudClassActive = function(r, cls) { return (QOL.core && QOL.core.hud && QOL.core.hud.isClassActive) ? QOL.core.hud.isClassActive(cls) : (QOL.isHudClassActive ? QOL.isHudClassActive(r, cls) : false); };
             var hasClassInHierarchy = QOL.hasClassInHierarchy || function(p, cls) { return !!(p && p.BHasClass && p.BHasClass(cls)); };
-            var EnsureMinimapOverlayAnchor = function(m, r) { return QOL.ensureMinimapOverlayAnchor ? QOL.ensureMinimapOverlayAnchor(m, r) : null; };
+            var EnsureMinimapOverlayAnchor = function(root) {
+                if (typeof QOL.ensureMinimapOverlayAnchor === "function") {
+                    var a = QOL.ensureMinimapOverlayAnchor(root);
+                    if (a) return a;
+                }
+                if (!root || !root.FindChildTraverse) return null;
+                return root.FindChildTraverse("minimap_container") || root.FindChildTraverse("minimap_persp") || null;
+            };
             var GetGameSecondsForUrn = function() { return QOL.getGameSecondsForUrn ? QOL.getGameSecondsForUrn() : 0; };
             var IsStreetBrawlModeActive = function(r) { return QOL.isStreetBrawlModeActive ? QOL.isStreetBrawlModeActive(r) : false; };
             var isConnectedToHideout = function(r) { return (QOL.core && QOL.core.hud && QOL.core.hud.isClassActive) ? (QOL.core.hud.isClassActive("connectedToHideout") || QOL.core.hud.isClassActive("InHideout")) : (QOL.isConnectedToHideout ? QOL.isConnectedToHideout(r) : false); };

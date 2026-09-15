@@ -30,6 +30,13 @@
         return;
     }
 
+    if (typeof QOL !== "undefined" && QOL) {
+        QOL.ensureMinimapOverlayAnchor = function(root) {
+            if (!root || !root.FindChildTraverse) return null;
+            return root.FindChildTraverse("minimap_container") || root.FindChildTraverse("minimap_persp") || null;
+        };
+    }
+
     var PANEL_ID_MINIMAP = "hud_minimap";
     var PANEL_ID_GAMEPLAY_HUD = "gameplay_hud";
     var MINIMAP_CAST_RANGE_BASE_SIZE = 400.0;
