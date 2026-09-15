@@ -59,7 +59,13 @@
             { key: "PASSIVE_COOLDOWN_SIZE", type: "slider", min: 30, max: 60, step: 1, default: 40 },
             { key: "PASSIVE_COOLDOWN_X", type: "slider", min: -50, max: 50, step: 1, default: 0 },
             { key: "PASSIVE_COOLDOWN_Y", type: "slider", min: -50, max: 50, step: 1, default: 0 },
-            { key: "PASSIVE_COOLDOWN_OPACITY", type: "slider", min: 0, max: 100, step: 5, default: 50 }
+            { key: "PASSIVE_COOLDOWN_OPACITY", type: "slider", min: 0, max: 100, step: 5, default: 50 },
+            { key: "ENABLE_PASSIVE_COOLDOWN", type: "toggle", default: true },
+            { key: "ENABLE_OLD_ITEM_COOLDOWNS", type: "toggle", default: false },
+            { key: "ITEM_FILTER_DEF_PASSIVE", type: "toggle", default: true },
+            { key: "ITEM_FILTER_OFF_PASSIVE", type: "toggle", default: true },
+            { key: "ITEM_FILTER_DEF_ACTIVE", type: "toggle", default: false },
+            { key: "ITEM_FILTER_OFF_ACTIVE", type: "toggle", default: false }
         ],
         create: function(ctx) {
             var Panel = (QOL.core && QOL.core.panel) ? QOL.core.panel : {};
@@ -70,9 +76,18 @@
             var SetPanelOpacitySafe = Utils.SetPanelOpacitySafe || function(p, o) { if (p && p.style) p.style.opacity = String(o); };
             var GetCachedPanel = QOL.getCachedPanel || function(k) { return State.cachedPanels ? State.cachedPanels[k] : null; };
             var SetCachedPanel = QOL.setCachedPanel || function(k, p) { if (State.cachedPanels) State.cachedPanels[k] = p; };
-            var ResolvePassiveCooldownMode = function(cfg) { return QOL.resolvePassiveCooldownMode ? QOL.resolvePassiveCooldownMode(cfg) : 0; };
+            var ResolvePassiveCooldownMode = function(cfg) {
+                if (typeof QOL.resolvePassiveCooldownMode === "function") return QOL.resolvePassiveCooldownMode(cfg);
+                var masterEnabled = IsCfgEnabled(cfg, "ENABLE_PASSIVE_COOLDOWN");
+                if (!masterEnabled) return "default";
+                var advancedModeEnabled = Number(cfg && cfg.ENABLE_OLD_ITEM_COOLDOWNS) !== 1;
+                return advancedModeEnabled ? "advanced" : "basic";
+            };
             var IsStreetBrawlModeActive = function(r) { return QOL.isStreetBrawlModeActive ? QOL.isStreetBrawlModeActive(r) : false; };
-            var IsPassiveCooldownBasicMode = function(mode) { return QOL.isPassiveCooldownBasicMode ? QOL.isPassiveCooldownBasicMode(mode) : false; };
+            var IsPassiveCooldownBasicMode = function(mode) {
+                if (typeof QOL.isPassiveCooldownBasicMode === "function") return QOL.isPassiveCooldownBasicMode(mode);
+                return mode === "basic";
+            };
             var IsColorWarningEnabled = function(cfg) { return QOL.isColorWarningEnabled ? QOL.isColorWarningEnabled(cfg) : false; };
 
             function _ensureCachedByIds(root, cacheKey, ids) {

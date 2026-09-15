@@ -104,3 +104,61 @@ test("Urn Tracker overlay creation, state calculation, and root classes", () => 
     hudModule.applyRootClasses(root, { ENABLE_URN_DIFF: 1 }, Date.now(), false);
     assert.strictEqual(root.BHasClass("urn_diff_disabled"), false, "urn_diff_disabled must NOT be active when ENABLE_URN_DIFF is 1");
 });
+
+test("Combat signal, passive cooldown mode, and account lookup functions exported and functioning", () => {
+    const hud = sim.createHud();
+    hud.assertLoaded();
+    const Q = hud.sandbox.global.QOL;
+    const $ = hud.sandbox.global.$;
+    const root = hud.root;
+
+    // 1. isCombatSignalActive
+    assert.strictEqual(typeof Q.isCombatSignalActive, "function");
+    assert.strictEqual(typeof Q.core.hud.isCombatSignalActive, "function");
+    assert.strictEqual(Q.isCombatSignalActive(root, Date.now()), false);
+
+    root.AddClass("InCombat");
+    assert.strictEqual(Q.isCombatSignalActive(root, Date.now()), true);
+    root.RemoveClass("InCombat");
+
+    // 2. resolvePassiveCooldownMode and isPassiveCooldownBasicMode
+    assert.strictEqual(typeof Q.resolvePassiveCooldownMode, "function");
+    assert.strictEqual(typeof Q.isPassiveCooldownBasicMode, "function");
+    assert.strictEqual(Q.resolvePassiveCooldownMode({ ENABLE_PASSIVE_COOLDOWN: 0 }), "default");
+    assert.strictEqual(Q.resolvePassiveCooldownMode({ ENABLE_PASSIVE_COOLDOWN: 1, ENABLE_OLD_ITEM_COOLDOWNS: 0 }), "advanced");
+    assert.strictEqual(Q.resolvePassiveCooldownMode({ ENABLE_PASSIVE_COOLDOWN: 1, ENABLE_OLD_ITEM_COOLDOWNS: 1 }), "basic");
+    assert.strictEqual(Q.isPassiveCooldownBasicMode("basic"), true);
+    assert.strictEqual(Q.isPassiveCooldownBasicMode("advanced"), false);
+    assert.strictEqual(Q.isPassiveCooldownBasicMode("default"), false);
+
+    // 3. hasClassInHierarchy and findAncestorWithClass
+    assert.strictEqual(typeof Q.hasClassInHierarchy, "function");
+    assert.strictEqual(typeof Q.findAncestorWithClass, "function");
+    const parentP = $.CreatePanel("Panel", root, "ParentPanel");
+    parentP.AddClass("test_ancestor_class");
+    const childP = $.CreatePanel("Panel", parentP, "ChildPanel");
+    assert.strictEqual(Q.hasClassInHierarchy(childP, "test_ancestor_class"), true);
+    assert.strictEqual(Q.findAncestorWithClass(childP, "test_ancestor_class"), parentP);
+    assert.strictEqual(Q.hasClassInHierarchy(childP, "non_existent"), false);
+    assert.strictEqual(Q.findAncestorWithClass(childP, "non_existent"), null);
+
+    // 4. tryReadAccountIdFromKnownPartyPath and getAccountIdForBuildCategoryPayload
+    assert.strictEqual(typeof Q.tryReadAccountIdFromKnownPartyPath, "function");
+    assert.strictEqual(typeof Q.getAccountIdForBuildCategoryPayload, "function");
+    assert.strictEqual(Q.tryReadAccountIdFromKnownPartyPath(null), "");
+
+    const partyContainer = $.CreatePanel("Panel", root, "CitadelPartyContainer");
+    const party = $.CreatePanel("Panel", partyContainer, "CitadelParty");
+    const localPlayer = $.CreatePanel("Panel", party, "LocalPlayer");
+    const avatar = $.CreatePanel("Panel", localPlayer, "AvatarImage");
+    avatar.text = "12345678";
+    assert.strictEqual(Q.tryReadAccountIdFromKnownPartyPath(root), "12345678");
+    assert.strictEqual(Q.getAccountIdForBuildCategoryPayload(root), "12345678");
+
+    // 5. ConfigStore has ql_legacy_audio_passive schema for item filters
+    const ConfigStore = Q.core.ConfigStore;
+    assert.ok(ConfigStore.hasSchema("ql_legacy_audio_passive"));
+    assert.strictEqual(ConfigStore.get("ql_legacy_audio_passive", "ENABLE_PASSIVE_COOLDOWN"), true);
+    assert.strictEqual(ConfigStore.get("ql_legacy_audio_passive", "ITEM_FILTER_DEF_PASSIVE"), true);
+});
+

@@ -37,6 +37,7 @@
             var GetUnitTargetDefaultStyleTexts = QOL.getUnitTargetDefaultStyleTexts || function() {
                 return ResolveUnitTargetStyleTexts(QOL.buildDefaultConfig ? QOL.buildDefaultConfig() : {});
             };
+            QOL.getUnitTargetDefaultStyleTexts = GetUnitTargetDefaultStyleTexts;
 
             var _loop = null;
             var _root = null;

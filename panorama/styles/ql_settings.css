@@ -1422,7 +1422,9 @@
 
 #CloseBtn
 {
+	ignore-parent-flow: true;
 	align: right center;
+	margin-right: 15px;
 	width: 32px;
 	height: 32px;
 	background-color: transparent;

@@ -694,7 +694,12 @@
         _activeTab = tabId;
         globalThis.currentTab = tabId;
         highlightActiveTab();
-        renderTab(tabId);
+        const list = getSettingsListPanel();
+        if (isAlive(list)) {
+            updateListContent(list, true);
+        } else {
+            renderTab(tabId);
+        }
     };
 
     const getActiveTab = () => _activeTab;
@@ -828,8 +833,8 @@
             return;
         }
 
-        // Fallback: If ql_settings.js or legacy renderer exists, delegate
-        if (container && typeof globalThis.RenderCurrentTabContent === "function") {
+        // Fallback: If legacy renderer exists (and is not our own renderCurrentTabContent), delegate
+        if (container && typeof globalThis.RenderCurrentTabContent === "function" && globalThis.RenderCurrentTabContent !== renderCurrentTabContent) {
             try {
                 globalThis.RenderCurrentTabContent(container);
                 return;
@@ -1587,8 +1592,10 @@
                 const headerDiscordBtn = header.FindChildTraverse("HeaderDiscordLinkButton");
                 if (headerDiscordBtn) headerDiscordBtn.DeleteAsync(0);
 
+                closeBtnHeader.style.ignoreParentFlow = "true";
                 closeBtnHeader.style.horizontalAlign = "right";
                 closeBtnHeader.style.verticalAlign = "center";
+                closeBtnHeader.style.marginRight = "15px";
                 closeBtnHeader.SetPanelEvent("onactivate", () => {
                     forceCloseModSettings();
                 });

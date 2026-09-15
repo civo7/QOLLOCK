@@ -352,6 +352,59 @@
         return false;
     };
 
+    const findAncestorWithClass = (panel, className) => {
+        if (!panel || !className) return null;
+        if (typeof QOL_UTILS !== "undefined" && typeof QOL_UTILS.FindAncestorWithClass === "function") {
+            return QOL_UTILS.FindAncestorWithClass(panel, className);
+        }
+        let cur = panel;
+        let depth = 0;
+        while (cur && depth < 32) {
+            try {
+                if (cur.BHasClass && cur.BHasClass(className)) return cur;
+            } catch (_) {}
+            cur = cur.GetParent ? cur.GetParent() : null;
+            depth++;
+        }
+        return null;
+    };
+
+    const resolvePassiveCooldownMode = (cfg) => {
+        const masterEnabled = Number(cfg?.ENABLE_PASSIVE_COOLDOWN) === 1;
+        if (!masterEnabled) return "default";
+        const advancedModeEnabled = Number(cfg?.ENABLE_OLD_ITEM_COOLDOWNS) !== 1;
+        return advancedModeEnabled ? "advanced" : "basic";
+    };
+
+    const isPassiveCooldownBasicMode = (mode) => mode === "basic";
+
+    const tryReadAccountIdFromKnownPartyPath = (root) => {
+        if (!root) return "";
+        let partyContainer = null;
+        try { partyContainer = root.FindChildTraverse ? root.FindChildTraverse("CitadelPartyContainer") : null; } catch (_) {}
+        if (!partyContainer) return "";
+        let party = null;
+        try { party = partyContainer.FindChildTraverse ? partyContainer.FindChildTraverse("CitadelParty") : null; } catch (_) {}
+        if (!party) return "";
+        let localPlayer = null;
+        try { localPlayer = party.FindChildTraverse ? party.FindChildTraverse("LocalPlayer") : null; } catch (_) {}
+        if (!localPlayer) return "";
+        let avatar = null;
+        try { avatar = localPlayer.FindChildTraverse ? localPlayer.FindChildTraverse("AvatarImage") : null; } catch (_) {}
+        if (!avatar) return "";
+        if (typeof Q.readAccountIdFromPanel === "function") return Q.readAccountIdFromPanel(avatar);
+        try {
+            const parsed = avatar.text || avatar.accountid || avatar.account_id || "";
+            return String(parsed || "");
+        } catch (_) {
+            return "";
+        }
+    };
+
+    const getAccountIdForBuildCategoryPayload = (root) => {
+        return tryReadAccountIdFromKnownPartyPath(root);
+    };
+
     const updateReloadCircleExceptionState = (root, cfg) => {
         const hideReloadCircleEnabled = Number(cfg?.ENABLE_HIDE_RELOAD_CIRCLE) === 1;
         const state = getState();
@@ -861,10 +914,7 @@
             }
         }
 
-        const masterPassiveEnabled = Number(cfg?.ENABLE_PASSIVE_COOLDOWN) === 1;
-        const passiveCooldownMode = !masterPassiveEnabled
-            ? "default"
-            : ((Number(cfg?.ENABLE_OLD_ITEM_COOLDOWNS) !== 1) ? "advanced" : "basic");
+        const passiveCooldownMode = resolvePassiveCooldownMode(cfg);
 
         const staticSig = [
             hideoutConnected ? 1 : 0,
@@ -1208,6 +1258,12 @@
         hideUrnTrackerOverlay,
         refreshUrnTrackerScoreCache,
         getCachedUrnTeamNetworthValue,
+        resolvePassiveCooldownMode,
+        isPassiveCooldownBasicMode,
+        hasClassInHierarchy,
+        findAncestorWithClass,
+        tryReadAccountIdFromKnownPartyPath,
+        getAccountIdForBuildCategoryPayload,
         PANEL_ID_GAMEPLAY_HUD,
         PANEL_ID_TOP_BAR,
         PANEL_ID_GOLD_AP_CONTAINER
@@ -1243,6 +1299,13 @@
     Q.isCustomHudContextActive = isCustomHudContextActive;
     Q.isHudVisibleForTopBarRuntime = isHudVisibleForTopBarRuntime;
     Q.isColorWarningEnabled = isColorWarningEnabled;
+    Q.isCombatSignalActive = isCombatSignalActive;
+    Q.resolvePassiveCooldownMode = resolvePassiveCooldownMode;
+    Q.isPassiveCooldownBasicMode = isPassiveCooldownBasicMode;
+    Q.hasClassInHierarchy = hasClassInHierarchy;
+    Q.findAncestorWithClass = findAncestorWithClass;
+    Q.tryReadAccountIdFromKnownPartyPath = tryReadAccountIdFromKnownPartyPath;
+    Q.getAccountIdForBuildCategoryPayload = getAccountIdForBuildCategoryPayload;
     Q.ensureUrnTrackerOverlay = ensureUrnTrackerOverlay;
     Q.updateUrnTrackerOverlay = updateUrnTrackerOverlay;
     Q.needsUrnTrackerRuntimeWork = needsUrnTrackerRuntimeWork;
