@@ -145,6 +145,24 @@ class Panel {
         if (parent && typeof parent.addChild === "function") parent.addChild(this);
     }
 
+    MoveChildBefore(child, beforeChild) {
+        this._assertValid("MoveChildBefore");
+        if (!child) return;
+        const curIdx = this._children.indexOf(child);
+        if (curIdx < 0) return;
+        this._children.splice(curIdx, 1);
+        if (!beforeChild) {
+            this._children.push(child);
+            return;
+        }
+        const targetIdx = this._children.indexOf(beforeChild);
+        if (targetIdx < 0) {
+            this._children.push(child);
+        } else {
+            this._children.splice(targetIdx, 0, child);
+        }
+    }
+
     RemoveAndDeleteChildren() {
         this._assertValid("RemoveAndDeleteChildren");
         for (const child of this._children.slice()) child._destroy();

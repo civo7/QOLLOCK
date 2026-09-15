@@ -192,18 +192,7 @@
     // =========================================================================
 
     const clear = () => {
-        _currentQuery = "";
-        _searching = false;
-
-        if (_searchInput && isAlive(_searchInput)) {
-            _suppressChange = true;
-            try { _searchInput.text = ""; } catch (_) {}
-            _suppressChange = false;
-        }
-
-        if (_searchWrap && isAlive(_searchWrap)) {
-            _searchWrap.SetHasClass("HasSearchText", false);
-        }
+        clearSettingsSearchQuery();
 
         const win = Q.ui?.window;
         if (win) {
@@ -236,9 +225,26 @@
 
     const bindHeader = (headerPanel) => {
         if (!headerPanel || !isAlive(headerPanel)) return;
+        let centerHost = headerPanel.FindChildTraverse("SettingsHeaderCenterHost");
+        if (!centerHost) {
+            centerHost = createPanel("Panel", headerPanel, "SettingsHeaderCenterHost");
+            const closeBtn = headerPanel.FindChildTraverse("CloseBtn");
+            if (closeBtn && headerPanel.MoveChildBefore) {
+                try { headerPanel.MoveChildBefore(centerHost, closeBtn); } catch (_) {}
+            }
+        }
+        const parent = centerHost || headerPanel;
+        const existingWrap = parent.FindChildTraverse("SettingsSearchWrap");
+        if (existingWrap && isAlive(existingWrap)) {
+            _searchWrap = existingWrap;
+            _searchInput = existingWrap.FindChildTraverse("SettingsSearchInput");
+            _searchClear = existingWrap.FindChildTraverse("SettingsSearchClear");
+            return;
+        }
+
         if (_searchWrap && isAlive(_searchWrap)) return; // already bound
 
-        _searchWrap = createPanel("Panel", headerPanel, "SettingsSearchWrap");
+        _searchWrap = createPanel("Panel", parent, "SettingsSearchWrap");
         if (!_searchWrap) return;
         _searchWrap.AddClass("SettingsSearchWrap");
 
@@ -659,32 +665,52 @@
         return rendered === true;
     };
 
+    const resolveWindowOrRoot = (panel) => {
+        if (panel && panel.id === "SettingsWindow") return panel;
+        if (panel && panel.FindChildTraverse && panel.FindChildTraverse("SettingsSearchInput")) return panel;
+        const shell = Q.ui?.window?.findShell?.();
+        if (shell && isAlive(shell)) return shell;
+        let root = panel || (typeof $.GetContextPanel === "function" ? $.GetContextPanel() : null);
+        while (root && root.GetParent && isAlive(root.GetParent())) {
+            root = root.GetParent();
+        }
+        return (root?.FindChildTraverse ? root.FindChildTraverse("SettingsWindow") : null) || root;
+    };
+
     const updateSettingsSearchUiState = (rootPanel) => {
-        const root = rootPanel || (typeof $.GetContextPanel === "function" ? $.GetContextPanel() : null);
+        const root = resolveWindowOrRoot(rootPanel);
         if (!root || !root.FindChildTraverse) return;
         const searchWrap = root.FindChildTraverse("SettingsSearchWrap");
         const searchInput = root.FindChildTraverse("SettingsSearchInput");
         let hasText = false;
-        if (searchInput && searchInput.IsValid && searchInput.IsValid()) {
+        if (searchInput && isAlive(searchInput)) {
             hasText = String(searchInput.text || "").length > 0;
         }
-        if (searchWrap && searchWrap.IsValid && searchWrap.IsValid()) {
+        if (searchWrap && isAlive(searchWrap)) {
             searchWrap.SetHasClass("HasSearchText", hasText);
         }
     };
 
     const clearSettingsSearchQuery = (rootPanel) => {
+        _currentQuery = "";
+        _searching = false;
         if (typeof currentSearchQuery !== "undefined") currentSearchQuery = "";
         globalThis.currentSearchQuery = "";
-        const root = rootPanel || (typeof $.GetContextPanel === "function" ? $.GetContextPanel() : null);
+        cancelSettingsSearchRender();
+
+        const root = resolveWindowOrRoot(rootPanel);
         const searchInput = root ? root.FindChildTraverse("SettingsSearchInput") : null;
-        if (searchInput && searchInput.IsValid && searchInput.IsValid()) {
-            if ((searchInput.text || "") !== "") {
-                searchInput.text = "";
-            }
-            if (searchInput.ClearSelection) {
-                searchInput.ClearSelection();
-            }
+        if (searchInput && isAlive(searchInput)) {
+            _suppressChange = true;
+            try {
+                if ((searchInput.text || "") !== "") {
+                    searchInput.text = "";
+                }
+                if (searchInput.ClearSelection) {
+                    searchInput.ClearSelection();
+                }
+            } catch (_) {}
+            _suppressChange = false;
         }
         updateSettingsSearchUiState(root);
     };

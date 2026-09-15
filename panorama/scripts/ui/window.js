@@ -168,10 +168,6 @@
             });
         }
 
-        if (_header && Q.ui?.search?.bindHeader) {
-            Q.ui.search.bindHeader(_header);
-        }
-
         return _window;
     };
 
@@ -957,18 +953,54 @@
 
     const setActiveTabAndRefresh = (tabName) => {
         const curTab = (typeof globalThis.currentTab !== "undefined") ? globalThis.currentTab : _activeTab;
-        if (!tabName || curTab === tabName) return;
+        const activeQuery = (typeof currentSearchQuery !== "undefined")
+            ? currentSearchQuery
+            : (typeof globalThis.currentSearchQuery !== "undefined" ? globalThis.currentSearchQuery : "");
+        const isSearchActive = (typeof IsSettingsSearchActiveQuery === "function")
+            ? IsSettingsSearchActiveQuery()
+            : (Q.ui?.search?.isSettingsSearchActiveQuery
+                ? Q.ui.search.isSettingsSearchActiveQuery()
+                : (String(activeQuery || "").trim().length > 0));
+
+        if (!tabName) return;
+        if (curTab === tabName && !isSearchActive) return;
 
         let root = null;
         try { root = (typeof $.GetContextPanel === "function") ? $.GetContextPanel() : null; } catch (_) {}
-        const tabBar = (root && root.FindChildTraverse ? root.FindChildTraverse("SettingsTabBar") : null) || _tabBar;
-        const list = (root && root.FindChildTraverse ? root.FindChildTraverse("SettingsList") : null) || _contentList;
+        const win = findShell() || root;
+        const tabBar = (win && win.FindChildTraverse ? win.FindChildTraverse("SettingsTabBar") : null) || _tabBar;
+        const list = (win && win.FindChildTraverse ? win.FindChildTraverse("SettingsList") : null) || _contentList;
 
-        closeOpenSettingsDropdowns(root);
+        closeOpenSettingsDropdowns(win);
+
+        if (typeof currentSearchQuery !== "undefined") currentSearchQuery = "";
+        globalThis.currentSearchQuery = "";
         if (typeof ClearSettingsSearchQuery === "function") {
-            ClearSettingsSearchQuery(root);
+            ClearSettingsSearchQuery(win);
         } else if (Q.ui?.search?.clearSettingsSearchQuery) {
-            Q.ui.search.clearSettingsSearchQuery(root);
+            Q.ui.search.clearSettingsSearchQuery(win);
+        }
+
+        const searchInput = win ? win.FindChildTraverse("SettingsSearchInput") : null;
+        if (searchInput && isAlive(searchInput)) {
+            try {
+                if ((searchInput.text || "") !== "") searchInput.text = "";
+                if (searchInput.ClearSelection) searchInput.ClearSelection();
+            } catch (_) {}
+        }
+        const searchWrap = win ? win.FindChildTraverse("SettingsSearchWrap") : null;
+        if (searchWrap && isAlive(searchWrap)) {
+            try { searchWrap.SetHasClass("HasSearchText", false); } catch (_) {}
+        }
+
+        if (typeof CancelSettingsSearchRender === "function") {
+            CancelSettingsSearchRender();
+        } else if (Q.ui?.search?.cancelSettingsSearchRender) {
+            Q.ui.search.cancelSettingsSearchRender();
+        }
+        _settingsListSearchModeActive = false;
+        if (typeof globalThis.gSettingsListSearchModeActive !== "undefined") {
+            globalThis.gSettingsListSearchModeActive = false;
         }
 
         if (
@@ -1444,120 +1476,6 @@
             try { tabBar.MoveChildBefore(tabSpacerMain, tabFooter); } catch (_) {}
         }
 
-        const headerHost = win.FindChildTraverse("SettingsHeader");
-        let searchWrapExisting = headerHost ? headerHost.FindChildTraverse("SettingsSearchWrap") : null;
-        if (!searchWrapExisting) {
-            const searchWrapAny = (tabHost.FindChildTraverse ? tabHost.FindChildTraverse("SettingsSearchWrap") : null) ||
-                (contentHost.FindChildTraverse ? contentHost.FindChildTraverse("SettingsSearchWrap") : null);
-            if (searchWrapAny) {
-                searchWrapExisting = searchWrapAny;
-                if (headerHost) searchWrapExisting.SetParent(headerHost);
-            } else if (headerHost) {
-                searchWrapExisting = createPanel("Panel", headerHost, "SettingsSearchWrap");
-            }
-        } else if (searchWrapExisting.GetParent && headerHost && searchWrapExisting.GetParent() !== headerHost) {
-            searchWrapExisting.SetParent(headerHost);
-        }
-
-        if (searchWrapExisting) {
-            searchWrapExisting.AddClass("SettingsHeaderSearchWrap");
-            searchWrapExisting.hittest = true;
-            searchWrapExisting.hittestchildren = true;
-            searchWrapExisting.style.zIndex = "4";
-
-            let searchIconExisting = searchWrapExisting.FindChildTraverse("SettingsNavigationSearchIcon");
-            if (!searchIconExisting) {
-                searchIconExisting = createPanel("Image", searchWrapExisting, "SettingsNavigationSearchIcon", {
-                    src: "s2r://panorama/images/control_icons/24px/search.vsvg",
-                    defaultsrc: "",
-                    scaling: "contain"
-                });
-            }
-
-            let searchInputExisting = searchWrapExisting.FindChildTraverse("SettingsSearchInput");
-            if (!searchInputExisting) {
-                searchInputExisting = createPanel("TextEntry", searchWrapExisting, "SettingsSearchInput");
-            }
-
-            const syncSearchQueryState = () => {
-                const query = searchInputExisting.text || "";
-                if (typeof globalThis.currentSearchQuery !== "undefined") {
-                    globalThis.currentSearchQuery = query;
-                }
-                if (typeof UpdateSettingsSearchUiState === "function") {
-                    UpdateSettingsSearchUiState(ctx);
-                } else if (Q.ui?.search?.updateSettingsSearchUiState) {
-                    Q.ui.search.updateSettingsSearchUiState(ctx);
-                }
-            };
-
-            if (searchInputExisting) {
-                searchInputExisting.SetPanelEvent("ontextentrychange", () => {
-                    syncSearchQueryState();
-                    if (typeof ScheduleSettingsSearchRender === "function") {
-                        ScheduleSettingsSearchRender();
-                    } else if (Q.ui?.search?.scheduleSettingsSearchRender) {
-                        Q.ui.search.scheduleSettingsSearchRender();
-                    }
-                });
-                searchInputExisting.SetPanelEvent("oninputsubmit", () => {
-                    syncSearchQueryState();
-                    if (typeof FlushSettingsSearchRender === "function") {
-                        FlushSettingsSearchRender();
-                    } else if (Q.ui?.search?.flushSettingsSearchRender) {
-                        Q.ui.search.flushSettingsSearchRender();
-                    }
-                });
-            }
-
-            let searchClearExisting = searchWrapExisting.FindChildTraverse("SettingsSearchClear");
-            if (!searchClearExisting) {
-                searchClearExisting = createPanel("Button", searchWrapExisting, "SettingsSearchClear");
-                if (searchClearExisting) {
-                    const searchClearLabel = createPanel("Label", searchClearExisting, "");
-                    if (searchClearLabel) searchClearLabel.text = "X";
-                }
-            }
-            if (searchClearExisting) {
-                searchClearExisting.hittest = true;
-                searchClearExisting.hittestchildren = true;
-                let searchClearLabelExisting = null;
-                try {
-                    const clearChildren = searchClearExisting.Children ? searchClearExisting.Children() : [];
-                    if (clearChildren && clearChildren.length > 0) searchClearLabelExisting = clearChildren[0];
-                } catch (_) {}
-                if (!searchClearLabelExisting) {
-                    searchClearLabelExisting = createPanel("Label", searchClearExisting, "");
-                    if (searchClearLabelExisting) searchClearLabelExisting.text = "X";
-                }
-                if (searchClearLabelExisting) {
-                    searchClearLabelExisting.hittest = false;
-                    searchClearLabelExisting.hittestchildren = false;
-                }
-                searchClearExisting.SetPanelEvent("onactivate", () => {
-                    if (typeof ClearSettingsSearchQuery === "function") {
-                        ClearSettingsSearchQuery(ctx);
-                    } else if (Q.ui?.search?.clearSettingsSearchQuery) {
-                        Q.ui.search.clearSettingsSearchQuery(ctx);
-                    }
-                    if (typeof CancelSettingsSearchRender === "function") {
-                        CancelSettingsSearchRender();
-                    } else if (Q.ui?.search?.cancelSettingsSearchRender) {
-                        Q.ui.search.cancelSettingsSearchRender();
-                    }
-                    const liveList = (typeof GetSettingsListPanel === "function") ? GetSettingsListPanel() : list;
-                    if (liveList) updateListContent(liveList, true);
-                });
-                const curQuery = (typeof globalThis.currentSearchQuery !== "undefined") ? globalThis.currentSearchQuery : "";
-                if (searchInputExisting && (searchInputExisting.text || "") !== curQuery) {
-                    searchInputExisting.text = curQuery;
-                }
-                if (typeof UpdateSettingsSearchUiState === "function") {
-                    UpdateSettingsSearchUiState(ctx);
-                }
-            }
-        }
-
         const staleSubHeader = contentHost ? contentHost.FindChildTraverse("SettingsSubHeaderBar") : null;
         if (staleSubHeader) staleSubHeader.DeleteAsync(0);
         const staleSubHeaderActions = tabHost.FindChildTraverse("SettingsSubHeaderActions");
@@ -1572,12 +1490,6 @@
         if (expBtnRailExisting) expBtnRailExisting.DeleteAsync(0);
 
         syncTabActiveStates(tabBar);
-        updateListContent(list, true);
-        if (typeof UpdatePresetHighlightPollingState === "function") {
-            UpdatePresetHighlightPollingState();
-        } else if (typeof globalThis.UpdatePresetHighlightPollingState === "function") {
-            globalThis.UpdatePresetHighlightPollingState();
-        }
 
         const header = win.FindChildTraverse("SettingsHeader");
         if (header) {
@@ -1662,33 +1574,160 @@
                 Q.ui.theme.applyHeaderLogoTheme(theme);
             }
 
+            let headerCenterHost = header.FindChildTraverse("SettingsHeaderCenterHost");
+            if (!headerCenterHost) {
+                headerCenterHost = createPanel("Panel", header, "SettingsHeaderCenterHost");
+            }
+            if (headerCenterHost) {
+                headerCenterHost.style.zIndex = "4";
+            }
+
             const closeBtnHeader = header.FindChildTraverse("CloseBtn");
             if (closeBtnHeader) {
                 const headerDiscordBtn = header.FindChildTraverse("HeaderDiscordLinkButton");
                 if (headerDiscordBtn) headerDiscordBtn.DeleteAsync(0);
 
-                let headerCenterHost = header.FindChildTraverse("SettingsHeaderCenterHost");
-                if (!headerCenterHost) {
-                    headerCenterHost = createPanel("Panel", header, "SettingsHeaderCenterHost");
-                }
-                if (headerCenterHost) {
-                    headerCenterHost.style.zIndex = "4";
-                    if (header.MoveChildBefore) {
-                        try { header.MoveChildBefore(headerCenterHost, closeBtnHeader); } catch (_) {}
-                        if (headerVer) {
-                            try { header.MoveChildBefore(headerVer, headerCenterHost); } catch (_) {}
-                        }
-                    }
-                    if (searchWrapExisting && searchWrapExisting.GetParent && searchWrapExisting.GetParent() !== headerCenterHost) {
-                        try { searchWrapExisting.SetParent(headerCenterHost); } catch (_) {}
-                    }
-                }
                 closeBtnHeader.style.horizontalAlign = "right";
                 closeBtnHeader.style.verticalAlign = "center";
                 closeBtnHeader.SetPanelEvent("onactivate", () => {
                     forceCloseModSettings();
                 });
             }
+
+            // Ensure header children ordering:
+            // [Logo] [Accent] [Title] [by moglock.gg] [CenterHost] [CloseBtn]
+            if (header.MoveChildBefore) {
+                if (headerVer && headerCenterHost) {
+                    try { header.MoveChildBefore(headerVer, headerCenterHost); } catch (_) {}
+                }
+                if (headerCenterHost && closeBtnHeader) {
+                    try { header.MoveChildBefore(headerCenterHost, closeBtnHeader); } catch (_) {}
+                }
+            }
+
+            // Clean up any stale search wrap not parented to headerCenterHost
+            const staleWraps = [
+                header.FindChildTraverse("SettingsSearchWrap"),
+                tabHost ? tabHost.FindChildTraverse("SettingsSearchWrap") : null,
+                contentHost ? contentHost.FindChildTraverse("SettingsSearchWrap") : null
+            ];
+            for (const sw of staleWraps) {
+                if (sw && sw.GetParent && sw.GetParent() !== headerCenterHost) {
+                    try { sw.DeleteAsync(0); } catch (_) {}
+                }
+            }
+
+            // Create / configure SettingsSearchWrap inside headerCenterHost
+            let searchWrapExisting = headerCenterHost ? headerCenterHost.FindChildTraverse("SettingsSearchWrap") : null;
+            if (!searchWrapExisting && headerCenterHost) {
+                searchWrapExisting = createPanel("Panel", headerCenterHost, "SettingsSearchWrap");
+            }
+            if (searchWrapExisting) {
+                searchWrapExisting.AddClass("SettingsHeaderSearchWrap");
+                searchWrapExisting.hittest = true;
+                searchWrapExisting.hittestchildren = true;
+                searchWrapExisting.style.zIndex = "4";
+
+                let searchIconExisting = searchWrapExisting.FindChildTraverse("SettingsNavigationSearchIcon");
+                if (!searchIconExisting) {
+                    searchIconExisting = createPanel("Image", searchWrapExisting, "SettingsNavigationSearchIcon", {
+                        src: "s2r://panorama/images/control_icons/24px/search.vsvg",
+                        defaultsrc: "",
+                        scaling: "contain"
+                    });
+                }
+
+                let searchInputExisting = searchWrapExisting.FindChildTraverse("SettingsSearchInput");
+                if (!searchInputExisting) {
+                    searchInputExisting = createPanel("TextEntry", searchWrapExisting, "SettingsSearchInput");
+                }
+
+                const syncSearchQueryState = () => {
+                    const query = searchInputExisting.text || "";
+                    if (typeof currentSearchQuery !== "undefined") {
+                        currentSearchQuery = query;
+                    }
+                    globalThis.currentSearchQuery = query;
+                    if (typeof UpdateSettingsSearchUiState === "function") {
+                        UpdateSettingsSearchUiState(win);
+                    } else if (Q.ui?.search?.updateSettingsSearchUiState) {
+                        Q.ui.search.updateSettingsSearchUiState(win);
+                    }
+                };
+
+                if (searchInputExisting) {
+                    searchInputExisting.SetPanelEvent("ontextentrychange", () => {
+                        syncSearchQueryState();
+                        if (typeof ScheduleSettingsSearchRender === "function") {
+                            ScheduleSettingsSearchRender();
+                        } else if (Q.ui?.search?.scheduleSettingsSearchRender) {
+                            Q.ui.search.scheduleSettingsSearchRender();
+                        }
+                    });
+                    searchInputExisting.SetPanelEvent("oninputsubmit", () => {
+                        syncSearchQueryState();
+                        if (typeof FlushSettingsSearchRender === "function") {
+                            FlushSettingsSearchRender();
+                        } else if (Q.ui?.search?.flushSettingsSearchRender) {
+                            Q.ui.search.flushSettingsSearchRender();
+                        }
+                    });
+                }
+
+                let searchClearExisting = searchWrapExisting.FindChildTraverse("SettingsSearchClear");
+                if (!searchClearExisting) {
+                    searchClearExisting = createPanel("Button", searchWrapExisting, "SettingsSearchClear");
+                    if (searchClearExisting) {
+                        const searchClearLabel = createPanel("Label", searchClearExisting, "");
+                        if (searchClearLabel) searchClearLabel.text = "X";
+                    }
+                }
+                if (searchClearExisting) {
+                    searchClearExisting.hittest = true;
+                    searchClearExisting.hittestchildren = true;
+                    let searchClearLabelExisting = null;
+                    try {
+                        const clearChildren = searchClearExisting.Children ? searchClearExisting.Children() : [];
+                        if (clearChildren && clearChildren.length > 0) searchClearLabelExisting = clearChildren[0];
+                    } catch (_) {}
+                    if (!searchClearLabelExisting) {
+                        searchClearLabelExisting = createPanel("Label", searchClearExisting, "");
+                        if (searchClearLabelExisting) searchClearLabelExisting.text = "X";
+                    }
+                    if (searchClearLabelExisting) {
+                        searchClearLabelExisting.hittest = false;
+                        searchClearLabelExisting.hittestchildren = false;
+                    }
+                    searchClearExisting.SetPanelEvent("onactivate", () => {
+                        if (typeof ClearSettingsSearchQuery === "function") {
+                            ClearSettingsSearchQuery(win);
+                        } else if (Q.ui?.search?.clearSettingsSearchQuery) {
+                            Q.ui.search.clearSettingsSearchQuery(win);
+                        }
+                        if (typeof CancelSettingsSearchRender === "function") {
+                            CancelSettingsSearchRender();
+                        } else if (Q.ui?.search?.cancelSettingsSearchRender) {
+                            Q.ui.search.cancelSettingsSearchRender();
+                        }
+                        const liveList = (typeof GetSettingsListPanel === "function") ? GetSettingsListPanel() : list;
+                        if (liveList) updateListContent(liveList, true);
+                    });
+                    const curQuery = (typeof globalThis.currentSearchQuery !== "undefined") ? globalThis.currentSearchQuery : "";
+                    if (searchInputExisting && (searchInputExisting.text || "") !== curQuery) {
+                        searchInputExisting.text = curQuery;
+                    }
+                    if (typeof UpdateSettingsSearchUiState === "function") {
+                        UpdateSettingsSearchUiState(win);
+                    }
+                }
+            }
+        }
+
+        updateListContent(list, true);
+        if (typeof UpdatePresetHighlightPollingState === "function") {
+            UpdatePresetHighlightPollingState();
+        } else if (typeof globalThis.UpdatePresetHighlightPollingState === "function") {
+            globalThis.UpdatePresetHighlightPollingState();
         }
 
         const footer = win.FindChildTraverse("SettingsFooter");

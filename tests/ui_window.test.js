@@ -96,6 +96,7 @@ function createTestEnvironment() {
     vm.runInNewContext(windowCode, sandbox);
 
     return {
+        sandbox,
         doc,
         emRoot,
         win,
@@ -342,6 +343,55 @@ test("window: buildUI initializes navigation structure and attaches events", () 
     assert.ok(tabBar, "SettingsTabBar should be created by buildUI");
     const searchWrap = win.FindChildTraverse("SettingsSearchWrap");
     assert.ok(searchWrap, "SettingsSearchWrap should be created in header by buildUI");
+
+    const headerCenterHost = win.FindChildTraverse("SettingsHeaderCenterHost");
+    assert.ok(headerCenterHost, "SettingsHeaderCenterHost must exist");
+    assert.strictEqual(searchWrap.GetParent(), headerCenterHost, "SettingsSearchWrap must be child of SettingsHeaderCenterHost");
+
+    const header = win.FindChildTraverse("SettingsHeader");
+    const closeBtn = header.FindChildTraverse("CloseBtn");
+    assert.ok(closeBtn, "CloseBtn must exist");
+
+    const headerChildren = header.Children();
+    const centerIdx = headerChildren.indexOf(headerCenterHost);
+    const closeIdx = headerChildren.indexOf(closeBtn);
+    assert.ok(centerIdx >= 0 && closeIdx >= 0, "Both CenterHost and CloseBtn must be in header");
+    assert.ok(centerIdx < closeIdx, "SettingsHeaderCenterHost must precede CloseBtn in header child order");
+});
+
+test("window: setActiveTabAndRefresh clears search query and cancels pending search timer", async () => {
+    const { windowApi, win, sandbox } = createTestEnvironment();
+    windowApi.buildUI();
+
+    const searchInput = win.FindChildTraverse("SettingsSearchInput");
+    assert.ok(searchInput, "SettingsSearchInput must exist");
+    searchInput.text = "d";
+    sandbox.currentSearchQuery = "d";
+
+    windowApi.setActiveTabAndRefresh("Console");
+    assert.strictEqual(sandbox.currentSearchQuery, "", "currentSearchQuery must be cleared on tab navigation");
+    assert.strictEqual(searchInput.text, "", "searchInput text must be cleared on tab navigation");
+
+    await new Promise((resolve) => setTimeout(resolve, 250));
+    assert.strictEqual(windowApi.getActiveTab(), "Console", "Active tab must be Console after fade");
+});
+
+test("window: setActiveTabAndRefresh with same active tab exits search mode if search was active", () => {
+    const { windowApi, win, sandbox } = createTestEnvironment();
+    windowApi.buildUI();
+
+    windowApi.setActiveTab("Presets");
+    assert.strictEqual(windowApi.getActiveTab(), "Presets");
+
+    const searchInput = win.FindChildTraverse("SettingsSearchInput");
+    searchInput.text = "d";
+    sandbox.currentSearchQuery = "d";
+
+    // Re-clicking "Presets" while search is active must exit search and restore Presets tab
+    windowApi.setActiveTabAndRefresh("Presets");
+    assert.strictEqual(sandbox.currentSearchQuery, "", "Search query must be reset even when clicking same tab");
+    assert.strictEqual(searchInput.text, "", "Search input text must be cleared");
+    assert.strictEqual(windowApi.getActiveTab(), "Presets");
 });
 
 
