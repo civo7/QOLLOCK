@@ -109,9 +109,8 @@
                 var op = opNum.toFixed(2);
                 var sc = scNum.toFixed(2);
 
-                // When user explicitly disabled TopBar, hide it with qol-hidden.
-                // Otherwise never add qol-hidden (Valve's CSS manages normal match/hideout/replay visibility).
-                if (topBar.SetHasClass) topBar.SetHasClass("qol-hidden", !enabled);
+                // Valve's CSS manages normal match/hideout/replay visibility — QOLLOCK never collapses TopBar.
+                if (topBar.SetHasClass) topBar.SetHasClass("qol-hidden", false);
 
                 var sig = ox + "|" + oy + "|" + op + "|" + sc + "|" + (enabled ? "1" : "0") + "|" + (hudVisible ? "1" : "0") + "|" + (active ? "1" : "0");
                 if (_lastSig === sig) return;

@@ -30,11 +30,20 @@
             var _loop = null;
             var PANEL_ID = "gold_and_ap_container";
 
+            function _clearStyle(p, prop) {
+                if (!p || !p.style || !prop) return;
+                try { delete p.style[prop]; } catch (e0) {}
+                try { p.style[prop] = null; } catch (e1) {}
+                try { p.style[prop] = ""; } catch (e2) {}
+            }
+
             function _hasNonDefault(cfg) {
-                return Number(cfg.HUD_SOULS_ENABLED) !== 1 ||
-                    Number(cfg.SOULS_OPACITY) !== 1.0 ||
-                    Number(cfg.SOULS_X_OFFSET) !== 0 ||
-                    Number(cfg.SOULS_Y_OFFSET) !== 0;
+                if (!cfg) return false;
+                var enabled = (cfg.HUD_SOULS_ENABLED === undefined || cfg.HUD_SOULS_ENABLED === true || Number(cfg.HUD_SOULS_ENABLED) === 1);
+                return !enabled ||
+                    Number(cfg.SOULS_OPACITY !== undefined ? cfg.SOULS_OPACITY : 1.0) !== 1.0 ||
+                    Number(cfg.SOULS_X_OFFSET || 0) !== 0 ||
+                    Number(cfg.SOULS_Y_OFFSET || 0) !== 0;
             }
 
             function _apply(cfg) {
@@ -43,26 +52,28 @@
                 if (!panel) return;
 
                 var active = _hasNonDefault(cfg);
-                var enabled = Number(cfg.HUD_SOULS_ENABLED) === 1;
-                var offsetX = active ? (Math.round(Number(cfg.SOULS_X_OFFSET)) || 0) : 0;
-                var offsetY = active ? (Math.round(Number(cfg.SOULS_Y_OFFSET)) || 0) : 0;
-                var rawOp = Number(cfg.SOULS_OPACITY);
-                var opacityText = active ? (isFinite(rawOp) ? rawOp : 1.0).toFixed(2) : "1.00";
-                var sig = offsetX + "|" + offsetY + "|" + opacityText + "|" + (enabled ? "1" : "0");
+                var enabled = (cfg.HUD_SOULS_ENABLED === undefined || cfg.HUD_SOULS_ENABLED === true || Number(cfg.HUD_SOULS_ENABLED) === 1);
+                var offsetX = Math.round(Number(active ? cfg.SOULS_X_OFFSET : 0)) || 0;
+                var offsetY = Math.round(Number(active ? cfg.SOULS_Y_OFFSET : 0)) || 0;
+                var opNum = active ? Number(cfg.SOULS_OPACITY !== undefined ? cfg.SOULS_OPACITY : 1.0) : 1.0;
+                if (!isFinite(opNum)) opNum = 1.0;
+                var opacityText = opNum.toFixed(2);
+                var sig = offsetX + "|" + offsetY + "|" + opacityText + "|" + (enabled ? "1" : "0") + "|" + (active ? "1" : "0");
                 if (_lastSig === sig) return;
                 _lastSig = sig;
 
-                try { panel.style.x = offsetX + "px"; } catch(e) {}
-                try { panel.style.y = (-offsetY) + "px"; } catch(e) {}
-                if (panel.SetHasClass) { panel.SetHasClass("qol-hidden", !enabled); }
-                else { try { panel.style.visibility = enabled ? "visible" : "collapse"; } catch(e) {} }
-                try {
-                    if (typeof Utils !== "undefined" && Utils.SetPanelOpacitySafe) {
-                        Utils.SetPanelOpacitySafe(panel, opacityText, 1.0);
-                    } else {
-                        panel.style.opacity = opacityText;
-                    }
-                } catch(e) {}
+                // Valve's CSS manages normal match/hideout/replay visibility — QOLLOCK never collapses souls.
+                if (panel.SetHasClass) { panel.SetHasClass("qol-hidden", false); }
+
+                if (active && enabled) {
+                    if (offsetX !== 0) panel.style.x = offsetX + "px"; else _clearStyle(panel, "x");
+                    if (offsetY !== 0) panel.style.y = (-offsetY) + "px"; else _clearStyle(panel, "y");
+                    if (Math.abs(opNum - 1.0) > 0.0001) panel.style.opacity = opacityText; else _clearStyle(panel, "opacity");
+                } else {
+                    _clearStyle(panel, "x");
+                    _clearStyle(panel, "y");
+                    _clearStyle(panel, "opacity");
+                }
             }
 
             function _tick() {
@@ -86,9 +97,11 @@
                     _lastSig = "";
                     try {
                         var p = $.GetContextPanel().FindChildTraverse(PANEL_ID);
-                        if (p && p.style) {
-                            p.style.x = "0px"; p.style.y = "0px"; p.style.opacity = "1.00";
+                        if (p) {
                             if (p.SetHasClass) p.SetHasClass("qol-hidden", false);
+                            _clearStyle(p, "x");
+                            _clearStyle(p, "y");
+                            _clearStyle(p, "opacity");
                         }
                     } catch(e) {}
                 },

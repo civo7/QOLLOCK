@@ -298,9 +298,12 @@
                 forceSync = true;
                 if (Logger) Logger.logInfo("App", `diag force-sync requested, token=${String(forceToken).substring(0, 16)}`);
 
-                if (forceToken.startsWith("mt_") || forceToken.startsWith("fs_")) {
+                if (forceToken.startsWith("mt_") || forceToken.startsWith("fs_") || forceToken.startsWith("audit_")) {
                     if (QOL?.core?.ManifestTests) {
                         try {
+                            if (forceToken.startsWith("audit_") && typeof QOL.core.ManifestTests.runEngineAudit === "function") {
+                                QOL.core.ManifestTests.runEngineAudit();
+                            }
                             QOL.core.ManifestTests.runAll({
                                 token: forceToken,
                                 onComplete: () => {

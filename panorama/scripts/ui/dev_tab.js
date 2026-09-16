@@ -501,6 +501,106 @@
     }
 
     // =========================================================================
+    // In-Game Engine Audit Runner (Spews directly to console ~)
+    // =========================================================================
+
+    let auditRunning = false;
+    let auditToken = 0;
+
+    function runInGameEngineAudit(container, statusLabel, actionBtn) {
+        const setStatus = (text, color) => {
+            if (isAlive(statusLabel)) {
+                statusLabel.text = text;
+                statusLabel.style.color = color;
+            }
+        };
+
+        const setBtnActive = (active) => {
+            if (isAlive(actionBtn)) {
+                actionBtn.SetHasClass("CycleActive", Boolean(active));
+            }
+        };
+
+        if (auditRunning) return;
+        const token = ++auditToken;
+        auditRunning = true;
+        setBtnActive(true);
+        setStatus("Auditing...", "#66cc99");
+
+        // 1. Run local audit if function exists
+        try {
+            if (typeof Q.runEngineAudit === "function") {
+                Q.runEngineAudit();
+            } else if (typeof globalThis.QOL_RUN_AUDIT === "function") {
+                globalThis.QOL_RUN_AUDIT();
+            }
+        } catch (auditErr) {
+            $.Msg(`[QOLLock][AUDIT] Local audit error: ${auditErr?.message || auditErr}`);
+        }
+
+        // 2. Trigger HUD-side audit via bridge token
+        const forceToken = `audit_${token}_${Date.now()}`;
+        const hudPanel = findHudPanel();
+        if (hudPanel && hudPanel.SetAttributeString) {
+            try { hudPanel.SetAttributeString("QOL_DiagRequest", forceToken); } catch {}
+        }
+
+        // 3. Poll for result and copy report
+        const pollStartMs = Date.now();
+        let pollAttempts = 0;
+
+        function pollAuditResults() {
+            pollAttempts++;
+            if (!auditRunning || token !== auditToken) return;
+
+            const elapsedMs = Date.now() - pollStartMs;
+            if (elapsedMs > 6000) {
+                setStatus("Audit Done (Check ~)", "#66cc99");
+                auditRunning = false;
+                setBtnActive(false);
+                return;
+            }
+
+            const hud = findHudPanel();
+            let rawDiag = "";
+            if (hud && hud.GetAttributeString) {
+                try { rawDiag = hud.GetAttributeString("QOL_Diag", ""); } catch {}
+            }
+            if (rawDiag) {
+                try {
+                    const diag = JSON.parse(rawDiag);
+                    if (diag.testResults && diag.testResults.token === forceToken) {
+                        const report = formatTestSuiteReport(diag);
+                        const hiddenEntry = $.CreatePanel("TextEntry", container, "AuditCopyTextEntry");
+                        hiddenEntry.text = report;
+                        hiddenEntry.multiline = true;
+                        hiddenEntry.maxchars = Math.max(report.length + 100, 1000);
+
+                        const tryCopy = Q.ui?.configTab?.tryCopyTextToClipboard || globalThis.TryCopyTextToClipboard;
+                        if (typeof tryCopy === "function") {
+                            tryCopy(report, hiddenEntry);
+                        }
+                        if (isAlive(hiddenEntry)) {
+                            try { hiddenEntry.DeleteAsync(0); } catch {}
+                        }
+
+                        const ts = diag.testResults.summary;
+                        setStatus(`Audit OK: ${ts.passed}/${ts.total} (Check ~)`, "#66cc99");
+                        auditRunning = false;
+                        setBtnActive(false);
+                        return;
+                    }
+                } catch {}
+            }
+
+            const interval = pollAttempts < 10 ? 0.1 : 0.3;
+            $.Schedule(interval, pollAuditResults);
+        }
+
+        $.Schedule(0.2, pollAuditResults);
+    }
+
+    // =========================================================================
     // Full Test Suite Runner & Clipboard Copy
     // =========================================================================
 
@@ -979,7 +1079,25 @@
             });
         }
 
-        // 6. Test Suite + Copy Report
+        // 6. In-Game Engine Audit (Direct output to console ~)
+        const auditHeader = createTitle(list, "In-Game Engine Audit");
+        const auditBtn = (typeof createIconButton === "function")
+            ? createIconButton(auditHeader, "EngineAuditBtn", "s2r://panorama/images/icons/icon_play.vsvg", "Run full in-game diagnostic audit. Outputs detailed pass/fail report to console (~) and clipboard.")
+            : null;
+        const auditStatus = $.CreatePanel("Label", auditHeader, "EngineAuditStatus");
+        auditStatus.text = "Idle";
+        auditStatus.style.fontSize = "13px";
+        auditStatus.style.color = "#666";
+        auditStatus.style.marginLeft = "6px";
+        auditStatus.style.verticalAlign = "center";
+
+        if (auditBtn) {
+            auditBtn.SetPanelEvent("onactivate", () => {
+                runInGameEngineAudit(list, auditStatus, auditBtn);
+            });
+        }
+
+        // 7. Test Suite + Copy Report
         const suiteHeader = createTitle(list, "Test Suite");
         const suiteBtn = (typeof createIconButton === "function")
             ? createIconButton(suiteHeader, "FullSuiteBtn", "s2r://panorama/images/icons/icon_copy.vsvg", "Run all tests and copy a compact report to clipboard.")
@@ -997,7 +1115,7 @@
             });
         }
 
-        // 7. Preset Cycle (Robust)
+        // 8. Preset Cycle (Robust)
         const presetCycleHeader = createTitle(list, "Preset Cycle");
         const presetCycleBtn = (typeof createIconButton === "function")
             ? createIconButton(presetCycleHeader, "PresetCycleBtn", "s2r://panorama/images/icons/icon_reorder.vsvg", "Apply every preset and verify no features auto-disable. Click again to stop.")
@@ -1015,7 +1133,7 @@
             });
         }
 
-        // 8. Diagnostics Dump
+        // 9. Diagnostics Dump
         const diagHeader = createTitle(list, "Diagnostics");
         const copyLogsBtn = (typeof createIconButton === "function")
             ? createIconButton(diagHeader, "DiagCopyLogsBtn", "s2r://panorama/images/icons/icon_copy.vsvg", "Copy QOLLock diagnostic logs to clipboard.")
@@ -1042,6 +1160,7 @@
         formatTestSuiteReport,
         runFeatureIsolationTest,
         runManifestTests,
+        runInGameEngineAudit,
         requestPanelTreeDump,
         requestBuildStorageDryRun,
         runFullTestSuite,

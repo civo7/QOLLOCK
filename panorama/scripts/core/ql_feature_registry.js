@@ -114,8 +114,11 @@
 
     const onConfigChanged = (payload) => {
         if (!payload || typeof payload.featureId !== "string") return;
-        if (payload.key === "enabled") {
-            payload.value ? safeEnableFeature(payload.featureId) : safeDisableFeature(payload.featureId);
+        const manifest = manifests[payload.featureId];
+        const isEnableKey = payload.key === "enabled" || (manifest && manifest.enableKey && payload.key === manifest.enableKey);
+        if (isEnableKey) {
+            const isTrue = payload.value === true || payload.value === 1 || String(payload.value) === "true";
+            isTrue ? safeEnableFeature(payload.featureId) : safeDisableFeature(payload.featureId);
             return;
         }
         if (!Object.prototype.hasOwnProperty.call(instances, payload.featureId) &&
@@ -176,8 +179,12 @@
             const manifest = manifests[id];
 
             let shouldEnable = manifest.enabledByDefault === true;
-            if (config && Object.prototype.hasOwnProperty.call(config, id) && Object.prototype.hasOwnProperty.call(config[id], "enabled")) {
-                shouldEnable = !!config[id].enabled;
+            if (config && Object.prototype.hasOwnProperty.call(config, id)) {
+                if (Object.prototype.hasOwnProperty.call(config[id], "enabled")) {
+                    shouldEnable = !!config[id].enabled;
+                } else if (manifest.enableKey && Object.prototype.hasOwnProperty.call(config[id], manifest.enableKey)) {
+                    shouldEnable = !!config[id][manifest.enableKey];
+                }
             }
 
             if (!shouldEnable) continue;

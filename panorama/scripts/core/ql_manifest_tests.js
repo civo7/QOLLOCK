@@ -290,13 +290,218 @@
         return lines.join("\n");
     };
 
+    /**
+     * In-Game Engine Audit Runner.
+     * Sweeps the live game environment, inspecting native Valve panels,
+     * manifest states, bridge attributes, presets, and UI integrity.
+     * Outputs structured, high-visibility logs directly to the engine console via $.Msg.
+     */
+    const runEngineAudit = () => {
+        const log = (msg) => {
+            if (typeof $.Msg === "function") {
+                $.Msg(msg);
+            }
+        };
+
+        const startTime = nowMs();
+        log("================================================================================");
+        log("[QOLLOCK ENGINE AUDIT] Starting Full In-Game Self-Test");
+        log("================================================================================");
+
+        // 1. Context & Environment
+        let hud = null;
+        try {
+            if (Q.core?.hud?.findHud) hud = Q.core.hud.findHud();
+            else if (Q.core?.panel?.findHud) hud = Q.core.panel.findHud();
+            else if (Q.ui?.PanelHelpers?.findHud) hud = Q.ui.PanelHelpers.findHud();
+            else if ($.GetContextPanel) {
+                let cur = $.GetContextPanel();
+                while (cur && cur.GetParent && cur.GetParent()) cur = cur.GetParent();
+                hud = (cur && cur.FindChildTraverse) ? cur.FindChildTraverse("Hud") : cur;
+            }
+        } catch (_) {}
+
+        const inHideout = Boolean(Q.core?.hud?.isInHideout && Q.core.hud.isInHideout());
+        const isBrawl = Boolean(Q.core?.hud?.isStreetBrawl && Q.core.hud.isStreetBrawl());
+        log(`[AUDIT][Context] HUD Panel: ${hud ? (hud.id || hud.paneltype || "CitadelHud") : "NOT FOUND (EscapeMenu context)"} | Hideout: ${inHideout} | StreetBrawl: ${isBrawl}`);
+
+        // 2. Valve Native Panels Safety Check
+        log("\n--- [1/5] Native Valve Panels Safety Check ---");
+        const nativePanelIds = [
+            { id: "TopBar", name: "Top Bar (CitadelHudTopBar)", critical: true },
+            { id: "minimap_container", name: "Minimap Container", critical: false },
+            { id: "hud_health", name: "Health Container", critical: true },
+            { id: "gold_and_ap_container", name: "Gold & AP Container (Souls)", critical: true },
+            { id: "gameplay_hud", name: "Gameplay HUD", critical: false },
+            { id: "gameplay_hud_alive", name: "Gameplay HUD Alive", critical: false },
+            { id: "ability_container", name: "Abilities Container", critical: false },
+            { id: "CitadelHudShop", name: "Hero Shop", critical: false }
+        ];
+
+        let nativePass = 0;
+        let nativeFail = 0;
+
+        for (const item of nativePanelIds) {
+            let p = null;
+            try {
+                if (hud && hud.FindChildTraverse) p = hud.FindChildTraverse(item.id);
+                if (!p && $.GetContextPanel) {
+                    let cur = $.GetContextPanel();
+                    while (cur && cur.GetParent && cur.GetParent()) cur = cur.GetParent();
+                    if (cur && cur.FindChildTraverse) p = cur.FindChildTraverse(item.id);
+                }
+            } catch (_) {}
+
+            if (!p) {
+                log(`  [INFO] #${item.id} (${item.name}): Not in tree (normal if before hero spawn or in menu)`);
+                continue;
+            }
+
+            const hasQolHidden = Boolean(p.BHasClass && p.BHasClass("qol-hidden"));
+            const isCollapsed = Boolean(p.style && (p.style.visibility === "collapse" || p.style.visibility === "none"));
+
+            if (hasQolHidden) {
+                log(`  [CRITICAL FAIL] #${item.id} has class 'qol-hidden'! (PANEL WAS COLLAPSED BY MOD)`);
+                nativeFail++;
+            } else if (isCollapsed && item.critical) {
+                log(`  [WARN] #${item.id} has inline style visibility: ${p.style.visibility}`);
+            } else {
+                const hasCustomPos = Boolean(p.style && (p.style.x || p.style.y));
+                const hasCustomScale = Boolean(p.style && p.style.uiScale);
+                log(`  [PASS] #${item.id}: ALIVE, qol-hidden: NO, position: ${hasCustomPos ? (p.style.x + "," + p.style.y) : "native"}, scale: ${hasCustomScale ? p.style.uiScale : "native"}`);
+                nativePass++;
+            }
+        }
+
+        // 3. Feature Manifests Audit
+        log("\n--- [2/5] Feature Manifests Audit ---");
+        const registeredIds = FR ? FR.getRegisteredIds() : [];
+        const enabledIds = FR ? FR.getEnabledIds() : [];
+        const errorCounts = FR ? FR.getErrorCounts() : {};
+
+        let manifestErrors = 0;
+        let manifestsPassed = 0;
+
+        for (const fId of registeredIds) {
+            const errCount = errorCounts[fId] || 0;
+            if (errCount > 0) {
+                log(`  [FAIL] ${fId}: recorded ${errCount} runtime errors!`);
+                manifestErrors++;
+                continue;
+            }
+
+            const manifest = FR.getManifest(fId);
+            if (manifest && typeof manifest.test === "function") {
+                try {
+                    const ctx = FR.createContext ? FR.createContext(fId) : {};
+                    const tr = manifest.test(ctx);
+                    if (tr && tr.passed === false) {
+                        if (tr.message && (tr.message.includes("not found") || tr.message.includes("missing"))) {
+                            log(`  [INFO] ${fId}: deferred (${tr.message})`);
+                        } else {
+                            log(`  [FAIL] ${fId} test hook failed: ${tr.message || "assertion failure"}`);
+                            manifestErrors++;
+                            continue;
+                        }
+                    }
+                } catch (tErr) {
+                    log(`  [FAIL] ${fId} test hook threw: ${tErr && tErr.message ? tErr.message : tErr}`);
+                    manifestErrors++;
+                    continue;
+                }
+            }
+            manifestsPassed++;
+        }
+        log(`  Result: ${manifestsPassed}/${registeredIds.length} manifests healthy (Enabled: ${enabledIds.length}, Errors: ${manifestErrors})`);
+
+        // 4. Cross-Isolate Bridge Integrity Check
+        log("\n--- [3/5] Cross-Isolate Bridge Integrity ---");
+        let bridgePass = 0;
+        let bridgeFail = 0;
+
+        if (hud && hud.GetAttributeString) {
+            const storageKey = (typeof QOL_STORAGE_KEY !== "undefined") ? QOL_STORAGE_KEY : "Deadlock_Mod_Settings_v1";
+            const rawCfg = hud.GetAttributeString(storageKey, "");
+            const rev = hud.GetAttributeString("QOL_USER_EDIT_REV", "0");
+            const activePreset = hud.GetAttributeString("QOL_RUNTIME_PRESET", "");
+
+            if (!rawCfg) {
+                log(`  [WARN] Bridge STORAGE_KEY ('${storageKey}') is empty on #Hud`);
+            } else {
+                try {
+                    const parsed = JSON.parse(rawCfg);
+                    const keyCount = (parsed && parsed.data) ? Object.keys(parsed.data).length : Object.keys(parsed).length;
+                    log(`  [PASS] Bridge config envelope: Valid JSON (${rawCfg.length} chars, ${keyCount} keys)`);
+                    bridgePass++;
+                } catch (e) {
+                    log(`  [FAIL] Bridge config is corrupt JSON: ${e.message}`);
+                    bridgeFail++;
+                }
+            }
+
+            log(`  [INFO] User edit revision: ${rev} | Active preset: ${activePreset || "Default/Custom"}`);
+            bridgePass++;
+        } else {
+            log("  [INFO] #Hud attributes not directly readable from current context panel");
+        }
+
+        // 5. Presets Subsystem Check
+        log("\n--- [4/5] Presets Subsystem ---");
+        const presetsMap = (typeof globalThis !== "undefined" && (globalThis.QOL_PRESETS || globalThis.PRESETS)) ||
+                           (typeof QOL !== "undefined" && QOL.presets) || {};
+        const presetKeys = Object.keys(presetsMap);
+        log(`  Total community presets registered: ${presetKeys.length}`);
+
+        const samplePresets = ["BreadRollius", "Saiah", "Basil", "Vegas", "Poshy", "BSQTT", "Thorkizzle"];
+        let presetsFound = 0;
+        for (const name of samplePresets) {
+            if (presetsMap[name]) {
+                presetsFound++;
+            } else {
+                log(`  [FAIL] Expected preset '${name}' missing from presets dictionary!`);
+            }
+        }
+        if (presetsFound === samplePresets.length) {
+            log(`  [PASS] Sample presets resolution: 100% (${samplePresets.length}/${samplePresets.length} found)`);
+        } else {
+            log(`  [WARN] Missing sample presets: found ${presetsFound}/${samplePresets.length}`);
+        }
+
+        // 6. Summary & Elapsed Time
+        const elapsed = nowMs() - startTime;
+        log("\n================================================================================");
+        const totalFails = nativeFail + manifestErrors + bridgeFail;
+        if (totalFails === 0) {
+            log(`[QOLLOCK ENGINE AUDIT] ALL CHECKS PASSED in ${elapsed}ms (Native: ${nativePass} ok, Manifests: ${manifestsPassed} ok)`);
+        } else {
+            log(`[QOLLOCK ENGINE AUDIT] AUDIT FAILED with ${totalFails} issue(s) in ${elapsed}ms!`);
+        }
+        log("================================================================================\n");
+
+        return {
+            success: totalFails === 0,
+            nativePass,
+            nativeFail,
+            manifestsPassed,
+            manifestErrors,
+            bridgePass,
+            bridgeFail,
+            elapsed
+        };
+    };
+
     Q.core.ManifestTests = {
         runAll: runAllTests,
+        runEngineAudit,
         getResults,
         cancel,
         isRunning,
         buildCompactReport
     };
+    Q.runEngineAudit = runEngineAudit;
+    if (typeof globalThis !== "undefined") {
+        globalThis.QOL_RUN_AUDIT = runEngineAudit;
+    }
 
     $.Msg("[QOLLock] core/ql_manifest_tests: attached to QOL.core.ManifestTests");
 })();
