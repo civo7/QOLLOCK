@@ -226,12 +226,8 @@
         const gameplayHud = (typeof QOL !== "undefined" && QOL.getCachedPanel)
             ? QOL.getCachedPanel("gameplayHud")
             : (root.FindChildTraverse ? root.FindChildTraverse(PANEL_ID_GAMEPLAY_HUD) : null);
-        const gameplayHudAlive = (typeof QOL !== "undefined" && QOL.getCachedPanel)
-            ? QOL.getCachedPanel("gameplayHudAlive")
-            : (root.FindChildTraverse ? root.FindChildTraverse("gameplay_hud_alive") : null);
 
         if (gameplayHud && !isPanelEffectivelyVisibleMaybe(gameplayHud, root)) return false;
-        if (gameplayHudAlive && !isPanelEffectivelyVisibleMaybe(gameplayHudAlive, root)) return false;
 
         return true;
     };

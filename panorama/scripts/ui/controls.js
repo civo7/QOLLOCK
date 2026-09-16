@@ -2573,7 +2573,7 @@
                 const btnLbl = $.CreatePanel("Label", btn, "");
                 btnLbl.text = opt.label;
                 btn.SetPanelEvent("onactivate", () => {
-                    const presetList = (typeof PRESETS !== "undefined") ? PRESETS : (typeof globalThis.PRESETS !== "undefined" ? globalThis.PRESETS : {});
+                    const presetList = (typeof PRESETS !== "undefined" && PRESETS) ? PRESETS : ((typeof globalThis !== "undefined" && (globalThis.QOL_PRESETS || globalThis.PRESETS)) ? (globalThis.QOL_PRESETS || globalThis.PRESETS) : {});
                     const presetData = opt.label === "Default" ? getDefaultConfig() : presetList[opt.label];
                     const applyPreset = globalThis.ApplyPresetConfig || (Q.ui && Q.ui.presets && Q.ui.presets.applyPresetConfig);
                     if (applyPreset && presetData && applyPreset(presetData)) {

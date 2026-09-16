@@ -18,8 +18,8 @@
         return;
     }
 
-    const BREAD_PRESET_NAME = "Bread";
-    const LEGACY_BREAD_PRESET_NAME = "BreadRollius";
+    const BREAD_PRESET_NAME = "BreadRollius";
+    const LEGACY_BREAD_PRESET_NAME = "Bread";
     const PRESET_MATCH_EXCLUDED_KEYS = new Set(["DRAG_ENABLED", "PREVIEWS_ENABLED", "ACTIVE_PRESET_NAME"]);
 
     let _presetButtonRegistry = new Map();
@@ -30,6 +30,13 @@
     const isAlive = (panel) => {
         if (Q.core?.panel?.isAlive) return Q.core.panel.isAlive(panel);
         return !!(panel && typeof panel.IsValid === "function" && panel.IsValid());
+    };
+
+    const getPresetsMap = () => {
+        if (typeof globalThis !== "undefined" && globalThis.QOL_PRESETS) return globalThis.QOL_PRESETS;
+        if (typeof globalThis !== "undefined" && globalThis.PRESETS) return globalThis.PRESETS;
+        if (typeof QOL !== "undefined" && QOL.presets) return QOL.presets;
+        return {};
     };
 
     const localize = (text) => {
@@ -99,10 +106,20 @@
             "_ZODUK_", "nkonin.me", "loony", "leah", "Thorkizzle"
         ];
 
-        const entries = names.map((name) => ({
-            label: name === "munchkinman" ? "munchkin" : (name === "ninjabladeJr" ? "ninjabladejr" : name),
-            preset: name,
-        }));
+        const entries = names.map((name) => {
+            let label = name;
+            let preset = name;
+            if (name === "munchkinman") label = "munchkin";
+            else if (name === "ninjabladeJr") label = "ninjabladejr";
+            else if (name === BREAD_PRESET_NAME || name === LEGACY_BREAD_PRESET_NAME) {
+                label = "Bread";
+                preset = "Bread";
+            }
+            return {
+                label,
+                preset,
+            };
+        });
 
         for (let i = entries.length; i < 90; i++) {
             entries.push({ label: "Available", available: false });
@@ -112,12 +129,20 @@
 
     const resolvePresetConfigByName = (presetName) => {
         if (!presetName) return null;
-        const normName = normalizeBreadPresetName(presetName);
-        const presets = globalThis.PRESETS || {};
+        let normName = normalizeBreadPresetName(presetName);
+        const presets = getPresetsMap();
         const defConfig = globalThis.DEFAULT_CONFIG || globalThis.QOL_DEFAULT_CONFIG || {};
 
         if (normName !== "Default" && !Object.prototype.hasOwnProperty.call(presets, normName)) {
-            return null;
+            if (Object.prototype.hasOwnProperty.call(presets, presetName)) {
+                normName = presetName;
+            } else if (normName === "Bread" && Object.prototype.hasOwnProperty.call(presets, "BreadRollius")) {
+                normName = "BreadRollius";
+            } else if (normName === "BreadRollius" && Object.prototype.hasOwnProperty.call(presets, "Bread")) {
+                normName = "Bread";
+            } else {
+                return null;
+            }
         }
 
         const resolved = Object.assign({}, defConfig);
@@ -180,9 +205,20 @@
     };
 
     const applyPresetByName = (presetName) => {
-        const normName = normalizeBreadPresetName(presetName);
-        const presets = globalThis.PRESETS || {};
+        let normName = normalizeBreadPresetName(presetName);
+        const presets = getPresetsMap();
         const defConfig = globalThis.DEFAULT_CONFIG || globalThis.QOL_DEFAULT_CONFIG || {};
+
+        if (normName !== "Default" && !Object.prototype.hasOwnProperty.call(presets, normName)) {
+            if (Object.prototype.hasOwnProperty.call(presets, presetName)) {
+                normName = presetName;
+            } else if (normName === "Bread" && Object.prototype.hasOwnProperty.call(presets, "BreadRollius")) {
+                normName = "BreadRollius";
+            } else if (normName === "BreadRollius" && Object.prototype.hasOwnProperty.call(presets, "Bread")) {
+                normName = "Bread";
+            }
+        }
+
         const presetData = normName === "Default" ? defConfig : presets[normName];
         const prevLang = typeof globalThis.GetSettingsLanguage === "function" ? globalThis.GetSettingsLanguage() : "english";
 

@@ -34,6 +34,8 @@ if (QOL.arcade && QOL.arcade.init) QOL.arcade.init({
 });
 
 const RUNTIME_PRESET_ATTR = "QOL_RUNTIME_PRESET";
+var STORAGE_KEY = (typeof STORAGE_KEY !== "undefined") ? STORAGE_KEY : ((typeof QOL_STORAGE_KEY !== "undefined") ? QOL_STORAGE_KEY : "Deadlock_Mod_Settings_v1");
+var USER_EDIT_REV_ATTR = (typeof USER_EDIT_REV_ATTR !== "undefined") ? USER_EDIT_REV_ATTR : ((typeof QOL_USER_EDIT_REV_ATTR !== "undefined") ? QOL_USER_EDIT_REV_ATTR : "QOL_USER_EDIT_REV");
 var LATEST_COMPACT_SEMVER = QOL_LATEST_COMPACT_SEMVER;
 var DEFAULT_CONFIG = QOL_DEFAULT_CONFIG;
 const SETTINGS_SAVE_LOADER_ENABLED = true;
@@ -280,8 +282,15 @@ function SaveAndSync() {
     if (!hud && root && (root.id === "Hud" || (root.paneltype && root.paneltype === "CitadelHud"))) {
         hud = root;
     }
-    if (!hud && typeof QOL !== "undefined" && QOL.core && QOL.core.PanelHelpers && typeof QOL.core.PanelHelpers.findHud === "function") {
-        try { hud = QOL.core.PanelHelpers.findHud(panel) || QOL.core.PanelHelpers.findHud(root); } catch(ePh) {}
+    if (!hud && typeof QOL !== "undefined") {
+        var findHudFn = (QOL.ui && QOL.ui.PanelHelpers && QOL.ui.PanelHelpers.findHud) ||
+                        (QOL.core && QOL.core.PanelHelpers && QOL.core.PanelHelpers.findHud) ||
+                        (QOL.core && QOL.core.panel && QOL.core.panel.findHud) ||
+                        (QOL.core && QOL.core.hud && QOL.core.hud.findHud) ||
+                        QOL.findHud;
+        if (typeof findHudFn === "function") {
+            try { hud = findHudFn(panel) || findHudFn(root) || findHudFn(); } catch(ePh) {}
+        }
     }
     NormalizeConfig(MOD_CONFIG, MOD_CONFIG);
     if (typeof globalThis.RefreshActivePresetConfigMarkerBeforeSave === "function") {

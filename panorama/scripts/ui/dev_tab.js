@@ -182,7 +182,7 @@
             }
         }
 
-        const presetsObj = (typeof PRESETS !== "undefined" && PRESETS) ? PRESETS : {};
+        const presetsObj = (typeof PRESETS !== "undefined" && PRESETS) ? PRESETS : ((typeof globalThis !== "undefined" && (globalThis.QOL_PRESETS || globalThis.PRESETS)) ? (globalThis.QOL_PRESETS || globalThis.PRESETS) : {});
         const presetNames = Object.keys(presetsObj);
         for (let pi = 0; pi < presetNames.length; pi++) {
             const presetCfg = presetsObj[presetNames[pi]];
@@ -636,7 +636,8 @@
             pcToken++;
             setBtnActive(false);
             const done = pcResults.length;
-            const total = (typeof PRESETS !== "undefined" && PRESETS) ? Object.keys(PRESETS).length : 0;
+            const presetsForTotal = (typeof PRESETS !== "undefined" && PRESETS) ? PRESETS : ((typeof globalThis !== "undefined" && (globalThis.QOL_PRESETS || globalThis.PRESETS)) ? (globalThis.QOL_PRESETS || globalThis.PRESETS) : {});
+            const total = Object.keys(presetsForTotal).length;
             setStatus(`Stopped (${done} of ${total})`, "#aa8844");
             if (typeof setFeedback === "function") {
                 setFeedback(`Stopped after ${done} presets.`, "info", 2400);
@@ -644,7 +645,7 @@
             return;
         }
 
-        const presetsObj = (typeof PRESETS !== "undefined" && PRESETS) ? PRESETS : {};
+        const presetsObj = (typeof PRESETS !== "undefined" && PRESETS) ? PRESETS : ((typeof globalThis !== "undefined" && (globalThis.QOL_PRESETS || globalThis.PRESETS)) ? (globalThis.QOL_PRESETS || globalThis.PRESETS) : {});
         const presetNames = Object.keys(presetsObj).sort();
         if (presetNames.length === 0) {
             setStatus("No presets found.", "#cc4444");

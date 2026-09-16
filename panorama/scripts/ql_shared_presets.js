@@ -6651,3 +6651,12 @@ QOL_PRESETS["Thorkizzle"] = {
     TAB_ZOOM_DRAW_OVER_UI: 1,
     TAB_ZOOM_OPACITY: 0.9
 };
+
+if (typeof QOL_PRESETS === "object" && QOL_PRESETS) {
+    if (typeof QOL === "object" && QOL) QOL.presets = QOL_PRESETS;
+    if (typeof globalThis !== "undefined") {
+        globalThis.QOL_PRESETS = QOL_PRESETS;
+        globalThis.PRESETS = QOL_PRESETS;
+    }
+}
+
