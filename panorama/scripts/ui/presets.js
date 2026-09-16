@@ -455,9 +455,8 @@
     // =========================================================================
 
     const renderPresetsTab = (container) => {
-        if (!isAlive(container)) return;
-
-        resetPresetButtonRegistry();
+        const collecting = globalThis.gSearchCollectMode && globalThis.gSearchCollectState;
+        if (!collecting && !isAlive(container)) return;
 
         const isRu = isRussian();
         const presetsTitle = isRu ? "Пресеты" : "Presets";
@@ -473,6 +472,16 @@
         ];
 
         const customEntries = basePresetEntries.concat(buildCommunityPresetEntries());
+        if (collecting) {
+            Q.ui.controls.createSectionTitle(container, presetsTitle);
+            for (const entry of customEntries) {
+                if (!entry || entry.available === false) continue;
+                Q.ui.controls.createRow(container, entry.label, entry.preset ? "SEARCH_PRESET:" + entry.preset : "SEARCH_TAB:Presets", "actionbutton", null, null, null, [{ label: entry.preset ? "Apply" : "Open" }], "Preset");
+            }
+            Q.ui.controls.createRow(container, requestPresetText, "OPEN_COMMISSIONS", "actionbutton", null, null, null, [{ label: "Open" }], "Request a community preset");
+            return;
+        }
+        resetPresetButtonRegistry();
 
         createPresetGrid(container, presetsTitle, customEntries, 6, "custom");
 

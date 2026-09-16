@@ -322,7 +322,7 @@
     // =========================================================================
 
     function renderAudioTab(list) {
-        if (!list) return;
+        if (!list && !globalThis.gSearchCollectMode) return;
 
         const createTitle = (typeof globalThis.CreateSectionTitle === "function")
             ? globalThis.CreateSectionTitle

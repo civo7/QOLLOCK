@@ -1,0 +1,92 @@
+// manifests/ql_ui_controls/manifest.js
+// =============================================================================
+// QOLLOCK — General UI Controls & Aspect Ratio Support
+// =============================================================================
+// OWNS:        Aspect ratio HUD shifts (16:10, 4:3, 21:9 stream fix), ESC menu
+//              centering, testing tools visibility overrides, behavior summary.
+// DOES NOT OWN: Base HUD components or settings window layout
+// DEPENDS ON:  QOL.core.FeatureRegistry, QOL.core.hud
+// CONFIG KEYS: SUPPORT_16_10, SUPPORT_4_3, ENABLE_HUD_SHIFT, ENABLE_CENTER_ESC,
+//              ENABLE_CENTER_FRIENDS_LIST, ENABLE_FORCE_TESTING_TOOLS,
+//              ENABLE_HIDE_TESTING_TOOLS, ENABLE_HIDE_BEHAVIOR_SUMMARY
+// =============================================================================
+
+(function () {
+    "use strict";
+
+    var FR = QOL.core && QOL.core.FeatureRegistry;
+    if (!FR) {
+        $.Msg("[QOLLock] ql_ui_controls: FeatureRegistry not found — aborting");
+        return;
+    }
+
+    var FEATURE_ID = "ql_ui_controls";
+
+    FR.register({
+        id: FEATURE_ID,
+        enabledByDefault: true,
+        settings: [
+            { key: "SUPPORT_16_10", type: "toggle", default: false, label: "16:10 Support", description: "Shifts the HUD for better visual support for 16:10 resolutions." },
+            { key: "SUPPORT_4_3", type: "toggle", default: false, label: "4:3 Support", description: "Shifts the HUD for better visual support for 4:3 resolutions." },
+            { key: "ENABLE_HUD_SHIFT", type: "toggle", default: false, label: "21:9 Stream Fix", description: "Slight adjustments to the HUD for better streaming output." },
+            { key: "ENABLE_CENTER_ESC", type: "toggle", default: false, label: "Centered ESC Menu", description: "Centers ESC menu elements to make them easier to access." },
+            { key: "ENABLE_CENTER_FRIENDS_LIST", type: "toggle", default: false, label: "Centered Friends List", description: "Centers friends list area in ESC menu." },
+            { key: "ENABLE_FORCE_TESTING_TOOLS", type: "toggle", default: false, label: "Show Testing Tools", description: "Forcibly shows testing tools at all times." },
+            { key: "ENABLE_HIDE_TESTING_TOOLS", type: "toggle", default: false, label: "Hide Testing Tools", description: "Forcibly hides testing tools at all times." },
+            { key: "ENABLE_HIDE_BEHAVIOR_SUMMARY", type: "toggle", invert: true, default: false, label: "Behavior Summary", description: "Menu when you receive a punishment for breaking game rules." },
+            { key: "ENABLE_LEGACY_COOLDOWNS", type: "toggle", default: false, label: "Legacy Durations", description: "Show cooldown durations on abilities like in older versions." }
+        ],
+        create: function (ctx) {
+            function _getRoot() {
+                var hud = QOL.core?.hud?.findHud ? QOL.core.hud.findHud() : null;
+                if (hud) return hud;
+                var c = $.GetContextPanel ? $.GetContextPanel() : null;
+                return c;
+            }
+
+            function _apply(cfg) {
+                var root = _getRoot();
+                if (!root) return;
+                if (QOL.core?.hud?.applyRootClasses) {
+                    QOL.core.hud.applyRootClasses(root, cfg, Date.now ? Date.now() : (new Date()).getTime(), false);
+                }
+            }
+
+            return {
+                onEnable: function () {
+                    _apply(ctx.config.all ? ctx.config.all() : {});
+                },
+                onDisable: function () {
+                    var root = _getRoot();
+                    if (!root) return;
+                    if (root.RemoveClass) {
+                        root.RemoveClass("support_16_10_active");
+                        root.RemoveClass("support_4_3_active");
+                        root.RemoveClass("hud_shift_active");
+                        root.RemoveClass("center_esc_active");
+                        root.RemoveClass("center_friends_list_active");
+                        root.RemoveClass("force_testing_tools_active");
+                        root.RemoveClass("hide_testing_tools_active");
+                        root.RemoveClass("hide_behavior_summary_active");
+                    }
+                },
+                onSettingsChanged: function () {
+                    _apply(ctx.config.all ? ctx.config.all() : {});
+                }
+            };
+        },
+        test: function (ctx) {
+            try {
+                var passed = (ctx && ctx.id === FEATURE_ID);
+                return {
+                    passed: passed,
+                    name: "ql_ui_controls manifest check",
+                    message: passed ? "" : "Invalid feature ID",
+                    assertions: [{ passed: passed, name: "Feature ID matches" }]
+                };
+            } catch (e) {
+                return { passed: false, name: "ql_ui_controls manifest check", message: (e && e.message ? e.message : String(e)) };
+            }
+        }
+    });
+})();

@@ -78,7 +78,7 @@
         perf: "ql_perf",
         // Permanent exceptions — no new manifest, keep in old system
         buildBridge: "_legacy",
-        coreRoot: "_legacy",
+        coreRoot: "ql_ui_controls",
         buildSave: "_legacy",
         buildLoad: "_legacy",
         panelCache: "_legacy"
@@ -143,11 +143,21 @@
                 }
                 if (m.settings) {
                     for (let s = 0; s < m.settings.length; s++) {
-                        const sk = m.settings[s].key;
+                        const setting = m.settings[s];
+                        const sk = setting.key;
                         if (sk) {
                             appendFeatureOwner(map, sk, ids[i]);
-                            if (m.settings[s].type === "toggle") {
+                            if (setting.type === "toggle") {
                                 KNOWN_TOGGLE_KEYS.add(sk);
+                            }
+                        }
+                        if (setting.type === "multitoggle" && Array.isArray(setting.options)) {
+                            for (let o = 0; o < setting.options.length; o++) {
+                                const ok = setting.options[o]?.key;
+                                if (ok) {
+                                    appendFeatureOwner(map, ok, ids[i]);
+                                    KNOWN_TOGGLE_KEYS.add(ok);
+                                }
                             }
                         }
                     }

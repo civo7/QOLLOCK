@@ -71,7 +71,11 @@
                     animatedToggle: true,
                     enableKey: "ENABLE_PASSIVE_COOLDOWN",
                     description: "Tracked cooldowns near crosshair",
-                    features: ["ql_passive_cooldown"]
+                    features: ["ql_passive_cooldown", { id: "ql_item_mirror", hideToggle: true }]
+                },
+                {
+                    title: "Stamina",
+                    features: ["ql_stamina"]
                 },
                 {
                     title: "Active Stats",
@@ -126,7 +130,7 @@
                     title: "Top Bar",
                     animatedToggle: true,
                     enableKey: "HUD_TOP_BAR_ENABLED",
-                    features: ["ql_topbar", "ql_rejuv_hud", "ql_nicknames", "ql_showrank"]
+                    features: ["ql_topbar", "ql_urn_timer", "ql_rejuv_hud", "ql_nicknames", "ql_showrank"]
                 },
                 {
                     title: "Bottom Bar",
@@ -163,7 +167,7 @@
                     title: "UI Controls",
                     features: [
                         "ql_lane_with_party",
-                        "ql_legacy_audio_passive"
+                        "ql_ui_controls"
                     ]
                 },
                 {

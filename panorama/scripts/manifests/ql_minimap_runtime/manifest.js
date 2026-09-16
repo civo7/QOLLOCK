@@ -140,7 +140,10 @@
             { key: "ALT_ZOOM_REM_TUNNELS_OPACITY", type: "slider", min: 0, max: 1, step: 0.05, default: 0.75 },
             { key: "ENABLE_TAB_ZOOM_REM_TUNNELS", type: "toggle", default: false },
             { key: "TAB_ZOOM_REM_TUNNELS_OPACITY", type: "slider", min: 0, max: 1, step: 0.05, default: 0.75 },
-            { key: "MINIMAP_ICON_COLOR", type: "palette", default: 0 }
+            { key: "MINIMAP_ICON_COLOR", type: "palette", default: 0 },
+            { key: "MINIMAP_FLIP", type: "toggle", default: false, label: "Flip", description: "Rotates the static minimap 180 degrees." },
+            { key: "MINIMAP_ROTATE_WITH_PLAYER", type: "toggle", default: false, label: "Spinny Mode", description: "Makes the minimap rotate with player view, this is just for fun." },
+            { key: "ENABLE_MINIMAP_ELEVATION_MARKERS", type: "toggle", default: false, label: "Elevation Markers", description: "Shows relative elevation difference between you and players." }
         ],
         create: function(ctx) {
             var _loop = null;
@@ -761,7 +764,13 @@
                     _drawHudRoot = null;
                     _mapRenderPanel = null;
                 },
-                onSettingsChanged: function() {}
+                onSettingsChanged: function() {
+                    var root = $.GetContextPanel ? $.GetContextPanel() : null;
+                    if (root && QOL.core && QOL.core.hud && QOL.core.hud.applyRootClasses) {
+                        var cfg = ctx.config.all ? ctx.config.all() : {};
+                        QOL.core.hud.applyRootClasses(root, cfg, Date.now ? Date.now() : (new Date()).getTime(), false);
+                    }
+                }
             };
         },
         test: function(ctx) {

@@ -18,7 +18,9 @@
         enabledByDefault: false,
         settings: [
             { key: "ENABLE_SIMPLIFY_ABILITY_ICONS", type: "toggle", default: false },
-            { key: "ENABLE_HIDE_COSMETIC_ABILITY", type: "toggle", default: false }
+            { key: "ENABLE_HIDE_COSMETIC_ABILITY", type: "toggle", default: false },
+            { key: "ENABLE_HIDE_ABILITY_SUGGESTION", type: "toggle", invert: true, default: false, label: "Ability Suggestion", description: "Highlighted abilities showing you what you should upgrade depending on build." },
+            { key: "ENABLE_CLEAN_STACKS", type: "toggle", default: false, label: "Clean Stacks", description: "Move ability stacks to bottom-center of ability icon" }
         ],
         create: function(ctx) {
             function _findHud() {
@@ -36,14 +38,29 @@
                                                    : h.RemoveClass("simplify_ability_icons_active");
                 cfg.ENABLE_HIDE_COSMETIC_ABILITY ? h.AddClass("hide_cosmetic_ability_active")
                                                   : h.RemoveClass("hide_cosmetic_ability_active");
+                cfg.ENABLE_HIDE_ABILITY_SUGGESTION ? h.AddClass("hide_ability_suggestion_active")
+                                                    : h.RemoveClass("hide_ability_suggestion_active");
+                cfg.ENABLE_CLEAN_STACKS ? h.AddClass("clean_stacks_active")
+                                         : h.RemoveClass("clean_stacks_active");
             }
             return {
                 onEnable: function() { _apply(ctx.config.all()); },
                 onDisable: function() {
                     var h = _findHud();
-                    if (h) { h.RemoveClass("simplify_ability_icons_active"); h.RemoveClass("hide_cosmetic_ability_active"); }
+                    if (h) {
+                        h.RemoveClass("simplify_ability_icons_active");
+                        h.RemoveClass("hide_cosmetic_ability_active");
+                        h.RemoveClass("hide_ability_suggestion_active");
+                        h.RemoveClass("clean_stacks_active");
+                    }
                 },
-                onSettingsChanged: function() { _apply(ctx.config.all()); }
+                onSettingsChanged: function() {
+                    _apply(ctx.config.all());
+                    var h = _findHud();
+                    if (h && QOL.core && QOL.core.hud && QOL.core.hud.applyRootClasses) {
+                        QOL.core.hud.applyRootClasses(h, ctx.config.all(), Date.now ? Date.now() : (new Date()).getTime(), false);
+                    }
+                }
             };
         },
         test: function(ctx) {

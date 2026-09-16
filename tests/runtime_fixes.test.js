@@ -162,3 +162,33 @@ test("Combat signal, passive cooldown mode, and account lookup functions exporte
     assert.strictEqual(ConfigStore.get("ql_legacy_audio_passive", "ITEM_FILTER_DEF_PASSIVE"), true);
 });
 
+test("ql_ui_controls manifest and multitoggle settings are properly registered and coerced", () => {
+    const hud = sim.createHud();
+    hud.assertLoaded();
+    const Q = hud.sandbox.global.QOL;
+    const FR = Q.core.FeatureRegistry;
+    const ConfigStore = Q.core.ConfigStore;
+    const ConfigAdapter = Q.core.ConfigAdapter;
+
+    // 1. ql_ui_controls is registered and has schema
+    assert.ok(FR.isRegistered("ql_ui_controls"), "ql_ui_controls must be registered in FeatureRegistry");
+    assert.ok(ConfigStore.hasSchema("ql_ui_controls"), "ql_ui_controls must have schema in ConfigStore");
+
+    // 2. Loading UI controls settings into ConfigStore
+    ConfigAdapter.loadFromFlat({
+        SUPPORT_16_10: 1,
+        ENABLE_CENTER_ESC: 1,
+        ENABLE_TOPBAR_ENEMY_HP_WARNING_25: 1,
+        ENABLE_TOPBAR_ENEMY_HP_WARNING_65: 1
+    });
+
+    assert.strictEqual(ConfigStore.get("ql_ui_controls", "SUPPORT_16_10"), true);
+    assert.strictEqual(ConfigStore.get("ql_ui_controls", "ENABLE_CENTER_ESC"), true);
+
+    // 3. Top bar multitoggle options coerced in ConfigStore
+    assert.strictEqual(ConfigStore.get("ql_topbar", "ENABLE_TOPBAR_ENEMY_HP_WARNING_25"), true);
+    assert.strictEqual(ConfigStore.get("ql_topbar", "ENABLE_TOPBAR_ENEMY_HP_WARNING_65"), true);
+    assert.strictEqual(ConfigStore.get("ql_topbar", "ENABLE_TOPBAR_ENEMY_HP_WARNING_75"), false);
+});
+
+

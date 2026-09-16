@@ -74,6 +74,7 @@
 		<include src="s2r://panorama/scripts/manifests/ql_chat_images/manifest.vjs_c" />
 		<include src="s2r://panorama/scripts/manifests/ql_chat_translate/manifest.vjs_c" />
 		<include src="s2r://panorama/scripts/manifests/ql_lane_with_party/manifest.vjs_c" />
+		<include src="s2r://panorama/scripts/manifests/ql_ui_controls/manifest.vjs_c" />
 		<include src="s2r://panorama/scripts/manifests/ql_unsecured_souls_timer/manifest.vjs_c" />
 		<include src="s2r://panorama/scripts/manifests/ql_urn_timer/manifest.vjs_c" />
 		<!-- Disabled: legacy Unsecured Plus runtime remains authoritative above. -->

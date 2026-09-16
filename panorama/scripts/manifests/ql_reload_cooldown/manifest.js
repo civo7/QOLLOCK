@@ -70,6 +70,8 @@
         enabledByDefault: false,
         settings: [
             { key: "ENABLE_RELOAD_COOLDOWN", type: "toggle", default: false },
+            { key: "ENABLE_HIDE_RELOAD_ICON", type: "toggle", invert: true, default: false, label: "Icon", description: "The icon that replaces your crosshair when reloading." },
+            { key: "ENABLE_HIDE_RELOAD_CIRCLE", type: "toggle", invert: true, default: false, label: "Circle", description: "The circle countdown for when you are reloading." },
             { key: "RELOAD_COOLDOWN_OPACITY", type: "slider", min: 0, max: 1, step: 0.05, default: 0.6 },
             { key: "RELOAD_COOLDOWN_SIZE", type: "slider", min: 16, max: 60, step: 1, default: 28 },
             { key: "RELOAD_COOLDOWN_X_OFFSET", type: "slider", min: -75, max: 75, step: 1, default: 0 },
@@ -306,6 +308,11 @@
                 },
                 onSettingsChanged: function () {
                     _tick();
+                    var hud = _getHud();
+                    if (hud && QOL.core && QOL.core.hud && QOL.core.hud.applyRootClasses) {
+                        var cfg = ctx.config.view ? ctx.config.view() : ctx.config.all();
+                        QOL.core.hud.applyRootClasses(hud, cfg, _nowMs(), false);
+                    }
                 }
             };
         },

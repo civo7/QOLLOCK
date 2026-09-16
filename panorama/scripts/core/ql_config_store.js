@@ -29,11 +29,17 @@
 
     const schemas = {};
     const values = {};
-    const VALID_TYPES = ["toggle", "slider", "dropdown", "text", "palette", "action", "number", "buttongroup"];
+    const VALID_TYPES = ["toggle", "slider", "dropdown", "text", "palette", "action", "number", "buttongroup", "multitoggle"];
 
     const validateSetting = (schemaEntry) => {
         if (!schemaEntry || typeof schemaEntry.key !== "string") return "key must be a string";
         if (!VALID_TYPES.includes(schemaEntry.type)) return `type must be: ${VALID_TYPES.join(", ")}`;
+        if (schemaEntry.type === "multitoggle") {
+            if (!Array.isArray(schemaEntry.options) || schemaEntry.options.length === 0) {
+                return "multitoggle options must be a non-empty array";
+            }
+            return null;
+        }
         if (!Object.prototype.hasOwnProperty.call(schemaEntry, "default")) return "default is required";
         if (schemaEntry.type === "slider") {
             if (typeof schemaEntry.min !== "number" || typeof schemaEntry.max !== "number") {
@@ -75,6 +81,8 @@
                 if (typeof value !== "number" || isNaN(value)) return "must be number";
                 if (value < 0 || value > 29) return "must be 0-29";
                 return null;
+            case "multitoggle":
+                return (typeof value === "boolean" || value === 0 || value === 1 || typeof value === "object") ? null : "must be boolean or object";
             case "action":
                 return null;
         }
@@ -97,7 +105,17 @@
         ensureBucket(featureId);
         for (let j = 0; j < schema.settings.length; j++) {
             const s = schema.settings[j];
-            if (!Object.prototype.hasOwnProperty.call(values[featureId], s.key)) {
+            if (s.type === "multitoggle" && Array.isArray(s.options)) {
+                if (!Object.prototype.hasOwnProperty.call(values[featureId], s.key)) {
+                    values[featureId][s.key] = s.default !== undefined ? s.default : false;
+                }
+                for (let k = 0; k < s.options.length; k++) {
+                    const opt = s.options[k];
+                    if (opt && opt.key && !Object.prototype.hasOwnProperty.call(values[featureId], opt.key)) {
+                        values[featureId][opt.key] = false;
+                    }
+                }
+            } else if (!Object.prototype.hasOwnProperty.call(values[featureId], s.key)) {
                 values[featureId][s.key] = s.default;
             }
         }
@@ -114,9 +132,19 @@
         if (!schema) return false;
         let def = null;
         for (let i = 0; i < schema.settings.length; i++) {
-            if (schema.settings[i].key === key) {
-                def = schema.settings[i];
+            const s = schema.settings[i];
+            if (s.key === key) {
+                def = s;
                 break;
+            }
+            if (s.type === "multitoggle" && Array.isArray(s.options)) {
+                for (let k = 0; k < s.options.length; k++) {
+                    if (s.options[k] && s.options[k].key === key) {
+                        def = { key: key, type: "toggle", default: false };
+                        break;
+                    }
+                }
+                if (def) break;
             }
         }
         if (!def) return false;
@@ -167,10 +195,22 @@
             for (const key in featureData) {
                 if (!Object.prototype.hasOwnProperty.call(featureData, key)) continue;
                 for (let i = 0; i < schema.settings.length; i++) {
-                    if (schema.settings[i].key === key && validateValue(schema.settings[i], featureData[key]) === null) {
+                    const s = schema.settings[i];
+                    let matchedDef = null;
+                    if (s.key === key) {
+                        matchedDef = s;
+                    } else if (s.type === "multitoggle" && Array.isArray(s.options)) {
+                        for (let k = 0; k < s.options.length; k++) {
+                            if (s.options[k] && s.options[k].key === key) {
+                                matchedDef = { key: key, type: "toggle", default: false };
+                                break;
+                            }
+                        }
+                    }
+                    if (matchedDef && validateValue(matchedDef, featureData[key]) === null) {
                         const oldVal = values[featureId][key];
                         let newVal = featureData[key];
-                        if (schema.settings[i].type === "toggle" && typeof newVal === "number") {
+                        if (matchedDef.type === "toggle" && typeof newVal === "number") {
                             newVal = newVal === 1;
                         }
                         values[featureId][key] = newVal;

@@ -26,6 +26,7 @@
         enabledByDefault: true,
         settings: [
             { key: "ENABLE_RED_DIAMOND", type: "toggle", default: false },
+            { key: "ENABLE_IMPROVED_HINT", type: "toggle", default: false, label: "Improved Hint" },
             { key: "UNIT_TARGET_SIZE", type: "slider", min: 50, max: 300, step: 5, default: 150 },
             { key: "UNIT_TARGET_OPACITY", type: "slider", min: 0, max: 1, step: 0.05, default: 1 },
             { key: "UNIT_TARGET_HINT_SIZE", type: "slider", min: 50, max: 200, step: 5, default: 100 }
@@ -252,7 +253,13 @@
                     State.targetShapeDebugNextMs = 0;
                     _root = null;
                 },
-                onSettingsChanged: function() {}
+                onSettingsChanged: function() {
+                    var root = _root || ($.GetContextPanel ? $.GetContextPanel() : null);
+                    if (root && QOL.core && QOL.core.hud && QOL.core.hud.applyRootClasses) {
+                        var cfg = ctx.config.all ? ctx.config.all() : {};
+                        QOL.core.hud.applyRootClasses(root, cfg, Date.now ? Date.now() : (new Date()).getTime(), false);
+                    }
+                }
             };
         },
         test: function(ctx) {

@@ -756,7 +756,18 @@
                 const setting = manifest.settings[j];
                 if (hideToggle && setting.key === manifest.enableKey) continue;
 
-                const curVal = getConfigValue(featureId, setting.key, setting.default);
+                let curVal;
+                if (setting.type === "multitoggle" && Array.isArray(setting.options)) {
+                    curVal = {};
+                    for (let k = 0; k < setting.options.length; k++) {
+                        const opt = setting.options[k];
+                        if (opt && opt.key) {
+                            curVal[opt.key] = getConfigValue(featureId, opt.key, 0);
+                        }
+                    }
+                } else {
+                    curVal = getConfigValue(featureId, setting.key, setting.default);
+                }
                 const onChange = (k, v) => setConfigValue(featureId, k, v);
 
                 renderer.createControl(parent, setting, curVal, onChange, {

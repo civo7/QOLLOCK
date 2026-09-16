@@ -87,6 +87,9 @@
     // =========================================================================
 
     function createArcadeGameRow(parent, game) {
+        if (game && globalThis.gSearchCollectMode && globalThis.gSearchCollectState) {
+            return globalThis.CreateRow(parent, game.name, game.actionKey, "actionbutton", null, null, null, [{ label: "Play" }]);
+        }
         if (!parent || !game) return null;
 
         const row = $.CreatePanel("Panel", parent, `ArcadeGameRow_${game.actionKey}`);
@@ -173,7 +176,7 @@
     // =========================================================================
 
     function renderArcadeTab(list) {
-        if (!list) return;
+        if (!list && !globalThis.gSearchCollectMode) return;
 
         const createTitle = (typeof globalThis.CreateSectionTitle === "function")
             ? globalThis.CreateSectionTitle

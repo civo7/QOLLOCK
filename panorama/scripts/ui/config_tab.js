@@ -211,7 +211,7 @@
     };
 
     const renderConfigTab = (list) => {
-        if (!isAlive(list)) return;
+        if (!globalThis.gSearchCollectMode && !isAlive(list)) return;
 
         globalThis.gCurrentSettingsSectionTitle = "";
         gConfigFeedbackLabel = null;

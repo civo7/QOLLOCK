@@ -22,6 +22,10 @@
         enabledByDefault: true,
         settings: [
             { key: "HUD_SHOP_ENABLED", type: "toggle", default: true },
+            { key: "ENABLE_HERO_SCENE_PANEL", type: "toggle", default: true, label: "Hero", description: "Shows your character in the shop menu." },
+            { key: "DISABLE_QUICK_BUY", type: "toggle", invert: true, default: false, label: "Quick Buy", description: "The item buying auto queue system in the shop menu." },
+            { key: "ENHANCED_QUICKBUY_COUNT", type: "slider", min: 1, max: 5, step: 1, default: 3, label: "Enhanced Count", description: "Controls how many enhanced quickbuy preview items are shown." },
+            { key: "ENABLE_QUICKBUY_CLICK_TO_NOTIFY", type: "toggle", default: false, label: "Click to Notify", description: "Notify your teammates in chat about how close you are to a quickbuy purchase." },
             { key: "SHOP_OFFSET_X", type: "slider", min: -500, max: 500, step: 5, default: 0 },
             { key: "SHOP_OFFSET_Y", type: "slider", min: -500, max: 500, step: 5, default: 0 },
             { key: "SHOP_OPACITY", type: "slider", min: 0, max: 1, step: 0.05, default: 1 },
@@ -229,7 +233,13 @@
                     }
                     _shopPanel = null; _mainPanel = null; _classCache = {}; _styleSig = ""; _nextSearchMs = 0;
                 },
-                onSettingsChanged: function() { _styleSig = ""; }
+                onSettingsChanged: function() {
+                    _styleSig = "";
+                    var root = $.GetContextPanel ? $.GetContextPanel() : null;
+                    if (root && QOL.core && QOL.core.hud && QOL.core.hud.applyRootClasses) {
+                        QOL.core.hud.applyRootClasses(root, ctx.config.all(), Date.now ? Date.now() : (new Date()).getTime(), false);
+                    }
+                }
             };
         },
     test: function(ctx) {

@@ -23,6 +23,32 @@
         enableKey: "HUD_TOP_BAR_ENABLED",
         settings: [
             { key: "HUD_TOP_BAR_ENABLED", type: "toggle", default: true },
+            { key: "ENABLE_OBJ_MAP", type: "toggle", default: false, label: "Objective Map", description: "Show a visual indicator in the top bar of the current Guardians, Walkers, and Base." },
+            { key: "ENABLE_MISSING_HERO", type: "toggle", default: false, label: "Missing Hero Opaque", description: "Greys out heros in the top bar when missing on the map." },
+            { key: "ENABLE_OBJ_DMG", type: "toggle", default: false, label: "Objective Damage", description: "Shows the individual player's objective damage in the top bar." },
+            { key: "DISABLE_PLAYER_NAME_BLUR", type: "toggle", invert: true, default: false, label: "Top Bar Background", description: "The world blur behind player names in the top bar." },
+            {
+                key: "ENABLE_TOPBAR_ENEMY_HP_WARNING",
+                type: "multitoggle",
+                label: "Enemy HP Warning",
+                description: "Colored enemy top-bar health warnings when at significant thresholds.",
+                options: [
+                    { label: "25%", key: "ENABLE_TOPBAR_ENEMY_HP_WARNING_25" },
+                    { label: "65%", key: "ENABLE_TOPBAR_ENEMY_HP_WARNING_65" },
+                    { label: "75%", key: "ENABLE_TOPBAR_ENEMY_HP_WARNING_75" }
+                ]
+            },
+            {
+                key: "ENABLE_TOPBAR_ALLY_HP_WARNING",
+                type: "multitoggle",
+                label: "Ally HP Warning",
+                description: "Colored ally top-bar health warnings when at significant thresholds.",
+                options: [
+                    { label: "25%", key: "ENABLE_TOPBAR_ALLY_HP_WARNING_25" },
+                    { label: "65%", key: "ENABLE_TOPBAR_ALLY_HP_WARNING_65" },
+                    { label: "75%", key: "ENABLE_TOPBAR_ALLY_HP_WARNING_75" }
+                ]
+            },
             { key: "ENABLE_URN_DIFF", type: "toggle", default: false },
             { key: "TOP_BAR_OPACITY", type: "slider", min: 0, max: 1, step: 0.05, default: 1.0 },
             { key: "TOP_BAR_SCALE", type: "slider", min: 0.5, max: 1.5, step: 0.05, default: 1.0 },
@@ -112,7 +138,13 @@
                     // left the panel position alone, just hiding via qol-hidden.
                     // Forcing y="0px" would move the bar from its CSS-native position.
                 },
-                onSettingsChanged: function() { _apply(ctx.config.all()); }
+                onSettingsChanged: function() {
+                    _apply(ctx.config.all());
+                    var root = $.GetContextPanel ? $.GetContextPanel() : null;
+                    if (root && QOL.core && QOL.core.hud && QOL.core.hud.applyRootClasses) {
+                        QOL.core.hud.applyRootClasses(root, ctx.config.all(), Date.now ? Date.now() : (new Date()).getTime(), false);
+                    }
+                }
             };
         },
         test: function(ctx) {

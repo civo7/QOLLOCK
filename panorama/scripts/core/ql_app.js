@@ -104,19 +104,6 @@
         return hud;
     };
 
-    const _unwrapEnvelope = (raw) => {
-        if (!raw) return null;
-        try {
-            const envelope = JSON.parse(raw);
-            if (envelope && envelope.data && typeof envelope.data === "object") {
-                return envelope.data;
-            }
-            if (envelope && typeof envelope === "object" && !envelope.schema) {
-                return envelope;
-            }
-        } catch (_) {}
-        return null;
-    };
 
     const _parseRev = (v) => {
         const n = Number(v);
@@ -205,7 +192,7 @@
             } catch (_) {}
         }
 
-        const flatConfig = _unwrapEnvelope(raw);
+        const flatConfig = QOL.safeParseConfig(raw) || QOL.buildDefaultConfig();
         if (flatConfig) {
             const globalState = (typeof State !== "undefined" && State) ? State :
                               ((typeof globalThis !== "undefined" && globalThis.State) ? globalThis.State : null);
@@ -445,29 +432,23 @@
 
         _enableKeyMap = _buildEnableKeyMap();
 
+        const best = _readBestConfig(hud);
+        _lastRevision = best.rev;
+        _lastConfigRaw = best.raw;
         let flatConfig = null;
-        try {
-            const best = _readBestConfig(hud);
-            const raw = best.raw;
-            _lastRevision = best.rev;
-            if (raw) {
-                _lastConfigRaw = raw;
-                flatConfig = _unwrapEnvelope(raw);
-                if (flatConfig && ConfigAdapter) {
-                    ConfigAdapter.loadFromFlat(flatConfig, _enableKeyMap);
-                    if (Logger) Logger.logInfo("App", "config loaded via ConfigAdapter");
-                }
+        if (best.raw) {
+            flatConfig = (typeof QOL !== "undefined" && typeof QOL.safeParseConfig === "function")
+                ? QOL.safeParseConfig(best.raw)
+                : null;
+            if (flatConfig && ConfigAdapter) {
+                ConfigAdapter.loadFromFlat(flatConfig, _enableKeyMap);
+                if (Logger) Logger.logInfo("App", "config loaded via ConfigAdapter");
             }
-        } catch (e) {
-            if (Logger) Logger.logWarn("App", `config load failed, using defaults: ${e.message || e}`);
         }
 
         const globalState = (typeof State !== "undefined" && State) ? State :
                           ((typeof globalThis !== "undefined" && globalThis.State) ? globalThis.State : null);
         if (globalState) {
-            if (!flatConfig && ConfigAdapter) {
-                flatConfig = ConfigAdapter.exportToFlat();
-            }
             globalState.lastConfig = flatConfig || {};
         }
 

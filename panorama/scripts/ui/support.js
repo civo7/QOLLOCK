@@ -214,7 +214,7 @@
     };
 
     const renderSupportTab = (list) => {
-        if (!isAlive(list)) return;
+        if (!globalThis.gSearchCollectMode && !isAlive(list)) return;
 
         // Search collection mode
         if (globalThis.gSearchCollectMode && globalThis.gSearchCollectState) {

@@ -255,7 +255,7 @@
     }
 
     function renderConsoleTab(list) {
-        if (!list) return;
+        if (!list && !globalThis.gSearchCollectMode) return;
 
         const createRow = (typeof globalThis.CreateRow === "function")
             ? globalThis.CreateRow
@@ -273,7 +273,7 @@
             });
 
         // 1. Console Notes Hero Card
-        createConsoleNotesCard(list);
+        if (!globalThis.gSearchCollectMode) createConsoleNotesCard(list);
 
         // 2. General Section (Hitmarkers)
         createTitle(list, "General");

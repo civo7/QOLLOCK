@@ -129,11 +129,11 @@
     const isHudClassActive = (root, className) => {
         const target = root || findHud();
         if (!isAlive(target) || !className) return false;
-        try {
-            return target.BHasClass(className);
-        } catch (_) {
-            return false;
-        }
+        if (target.BHasClass(className)) return true;
+        const gameplayHud = resolveCachedPanel(target, "gameplayHud", "gameplay_hud");
+        if (gameplayHud?.BHasClass(className)) return true;
+        const abilities = resolveCachedPanel(target, "abilitiesContainer", "abilitiesContainer");
+        return !!abilities?.BHasClass(className);
     };
 
     const PANEL_ID_GAMEPLAY_HUD = "gameplay_hud";
@@ -249,15 +249,26 @@
         if (typeof QOL !== "undefined" && QOL.setCachedPanel) {
             QOL.setCachedPanel(key, p);
         } else {
-            const st = getState();
-            if (st && st.cachedPanels) st.cachedPanels[key] = p;
+            const s = getState();
+            if (!s.cachedPanels) s.cachedPanels = {};
+            s.cachedPanels[key] = p;
         }
     };
-    const resolveCachedPanel = (parent, cacheKey, traverseId) => {
-        if (typeof QOL !== "undefined" && QOL.resolveCachedPanel) {
-            return QOL.resolveCachedPanel(parent, cacheKey, traverseId);
+
+    const resolveCachedPanel = (root, cacheKey, childId) => {
+        let p = getCachedPanel(cacheKey);
+        if (!isAlive(p)) {
+            const r = root || findHud();
+            p = r?.FindChildTraverse ? r.FindChildTraverse(childId) : null;
+            if (isAlive(p)) setCachedPanel(cacheKey, p);
         }
-        return parent?.FindChildTraverse ? parent.FindChildTraverse(traverseId) : null;
+        return isAlive(p) ? p : null;
+    };
+
+    const ensureMinimapOverlayAnchor = (root) => {
+        const target = root || findHud();
+        if (!target?.FindChildTraverse) return null;
+        return target.FindChildTraverse("minimap_container") || target.FindChildTraverse("minimap_persp") || null;
     };
 
     const ensurePanelClassCache = (cacheObj, panel) => {
@@ -1264,6 +1275,10 @@
         findAncestorWithClass,
         tryReadAccountIdFromKnownPartyPath,
         getAccountIdForBuildCategoryPayload,
+        isClassActive: (className) => isHudClassActive(null, className),
+        isConnectedToHideout: isInHideout,
+        resolveCachedPanel,
+        ensureMinimapOverlayAnchor,
         PANEL_ID_GAMEPLAY_HUD,
         PANEL_ID_TOP_BAR,
         PANEL_ID_GOLD_AP_CONTAINER
@@ -1279,10 +1294,14 @@
 
     // Direct backward compat on QOL root
     Q.findHud = findHud;
+    Q.isInHideout = isInHideout;
     Q.isConnectedToHideout = isInHideout;
+    Q.isClassActive = (className) => isHudClassActive(null, className);
     Q.isHudClassActive = isHudClassActive;
     Q.isStreetBrawlModeActive = isStreetBrawl;
     Q.applyCoreLoopRootClassesAndState = applyRootClasses;
+    Q.resolveCachedPanel = resolveCachedPanel;
+    Q.ensureMinimapOverlayAnchor = ensureMinimapOverlayAnchor;
     Q.setPanelClassCached = setPanelClassCached;
     Q.setPanelClassIfChanged = setPanelClassIfChanged;
     Q.updateReloadCircleExceptionState = updateReloadCircleExceptionState;
