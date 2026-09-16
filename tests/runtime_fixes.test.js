@@ -191,4 +191,74 @@ test("ql_ui_controls manifest and multitoggle settings are properly registered a
     assert.strictEqual(ConfigStore.get("ql_topbar", "ENABLE_TOPBAR_ENEMY_HP_WARNING_75"), false);
 });
 
+test("Minecraft healthbar parses health from currentHealthOverHearts and tracks stamina charges for hunger", () => {
+    const hud = sim.createHud();
+    hud.assertLoaded();
+    const Q = hud.sandbox.global.QOL;
+    const $ = hud.sandbox.global.$;
+
+    assert.ok(Q.healthbar && Q.healthbar.mc, "QOL.healthbar.mc must exist");
+    assert.strictEqual(typeof Q.healthbar.mc.update, "function", "QOL.healthbar.mc.update must be a function");
+
+    const root = hud.root;
+
+    // Build Minecraft healthbar DOM
+    const healthContainerRoot = $.CreatePanel("Panel", root, "HealthContainerRoot");
+    const heartsRoot = $.CreatePanel("Panel", healthContainerRoot, "MinecraftHeartsRoot");
+    const heartsContainer = $.CreatePanel("Panel", heartsRoot, "MinecraftHeartsContainer");
+    const numbersContainer = $.CreatePanel("Panel", heartsContainer, "MinecraftHeartsHealthNumbersContainer");
+    const numbers = $.CreatePanel("Panel", numbersContainer, "MinecraftHeartsHealthNumbers");
+    const currentHealthLabel = $.CreatePanel("Label", numbers, "currentHealthOverHearts");
+    currentHealthLabel.text = "750";
+    const totalHealthLabel = $.CreatePanel("Label", numbers, "totalHealthOverHearts");
+    totalHealthLabel.text = "/ 1000";
+    const percentLabel = $.CreatePanel("Label", numbers, "MinecraftHealthPercent");
+    const heartsGrid = $.CreatePanel("Panel", heartsContainer, "MinecraftHearts");
+    const foodContainer = $.CreatePanel("Panel", heartsContainer, "MinecraftFoodContainer");
+    for (let i = 0; i < 10; i++) {
+        const icon = $.CreatePanel("Image", foodContainer, "");
+        icon.AddClass("FoodIcon");
+    }
+
+    // Build stamina reticle container with .ability_element_charges
+    const abilityElem = $.CreatePanel("Panel", root, "");
+    abilityElem.AddClass("ability_element_charges");
+    const chargesContainer = $.CreatePanel("Panel", abilityElem, "charges_container");
+    const charge1 = $.CreatePanel("Panel", chargesContainer, "charge1");
+    charge1.AddClass("charge");
+    charge1.AddClass("has_charge");
+    const chargeFg1 = $.CreatePanel("Panel", charge1, "");
+    chargeFg1.AddClass("charge_fg");
+
+    const charge2 = $.CreatePanel("Panel", chargesContainer, "charge2");
+    charge2.AddClass("charge");
+    charge2.AddClass("has_charge");
+    const chargeFg2 = $.CreatePanel("Panel", charge2, "");
+    chargeFg2.AddClass("charge_fg");
+
+    const charge3 = $.CreatePanel("Panel", chargesContainer, "charge3");
+    charge3.AddClass("charge");
+    charge3.AddClass("has_charge");
+    const chargeFg3 = $.CreatePanel("Panel", charge3, "");
+    chargeFg3.AddClass("charge_fg");
+
+    // 1. Initial tick with full stamina (no charging)
+    Q.healthbar.mc.update(root, { HEALTHBAR_TYPE: 5, ENABLE_MINECRAFT_HEALTH_NUMBERS: 1 }, 1000, true);
+
+    assert.strictEqual(percentLabel.text.trim(), "[75%]", "Percent label should calculate 750/1000 = 75%");
+    // 750 HP = 15 half segments = 8 hearts (7 full + 1 half)
+    assert.ok(heartsGrid.Children().length > 0, "Hearts grid should contain heart rows");
+
+    // 2. Dash used: charge3 is charging (recharging with 50% clip angle: 13deg out of 26deg)
+    charge3.AddClass("charging");
+    chargeFg3.style = { clip: "radial( 50% 50%, 0deg, 13deg )" };
+
+    Q.healthbar.mc.update(root, { HEALTHBAR_TYPE: 5, ENABLE_MINECRAFT_HEALTH_NUMBERS: 0 }, 2000, true);
+
+    // 2 full charges (1.0 each) + 1 charging (13/26 = 0.5) = 2.5 / 3 = 83% hunger
+    const foodIcons = foodContainer.Children();
+    assert.strictEqual(foodIcons.length, 10, "10 food icons must exist");
+});
+
+
 

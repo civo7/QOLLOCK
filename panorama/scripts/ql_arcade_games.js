@@ -7583,10 +7583,10 @@ function FormatBlackjackCard(card) {
 
 function GetBlackjackSuitGlyph(suit) {
     var key = String(suit || "");
-    if (key === "H") return "?";
-    if (key === "D") return "?";
-    if (key === "C") return "?";
-    if (key === "S") return "?";
+    if (key === "H") return "\u2665";
+    if (key === "D") return "\u2666";
+    if (key === "C") return "\u2663";
+    if (key === "S") return "\u2660";
     return "?";
 }
 

@@ -96,12 +96,15 @@
         row.AddClass("SettingRow");
         row.AddClass("RowTypeAction");
         row.AddClass("ArcadeGameRow");
+        if (game.actionKey) {
+            row.AddClass(`SettingRow_${game.actionKey}`);
+        }
 
         const labelContainer = $.CreatePanel("Panel", row, "");
-        labelContainer.AddClass("SettingLabelContainer");
+        labelContainer.AddClass("LabelContainer");
 
         const titleLabel = $.CreatePanel("Label", labelContainer, "");
-        titleLabel.AddClass("SettingRowTitle");
+        titleLabel.AddClass("SettingLabel");
         titleLabel.text = (typeof LocalizeSettingsText === "function")
             ? LocalizeSettingsText(game.name, true)
             : game.name;
@@ -158,6 +161,10 @@
             };
             syncVisual();
 
+            if (typeof globalThis.gArcadeOnDeathSyncFns !== "undefined" && Array.isArray(globalThis.gArcadeOnDeathSyncFns)) {
+                globalThis.gArcadeOnDeathSyncFns.push(syncVisual);
+            }
+
             onDeathBtn.SetPanelEvent("onactivate", () => {
                 if (typeof globalThis.MOD_CONFIG === "object" && globalThis.MOD_CONFIG) {
                     const nextVal = (Number(globalThis.MOD_CONFIG[onDeathKey]) === 1) ? 0 : 1;
@@ -165,6 +172,14 @@
                     if (typeof globalThis.SaveAndSync === "function") globalThis.SaveAndSync();
                 }
                 syncVisual();
+                if (typeof globalThis.gArcadeOnDeathSyncFns !== "undefined" && Array.isArray(globalThis.gArcadeOnDeathSyncFns)) {
+                    for (let i = globalThis.gArcadeOnDeathSyncFns.length - 1; i >= 0; i--) {
+                        const fn = globalThis.gArcadeOnDeathSyncFns[i];
+                        if (typeof fn === "function") {
+                            try { fn(); } catch (_) {}
+                        }
+                    }
+                }
             });
         }
 

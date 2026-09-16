@@ -252,7 +252,9 @@
                     // Clear bridge attributes on disable
                     var root = IsPanelValid(_root) ? _root : ResolveOnDeathArcadeBridgeRoot($.GetContextPanel());
                     try { SetOnDeathArcadeBridgeAttributes(root, false, "", ""); } catch(e) {}
-                    try { SetOnDeathArcadeEscapeMenuOpen(root, false); } catch(e) {}
+                    if (State.onDeathArcadeWasDead) {
+                        try { SetOnDeathArcadeEscapeMenuOpen(root, false); } catch(e) {}
+                    }
                     State.onDeathArcadeWasDead = false;
                     State.onDeathArcadeLastTriggerMs = 0;
                     State.onDeathArcadeRespawnPanel = null;

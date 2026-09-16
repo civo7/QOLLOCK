@@ -371,8 +371,7 @@
             // ── Main tick (adapted from UpdateLegacyAudioAndPassiveHudRuntime) ──
             function _tick() {
                 var root = _root || $.GetContextPanel(); if (root && !_root) _root = root;
-                // No enableKey → ConfigStore bucket is empty; read from global config
-                var cfg = (State.lastConfig) || {};
+                var cfg = (ctx.config && ctx.config.view) ? ctx.config.view() : (_lastFeatureConfig || {});
 
                 var passiveCooldownMode = ResolvePassiveCooldownMode(cfg);
                 var basicModeActive = IsPassiveCooldownBasicMode(passiveCooldownMode);
@@ -490,8 +489,11 @@
                 State.lastTime = currentTime;
             }
 
+            var _lastFeatureConfig = {};
+
             return {
                 onEnable: function() {
+                    _lastFeatureConfig = (ctx.config && ctx.config.all) ? ctx.config.all() : (globalThis.MOD_CONFIG || {});
                     var S = QOL.core.Scheduler;
                     _loop = S && S.createPollLoop ? S.createPollLoop(_tick, 0.5, "ql_legacy_audio_passive") : null;
                 },
@@ -508,7 +510,9 @@
                     SetCachedPanel("dl4dCaptionPanel", null); SetCachedPanel("passiveHud", null); SetCachedPanel("gameTime", null); SetCachedPanel("abilitiesContainer", null);
                     _root = null;
                 },
-                onSettingsChanged: function() {}
+                onSettingsChanged: function() {
+                    _lastFeatureConfig = (ctx.config && ctx.config.all) ? ctx.config.all() : (globalThis.MOD_CONFIG || {});
+                }
             };
         },
         test: function(ctx) {

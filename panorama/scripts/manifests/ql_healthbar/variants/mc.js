@@ -78,6 +78,13 @@
         State.mcLastBarrierHeartsNeeded = -1;
         State.mcWasEnabled = false;
         SetCachedPanel("mcHealthPercentLabel", null);
+        SetCachedPanel("mcCurrentHealthLabel", null);
+        SetCachedPanel("mcTotalHealthLabel", null);
+        SetCachedPanel("mcHealthContainer", null);
+        SetCachedPanel("mcChargesContainer", null);
+        SetCachedPanel("mcFoodContainer", null);
+        State.mcCachedFoodIcons = [];
+        State.mcLoggedHealthContainerMiss = false;
     }
 
     function McStartHeartsBlink() {
@@ -588,35 +595,61 @@
     }
 
     function McReadHealthValues(hudRoot) {
-        if (!GetCachedPanel("mcHealthContainer")) {
-            var hc = hudRoot.FindChildTraverse ? hudRoot.FindChildTraverse("healthContainer") : null;
-            if (!hc) {
-                var all = hudRoot.FindChildrenWithClassTraverse ? hudRoot.FindChildrenWithClassTraverse("healthContainer") : null;
-                if (all && all.length > 0) hc = all[0];
+        if (!hudRoot) return null;
+
+        var currentLbl = GetCachedPanel("mcCurrentHealthLabel");
+        if (!IsPanelValid(currentLbl)) {
+            currentLbl = hudRoot.FindChildTraverse ? hudRoot.FindChildTraverse("currentHealthOverHearts") : null;
+            if (!currentLbl) {
+                var hc = GetCachedPanel("mcHealthContainer");
+                if (!IsPanelValid(hc)) {
+                    hc = hudRoot.FindChildTraverse ? hudRoot.FindChildTraverse("healthContainer") : null;
+                    if (!hc && hudRoot.FindChildrenWithClassTraverse) {
+                        var all = hudRoot.FindChildrenWithClassTraverse("healthContainer");
+                        if (all && all.length > 0) hc = all[0];
+                    }
+                    if (hc) SetCachedPanel("mcHealthContainer", hc);
+                }
+                if (hc) {
+                    currentLbl = hc.FindChildTraverse ? hc.FindChildTraverse("currentHealthLabel") : null;
+                    if (!currentLbl && hc.FindChildrenWithClassTraverse) {
+                        var lbls = hc.FindChildrenWithClassTraverse("currentHealthLabel");
+                        if (lbls && lbls.length > 0) currentLbl = lbls[0];
+                    }
+                }
             }
-            if (!hc) {
-                if (!State.mcLoggedHealthContainerMiss) { $.Msg("[QOLLock][MC] Health container panel not found"); State.mcLoggedHealthContainerMiss = true; }
-                return null;
+            if (currentLbl) SetCachedPanel("mcCurrentHealthLabel", currentLbl);
+        }
+
+        var totalLbl = GetCachedPanel("mcTotalHealthLabel");
+        if (!IsPanelValid(totalLbl)) {
+            totalLbl = hudRoot.FindChildTraverse ? hudRoot.FindChildTraverse("totalHealthOverHearts") : null;
+            if (!totalLbl) {
+                var hcTotal = GetCachedPanel("mcHealthContainer");
+                if (hcTotal) {
+                    totalLbl = hcTotal.FindChildTraverse ? hcTotal.FindChildTraverse("totalHealthLabel") : null;
+                    if (!totalLbl && hcTotal.FindChildrenWithClassTraverse) {
+                        var lblsTotal = hcTotal.FindChildrenWithClassTraverse("totalHealthLabel");
+                        if (lblsTotal && lblsTotal.length > 0) totalLbl = lblsTotal[0];
+                    }
+                }
             }
-            State.mcLoggedHealthContainerMiss = false;
-            SetCachedPanel("mcHealthContainer", hc);
+            if (totalLbl) SetCachedPanel("mcTotalHealthLabel", totalLbl);
         }
-        if (!GetCachedPanel("mcCurrentHealthLabel")) {
-            var hcPanel = GetCachedPanel("mcHealthContainer");
-            var lbl = hcPanel.FindChildTraverse ? hcPanel.FindChildTraverse("currentHealthLabel") : null;
-            if (!lbl) { var lbls = hcPanel.FindChildrenWithClassTraverse ? hcPanel.FindChildrenWithClassTraverse("currentHealthLabel") : null; if (lbls && lbls.length > 0) lbl = lbls[0]; }
-            if (!lbl) return null;
-            SetCachedPanel("mcCurrentHealthLabel", lbl);
+
+        if (!currentLbl || !totalLbl) {
+            if (!State.mcLoggedHealthContainerMiss) {
+                $.Msg("[QOLLock][MC] Health label panels not found");
+                State.mcLoggedHealthContainerMiss = true;
+            }
+            return null;
         }
-        if (!GetCachedPanel("mcTotalHealthLabel")) {
-            var hcPanel = GetCachedPanel("mcHealthContainer");
-            var lbl = hcPanel.FindChildTraverse ? hcPanel.FindChildTraverse("totalHealthLabel") : null;
-            if (!lbl) { var lbls = hcPanel.FindChildrenWithClassTraverse ? hcPanel.FindChildrenWithClassTraverse("totalHealthLabel") : null; if (lbls && lbls.length > 0) lbl = lbls[0]; }
-            if (!lbl) return null;
-            SetCachedPanel("mcTotalHealthLabel", lbl);
-        }
-        var currentHealth = parseInt(GetCachedPanel("mcCurrentHealthLabel").text.replace(/[^0-9]/g, ""), 10) || 0;
-        var totalHealth = parseInt(GetCachedPanel("mcTotalHealthLabel").text.replace(/[^0-9]/g, ""), 10) || 0;
+        State.mcLoggedHealthContainerMiss = false;
+
+        var currentText = currentLbl.text ? String(currentLbl.text) : "";
+        var totalText = totalLbl.text ? String(totalLbl.text) : "";
+        var currentHealth = parseInt(currentText.replace(/[^0-9]/g, ""), 10) || 0;
+        var totalHealth = parseInt(totalText.replace(/[^0-9]/g, ""), 10) || 0;
         return { currentHealth: currentHealth, totalHealth: totalHealth };
     }
 
@@ -633,51 +666,140 @@
         return { deferredDamage: deferredDamage, trueCurrentHealth: trueCurrentHealth, healingHealth: healingHealth, currentHalfSegments: currentHalfSegments, effectiveHalfSegments: effectiveHalfSegments, hasIncomingHeal: hasIncomingHeal };
     }
 
+    function McResolveChargesContainer(root) {
+        var cached = GetCachedPanel("mcChargesContainer");
+        if (IsPanelValid(cached)) return cached;
+
+        var searchRoot = root;
+        try {
+            var top = root;
+            while (top && top.GetParent && top.GetParent()) {
+                top = top.GetParent();
+            }
+            if (top) searchRoot = top;
+        } catch (e) {}
+
+        var container = null;
+
+        // Method 1: Find .ability_element_charges (Valve stamina reticle element)
+        if (searchRoot && searchRoot.FindChildrenWithClassTraverse) {
+            var elements = searchRoot.FindChildrenWithClassTraverse("ability_element_charges");
+            if (elements && elements.length > 0) {
+                for (var k = 0; k < elements.length; k++) {
+                    var c = elements[k].FindChildTraverse ? elements[k].FindChildTraverse("charges_container") : null;
+                    if (!c && elements[k].id === "charges_container") c = elements[k];
+                    if (c && c.FindChildrenWithClassTraverse && c.FindChildrenWithClassTraverse("charge").length > 0) {
+                        container = c;
+                        break;
+                    }
+                }
+            }
+        }
+
+        // Method 2: Search for .charge pips and take their parent
+        if (!container && searchRoot && searchRoot.FindChildrenWithClassTraverse) {
+            var allChargePips = searchRoot.FindChildrenWithClassTraverse("charge");
+            if (allChargePips && allChargePips.length > 0) {
+                for (var j = 0; j < allChargePips.length; j++) {
+                    var p = allChargePips[j].GetParent ? allChargePips[j].GetParent() : null;
+                    if (p && p.id === "charges_container") {
+                        container = p;
+                        break;
+                    }
+                }
+                if (!container && allChargePips[0].GetParent) {
+                    container = allChargePips[0].GetParent();
+                }
+            }
+        }
+
+        // Method 3: Direct traversal on searchRoot verifying it has .charge children
+        if (!container && searchRoot && searchRoot.FindChildTraverse) {
+            var direct = searchRoot.FindChildTraverse("charges_container");
+            if (direct && direct.FindChildrenWithClassTraverse && direct.FindChildrenWithClassTraverse("charge").length > 0) {
+                container = direct;
+            }
+        }
+
+        if (container) {
+            SetCachedPanel("mcChargesContainer", container);
+        }
+        return container;
+    }
+
     function McParseChargesForHunger(root) {
         try {
-            if (!GetCachedPanel("mcChargesContainer")) {
-                SetCachedPanel("mcChargesContainer", root && root.FindChildTraverse ? (root.FindChildTraverse("charges_container") || null) : null);
-            }
-            if (!GetCachedPanel("mcChargesContainer")) return null;
-            var allCharges = GetCachedPanel("mcChargesContainer").FindChildrenWithClassTraverse ? GetCachedPanel("mcChargesContainer").FindChildrenWithClassTraverse("charge") : null;
+            var container = McResolveChargesContainer(root);
+            if (!container) return null;
+
+            var allCharges = container.FindChildrenWithClassTraverse ? container.FindChildrenWithClassTraverse("charge") : null;
             if (!allCharges || allCharges.length === 0) return null;
+
             var maxCharges = 0;
             var activeCharges = [];
             for (var i = 0; i < allCharges.length; i += 1) {
-                if (allCharges[i].BHasClass("has_charge")) { maxCharges += 1; activeCharges.push(allCharges[i]); }
-            }
-            if (maxCharges === 0) return null;
-            var maxAngle = MC_CHARGE_MAX_ANGLES[maxCharges] || 26;
-            var totalChargeValue = 0;
-            for (var i = 0; i < activeCharges.length; i += 1) {
-                var charge = activeCharges[i];
-                var chargeFgElements = charge.FindChildrenWithClassTraverse ? charge.FindChildrenWithClassTraverse("charge_fg") : null;
-                if (!chargeFgElements || chargeFgElements.length === 0) continue;
-                var chargeFg = chargeFgElements[0];
-                if (chargeFg.BHasClass("finished")) {
-                    totalChargeValue += 1.0;
-                } else {
-                    var clipStyle = chargeFg.style && chargeFg.style.clip ? chargeFg.style.clip.toString() : "";
-                    var match = clipStyle.match(/radial\([^,]+,[^,]+,\s*([\d.]+)deg\s*\)/);
-                    if (match) totalChargeValue += Math.min(parseFloat(match[1]) / maxAngle, 1.0);
+                if (allCharges[i].BHasClass("has_charge")) {
+                    maxCharges += 1;
+                    activeCharges.push(allCharges[i]);
                 }
             }
-            return { percent: Math.round((totalChargeValue / maxCharges) * 100), chargesFilled: totalChargeValue, maxCharges: maxCharges };
-        } catch (e) { $.Msg("[QOLLock][MC] Error in McParseChargesForHunger: " + e); return null; }
+            if (maxCharges === 0) return null;
+
+            var maxAngle = MC_CHARGE_MAX_ANGLES[maxCharges] || 26;
+            var totalChargeValue = 0;
+
+            for (var i = 0; i < activeCharges.length; i += 1) {
+                var charge = activeCharges[i];
+                var isCharging = charge.BHasClass("charging");
+                var isDraining = charge.BHasClass("draining") || charge.BHasClass("drained");
+                var isDisabled = charge.BHasClass("disabled");
+
+                if (!isCharging && !isDraining && !isDisabled) {
+                    // Ready / full dash charge
+                    totalChargeValue += 1.0;
+                } else if (isCharging) {
+                    // Actively recharging
+                    var chargeFgElements = charge.FindChildrenWithClassTraverse ? charge.FindChildrenWithClassTraverse("charge_fg") : null;
+                    var chargeFg = (chargeFgElements && chargeFgElements.length > 0) ? chargeFgElements[0] : null;
+                    var clipStyle = (chargeFg && chargeFg.style && chargeFg.style.clip) ? chargeFg.style.clip.toString() : "";
+                    var match = clipStyle.match(/radial\([^,]+,[^,]+,\s*([\d.]+)deg\s*\)/);
+                    if (match) {
+                        var extentAngle = parseFloat(match[1]) || 0;
+                        var progress = (extentAngle > maxAngle) ? (extentAngle / 360) : (extentAngle / maxAngle);
+                        totalChargeValue += Math.min(Math.max(progress, 0.0), 1.0);
+                    } else {
+                        // Recharging
+                        totalChargeValue += 0.2;
+                    }
+                }
+                // isDraining || isDisabled -> 0.0
+            }
+
+            var hungerPercent = Math.round((totalChargeValue / maxCharges) * 100);
+            if (hungerPercent < 0) hungerPercent = 0;
+            if (hungerPercent > 100) hungerPercent = 100;
+
+            return { percent: hungerPercent, chargesFilled: totalChargeValue, maxCharges: maxCharges };
+        } catch (e) {
+            $.Msg("[QOLLock][MC] Error in McParseChargesForHunger: " + e);
+            return null;
+        }
     }
 
     function McUpdateFood(percent) {
         try {
             var hudRoot = GetCachedPanel("mcHudRoot");
             if (!hudRoot) return;
-            if (!GetCachedPanel("mcFoodContainer")) {
-                SetCachedPanel("mcFoodContainer", hudRoot.FindChildTraverse ? (hudRoot.FindChildTraverse("MinecraftFoodContainer") || null) : null);
-                if (!GetCachedPanel("mcFoodContainer")) { $.Msg("[QOLLock][MC] MinecraftFoodContainer not found"); return; }
-                var children = GetCachedPanel("mcFoodContainer").Children();
+            var foodContainer = GetCachedPanel("mcFoodContainer");
+            if (!IsPanelValid(foodContainer)) {
+                foodContainer = hudRoot.FindChildTraverse ? (hudRoot.FindChildTraverse("MinecraftFoodContainer") || null) : null;
+                SetCachedPanel("mcFoodContainer", foodContainer);
+                if (!foodContainer) { $.Msg("[QOLLock][MC] MinecraftFoodContainer not found"); return; }
+                var children = foodContainer.Children ? foodContainer.Children() : [];
                 State.mcCachedFoodIcons = [];
                 for (var i = 0; i < children.length; i += 1) { if (children[i].BHasClass("FoodIcon")) State.mcCachedFoodIcons.push(children[i]); }
             }
-            if (State.mcCachedFoodIcons.length === 0) return;
+            if (!State.mcCachedFoodIcons || State.mcCachedFoodIcons.length === 0) return;
             if (percent < 0) percent = 0;
             if (percent > 100) percent = 100;
             var totalHalfSegments = Math.round(percent / MC_FOOD_PERCENT_PER_HALF);

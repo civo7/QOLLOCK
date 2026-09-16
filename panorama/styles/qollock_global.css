@@ -201,11 +201,15 @@
 .InHideout #QOLKeyboardOverlayRoot,
 .InHideout #QOLZipBoostOverlay,
 .InHideout #QOLStatBonusesOverlay,
-.InHideout #QOLItemMirrorRoot,
 .InHideout #QOLCompassRoot,
 .InHideout #QOLBetterUnsecuredOverlay
 {
     opacity: 0;
+}
+
+.connectedToHeroTesting #QOLItemMirrorRoot
+{
+    opacity: 1;
 }
 
 /* ── HudTakeover ── */

@@ -105,19 +105,6 @@
                 var root = $.GetContextPanel();
                 var ap = root.FindChildTraverse("ammo_panel");
                 _applyClipAngle(root, _clamp(cfg.AMMO_CLIP_ANGLE, 0, 360));
-                var ammoStatusEnabled = Number(cfg.ENABLE_AMMO_STATUS) === 1 || cfg.ENABLE_AMMO_STATUS === true;
-                if (!ammoStatusEnabled) {
-                    if (_lastMainSig !== "disabled") {
-                        _lastMainSig = "disabled";
-                        if (ap && ap.style) {
-                            ap.style.x = "0px";
-                            ap.style.y = "80px";
-                            ap.style.preTransformScale2d = "1.00, 1.00";
-                        }
-                        if (ap) _applyChildren(ap, 100, 100, "");
-                    }
-                    return;
-                }
                 if (!ap) { _lastMainSig = ""; return; }
 
                 var hideMagazine = Number(cfg.ENABLE_HIDE_MAGAZINE) === 1;
@@ -152,6 +139,7 @@
                         if (ap && ap.style) {
                             ap.style.x = "0px"; ap.style.y = "80px";
                             ap.style.preTransformScale2d = "1.00, 1.00";
+                            _applyChildren(ap, 100, 100, "");
                         }
                         var cs = root.FindChildTraverse("clip_status");
                         if (cs) {

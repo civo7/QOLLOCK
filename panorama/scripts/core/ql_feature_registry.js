@@ -112,14 +112,49 @@
         enabledMap[id] = false;
     };
 
+    const isFeatureSupposedToBeEnabled = (id, configSlice) => {
+        const manifest = manifests[id];
+        if (!manifest) return false;
+        const cfg = configSlice || (ConfigStore && ConfigStore.hasSchema(id) ? ConfigStore.all(id) : null);
+        if (!cfg) return manifest.enabledByDefault === true;
+
+        if (manifest.enableKey && Object.prototype.hasOwnProperty.call(cfg, manifest.enableKey)) {
+            const v = cfg[manifest.enableKey];
+            return (v === true || v === 1 || String(v) === "true");
+        }
+        if (Array.isArray(manifest.enableKeys) && manifest.enableKeys.length > 0) {
+            for (let i = 0; i < manifest.enableKeys.length; i++) {
+                const k = manifest.enableKeys[i];
+                if (Object.prototype.hasOwnProperty.call(cfg, k)) {
+                    const val = cfg[k];
+                    if (val === true || val === 1 || String(val) === "true") {
+                        return true;
+                    }
+                }
+            }
+            return false;
+        }
+        if (Object.prototype.hasOwnProperty.call(cfg, "enabled")) {
+            return !!cfg.enabled;
+        }
+        return manifest.enabledByDefault === true;
+    };
+
     const onConfigChanged = (payload) => {
         if (!payload || typeof payload.featureId !== "string") return;
         const manifest = manifests[payload.featureId];
-        const isEnableKey = payload.key === "enabled" || (manifest && manifest.enableKey && payload.key === manifest.enableKey);
+        const hasEnableKey = manifest && manifest.enableKey && payload.key === manifest.enableKey;
+        const hasEnableKeys = manifest && Array.isArray(manifest.enableKeys) && manifest.enableKeys.includes(payload.key);
+        const isEnableKey = payload.key === "enabled" || hasEnableKey || hasEnableKeys;
         if (isEnableKey) {
-            const isTrue = payload.value === true || payload.value === 1 || String(payload.value) === "true";
-            isTrue ? safeEnableFeature(payload.featureId) : safeDisableFeature(payload.featureId);
-            return;
+            const shouldEnable = isFeatureSupposedToBeEnabled(payload.featureId);
+            const isCurrentlyEnabled = Object.prototype.hasOwnProperty.call(instances, payload.featureId);
+            if (shouldEnable && !isCurrentlyEnabled) {
+                safeEnableFeature(payload.featureId);
+            } else if (!shouldEnable && isCurrentlyEnabled) {
+                safeDisableFeature(payload.featureId);
+                return;
+            }
         }
         if (!Object.prototype.hasOwnProperty.call(instances, payload.featureId) &&
             Object.prototype.hasOwnProperty.call(manifests, payload.featureId) &&
@@ -178,14 +213,8 @@
             if (enablingInProgress[id]) continue;                              // reentry guard
             const manifest = manifests[id];
 
-            let shouldEnable = manifest.enabledByDefault === true;
-            if (config && Object.prototype.hasOwnProperty.call(config, id)) {
-                if (Object.prototype.hasOwnProperty.call(config[id], "enabled")) {
-                    shouldEnable = !!config[id].enabled;
-                } else if (manifest.enableKey && Object.prototype.hasOwnProperty.call(config[id], manifest.enableKey)) {
-                    shouldEnable = !!config[id][manifest.enableKey];
-                }
-            }
+            const slice = (config && Object.prototype.hasOwnProperty.call(config, id)) ? config[id] : null;
+            const shouldEnable = isFeatureSupposedToBeEnabled(id, slice);
 
             if (!shouldEnable) continue;
 

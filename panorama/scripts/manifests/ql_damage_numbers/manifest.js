@@ -163,6 +163,10 @@
             function _applyStyle(meta, fontSizeText, indicatorSize, hideModesChanged, hideSmallNumbers, opacityText) {
                 if (!meta || !meta.panel) return;
                 var p = meta.panel; if (!_isPanelValid(p)) return;
+                if (meta.isCumulativeOrBatched) {
+                    try { if (p.style.fontSize) p.style.fontSize = null; } catch(e) {}
+                    return;
+                }
                 if (hideModesChanged) {
                     var container = _isPanelValid(meta.container) ? meta.container : _findAncestorWithClass(p, "HudIndicatorContainer");
                     if (container && container !== meta.container) meta.container = container;
@@ -172,7 +176,6 @@
                 var targetSize = fontSizeText;
                 try { var pid = p.id; if (pid === "Desc" || pid === "Effectiveness") { var capped = indicatorSize > 28 ? 28 : indicatorSize; targetSize = capped + "px"; } } catch(e) {}
                 if (p.style.fontSize !== targetSize) { try { p.style.fontSize = targetSize; } catch(e) {} }
-                if (meta.isCumulativeOrBatched) return;
                 if (hideSmallNumbers && meta.isSmallDamage) { _setOpacitySafe(p, 0, 0); return; }
                 _setOpacitySafe(p, opacityText, 1.0);
             }
