@@ -350,12 +350,16 @@ test("window: buildUI initializes navigation structure and attaches events", () 
 
     const header = win.FindChildTraverse("SettingsHeader");
     const closeBtn = header.FindChildTraverse("CloseBtn");
+    const moglockLink = header.FindChildTraverse("ModVersionLabelTop");
     assert.ok(closeBtn, "CloseBtn must exist");
+    assert.ok(moglockLink, "ModVersionLabelTop must exist");
 
     const headerChildren = header.Children();
+    const verIdx = headerChildren.indexOf(moglockLink);
     const centerIdx = headerChildren.indexOf(headerCenterHost);
     const closeIdx = headerChildren.indexOf(closeBtn);
-    assert.ok(centerIdx >= 0 && closeIdx >= 0, "Both CenterHost and CloseBtn must be in header");
+    assert.ok(verIdx >= 0 && centerIdx >= 0 && closeIdx >= 0, "All header elements must be in header");
+    assert.ok(verIdx < centerIdx, "ModVersionLabelTop must precede SettingsHeaderCenterHost in header child order");
     assert.ok(centerIdx < closeIdx, "SettingsHeaderCenterHost must precede CloseBtn in header child order");
 });
 

@@ -1563,25 +1563,30 @@
             }
 
             let headerVer = header.FindChildTraverse("ModVersionLabelTop");
-            if (headerVer) {
-                headerVer.DeleteAsync(0);
-                headerVer = null;
+            if (!headerVer) {
+                headerVer = createPanel("Button", header, "ModVersionLabelTop");
+                if (headerVer) {
+                    headerVer.AddClass("HeaderMoglockLinkButton");
+                    headerVer.hittest = true;
+                    headerVer.hittestchildren = true;
+                    headerVer.style.zIndex = "7";
+                    headerVer.SetPanelEvent("onactivate", () => {
+                        try { $.DispatchEvent("ExternalBrowserGoToURL", "https://moglock.gg/"); } catch (_) {}
+                    });
+                    const headerVerPrefix = createPanel("Label", headerVer, "ModVersionLabelTopPrefix");
+                    if (headerVerPrefix) headerVerPrefix.text = localize("by", true);
+                    const headerVerDomain = createPanel("Label", headerVer, "ModVersionLabelTopDomain");
+                    if (headerVerDomain) headerVerDomain.text = localize("moglock.gg", true);
+                }
+            } else {
+                const headerVerPrefix = headerVer.FindChildTraverse("ModVersionLabelTopPrefix");
+                if (headerVerPrefix) headerVerPrefix.text = localize("by", true);
+                const headerVerDomain = headerVer.FindChildTraverse("ModVersionLabelTopDomain");
+                if (headerVerDomain) headerVerDomain.text = localize("moglock.gg", true);
             }
-            headerVer = createPanel("Button", header, "ModVersionLabelTop");
             if (headerVer) {
-                headerVer.AddClass("HeaderMoglockLinkButton");
                 headerVer.visible = !isMunfins;
                 headerVer.style.visibility = isMunfins ? "collapse" : "visible";
-                headerVer.hittest = true;
-                headerVer.hittestchildren = true;
-                headerVer.style.zIndex = "7";
-                headerVer.SetPanelEvent("onactivate", () => {
-                    try { $.DispatchEvent("ExternalBrowserGoToURL", "https://moglock.gg/"); } catch (_) {}
-                });
-                const headerVerPrefix = createPanel("Label", headerVer, "ModVersionLabelTopPrefix");
-                if (headerVerPrefix) headerVerPrefix.text = localize("by", true);
-                const headerVerDomain = createPanel("Label", headerVer, "ModVersionLabelTopDomain");
-                if (headerVerDomain) headerVerDomain.text = localize("moglock.gg", true);
             }
 
             if (typeof ApplySettingsHeaderLogoTheme === "function") {
@@ -1603,23 +1608,21 @@
                 const headerDiscordBtn = header.FindChildTraverse("HeaderDiscordLinkButton");
                 if (headerDiscordBtn) headerDiscordBtn.DeleteAsync(0);
 
-                closeBtnHeader.style.ignoreParentFlow = "true";
                 closeBtnHeader.style.horizontalAlign = "right";
                 closeBtnHeader.style.verticalAlign = "center";
-                closeBtnHeader.style.marginRight = "15px";
                 closeBtnHeader.SetPanelEvent("onactivate", () => {
                     forceCloseModSettings();
                 });
             }
 
             // Ensure header children ordering:
-            // [Logo] [Accent] [Title] [by moglock.gg] [CenterHost] [CloseBtn]
+            // [Logo] [Accent: QOL] [Title: LOCK] [by moglock.gg] [CenterHost: Search] [CloseBtn: X]
             if (header.MoveChildBefore) {
-                if (headerVer && headerCenterHost) {
-                    try { header.MoveChildBefore(headerVer, headerCenterHost); } catch (_) {}
-                }
                 if (headerCenterHost && closeBtnHeader) {
                     try { header.MoveChildBefore(headerCenterHost, closeBtnHeader); } catch (_) {}
+                }
+                if (headerVer && headerCenterHost) {
+                    try { header.MoveChildBefore(headerVer, headerCenterHost); } catch (_) {}
                 }
             }
 
