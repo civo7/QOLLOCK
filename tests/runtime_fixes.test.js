@@ -360,6 +360,61 @@ test("ql_minimap_timers hides bridge buff timer when powerup rune is spawned on 
     instance.onDisable();
 });
 
+test("ql_minimap_timers standard mode positioning respects 40px bottom offset and single slot offsets", () => {
+    const hud = sim.createHud({ inHideout: false });
+    hud.assertLoaded();
+    const Q = hud.sandbox.global.QOL;
+    const $ = hud.sandbox.global.$;
+
+    const root = hud.root;
+    const persp = $.CreatePanel("Panel", root, "minimap_persp");
+    const container = $.CreatePanel("Panel", persp, "minimap_container");
+    $.CreatePanel("Panel", container, "hud_minimap");
+
+    const feat = Q.core.FeatureRegistry.getManifest("ql_minimap_timers");
+    assert.ok(feat, "ql_minimap_timers must be registered");
+
+    let cfg = {
+        ENABLE_MINIMAP_BUFF_TIMER: 1,
+        ENABLE_MINIMAP_BUFF_TIMER_ON_BRIDGE: 0,
+        ENABLE_MINIMAP_REJUV_TIMER: 1,
+        ENABLE_MINIMAP_ALWAYS_ON_MID_BOSS: 0,
+        MINIMAP_SMALL_SIZE: 400
+    };
+
+    const instance = feat.create({
+        config: { view: () => cfg }
+    });
+
+    instance.onEnable();
+    hud.clock.advance(500);
+
+    const overlay = container.FindChildTraverse("QOLMinimapTimersRoot");
+    assert.ok(overlay, "Overlay root must exist");
+    const buffTimer = container.FindChildTraverse("QOLMinimapBuffTimer");
+    const rejuvTimer = container.FindChildTraverse("QOLMinimapRejuvTimer");
+    assert.ok(buffTimer, "Buff timer must exist");
+    assert.ok(rejuvTimer, "Rejuv timer must exist");
+
+    // Both timers active: overlay bottom margin must be 40px, timer margin 0px 40px, overlay marginLeft 0px
+    assert.strictEqual(overlay.style.marginBottom, "40px", "Bottom offset must be 40px at 400px minimap");
+    assert.strictEqual(buffTimer.style.margin, "0px 40px", "Buff timer gap margin must be 40px");
+    assert.strictEqual(rejuvTimer.style.margin, "0px 40px", "Rejuv timer gap margin must be 40px");
+    assert.strictEqual(overlay.style.marginLeft, "0px", "Centered when both timers active");
+
+    // Only buff timer active: single slot offset applied to the right (+152px)
+    cfg = { ...cfg, ENABLE_MINIMAP_REJUV_TIMER: 0 };
+    hud.clock.advance(500);
+    assert.strictEqual(overlay.style.marginLeft, "152px", "Single buff timer shifted right to preserve slot");
+
+    // Only rejuv timer active: single slot offset applied to the left (-152px)
+    cfg = { ...cfg, ENABLE_MINIMAP_BUFF_TIMER: 0, ENABLE_MINIMAP_REJUV_TIMER: 1 };
+    hud.clock.advance(500);
+    assert.strictEqual(overlay.style.marginLeft, "-152px", "Single rejuv timer shifted left to preserve slot");
+
+    instance.onDisable();
+});
+
 test("ql_minimap_runtime handles zero opacity, offsets, and zoom modes without child pollution", () => {
     const hud = sim.createHud({ inHideout: false });
     hud.assertLoaded();

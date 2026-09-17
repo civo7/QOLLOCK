@@ -271,4 +271,9 @@ test("ui/controls: createInlineSecondaryCheckboxToggleRow constructs main toggle
     assert.ok(row);
     assert.ok(row.BHasClass("SettingRow"));
     assert.ok(row.BHasClass("InlineSecondaryCheckboxRow"));
+    const secBtn = row.FindChildrenWithClassTraverse("InlineSecondaryCheckboxBtn")[0];
+    assert.ok(secBtn, "Secondary button must exist");
+    assert.strictEqual(secBtn.type, "Button", "Secondary checkbox must be a Button, not ToggleButton, to prevent duplicate tickbox");
+    const tickBoxes = row.FindChildrenWithClassTraverse("TickBox");
+    assert.strictEqual(tickBoxes.length, 1, "There must be exactly one TickBox panel");
 });

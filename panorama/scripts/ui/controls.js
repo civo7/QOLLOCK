@@ -3004,7 +3004,7 @@
 
         const checkboxWrap = $.CreatePanel("Panel", controls, "");
         checkboxWrap.AddClass("InlineSecondaryCheckboxWrap");
-        const secondaryBtn = $.CreatePanel("ToggleButton", checkboxWrap, "");
+        const secondaryBtn = $.CreatePanel("Button", checkboxWrap, "");
         secondaryBtn.AddClass("InlineSecondaryCheckboxBtn");
         secondaryBtn.AddClass("CitadelSettingsCheckbox");
         secondaryBtn.AddClass("MultiCheckboxBtn");
