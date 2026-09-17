@@ -556,3 +556,92 @@ test("ql_minimap_timers maintains calibrated base coordinates across minimap sca
     instance.onDisable();
 });
 
+test("ql_minimap_runtime ALT_ZOOM_DRAW_OVER_UI stays stable without oscillation when reparented", () => {
+    const hud = sim.createHud({ inHideout: false });
+    hud.assertLoaded();
+    const Q = hud.sandbox.global.QOL;
+    const $ = hud.sandbox.global.$;
+
+    const root = hud.root;
+    const gameplayHud = $.CreatePanel("Panel", root, "CitadelGameplayHud");
+    const persp = $.CreatePanel("Panel", gameplayHud, "minimap_persp");
+    const container = $.CreatePanel("Panel", persp, "minimap_container");
+    $.CreatePanel("Panel", container, "hud_minimap");
+
+    Q.core.ConfigStore.set("ql_minimap_runtime", "ENABLE_ALT_ZOOM", 1);
+    Q.core.ConfigStore.set("ql_minimap_runtime", "ALT_ZOOM_DRAW_OVER_UI", 1);
+    Q.core.ConfigStore.set("ql_minimap_runtime", "MINIMAP_LARGE_SIZE_ALT", 800);
+
+    // Simulate Alt press on gameplayHud (where gDetailView lives in Deadlock)
+    gameplayHud.AddClass("gDetailView");
+    hud.clock.advance(100);
+
+    // Tick 1: should zoom and reparent to root
+    assert.strictEqual(persp.style.align, "center center", "Minimap must be centered in alt zoom");
+    assert.strictEqual(persp.GetParent(), root, "Minimap must be reparented to hudRoot under draw over ui");
+
+    // Advance multiple ticks while holding Alt
+    for (let i = 0; i < 5; i++) {
+        hud.clock.advance(50);
+        assert.strictEqual(persp.style.align, "center center", `Tick ${i + 1}: Minimap must remain centered without oscillating`);
+        assert.strictEqual(persp.GetParent(), root, `Tick ${i + 1}: Minimap must remain reparented to hudRoot`);
+    }
+
+    // Release Alt
+    gameplayHud.RemoveClass("gDetailView");
+    hud.clock.advance(100);
+
+    assert.strictEqual(persp.style.align, "right bottom", "Releasing Alt restores right bottom alignment");
+    assert.strictEqual(persp.GetParent(), gameplayHud, "Releasing Alt restores original parent");
+
+    Q.core.FeatureRegistry.disable("ql_minimap_runtime");
+});
+
+test("ql_compass MINIMAP_FLIP sets flip classes on hud_minimap and overlays correctly", () => {
+    const hud = sim.createHud({ inHideout: false });
+    hud.assertLoaded();
+    const Q = hud.sandbox.global.QOL;
+    const $ = hud.sandbox.global.$;
+
+    const root = hud.root;
+    const persp = $.CreatePanel("Panel", root, "minimap_persp");
+    const container = $.CreatePanel("Panel", persp, "minimap_container");
+    const hudMinimap = $.CreatePanel("Panel", container, "hud_minimap");
+    hudMinimap.AddClass("HudMinimap");
+
+    const feat = Q.core.FeatureRegistry.getManifest("ql_compass");
+    assert.ok(feat, "ql_compass must be registered");
+
+    let cfg = {
+        ENABLE_COMPASS: 0,
+        MINIMAP_ROTATE_WITH_PLAYER: 0,
+        MINIMAP_FLIP: 1
+    };
+
+    const instance = feat.create({
+        config: { view: () => cfg, all: () => cfg }
+    });
+    instance.onEnable();
+    hud.clock.advance(100);
+
+    // When MINIMAP_FLIP is enabled:
+    assert.strictEqual(hudMinimap.BHasClass("qol_minimap_flip_active"), true, "hudMinimap must have qol_minimap_flip_active");
+    assert.strictEqual(container.BHasClass("qol_minimap_flip_active"), true, "container must have qol_minimap_flip_active");
+
+    // When MINIMAP_FLIP is disabled:
+    cfg = { ...cfg, MINIMAP_FLIP: 0 };
+    instance.onSettingsChanged();
+    assert.strictEqual(hudMinimap.BHasClass("qol_minimap_flip_active"), false, "hudMinimap must not have qol_minimap_flip_active when disabled");
+    assert.strictEqual(container.BHasClass("qol_minimap_flip_active"), false, "container must not have qol_minimap_flip_active when disabled");
+
+    // onDisable cleans up classes:
+    cfg = { ...cfg, MINIMAP_FLIP: 1 };
+    instance.onSettingsChanged();
+    assert.strictEqual(hudMinimap.BHasClass("qol_minimap_flip_active"), true);
+    assert.strictEqual(container.BHasClass("qol_minimap_flip_active"), true);
+
+    instance.onDisable();
+    assert.strictEqual(hudMinimap.BHasClass("qol_minimap_flip_active"), false, "onDisable must remove qol_minimap_flip_active from hudMinimap");
+    assert.strictEqual(container.BHasClass("qol_minimap_flip_active"), false, "onDisable must remove qol_minimap_flip_active from container");
+});
+

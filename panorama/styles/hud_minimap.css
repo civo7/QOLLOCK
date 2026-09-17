@@ -116,6 +116,11 @@
 	z-index: 30;
 }
 
+.qol_minimap_flip_active.HudMinimap
+{
+	transform: scaleY(-1) scaleX(-1);
+}
+
 .qol_minimap_flip_active .button_image
 {
 	transform: scaleY(-1) scaleX(-1);
@@ -134,7 +139,7 @@
 
 .qol_minimap_flip_active .held_idol_image
 {
-	transform: rotateZ(180deg) translateX(-10px) translateY(-2px);
+	transform: rotateZ(180deg) translateX(8px) translateY(7px);
 }
 
 .qol_minimap_flip_active .map_button
@@ -145,11 +150,6 @@
 .qol_minimap_flip_active .map_button.powerup_spawn
 {
 	transform: rotateZ(180deg);
-}
-
-.qol_minimap_flip_active .map_button.boss_icon_t3
-{
-	transform: scaleY(-1) scaleX(-1);
 }
 
 .qol_minimap_flip_active .speaking_button_image
@@ -164,7 +164,7 @@
 
 .qol_minimap_flip_active .map_button.player
 {
-	transform: scaleY(-1) scaleX(-1);
+	transform: scaleY(1) scaleX(1);
 	border-radius: 50%;
 	overflow: clip clip;
 	clip: radial(50% 50%, 0deg, 360deg);
@@ -175,5 +175,94 @@
 	border-radius: 50%;
 	overflow: clip clip;
 	clip: radial(50% 50%, 0deg, 360deg);
+}
+
+.invert_map.qol_minimap_flip_active.HudMinimap
+{
+	transform: scaleY(1) scaleX(1);
+}
+
+.invert_map.qol_minimap_flip_active .button_image
+{
+	transform: scaleY(1) scaleX(1);
+}
+
+.invert_map.qol_minimap_flip_active .map_button.mid_stairs.right_stairs
+{
+	transform: rotateZ(0deg);
+}
+
+.invert_map.qol_minimap_flip_active .map_button.mid_stairs
+{
+	transform: rotateZ(0deg) scaleY(1);
+}
+
+.invert_map.qol_minimap_flip_active .held_idol_image
+{
+	transform: rotateZ(0deg) translateX(0px) translateY(0px);
+}
+
+.invert_map.qol_minimap_flip_active .map_button
+{
+	transform: scaleY(1) scaleX(1);
+}
+
+.invert_map.qol_minimap_flip_active .map_button.powerup_spawn
+{
+	transform: rotateZ(0deg);
+}
+
+.invert_map.qol_minimap_flip_active .speaking_button_image
+{
+	transform: rotateZ(0deg);
+}
+
+.invert_map.qol_minimap_flip_active .map_button.enlarge_entry
+{
+	transform: scaleY(1.2) scaleX(1.2);
+}
+
+.invert_map.qol_minimap_flip_active .map_button.player
+{
+	transform: scaleY(1) scaleX(1);
+}
+
+.qol_minimap_flip_active #tunnel_overlay,
+.qol_minimap_flip_active #QOLMinimapCrateOverlay,
+.qol_minimap_flip_active #QOLMinimapTimersRoot
+{
+	transform: scaleY(-1) scaleX(-1);
+}
+
+.qol_minimap_flip_active #QOLMinimapCrateOverlay .minimap_crate_marker,
+.qol_minimap_flip_active #QOLMinimapTimersRoot .QOLMinimapTimer
+{
+	transform: scaleY(-1) scaleX(-1);
+}
+
+.localPlayerTeam2 #tunnel_overlay,
+.localPlayerTeam2 #QOLMinimapCrateOverlay,
+.localPlayerTeam2 #QOLMinimapTimersRoot
+{
+	transform: scaleY(-1) scaleX(-1);
+}
+
+.localPlayerTeam2 #QOLMinimapCrateOverlay .minimap_crate_marker,
+.localPlayerTeam2 #QOLMinimapTimersRoot .QOLMinimapTimer
+{
+	transform: scaleY(-1) scaleX(-1);
+}
+
+.localPlayerTeam2 .qol_minimap_flip_active #tunnel_overlay,
+.localPlayerTeam2 .qol_minimap_flip_active #QOLMinimapCrateOverlay,
+.localPlayerTeam2 .qol_minimap_flip_active #QOLMinimapTimersRoot
+{
+	transform: scaleY(1) scaleX(1);
+}
+
+.localPlayerTeam2 .qol_minimap_flip_active #QOLMinimapCrateOverlay .minimap_crate_marker,
+.localPlayerTeam2 .qol_minimap_flip_active #QOLMinimapTimersRoot .QOLMinimapTimer
+{
+	transform: scaleY(1) scaleX(1);
 }
 

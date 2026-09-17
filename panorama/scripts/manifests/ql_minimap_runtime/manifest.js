@@ -483,15 +483,17 @@
                 if (!parent.GetChildCount || !parent.GetChild || !parent.MoveChildBefore) return;
 
                 var targetIndex = _drawOverUiOriginalIndex;
-                if (!isFinite(targetIndex) || targetIndex < 0) return;
-
-                var count = parent.GetChildCount();
-                if (count <= 1 || targetIndex >= count) return;
-
-                var anchor = parent.GetChild(targetIndex);
-                if (anchor && anchor !== minimapPersp) {
-                    parent.MoveChildBefore(minimapPersp, anchor);
+                if (isFinite(targetIndex) && targetIndex >= 0) {
+                    var count = parent.GetChildCount();
+                    if (count > 1 && targetIndex < count) {
+                        var anchor = parent.GetChild(targetIndex);
+                        if (anchor && anchor !== minimapPersp) {
+                            parent.MoveChildBefore(minimapPersp, anchor);
+                        }
+                    }
                 }
+                _drawOverUiOriginalParent = null;
+                _drawOverUiOriginalIndex = -1;
             }
 
             function _updateZoomDrawOverUi(root, cfg, zoomTabActive, zoomAltActive, minimapPersp) {
@@ -594,6 +596,22 @@
                 return Number(val);
             }
 
+            function _isHudOrHierarchyClassActive(root, panel, className) {
+                if (root && root.BHasClass && root.BHasClass(className)) return true;
+                if (panel && hasClassInHierarchy(panel, className)) return true;
+                if (isPanelValid(_drawOverUiOriginalParent) && hasClassInHierarchy(_drawOverUiOriginalParent, className)) return true;
+                var hudMinimap = isPanelValid(_hudMinimapPanel) ? _hudMinimapPanel : (root && root.FindChildTraverse ? root.FindChildTraverse(PANEL_ID_MINIMAP) : null);
+                if (isPanelValid(hudMinimap)) {
+                    _hudMinimapPanel = hudMinimap;
+                    if (hudMinimap.BHasClass && hudMinimap.BHasClass(className)) return true;
+                }
+                if (typeof QOL !== "undefined") {
+                    if (QOL.core && QOL.core.hud && typeof QOL.core.hud.isClassActive === "function" && QOL.core.hud.isClassActive(className)) return true;
+                    if (typeof QOL.isHudClassActive === "function" && QOL.isHudClassActive(root, className)) return true;
+                }
+                return false;
+            }
+
             function _tick() {
                 var root = $.GetContextPanel();
                 if (!root) return;
@@ -604,8 +622,8 @@
 
                 var cfg = ctx.config.view();
 
-                var isAlt = (root.BHasClass && root.BHasClass("gDetailView")) || hasClassInHierarchy(master, "gDetailView");
-                var isTab = (root.BHasClass && root.BHasClass("gScoreboardOpen")) || hasClassInHierarchy(master, "gScoreboardOpen");
+                var isAlt = _isHudOrHierarchyClassActive(root, master, "gDetailView");
+                var isTab = _isHudOrHierarchyClassActive(root, master, "gScoreboardOpen");
                 var zoomAlt = (isAlt && Number(cfg.ENABLE_ALT_ZOOM) === 1);
                 var zoomTab = (isTab && Number(cfg.ENABLE_TAB_ZOOM) === 1);
                 var activeZoomModeForTunnels = zoomAlt ? "ALT" : (zoomTab ? "TAB" : "");

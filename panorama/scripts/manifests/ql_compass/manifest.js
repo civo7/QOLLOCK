@@ -512,6 +512,15 @@
                 return _minimapRotateTarget;
             }
 
+            var _minimapContainer = null;
+            function _findMinimapContainer(hud) {
+                if (_isAlive(_minimapContainer)) return _minimapContainer;
+                _minimapContainer = null;
+                if (!hud || !hud.FindChildTraverse) return null;
+                _minimapContainer = hud.FindChildTraverse("minimap_container") || null;
+                return _minimapContainer;
+            }
+
             function _findMinimapFlipClassTarget(hud) {
                 if (_isAlive(_minimapFlipClassTarget)) return _minimapFlipClassTarget;
                 var rotateTarget = _findMinimapRotateTarget(hud);
@@ -560,14 +569,21 @@
                 var enabled = !!cfg.MINIMAP_ROTATE_WITH_PLAYER;
                 var staticFlipEnabled = !!cfg.MINIMAP_FLIP;
                 var flipClassTarget = _findMinimapFlipClassTarget(hud);
+                var container = _findMinimapContainer(hud);
 
                 if (!enabled) {
-                    _applyStaticMinimapRotation(hud, nowMs, staticFlipEnabled ? 180 : 0);
-                    if (_isAlive(flipClassTarget)) flipClassTarget.SetHasClass("qol_minimap_flip_active", staticFlipEnabled);
+                    _applyStaticMinimapRotation(hud, nowMs, 0);
+                    if (_isAlive(flipClassTarget)) {
+                        flipClassTarget.SetHasClass("qol_minimap_flip_active", staticFlipEnabled);
+                    }
+                    if (_isAlive(container)) {
+                        container.SetHasClass("qol_minimap_flip_active", staticFlipEnabled);
+                    }
                     return;
                 }
 
                 if (_isAlive(flipClassTarget)) flipClassTarget.SetHasClass("qol_minimap_flip_active", false);
+                if (_isAlive(container)) container.SetHasClass("qol_minimap_flip_active", false);
 
                 var target = _findMinimapRotateTarget(hud);
                 if (!_isAlive(target)) return;
@@ -619,8 +635,8 @@
                 if (headingPrediction > MINIMAP_ROTATE_PREDICT_MAX_DEG) headingPrediction = MINIMAP_ROTATE_PREDICT_MAX_DEG;
                 if (headingPrediction < -MINIMAP_ROTATE_PREDICT_MAX_DEG) headingPrediction = -MINIMAP_ROTATE_PREDICT_MAX_DEG;
                 var predictedHeading = _norm360(heading360 + headingPrediction);
-
-                var targetDeg = _norm180(-(predictedHeading + MINIMAP_ROTATE_NORTH_OFFSET_DEG));
+                var flipOffset = staticFlipEnabled ? 180 : 0;
+                var targetDeg = _norm180(-(predictedHeading + MINIMAP_ROTATE_NORTH_OFFSET_DEG) + flipOffset);
                 if (_minimapRotateSmoothedDeg === null || !isFinite(_minimapRotateSmoothedDeg)) {
                     _minimapRotateSmoothedDeg = targetDeg;
                     _minimapRotateLastUpdateMs = nowMs;
@@ -938,6 +954,8 @@
                     _hideCompassOverlay();
                     var flipTarget = _findMinimapFlipClassTarget(hud);
                     if (_isAlive(flipTarget)) flipTarget.SetHasClass("qol_minimap_flip_active", false);
+                    var container = _findMinimapContainer(hud);
+                    if (_isAlive(container)) container.SetHasClass("qol_minimap_flip_active", false);
                     _applyStaticMinimapRotation(hud, _nowMs(), 0);
                     if (_loop) _loop.reschedule(COMPASS_INTERVAL_IDLE_SEC);
                     return;
@@ -964,11 +982,14 @@
                     if (hud) {
                         var flipTarget = _findMinimapFlipClassTarget(hud);
                         if (_isAlive(flipTarget)) flipTarget.SetHasClass("qol_minimap_flip_active", false);
+                        var container = _findMinimapContainer(hud);
+                        if (_isAlive(container)) container.SetHasClass("qol_minimap_flip_active", false);
                         _applyStaticMinimapRotation(hud, _nowMs(), 0);
                         var target = _findMinimapRotateTarget(hud);
                         if (_isAlive(target)) _clearStyle(target, "preTransformRotate2d");
                         _minimapRotateLastDeg = null;
                     }
+                    _minimapContainer = null;
                 },
                 onSettingsChanged: function () {
                     _tick();
