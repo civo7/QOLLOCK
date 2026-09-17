@@ -141,7 +141,8 @@
                         if (mc && mc.style) {
                             mc.style.x = "0px"; mc.style.y = "0px"; mc.style.washColor = "";
                             _clearOpacity(mc);
-                            if (mc.SetHasClass) mc.SetHasClass("qol-hidden", false);
+                            var isSupposed = FR && FR.isFeatureSupposedToBeEnabled ? FR.isFeatureSupposedToBeEnabled("ql_items") : false;
+                            if (mc.SetHasClass) mc.SetHasClass("qol-hidden", !isSupposed);
                             // Also reset all child panels that _apply touches.
                             _resetAllChildren(mc);
                         }

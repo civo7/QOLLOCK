@@ -124,8 +124,7 @@
                 if (Math.abs(scNum - 1.0) > 0.0001) bp.style.uiScale = scText;
                 else _clearStyle(bp, "uiScale");
 
-                // Valve's CSS manages normal visibility — QOLLOCK never collapses abilities.
-                if (bp.SetHasClass) bp.SetHasClass("qol-hidden", false);
+                if (bp.SetHasClass) bp.SetHasClass("qol-hidden", !enabled);
 
                 if (wc) bp.style.washColor = wc;
                 else _clearStyle(bp, "washColor");
@@ -149,7 +148,8 @@
                             _clearStyle(bp, "uiScale");
                             _clearStyle(bp, "opacity");
                             _clearStyle(bp, "washColor");
-                            if (bp.SetHasClass) bp.SetHasClass("qol-hidden", false);
+                            var isSupposed = FR && FR.isFeatureSupposedToBeEnabled ? FR.isFeatureSupposedToBeEnabled("ql_bottom_bar") : false;
+                            if (bp.SetHasClass) bp.SetHasClass("qol-hidden", !isSupposed);
                         }
                     } catch(e) {}
                 },

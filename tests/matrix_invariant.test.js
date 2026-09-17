@@ -146,13 +146,13 @@ test("INVARIANT 2: Explicit feature disable restores vanilla layout cleanly, ena
     assert.strictEqual(env.panels.topBar.style.x, "50px", "TopBar should have custom x offset applied");
     assert.strictEqual(env.panels.topBar.BHasClass("qol-hidden"), false, "TopBar must NOT be hidden");
 
-    // 2. Disable TopBar feature explicitly -> restores vanilla state (clears inline styles, never collapses Valve panel)
+    // 2. Disable TopBar feature explicitly -> hides panel with qol-hidden
     configStore.set("ql_topbar", "HUD_TOP_BAR_ENABLED", 0);
     env.hud.clock.advance(500);
-    assert.strictEqual(env.panels.topBar.BHasClass("qol-hidden"), false, "TopBar should NOT be collapsed when feature is disabled");
+    assert.strictEqual(env.panels.topBar.BHasClass("qol-hidden"), true, "TopBar should be hidden with qol-hidden when feature is disabled");
     assert.ok(!env.panels.topBar.style.x, "TopBar x offset must be cleared when feature is disabled");
 
-    // 3. Re-enable TopBar -> custom offset restored
+    // 3. Re-enable TopBar -> custom offset restored and qol-hidden removed
     configStore.set("ql_topbar", "HUD_TOP_BAR_ENABLED", 1);
     env.hud.clock.advance(500);
     assert.strictEqual(env.panels.topBar.BHasClass("qol-hidden"), false, "TopBar should NOT have qol-hidden when re-enabled");
@@ -163,10 +163,10 @@ test("INVARIANT 2: Explicit feature disable restores vanilla layout cleanly, ena
     env.hud.clock.advance(500);
     assert.strictEqual(env.panels.souls.BHasClass("qol-hidden"), false);
 
-    // Disable Souls explicitly -> restores vanilla state
+    // Disable Souls explicitly -> hides panel with qol-hidden
     configStore.set("ql_souls", "HUD_SOULS_ENABLED", 0);
     env.hud.clock.advance(500);
-    assert.strictEqual(env.panels.souls.BHasClass("qol-hidden"), false, "Souls should NOT be collapsed when feature is disabled");
+    assert.strictEqual(env.panels.souls.BHasClass("qol-hidden"), true, "Souls should be hidden with qol-hidden when feature is disabled");
     assert.ok(!env.panels.souls.style.y, "Souls y offset must be cleared when feature is disabled");
 
     // Re-enable Souls

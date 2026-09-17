@@ -62,8 +62,7 @@
                 if (_lastSig === sig) return;
                 _lastSig = sig;
 
-                // Valve's CSS manages normal match/hideout/replay visibility — QOLLOCK never collapses souls.
-                if (panel.SetHasClass) panel.SetHasClass("qol-hidden", false);
+                if (panel.SetHasClass) panel.SetHasClass("qol-hidden", !enabled);
 
                 if (active && enabled) {
                     if (offsetX !== 0) panel.style.x = offsetX + "px"; else _clearStyle(panel, "x");
@@ -98,7 +97,8 @@
                     try {
                         var p = $.GetContextPanel().FindChildTraverse(PANEL_ID);
                         if (p) {
-                            if (p.SetHasClass) p.SetHasClass("qol-hidden", false);
+                            var isSupposed = FR && FR.isFeatureSupposedToBeEnabled ? FR.isFeatureSupposedToBeEnabled("ql_souls") : false;
+                            if (p.SetHasClass) p.SetHasClass("qol-hidden", !isSupposed);
                             _clearStyle(p, "x");
                             _clearStyle(p, "y");
                             _clearStyle(p, "opacity");
