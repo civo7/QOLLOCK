@@ -44,7 +44,10 @@
             var Panel = (QOL.core && QOL.core.panel) ? QOL.core.panel : {};
             var State = QOL.state || (typeof globalThis !== "undefined" && globalThis.State) || {};
             var Utils = (typeof QOL_UTILS !== "undefined" ? QOL_UTILS : (QOL.utils || {}));
-            var IsCfgEnabled = Utils.IsCfgEnabled || function(v) { return !!v && v !== "false" && v !== "0"; };
+            var IsCfgEnabled = Utils.IsCfgEnabled || function(cfg, key) {
+                var v = (typeof key !== "undefined" && cfg && typeof cfg === "object") ? cfg[key] : cfg;
+                return !!v && v !== "false" && v !== "0" && v !== 0;
+            };
             var IsPanelValid = Panel.isAlive || (Utils.IsPanelValid || function(p) { return p != null && typeof p.IsValid === "function" && p.IsValid(); });
             var GetCachedPanel = QOL.getCachedPanel || function(k) { return State.cachedPanels ? State.cachedPanels[k] : null; };
             var SetCachedPanel = QOL.setCachedPanel || function(k, p) { if (State.cachedPanels) State.cachedPanels[k] = p; };
@@ -64,6 +67,84 @@
             var IsStreetBrawlModeActive = function(r) { return QOL.isStreetBrawlModeActive ? QOL.isStreetBrawlModeActive(r) : false; };
             var isConnectedToHideout = function(r) { return (QOL.core && QOL.core.hud && QOL.core.hud.isClassActive) ? (QOL.core.hud.isClassActive("connectedToHideout") || QOL.core.hud.isClassActive("InHideout")) : (QOL.isConnectedToHideout ? QOL.isConnectedToHideout(r) : false); };
             var BRIDGE_DURATION_SEC = 300;
+
+            var POWERUP_BUFF_CLASSES = [
+                "powerup_gun",
+                "powerup_survival",
+                "powerup_casting",
+                "powerup_movement"
+            ];
+
+            function GetPowerupBridgeSide(panel) {
+                if (!IsPanelValid(panel)) return null;
+                var posText = "";
+                try {
+                    if (panel.style && typeof panel.style.position === "string") {
+                        posText = panel.style.position;
+                    }
+                } catch(e) {}
+                if (!posText && panel.GetAttributeString) {
+                    try { posText = panel.GetAttributeString("style", ""); } catch(e) {}
+                }
+                if (posText) {
+                    var match = posText.match(/([+\-]?\d+(?:\.\d+)?)%/);
+                    if (match && match[1]) {
+                        var xPct = parseFloat(match[1]);
+                        if (isFinite(xPct)) return xPct < 50 ? "left" : "right";
+                    }
+                }
+                try {
+                    var ox = panel.actualxoffset;
+                    if (typeof ox === "number" && isFinite(ox)) {
+                        var parent = panel.GetParent ? panel.GetParent() : null;
+                        var pw = parent && typeof parent.actuallayoutwidth === "number" ? parent.actuallayoutwidth : 0;
+                        if (pw > 0) return ox < (pw / 2) ? "left" : "right";
+                        if (ox > 0) return ox < 200 ? "left" : "right";
+                    }
+                } catch(e) {}
+                return null;
+            }
+
+            function DetectActiveBridgeBuffs(root, anchor) {
+                var result = { left: false, right: false };
+                var searchRoot = (root && root.FindChildTraverse) ? (root.FindChildTraverse("HudMinimap") || root.FindChildTraverse("hud_minimap") || anchor || root) : (anchor || root);
+                if (!IsPanelValid(searchRoot)) return result;
+
+                var spawners = searchRoot.FindChildrenWithClassTraverse ? searchRoot.FindChildrenWithClassTraverse("powerup_spawn") : null;
+                if (!spawners || spawners.length === 0) return result;
+
+                for (var i = 0; i < spawners.length; i++) {
+                    var p = spawners[i];
+                    if (!IsPanelValid(p)) continue;
+
+                    var isSpawned = false;
+                    for (var c = 0; c < POWERUP_BUFF_CLASSES.length; c++) {
+                        if (p.BHasClass && p.BHasClass(POWERUP_BUFF_CLASSES[c])) {
+                            isSpawned = true;
+                            break;
+                        }
+                    }
+                    if (!isSpawned && p.BHasClass && p.BHasClass("powerup_spawn") && p.BHasClass("active")) {
+                        isSpawned = true;
+                    }
+                    if (!isSpawned) continue;
+
+                    var side = GetPowerupBridgeSide(p);
+                    if (!side && spawners.length >= 2) {
+                        var x0 = Number(spawners[0].actualxoffset) || 0;
+                        var x1 = Number(spawners[1].actualxoffset) || 0;
+                        if (p === spawners[0]) {
+                            side = x0 <= x1 ? "left" : "right";
+                        } else {
+                            side = x1 > x0 ? "right" : "left";
+                        }
+                    }
+
+                    if (side === "left") result.left = true;
+                    else if (side === "right") result.right = true;
+                }
+                return result;
+            }
 
             var _loop = null;
             var _root = null;
@@ -158,7 +239,7 @@
                 if (panels.rejuvPanel) { SetPanelClassCached(panels.rejuvPanel, State.minimapObjectiveRejuvClassCache, "yellow", ry); SetPanelClassCached(panels.rejuvPanel, State.minimapObjectiveRejuvClassCache, "red", rr); }
             }
 
-            function ApplyMinimapObjectiveTimersBridgeMode(panels, overlay, dims, bd, flags, icons, bridgeText, rejuvText) {
+            function ApplyMinimapObjectiveTimersBridgeMode(panels, overlay, dims, bd, flags, icons, bridgeText, rejuvText, activeBuffs) {
                 var tw = dims.timerWidth, th = dims.timerHeight, tg = dims.timerGap, tpx = dims.timerPaddingX, tr = dims.timerRadius, tf = dims.timerFont, ti = dims.timerIcon, bo = dims.bottomOffset;
                 var ms = bd.minimapSize, btw = bd.bridgeTimerWidth, bth = bd.bridgeTimerHeight, btpx = bd.bridgeTimerPaddingX, btr = bd.bridgeTimerRadius, btf = bd.bridgeTimerFont, bho = bd.bridgeHorizontalOffset;
                 var be = flags.buffEnabled, bbe = flags.buffOnBridgeEnabled, re = flags.rejuvEnabled, rbe = flags.rejuvOnBridgeEnabled, br = flags.buffRed, by = flags.buffYellow, rr = flags.rejuvRed, ry = flags.rejuvYellow;
@@ -181,8 +262,24 @@
                 if (overlay.style.marginLeft !== "0px") overlay.style.marginLeft = "0px";
                 var sbbp = be && !bbe;
                 if (panels.buffPanel) { if (panels.buffPanel.SetHasClass) panels.buffPanel.SetHasClass("qol-hidden", !sbbp); else if (panels.buffPanel.style.visibility !== (sbbp ? "visible" : "collapse")) panels.buffPanel.style.visibility = sbbp ? "visible" : "collapse"; }
-                if (panels.buffBridgeLeftPanel) { if (panels.buffBridgeLeftPanel.SetHasClass) panels.buffBridgeLeftPanel.SetHasClass("qol-hidden", !bbe); else if (panels.buffBridgeLeftPanel.style.visibility !== (be ? "visible" : "collapse")) panels.buffBridgeLeftPanel.style.visibility = bbe ? "visible" : "collapse"; }
-                if (panels.buffBridgeRightPanel) { if (panels.buffBridgeRightPanel.SetHasClass) panels.buffBridgeRightPanel.SetHasClass("qol-hidden", !bbe); else if (panels.buffBridgeRightPanel.style.visibility !== (be ? "visible" : "collapse")) panels.buffBridgeRightPanel.style.visibility = bbe ? "visible" : "collapse"; }
+                var leftHidden = !bbe || !!(activeBuffs && activeBuffs.left);
+                var rightHidden = !bbe || !!(activeBuffs && activeBuffs.right);
+                if (panels.buffBridgeLeftPanel) {
+                    if (panels.buffBridgeLeftPanel.SetHasClass) {
+                        panels.buffBridgeLeftPanel.SetHasClass("qol-hidden", leftHidden);
+                        panels.buffBridgeLeftPanel.SetHasClass("buff_spawned", !!(activeBuffs && activeBuffs.left));
+                    } else if (panels.buffBridgeLeftPanel.style.visibility !== (leftHidden ? "collapse" : "visible")) {
+                        panels.buffBridgeLeftPanel.style.visibility = leftHidden ? "collapse" : "visible";
+                    }
+                }
+                if (panels.buffBridgeRightPanel) {
+                    if (panels.buffBridgeRightPanel.SetHasClass) {
+                        panels.buffBridgeRightPanel.SetHasClass("qol-hidden", rightHidden);
+                        panels.buffBridgeRightPanel.SetHasClass("buff_spawned", !!(activeBuffs && activeBuffs.right));
+                    } else if (panels.buffBridgeRightPanel.style.visibility !== (rightHidden ? "collapse" : "visible")) {
+                        panels.buffBridgeRightPanel.style.visibility = rightHidden ? "collapse" : "visible";
+                    }
+                }
                 if (panels.rejuvPanel) { if (panels.rejuvPanel.SetHasClass) panels.rejuvPanel.SetHasClass("qol-hidden", !re); else if (panels.rejuvPanel.style.visibility !== (re ? "visible" : "collapse")) panels.rejuvPanel.style.visibility = re ? "visible" : "collapse"; }
                 if (panels.buffPanel && sbbp) { panels.buffPanel.style.ignoreParentFlow = "true"; panels.buffPanel.style.verticalAlign = "bottom"; panels.buffPanel.style.marginTop = "0px"; panels.buffPanel.style.marginBottom = bo + "px"; panels.buffPanel.style.marginLeft = ((!re || rbe) ? 0 : (-sso)) + "px"; }
                 if (panels.rejuvPanel) { panels.rejuvPanel.style.ignoreParentFlow = "true"; if (rbe) { panels.rejuvPanel.style.verticalAlign = "center"; panels.rejuvPanel.style.marginLeft = "0px"; panels.rejuvPanel.style.marginTop = "0px"; panels.rejuvPanel.style.marginBottom = "0px"; } else { panels.rejuvPanel.style.verticalAlign = "bottom"; panels.rejuvPanel.style.marginTop = "0px"; panels.rejuvPanel.style.marginBottom = bo + "px"; panels.rejuvPanel.style.marginLeft = ((be && !bbe) || bbe ? sso : 0) + "px"; } }
@@ -195,8 +292,14 @@
                 // keeps whatever standard mode last set — a clock frozen mid-countdown.
                 if (sbbp && panels.buffTime && panels.buffTime.text !== bridgeText) panels.buffTime.text = bridgeText;
                 if (re && panels.rejuvTime && panels.rejuvTime.text !== rejuvText) panels.rejuvTime.text = rejuvText;
-                if (panels.buffBridgeLeftPanel) { SetPanelClassCached(panels.buffBridgeLeftPanel, State.minimapObjectiveBuffBridgeLeftClassCache, "yellow", by); SetPanelClassCached(panels.buffBridgeLeftPanel, State.minimapObjectiveBuffBridgeLeftClassCache, "red", br); }
-                if (panels.buffBridgeRightPanel) { SetPanelClassCached(panels.buffBridgeRightPanel, State.minimapObjectiveBuffBridgeRightClassCache, "yellow", by); SetPanelClassCached(panels.buffBridgeRightPanel, State.minimapObjectiveBuffBridgeRightClassCache, "red", br); }
+                if (panels.buffBridgeLeftPanel) {
+                    SetPanelClassCached(panels.buffBridgeLeftPanel, State.minimapObjectiveBuffBridgeLeftClassCache, "yellow", !leftHidden && by);
+                    SetPanelClassCached(panels.buffBridgeLeftPanel, State.minimapObjectiveBuffBridgeLeftClassCache, "red", !leftHidden && br);
+                }
+                if (panels.buffBridgeRightPanel) {
+                    SetPanelClassCached(panels.buffBridgeRightPanel, State.minimapObjectiveBuffBridgeRightClassCache, "yellow", !rightHidden && by);
+                    SetPanelClassCached(panels.buffBridgeRightPanel, State.minimapObjectiveBuffBridgeRightClassCache, "red", !rightHidden && br);
+                }
                 if (panels.buffPanel) { SetPanelClassCached(panels.buffPanel, State.minimapObjectiveBuffClassCache, "yellow", false); SetPanelClassCached(panels.buffPanel, State.minimapObjectiveBuffClassCache, "red", false); }
                 if (panels.rejuvPanel) { SetPanelClassCached(panels.rejuvPanel, State.minimapObjectiveRejuvClassCache, "yellow", ry); SetPanelClassCached(panels.rejuvPanel, State.minimapObjectiveRejuvClassCache, "red", rr); }
             }
@@ -208,16 +311,16 @@
                 var panels = EnsureMinimapObjectiveTimers(root); if (!panels || !panels.root) return;
                 var overlay = panels.root;
                 if (overlay.SetHasClass) overlay.SetHasClass("qol-hidden", false); else if (overlay.style.visibility !== "visible") overlay.style.visibility = "visible";
-                var ms = ResolveActiveMinimapObjectiveSize(root, cfg); if (!isFinite(ms)) ms = 400; if (ms < 200) ms = 200; if (ms > 1200) ms = 1200;
-                var msc = ms / 400.0; if (!isFinite(msc)) msc = 1.0; if (msc < 0.5) msc = 0.5; if (msc > 2.5) msc = 2.5;
-                var tw = Math.max(58, Math.round(72 * msc)), th = Math.max(22, Math.round(28 * msc)), tg = Math.max(24, Math.round(40 * msc)), tpx = Math.max(3, Math.round(5 * msc)), tr = Math.max(4, Math.round(5 * msc)), tf = Math.max(11, Math.round(14 * msc)), ti = Math.max(12, Math.round(16 * msc)), bo = Math.max(4, Math.round(ms * 0.10));
+                var ms = 400;
+                var tw = 72, th = 28, tg = 6, tpx = 5, tr = 5, tf = 14, ti = 16, bo = 8;
                 var brr = Math.max(0, Math.floor(Number(remainingBridge) || 0)), rjr = Math.max(0, Math.floor(Number(remainingRejuv) || 0));
                 var bufR = be && brr < 10 && (brr % 2) === 1, bufY = be && !bufR && brr < 20 && (brr % 2) === 1;
                 var rwe = re && !spawnWaiting, rejR = re && (spawnWaiting || (rwe && rjr < 10 && (rjr % 2) === 1)), rejY = rwe && !rejR && rjr < 20 && (rjr % 2) === 1;
                 var bi = GetCachedPanel("minimapObjectiveBuffIcon"), bli = GetCachedPanel("minimapObjectiveBuffBridgeLeftIcon"), bri = GetCachedPanel("minimapObjectiveBuffBridgeRightIcon"), ri = GetCachedPanel("minimapObjectiveRejuvIcon");
-                var btw2 = Math.max(29, Math.round(tw * 0.5)), bth2 = Math.max(11, Math.round(th * 0.5)), btpx2 = Math.max(2, Math.round(tpx * 0.5)), btr2 = Math.max(2, Math.round(tr * 0.5)), btf2 = Math.max(8, Math.round(tf * 0.5)), bho2 = Math.round(ms * 0.35);
+                var btw = 48, bth = 18, btpx = 3, btr = 4, btf = 11, bho = 144;
+                var activeBuffs = DetectActiveBridgeBuffs(root, EnsureMinimapOverlayAnchor(root));
                 if (!bbe && !rbe) { ApplyMinimapObjectiveTimersStandardMode(panels, overlay, {timerWidth:tw,timerHeight:th,timerGap:tg,timerPaddingX:tpx,timerRadius:tr,timerFont:tf,timerIcon:ti,bottomOffset:bo}, {buffEnabled:be,rejuvEnabled:re,buffRed:bufR,buffYellow:bufY,rejuvRed:rejR,rejuvYellow:rejY}, {buffIcon:bi,buffBridgeLeftIcon:bli,buffBridgeRightIcon:bri,rejuvIcon:ri}, bridgeText, rejuvText); return; }
-                ApplyMinimapObjectiveTimersBridgeMode(panels, overlay, {timerWidth:tw,timerHeight:th,timerGap:tg,timerPaddingX:tpx,timerRadius:tr,timerFont:tf,timerIcon:ti,bottomOffset:bo}, {minimapSize:ms,bridgeTimerWidth:btw2,bridgeTimerHeight:bth2,bridgeTimerPaddingX:btpx2,bridgeTimerRadius:btr2,bridgeTimerFont:btf2,bridgeHorizontalOffset:bho2}, {buffEnabled:be,buffOnBridgeEnabled:bbe,rejuvEnabled:re,rejuvOnBridgeEnabled:rbe,buffRed:bufR,buffYellow:bufY,rejuvRed:rejR,rejuvYellow:rejY}, {buffIcon:bi,buffBridgeLeftIcon:bli,buffBridgeRightIcon:bri,rejuvIcon:ri}, bridgeText, rejuvText);
+                ApplyMinimapObjectiveTimersBridgeMode(panels, overlay, {timerWidth:tw,timerHeight:th,timerGap:tg,timerPaddingX:tpx,timerRadius:tr,timerFont:tf,timerIcon:ti,bottomOffset:bo}, {minimapSize:ms,bridgeTimerWidth:btw,bridgeTimerHeight:bth,bridgeTimerPaddingX:btpx,bridgeTimerRadius:btr,bridgeTimerFont:btf,bridgeHorizontalOffset:bho}, {buffEnabled:be,buffOnBridgeEnabled:bbe,rejuvEnabled:re,rejuvOnBridgeEnabled:rbe,buffRed:bufR,buffYellow:bufY,rejuvRed:rejR,rejuvYellow:rejY}, {buffIcon:bi,buffBridgeLeftIcon:bli,buffBridgeRightIcon:bri,rejuvIcon:ri}, bridgeText, rejuvText, activeBuffs);
             }
 
             // ── Main tick ──

@@ -260,5 +260,107 @@ test("Minecraft healthbar parses health from currentHealthOverHearts and tracks 
     assert.strictEqual(foodIcons.length, 10, "10 food icons must exist");
 });
 
+test("ql_minimap_runtime scales minimap via uiScale and preserves base 400px geometry", () => {
+    const hud = sim.createHud({ inHideout: false });
+    hud.assertLoaded();
+    const Q = hud.sandbox.global.QOL;
+    const $ = hud.sandbox.global.$;
+
+    const root = hud.root;
+    const persp = $.CreatePanel("Panel", root, "minimap_persp");
+    const container = $.CreatePanel("Panel", persp, "minimap_container");
+    $.CreatePanel("Panel", container, "hud_minimap");
+
+    const feat = Q.core.FeatureRegistry.getManifest("ql_minimap_runtime");
+    assert.ok(feat, "ql_minimap_runtime must be registered");
+
+    const instance = feat.create({
+        config: {
+            view: () => ({
+                MINIMAP_SMALL_SIZE: 600,
+                ENABLE_ALT_ZOOM: 0,
+                ENABLE_TAB_ZOOM: 0,
+            })
+        }
+    });
+
+    instance.onEnable();
+    hud.clock.advance(500);
+
+    assert.strictEqual(persp.style.uiScale, "150%", "minimap_persp must receive uiScale: 150%");
+    assert.strictEqual(persp.style.width, "400px", "minimap_persp width must stay 400px base");
+    assert.strictEqual(persp.style.height, "400px", "minimap_persp height must stay 400px base");
+    assert.ok(!container.style.width, "child container must not receive hardcoded width");
+    assert.ok(!container.style.height, "child container must not receive hardcoded height");
+
+    instance.onDisable();
+    assert.ok(!persp.style.uiScale, "onDisable must clear uiScale");
+});
+
+test("ql_minimap_timers hides bridge buff timer when powerup rune is spawned on bridge", () => {
+    const hud = sim.createHud({ inHideout: false });
+    hud.assertLoaded();
+    const Q = hud.sandbox.global.QOL;
+    const $ = hud.sandbox.global.$;
+
+    const root = hud.root;
+    const persp = $.CreatePanel("Panel", root, "minimap_persp");
+    const container = $.CreatePanel("Panel", persp, "minimap_container");
+    const hudMinimap = $.CreatePanel("Panel", container, "hud_minimap");
+
+    const spawnerLeft = $.CreatePanel("Panel", hudMinimap, "spawner_left");
+    spawnerLeft.AddClass("map_button");
+    spawnerLeft.AddClass("powerup_spawn");
+    spawnerLeft.style = { position: "25% 50% 0px" };
+
+    const spawnerRight = $.CreatePanel("Panel", hudMinimap, "spawner_right");
+    spawnerRight.AddClass("map_button");
+    spawnerRight.AddClass("powerup_spawn");
+    spawnerRight.style = { position: "75% 50% 0px" };
+
+    const feat = Q.core.FeatureRegistry.getManifest("ql_minimap_timers");
+    assert.ok(feat, "ql_minimap_timers must be registered");
+
+    const instance = feat.create({
+        config: {
+            view: () => ({
+                ENABLE_MINIMAP_BUFF_TIMER: 1,
+                ENABLE_MINIMAP_BUFF_TIMER_ON_BRIDGE: 1,
+                ENABLE_MINIMAP_REJUV_TIMER: 0,
+                ENABLE_MINIMAP_ALWAYS_ON_MID_BOSS: 0,
+            })
+        }
+    });
+
+    instance.onEnable();
+    hud.clock.advance(500);
+
+    const bridgeL = container.FindChildTraverse("QOLMinimapBuffBridgeLeftTimer");
+    const bridgeR = container.FindChildTraverse("QOLMinimapBuffBridgeRightTimer");
+    assert.ok(bridgeL, "Left bridge timer must exist");
+    assert.ok(bridgeR, "Right bridge timer must exist");
+
+    // Initially, neither spawner is active -> both bridge timers visible
+    assert.strictEqual(bridgeL.BHasClass("qol-hidden"), false, "Left timer should be visible");
+    assert.strictEqual(bridgeR.BHasClass("qol-hidden"), false, "Right timer should be visible");
+
+    // Powerup spawns on left bridge
+    spawnerLeft.AddClass("powerup_gun");
+    hud.clock.advance(500);
+
+    assert.strictEqual(bridgeL.BHasClass("qol-hidden"), true, "Left timer should be hidden when powerup active on left bridge");
+    assert.strictEqual(bridgeL.BHasClass("buff_spawned"), true, "Left timer should have buff_spawned class");
+    assert.strictEqual(bridgeR.BHasClass("qol-hidden"), false, "Right timer should remain visible");
+
+    // Powerup collected
+    spawnerLeft.RemoveClass("powerup_gun");
+    hud.clock.advance(500);
+
+    assert.strictEqual(bridgeL.BHasClass("qol-hidden"), false, "Left timer should reappear after rune is picked up");
+    assert.strictEqual(bridgeL.BHasClass("buff_spawned"), false, "Left timer buff_spawned class removed");
+
+    instance.onDisable();
+});
+
 
 

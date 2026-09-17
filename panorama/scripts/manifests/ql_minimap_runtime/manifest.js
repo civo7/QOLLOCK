@@ -637,11 +637,17 @@
                         ? _getZoomValue(cfg, "ZOOM_Y_OFFSET_TAB", "ZOOM_Y_OFFSET", 0)
                         : _getZoomValue(cfg, "ZOOM_Y_OFFSET_ALT", "ZOOM_Y_OFFSET", 0);
 
+                    var minimapScale = activeTargetSize / 400.0;
+                    var minimapScaleText = Math.round(minimapScale * 100) + "%";
+
                     for (var pi = 0; pi < minimapPanels.length; pi++) {
                         var p = minimapPanels[pi];
-                        if (p.style.width !== minimapSizeText) p.style.width = minimapSizeText;
-                        if (p.style.height !== minimapSizeText) p.style.height = minimapSizeText;
                         if (p.id === "minimap_persp") {
+                            if (p.style.uiScale !== minimapScaleText) {
+                                p.style.uiScale = minimapScaleText;
+                            }
+                            if (p.style.width !== "400px") p.style.width = "400px";
+                            if (p.style.height !== "400px") p.style.height = "400px";
                             if (p.style.preTransformScale2d !== "1.00, 1.00") {
                                 p.style.preTransformScale2d = "1.00, 1.00";
                             }
@@ -656,6 +662,10 @@
                                 var marginY = 30 + (Number(cfg.MINIMAP_Y_OFFSET) || 0);
                                 p.style.margin = "0px " + marginX + "px " + marginY + "px 0px";
                             }
+                        } else {
+                            if (p.style.width) p.style.width = null;
+                            if (p.style.height) p.style.height = null;
+                            if (p.style.uiScale) p.style.uiScale = null;
                         }
                         var op = 1.0;
                         if (zoomAlt) {
@@ -732,6 +742,18 @@
                         var master = _cachedPanels[0];
                         if (master && isPanelValid(master)) {
                             _updateZoomDrawOverUi(root, {}, false, false, master);
+                        }
+                        for (var dpi = 0; dpi < _cachedPanels.length; dpi++) {
+                            var dp = _cachedPanels[dpi];
+                            if (isPanelValid(dp)) {
+                                try { dp.style.uiScale = null; } catch(e) {}
+                                try { dp.style.width = null; } catch(e) {}
+                                try { dp.style.height = null; } catch(e) {}
+                                try { dp.style.margin = null; } catch(e) {}
+                                try { dp.style.align = null; } catch(e) {}
+                                try { dp.style.transformOrigin = null; } catch(e) {}
+                                try { dp.style.opacity = null; } catch(e) {}
+                            }
                         }
                     }
 
