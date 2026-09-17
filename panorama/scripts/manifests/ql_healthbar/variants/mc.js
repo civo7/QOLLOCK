@@ -597,42 +597,56 @@
     function McReadHealthValues(hudRoot) {
         if (!hudRoot) return null;
 
+        var regenTotal = GetCachedPanel("mcHealthRegenAndTotal");
+        if (!IsPanelValid(regenTotal)) {
+            regenTotal = hudRoot.FindChildTraverse ? hudRoot.FindChildTraverse("HealthRegenAndTotal") : null;
+            if (regenTotal) SetCachedPanel("mcHealthRegenAndTotal", regenTotal);
+        }
+
         var currentLbl = GetCachedPanel("mcCurrentHealthLabel");
         if (!IsPanelValid(currentLbl)) {
-            currentLbl = hudRoot.FindChildTraverse ? hudRoot.FindChildTraverse("currentHealthOverHearts") : null;
+            if (regenTotal) {
+                try {
+                    if (typeof QOL !== "undefined" && QOL.utils && QOL.utils.FindFirstPanelByClass) {
+                        currentLbl = QOL.utils.FindFirstPanelByClass(regenTotal, "currentHealthLabel");
+                    }
+                } catch (e1) {}
+            }
+            if (!currentLbl && hudRoot.FindChildrenWithClassTraverse) {
+                var cPanels = hudRoot.FindChildrenWithClassTraverse("currentHealthLabel") || [];
+                for (var ci = 0; ci < cPanels.length; ci++) {
+                    if (cPanels[ci] && String(cPanels[ci].id || "") !== "currentHealthOverHearts") {
+                        currentLbl = cPanels[ci];
+                        break;
+                    }
+                }
+            }
             if (!currentLbl) {
-                var hc = GetCachedPanel("mcHealthContainer");
-                if (!IsPanelValid(hc)) {
-                    hc = hudRoot.FindChildTraverse ? hudRoot.FindChildTraverse("healthContainer") : null;
-                    if (!hc && hudRoot.FindChildrenWithClassTraverse) {
-                        var all = hudRoot.FindChildrenWithClassTraverse("healthContainer");
-                        if (all && all.length > 0) hc = all[0];
-                    }
-                    if (hc) SetCachedPanel("mcHealthContainer", hc);
-                }
-                if (hc) {
-                    currentLbl = hc.FindChildTraverse ? hc.FindChildTraverse("currentHealthLabel") : null;
-                    if (!currentLbl && hc.FindChildrenWithClassTraverse) {
-                        var lbls = hc.FindChildrenWithClassTraverse("currentHealthLabel");
-                        if (lbls && lbls.length > 0) currentLbl = lbls[0];
-                    }
-                }
+                currentLbl = hudRoot.FindChildTraverse ? (hudRoot.FindChildTraverse("currentHealthLabel") || hudRoot.FindChildTraverse("currentHealthOverHearts")) : null;
             }
             if (currentLbl) SetCachedPanel("mcCurrentHealthLabel", currentLbl);
         }
 
         var totalLbl = GetCachedPanel("mcTotalHealthLabel");
         if (!IsPanelValid(totalLbl)) {
-            totalLbl = hudRoot.FindChildTraverse ? hudRoot.FindChildTraverse("totalHealthOverHearts") : null;
-            if (!totalLbl) {
-                var hcTotal = GetCachedPanel("mcHealthContainer");
-                if (hcTotal) {
-                    totalLbl = hcTotal.FindChildTraverse ? hcTotal.FindChildTraverse("totalHealthLabel") : null;
-                    if (!totalLbl && hcTotal.FindChildrenWithClassTraverse) {
-                        var lblsTotal = hcTotal.FindChildrenWithClassTraverse("totalHealthLabel");
-                        if (lblsTotal && lblsTotal.length > 0) totalLbl = lblsTotal[0];
+            if (regenTotal) {
+                try {
+                    if (typeof QOL !== "undefined" && QOL.utils && QOL.utils.FindFirstPanelByClass) {
+                        totalLbl = QOL.utils.FindFirstPanelByClass(regenTotal, "totalHealthLabel");
+                    }
+                } catch (e2) {}
+            }
+            if (!totalLbl && hudRoot.FindChildrenWithClassTraverse) {
+                var tPanels = hudRoot.FindChildrenWithClassTraverse("totalHealthLabel") || [];
+                for (var ti = 0; ti < tPanels.length; ti++) {
+                    if (tPanels[ti] && String(tPanels[ti].id || "") !== "totalHealthOverHearts") {
+                        totalLbl = tPanels[ti];
+                        break;
                     }
                 }
+            }
+            if (!totalLbl) {
+                totalLbl = hudRoot.FindChildTraverse ? (hudRoot.FindChildTraverse("totalHealthLabel") || hudRoot.FindChildTraverse("totalHealthOverHearts")) : null;
             }
             if (totalLbl) SetCachedPanel("mcTotalHealthLabel", totalLbl);
         }
@@ -926,6 +940,11 @@
             if (mcPercent < 0) mcPercent = 0;
             mcPercentLabel.text = "  [" + String(Math.floor(mcPercent)) + "%]";
         }
+
+        var numCurrent = hudRoot.FindChildTraverse ? hudRoot.FindChildTraverse("currentHealthOverHearts") : null;
+        if (IsPanelValid(numCurrent)) numCurrent.text = String(currentHealth);
+        var numTotal = hudRoot.FindChildTraverse ? hudRoot.FindChildTraverse("totalHealthOverHearts") : null;
+        if (IsPanelValid(numTotal)) numTotal.text = "/ " + String(totalHealth);
 
         var nowMsForMod = Date.now();
         var hs = McComputeHealthState(currentHealth, totalHealth, hudRoot, nowMsForMod);

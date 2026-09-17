@@ -158,7 +158,7 @@
         }
         if (!Object.prototype.hasOwnProperty.call(instances, payload.featureId) &&
             Object.prototype.hasOwnProperty.call(manifests, payload.featureId) &&
-            ConfigStore.get(payload.featureId, "enabled") === true) {
+            isFeatureSupposedToBeEnabled(payload.featureId)) {
             safeEnableFeature(payload.featureId);
         }
         const instance = instances[payload.featureId];

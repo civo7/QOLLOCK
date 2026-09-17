@@ -69,9 +69,15 @@
     };
 
     const _syncFeatureEnabledState = () => {
-        if (!FeatureRegistry || !ConfigStore || !_enableKeyMap) return;
-        for (const id of Object.keys(_enableKeyMap)) {
-            const nowEnabled = ConfigStore.get(id, "enabled");
+        if (!FeatureRegistry || !ConfigStore) return;
+        const ids = (typeof FeatureRegistry.getRegisteredIds === "function")
+            ? FeatureRegistry.getRegisteredIds()
+            : Object.keys(_enableKeyMap || {});
+        for (let i = 0; i < ids.length; i++) {
+            const id = ids[i];
+            const nowEnabled = (typeof FeatureRegistry.isFeatureSupposedToBeEnabled === "function")
+                ? FeatureRegistry.isFeatureSupposedToBeEnabled(id)
+                : !!ConfigStore.get(id, "enabled");
             const wasEnabled = FeatureRegistry.isEnabled(id);
             if (nowEnabled && !wasEnabled) {
                 FeatureRegistry.enable(id);
