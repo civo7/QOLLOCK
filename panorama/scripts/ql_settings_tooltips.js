@@ -32,19 +32,25 @@ var gSettingsRowFloatingTooltipLastCursorY = NaN;
 var gSettingsRowFloatingTooltipLastX = NaN;
 var gSettingsRowFloatingTooltipLastY = NaN;
 var gSettingsRowFloatingTooltipTrackScheduled = false;
-var SETTINGS_ROW_FLOATING_TOOLTIP_TRACK_INTERVAL_SEC = 0.05;
+var SETTINGS_ROW_FLOATING_TOOLTIP_TRACK_INTERVAL_SEC = 0.03;
 var SETTINGS_TOOLTIP_POSITION_DEBUG = false;
 var SETTINGS_TOOLTIP_POSITION_DEBUG_INTERVAL_MS = 200;
-var SETTINGS_TOOLTIP_SCROLL_SUPPRESS_MS = 180;
+var SETTINGS_TOOLTIP_SCROLL_SUPPRESS_MS = 250;
 var SETTINGS_TOOLTIP_DEFER_HIDE_SEC = 0.06;
+var SETTINGS_TOOLTIP_COLD_HOVER_DELAY_SEC = 0.10;
+var SETTINGS_TOOLTIP_WARM_RECENT_MS = 250;
 var gSettingsTooltipDebugNextMs = 0;
 var gSettingsTooltipLastListScrollY = NaN;
 var gSettingsTooltipLastHostScrollY = NaN;
+var gSettingsTooltipLastThumbScrollY = NaN;
 var gSettingsTooltipLastAnchorLocalY = NaN;
 var gSettingsTooltipSuppressUntilMs = 0;
 var gSettingsTooltipHideToken = 0;
+var gSettingsTooltipPendingShowToken = 0;
+var gSettingsTooltipLastVisibleTimeMs = 0;
 var gSettingsTooltipObservedListScrollY = NaN;
 var gSettingsTooltipObservedHostScrollY = NaN;
+var gSettingsTooltipObservedThumbScrollY = NaN;
 var gSettingsTooltipLastScrollMoveMs = 0;
 var gSettingsTooltipLastSide = "";
 var gSettingsTooltipStyleToActualX = 1.0;
@@ -54,20 +60,24 @@ var gSettingsTooltipLastWrittenStyleY = NaN;
 var gSettingsTooltipCalibrationFramesRemaining = 0;
 
 function ReadPanelScrollOffsetY(panel) {
-    if (!panel || !panel.IsValid || !panel.IsValid()) return 0;
+    if (!panel || (panel.IsValid && !panel.IsValid())) return 0;
     var y = 0;
     try {
         var sy0 = Number(panel.scrolloffset_y);
         if (isFinite(sy0)) return sy0;
-    } catch(e0) { WarnLog("settings", "op failed: " + (e0 && e0.message ? e0.message : String(e0 || ""))); }
+    } catch(e0) {}
+    try {
+        var syA = Number(panel.actualscrolloffset_y);
+        if (isFinite(syA)) return syA;
+    } catch(eA) {}
     try {
         var sy1 = Number(panel.scrolloffsetY);
         if (isFinite(sy1)) return sy1;
-    } catch(e1) { WarnLog("settings", "op failed: " + (e1 && e1.message ? e1.message : String(e1 || ""))); }
+    } catch(e1) {}
     try {
         var sy2 = Number(panel.ScrollOffsetY);
         if (isFinite(sy2)) return sy2;
-    } catch(e2) { WarnLog("settings", "op failed: " + (e2 && e2.message ? e2.message : String(e2 || ""))); }
+    } catch(e2) {}
     try {
         if (typeof panel.GetScrollOffset === "function") {
             var so = panel.GetScrollOffset();
@@ -76,7 +86,7 @@ function ReadPanelScrollOffsetY(panel) {
                 if (isFinite(sy3)) return sy3;
             }
         }
-    } catch(e3) { WarnLog("settings", "op failed: " + (e3 && e3.message ? e3.message : String(e3 || ""))); }
+    } catch(e3) {}
     return y;
 }
 
@@ -112,13 +122,17 @@ function UpdateSettingsTooltipScrollMotionWatch() {
     var snap = ReadSettingsTooltipScrollSnapshot();
     var listY = Number(snap.listY);
     var hostY = Number(snap.hostY);
+    var thumbY = Number(snap.thumbY);
     if (!isFinite(listY)) listY = 0;
     if (!isFinite(hostY)) hostY = 0;
+    if (!isFinite(thumbY)) thumbY = 0;
     var moved = false;
     if (isFinite(gSettingsTooltipObservedListScrollY) && Math.abs(listY - gSettingsTooltipObservedListScrollY) >= 1) moved = true;
     if (isFinite(gSettingsTooltipObservedHostScrollY) && Math.abs(hostY - gSettingsTooltipObservedHostScrollY) >= 1) moved = true;
+    if (isFinite(gSettingsTooltipObservedThumbScrollY) && Math.abs(thumbY - gSettingsTooltipObservedThumbScrollY) >= 1) moved = true;
     gSettingsTooltipObservedListScrollY = listY;
     gSettingsTooltipObservedHostScrollY = hostY;
+    gSettingsTooltipObservedThumbScrollY = thumbY;
     if (moved) gSettingsTooltipLastScrollMoveMs = GetSettingsTooltipNowMs();
     return moved;
 }
@@ -134,7 +148,12 @@ function CancelSettingsRowFloatingTooltipHide() {
     gSettingsTooltipHideToken++;
 }
 
+function CancelPendingSettingsRowFloatingTooltipShow() {
+    gSettingsTooltipPendingShowToken++;
+}
+
 function HideSettingsRowFloatingTooltipDeferred(reason) {
+    CancelPendingSettingsRowFloatingTooltipShow();
     CancelSettingsRowFloatingTooltipHide();
     var token = gSettingsTooltipHideToken;
     $.Schedule(SETTINGS_TOOLTIP_DEFER_HIDE_SEC, function() {
@@ -146,19 +165,83 @@ function HideSettingsRowFloatingTooltipDeferred(reason) {
 
 function IsSettingsRowFloatingTooltipVisible() {
     var panel = gSettingsRowFloatingTooltipPanel;
-    if (!panel || !panel.IsValid || !panel.IsValid()) return false;
+    if (!panel || (panel.IsValid && !panel.IsValid())) return false;
     if (!panel.BHasClass) return false;
     return !!panel.BHasClass("Visible");
+}
+
+function IsDescendantOf(panel, ancestor) {
+    if (!panel || !ancestor) return false;
+    var cur = panel;
+    var guard = 0;
+    while (cur && (!cur.IsValid || cur.IsValid()) && guard < 64) {
+        if (cur === ancestor) return true;
+        if (!cur.GetParent) break;
+        cur = cur.GetParent();
+        guard++;
+    }
+    return false;
+}
+
+function IsPanelVisibleInList(anchorPanel, settingsList, host) {
+    if (!anchorPanel || (anchorPanel.IsValid && !anchorPanel.IsValid())) return false;
+    if (!settingsList || (settingsList.IsValid && !settingsList.IsValid())) return true;
+
+    var anchorY = (typeof GetPanelYOffsetWithinAncestor === "function")
+        ? Number(GetPanelYOffsetWithinAncestor(anchorPanel, host)) : NaN;
+    var anchorHeight = Number(anchorPanel.actuallayoutheight);
+    var listY = (typeof GetPanelYOffsetWithinAncestor === "function")
+        ? Number(GetPanelYOffsetWithinAncestor(settingsList, host)) : NaN;
+    var listHeight = Number(settingsList.actuallayoutheight);
+
+    if (!isFinite(anchorY) || !isFinite(anchorHeight) || !isFinite(listY) || !isFinite(listHeight)) return true;
+    if (listHeight <= 0) return true;
+
+    if ((anchorY + anchorHeight <= listY + 4) || (anchorY >= listY + listHeight - 4)) {
+        return false;
+    }
+    return true;
 }
 
 function TickSettingsRowFloatingTooltipPosition() {
     gSettingsRowFloatingTooltipTrackScheduled = false;
     if (!IsSettingsRowFloatingTooltipVisible()) return;
     var anchor = gSettingsRowFloatingTooltipAnchor;
-    if (!anchor || !anchor.IsValid || !anchor.IsValid()) {
+    if (!anchor || (anchor.IsValid && !anchor.IsValid())) {
         HideSettingsRowFloatingTooltip();
         return;
     }
+
+    var host = (gSettingsRowFloatingTooltipPanel && gSettingsRowFloatingTooltipPanel.GetParent)
+        ? gSettingsRowFloatingTooltipPanel.GetParent()
+        : null;
+
+    var currentAnchorY = NaN;
+    if (anchor && host && typeof GetPanelYOffsetWithinAncestor === "function") {
+        var rawY = GetPanelYOffsetWithinAncestor(anchor, host);
+        if (rawY !== null && isFinite(rawY)) currentAnchorY = Number(rawY);
+    }
+
+    var anchorMoved = isFinite(gSettingsTooltipLastAnchorLocalY) && isFinite(currentAnchorY) &&
+        Math.abs(currentAnchorY - gSettingsTooltipLastAnchorLocalY) >= 1;
+    var scrollChanged = DidSettingsTooltipScrollChange();
+
+    if (anchorMoved || scrollChanged) {
+        SuppressSettingsTooltipForMs(SETTINGS_TOOLTIP_SCROLL_SUPPRESS_MS, "scroll_motion");
+        HideSettingsRowFloatingTooltip();
+        return;
+    }
+
+    var context = $.GetContextPanel ? $.GetContextPanel() : null;
+    var settingsList = null;
+    try { settingsList = context ? context.FindChildTraverse("SettingsList") : null; } catch (_) {}
+    if (settingsList && IsDescendantOf(anchor, settingsList)) {
+        if (!IsPanelVisibleInList(anchor, settingsList, host)) {
+            HideSettingsRowFloatingTooltip();
+            return;
+        }
+    }
+
     PositionSettingsRowFloatingTooltip(anchor);
     gSettingsRowFloatingTooltipTrackScheduled = true;
     $.Schedule(SETTINGS_ROW_FLOATING_TOOLTIP_TRACK_INTERVAL_SEC, TickSettingsRowFloatingTooltipPosition);
@@ -171,15 +254,35 @@ function EnsureSettingsRowFloatingTooltipTracking() {
 }
 
 function ReadSettingsTooltipScrollSnapshot() {
-    var context = $.GetContextPanel();
-    if (!context) return { listY: 0, hostY: 0 };
+    var context = $.GetContextPanel ? $.GetContextPanel() : null;
+    if (!context) return { listY: 0, hostY: 0, thumbY: 0 };
     var settingsList = null;
     try { settingsList = context.FindChildTraverse("SettingsList"); } catch (eList) { settingsList = null; }
     var settingsContentHost = null;
     try { settingsContentHost = context.FindChildTraverse("SettingsContentHost"); } catch (eHost) { settingsContentHost = null; }
+
+    var thumbY = 0;
+    if (settingsList && settingsList.FindChildTraverse) {
+        try {
+            var scrollBar = settingsList.FindChildTraverse("VerticalScrollBar");
+            if (scrollBar && scrollBar.FindChildTraverse) {
+                var thumb = scrollBar.FindChildTraverse("ScrollThumb");
+                if (thumb && (!thumb.IsValid || thumb.IsValid())) {
+                    var sty = Number(thumb.scrolloffset_y);
+                    if (!isFinite(sty)) sty = Number(thumb.actualscrolloffset_y);
+                    if (!isFinite(sty) && typeof GetPanelYOffsetWithinAncestor === "function") {
+                        sty = Number(GetPanelYOffsetWithinAncestor(thumb, scrollBar));
+                    }
+                    if (isFinite(sty)) thumbY = sty;
+                }
+            }
+        } catch (_) {}
+    }
+
     return {
         listY: ReadPanelScrollOffsetY(settingsList),
-        hostY: ReadPanelScrollOffsetY(settingsContentHost)
+        hostY: ReadPanelScrollOffsetY(settingsContentHost),
+        thumbY: isFinite(thumbY) ? thumbY : 0
     };
 }
 
@@ -187,28 +290,40 @@ function PrimeSettingsTooltipScrollSnapshot() {
     var snap = ReadSettingsTooltipScrollSnapshot();
     gSettingsTooltipLastListScrollY = Number(snap.listY);
     gSettingsTooltipLastHostScrollY = Number(snap.hostY);
+    gSettingsTooltipLastThumbScrollY = Number(snap.thumbY);
     var anchor = gSettingsRowFloatingTooltipAnchor;
-    var host = gSettingsRowFloatingTooltipPanel && gSettingsRowFloatingTooltipPanel.GetParent
+    var host = (gSettingsRowFloatingTooltipPanel && gSettingsRowFloatingTooltipPanel.GetParent)
         ? gSettingsRowFloatingTooltipPanel.GetParent()
         : null;
-    gSettingsTooltipLastAnchorLocalY = Number(GetPanelYOffsetWithinAncestor(anchor, host));
+    var currentAnchorY = NaN;
+    if (anchor && host && typeof GetPanelYOffsetWithinAncestor === "function") {
+        var rawY = GetPanelYOffsetWithinAncestor(anchor, host);
+        if (rawY !== null && isFinite(rawY)) currentAnchorY = Number(rawY);
+    }
+    gSettingsTooltipLastAnchorLocalY = currentAnchorY;
 }
 
 function DidSettingsTooltipScrollChange() {
     var snap = ReadSettingsTooltipScrollSnapshot();
     var listY = Number(snap.listY);
     var hostY = Number(snap.hostY);
+    var thumbY = Number(snap.thumbY);
     if (!isFinite(listY)) listY = 0;
     if (!isFinite(hostY)) hostY = 0;
-    var hasBaseline = isFinite(gSettingsTooltipLastListScrollY) && isFinite(gSettingsTooltipLastHostScrollY);
+    if (!isFinite(thumbY)) thumbY = 0;
+
     var changed = false;
-    if (hasBaseline) {
-        changed =
-            Math.abs(listY - gSettingsTooltipLastListScrollY) >= 1 ||
-            Math.abs(hostY - gSettingsTooltipLastHostScrollY) >= 1;
-    }
+    if (isFinite(gSettingsTooltipLastListScrollY) && Math.abs(listY - gSettingsTooltipLastListScrollY) >= 1) changed = true;
+    if (isFinite(gSettingsTooltipLastHostScrollY) && Math.abs(hostY - gSettingsTooltipLastHostScrollY) >= 1) changed = true;
+    if (isFinite(gSettingsTooltipLastThumbScrollY) && Math.abs(thumbY - gSettingsTooltipLastThumbScrollY) >= 1) changed = true;
+
     gSettingsTooltipLastListScrollY = listY;
     gSettingsTooltipLastHostScrollY = hostY;
+    gSettingsTooltipLastThumbScrollY = thumbY;
+
+    if (changed) {
+        gSettingsTooltipLastScrollMoveMs = GetSettingsTooltipNowMs();
+    }
     return changed;
 }
 
@@ -318,22 +433,26 @@ function GetSettingsTooltipHostAxisScale(actualSize, desiredSize) {
 
 function PositionSettingsRowFloatingTooltip(anchorPanel) {
     var panel = gSettingsRowFloatingTooltipPanel;
-    if (!panel || !panel.IsValid || !panel.IsValid()) return;
-    if (!anchorPanel || !anchorPanel.IsValid || !anchorPanel.IsValid()) return;
+    if (!panel || (panel.IsValid && !panel.IsValid())) return;
+    if (!anchorPanel || (anchorPanel.IsValid && !anchorPanel.IsValid())) return;
 
     var host = panel.GetParent ? panel.GetParent() : null;
-    if (!host || !host.IsValid || !host.IsValid()) return;
+    if (!host || (host.IsValid && !host.IsValid())) return;
 
-    var anchorX = Number(GetPanelXOffsetWithinAncestor(anchorPanel, host));
-    var anchorY = Number(GetPanelYOffsetWithinAncestor(anchorPanel, host));
+    var context = $.GetContextPanel ? $.GetContextPanel() : null;
+    var settingsWin = null;
+    try { settingsWin = context ? context.FindChildTraverse("SettingsWindow") : null; } catch (_) {}
+    var settingsList = null;
+    try { settingsList = context ? context.FindChildTraverse("SettingsList") : null; } catch (_) {}
+
+    var anchorX = (typeof GetPanelXOffsetWithinAncestor === "function") ? Number(GetPanelXOffsetWithinAncestor(anchorPanel, host)) : 0;
+    var anchorY = (typeof GetPanelYOffsetWithinAncestor === "function") ? Number(GetPanelYOffsetWithinAncestor(anchorPanel, host)) : 0;
     var anchorWidth = Number(anchorPanel.actuallayoutwidth);
     var anchorHeight = Number(anchorPanel.actuallayoutheight);
     var panelWidth = Number(panel.actuallayoutwidth);
     var panelHeight = Number(panel.actuallayoutheight);
     var hostWidth = Number(host.actuallayoutwidth);
     var hostHeight = Number(host.actuallayoutheight);
-    var hostDesiredWidth = Number(host.desiredlayoutwidth);
-    var hostDesiredHeight = Number(host.desiredlayoutheight);
 
     if (!isFinite(anchorX) || !isFinite(anchorY) || !isFinite(anchorWidth) || !isFinite(anchorHeight) ||
         !isFinite(panelWidth) || panelWidth <= 0 || !isFinite(panelHeight) || panelHeight <= 0 ||
@@ -346,28 +465,52 @@ function PositionSettingsRowFloatingTooltip(anchorPanel) {
     }
 
     var edgeMargin = 8;
-    var gap = 4;
-    var attachNudgeLeft = 12;
+    var gap = 8;
     var xMin = edgeMargin;
     var xMax = Math.max(xMin, Math.round(hostWidth - panelWidth - edgeMargin));
-    var xRight = Math.round(anchorX + anchorWidth + gap - attachNudgeLeft);
-    var xLeft = Math.round(anchorX - panelWidth - gap);
+
+    var isInsideList = settingsList && IsDescendantOf(anchorPanel, settingsList);
+    var winX = (settingsWin && (!settingsWin.IsValid || settingsWin.IsValid()) && typeof GetPanelXOffsetWithinAncestor === "function")
+        ? Number(GetPanelXOffsetWithinAncestor(settingsWin, host)) : NaN;
+    var winY = (settingsWin && (!settingsWin.IsValid || settingsWin.IsValid()) && typeof GetPanelYOffsetWithinAncestor === "function")
+        ? Number(GetPanelYOffsetWithinAncestor(settingsWin, host)) : NaN;
+    var winWidth = (settingsWin && (!settingsWin.IsValid || settingsWin.IsValid())) ? Number(settingsWin.actuallayoutwidth) : NaN;
+    var winHeight = (settingsWin && (!settingsWin.IsValid || settingsWin.IsValid())) ? Number(settingsWin.actuallayoutheight) : NaN;
+
+    var xRight, xLeft;
+    if (isInsideList && isFinite(winX) && isFinite(winWidth) && winWidth > 0) {
+        // Place cleanly outside SettingsWindow to the right (beyond scrollbar and border)
+        xRight = Math.round(winX + winWidth + gap);
+        xLeft = Math.round(winX - panelWidth - gap);
+    } else {
+        // Standard anchor-relative positioning
+        xRight = Math.round(anchorX + anchorWidth + gap);
+        xLeft = Math.round(anchorX - panelWidth - gap);
+    }
 
     var side = "right";
     var x = xRight;
     if (xRight + panelWidth > hostWidth - edgeMargin && xLeft >= xMin) {
         side = "left";
         x = xLeft;
+    } else if (xRight + panelWidth > hostWidth - edgeMargin) {
+        // If neither outside fits, clamp safely within host
+        x = Math.max(xMin, Math.min(xMax, xRight));
     }
-    x = Math.max(xMin, Math.min(xMax, x));
 
+    var targetY = Math.round(anchorY + (anchorHeight * 0.5) - (panelHeight * 0.5));
     var yMin = edgeMargin;
     var yMax = Math.max(yMin, Math.round(hostHeight - panelHeight - edgeMargin));
-    var y = Math.round(anchorY + (anchorHeight * 0.5) - (panelHeight * 0.5));
-    y = Math.max(yMin, Math.min(yMax, y));
 
-    // Stabilize tooltip placement: if target anchor position is unchanged, skip
-    // re-writing style values to avoid visible oscillation on some rows.
+    if (isFinite(winY) && isFinite(winHeight) && winHeight > 0) {
+        yMin = Math.max(yMin, Math.round(winY + 8));
+        yMax = Math.min(yMax, Math.round(winY + winHeight - panelHeight - 8));
+        if (yMax < yMin) yMax = yMin;
+    }
+
+    var y = Math.max(yMin, Math.min(yMax, targetY));
+
+    // Stabilize tooltip placement: if target position is unchanged, skip re-writing style values
     if (
         isFinite(gSettingsRowFloatingTooltipLastX) &&
         isFinite(gSettingsRowFloatingTooltipLastY) &&
@@ -381,8 +524,10 @@ function PositionSettingsRowFloatingTooltip(anchorPanel) {
     var finalX = Math.round(x);
     var finalY = Math.round(y);
 
-    panel.style.x = finalX + "px";
-    panel.style.y = finalY + "px";
+    if (panel.style) {
+        panel.style.x = finalX + "px";
+        panel.style.y = finalY + "px";
+    }
     gSettingsTooltipLastWrittenStyleX = finalX;
     gSettingsTooltipLastWrittenStyleY = finalY;
 
@@ -391,7 +536,7 @@ function PositionSettingsRowFloatingTooltip(anchorPanel) {
     gSettingsTooltipLastSide = side;
 
     var anchorId = "";
-    try { anchorId = String(anchorPanel.id || ""); } catch (eAid) { anchorId = ""; }
+    try { anchorId = String(anchorPanel.id || ""); } catch (_) { anchorId = ""; }
     SettingsTooltipDebugLog(
         "pos_simple anchor=" + (anchorId || "-") +
         " side=" + side +
@@ -406,8 +551,8 @@ function TryGetCursorScreenPosition() {
     return null;
 }
 
-function ShowSettingsRowFloatingTooltip(anchorPanel, perfText, bodyText, perfTier, createdBy, options) {
-    if (!anchorPanel || !anchorPanel.IsValid || !anchorPanel.IsValid()) return;
+function ExecuteShowSettingsRowFloatingTooltip(anchorPanel, perfText, bodyText, perfTier, createdBy, options) {
+    if (!anchorPanel || (anchorPanel.IsValid && !anchorPanel.IsValid())) return;
     if (!HasMeaningfulFloatingTooltipContent(perfTier, bodyText, createdBy, options)) {
         HideSettingsRowFloatingTooltip();
         return;
@@ -422,7 +567,7 @@ function ShowSettingsRowFloatingTooltip(anchorPanel, perfText, bodyText, perfTie
     var useVoiceMetaMode = (voiceMetaAuthor.length > 0 || voiceMetaActor.length > 0);
 
     var panel = EnsureSettingsRowFloatingTooltipPanel();
-    if (!panel || !panel.IsValid || !panel.IsValid()) return;
+    if (!panel || (panel.IsValid && !panel.IsValid())) return;
     if (
         !gSettingsRowFloatingTooltipPerfPrefixLabel ||
         !gSettingsRowFloatingTooltipPerfValueLabel ||
@@ -484,15 +629,76 @@ function ShowSettingsRowFloatingTooltip(anchorPanel, perfText, bodyText, perfTie
     EnsureSettingsRowFloatingTooltipTracking();
 }
 
-function HideSettingsRowFloatingTooltip() {
+function ShowSettingsRowFloatingTooltip(anchorPanel, perfText, bodyText, perfTier, createdBy, options) {
+    if (!anchorPanel || (anchorPanel.IsValid && !anchorPanel.IsValid())) return;
+
+    if (IsSettingsTooltipSuppressed() || IsSettingsTooltipInRecentScrollMotion()) {
+        return;
+    }
+    if (DidSettingsTooltipScrollChange()) {
+        SuppressSettingsTooltipForMs(SETTINGS_TOOLTIP_SCROLL_SUPPRESS_MS, "scroll_active");
+        return;
+    }
+
+    if (!HasMeaningfulFloatingTooltipContent(perfTier, bodyText, createdBy, options)) {
+        HideSettingsRowFloatingTooltip();
+        return;
+    }
+
+    var context = $.GetContextPanel ? $.GetContextPanel() : null;
+    var settingsList = null;
+    try { settingsList = context ? context.FindChildTraverse("SettingsList") : null; } catch (_) {}
+    var settingsWin = null;
+    try { settingsWin = context ? context.FindChildTraverse("SettingsWindow") : null; } catch (_) {}
+    var host = (settingsWin && settingsWin.GetParent) ? settingsWin.GetParent() : context;
+
+    if (settingsList && IsDescendantOf(anchorPanel, settingsList)) {
+        if (!IsPanelVisibleInList(anchorPanel, settingsList, host)) {
+            return;
+        }
+    }
+
     CancelSettingsRowFloatingTooltipHide();
+
+    var isCurrentlyVisible = IsSettingsRowFloatingTooltipVisible();
+    var isWarm = isCurrentlyVisible || ((GetSettingsTooltipNowMs() - gSettingsTooltipLastVisibleTimeMs) < SETTINGS_TOOLTIP_WARM_RECENT_MS);
+    var forceImmediate = !!(options && options.immediate);
+
+    if (forceImmediate || isWarm) {
+        CancelPendingSettingsRowFloatingTooltipShow();
+        ExecuteShowSettingsRowFloatingTooltip(anchorPanel, perfText, bodyText, perfTier, createdBy, options);
+    } else {
+        CancelPendingSettingsRowFloatingTooltipShow();
+        var showToken = gSettingsTooltipPendingShowToken;
+        $.Schedule(SETTINGS_TOOLTIP_COLD_HOVER_DELAY_SEC, function() {
+            if (showToken !== gSettingsTooltipPendingShowToken) return;
+            if (IsSettingsTooltipSuppressed() || IsSettingsTooltipInRecentScrollMotion()) return;
+            if (DidSettingsTooltipScrollChange()) {
+                SuppressSettingsTooltipForMs(SETTINGS_TOOLTIP_SCROLL_SUPPRESS_MS, "scroll_debounce");
+                return;
+            }
+            if (!anchorPanel || (anchorPanel.IsValid && !anchorPanel.IsValid())) return;
+            if (settingsList && IsDescendantOf(anchorPanel, settingsList)) {
+                if (!IsPanelVisibleInList(anchorPanel, settingsList, host)) return;
+            }
+            ExecuteShowSettingsRowFloatingTooltip(anchorPanel, perfText, bodyText, perfTier, createdBy, options);
+        });
+    }
+}
+
+function HideSettingsRowFloatingTooltip() {
+    CancelPendingSettingsRowFloatingTooltipShow();
+    CancelSettingsRowFloatingTooltipHide();
+    gSettingsTooltipLastVisibleTimeMs = GetSettingsTooltipNowMs();
     gSettingsRowFloatingTooltipAnchor = null;
-    if (!gSettingsRowFloatingTooltipPanel || !gSettingsRowFloatingTooltipPanel.IsValid || !gSettingsRowFloatingTooltipPanel.IsValid()) return;
-    gSettingsRowFloatingTooltipPanel.SetHasClass("Visible", false);
+    if (!gSettingsRowFloatingTooltipPanel || (gSettingsRowFloatingTooltipPanel.IsValid && !gSettingsRowFloatingTooltipPanel.IsValid())) return;
+    if (gSettingsRowFloatingTooltipPanel.SetHasClass) {
+        gSettingsRowFloatingTooltipPanel.SetHasClass("Visible", false);
+    }
     gSettingsRowFloatingTooltipTrackScheduled = false;
-    gSettingsTooltipLastListScrollY = NaN;
-    gSettingsTooltipLastHostScrollY = NaN;
     gSettingsTooltipLastAnchorLocalY = NaN;
+    gSettingsRowFloatingTooltipLastX = NaN;
+    gSettingsRowFloatingTooltipLastY = NaN;
     SettingsTooltipDebugLog("hide", true);
 }
 
