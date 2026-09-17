@@ -134,6 +134,9 @@
             }
             return false;
         }
+        if (!manifest.enableKey && (!manifest.enableKeys || manifest.enableKeys.length === 0) && manifest.enabledByDefault === true) {
+            return true;
+        }
         if (Object.prototype.hasOwnProperty.call(cfg, "enabled")) {
             return !!cfg.enabled;
         }

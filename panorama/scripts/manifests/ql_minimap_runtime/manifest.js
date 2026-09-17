@@ -60,7 +60,8 @@
 
     function setPanelOpacitySafe(panel, opacityText, fallback) {
         if (!isPanelValid(panel)) return;
-        try { panel.style.opacity = String(opacityText || fallback); } catch(e) {}
+        var val = (opacityText !== undefined && opacityText !== null && opacityText !== "") ? opacityText : fallback;
+        try { panel.style.opacity = String(val); } catch(e) {}
     }
 
     function hasClassInHierarchy(panel, className) {
@@ -113,7 +114,7 @@
 
     FR.register({
         id: "ql_minimap_runtime",
-        enabledByDefault: false,
+        enabledByDefault: true,
         settings: [
             { key: "ENABLE_ALT_ZOOM", type: "toggle", default: false },
             { key: "ENABLE_TAB_ZOOM", type: "toggle", default: false },
@@ -177,16 +178,18 @@
             var _mapRenderPanel = null;
 
             function _ensureMinimapPanelCache(root) {
-                if (isPanelListValid(_cachedPanels)) return _cachedPanels;
+                var ids = ["minimap_persp", "minimap_container", "minimap_frame", "HudMinimapContainer", PANEL_ID_MINIMAP];
+                if (isPanelListValid(_cachedPanels) && _cachedPanels.length === ids.length) return _cachedPanels;
                 var panels = [];
                 if (root && root.FindChildTraverse) {
-                    var ids = ["minimap_persp", "minimap_container", "minimap_frame", "HudMinimapContainer", PANEL_ID_MINIMAP];
                     for (var i = 0; i < ids.length; i++) {
                         var panel = root.FindChildTraverse(ids[i]);
                         if (panel) panels.push(panel);
                     }
                 }
-                _cachedPanels = panels;
+                if (panels.length > 0) {
+                    _cachedPanels = panels;
+                }
                 return panels;
             }
 
@@ -556,7 +559,7 @@
                     Number(cfg.ENABLE_TAB_ZOOM) === 1 ? "1" : "0",
                     Number(cfg.MINIMAL_MINIMAP) === 1 ? "1" : "0",
                     String(Math.round(Number(cfg.MINIMAP_SMALL_SIZE) || 400)),
-                    String(Number(cfg.MINIMAP_BASE_OPACITY) || 1),
+                    String(isFinite(Number(cfg.MINIMAP_BASE_OPACITY)) ? Number(cfg.MINIMAP_BASE_OPACITY) : 1),
                     String(Math.round(Number(cfg.MINIMAP_X_OFFSET) || 0)),
                     String(Math.round(Number(cfg.MINIMAP_Y_OFFSET) || 0)),
                     String(Number(cfg.MINIMAP_LARGE_SIZE_ALT) || Number(cfg.MINIMAP_LARGE_SIZE) || 0),
@@ -565,8 +568,8 @@
                     String(Number(cfg.ZOOM_Y_OFFSET_ALT) || Number(cfg.ZOOM_Y_OFFSET) || 0),
                     String(Number(cfg.ZOOM_X_OFFSET_TAB) || Number(cfg.ZOOM_X_OFFSET) || 0),
                     String(Number(cfg.ZOOM_Y_OFFSET_TAB) || Number(cfg.ZOOM_Y_OFFSET) || 0),
-                    String(Number(cfg.ALT_ZOOM_OPACITY) || 1),
-                    String(Number(cfg.TAB_ZOOM_OPACITY) || 1),
+                    String(isFinite(Number(cfg.ALT_ZOOM_OPACITY)) ? Number(cfg.ALT_ZOOM_OPACITY) : 1),
+                    String(isFinite(Number(cfg.TAB_ZOOM_OPACITY)) ? Number(cfg.TAB_ZOOM_OPACITY) : 1),
                     String(Number(cfg.MINIMAL_MINIMAP_OPACITY) || 0.9),
                     Number(cfg.ALT_ZOOM_DRAW_OVER_UI) === 1 ? "1" : "0",
                     Number(cfg.TAB_ZOOM_DRAW_OVER_UI) === 1 ? "1" : "0",
@@ -640,6 +643,19 @@
                     var minimapScale = activeTargetSize / 400.0;
                     var minimapScaleText = Math.round(minimapScale * 100) + "%";
 
+                    var op = 1.0;
+                    if (zoomAlt) {
+                        op = cfg.ALT_ZOOM_OPACITY;
+                    } else if (zoomTab) {
+                        op = cfg.TAB_ZOOM_OPACITY;
+                    } else {
+                        op = cfg.MINIMAP_BASE_OPACITY;
+                    }
+                    op = Number(op);
+                    if (!isFinite(op)) op = 1.0;
+                    if (op < 0) op = 0;
+                    if (op > 1) op = 1;
+
                     for (var pi = 0; pi < minimapPanels.length; pi++) {
                         var p = minimapPanels[pi];
                         if (p.id === "minimap_persp") {
@@ -654,33 +670,30 @@
                             try {
                                 p.style.transformOrigin = shouldZoom ? "50% 50%" : "100% 100%";
                             } catch(eOrigin) {}
+                            p.style.horizontalAlign = shouldZoom ? "center" : "right";
+                            p.style.verticalAlign = shouldZoom ? "center" : "bottom";
                             p.style.align = shouldZoom ? "center center" : "right bottom";
                             if (shouldZoom) {
                                 p.style.margin = (-zoomOffsetY) + "px 0px 0px " + zoomOffsetX + "px";
+                                p.style.marginTop = (-zoomOffsetY) + "px";
+                                p.style.marginLeft = zoomOffsetX + "px";
+                                p.style.marginRight = "0px";
+                                p.style.marginBottom = "0px";
                             } else {
                                 var marginX = 30 - (Number(cfg.MINIMAP_X_OFFSET) || 0);
                                 var marginY = 30 + (Number(cfg.MINIMAP_Y_OFFSET) || 0);
                                 p.style.margin = "0px " + marginX + "px " + marginY + "px 0px";
+                                p.style.marginRight = marginX + "px";
+                                p.style.marginBottom = marginY + "px";
+                                p.style.marginLeft = "0px";
+                                p.style.marginTop = "0px";
                             }
+                            setPanelOpacitySafe(p, op, 1.0);
                         } else {
                             if (p.style.width) p.style.width = null;
                             if (p.style.height) p.style.height = null;
                             if (p.style.uiScale) p.style.uiScale = null;
-                        }
-                        var op = 1.0;
-                        if (zoomAlt) {
-                            op = cfg.ALT_ZOOM_OPACITY;
-                        } else if (zoomTab) {
-                            op = cfg.TAB_ZOOM_OPACITY;
-                        } else {
-                            op = cfg.MINIMAP_BASE_OPACITY || 1.0;
-                        }
-                        op = Number(op);
-                        if (!isFinite(op)) op = 1.0;
-                        if (op < 0) op = 0;
-                        if (op > 1) op = 1;
-                        if (p.id !== PANEL_ID_MINIMAP) {
-                            setPanelOpacitySafe(p, op, 1.0);
+                            if (p.style.opacity) p.style.opacity = null;
                         }
                     }
 
@@ -750,7 +763,13 @@
                                 try { dp.style.width = null; } catch(e) {}
                                 try { dp.style.height = null; } catch(e) {}
                                 try { dp.style.margin = null; } catch(e) {}
+                                try { dp.style.marginTop = null; } catch(e) {}
+                                try { dp.style.marginRight = null; } catch(e) {}
+                                try { dp.style.marginBottom = null; } catch(e) {}
+                                try { dp.style.marginLeft = null; } catch(e) {}
                                 try { dp.style.align = null; } catch(e) {}
+                                try { dp.style.horizontalAlign = null; } catch(e) {}
+                                try { dp.style.verticalAlign = null; } catch(e) {}
                                 try { dp.style.transformOrigin = null; } catch(e) {}
                                 try { dp.style.opacity = null; } catch(e) {}
                             }
@@ -787,6 +806,8 @@
                     _mapRenderPanel = null;
                 },
                 onSettingsChanged: function() {
+                    _minimapRuntimeSig = "";
+                    _tick();
                     var root = $.GetContextPanel ? $.GetContextPanel() : null;
                     if (root && QOL.core && QOL.core.hud && QOL.core.hud.applyRootClasses) {
                         var cfg = ctx.config.all ? ctx.config.all() : {};

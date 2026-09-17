@@ -271,30 +271,28 @@ test("ql_minimap_runtime scales minimap via uiScale and preserves base 400px geo
     const container = $.CreatePanel("Panel", persp, "minimap_container");
     $.CreatePanel("Panel", container, "hud_minimap");
 
-    const feat = Q.core.FeatureRegistry.getManifest("ql_minimap_runtime");
-    assert.ok(feat, "ql_minimap_runtime must be registered");
+    assert.strictEqual(Q.core.FeatureRegistry.isEnabled("ql_minimap_runtime"), true, "ql_minimap_runtime must be enabled by default");
 
-    const instance = feat.create({
-        config: {
-            view: () => ({
-                MINIMAP_SMALL_SIZE: 600,
-                ENABLE_ALT_ZOOM: 0,
-                ENABLE_TAB_ZOOM: 0,
-            })
-        }
-    });
-
-    instance.onEnable();
+    Q.core.ConfigStore.set("ql_minimap_runtime", "MINIMAP_SMALL_SIZE", 600);
+    Q.core.ConfigStore.set("ql_minimap_runtime", "MINIMAP_BASE_OPACITY", 0.5);
+    Q.core.ConfigStore.set("ql_minimap_runtime", "MINIMAP_X_OFFSET", 50);
+    Q.core.ConfigStore.set("ql_minimap_runtime", "MINIMAP_Y_OFFSET", 20);
     hud.clock.advance(500);
 
     assert.strictEqual(persp.style.uiScale, "150%", "minimap_persp must receive uiScale: 150%");
     assert.strictEqual(persp.style.width, "400px", "minimap_persp width must stay 400px base");
     assert.strictEqual(persp.style.height, "400px", "minimap_persp height must stay 400px base");
+    assert.strictEqual(persp.style.opacity, "0.5", "minimap_persp must receive configured opacity");
+    assert.strictEqual(persp.style.marginRight, "-20px", "minimap_persp marginRight must be 30 - 50 = -20px");
+    assert.strictEqual(persp.style.marginBottom, "50px", "minimap_persp marginBottom must be 30 + 20 = 50px");
     assert.ok(!container.style.width, "child container must not receive hardcoded width");
     assert.ok(!container.style.height, "child container must not receive hardcoded height");
+    assert.ok(!container.style.opacity, "child container must not receive cascaded opacity");
 
-    instance.onDisable();
-    assert.ok(!persp.style.uiScale, "onDisable must clear uiScale");
+    Q.core.FeatureRegistry.disable("ql_minimap_runtime");
+    assert.ok(!persp.style.uiScale, "disable must clear uiScale");
+    assert.ok(!persp.style.opacity, "disable must clear opacity");
+    assert.ok(!persp.style.margin, "disable must clear margin");
 });
 
 test("ql_minimap_timers hides bridge buff timer when powerup rune is spawned on bridge", () => {
@@ -362,5 +360,50 @@ test("ql_minimap_timers hides bridge buff timer when powerup rune is spawned on 
     instance.onDisable();
 });
 
+test("ql_minimap_runtime handles zero opacity, offsets, and zoom modes without child pollution", () => {
+    const hud = sim.createHud({ inHideout: false });
+    hud.assertLoaded();
+    const Q = hud.sandbox.global.QOL;
+    const $ = hud.sandbox.global.$;
 
+    const root = hud.root;
+    const persp = $.CreatePanel("Panel", root, "minimap_persp");
+    const container = $.CreatePanel("Panel", persp, "minimap_container");
+    const frame = $.CreatePanel("Panel", persp, "minimap_frame");
+    $.CreatePanel("Panel", container, "hud_minimap");
 
+    // 1. Zero opacity
+    Q.core.ConfigStore.set("ql_minimap_runtime", "MINIMAP_BASE_OPACITY", 0);
+    hud.clock.advance(100);
+    assert.strictEqual(persp.style.opacity, "0", "zero opacity must apply as string 0 without falling back to 1.0");
+    assert.ok(!container.style.opacity, "child container must not receive cascaded opacity");
+    assert.ok(!frame.style.opacity, "frame panel must not receive cascaded opacity");
+
+    // 2. Custom offsets
+    Q.core.ConfigStore.set("ql_minimap_runtime", "MINIMAP_X_OFFSET", 100);
+    Q.core.ConfigStore.set("ql_minimap_runtime", "MINIMAP_Y_OFFSET", -40);
+    hud.clock.advance(100);
+    assert.strictEqual(persp.style.marginRight, "-70px", "marginRight must be 30 - 100 = -70px");
+    assert.strictEqual(persp.style.marginBottom, "-10px", "marginBottom must be 30 + (-40) = -10px");
+
+    // 3. Alt Zoom
+    Q.core.ConfigStore.set("ql_minimap_runtime", "ENABLE_ALT_ZOOM", 1);
+    Q.core.ConfigStore.set("ql_minimap_runtime", "MINIMAP_LARGE_SIZE_ALT", 800);
+    Q.core.ConfigStore.set("ql_minimap_runtime", "ALT_ZOOM_OPACITY", 0.9);
+    Q.core.ConfigStore.set("ql_minimap_runtime", "ZOOM_X_OFFSET_ALT", 10);
+    Q.core.ConfigStore.set("ql_minimap_runtime", "ZOOM_Y_OFFSET_ALT", 20);
+    root.AddClass("gDetailView");
+    hud.clock.advance(100);
+
+    assert.strictEqual(persp.style.uiScale, "200%", "Alt zoom must scale to 200%");
+    assert.strictEqual(persp.style.align, "center center", "Alt zoom must center minimap");
+    assert.strictEqual(persp.style.opacity, "0.9", "Alt zoom opacity must apply");
+    assert.strictEqual(persp.style.marginLeft, "10px", "Alt zoom X offset must apply to marginLeft");
+    assert.strictEqual(persp.style.marginTop, "-20px", "Alt zoom Y offset must apply to marginTop");
+
+    root.RemoveClass("gDetailView");
+    hud.clock.advance(100);
+    assert.strictEqual(persp.style.align, "right bottom", "Exiting zoom restores right bottom alignment");
+
+    Q.core.FeatureRegistry.disable("ql_minimap_runtime");
+});

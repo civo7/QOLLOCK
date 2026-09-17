@@ -72,7 +72,7 @@
     height: 400px;
     transform: none;
     transform-origin: 100% 100%;
-    transition-property: opacity, margin, pre-transform-scale2d, ui-scale;
+    transition-property: opacity, margin, margin-left, margin-right, margin-top, margin-bottom, pre-transform-scale2d;
     transition-duration: 0.12s;
     transition-timing-function: ease-out;
 }
