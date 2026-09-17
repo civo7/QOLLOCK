@@ -35,8 +35,16 @@
             icon: "s2r://panorama/images/icons/icon_gear.vsvg",
             sections: [
                 {
-                    title: "General Preferences",
-                    features: ["ql_show_build_id"]
+                    title: "Display & Screen",
+                    features: ["ql_ui_controls"]
+                },
+                {
+                    title: "Matchmaking & Game",
+                    features: ["ql_lane_with_party"]
+                },
+                {
+                    title: "Content & Stream",
+                    features: ["ql_show_build_id", "ql_keyboard"]
                 }
             ]
         },
@@ -130,7 +138,7 @@
                     title: "Top Bar",
                     animatedToggle: true,
                     enableKey: "HUD_TOP_BAR_ENABLED",
-                    features: ["ql_topbar", "ql_urn_timer", "ql_rejuv_hud", "ql_nicknames", "ql_showrank"]
+                    features: ["ql_topbar", "ql_urn_timer", "ql_rejuv_hud", "ql_nicknames", "ql_showrank", "ql_ult_cooldowns"]
                 },
                 {
                     title: "Bottom Bar",
@@ -148,99 +156,15 @@
                     title: "Souls",
                     animatedToggle: true,
                     enableKey: "HUD_SOULS_ENABLED",
-                    features: ["ql_souls"]
+                    features: ["ql_souls", "ql_unsecured_souls_timer", "ql_better_unsecured_hud"]
                 },
                 {
-                    title: "Shop",
-                    animatedToggle: true,
-                    enableKey: "HUD_SHOP_ENABLED",
-                    features: ["ql_heroshop", "ql_recent_purchases"]
-                }
-            ]
-        },
-        {
-            id: "UI",
-            name: "UI",
-            icon: "s2r://panorama/images/icons/icon_reorder.vsvg",
-            sections: [
-                {
-                    title: "UI Controls",
-                    features: [
-                        "ql_lane_with_party",
-                        "ql_ui_controls"
-                    ]
+                    title: "Indicators",
+                    features: ["ql_zipboost", "ql_compass"]
                 },
                 {
-                    title: "Show Build ID",
-                    animatedToggle: true,
-                    enableKey: "ENABLE_SHOW_BUILD_ID",
-                    description: "Shows your build information always for content creators",
-                    features: ["ql_show_build_id"]
-                },
-                {
-                    title: "Damage Report",
-                    animatedToggle: true,
-                    enableKey: "DISABLE_DAMAGE_REPORT",
-                    invertToggle: true,
-                    features: ["ql_damage_report"]
-                },
-                {
-                    title: "Player Stats",
-                    features: ["ql_stats_position"]
-                },
-                {
-                    title: "Chat",
-                    animatedToggle: true,
-                    enableKey: "ENABLE_CHAT",
-                    features: ["ql_chat_images"]
-                }
-            ]
-        },
-        {
-            id: "Overlay",
-            name: "Overlay",
-            icon: "s2r://panorama/images/icons/icon_graph.vsvg",
-            sections: [
-                {
-                    title: "Zipline Boost",
-                    animatedToggle: true,
-                    enableKey: "ENABLE_ZIP_BOOST",
-                    description: "Always Visible Boost",
-                    features: ["ql_zipboost"]
-                },
-                {
-                    title: "Ult Cooldowns",
-                    animatedToggle: true,
-                    enableKey: "ENABLE_ULT_COOLDOWNS",
-                    features: ["ql_ult_cooldowns"]
-                },
-                {
-                    title: "Unsecured Timer",
-                    animatedToggle: true,
-                    enableKey: "ENABLE_UNSECURED_SOUL_TIMER",
-                    description: "Realtime Drain Countdown",
-                    features: ["ql_unsecured_souls_timer"]
-                },
-                {
-                    title: "Unsecured Plus",
-                    animatedToggle: true,
-                    enableKey: "ENABLE_BETTER_UNSECURED",
-                    description: "Customizable Unsecured Souls",
-                    features: ["ql_better_unsecured_hud"]
-                },
-                {
-                    title: "Keyboard",
-                    animatedToggle: true,
-                    enableKey: "ENABLE_KEYBOARD_OVERLAY",
-                    description: "Realtime Key Inputs",
-                    features: ["ql_keyboard"]
-                },
-                {
-                    title: "Compass & Speed",
-                    animatedToggle: true,
-                    enableKey: "ENABLE_COMPASS",
-                    description: "See your view angle and movement speed",
-                    features: ["ql_compass"]
+                    title: "Chat & Panels",
+                    features: ["ql_chat_images", "ql_damage_report", "ql_stats_position"]
                 }
             ]
         },
@@ -256,6 +180,21 @@
                 {
                     title: "Timers & Addons",
                     features: ["ql_minimap_timers"]
+                }
+            ]
+        },
+        {
+            id: "Shop",
+            name: "Shop",
+            icon: "s2r://panorama/images/icons/icon_cart.vsvg",
+            sections: [
+                {
+                    title: "Quick Buy",
+                    features: ["ql_heroshop"]
+                },
+                {
+                    title: "Recent Purchases",
+                    features: ["ql_recent_purchases"]
                 }
             ]
         },

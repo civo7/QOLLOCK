@@ -186,7 +186,7 @@
             },
             {
                 title: "Gameplay",
-                tabs: ["Crosshair", "Healthbar", "HUD", "UI", "Overlay", "Minimap", "Audio"],
+                tabs: ["Crosshair", "Healthbar", "HUD", "Minimap", "Shop", "Audio"],
             },
         ];
     };
@@ -212,10 +212,11 @@
             Crosshair: "s2r://panorama/images/icons/properties/range_aoe.vsvg",
             Healthbar: "s2r://panorama/images/icons/properties/health.vsvg",
             HUD: "s2r://panorama/images/icons/properties/spirit.vsvg",
+            Minimap: "s2r://panorama/images/icons/icon_report.vsvg",
+            Shop: "s2r://panorama/images/icons/icon_cart.vsvg",
+            Audio: "s2r://panorama/images/qollock/audio_nav_icon.vsvg",
             UI: "s2r://panorama/images/icons/icon_reorder.vsvg",
             Overlay: "s2r://panorama/images/icons/icon_graph.vsvg",
-            Minimap: "s2r://panorama/images/icons/icon_report.vsvg",
-            Audio: "s2r://panorama/images/qollock/audio_nav_icon.vsvg",
         };
         return defaultIcons[tabName] || "";
     };
@@ -614,8 +615,8 @@
 
         const curTab = (typeof globalThis.currentTab !== "undefined") ? globalThis.currentTab : _activeTab;
         const allTabNames = [
-            "Presets", "Crosshair", "Healthbar", "HUD", "UI", "Overlay",
-            "Minimap", "Audio", "Config", "Support", "Dev", "Credits"
+            "Presets", "Crosshair", "Healthbar", "HUD", "Minimap", "Shop",
+            "UI", "Overlay", "Audio", "Config", "Support", "Dev", "Credits"
         ];
         if (isAlive(win) && win.SetHasClass) {
             for (let i = 0; i < allTabNames.length; i++) {
@@ -1223,9 +1224,9 @@
         });
 
         let curTab = (typeof globalThis.currentTab !== "undefined") ? globalThis.currentTab : _activeTab;
-        if (curTab === "Layout") curTab = "Overlay";
+        if (curTab === "Layout" || curTab === "Overlay") curTab = "HUD";
         if (curTab === "Main") curTab = "Presets";
-        if (curTab === "HUDControls") curTab = "UI";
+        if (curTab === "HUDControls" || curTab === "UI") curTab = "Config";
         _activeTab = curTab;
         globalThis.currentTab = curTab;
 
@@ -1233,16 +1234,17 @@
         if (tabBar) {
             const hasLegacyLayoutTab = tabBar.FindChildTraverse("TabButton_Layout");
             const hasLegacyMainTab = tabBar.FindChildTraverse("TabButton_Main");
+            const hasLegacyUiTab = tabBar.FindChildTraverse("TabButton_UI");
+            const hasLegacyOverlayTab = tabBar.FindChildTraverse("TabButton_Overlay");
             const hasPresetsTab = tabBar.FindChildTraverse("TabButton_Presets");
             const hasCrosshairTab = tabBar.FindChildTraverse("TabButton_Crosshair");
             const hasHealthbarTab = tabBar.FindChildTraverse("TabButton_Healthbar");
             const hasHudTab = tabBar.FindChildTraverse("TabButton_HUD");
-            const hasUiTab = tabBar.FindChildTraverse("TabButton_UI");
-            const hasOverlayTab = tabBar.FindChildTraverse("TabButton_Overlay");
+            const hasShopTab = tabBar.FindChildTraverse("TabButton_Shop");
             const hasMinimapTab = tabBar.FindChildTraverse("TabButton_Minimap");
             const hasAudioTab = tabBar.FindChildTraverse("TabButton_Audio");
             const hasConfigTab = tabBar.FindChildTraverse("TabButton_Config");
-            if (hasLegacyLayoutTab || hasLegacyMainTab || !hasPresetsTab || !hasCrosshairTab || !hasHealthbarTab || !hasHudTab || !hasUiTab || !hasOverlayTab || !hasMinimapTab || !hasAudioTab || !hasConfigTab) {
+            if (hasLegacyLayoutTab || hasLegacyMainTab || hasLegacyUiTab || hasLegacyOverlayTab || !hasPresetsTab || !hasCrosshairTab || !hasHealthbarTab || !hasHudTab || !hasShopTab || !hasMinimapTab || !hasAudioTab || !hasConfigTab) {
                 tabBar.DeleteAsync(0);
                 tabBar = null;
             }

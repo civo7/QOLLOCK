@@ -123,11 +123,12 @@ test("ui/gameplay_tabs: exports public API and registers all 6 tabs", () => {
     assert.strictEqual(typeof api.renderCrosshairTab, "function");
     assert.strictEqual(typeof api.renderHudTab, "function");
     assert.strictEqual(typeof api.renderHealthbarTab, "function");
+    assert.strictEqual(typeof api.renderShopTab, "function");
     assert.strictEqual(typeof api.renderUiTab, "function");
     assert.strictEqual(typeof api.renderOverlayTab, "function");
     assert.strictEqual(typeof api.renderMinimapTab, "function");
 
-    const expectedTabs = ["Crosshair", "HUD", "Healthbar", "UI", "Overlay", "Minimap"];
+    const expectedTabs = ["Crosshair", "HUD", "Healthbar", "Minimap", "Shop", "UI", "Overlay"];
     for (const t of expectedTabs) {
         assert.ok(env.registeredTabs.has(t), `Tab '${t}' must be registered with window manager`);
     }
@@ -145,9 +146,10 @@ test("ui/gameplay_tabs: render dispatches to corresponding tab renderers", () =>
     assert.strictEqual(render("Crosshair", list), true);
     assert.strictEqual(render("HUD", list), true);
     assert.strictEqual(render("Healthbar", list), true);
+    assert.strictEqual(render("Minimap", list), true);
+    assert.strictEqual(render("Shop", list), true);
     assert.strictEqual(render("UI", list), true);
     assert.strictEqual(render("Overlay", list), true);
-    assert.strictEqual(render("Minimap", list), true);
     assert.strictEqual(render("UnknownTab", list), false);
 
     assert.ok(list.Children().length > 0, "List should have rendered children");
@@ -205,4 +207,13 @@ test("ui/gameplay_tabs: renderMinimapTab builds Minimap controls", () => {
     const list = env.sandbox.$.CreatePanel("Panel", env.rootPanel, "MinimapList");
     renderMinimapTab(list);
     assert.ok(list.Children().length > 0, "Minimap list should have rendered controls");
+});
+
+test("ui/gameplay_tabs: renderShopTab builds Shop controls", () => {
+    const env = createTestEnvironment();
+    const { renderShopTab } = env.sandbox.QOL.ui.gameplayTabs;
+
+    const list = env.sandbox.$.CreatePanel("Panel", env.rootPanel, "ShopList");
+    renderShopTab(list);
+    assert.ok(list.Children().length > 0, "Shop list should have rendered controls");
 });

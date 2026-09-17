@@ -266,4 +266,14 @@ test("ui/config_tab: renderConfigTab creates cards for General, Export, and Impo
 
     const importEntry = importCard.FindChildTraverse("ConfigImportTextEntry");
     assert.ok(importEntry, "ConfigImportTextEntry exists");
+
+    const displayCard = list.FindChildTraverse("ConfigCardDisplay");
+    assert.ok(displayCard, "ConfigCardDisplay exists");
+
+    const gameCard = list.FindChildTraverse("ConfigCardGameInterface");
+    assert.ok(gameCard, "ConfigCardGameInterface exists");
+
+    const toolsCard = list.FindChildTraverse("ConfigCardContentTools");
+    assert.ok(toolsCard, "ConfigCardContentTools exists");
 });
+

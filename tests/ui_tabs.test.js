@@ -28,7 +28,7 @@ test("ui/tabs: exports tab definitions on QOL.ui.tabs and globalThis", () => {
 
     // Order
     const order = ctx.QOL.ui.tabs.GetSettingsTabOrder();
-    assert.strictEqual(order.length, 12);
+    assert.strictEqual(order.length, 11);
     assert.strictEqual(order[0], "Support");
     assert.strictEqual(order[1], "Config");
 
@@ -46,6 +46,7 @@ test("ui/tabs: exports tab definitions on QOL.ui.tabs and globalThis", () => {
     // Icons
     assert.ok(ctx.QOL.ui.tabs.GetSettingsTabIconSource("Support").includes("icon_thumbsup"));
     assert.ok(ctx.QOL.ui.tabs.GetSettingsTabIconSource("Config").includes("icon_gear"));
+    assert.ok(ctx.QOL.ui.tabs.GetSettingsTabIconSource("Shop").includes("icon_cart"));
     assert.strictEqual(ctx.QOL.ui.tabs.GetSettingsTabIconSource("Unknown"), "");
 
     // Globals

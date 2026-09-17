@@ -265,6 +265,42 @@
                 globalThis.CreateRow(list, "Import String", "SEARCH_TAB:Config", "actionbutton", null, null, null, [
                     { label: "Open Settings" },
                 ], "Paste and apply an exported settings string");
+
+                if (typeof globalThis.CreateSeparator === "function") {
+                    globalThis.CreateSeparator(list);
+                }
+                globalThis.CreateSectionTitle(list, "Display & Resolution");
+                globalThis.CreateRow(list, "16:10 Support", "SUPPORT_16_10", "toggle", null, null, null, null, "Hud Shift");
+                globalThis.CreateRow(list, "4:3 Support", "SUPPORT_4_3", "toggle", null, null, null, null, "Hud Shift");
+                globalThis.CreateRow(list, "21:9 Stream Fix", "ENABLE_HUD_SHIFT", "toggle", null, null, null, null, "Hud Shift");
+
+                if (typeof globalThis.CreateSeparator === "function") {
+                    globalThis.CreateSeparator(list);
+                }
+                globalThis.CreateSectionTitle(list, "Game & Interface");
+                globalThis.CreateRow(list, "Lane with Party", "ENABLE_LANE_WITH_PARTY", "toggle", null, null, null, null, "Automatically selects 'With Party' in lane preference. Requires the party screen to be open.");
+                globalThis.CreateRow(list, "Centered ESC Menu", "ENABLE_CENTER_ESC", "toggle", null, null, null, null, "Easier Access");
+                globalThis.CreateRow(list, "Centered Friends List", "ENABLE_CENTER_FRIENDS_LIST", "toggle", null, null, null, null, "");
+                globalThis.CreateRow(list, "Minimalistic Pause", "ENABLE_MINIMALISTIC_PAUSE", "toggle", null, null, null, null, "Use the compact minimalistic pause screen instead of the default large one.");
+                globalThis.CreateRow(list, "Show Testing Tools", "ENABLE_FORCE_TESTING_TOOLS", "toggle", null, null, null, null, "Always Shown");
+                globalThis.CreateRow(list, "Hide Testing Tools", "ENABLE_HIDE_TESTING_TOOLS", "toggle", null, null, null, null, "Always Hidden");
+                globalThis.CreateRow(list, "Behavior Summary", "ENABLE_HIDE_BEHAVIOR_SUMMARY", "toggle", null, null, null, [{ invert: true }], "Metro Button");
+
+                if (typeof globalThis.CreateSeparator === "function") {
+                    globalThis.CreateSeparator(list);
+                }
+                globalThis.CreateSectionTitle(list, "Content & Tools");
+                globalThis.CreateRow(list, "Show Build ID", "ENABLE_SHOW_BUILD_ID", "toggle", null, null, null, null, "Shows your build information always for content creators");
+                globalThis.CreateRow(list, "Show Title", "ENABLE_SHOW_BUILD_ID_TITLE", "toggle", null, null, null, null, "");
+                globalThis.CreateRow(list, "Keyboard Overlay", "ENABLE_KEYBOARD_OVERLAY", "toggle", null, null, null, null, "Realtime Key Inputs");
+                globalThis.CreateRow(list, "Full Keys", "ENABLE_FULL_KEYBOARD_LAYOUT", "toggle", null, null, null, null, "");
+                if (typeof globalThis.CreateSliderRow === "function") {
+                    globalThis.CreateSliderRow(list, "Size", "KEYBOARD_OVERLAY_SCALE", "size_70_150", "");
+                    globalThis.CreateSliderRow(list, "Horizontal Offset", "KEYBOARD_OVERLAY_X_OFFSET", "offset_n1500_1500");
+                    globalThis.CreateSliderRow(list, "Vertical Offset", "KEYBOARD_OVERLAY_Y_OFFSET", "offset_n400_1000");
+                }
+                const palette = (typeof globalThis.QOL_COLOR_PALETTE_OPTIONS !== "undefined" ? globalThis.QOL_COLOR_PALETTE_OPTIONS : []);
+                globalThis.CreateRow(list, "Color", "KEYBOARD_OVERLAY_WASH_COLOR", "palette", null, null, null, palette, "Choose a preset color wash for the keyboard overlay.");
             }
             return;
         }
@@ -477,6 +513,81 @@
                             if (isAlive(applyBtn)) applyBtn.RemoveClass("FailureState");
                         });
                     }
+                }
+            });
+        }
+
+        const palette = (typeof globalThis.QOL_COLOR_PALETTE_OPTIONS !== "undefined" ? globalThis.QOL_COLOR_PALETTE_OPTIONS : []);
+        const createRow = (typeof globalThis.CreateRow === "function" ? globalThis.CreateRow : null);
+        const createSliderRow = (typeof globalThis.CreateSliderRow === "function" ? globalThis.CreateSliderRow : null);
+        const createAnimatedToggle = (typeof globalThis.CreateAnimatedInlineToggleSection === "function" ? globalThis.CreateAnimatedInlineToggleSection : null);
+
+        // --- Card: Display & Resolution ---
+        const dividerAfterImport = $.CreatePanel("Panel", list, "ConfigDividerAfterImport");
+        dividerAfterImport.AddClass("ConfigTabDivider");
+        dividerAfterImport.AddClass("RowSeparator");
+
+        const cardDisplay = $.CreatePanel("Panel", list, "ConfigCardDisplay");
+        cardDisplay.AddClass("ConfigTabCard");
+        if (typeof globalThis.CreateSectionTitle === "function") {
+            globalThis.CreateSectionTitle(cardDisplay, "Display & Resolution");
+        }
+        if (createRow) {
+            createRow(cardDisplay, "16:10 Support", "SUPPORT_16_10", "toggle", null, null, null, null, "Hud Shift");
+            createRow(cardDisplay, "4:3 Support", "SUPPORT_4_3", "toggle", null, null, null, null, "Hud Shift");
+            createRow(cardDisplay, "21:9 Stream Fix", "ENABLE_HUD_SHIFT", "toggle", null, null, null, null, "Hud Shift");
+        }
+
+        // --- Card: Game & Interface ---
+        const dividerAfterDisplay = $.CreatePanel("Panel", list, "ConfigDividerAfterDisplay");
+        dividerAfterDisplay.AddClass("ConfigTabDivider");
+        dividerAfterDisplay.AddClass("RowSeparator");
+
+        const cardSystem = $.CreatePanel("Panel", list, "ConfigCardGameInterface");
+        cardSystem.AddClass("ConfigTabCard");
+        if (typeof globalThis.CreateSectionTitle === "function") {
+            globalThis.CreateSectionTitle(cardSystem, "Game & Interface");
+        }
+        if (createRow) {
+            createRow(cardSystem, "Lane with Party", "ENABLE_LANE_WITH_PARTY", "toggle", null, null, null, null, "Automatically selects 'With Party' in lane preference. Requires the party screen to be open.");
+            createRow(cardSystem, "Centered ESC Menu", "ENABLE_CENTER_ESC", "toggle", null, null, null, null, "Easier Access");
+            createRow(cardSystem, "Centered Friends List", "ENABLE_CENTER_FRIENDS_LIST", "toggle", null, null, null, null, "");
+            createRow(cardSystem, "Minimalistic Pause", "ENABLE_MINIMALISTIC_PAUSE", "toggle", null, null, null, null, "Use the compact minimalistic pause screen instead of the default large one.");
+            createRow(cardSystem, "Show Testing Tools", "ENABLE_FORCE_TESTING_TOOLS", "toggle", null, null, null, null, "Always Shown");
+            createRow(cardSystem, "Hide Testing Tools", "ENABLE_HIDE_TESTING_TOOLS", "toggle", null, null, null, null, "Always Hidden");
+            createRow(cardSystem, "Behavior Summary", "ENABLE_HIDE_BEHAVIOR_SUMMARY", "toggle", null, null, null, [{ invert: true }], "Metro Button");
+        }
+
+        // --- Card: Content & Tools ---
+        const dividerAfterSystem = $.CreatePanel("Panel", list, "ConfigDividerAfterSystem");
+        dividerAfterSystem.AddClass("ConfigTabDivider");
+        dividerAfterSystem.AddClass("RowSeparator");
+
+        const cardTools = $.CreatePanel("Panel", list, "ConfigCardContentTools");
+        cardTools.AddClass("ConfigTabCard");
+        if (typeof globalThis.CreateSectionTitle === "function") {
+            globalThis.CreateSectionTitle(cardTools, "Content & Tools");
+        }
+        if (createAnimatedToggle) {
+            createAnimatedToggle(cardTools, "Show Build ID", "ENABLE_SHOW_BUILD_ID", "Shows your build information always for content creators", (sectionParent) => {
+                if (createRow) {
+                    createRow(sectionParent, "Show Title", "ENABLE_SHOW_BUILD_ID_TITLE", "toggle", null, null, null, null, "");
+                }
+            });
+            if (typeof globalThis.CreateSeparator === "function") {
+                globalThis.CreateSeparator(cardTools);
+            }
+            createAnimatedToggle(cardTools, "Keyboard", "ENABLE_KEYBOARD_OVERLAY", "Realtime Key Inputs", (sectionParent) => {
+                if (createRow) {
+                    createRow(sectionParent, "Full Keys", "ENABLE_FULL_KEYBOARD_LAYOUT", "toggle", null, null, null, null, "");
+                }
+                if (createSliderRow) {
+                    createSliderRow(sectionParent, "Size", "KEYBOARD_OVERLAY_SCALE", "size_70_150", "");
+                    createSliderRow(sectionParent, "Horizontal Offset", "KEYBOARD_OVERLAY_X_OFFSET", "offset_n1500_1500");
+                    createSliderRow(sectionParent, "Vertical Offset", "KEYBOARD_OVERLAY_Y_OFFSET", "offset_n400_1000");
+                }
+                if (createRow) {
+                    createRow(sectionParent, "Color", "KEYBOARD_OVERLAY_WASH_COLOR", "palette", null, null, null, palette, "Choose a preset color wash for the keyboard overlay.");
                 }
             });
         }

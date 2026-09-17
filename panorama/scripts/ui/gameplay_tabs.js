@@ -260,6 +260,7 @@
     function renderHudTab(list) {
         const createRow = getCreateRow();
         const createSliderRow = getCreateSliderRow();
+        const createTitle = getCreateSectionTitle();
         const createSep = getCreateSeparator();
         const createAnimatedToggle = getCreateAnimatedToggle();
         const createSecondaryCheckboxRow = getCreateSecondaryCheckboxRow();
@@ -276,6 +277,7 @@
                     createRow(sectionParent, "Missing Hero Opaque", "ENABLE_MISSING_HERO", "toggle", null, null, null, null, "");
                     createRow(sectionParent, "Nicknames", "ENABLE_NICKNAMES", "toggle", null, null, null, null, "");
                     createRow(sectionParent, "Objective Damage", "ENABLE_OBJ_DMG", "toggle", null, null, null, null, "");
+                    createRow(sectionParent, "Ult Cooldowns", "ENABLE_ULT_COOLDOWNS", "toggle", null, null, null, null, "");
                     createRow(sectionParent, "Top Bar Background", "DISABLE_PLAYER_NAME_BLUR", "toggle", null, null, null, [{ invert: true }], "");
                 }
                 if (createSecondaryCheckboxRow) {
@@ -304,6 +306,7 @@
                     createRow(sectionParent, "Cosmetic Ability", "ENABLE_HIDE_COSMETIC_ABILITY", "toggle", null, null, null, [{ invert: true }], "Snowball or Poster");
                     createRow(sectionParent, "Minimalist Abilities", "ENABLE_SIMPLIFY_ABILITY_ICONS", "toggle", null, null, null, null);
                     createRow(sectionParent, "Clean Stacks", "ENABLE_CLEAN_STACKS", "toggle", null, null, null, null, "Move ability stacks to bottom-center of ability icon");
+                    createRow(sectionParent, "Legacy Durations", "ENABLE_LEGACY_COOLDOWNS", "toggle", null, null, null, null, "");
                 }
                 if (createSliderRow) {
                     createSliderRow(sectionParent, "Opacity", "BOTTOM_BAR_OPACITY", "opacity");
@@ -344,81 +347,173 @@
                     createSliderRow(sectionParent, "Horizontal Offset", "SOULS_X_OFFSET", "offset_n1500_1500");
                     createSliderRow(sectionParent, "Vertical Offset", "SOULS_Y_OFFSET", "offset_n500_500");
                 }
+                createSep(sectionParent);
+                createAnimatedToggle(sectionParent, "Unsecured Timer", "ENABLE_UNSECURED_SOUL_TIMER", "Realtime Drain Countdown", (unsecuredParent) => {
+                    if (createSliderRow) {
+                        createSliderRow(unsecuredParent, "Size", "UNSECURED_SOUL_TIMER_SCALE", "size_50_200", "");
+                        createSliderRow(unsecuredParent, "Horizontal Offset", "UNSECURED_SOUL_TIMER_X_OFFSET", "offset_n1500_1500");
+                        createSliderRow(unsecuredParent, "Vertical Offset", "UNSECURED_SOUL_TIMER_Y_OFFSET", "offset_n100_1000");
+                    }
+                });
+                createSep(sectionParent);
+                createAnimatedToggle(sectionParent, "Unsecured Plus", "ENABLE_BETTER_UNSECURED", "Customizable Unsecured Souls", (unsecuredPlusParent) => {
+                    if (createRow) {
+                        createRow(unsecuredPlusParent, "Icon", "ENABLE_BETTER_UNSECURED_SHOW_ICON", "toggle", null, null, null, null, "");
+                        createRow(unsecuredPlusParent, "Text", "ENABLE_BETTER_UNSECURED_SHOW_TEXT", "toggle", null, null, null, null, "");
+                    }
+                    if (createSliderRow) {
+                        createSliderRow(unsecuredPlusParent, "Size", "UNSECURED_SOULS_HUD_SCALE", "size_50_200", "");
+                        createSliderRow(unsecuredPlusParent, "Horizontal Offset", "UNSECURED_SOULS_HUD_X_OFFSET", "offset_n1000_2000");
+                        createSliderRow(unsecuredPlusParent, "Vertical Offset", "UNSECURED_SOULS_HUD_Y_OFFSET", "offset_800_2000");
+                    }
+                });
             });
         }
 
         createSep(list);
 
         if (createAnimatedToggle) {
-            createAnimatedToggle(list, "Shop", "HUD_SHOP_ENABLED", "", (sectionParent) => {
-                if (createSecondaryCheckboxRow) {
-                    createSecondaryCheckboxRow(
-                        sectionParent,
-                        "Stats",
-                        "ENABLE_SHOP_STATS",
-                        "Minimalist",
-                        "ENABLE_SIMPLIFY_SHOP_STATS",
-                        "",
-                        "Only simplifies the shop stats display."
-                    );
-                }
-                if (createRow) {
-                    createRow(sectionParent, "Hero", "ENABLE_HERO_SCENE_PANEL", "toggle", null, null, null, null);
-                    createRow(sectionParent, "Minimalist", "ENABLE_SIMPLIFY_SHOP", "toggle", null, null, null, null);
-                    createRow(sectionParent, "Blur", "DISABLE_SHOP_BLUE", "toggle", null, null, null, [{ invert: true }]);
-                }
-                if (createSecondaryCheckboxRow) {
-                    createSecondaryCheckboxRow(
-                        sectionParent,
-                        "Quick Buy",
-                        "DISABLE_QUICK_BUY",
-                        "Enhanced",
-                        "ENABLE_ENHANCED_QUICKBUY",
-                        null,
-                        "Replaces quickbuy with the Enhanced Quickbuy standalone layout and queue summaries.",
-                        { invert: true, clearSecondaryWhenDisabled: true }
-                    );
-                }
+            createAnimatedToggle(list, "Zipline Boost", "ENABLE_ZIP_BOOST", "Always Visible Boost", (sectionParent) => {
                 if (createSliderRow) {
-                    createSliderRow(sectionParent, "Enhanced Count", "ENHANCED_QUICKBUY_COUNT", "count_1_5", "Controls how many enhanced quickbuy preview items are shown.");
-                }
-                if (createRow) {
-                    createRow(sectionParent, "Click to Notify", "ENABLE_QUICKBUY_CLICK_TO_NOTIFY", "toggle", null, null, null, null);
-                }
-                if (createSliderRow) {
-                    createSliderRow(sectionParent, "Horizontal Offset", "SHOP_OFFSET_X", "offset_n500_500");
-                    createSliderRow(sectionParent, "Vertical Offset", "SHOP_OFFSET_Y", "offset_n500_500");
-                    createSliderRow(sectionParent, "Opacity", "SHOP_OPACITY", "opacity");
-                    createSliderRow(sectionParent, "Scale", "SHOP_SCALE", "scale_0_5_1_5");
-                }
-                createSep(sectionParent);
-
-                if (createAnimatedToggle) {
-                    createAnimatedToggle(sectionParent, "Recent Purchases", "ENABLE_SHOP_RECENT_PURCHASES", "See the recent purchases made in the game.", (recentPurchasesParent) => {
-                        if (createSliderRow) {
-                            createSliderRow(recentPurchasesParent, "Horizontal Offset", "RECENT_PURCHASES_PANEL_X_OFFSET", "offset_n1000_1000");
-                            createSliderRow(recentPurchasesParent, "Vertical Offset", "RECENT_PURCHASES_PANEL_Y_OFFSET", "offset_n500_500");
-                            createSliderRow(recentPurchasesParent, "Opacity", "RECENT_PURCHASES_PANEL_OPACITY", "opacity");
-                            createSliderRow(recentPurchasesParent, "Scale", "RECENT_PURCHASES_PANEL_SCALE", "scale_0_5_2_0");
-                        }
-                    });
-                    createSep(sectionParent);
-                    createAnimatedToggle(sectionParent, "Item Buy Notifications", "ENABLE_SHOP_ITEM_NOTIFICATIONS", "Shows item buy notifications from recent purchases.", (notificationsParent) => {
-                        if (createRow) {
-                            createRow(notificationsParent, "Reposition", null, "multitoggle", null, null, null, RECENT_PURCHASE_REPOSITION_OPTIONS, "Move notifications around Rejuvenator and Scoreboard UI.");
-                            createRow(notificationsParent, "Per-Hero Popups", "ENABLE_HERO_PURCHASE_POPUPS", "toggle", null, null, null, null, "Show purchase notifications under each hero's portrait instead of in the center.");
-                        }
-                        if (createSliderRow) {
-                            createSliderRow(notificationsParent, "Max Notifications", "RECENT_PURCHASES_QUICK_MAX", "count_1_5");
-                            createSliderRow(notificationsParent, "Duration", "RECENT_PURCHASES_QUICK_DISPLAY_SEC", "sec_3_15", "Seconds each notification stays visible.");
-                            createSliderRow(notificationsParent, "Horizontal Offset", "RECENT_PURCHASES_QUICK_X_OFFSET", "offset_n500_500");
-                            createSliderRow(notificationsParent, "Vertical Offset", "RECENT_PURCHASES_QUICK_Y_OFFSET", "offset_n500_500");
-                            createSliderRow(notificationsParent, "Opacity", "RECENT_PURCHASES_QUICK_OPACITY", "opacity");
-                            createSliderRow(notificationsParent, "Scale", "RECENT_PURCHASES_QUICK_SCALE", "scale_0_5_1_5");
-                        }
-                    });
+                    createSliderRow(sectionParent, "Size", "ZIP_BOOST_SCALE", "size_50_200", "");
+                    createSliderRow(sectionParent, "Horizontal Offset", "ZIP_BOOST_X_OFFSET", "offset_n2000_2000");
+                    createSliderRow(sectionParent, "Vertical Offset", "ZIP_BOOST_Y_OFFSET", "offset_0_1000");
                 }
             });
+            createSep(list);
+            createAnimatedToggle(list, "Speed", "ENABLE_COMPASS_SPEED", "Show standalone movement speed.", (sectionParent) => {
+                if (createSliderRow) {
+                    createSliderRow(sectionParent, "Horizontal Offset", "COMPASS_SPEED_X_OFFSET", "offset_n2000_2000");
+                    createSliderRow(sectionParent, "Vertical Offset", "COMPASS_SPEED_Y_OFFSET", "offset_n2000_2000");
+                }
+            });
+            createSep(list);
+            createAnimatedToggle(list, "Compass", "ENABLE_COMPASS", "See your view angle.", (sectionParent) => {
+                if (createRow) {
+                    createRow(sectionParent, "Minimalist", "ENABLE_SIMPLIFY_COMPASS", "toggle", null, null, null, null, "Simplifies the Compass overlay to its bare elements.");
+                }
+                if (createSliderRow) {
+                    createSliderRow(sectionParent, "Horizontal Stretch", "COMPASS_STRETCH_X", "size_50_200");
+                    createSliderRow(sectionParent, "Vertical Stretch", "COMPASS_STRETCH_Y", "size_50_200");
+                    createSliderRow(sectionParent, "Size", "COMPASS_SCALE", "size_50_200");
+                    createSliderRow(sectionParent, "Horizontal Offset", "COMPASS_X_OFFSET", "offset_n2000_2000");
+                    createSliderRow(sectionParent, "Vertical Offset", "COMPASS_Y_OFFSET", "offset_n1000_300");
+                }
+            });
+            createSep(list);
+            createAnimatedToggle(list, "Chat", "ENABLE_CHAT", "", (sectionParent) => {
+                if (createSliderRow) {
+                    createSliderRow(sectionParent, "Size", "CHAT_SCALE", "size_50_200", "");
+                    createSliderRow(sectionParent, "Horizontal Offset", "CHAT_X_OFFSET", "offset_n1500_1500");
+                    createSliderRow(sectionParent, "Vertical Offset", "CHAT_Y_OFFSET", "offset_n250_800", "");
+                }
+                if (createRow) {
+                    createRow(sectionParent, "Images in Chat", "ENABLE_IMAGES_IN_CHAT", "toggle", null, null, null, null, "");
+                }
+            });
+            createSep(list);
+            createAnimatedToggle(list, "Damage Report", "DISABLE_DAMAGE_REPORT", "", (sectionParent) => {
+                if (createSliderRow) {
+                    createSliderRow(sectionParent, "Horizontal Offset", "DAMAGE_REPORT_X_OFFSET", "offset_n1500_1500", "");
+                    createSliderRow(sectionParent, "Vertical Offset", "DAMAGE_REPORT_Y_OFFSET", "offset_n1500_200", "");
+                }
+            }, { invert: true });
+        }
+
+        createSep(list);
+        createTitle(list, "Player Stats", "ENABLE_STATS_POSITION");
+        if (createRow) {
+            createRow(list, "Side", "STATS_POSITION_SIDE", "buttongroup", null, null, null, STATS_POSITION_SIDE_OPTIONS);
+        }
+        if (createSliderRow) {
+            createSliderRow(list, "Horizontal Offset", "STATS_POSITION_X_OFFSET", "offset_n500_500", "");
+            createSliderRow(list, "Vertical Offset", "STATS_POSITION_Y_OFFSET", "offset_n500_500", "");
+        }
+        if (createRow) {
+            createRow(list, "Hide in normal view", "STATS_POSITION_HIDE_NORMAL", "toggle", null, null, null, null, "Hide the bottom-left active stats block during normal play. It stays in the HUD (just made invisible), so the Crosshair Active Stats mirror keeps working.");
+            createRow(list, "Hide on scoreboard (TAB)", "STATS_POSITION_HIDE_SCOREBOARD", "toggle", null, null, null, null, "Hide the detailed stats list that appears while the scoreboard / TAB is held.");
+        }
+    }
+
+    function renderShopTab(list) {
+        const createRow = getCreateRow();
+        const createSliderRow = getCreateSliderRow();
+        const createTitle = getCreateSectionTitle();
+        const createSep = getCreateSeparator();
+        const createAnimatedToggle = getCreateAnimatedToggle();
+        const createSecondaryCheckboxRow = getCreateSecondaryCheckboxRow();
+
+        createTitle(list, "Quick Buy");
+        if (createSecondaryCheckboxRow) {
+            createSecondaryCheckboxRow(
+                list,
+                "Quick Buy",
+                "DISABLE_QUICK_BUY",
+                "Enhanced",
+                "ENABLE_ENHANCED_QUICKBUY",
+                null,
+                "Replaces quickbuy with the Enhanced Quickbuy standalone layout and queue summaries.",
+                { invert: true, clearSecondaryWhenDisabled: true }
+            );
+        }
+        if (createSliderRow) {
+            createSliderRow(list, "Enhanced Count", "ENHANCED_QUICKBUY_COUNT", "count_1_5", "Controls how many enhanced quickbuy preview items are shown.");
+        }
+        if (createRow) {
+            createRow(list, "Click to Notify", "ENABLE_QUICKBUY_CLICK_TO_NOTIFY", "toggle", null, null, null, null);
+        }
+
+        createSep(list);
+
+        if (createAnimatedToggle) {
+            createAnimatedToggle(list, "Recent Purchases", "ENABLE_SHOP_RECENT_PURCHASES", "See the recent purchases made in the game.", (recentPurchasesParent) => {
+                if (createSliderRow) {
+                    createSliderRow(recentPurchasesParent, "Horizontal Offset", "RECENT_PURCHASES_PANEL_X_OFFSET", "offset_n1000_1000");
+                    createSliderRow(recentPurchasesParent, "Vertical Offset", "RECENT_PURCHASES_PANEL_Y_OFFSET", "offset_n500_500");
+                    createSliderRow(recentPurchasesParent, "Opacity", "RECENT_PURCHASES_PANEL_OPACITY", "opacity");
+                    createSliderRow(recentPurchasesParent, "Scale", "RECENT_PURCHASES_PANEL_SCALE", "scale_0_5_2_0");
+                }
+            });
+            createSep(list);
+            createAnimatedToggle(list, "Item Buy Notifications", "ENABLE_SHOP_ITEM_NOTIFICATIONS", "Shows item buy notifications from recent purchases.", (notificationsParent) => {
+                if (createRow) {
+                    createRow(notificationsParent, "Reposition", null, "multitoggle", null, null, null, RECENT_PURCHASE_REPOSITION_OPTIONS, "Move notifications around Rejuvenator and Scoreboard UI.");
+                    createRow(notificationsParent, "Per-Hero Popups", "ENABLE_HERO_PURCHASE_POPUPS", "toggle", null, null, null, null, "Show purchase notifications under each hero's portrait instead of in the center.");
+                }
+                if (createSliderRow) {
+                    createSliderRow(notificationsParent, "Max Notifications", "RECENT_PURCHASES_QUICK_MAX", "count_1_5");
+                    createSliderRow(notificationsParent, "Duration", "RECENT_PURCHASES_QUICK_DISPLAY_SEC", "sec_3_15", "Seconds each notification stays visible.");
+                    createSliderRow(notificationsParent, "Horizontal Offset", "RECENT_PURCHASES_QUICK_X_OFFSET", "offset_n500_500");
+                    createSliderRow(notificationsParent, "Vertical Offset", "RECENT_PURCHASES_QUICK_Y_OFFSET", "offset_n500_500");
+                    createSliderRow(notificationsParent, "Opacity", "RECENT_PURCHASES_QUICK_OPACITY", "opacity");
+                    createSliderRow(notificationsParent, "Scale", "RECENT_PURCHASES_QUICK_SCALE", "scale_0_5_1_5");
+                }
+            });
+        }
+
+        createSep(list);
+        createTitle(list, "Shop Display");
+        if (createSecondaryCheckboxRow) {
+            createSecondaryCheckboxRow(
+                list,
+                "Stats",
+                "ENABLE_SHOP_STATS",
+                "Minimalist",
+                "ENABLE_SIMPLIFY_SHOP_STATS",
+                "",
+                "Only simplifies the shop stats display."
+            );
+        }
+        if (createRow) {
+            createRow(list, "Hero", "ENABLE_HERO_SCENE_PANEL", "toggle", null, null, null, null);
+            createRow(list, "Minimalist", "ENABLE_SIMPLIFY_SHOP", "toggle", null, null, null, null);
+            createRow(list, "Blur", "DISABLE_SHOP_BLUE", "toggle", null, null, null, [{ invert: true }]);
+        }
+        if (createSliderRow) {
+            createSliderRow(list, "Horizontal Offset", "SHOP_OFFSET_X", "offset_n500_500");
+            createSliderRow(list, "Vertical Offset", "SHOP_OFFSET_Y", "offset_n500_500");
+            createSliderRow(list, "Opacity", "SHOP_OPACITY", "opacity");
+            createSliderRow(list, "Scale", "SHOP_SCALE", "scale_0_5_1_5");
         }
     }
 
@@ -708,28 +803,32 @@
             case "Healthbar":
                 renderHealthbarTab(list);
                 return true;
+            case "Minimap":
+                renderMinimapTab(list);
+                return true;
+            case "Shop":
+                renderShopTab(list);
+                return true;
             case "UI":
                 renderUiTab(list);
                 return true;
             case "Overlay":
                 renderOverlayTab(list);
                 return true;
-            case "Minimap":
-                renderMinimapTab(list);
-                return true;
             default:
                 return false;
         }
     }
 
-    // Register all 6 gameplay tabs with window manager
+    // Register all gameplay tabs with window manager
     if (Q.ui?.window?.registerTabRenderer) {
         Q.ui.window.registerTabRenderer("Crosshair", renderCrosshairTab);
         Q.ui.window.registerTabRenderer("HUD", renderHudTab);
         Q.ui.window.registerTabRenderer("Healthbar", renderHealthbarTab);
+        Q.ui.window.registerTabRenderer("Minimap", renderMinimapTab);
+        Q.ui.window.registerTabRenderer("Shop", renderShopTab);
         Q.ui.window.registerTabRenderer("UI", renderUiTab);
         Q.ui.window.registerTabRenderer("Overlay", renderOverlayTab);
-        Q.ui.window.registerTabRenderer("Minimap", renderMinimapTab);
     }
 
     // =========================================================================
@@ -746,6 +845,7 @@
         renderCrosshairTab,
         renderHudTab,
         renderHealthbarTab,
+        renderShopTab,
         renderUiTab,
         renderOverlayTab,
         renderMinimapTab,

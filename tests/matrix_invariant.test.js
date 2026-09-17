@@ -298,8 +298,8 @@ test("INVARIANT 3: Full UI layout walk - all controls bind to valid DEFAULT_CONF
 
     // All known tabs
     const tabsToTest = [
-        "General", "Crosshair", "HUD", "Healthbar", "UI", "Minimap",
-        "Overlay", "Audio", "Presets", "Support", "Console", "Dev", "Arcade"
+        "General", "Crosshair", "HUD", "Healthbar", "Minimap", "Shop",
+        "UI", "Overlay", "Audio", "Presets", "Support", "Console", "Dev", "Arcade"
     ];
 
     for (const tabName of tabsToTest) {

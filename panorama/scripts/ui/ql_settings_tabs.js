@@ -19,7 +19,7 @@
 
     const TAB_ORDER = [
         "Support", "Config", "Presets", "Crosshair", "Healthbar",
-        "HUD", "UI", "Overlay", "Minimap", "Audio", "Arcade", "Console"
+        "HUD", "Minimap", "Shop", "Audio", "Arcade", "Console"
     ];
 
     function GetSettingsTabOrder() {
@@ -41,7 +41,7 @@
             },
             {
                 title: "Gameplay",
-                tabs: ["Crosshair", "Healthbar", "HUD", "UI", "Overlay", "Minimap", "Audio"]
+                tabs: ["Crosshair", "Healthbar", "HUD", "Minimap", "Shop", "Audio"]
             }
         ];
     }
@@ -57,10 +57,11 @@
             case "Crosshair": return "s2r://panorama/images/icons/properties/range_aoe.vsvg";
             case "Healthbar": return "s2r://panorama/images/icons/properties/health.vsvg";
             case "HUD": return "s2r://panorama/images/icons/properties/spirit.vsvg";
+            case "Minimap": return "s2r://panorama/images/icons/icon_report.vsvg";
+            case "Shop": return "s2r://panorama/images/icons/icon_cart.vsvg";
+            case "Audio": return "s2r://panorama/images/qollock/audio_nav_icon.vsvg";
             case "UI": return "s2r://panorama/images/icons/icon_reorder.vsvg";
             case "Overlay": return "s2r://panorama/images/icons/icon_graph.vsvg";
-            case "Minimap": return "s2r://panorama/images/icons/icon_report.vsvg";
-            case "Audio": return "s2r://panorama/images/qollock/audio_nav_icon.vsvg";
             default: return "";
         }
     }
