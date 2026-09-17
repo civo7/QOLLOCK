@@ -3004,7 +3004,7 @@
 
         const checkboxWrap = $.CreatePanel("Panel", controls, "");
         checkboxWrap.AddClass("InlineSecondaryCheckboxWrap");
-        const secondaryBtn = $.CreatePanel("Button", checkboxWrap, "");
+        const secondaryBtn = $.CreatePanel("ToggleButton", checkboxWrap, "");
         secondaryBtn.AddClass("InlineSecondaryCheckboxBtn");
         secondaryBtn.AddClass("CitadelSettingsCheckbox");
         secondaryBtn.AddClass("MultiCheckboxBtn");
@@ -3023,7 +3023,9 @@
             setSwitchState(mainEnabled);
             checkboxWrap.SetHasClass("Disabled", !mainEnabled);
             secondaryBtn.enabled = mainEnabled;
+            try { secondaryBtn.SetSelected(secondaryEnabled); } catch (eSel) {}
             secondaryBtn.SetHasClass("selected", secondaryEnabled);
+            secondaryBtn.SetHasClass("IsSelected", secondaryEnabled);
             secondaryBtn.SetHasClass("Active", secondaryEnabled);
         };
 

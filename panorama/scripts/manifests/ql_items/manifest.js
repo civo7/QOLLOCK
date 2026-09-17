@@ -50,7 +50,13 @@
                 return null;
             }
 
-            function _clearOpacity(panel) { try { panel.style.opacity = ""; } catch(e) {} }
+            function _clearOpacity(panel) {
+                if (!panel || !panel.style) return;
+                try { panel.style.opacity = "1.0"; } catch(e0) {}
+                try { delete panel.style.opacity; } catch(e1) {}
+                try { panel.style.opacity = null; } catch(e2) {}
+                try { panel.style.opacity = ""; } catch(e3) {}
+            }
             function _setOpacity(panel, val) { try { panel.style.opacity = val; } catch(e) {} }
 
             function _resetAllChildren(mc) {
@@ -77,7 +83,9 @@
                 var enabled = (cfg.HUD_ITEMS_ENABLED === undefined || cfg.HUD_ITEMS_ENABLED === true || Number(cfg.HUD_ITEMS_ENABLED) === 1);
                 var ox = Math.round(Number(active ? cfg.ITEMS_X_OFFSET : 0)) || 0;
                 var oy = Math.round(Number(active ? cfg.ITEMS_Y_OFFSET : 0)) || 0;
-                var op = active ? Number(cfg.ITEMS_OPACITY).toFixed(2) : "1.00";
+                var opVal = active ? Number(cfg.ITEMS_OPACITY !== undefined ? cfg.ITEMS_OPACITY : 1.0) : 1.0;
+                if (!isFinite(opVal)) opVal = 1.0;
+                var op = opVal.toFixed(2);
                 var wcIdx = active ? (Math.round(Number(cfg.ITEMS_WASH_COLOR)) || 0) : 0;
                 var pal = (typeof QOL !== "undefined" && QOL.washColorPalette) ? QOL.washColorPalette : [];
                 var wc = (wcIdx > 0 && wcIdx < pal.length) ? pal[wcIdx] : "";
@@ -134,7 +142,8 @@
                         if (mc && mc.style) {
                             mc.style.x = "0px"; mc.style.y = "0px"; mc.style.washColor = "";
                             _clearOpacity(mc);
-                            if (mc.SetHasClass) mc.SetHasClass("qol-hidden", false);
+                            var isSupposed = FR && FR.isFeatureSupposedToBeEnabled ? FR.isFeatureSupposedToBeEnabled("ql_items") : true;
+                            if (mc.SetHasClass) mc.SetHasClass("qol-hidden", !isSupposed);
                             // Also reset all child panels that _apply touches.
                             _resetAllChildren(mc);
                         }

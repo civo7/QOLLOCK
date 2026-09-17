@@ -69,6 +69,9 @@
 
             function _clearStyle(panel, prop) {
                 if (!panel || !panel.style || !prop) return;
+                if (prop === "opacity") {
+                    try { panel.style.opacity = "1.0"; } catch (eOp) {}
+                }
                 try { delete panel.style[prop]; } catch (e0) {}
                 try { panel.style[prop] = null; } catch (e1) {}
                 try { panel.style[prop] = ""; } catch (e2) {}
@@ -109,8 +112,7 @@
                 var op = opNum.toFixed(2);
                 var sc = scNum.toFixed(2);
 
-                // Valve's CSS manages normal match/hideout/replay visibility — QOLLOCK never collapses TopBar.
-                if (topBar.SetHasClass) topBar.SetHasClass("qol-hidden", false);
+                if (topBar.SetHasClass) topBar.SetHasClass("qol-hidden", !enabled);
 
                 var sig = ox + "|" + oy + "|" + op + "|" + sc + "|" + (enabled ? "1" : "0") + "|" + (hudVisible ? "1" : "0") + "|" + (active ? "1" : "0");
                 if (_lastSig === sig) return;
@@ -164,7 +166,8 @@
                     var root = $.GetContextPanel ? $.GetContextPanel() : null;
                     var topBar = root ? root.FindChildTraverse("TopBar") : null;
                     if (topBar) {
-                        if (topBar.SetHasClass) topBar.SetHasClass("qol-hidden", false);
+                        var isSupposed = FR && FR.isFeatureSupposedToBeEnabled ? FR.isFeatureSupposedToBeEnabled("ql_topbar") : true;
+                        if (topBar.SetHasClass) topBar.SetHasClass("qol-hidden", !isSupposed);
                         _clearStyle(topBar, "x");
                         _clearStyle(topBar, "y");
                         _clearStyle(topBar, "preTransformScale2d");

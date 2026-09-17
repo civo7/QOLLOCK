@@ -20,6 +20,7 @@
     FR.register({
         id: "ql_heroshop",
         enabledByDefault: true,
+        enableKey: "HUD_SHOP_ENABLED",
         settings: [
             { key: "HUD_SHOP_ENABLED", type: "toggle", default: true },
             { key: "ENABLE_HERO_SCENE_PANEL", type: "toggle", default: true, label: "Hero", description: "Shows your character in the shop menu." },
@@ -52,7 +53,17 @@
             function _normOffset(v, d) { var n = Math.round(Number(v)); return isFinite(n) ? n : d; }
             function _normOpacity(v, d) { var n = Number(v); return isFinite(n) && n >= 0 && n <= 1 ? n : d; }
             function _normScale(v, d) { var n = Number(v); return isFinite(n) && n >= 0.5 && n <= 1.5 ? n : d; }
-            function _isOn(cfg, k) { return Number(cfg[k]) === 1; }
+            function _isOn(cfg, k) {
+                if (!cfg) return false;
+                var v = cfg[k];
+                return v === true || Number(v) === 1;
+            }
+            function _isShopEnabled(cfg) {
+                if (!cfg) return true;
+                var v = cfg.HUD_SHOP_ENABLED;
+                if (v === undefined) return true;
+                return v === true || Number(v) === 1;
+            }
 
             function _setClass(panel, cls, on) {
                 if (!_isAlive(panel)) return;
@@ -64,9 +75,10 @@
             function _needsFeatures(cfg) {
                 var simplifyStats = _isOn(cfg, "ENABLE_SHOP_STATS") && _isOn(cfg, "ENABLE_SIMPLIFY_SHOP_STATS");
                 var recentPurchases = _isOn(cfg, "ENABLE_SHOP_RECENT_PURCHASES");
+                var shopEnabled = _isShopEnabled(cfg);
                 return simplifyStats || recentPurchases ||
                     Number(cfg.ENABLE_SIMPLIFY_SHOP) === 1 || Number(cfg.ENABLE_SIMPLIFY_ITEMS) === 1 ||
-                    Number(cfg.DISABLE_SHOP_BLUE) === 1 || !_isOn(cfg, "HUD_SHOP_ENABLED") ||
+                    Number(cfg.DISABLE_SHOP_BLUE) === 1 || !shopEnabled ||
                     _normOffset(cfg.SHOP_OFFSET_X, 0) !== 0 || _normOffset(cfg.SHOP_OFFSET_Y, 0) !== 0 ||
                     _normOpacity(cfg.SHOP_OPACITY, 1.0) !== 1.0 || _normScale(cfg.SHOP_SCALE, 1.0) !== 1.0;
             }
@@ -82,7 +94,7 @@
                     var shopOffsetY = _normOffset(cfg.SHOP_OFFSET_Y, 0);
                     var shopOpacity = _normOpacity(cfg.SHOP_OPACITY, 1.0);
                     var shopScale = _normScale(cfg.SHOP_SCALE, 1.0);
-                    var shopEnabled = _isOn(cfg, "HUD_SHOP_ENABLED");
+                    var shopEnabled = _isShopEnabled(cfg);
                     var simplifyStats = _isOn(cfg, "ENABLE_SHOP_STATS") && _isOn(cfg, "ENABLE_SIMPLIFY_SHOP_STATS");
                     var recentPurchases = _isOn(cfg, "ENABLE_SHOP_RECENT_PURCHASES");
                     var needsFeatures = _needsFeatures(cfg);
@@ -227,7 +239,8 @@
                             _mainPanel.style.y = "0px";
                             _mainPanel.style.preTransformScale2d = "1.00, 1.00";
                             _mainPanel.style.uiScale = "100%";
-                            if (_mainPanel.SetHasClass) _mainPanel.SetHasClass("qol-hidden", false);
+                            var isSupposed = FR && FR.isFeatureSupposedToBeEnabled ? FR.isFeatureSupposedToBeEnabled("ql_heroshop") : true;
+                            if (_mainPanel.SetHasClass) _mainPanel.SetHasClass("qol-hidden", !isSupposed);
                             try { _mainPanel.style.opacity = "1.00"; } catch(e2) {}
                         } catch(e) {}
                     }

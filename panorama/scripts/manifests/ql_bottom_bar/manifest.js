@@ -44,9 +44,10 @@
 
             function _applyCurrencyColor(root, washColor) {
                 var wc = washColor || "";
-                var sr = $.GetContextPanel();
-                var ap = sr.FindChildTraverse("APContainer");
-                var gap = sr.FindChildTraverse("gold_and_ap_container");
+                var sr = root || $.GetContextPanel();
+                if (!sr) return;
+                var ap = sr.FindChildTraverse ? sr.FindChildTraverse("APContainer") : null;
+                var gap = sr.FindChildTraverse ? sr.FindChildTraverse("gold_and_ap_container") : null;
                 var containers = [sr];
                 if (ap) containers.push(ap);
                 if (gap) containers.push(gap);
@@ -78,6 +79,9 @@
 
             function _clearStyle(panel, prop) {
                 if (!panel || !panel.style || !prop) return;
+                if (prop === "opacity") {
+                    try { panel.style.opacity = "1.0"; } catch (eOp) {}
+                }
                 try { delete panel.style[prop]; } catch (e0) {}
                 try { panel.style[prop] = null; } catch (e1) {}
                 try { panel.style[prop] = ""; } catch (e2) {}
@@ -139,7 +143,7 @@
                     try {
                         var root = $.GetContextPanel();
                         _applyCurrencyColor(root, "");
-                        var bp = root.FindChildTraverse("hud_signature");
+                        var bp = root ? root.FindChildTraverse("hud_signature") : null;
                         if (bp && bp.style) {
                             _clearStyle(bp, "x");
                             _clearStyle(bp, "y");
@@ -147,7 +151,8 @@
                             _clearStyle(bp, "uiScale");
                             _clearStyle(bp, "opacity");
                             _clearStyle(bp, "washColor");
-                            if (bp.SetHasClass) bp.SetHasClass("qol-hidden", false);
+                            var isSupposed = FR && FR.isFeatureSupposedToBeEnabled ? FR.isFeatureSupposedToBeEnabled("ql_bottom_bar") : true;
+                            if (bp.SetHasClass) bp.SetHasClass("qol-hidden", !isSupposed);
                         }
                     } catch(e) {}
                 },
