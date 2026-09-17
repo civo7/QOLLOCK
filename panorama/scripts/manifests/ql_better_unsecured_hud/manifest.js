@@ -36,7 +36,7 @@
             { key: "ENABLE_BETTER_UNSECURED", type: "toggle", default: false },
             { key: "UNSECURED_SOULS_HUD_SCALE", type: "slider", min: 50, max: 200, default: 100 },
             { key: "UNSECURED_SOULS_HUD_X_OFFSET", type: "slider", min: -1000, max: 2000, default: 0 },
-            { key: "UNSECURED_SOULS_HUD_Y_OFFSET", type: "slider", min: 800, max: 2000, default: 0 },
+            { key: "UNSECURED_SOULS_HUD_Y_OFFSET", type: "slider", min: 800, max: 2000, default: 1095 },
             { key: "ENABLE_BETTER_UNSECURED_SHOW_ICON", type: "toggle", default: false },
             { key: "ENABLE_BETTER_UNSECURED_SHOW_TEXT", type: "toggle", default: false },
             { key: "ENABLE_BETTER_UNSECURED_SHOW_ICON_TEXT", type: "toggle", default: false }
@@ -91,8 +91,9 @@
                 return (val != null && isFinite(val)) ? val : null;
             }
             function _getDefaultConfigYOffset() {
+                try { if (typeof globalThis !== "undefined" && globalThis.DEFAULT_CONFIG && globalThis.DEFAULT_CONFIG.UNSECURED_SOULS_HUD_Y_OFFSET != null) return Number(globalThis.DEFAULT_CONFIG.UNSECURED_SOULS_HUD_Y_OFFSET); } catch(e) {}
                 try { if (typeof QOL_DEFAULT_CONFIG !== "undefined" && QOL_DEFAULT_CONFIG.UNSECURED_SOULS_HUD_Y_OFFSET != null) return Number(QOL_DEFAULT_CONFIG.UNSECURED_SOULS_HUD_Y_OFFSET); } catch(e) {}
-                return 0;
+                return 1095;
             }
 
             // ── Constants ──
@@ -348,7 +349,7 @@
 
                     var scale = _clampConfigNumber(cfg.UNSECURED_SOULS_HUD_SCALE, 100, 50, 200, true);
                     var xOffset = _clampConfigNumber(cfg.UNSECURED_SOULS_HUD_X_OFFSET, 0, -1000, 2000, true);
-                    var yOffset = _clampConfigNumber(cfg.UNSECURED_SOULS_HUD_Y_OFFSET, 0, 800, 2000, true);
+                    var yOffset = _clampConfigNumber(cfg.UNSECURED_SOULS_HUD_Y_OFFSET, 1095, 800, 2000, true);
                     var fontPx = Math.round(14 * (scale / 100));
                     if (fontPx < 8) fontPx = 8;
                     if (fontPx > 72) fontPx = 72;

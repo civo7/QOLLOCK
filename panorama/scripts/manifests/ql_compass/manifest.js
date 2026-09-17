@@ -526,6 +526,13 @@
                 return _minimapFlipClassTarget;
             }
 
+            function _clearStyle(p, prop) {
+                if (!p || !p.style || !prop) return;
+                try { delete p.style[prop]; } catch (e0) {}
+                try { p.style[prop] = null; } catch (e1) {}
+                try { p.style[prop] = ""; } catch (e2) {}
+            }
+
             function _applyStaticMinimapRotation(hud, nowMs, targetDeg) {
                 var target = _findMinimapRotateTarget(hud);
                 if (!_isAlive(target)) return;
@@ -533,7 +540,11 @@
                 if (!isFinite(resolvedDeg)) resolvedDeg = 0;
                 var roundedDeg = Math.round(resolvedDeg * 100) / 100;
                 if (_minimapRotateLastDeg !== roundedDeg) {
-                    target.style.preTransformRotate2d = roundedDeg.toFixed(2) + "deg";
+                    if (Math.abs(roundedDeg) < 0.001) {
+                        _clearStyle(target, "preTransformRotate2d");
+                    } else {
+                        target.style.preTransformRotate2d = roundedDeg.toFixed(2) + "deg";
+                    }
                 }
                 _minimapRotateLastDeg = roundedDeg;
                 _minimapRotateSmoothedDeg = roundedDeg;
@@ -954,6 +965,9 @@
                         var flipTarget = _findMinimapFlipClassTarget(hud);
                         if (_isAlive(flipTarget)) flipTarget.SetHasClass("qol_minimap_flip_active", false);
                         _applyStaticMinimapRotation(hud, _nowMs(), 0);
+                        var target = _findMinimapRotateTarget(hud);
+                        if (_isAlive(target)) _clearStyle(target, "preTransformRotate2d");
+                        _minimapRotateLastDeg = null;
                     }
                 },
                 onSettingsChanged: function () {

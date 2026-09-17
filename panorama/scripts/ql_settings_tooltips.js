@@ -378,40 +378,14 @@ function PositionSettingsRowFloatingTooltip(anchorPanel) {
         return;
     }
 
-    var hostScaleX = GetSettingsTooltipHostAxisScale(hostWidth, hostDesiredWidth);
-    var hostScaleY = GetSettingsTooltipHostAxisScale(hostHeight, hostDesiredHeight);
-    var styleToActualX = NormalizeSettingsTooltipScaleFactor(gSettingsTooltipStyleToActualX);
-    var styleToActualY = NormalizeSettingsTooltipScaleFactor(gSettingsTooltipStyleToActualY);
+    var finalX = Math.round(x);
+    var finalY = Math.round(y);
 
-    var styleX = Number(x) / (hostScaleX * styleToActualX);
-    var styleY = Number(y) / (hostScaleY * styleToActualY);
-    if (!isFinite(styleX) || !isFinite(styleY)) {
-        styleX = Number(x);
-        styleY = Number(y);
-    }
+    panel.style.x = finalX + "px";
+    panel.style.y = finalY + "px";
+    gSettingsTooltipLastWrittenStyleX = finalX;
+    gSettingsTooltipLastWrittenStyleY = finalY;
 
-    panel.style.x = String(Math.round(styleX)) + "px";
-    panel.style.y = String(Math.round(styleY)) + "px";
-    gSettingsTooltipLastWrittenStyleX = styleX;
-    gSettingsTooltipLastWrittenStyleY = styleY;
-
-    if ((Number(gSettingsTooltipCalibrationFramesRemaining) || 0) > 0) {
-        var appliedActualX = Number(GetPanelXOffsetWithinAncestor(panel, host));
-        var appliedActualY = Number(GetPanelYOffsetWithinAncestor(panel, host));
-        if (isFinite(appliedActualX) && Math.abs(styleX) >= 8) {
-            var measuredX = appliedActualX / (styleX * hostScaleX);
-            if (isFinite(measuredX) && measuredX > 0.05 && measuredX < 20.0) {
-                gSettingsTooltipStyleToActualX = (gSettingsTooltipStyleToActualX * 0.7) + (measuredX * 0.3);
-            }
-        }
-        if (isFinite(appliedActualY) && Math.abs(styleY) >= 8) {
-            var measuredY = appliedActualY / (styleY * hostScaleY);
-            if (isFinite(measuredY) && measuredY > 0.05 && measuredY < 20.0) {
-                gSettingsTooltipStyleToActualY = (gSettingsTooltipStyleToActualY * 0.7) + (measuredY * 0.3);
-            }
-        }
-        gSettingsTooltipCalibrationFramesRemaining = Math.max(0, (Number(gSettingsTooltipCalibrationFramesRemaining) || 0) - 1);
-    }
     gSettingsRowFloatingTooltipLastX = x;
     gSettingsRowFloatingTooltipLastY = y;
     gSettingsTooltipLastSide = side;
@@ -421,12 +395,9 @@ function PositionSettingsRowFloatingTooltip(anchorPanel) {
     SettingsTooltipDebugLog(
         "pos_simple anchor=" + (anchorId || "-") +
         " side=" + side +
-        " x=" + String(Math.round(x)) +
-        " y=" + String(Math.round(y)) +
-        " style=" + String(Math.round(styleX)) + "," + String(Math.round(styleY)) +
-        " host=" + String(Math.round(hostWidth)) + "x" + String(Math.round(hostHeight)) +
-        " hScale=" + hostScaleX.toFixed(3) + "," + hostScaleY.toFixed(3) +
-        " s2a=" + gSettingsTooltipStyleToActualX.toFixed(3) + "," + gSettingsTooltipStyleToActualY.toFixed(3)
+        " x=" + String(finalX) +
+        " y=" + String(finalY) +
+        " host=" + String(Math.round(hostWidth)) + "x" + String(Math.round(hostHeight))
     );
 }
 

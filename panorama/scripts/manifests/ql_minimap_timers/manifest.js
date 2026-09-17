@@ -145,9 +145,7 @@
                     if (panels.buffTime) panels.buffTime.style.fontSize = tf + "px"; if (panels.rejuvTime) panels.rejuvTime.style.fontSize = tf + "px";
                     State.minimapObjectiveScaleSig = sig;
                 }
-                var sso = Math.round(tw + (tg * 2)), oml = "0px";
-                if (be && !re) oml = sso + "px"; else if (re && !be) oml = (-sso) + "px";
-                if (overlay.style.marginLeft !== oml) overlay.style.marginLeft = oml;
+                if (overlay.style.marginLeft !== "0px") overlay.style.marginLeft = "0px";
                 if (panels.buffPanel) { var bv = be; if (panels.buffPanel.SetHasClass) panels.buffPanel.SetHasClass("qol-hidden", !bv); else if (panels.buffPanel.style.visibility !== (bv ? "visible" : "collapse")) panels.buffPanel.style.visibility = bv ? "visible" : "collapse"; }
                 if (panels.rejuvPanel) { var rv = re; if (panels.rejuvPanel.SetHasClass) panels.rejuvPanel.SetHasClass("qol-hidden", !rv); else if (panels.rejuvPanel.style.visibility !== (rv ? "visible" : "collapse")) panels.rejuvPanel.style.visibility = rv ? "visible" : "collapse"; }
                 if (panels.buffBridgeLeftPanel) { if (panels.buffBridgeLeftPanel.SetHasClass) panels.buffBridgeLeftPanel.SetHasClass("qol-hidden", true); else if (panels.buffBridgeLeftPanel.style.visibility !== "collapse") panels.buffBridgeLeftPanel.style.visibility = "collapse"; }
