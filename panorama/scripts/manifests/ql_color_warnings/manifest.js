@@ -235,12 +235,12 @@
                 var healthBar = _getCachedPanel("coloredHealthbarHealthBar");
                 var progressLeft = _getCachedPanel("coloredHealthbarProgressLeft");
                 var currentHealth = _getCachedPanel("coloredHealthbarCurrentHealth");
-                if (barsPanel) _setWashColorSafe(barsPanel, "white");
-                if (healthBar) _setWashColorSafe(healthBar, "white");
-                if (progressLeft) _setWashColorSafe(progressLeft, "white");
+                if (barsPanel) _setWashColorSafe(barsPanel, "");
+                if (healthBar) _setWashColorSafe(healthBar, "");
+                if (progressLeft) _setWashColorSafe(progressLeft, "");
                 if (currentHealth) {
-                    _setStyleSafe(currentHealth, "color", "white");
-                    _setWashColorSafe(currentHealth, "white");
+                    _clearStyleSafe(currentHealth, "color");
+                    _setWashColorSafe(currentHealth, "");
                 }
                 if (State) {
                     State.coloredHealthbarLastColor = "";

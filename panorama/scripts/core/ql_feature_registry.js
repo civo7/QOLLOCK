@@ -331,6 +331,7 @@
         createContext,
         isEnabled,
         isRegistered,
+        isFeatureSupposedToBeEnabled,
         getRegisteredIds,
         getEnabledIds,
         getErrorCounts,

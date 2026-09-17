@@ -239,8 +239,7 @@
                             _mainPanel.style.y = "0px";
                             _mainPanel.style.preTransformScale2d = "1.00, 1.00";
                             _mainPanel.style.uiScale = "100%";
-                            var isSupposed = FR && FR.isFeatureSupposedToBeEnabled ? FR.isFeatureSupposedToBeEnabled("ql_heroshop") : true;
-                            if (_mainPanel.SetHasClass) _mainPanel.SetHasClass("qol-hidden", !isSupposed);
+                            if (_mainPanel.SetHasClass) _mainPanel.SetHasClass("qol-hidden", false);
                             try { _mainPanel.style.opacity = "1.00"; } catch(e2) {}
                         } catch(e) {}
                     }

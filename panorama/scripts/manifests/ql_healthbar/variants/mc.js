@@ -80,6 +80,9 @@
         SetCachedPanel("mcHealthPercentLabel", null);
         SetCachedPanel("mcCurrentHealthLabel", null);
         SetCachedPanel("mcTotalHealthLabel", null);
+        SetCachedPanel("mcHealthRegenAndTotal", null);
+        SetCachedPanel("mcNumCurrent", null);
+        SetCachedPanel("mcNumTotal", null);
         SetCachedPanel("mcHealthContainer", null);
         SetCachedPanel("mcChargesContainer", null);
         SetCachedPanel("mcFoodContainer", null);
@@ -622,7 +625,7 @@
                 }
             }
             if (!currentLbl) {
-                currentLbl = hudRoot.FindChildTraverse ? (hudRoot.FindChildTraverse("currentHealthLabel") || hudRoot.FindChildTraverse("currentHealthOverHearts")) : null;
+                currentLbl = hudRoot.FindChildTraverse ? (hudRoot.FindChildTraverse("currentHealthLabel") || hudRoot.FindChildTraverse("current_health") || hudRoot.FindChildTraverse("currentHealthOverHearts")) : null;
             }
             if (currentLbl) SetCachedPanel("mcCurrentHealthLabel", currentLbl);
         }
@@ -646,7 +649,7 @@
                 }
             }
             if (!totalLbl) {
-                totalLbl = hudRoot.FindChildTraverse ? (hudRoot.FindChildTraverse("totalHealthLabel") || hudRoot.FindChildTraverse("totalHealthOverHearts")) : null;
+                totalLbl = hudRoot.FindChildTraverse ? (hudRoot.FindChildTraverse("totalHealthLabel") || hudRoot.FindChildTraverse("max_health") || hudRoot.FindChildTraverse("totalHealthOverHearts")) : null;
             }
             if (totalLbl) SetCachedPanel("mcTotalHealthLabel", totalLbl);
         }
@@ -941,9 +944,18 @@
             mcPercentLabel.text = "  [" + String(Math.floor(mcPercent)) + "%]";
         }
 
-        var numCurrent = hudRoot.FindChildTraverse ? hudRoot.FindChildTraverse("currentHealthOverHearts") : null;
+        var numCurrent = GetCachedPanel("mcNumCurrent");
+        if (!IsPanelValid(numCurrent)) {
+            numCurrent = hudRoot.FindChildTraverse ? hudRoot.FindChildTraverse("currentHealthOverHearts") : null;
+            if (numCurrent) SetCachedPanel("mcNumCurrent", numCurrent);
+        }
         if (IsPanelValid(numCurrent)) numCurrent.text = String(currentHealth);
-        var numTotal = hudRoot.FindChildTraverse ? hudRoot.FindChildTraverse("totalHealthOverHearts") : null;
+
+        var numTotal = GetCachedPanel("mcNumTotal");
+        if (!IsPanelValid(numTotal)) {
+            numTotal = hudRoot.FindChildTraverse ? hudRoot.FindChildTraverse("totalHealthOverHearts") : null;
+            if (numTotal) SetCachedPanel("mcNumTotal", numTotal);
+        }
         if (IsPanelValid(numTotal)) numTotal.text = "/ " + String(totalHealth);
 
         var nowMsForMod = Date.now();

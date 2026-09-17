@@ -52,7 +52,6 @@
 
             function _clearOpacity(panel) {
                 if (!panel || !panel.style) return;
-                try { panel.style.opacity = "1.0"; } catch(e0) {}
                 try { delete panel.style.opacity; } catch(e1) {}
                 try { panel.style.opacity = null; } catch(e2) {}
                 try { panel.style.opacity = ""; } catch(e3) {}
@@ -142,8 +141,7 @@
                         if (mc && mc.style) {
                             mc.style.x = "0px"; mc.style.y = "0px"; mc.style.washColor = "";
                             _clearOpacity(mc);
-                            var isSupposed = FR && FR.isFeatureSupposedToBeEnabled ? FR.isFeatureSupposedToBeEnabled("ql_items") : true;
-                            if (mc.SetHasClass) mc.SetHasClass("qol-hidden", !isSupposed);
+                            if (mc.SetHasClass) mc.SetHasClass("qol-hidden", false);
                             // Also reset all child panels that _apply touches.
                             _resetAllChildren(mc);
                         }
