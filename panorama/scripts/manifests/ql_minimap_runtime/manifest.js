@@ -417,6 +417,9 @@
                 var mapButtons = (hudMinimap && hudMinimap.FindChildrenWithClassTraverse)
                     ? (hudMinimap.FindChildrenWithClassTraverse("doorman_doorway") || [])
                     : [];
+                if (mapButtons.length === 0 && hudMinimap && hudMinimap.FindChildrenWithClassTraverse) {
+                    mapButtons = hudMinimap.FindChildrenWithClassTraverse("ability_castrange") || [];
+                }
 
                 var rangePanels = [];
                 for (var i = 0; i < mapButtons.length; i++) {
@@ -424,27 +427,22 @@
                     if (castRange) rangePanels.push(castRange);
                 }
 
-                var cacheKey = size + "|" + rangePanels.length;
-                if (cacheKey === _cachedMinimapCastRangeKey) return;
-                _cachedMinimapCastRangeKey = cacheKey;
-
-                var scale = MINIMAP_CAST_RANGE_BASE_SIZE / size;
-                if (!isFinite(scale) || scale <= 0) scale = 1.0;
-                if (scale < 0.20) scale = 0.20;
-                if (scale > 2.00) scale = 2.00;
-                var scaleText = scale.toFixed(2) + ", " + scale.toFixed(2);
-
                 if (rangePanels.length <= 0 && root && root.FindChildTraverse) {
                     var fallbackCastRange = root.FindChildTraverse("CastRange");
                     if (fallbackCastRange) rangePanels.push(fallbackCastRange);
                 }
+
                 for (var j = 0; j < rangePanels.length; j++) {
                     var panel = rangePanels[j];
                     if (!panel || !panel.style) continue;
-                    if (panel.style.preTransformScale2d !== scaleText) panel.style.preTransformScale2d = scaleText;
-                    if (panel.style.uiScale !== "100%") panel.style.uiScale = "100%";
+                    if (panel.style.uiScale !== "100%") {
+                        panel.style.uiScale = "100%";
+                    }
+                    if (panel.style.preTransformScale2d !== "1.00, 1.00") {
+                        panel.style.preTransformScale2d = "1.00, 1.00";
+                    }
                 }
-                _minimapCastRangeScaleApplied = rangePanels.length > 0 && Math.abs(scale - 1.0) > 0.001;
+                _minimapCastRangeScaleApplied = rangePanels.length > 0;
             }
 
             function _resolveHudRootForMinimapDraw(root) {

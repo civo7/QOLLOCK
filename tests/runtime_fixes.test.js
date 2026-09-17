@@ -462,3 +462,97 @@ test("ql_minimap_runtime handles zero opacity, offsets, and zoom modes without c
 
     Q.core.FeatureRegistry.disable("ql_minimap_runtime");
 });
+
+test("ql_minimap_runtime normalizes Doorman doorway cast range across casts without cache lock", () => {
+    const hud = sim.createHud({ inHideout: false });
+    hud.assertLoaded();
+    const Q = hud.sandbox.global.QOL;
+    const $ = hud.sandbox.global.$;
+
+    const root = hud.root;
+    const persp = $.CreatePanel("Panel", root, "minimap_persp");
+    const container = $.CreatePanel("Panel", persp, "minimap_container");
+    const hudMinimap = $.CreatePanel("Panel", container, "hud_minimap");
+
+    Q.core.ConfigStore.set("ql_minimap_runtime", "MINIMAP_SMALL_SIZE", 550);
+    hud.clock.advance(100);
+
+    // 1. Initial door placed
+    const door1 = $.CreatePanel("Panel", hudMinimap, "doorway_1");
+    door1.AddClass("map_button");
+    door1.AddClass("doorman_doorway");
+    door1.AddClass("ability_castrange");
+    const castRange1 = $.CreatePanel("Panel", door1, "CastRange");
+
+    hud.clock.advance(100);
+    assert.strictEqual(castRange1.style.uiScale, "100%", "Initial CastRange must receive uiScale: 100%");
+    assert.strictEqual(castRange1.style.preTransformScale2d, "1.00, 1.00", "Initial CastRange preTransformScale2d must be reset to 1.00, 1.00");
+
+    // 2. Door 1 destroyed and Door 2 placed while minimap size is still 550 (door count stays 1)
+    door1.DeleteAsync(0);
+    const door2 = $.CreatePanel("Panel", hudMinimap, "doorway_2");
+    door2.AddClass("map_button");
+    door2.AddClass("doorman_doorway");
+    door2.AddClass("ability_castrange");
+    const castRange2 = $.CreatePanel("Panel", door2, "CastRange");
+
+    hud.clock.advance(100);
+    assert.strictEqual(castRange2.style.uiScale, "100%", "Recast doorway CastRange must receive uiScale: 100% without getting blocked by cacheKey");
+    assert.strictEqual(castRange2.style.preTransformScale2d, "1.00, 1.00", "Recast doorway CastRange preTransformScale2d must be reset to 1.00, 1.00");
+
+    Q.core.FeatureRegistry.disable("ql_minimap_runtime");
+});
+
+test("ql_minimap_timers maintains calibrated base coordinates across minimap scaling", () => {
+    const hud = sim.createHud({ inHideout: false });
+    hud.assertLoaded();
+    const Q = hud.sandbox.global.QOL;
+    const $ = hud.sandbox.global.$;
+
+    const root = hud.root;
+    const persp = $.CreatePanel("Panel", root, "minimap_persp");
+    const container = $.CreatePanel("Panel", persp, "minimap_container");
+    $.CreatePanel("Panel", container, "hud_minimap");
+
+    const feat = Q.core.FeatureRegistry.getManifest("ql_minimap_timers");
+    assert.ok(feat, "ql_minimap_timers must be registered");
+
+    let cfg = {
+        ENABLE_MINIMAP_BUFF_TIMER: 1,
+        ENABLE_MINIMAP_BUFF_TIMER_ON_BRIDGE: 1,
+        ENABLE_MINIMAP_REJUV_TIMER: 1,
+        ENABLE_MINIMAP_ALWAYS_ON_MID_BOSS: 1,
+        MINIMAP_SMALL_SIZE: 550
+    };
+
+    const instance = feat.create({
+        config: { view: () => cfg }
+    });
+
+    instance.onEnable();
+    hud.clock.advance(500);
+
+    const overlay = container.FindChildTraverse("QOLMinimapTimersRoot");
+    assert.ok(overlay, "Overlay root must exist");
+    const bridgeL = container.FindChildTraverse("QOLMinimapBuffBridgeLeftTimer");
+    const bridgeR = container.FindChildTraverse("QOLMinimapBuffBridgeRightTimer");
+    const rejuvTimer = container.FindChildTraverse("QOLMinimapRejuvTimer");
+
+    // Bridge mode under 550px scaled minimap: base geometry must remain pinned to 400px space
+    assert.strictEqual(overlay.style.width, "400px", "Overlay width must remain 400px base");
+    assert.strictEqual(overlay.style.height, "400px", "Overlay height must remain 400px base");
+    assert.strictEqual(bridgeL.style.marginLeft, "-144px", "West bridge timer must stay at -144px in base layout space");
+    assert.strictEqual(bridgeR.style.marginLeft, "144px", "East bridge timer must stay at 144px in base layout space");
+    assert.strictEqual(rejuvTimer.style.verticalAlign, "center", "Mid boss timer in pit must be vertically centered");
+    assert.strictEqual(rejuvTimer.style.horizontalAlign, "center", "Mid boss timer in pit must be horizontally centered");
+    assert.strictEqual(rejuvTimer.style.margin, "0px", "Mid boss timer in pit must have 0 margin");
+
+    // Docked at bottom when ENABLE_MINIMAP_ALWAYS_ON_MID_BOSS: 0 under 550px minimap
+    cfg = { ...cfg, ENABLE_MINIMAP_ALWAYS_ON_MID_BOSS: 0 };
+    hud.clock.advance(500);
+    assert.strictEqual(rejuvTimer.style.verticalAlign, "bottom", "Mid boss timer when not in pit must dock at bottom");
+    assert.strictEqual(rejuvTimer.style.marginBottom, "40px", "Mid boss timer bottom offset must remain 40px base");
+
+    instance.onDisable();
+});
+

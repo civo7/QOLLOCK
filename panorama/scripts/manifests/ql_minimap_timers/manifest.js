@@ -249,7 +249,7 @@
                 var sso = Math.round(tw + (tg * 2));
                 var sig = [tw,th,tg,tpx,tr,tf,ti,bo,btw,bth,btpx,btr,btf,bho,sso,bbe?1:0,rbe?1:0].join("|");
                 if (State.minimapObjectiveScaleSig !== sig) {
-                    overlay.style.width = ms + "px"; overlay.style.height = ms + "px"; overlay.style.horizontalAlign = "center"; overlay.style.verticalAlign = "center"; overlay.style.marginLeft = "0px"; overlay.style.marginRight = "0px"; overlay.style.marginTop = "0px"; overlay.style.marginBottom = "0px"; overlay.style.preTransformScale2d = "1.00, 1.00";
+                    overlay.style.width = "400px"; overlay.style.height = "400px"; overlay.style.horizontalAlign = "center"; overlay.style.verticalAlign = "center"; overlay.style.marginLeft = "0px"; overlay.style.marginRight = "0px"; overlay.style.marginTop = "0px"; overlay.style.marginBottom = "0px"; overlay.style.preTransformScale2d = "1.00, 1.00";
                     if (panels.buffPanel) { panels.buffPanel.style.width = tw + "px"; panels.buffPanel.style.height = th + "px"; panels.buffPanel.style.margin = "0px"; panels.buffPanel.style.padding = "0px " + tpx + "px"; panels.buffPanel.style.borderRadius = tr + "px"; panels.buffPanel.style.ignoreParentFlow = bbe ? "true" : "false"; panels.buffPanel.style.horizontalAlign = "center"; panels.buffPanel.style.verticalAlign = bbe ? "bottom" : "center"; panels.buffPanel.style.marginTop = "0px"; panels.buffPanel.style.marginBottom = bbe ? (bo + "px") : "0px"; }
                     if (panels.rejuvPanel) { panels.rejuvPanel.style.width = tw + "px"; panels.rejuvPanel.style.height = th + "px"; panels.rejuvPanel.style.margin = "0px"; panels.rejuvPanel.style.padding = "0px " + tpx + "px"; panels.rejuvPanel.style.borderRadius = tr + "px"; panels.rejuvPanel.style.ignoreParentFlow = "true"; panels.rejuvPanel.style.horizontalAlign = "center"; panels.rejuvPanel.style.verticalAlign = rbe ? "center" : "bottom"; panels.rejuvPanel.style.marginLeft = (rbe ? 0 : sso) + "px"; panels.rejuvPanel.style.marginTop = "0px"; panels.rejuvPanel.style.marginBottom = rbe ? "0px" : (bo + "px"); }
                     if (bi) { bi.style.width = ti + "px"; bi.style.height = ti + "px"; if (bi.SetHasClass) bi.SetHasClass("qol-hidden", true); else bi.style.visibility = "collapse"; }
@@ -313,17 +313,18 @@
                 var panels = EnsureMinimapObjectiveTimers(root); if (!panels || !panels.root) return;
                 var overlay = panels.root;
                 if (overlay.SetHasClass) overlay.SetHasClass("qol-hidden", false); else if (overlay.style.visibility !== "visible") overlay.style.visibility = "visible";
-                var ms = ResolveActiveMinimapObjectiveSize(root, cfg); if (!isFinite(ms)) ms = 400; if (ms < 200) ms = 200; if (ms > 1200) ms = 1200;
-                var msc = ms / 400.0; if (!isFinite(msc)) msc = 1.0; if (msc < 0.5) msc = 0.5; if (msc > 2.5) msc = 2.5;
-                var tw = Math.max(58, Math.round(72 * msc)), th = Math.max(22, Math.round(28 * msc)), tg = Math.max(24, Math.round(40 * msc)), tpx = Math.max(3, Math.round(5 * msc)), tr = Math.max(4, Math.round(5 * msc)), tf = Math.max(11, Math.round(14 * msc)), ti = Math.max(12, Math.round(16 * msc)), bo = Math.max(4, Math.round(ms * 0.10));
+                // Keep dimensions and offsets in base 400px layout coordinate space.
+                // Panorama's uiScale on #minimap_persp automatically handles vector scaling
+                // to any configured minimap size (550px, 700px, zoom, etc.) without layout drift.
+                var tw = 72, th = 28, tg = 40, tpx = 5, tr = 5, tf = 14, ti = 16, bo = 40;
                 var brr = Math.max(0, Math.floor(Number(remainingBridge) || 0)), rjr = Math.max(0, Math.floor(Number(remainingRejuv) || 0));
                 var bufR = be && brr < 10 && (brr % 2) === 1, bufY = be && !bufR && brr < 20 && (brr % 2) === 1;
                 var rwe = re && !spawnWaiting, rejR = re && (spawnWaiting || (rwe && rjr < 10 && (rjr % 2) === 1)), rejY = rwe && !rejR && rjr < 20 && (rjr % 2) === 1;
                 var bi = GetCachedPanel("minimapObjectiveBuffIcon"), bli = GetCachedPanel("minimapObjectiveBuffBridgeLeftIcon"), bri = GetCachedPanel("minimapObjectiveBuffBridgeRightIcon"), ri = GetCachedPanel("minimapObjectiveRejuvIcon");
-                var btw = Math.max(29, Math.round(tw * 0.5)), bth = Math.max(11, Math.round(th * 0.5)), btpx = Math.max(2, Math.round(tpx * 0.5)), btr = Math.max(2, Math.round(tr * 0.5)), btf = Math.max(8, Math.round(tf * 0.5)), bho = Math.round(ms * 0.35);
+                var btw = 48, bth = 18, btpx = 3, btr = 4, btf = 11, bho = 144;
                 var activeBuffs = DetectActiveBridgeBuffs(root, EnsureMinimapOverlayAnchor(root));
                 if (!bbe && !rbe) { ApplyMinimapObjectiveTimersStandardMode(panels, overlay, {timerWidth:tw,timerHeight:th,timerGap:tg,timerPaddingX:tpx,timerRadius:tr,timerFont:tf,timerIcon:ti,bottomOffset:bo}, {buffEnabled:be,rejuvEnabled:re,buffRed:bufR,buffYellow:bufY,rejuvRed:rejR,rejuvYellow:rejY}, {buffIcon:bi,buffBridgeLeftIcon:bli,buffBridgeRightIcon:bri,rejuvIcon:ri}, bridgeText, rejuvText); return; }
-                ApplyMinimapObjectiveTimersBridgeMode(panels, overlay, {timerWidth:tw,timerHeight:th,timerGap:tg,timerPaddingX:tpx,timerRadius:tr,timerFont:tf,timerIcon:ti,bottomOffset:bo}, {minimapSize:ms,bridgeTimerWidth:btw,bridgeTimerHeight:bth,bridgeTimerPaddingX:btpx,bridgeTimerRadius:btr,bridgeTimerFont:btf,bridgeHorizontalOffset:bho}, {buffEnabled:be,buffOnBridgeEnabled:bbe,rejuvEnabled:re,rejuvOnBridgeEnabled:rbe,buffRed:bufR,buffYellow:bufY,rejuvRed:rejR,rejuvYellow:rejY}, {buffIcon:bi,buffBridgeLeftIcon:bli,buffBridgeRightIcon:bri,rejuvIcon:ri}, bridgeText, rejuvText, activeBuffs);
+                ApplyMinimapObjectiveTimersBridgeMode(panels, overlay, {timerWidth:tw,timerHeight:th,timerGap:tg,timerPaddingX:tpx,timerRadius:tr,timerFont:tf,timerIcon:ti,bottomOffset:bo}, {minimapSize:400,bridgeTimerWidth:btw,bridgeTimerHeight:bth,bridgeTimerPaddingX:btpx,bridgeTimerRadius:btr,bridgeTimerFont:btf,bridgeHorizontalOffset:bho}, {buffEnabled:be,buffOnBridgeEnabled:bbe,rejuvEnabled:re,rejuvOnBridgeEnabled:rbe,buffRed:bufR,buffYellow:bufY,rejuvRed:rejR,rejuvYellow:rejY}, {buffIcon:bi,buffBridgeLeftIcon:bli,buffBridgeRightIcon:bri,rejuvIcon:ri}, bridgeText, rejuvText, activeBuffs);
             }
 
             // ── Main tick ──
