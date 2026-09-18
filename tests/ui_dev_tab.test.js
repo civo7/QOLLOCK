@@ -264,4 +264,21 @@ test("ui/dev_tab: render builds all dev sections and action buttons", () => {
     assert.ok(list.FindChildTraverse("FullSuiteBtn"), "Should render FullSuiteBtn");
     assert.ok(list.FindChildTraverse("PresetCycleBtn"), "Should render PresetCycleBtn");
     assert.ok(list.FindChildTraverse("DiagCopyLogsBtn"), "Should render DiagCopyLogsBtn");
+    assert.ok(list.FindChildTraverse("BenchmarkRunBtn"), "Should render BenchmarkRunBtn");
+    assert.ok(list.FindChildTraverse("BenchmarkStressBtn"), "Should render BenchmarkStressBtn");
+});
+
+test("ui/dev_tab: runInGameBenchmark initiates benchmark request and copies report", () => {
+    const env = createTestEnvironment();
+    const { runInGameBenchmark } = env.sandbox.QOL.ui.devTab;
+
+    const statusLabel = env.sandbox.$.CreatePanel("Label", env.rootPanel, "BmStatus");
+    const actionBtn = env.sandbox.$.CreatePanel("Button", env.rootPanel, "BmBtn");
+
+    runInGameBenchmark(env.rootPanel, statusLabel, actionBtn, false);
+
+    const reqToken = env.hudPanel.GetAttributeString("QOL_DiagRequest", "");
+    assert.ok(reqToken.startsWith("bm_10_normal_"), "Must request 10s normal benchmark");
+    assert.ok(actionBtn.BHasClass("CycleActive"), "Action button must be active");
+    assert.ok(statusLabel.text.includes("10s left"), "Status should indicate 10s remaining");
 });

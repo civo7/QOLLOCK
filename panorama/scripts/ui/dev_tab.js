@@ -708,6 +708,123 @@
     }
 
     // =========================================================================
+    // In-Game 10s Performance Benchmark & Clipboard Copy
+    // =========================================================================
+
+    let bmRunning = false;
+    let bmToken = 0;
+
+    function runInGameBenchmark(container, statusLabel, actionBtn, isStressTest) {
+        const setStatus = (text, color) => {
+            if (isAlive(statusLabel)) {
+                statusLabel.text = text;
+                statusLabel.style.color = color;
+            }
+        };
+
+        const setBtnActive = (active) => {
+            if (isAlive(actionBtn)) {
+                actionBtn.SetHasClass("CycleActive", Boolean(active));
+            }
+        };
+
+        if (bmRunning) return;
+        const token = ++bmToken;
+        bmRunning = true;
+        setBtnActive(true);
+
+        const durSec = 10;
+        const modeStr = isStressTest ? "stress" : "normal";
+        const forceToken = `bm_${durSec}_${modeStr}_${Date.now()}`;
+
+        const hudPanel = findHudPanel();
+        if (!hudPanel || !hudPanel.SetAttributeString) {
+            setStatus("Hud panel not found", "#cc4444");
+            bmRunning = false;
+            setBtnActive(false);
+            return;
+        }
+
+        try { hudPanel.SetAttributeString("QOL_DiagRequest", forceToken); } catch {}
+
+        const startTime = Date.now();
+        setStatus(`Benchmarking: ${durSec}s left...`, "#66cc99");
+
+        function pollBenchmark() {
+            if (!bmRunning || token !== bmToken) return;
+
+            const elapsedMs = Date.now() - startTime;
+            const elapsedSec = Math.floor(elapsedMs / 1000);
+            const remaining = Math.max(0, durSec - elapsedSec);
+
+            if (remaining > 0) {
+                setStatus(`Benchmarking: ${remaining}s left...`, "#66cc99");
+            } else {
+                setStatus("Finalizing report...", "#66cc99");
+            }
+
+            if (elapsedMs > (durSec + 6) * 1000) {
+                setStatus("Benchmark timeout", "#cc4444");
+                bmRunning = false;
+                setBtnActive(false);
+                return;
+            }
+
+            const hud = findHudPanel();
+            let rawDiag = "";
+            if (hud && hud.GetAttributeString) {
+                try { rawDiag = hud.GetAttributeString("QOL_Diag", ""); } catch {}
+            }
+            if (rawDiag) {
+                try {
+                    const diag = JSON.parse(rawDiag);
+                    if (diag.benchmark && diag.benchmark.token === forceToken) {
+                        const report = diag.benchmark.report || "";
+                        const hiddenEntry = $.CreatePanel("TextEntry", container, "BenchmarkCopyTextEntry");
+                        hiddenEntry.text = report;
+                        hiddenEntry.multiline = true;
+                        hiddenEntry.maxchars = Math.max(report.length + 100, 2000);
+
+                        const tryCopy = Q.ui?.configTab?.tryCopyTextToClipboard || globalThis.TryCopyTextToClipboard;
+                        const copied = (typeof tryCopy === "function") ? tryCopy(report, hiddenEntry) : false;
+
+                        if (isAlive(hiddenEntry)) {
+                            try { hiddenEntry.DeleteAsync(0); } catch {}
+                        }
+
+                        const stats = diag.benchmark.stats || {};
+                        const totalJs = (typeof stats.totalJsMs === "number") ? stats.totalJsMs.toFixed(1) : "?";
+                        const setFeedback = Q.ui?.configTab?.setLocalizedConfigFeedbackMessage || globalThis.SetLocalizedConfigFeedbackMessage;
+
+                        if (copied) {
+                            setStatus(`Copied! ${totalJs}ms JS (Check ~)`, "#66cc99");
+                            if (typeof setFeedback === "function") {
+                                setFeedback("Benchmark report copied to clipboard!", "success", 4000);
+                            }
+                        } else {
+                            setStatus(`Done: ${totalJs}ms JS (Check ~)`, "#e6b800");
+                            if (typeof setFeedback === "function") {
+                                setFeedback("Benchmark finished! Check console (~).", "info", 4000);
+                            }
+                        }
+
+                        bmRunning = false;
+                        setBtnActive(false);
+                        $.Schedule(6.0, () => {
+                            if (!bmRunning) setStatus("Idle", "#666");
+                        });
+                        return;
+                    }
+                } catch (_) {}
+            }
+
+            $.Schedule(0.5, pollBenchmark);
+        }
+
+        $.Schedule(0.5, pollBenchmark);
+    }
+
+    // =========================================================================
     // Preset Cycle (Robust)
     // =========================================================================
 
@@ -1005,6 +1122,32 @@
             createSliderRow(list, "Alert Threshold", "PERF_ALERT_THRESHOLD_MS", "alert_ms_1_50", "Console alert when any feature exceeds this ms threshold.");
             createSliderRow(list, "Overlay Opacity", "PERF_OVERLAY_OPACITY", "opacity_perf", "Opacity of the performance overlay panel.");
         }
+
+        // Benchmark Section (10s in-game profiling)
+        const bmHeader = createTitle(list, "10s Benchmark");
+        const bmRunBtn = (typeof createIconButton === "function")
+            ? createIconButton(bmHeader, "BenchmarkRunBtn", "s2r://panorama/images/icons/icon_play.vsvg", "Run 10s benchmark on current settings. Outputs clean breakdown to console (~) and copies to clipboard.")
+            : null;
+        const bmStressBtn = (typeof createIconButton === "function")
+            ? createIconButton(bmHeader, "BenchmarkStressBtn", "s2r://panorama/images/icons/icon_reorder.vsvg", "Stress Test: Temporarily enables ALL features for 10s, benchmarks CPU load, restores original config, and copies report to clipboard.")
+            : null;
+        const bmStatus = $.CreatePanel("Label", bmHeader, "BenchmarkStatus");
+        bmStatus.text = "Idle";
+        bmStatus.style.fontSize = "13px";
+        bmStatus.style.color = "#666";
+        bmStatus.style.marginLeft = "6px";
+        bmStatus.style.verticalAlign = "center";
+
+        if (bmRunBtn) {
+            bmRunBtn.SetPanelEvent("onactivate", () => {
+                runInGameBenchmark(list, bmStatus, bmRunBtn, false);
+            });
+        }
+        if (bmStressBtn) {
+            bmStressBtn.SetPanelEvent("onactivate", () => {
+                runInGameBenchmark(list, bmStatus, bmStressBtn, true);
+            });
+        }
         createSep(list);
 
         // 2. Feature Isolation Test (FIT)
@@ -1165,6 +1308,7 @@
         requestBuildStorageDryRun,
         runFullTestSuite,
         runPresetCycle,
+        runInGameBenchmark,
         copyDiagnosticsToClipboard,
         render: renderDevTab
     };
@@ -1174,5 +1318,6 @@
     if (typeof globalThis === "object" && globalThis) {
         globalThis.RenderDevTabContent = renderDevTab;
         globalThis.FormatTestSuiteReport = formatTestSuiteReport;
+        globalThis.RunInGameBenchmark = runInGameBenchmark;
     }
 })();

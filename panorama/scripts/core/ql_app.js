@@ -40,6 +40,7 @@
         : ((typeof USER_EDIT_REV_ATTR !== "undefined") ? USER_EDIT_REV_ATTR : "QOL_USER_EDIT_REV");
     let _lastDiagForceToken = "";
     let _diagWriteNextMs = 0;
+    let _lastBenchmarkReport = null;
 
     const _buildEnableKeyMap = () => {
         const map = {};
@@ -261,6 +262,10 @@
             }
         }
 
+        if (_lastBenchmarkReport) {
+            diag.benchmark = _lastBenchmarkReport;
+        }
+
         return diag;
     };
 
@@ -303,6 +308,56 @@
                         } catch (mtErr) {
                             if (Logger) Logger.logWarn("App", `manifest test run failed: ${mtErr.message || mtErr}`);
                         }
+                    }
+                }
+
+                if (forceToken.startsWith("bm_")) {
+                    const parts = forceToken.split("_");
+                    const durSec = parseFloat(parts[1]) || 10;
+                    const isStress = parts[2] === "stress";
+
+                    let savedFlatConfig = null;
+                    if (isStress) {
+                        try {
+                            if (ConfigAdapter && typeof ConfigAdapter.exportToFlat === "function") {
+                                savedFlatConfig = ConfigAdapter.exportToFlat();
+                            }
+                            if (FeatureRegistry && typeof FeatureRegistry.getRegisteredIds === "function") {
+                                const allIds = FeatureRegistry.getRegisteredIds();
+                                for (let i = 0; i < allIds.length; i++) {
+                                    FeatureRegistry.enable(allIds[i]);
+                                }
+                            }
+                        } catch (e) {
+                            if (Logger) Logger.logWarn("App", `Benchmark stress setup failed: ${e?.message || e}`);
+                        }
+                    }
+
+                    if (QOL?.core?.Scheduler?.startBenchmark) {
+                        try {
+                            QOL.core.Scheduler.startBenchmark(durSec, (report, stats) => {
+                                if (isStress && savedFlatConfig) {
+                                    try {
+                                        if (ConfigAdapter && typeof ConfigAdapter.importFromFlat === "function") {
+                                            ConfigAdapter.importFromFlat(savedFlatConfig);
+                                        }
+                                    } catch (e) {
+                                        if (Logger) Logger.logWarn("App", `Benchmark stress restore failed: ${e?.message || e}`);
+                                    }
+                                }
+                                _lastBenchmarkReport = {
+                                    token: forceToken,
+                                    report,
+                                    stats,
+                                    timestamp: _nowMs()
+                                };
+                                _writeDiagSnapshot(hudPanel, forceToken);
+                            });
+                        } catch (bmErr) {
+                            if (Logger) Logger.logWarn("App", `Benchmark start failed: ${bmErr.message || bmErr}`);
+                        }
+                    } else if (Logger) {
+                        Logger.logWarn("App", "Benchmark requested but Scheduler.startBenchmark unavailable");
                     }
                 }
 

@@ -45,19 +45,43 @@
     const recordTiming = (featureId, elapsedMs) => {
         try {
             const state = getState();
-            if (!state?.perfEnabled) return;
-            const stats = state.perfStats;
-            if (!stats) return;
-            const key = `mf.${featureId}`;
-            let entry = stats[key];
-            if (!entry) {
-                entry = { count: 0, total: 0, max: 0, slow: 0 };
-                stats[key] = entry;
+            if (!state) return;
+
+            if (state.perfEnabled && state.perfStats) {
+                const stats = state.perfStats;
+                const key = `mf.${featureId}`;
+                let entry = stats[key];
+                if (!entry) {
+                    entry = { count: 0, total: 0, max: 0, slow: 0 };
+                    stats[key] = entry;
+                }
+                entry.count += 1;
+                entry.total += elapsedMs;
+                if (elapsedMs > entry.max) entry.max = elapsedMs;
+                if (elapsedMs >= 8) entry.slow += 1;
             }
-            entry.count += 1;
-            entry.total += elapsedMs;
-            if (elapsedMs > entry.max) entry.max = elapsedMs;
-            if (elapsedMs >= 8) entry.slow += 1;
+
+            if (state.benchmarkActive && state.benchmarkStats) {
+                const bm = state.benchmarkStats;
+                bm.totalJsMs += elapsedMs;
+                bm.totalTicks += 1;
+                if (elapsedMs > bm.maxTickMs) {
+                    bm.maxTickMs = elapsedMs;
+                    bm.maxTickFeature = featureId;
+                }
+                if (elapsedMs >= 4) {
+                    bm.spikeCount += 1;
+                }
+                let feat = bm.byFeature[featureId];
+                if (!feat) {
+                    feat = { count: 0, totalMs: 0, maxMs: 0, spikes: 0 };
+                    bm.byFeature[featureId] = feat;
+                }
+                feat.count += 1;
+                feat.totalMs += elapsedMs;
+                if (elapsedMs > feat.maxMs) feat.maxMs = elapsedMs;
+                if (elapsedMs >= 4) feat.spikes += 1;
+            }
         } catch (_) { /* best-effort — perf tracking is non-critical */ }
     };
 
@@ -89,7 +113,7 @@
             let perfActive = false;
             try {
                 const s = getState();
-                perfActive = !!(s && s.perfEnabled);
+                perfActive = !!(s && (s.perfEnabled || s.benchmarkActive));
             } catch (_) {}
             const t0 = perfActive ? nowMs() : 0;
             let threw = false;
@@ -193,17 +217,174 @@
         } catch (_) { /* best-effort */ }
     };
 
+    let benchmarkTimer = null;
+
+    const padL = (val, len) => {
+        let s = String(val != null ? val : "");
+        while (s.length < len) s = " " + s;
+        return s;
+    };
+
+    const padR = (val, len) => {
+        let s = String(val != null ? val : "");
+        while (s.length < len) s = s + " ";
+        return s;
+    };
+
+    const formatBenchmarkReport = (bm, durSec, activeCount) => {
+        if (!bm) return "No benchmark data recorded.";
+        const dur = (durSec || 10).toFixed(1);
+        const totalTicks = bm.totalTicks || 0;
+        const ticksPerSec = (totalTicks / (durSec || 1)).toFixed(1);
+        const totalJs = (bm.totalJsMs || 0).toFixed(2);
+        const avgPerTick = (totalTicks > 0 ? (bm.totalJsMs / totalTicks) : 0).toFixed(3);
+        const budgetPct = (((bm.totalJsMs || 0) / ((durSec || 1) * 1000)) * 100).toFixed(2);
+        const maxSpike = (bm.maxTickMs || 0).toFixed(2) + " ms (" + (bm.maxTickFeature || "none") + ")";
+        const spikes = bm.spikeCount || 0;
+
+        const sep = "--------------------------------------------------------------------------------";
+        const eq = "================================================================================";
+
+        const lines = [
+            eq,
+            `QOLLOCK IN-GAME BENCHMARK REPORT (${dur}s sample)`,
+            eq,
+            `Active Features:  ${activeCount}`,
+            `Total Poll Ticks: ${totalTicks} (${ticksPerSec} ticks/s)`,
+            `Total V8 JS Time: ${totalJs} ms (${budgetPct}% of 60fps frame budget)`,
+            `Avg JS Per Tick:  ${avgPerTick} ms`,
+            `Max Single Spike: ${maxSpike}`,
+            `Spikes (>= 4ms):  ${spikes}`,
+            "",
+            "TOP FEATURES BY JS EXECUTION TIME:",
+            "  #   Feature                    Total(ms)   Avg(ms)   Max(ms)   Ticks  Spikes",
+            sep
+        ];
+
+        const features = [];
+        const byFeat = bm.byFeature || {};
+        for (const k in byFeat) {
+            if (Object.prototype.hasOwnProperty.call(byFeat, k)) {
+                features.push({
+                    id: k,
+                    count: byFeat[k].count,
+                    totalMs: byFeat[k].totalMs,
+                    maxMs: byFeat[k].maxMs,
+                    spikes: byFeat[k].spikes
+                });
+            }
+        }
+        features.sort((a, b) => b.totalMs - a.totalMs);
+
+        if (features.length === 0) {
+            lines.push("  No feature polling activity detected during benchmark window.");
+        } else {
+            for (let i = 0; i < features.length; i++) {
+                const f = features[i];
+                const rank = padL(i + 1 + ".", 4);
+                let featName = f.id;
+                if (featName.length > 24) featName = featName.substring(0, 23) + "…";
+                const featCol = padR(featName, 25);
+                const totCol = padL(f.totalMs.toFixed(2), 10);
+                const avgCol = padL((f.count > 0 ? (f.totalMs / f.count) : 0).toFixed(3), 10);
+                const maxCol = padL(f.maxMs.toFixed(2), 10);
+                const cntCol = padL(f.count, 8);
+                const spkCol = padL(f.spikes || 0, 8);
+                lines.push(`${rank} ${featCol} ${totCol} ${avgCol} ${maxCol} ${cntCol} ${spkCol}`);
+            }
+        }
+
+        lines.push(sep);
+        try {
+            lines.push(`Generated: ${new Date().toISOString()}`);
+        } catch (_) {}
+        lines.push(eq);
+
+        return lines.join("\n");
+    };
+
+    const startBenchmark = (durationSec, onComplete) => {
+        const durSec = (typeof durationSec === "number" && durationSec > 0) ? durationSec : 10;
+        const state = getState();
+        if (!state) return null;
+
+        if (benchmarkTimer !== null) {
+            $.CancelScheduled(benchmarkTimer);
+            benchmarkTimer = null;
+        }
+
+        state.benchmarkActive = true;
+        state.benchmarkStats = {
+            startTime: nowMs(),
+            durationSec: durSec,
+            totalJsMs: 0,
+            totalTicks: 0,
+            maxTickMs: 0,
+            maxTickFeature: "",
+            spikeCount: 0,
+            byFeature: {}
+        };
+
+        $.Msg(`[QOLLock] Starting ${durSec}s in-game benchmark...`);
+
+        benchmarkTimer = $.Schedule(durSec, () => {
+            benchmarkTimer = null;
+            const bm = state.benchmarkStats;
+            state.benchmarkActive = false;
+            const actualDurSec = Math.max(0.1, (nowMs() - (bm ? bm.startTime : 0)) / 1000);
+
+            let activeCount = 0;
+            try {
+                if (Q.core?.FeatureRegistry?.getEnabledIds) {
+                    activeCount = Q.core.FeatureRegistry.getEnabledIds().length;
+                }
+            } catch (_) {}
+
+            const report = formatBenchmarkReport(bm, actualDurSec, activeCount);
+
+            const reportLines = report.split("\n");
+            for (let i = 0; i < reportLines.length; i++) {
+                $.Msg(reportLines[i]);
+            }
+
+            if (typeof onComplete === "function") {
+                try {
+                    onComplete(report, bm);
+                } catch (e) {
+                    $.Msg(`[QOLLock][ERROR][Scheduler] benchmark onComplete threw: ${e?.message || e}`);
+                }
+            }
+        });
+
+        return {
+            stop: () => {
+                if (benchmarkTimer !== null) {
+                    $.CancelScheduled(benchmarkTimer);
+                    benchmarkTimer = null;
+                }
+                if (state) state.benchmarkActive = false;
+            }
+        };
+    };
+
     const perfApi = {
         schedule: createPollLoop,
         createPollLoop,
         cancelAll: cancelAllForFeature,
         cancelAllForFeature,
         getTimings,
-        resetTimings
+        resetTimings,
+        startBenchmark,
+        formatBenchmarkReport,
+        isBenchmarkActive: () => {
+            const s = getState();
+            return !!(s && s.benchmarkActive);
+        }
     };
 
     Q.core.perf = perfApi;
     Q.core.Scheduler = perfApi;
+    Q.runBenchmark = (durationSec, onComplete) => startBenchmark(durationSec, onComplete);
 
-    $.Msg("[QOLLock] core/ql_scheduler: attached to QOL.core.perf and QOL.core.Scheduler");
+    $.Msg("[QOLLock] core/ql_scheduler: attached to QOL.core.perf, QOL.core.Scheduler, and QOL.runBenchmark");
 })();
