@@ -151,6 +151,7 @@
             var _cachedPanels = [];
             var _lastZoomState = null;
             var _minimapRuntimeSig = "";
+            var _configDirty = true;
             var _minimapMinimalistOpacityApplied = false;
             var _minimapCastRangeScaleApplied = false;
             var _cachedMinimapCastRangeKey = "";
@@ -414,8 +415,16 @@
                 var size = Number(targetSize);
                 if (!isFinite(size) || size <= 0) size = MINIMAP_CAST_RANGE_BASE_SIZE;
 
+                // At base 400px geometry, native Deadlock minimap renders cast ranges without distortion.
+                if (Math.abs(size - MINIMAP_CAST_RANGE_BASE_SIZE) < 0.5) {
+                    if (!_minimapCastRangeScaleApplied) return;
+                    _minimapCastRangeScaleApplied = false;
+                    return;
+                }
+
                 var hudMinimap = isPanelValid(_hudMinimapPanel) ? _hudMinimapPanel : (root && root.FindChildTraverse ? root.FindChildTraverse(PANEL_ID_MINIMAP) : null);
                 if (hudMinimap) _hudMinimapPanel = hudMinimap;
+                if (!hudMinimap) return;
 
                 var mapButtons = (hudMinimap && hudMinimap.FindChildrenWithClassTraverse)
                     ? (hudMinimap.FindChildrenWithClassTraverse("doorman_doorway") || [])
@@ -619,6 +628,34 @@
                 return false;
             }
 
+            function _determineOptimalRate(cfg) {
+                var hasZoom = (Number(cfg.ENABLE_ALT_ZOOM) === 1 || Number(cfg.ENABLE_TAB_ZOOM) === 1);
+                var smallSize = Number(cfg.MINIMAP_SMALL_SIZE);
+                var isCustomSize = isFinite(smallSize) && Math.abs(smallSize - MINIMAP_LAYOUT_BASE_SIZE_PX) >= 0.5;
+
+                // 20Hz (0.05s) rate-exempt: required for instant Alt/Tab zoom response or active doorway scaling
+                if (hasZoom || isCustomSize) {
+                    return 0.05;
+                }
+                return 0.5; // 2Hz idle when minimap is static base size
+            }
+
+            var _currentRate = 0;
+
+            function _syncLoop(cfg) {
+                var targetRate = _determineOptimalRate(cfg);
+                if (_loop && _currentRate !== targetRate) {
+                    _loop.stop();
+                    _loop = null;
+                }
+                if (!_loop) {
+                    var S = QOL.core.Scheduler;
+                    _currentRate = targetRate;
+                    // rate-exempt: 20Hz (0.05s) dynamically managed for instant Alt/Tab zoom response
+                    _loop = (S && S.createPollLoop) ? S.createPollLoop(_tick, targetRate, "ql_minimap_runtime") : null;
+                }
+            }
+
             function _tick() {
                 var root = $.GetContextPanel();
                 if (!root) return;
@@ -629,33 +666,55 @@
 
                 var cfg = ctx.config.view();
 
-                var isAlt = _isHudOrHierarchyClassActive(root, master, "gDetailView");
-                var isTab = _isHudOrHierarchyClassActive(root, master, "gScoreboardOpen");
-                var zoomAlt = (isAlt && Number(cfg.ENABLE_ALT_ZOOM) === 1);
-                var zoomTab = (isTab && Number(cfg.ENABLE_TAB_ZOOM) === 1);
-                var activeZoomModeForTunnels = zoomAlt ? "ALT" : (zoomTab ? "TAB" : "");
+                var zoomAltEnabled = (Number(cfg.ENABLE_ALT_ZOOM) === 1);
+                var zoomTabEnabled = (Number(cfg.ENABLE_TAB_ZOOM) === 1);
 
-                _updateZoomDrawOverUi(root, cfg, zoomTab, zoomAlt, master);
-
+                var isAlt = zoomAltEnabled && _isHudOrHierarchyClassActive(root, master, "gDetailView");
+                var isTab = zoomTabEnabled && _isHudOrHierarchyClassActive(root, master, "gScoreboardOpen");
                 var currentZoomKey = (isAlt ? "A" : "") + (isTab ? "T" : "");
-                var runtimeSig = _buildMinimapRuntimeSignature(cfg);
+                var zoomChanged = (currentZoomKey !== _lastZoomState);
+
+                var zoomAlt = isAlt;
+                var zoomTab = isTab;
                 var shouldZoom = zoomAlt || zoomTab;
                 var activeZoomMode = zoomAlt ? "ALT" : (zoomTab ? "TAB" : "");
+                var activeZoomModeForTunnels = activeZoomMode;
+
+                var smallSize = Number(cfg.MINIMAP_SMALL_SIZE);
+                if (!isFinite(smallSize) || smallSize <= 0) smallSize = MINIMAP_LAYOUT_BASE_SIZE_PX;
+                var isBaseSize = Math.abs(smallSize - MINIMAP_LAYOUT_BASE_SIZE_PX) < 0.5;
 
                 var zoomTargetSize = (activeZoomMode === "TAB")
                     ? _getZoomValue(cfg, "MINIMAP_LARGE_SIZE_TAB", "MINIMAP_LARGE_SIZE", cfg.MINIMAP_SMALL_SIZE)
                     : _getZoomValue(cfg, "MINIMAP_LARGE_SIZE_ALT", "MINIMAP_LARGE_SIZE", cfg.MINIMAP_SMALL_SIZE);
-                var activeTargetSize = shouldZoom ? zoomTargetSize : cfg.MINIMAP_SMALL_SIZE;
+                var activeTargetSize = shouldZoom ? zoomTargetSize : smallSize;
                 activeTargetSize = Number(activeTargetSize);
                 if (!isFinite(activeTargetSize) || activeTargetSize <= 0) activeTargetSize = MINIMAP_LAYOUT_BASE_SIZE_PX;
                 if (activeTargetSize < 50) activeTargetSize = 50;
                 if (activeTargetSize > 1400) activeTargetSize = 1400;
+
+                // Fast path: if zoom state hasn't changed, config is not dirty, and signature is initialized
+                if (!zoomChanged && !_configDirty && _minimapRuntimeSig) {
+                    if (_drawOverUiActive) {
+                        _updateZoomDrawOverUi(root, cfg, zoomTab, zoomAlt, master);
+                    }
+                    if (!isBaseSize || shouldZoom) {
+                        _updateMinimapCastRangeScale(root, activeTargetSize);
+                    }
+                    return;
+                }
+
+                _configDirty = false;
+                var runtimeSig = _buildMinimapRuntimeSignature(cfg);
+
+                _updateZoomDrawOverUi(root, cfg, zoomTab, zoomAlt, master);
+
                 var minimapSizeText = Math.round(activeTargetSize) + "px";
 
                 _updateMinimapCastRangeScale(root, activeTargetSize);
                 _updateMinimapIconColor(root, cfg);
 
-                if (runtimeSig !== _minimapRuntimeSig || currentZoomKey !== _lastZoomState) {
+                if (runtimeSig !== _minimapRuntimeSig || zoomChanged) {
                     var zoomOffsetX = (activeZoomMode === "TAB")
                         ? _getZoomValue(cfg, "ZOOM_X_OFFSET_TAB", "ZOOM_X_OFFSET", 0)
                         : _getZoomValue(cfg, "ZOOM_X_OFFSET_ALT", "ZOOM_X_OFFSET", 0);
@@ -762,8 +821,11 @@
 
             return {
                 onEnable: function() {
-                    var S = QOL.core.Scheduler;
-                    _loop = S && S.createPollLoop ? S.createPollLoop(_tick, 0.05, "ql_minimap_runtime") : null;
+                    _configDirty = true;
+                    _minimapRuntimeSig = "";
+                    var cfg = ctx.config.view ? ctx.config.view() : (ctx.config.all ? ctx.config.all() : {});
+                    _syncLoop(cfg);
+                    _tick();
                 },
                 onDisable: function() {
                     if (_loop) {
@@ -827,13 +889,17 @@
                     _hudMinimapPanel = null;
                     _drawHudRoot = null;
                     _mapRenderPanel = null;
+                    _configDirty = true;
+                    _currentRate = 0;
                 },
                 onSettingsChanged: function() {
+                    _configDirty = true;
                     _minimapRuntimeSig = "";
+                    var cfg = ctx.config.view ? ctx.config.view() : (ctx.config.all ? ctx.config.all() : {});
+                    _syncLoop(cfg);
                     _tick();
                     var root = $.GetContextPanel ? $.GetContextPanel() : null;
                     if (root && QOL.core && QOL.core.hud && QOL.core.hud.applyRootClasses) {
-                        var cfg = ctx.config.all ? ctx.config.all() : {};
                         QOL.core.hud.applyRootClasses(root, cfg, Date.now ? Date.now() : (new Date()).getTime(), false);
                     }
                 }
