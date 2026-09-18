@@ -96,6 +96,7 @@ function createTestEnvironment() {
     };
 
     ctx.globalThis = ctx;
+    require("./load_ui_helpers")(ctx);
     vm.createContext(ctx);
 
     // Load metadata first
@@ -182,7 +183,7 @@ test("ui/tooltips: position flips to left of SettingsWindow when right edge does
     assert.strictEqual(floatingTooltip.style.x, "342px");
 });
 
-test("ui/tooltips: list scrolling hides active tooltip and suppresses further tooltips", () => {
+test("ui/tooltips: mouseout triggers deferred hide and cancelHide aborts pending hide", () => {
     const { ctx, doc, clock, list } = createTestEnvironment();
     const row = doc.create("Panel", { id: "TestRow" });
     row.actuallayoutwidth = 580;
@@ -197,12 +198,52 @@ test("ui/tooltips: list scrolling hides active tooltip and suppresses further to
 
     assert.strictEqual(tooltip.isVisible(), true);
 
-    // Simulate user scrolling SettingsList (row moves vertically)
-    row.actualyoffset = 140; // scrolled by 60px
-    clock.advance(40); // 30ms tracking tick runs
+    // Mouseout initiates deferred hide with 60ms grace period
+    tooltip.hideTooltipDeferred("row_mouseout");
+    assert.strictEqual(tooltip.isVisible(), true, "Tooltip remains visible during grace period");
 
-    assert.strictEqual(tooltip.isVisible(), false, "Tooltip must hide immediately when row scrolls");
-    assert.strictEqual(tooltip.isSuppressed(), true, "Tooltip must be suppressed during scroll motion");
+    // Advance 30ms (within grace period) and cancel
+    clock.advance(30);
+    tooltip.cancelHide();
+    clock.advance(60);
+    assert.strictEqual(tooltip.isVisible(), true, "Tooltip remains visible when cancelHide is called");
+
+    // Deferred hide completes when not cancelled
+    tooltip.hideTooltipDeferred("row_mouseout");
+    clock.advance(80);
+    assert.strictEqual(tooltip.isVisible(), false, "Tooltip hides after deferred duration");
+});
+
+test("ui/tooltips: position flips to left of SettingsWindow when RightSide (Friends list) leaves insufficient space", () => {
+    const { ctx, doc, clock, rootPanel, settingsWin, list } = createTestEnvironment();
+    // 1080p layout: screen is 1920 wide, SettingsWindow is at x=600, w=720 (right edge=1320)
+    rootPanel.actuallayoutwidth = 1920;
+    settingsWin.actualxoffset = 600;
+    settingsWin.actuallayoutwidth = 720;
+
+    // Friends list begins at x=1480 (space on right is 1480 - 1320 = 160px < 250 + 8)
+    const rightSide = doc.create("Panel", { id: "RightSide" });
+    rightSide.actuallayoutwidth = 440;
+    rightSide.actualxoffset = 1480;
+    rootPanel.addChild(rightSide);
+
+    const row = doc.create("Panel", { id: "TestRow" });
+    row.actuallayoutwidth = 580;
+    row.actuallayoutheight = 40;
+    row.actualxoffset = 10;
+    row.actualyoffset = 80;
+    list.addChild(row);
+
+    const tooltip = ctx.QOL.tooltip;
+    tooltip.showRowTooltip(row, "", "Test tooltip description", "none", "Author");
+    clock.advance(150);
+
+    const floatingTooltip = rootPanel.FindChildTraverse("QOLSettingsRowFloatingTooltip");
+    assert.ok(floatingTooltip);
+
+    // Because space to right is less than tipW + gap, it places cleanly to the left:
+    // x = winX(600) - tipW(250) - gap(8) = 342px
+    assert.strictEqual(floatingTooltip.style.x, "342px");
 });
 
 test("ui/tooltips: rows outside visible list viewport cannot show tooltips", () => {
@@ -257,3 +298,40 @@ test("ui/tooltips: cold hover is debounced, warm hover transitions immediately",
     tooltip.showRowTooltip(row2, "", "Tooltip 2", "none", "Author");
     assert.strictEqual(tooltip.isVisible(), true, "Must switch immediately in warm mode");
 });
+
+test("ui/tooltips: scroll motion while visible automatically hides tooltip and sets suppression", () => {
+    const { ctx, doc, clock, list, scrollThumb } = createTestEnvironment();
+    const row = doc.create("Panel", { id: "ScrollTestRow" });
+    row.actuallayoutwidth = 580;
+    row.actuallayoutheight = 40;
+    row.actualxoffset = 10;
+    row.actualyoffset = 80;
+    list.addChild(row);
+
+    const tooltip = ctx.QOL.tooltip;
+    tooltip.showRowTooltip(row, "", "Description", "none", "Author");
+    clock.advance(150);
+    assert.strictEqual(tooltip.isVisible(), true, "Tooltip should be visible initially");
+
+    // Simulate scrolling by moving scroll thumb
+    scrollThumb.actualyoffset = 50;
+
+    // Advance past tracking interval (30ms)
+    clock.advance(35);
+
+    assert.strictEqual(tooltip.isVisible(), false, "Tooltip must hide when scroll motion occurs");
+    assert.strictEqual(tooltip.isSuppressed(), true, "Scroll motion must trigger suppression");
+
+    // During suppression, attempting to open another tooltip is blocked
+    tooltip.showRowTooltip(row, "", "Description", "none", "Author");
+    clock.advance(150);
+    assert.strictEqual(tooltip.isVisible(), false, "Tooltip must not open while scroll-suppressed");
+
+    // After suppression expires (250ms), tooltip can open again
+    clock.advance(260);
+    assert.strictEqual(tooltip.isSuppressed(), false, "Suppression must expire");
+    tooltip.showRowTooltip(row, "", "Description", "none", "Author");
+    clock.advance(150);
+    assert.strictEqual(tooltip.isVisible(), true, "Tooltip can open after suppression expires");
+});
+
