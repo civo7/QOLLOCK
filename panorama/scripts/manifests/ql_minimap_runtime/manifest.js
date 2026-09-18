@@ -628,16 +628,24 @@
                 return false;
             }
 
+            function _onScoreboardToggle() {
+                if (typeof $ !== "undefined" && typeof $.Schedule === "function") {
+                    $.Schedule(0, _tick);
+                } else {
+                    _tick();
+                }
+            }
+
             function _determineOptimalRate(cfg) {
-                var hasZoom = (Number(cfg.ENABLE_ALT_ZOOM) === 1 || Number(cfg.ENABLE_TAB_ZOOM) === 1);
+                var hasAltZoom = (Number(cfg.ENABLE_ALT_ZOOM) === 1);
                 var smallSize = Number(cfg.MINIMAP_SMALL_SIZE);
                 var isCustomSize = isFinite(smallSize) && Math.abs(smallSize - MINIMAP_LAYOUT_BASE_SIZE_PX) >= 0.5;
 
-                // 20Hz (0.05s) rate-exempt: required for instant Alt/Tab zoom response or active doorway scaling
-                if (hasZoom || isCustomSize) {
+                // rate-exempt: 20Hz (0.05s) when Alt zoom is active or custom minimap size has active doorway scaling
+                if (hasAltZoom || isCustomSize) {
                     return 0.05;
                 }
-                return 0.5; // 2Hz idle when minimap is static base size
+                return 0.5; // 2Hz idle when minimap is base 400px geometry (Tab zoom is reactive via engine:scoreboard_toggle)
             }
 
             var _currentRate = 0;
@@ -651,7 +659,7 @@
                 if (!_loop) {
                     var S = QOL.core.Scheduler;
                     _currentRate = targetRate;
-                    // rate-exempt: 20Hz (0.05s) dynamically managed for instant Alt/Tab zoom response
+                    // rate-exempt: dynamically managed (10Hz when Alt zoom active, 2Hz idle / reactive Tab zoom)
                     _loop = (S && S.createPollLoop) ? S.createPollLoop(_tick, targetRate, "ql_minimap_runtime") : null;
                 }
             }
@@ -821,6 +829,9 @@
 
             return {
                 onEnable: function() {
+                    if (ctx && ctx.events && typeof ctx.events.on === "function") {
+                        ctx.events.on("engine:scoreboard_toggle", _onScoreboardToggle);
+                    }
                     _configDirty = true;
                     _minimapRuntimeSig = "";
                     var cfg = ctx.config.view ? ctx.config.view() : (ctx.config.all ? ctx.config.all() : {});
@@ -828,6 +839,9 @@
                     _tick();
                 },
                 onDisable: function() {
+                    if (ctx && ctx.events && typeof ctx.events.off === "function") {
+                        ctx.events.off("engine:scoreboard_toggle", _onScoreboardToggle);
+                    }
                     if (_loop) {
                         _loop.stop();
                         _loop = null;
