@@ -38,6 +38,7 @@ let _panelSeq = 0;
 class Panel {
     constructor(type, { id = "", classes = [], attributes = {}, text = "", doc = null } = {}) {
         this.type = type || "Panel";
+        this.paneltype = this.type;
         this.id = id || "";
         this._uid = ++_panelSeq;
         this._doc = doc;
@@ -311,6 +312,15 @@ class Panel {
 
     GetDialogVariable(name) {
         return this._dialogVars.get(name) || "";
+    }
+
+    ClearPropertyFromCode(prop) {
+        this._assertValid("ClearPropertyFromCode");
+        if (this.style && typeof prop === "string") {
+            delete this.style[prop];
+            return true;
+        }
+        return false;
     }
 
     // ── Events ────────────────────────────────────────────────────────────

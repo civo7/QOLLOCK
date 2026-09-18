@@ -136,6 +136,7 @@ function createTestEnvironment() {
         path.resolve(__dirname, "../panorama/scripts/ui/config_tab.js"),
         "utf8"
     );
+    require("./load_ui_helpers")(sandbox);
     vm.runInNewContext(configTabCode, sandbox);
 
     return {

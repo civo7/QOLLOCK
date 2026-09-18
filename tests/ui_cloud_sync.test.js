@@ -91,6 +91,7 @@ function createTestEnvironment() {
         path.resolve(__dirname, "../panorama/scripts/ui/cloud_sync.js"),
         "utf8"
     );
+    require("./load_ui_helpers")(sandbox);
     vm.runInNewContext(cloudSyncCode, sandbox);
 
     return {

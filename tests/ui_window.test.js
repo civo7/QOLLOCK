@@ -93,6 +93,7 @@ function createTestEnvironment() {
         path.resolve(__dirname, "../panorama/scripts/ui/window.js"),
         "utf8"
     );
+    require("./load_ui_helpers")(sandbox);
     vm.runInNewContext(windowCode, sandbox);
 
     return {

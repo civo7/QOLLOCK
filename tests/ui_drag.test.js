@@ -68,6 +68,7 @@ function createTestEnvironment() {
         path.resolve(__dirname, "../panorama/scripts/ui/drag.js"),
         "utf8"
     );
+    require("./load_ui_helpers")(sandbox);
     vm.runInNewContext(dragCode, sandbox);
 
     return {

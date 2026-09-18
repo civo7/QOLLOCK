@@ -115,6 +115,7 @@ function createTestEnvironment(initialConfig = {}) {
     };
 
     ctx.globalThis = ctx;
+    require("./load_ui_helpers")(ctx);
     vm.createContext(ctx);
 
     const controlsScriptPath = path.resolve(__dirname, "../panorama/scripts/ui/controls.js");
