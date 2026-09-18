@@ -104,7 +104,7 @@
 
             function DetectActiveBridgeBuffs(root, anchor) {
                 var result = { left: false, right: false };
-                var searchRoot = (root && root.FindChildTraverse) ? (root.FindChildTraverse("HudMinimap") || root.FindChildTraverse("hud_minimap") || anchor || root) : (anchor || root);
+                var searchRoot = (anchor && IsPanelValid(anchor)) ? anchor : ((root && root.FindChildTraverse) ? (root.FindChildTraverse("HudMinimap") || root.FindChildTraverse("hud_minimap") || root) : root);
                 if (!IsPanelValid(searchRoot)) return result;
 
                 var spawners = searchRoot.FindChildrenWithClassTraverse ? searchRoot.FindChildrenWithClassTraverse("powerup_spawn") : null;
@@ -190,8 +190,8 @@
             }
 
             function HideMinimapObjectiveTimers(root) {
-                var overlay = GetCachedPanel("minimapObjectiveTimersRoot"); if (!overlay && root && root.FindChildTraverse) { overlay = root.FindChildTraverse("QOLMinimapTimersRoot"); if (overlay) SetCachedPanel("minimapObjectiveTimersRoot", overlay); }
-                if (!overlay) return;
+                var overlay = GetCachedPanel("minimapObjectiveTimersRoot");
+                if (!overlay || !IsPanelValid(overlay)) return;
                 if (overlay.SetHasClass) overlay.SetHasClass("qol-hidden", true); else if (overlay.style.visibility !== "collapse") overlay.style.visibility = "collapse";
                 State.minimapObjectiveScaleSig = "";
                 if (overlay.style.preTransformScale2d !== "1.00, 1.00") overlay.style.preTransformScale2d = "1.00, 1.00";
