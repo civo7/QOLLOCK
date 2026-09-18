@@ -285,7 +285,7 @@
     const isBrowseBuildsPopupOpen = (root) => {
         if (!root?.FindChildTraverse) return false;
         const ids = ["PopupBuildBrowser", "BrowseBuilds", "HeroBuildSelector"];
-        const isAlive = (p) => !!(p && typeof p.IsValid === "function" && p.IsValid());
+        const isAlive = QOL_UTILS.IsPanelValid;
         for (let i = 0; i < ids.length; i++) {
             let panel = null;
             try { panel = root.FindChildTraverse(ids[i]); } catch (_) { panel = null; }

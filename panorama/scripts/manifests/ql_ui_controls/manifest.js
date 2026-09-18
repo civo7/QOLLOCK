@@ -38,7 +38,9 @@
         ],
         create: function (ctx) {
             function _getRoot() {
-                var hud = QOL.core?.hud?.findHud ? QOL.core.hud.findHud() : null;
+                var hud = (typeof QOL !== "undefined" && QOL.core && QOL.core.panel && QOL.core.panel.findHud)
+                    ? QOL.core.panel.findHud()
+                    : null;
                 if (hud) return hud;
                 var c = $.GetContextPanel ? $.GetContextPanel() : null;
                 return c;
@@ -47,8 +49,9 @@
             function _apply(cfg) {
                 var root = _getRoot();
                 if (!root) return;
-                if (QOL.core?.hud?.applyRootClasses) {
-                    QOL.core.hud.applyRootClasses(root, cfg, Date.now ? Date.now() : (new Date()).getTime(), false);
+                if (QOL.core && QOL.core.hud && QOL.core.hud.applyRootClasses) {
+                    var now = (typeof QOL_UTILS !== "undefined" && QOL_UTILS.PerfNowMs) ? QOL_UTILS.PerfNowMs() : Date.now();
+                    QOL.core.hud.applyRootClasses(root, cfg, now, false);
                 }
             }
 

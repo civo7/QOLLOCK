@@ -18,19 +18,9 @@
     'use strict';
 
     // ── Validation stubs (mirror ql_utils.js, fall back to inline) ──
-    var IsPanelValid = (typeof QOL_UTILS !== "undefined" && QOL_UTILS.IsPanelValid)
-        ? QOL_UTILS.IsPanelValid
-        : function(p) { return p != null && typeof p.IsValid === "function" && p.IsValid(); };
+    var IsPanelValid = QOL_UTILS.IsPanelValid;
 
-    var IsPanelListValid = (typeof QOL_UTILS !== "undefined" && QOL_UTILS.IsPanelListValid)
-        ? QOL_UTILS.IsPanelListValid
-        : function(list) {
-            if (!list || !Array.isArray(list) || list.length === 0) return false;
-            for (var i = 0; i < list.length; i++) {
-                if (!IsPanelValid(list[i])) return false;
-            }
-            return true;
-        };
+    var IsPanelListValid = QOL_UTILS.IsPanelListValid;
 
     // ── Typed cache storage ──
     var _panels = {};

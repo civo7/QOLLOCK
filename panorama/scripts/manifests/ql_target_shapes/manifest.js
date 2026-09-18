@@ -33,8 +33,8 @@
         ],
         create: function(ctx) {
             var State = QOL.state || (typeof globalThis !== "undefined" && globalThis.State) || {};
-            var Utils = (typeof QOL_UTILS !== "undefined" ? QOL_UTILS : (QOL.utils || {}));
-            var SetPanelOpacitySafe = Utils.SetPanelOpacitySafe || function(p, o) { if (p && p.style) p.style.opacity = String(o); };
+            var Utils = QOL.utils;
+            var SetPanelOpacitySafe = QOL.utils.SetPanelOpacitySafe;
             var GetUnitTargetDefaultStyleTexts = QOL.getUnitTargetDefaultStyleTexts || function() {
                 return ResolveUnitTargetStyleTexts(QOL.buildDefaultConfig ? QOL.buildDefaultConfig() : {});
             };
@@ -97,7 +97,7 @@
 
             function TargetShapeDebugLogThrottled(sig, msg, nowMsDbg) {
                 if (!TARGET_SHAPE_DEBUG) return;
-                var nowDbg = Number(nowMsDbg) || (Date.now ? Date.now() : (new Date()).getTime());
+                var nowDbg = Number(nowMsDbg) || ((typeof QOL_UTILS !== "undefined" && QOL_UTILS.PerfNowMs) ? QOL_UTILS.PerfNowMs() : Date.now());
                 var sameSig = sig && sig === State.targetShapeDebugLastSig;
                 if (sameSig && nowDbg < (State.targetShapeDebugNextMs || 0)) return;
                 State.targetShapeDebugLastSig = sig || "";
@@ -107,15 +107,17 @@
 
             function IsCachedPanelListAlive(list) {
                 if (!list) return false;
+                if (list.length === 0) return true;
+                if (typeof QOL_UTILS !== "undefined" && QOL_UTILS.IsPanelListValid) {
+                    return QOL_UTILS.IsPanelListValid(list);
+                }
                 for (var i = 0; i < list.length; i++) {
-                    var panel = list[i];
-                    if (!panel) return false;
-                    if (panel.IsValid) {
-                        try { if (!panel.IsValid()) return false; }
-                        catch(ePanel) { return false; }
+                    if (typeof QOL_UTILS !== "undefined" && QOL_UTILS.IsPanelValid) {
+                        if (!QOL_UTILS.IsPanelValid(list[i])) return false;
+                    } else if (!list[i] || (list[i].IsValid && !list[i].IsValid())) {
+                        return false;
                     }
                 }
-                // An initialized empty cache is valid until its discovery timer.
                 return true;
             }
 

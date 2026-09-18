@@ -47,13 +47,8 @@
                 try { if (typeof QOL !== "undefined" && QOL.state) return QOL.state; } catch(e) {}
                 return null;
             }
-            function _getCachedPanel(key) {
-                try { if (typeof QOL !== "undefined" && QOL.getCachedPanel) return QOL.getCachedPanel(key); } catch(e) {}
-                return null;
-            }
-            function _setCachedPanel(key, val) {
-                try { if (typeof QOL !== "undefined" && QOL.setCachedPanel) QOL.setCachedPanel(key, val); } catch(e) {}
-            }
+            var _getCachedPanel = QOL.getCachedPanel;
+            var _setCachedPanel = QOL.setCachedPanel;
             function _getGameplayHudPanel(root) {
                 try { if (typeof QOL !== "undefined" && QOL.getGameplayHudPanel) return QOL.getGameplayHudPanel(root); } catch(e) {}
                 if (!root || !root.FindChildTraverse) return root || null;
@@ -67,21 +62,9 @@
                 try { if (typeof QOL !== "undefined" && QOL.parseUnsecuredSoulsValue) return QOL.parseUnsecuredSoulsValue(valueText); } catch(e) {}
                 return 0;
             }
-            function _isPanelValid(p) {
-                try { if (typeof QOL !== "undefined" && QOL.utils && QOL.utils.IsPanelValid) return QOL.utils.IsPanelValid(p); } catch(e) {}
-                return !!(p && typeof p.IsValid === "function" && p.IsValid());
-            }
-            function _isCfgEnabled(cfg, key) {
-                try { if (typeof QOL !== "undefined" && QOL.utils && QOL.utils.IsCfgEnabled) return QOL.utils.IsCfgEnabled(cfg, key); } catch(e) {}
-                return Number(cfg[key]) === 1;
-            }
-            function _clampConfigNumber(val, def, min, max, round) {
-                try { if (typeof QOL !== "undefined" && QOL.utils && QOL.utils.ClampConfigNumber) return QOL.utils.ClampConfigNumber(val, def, min, max, round); } catch(e) {}
-                var v = Number(val); if (!isFinite(v)) v = def;
-                if (round) v = Math.round(v);
-                if (v < min) v = min; if (v > max) v = max;
-                return v;
-            }
+            var _isPanelValid = QOL.utils.IsPanelValid;
+            var _isCfgEnabled = QOL.utils.IsCfgEnabled;
+            var _clampConfigNumber = QOL.utils.ClampConfigNumber;
             function _getPanelPositionRelativeToAncestor(child, ancestor) {
                 try { if (typeof QOL !== "undefined" && QOL.utils && QOL.utils.GetPanelPositionRelativeToAncestor) return QOL.utils.GetPanelPositionRelativeToAncestor(child, ancestor); } catch(e) {}
                 return null;

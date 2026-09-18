@@ -32,7 +32,7 @@
     const EventBus = Q.core.EventBus || null;
 
     // Date.now() for per-tick elapsed measurement (sub-frame precision).
-    const nowMs = () => (Date.now ? Date.now() : (new Date()).getTime());
+    const nowMs = QOL_UTILS.PerfNowMs;
 
     const getState = () => {
         if (Q.state) return Q.state;

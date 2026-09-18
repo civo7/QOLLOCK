@@ -38,16 +38,10 @@
         create: function(ctx) {
             var _cachedPassiveHud = null;
 
-            function _findHud() {
-                var PH = (typeof QOL !== "undefined" && QOL.core && QOL.core.PanelHelpers) ? QOL.core.PanelHelpers : null;
-                if (PH && PH.findHud) return PH.findHud();
-                var c = $.GetContextPanel();
-                if (c && (c.id === "Hud" || (c.paneltype && c.paneltype === "CitadelHud"))) return c;
-                return (c && c.FindChildTraverse) ? c.FindChildTraverse("Hud") : c;
-            }
+            var _findHud = QOL.core.panel.findHud;
 
             function _findPassiveHud(hud) {
-                if (_cachedPassiveHud && _cachedPassiveHud.IsValid && _cachedPassiveHud.IsValid()) {
+                if (QOL_UTILS.IsPanelValid(_cachedPassiveHud)) {
                     return _cachedPassiveHud;
                 }
                 var root = hud || _findHud();
@@ -57,7 +51,7 @@
             }
 
             function _resetStyles(passiveHud) {
-                if (!passiveHud || !passiveHud.IsValid || !passiveHud.IsValid() || !passiveHud.style) return;
+                if (!QOL_UTILS.IsPanelValid(passiveHud) || !passiveHud.style) return;
                 try {
                     passiveHud.style.uiScale = null;
                     passiveHud.style.x = null;
@@ -129,8 +123,7 @@
         },
         test: function(ctx) {
             try {
-                var PH = (typeof QOL !== "undefined" && QOL.core && QOL.core.PanelHelpers) ? QOL.core.PanelHelpers : null;
-                var hud = PH && PH.findHud ? PH.findHud() : ($.GetContextPanel() ? ($.GetContextPanel().id === "Hud" ? $.GetContextPanel() : $.GetContextPanel().FindChildTraverse("Hud")) : null);
+                var hud = (typeof QOL !== "undefined" && QOL.core?.panel?.findHud) ? QOL.core.panel.findHud() : null;
                 if (!hud) return null;  // Skip — not in a match context
                 return { passed: true, name: "Passive cooldown Hud panel exists", message: "", assertions: [{ passed: true, name: "Hud panel exists" }] };
             } catch(e) { return { passed: false, name: "Passive cooldown panel check", message: (e && e.message ? e.message : String(e)) }; }

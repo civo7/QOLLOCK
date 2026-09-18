@@ -124,6 +124,7 @@ function loadMaps() {
         `\nglobalThis.__qolTranslations = { ${captureParts.join(", ")} };\n`;
     const ctx = makeSandbox();
     vm.createContext(ctx);
+    vm.runInContext(fs.readFileSync(path.join(path.dirname(sharedPath), "ql_utils.js"), "utf8"), ctx);
     vm.runInContext(fs.readFileSync(sharedPath, "utf8"), ctx, { filename: sharedPath });
     vm.runInContext(fs.readFileSync(bridgePath, "utf8"), ctx, { filename: bridgePath });
     vm.runInContext(settingsSrc, ctx, { filename: settingsPath });

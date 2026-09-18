@@ -21,9 +21,7 @@
     var requestToken = 0;
     var popupLayer = null;
 
-    function IsValid(panel) {
-        try { return !!(panel && panel.IsValid && panel.IsValid()); } catch(e) { return false; }
-    }
+    var IsValid = QOL_UTILS.IsPanelValid;
 
     function FindRoot() {
         var root = null;

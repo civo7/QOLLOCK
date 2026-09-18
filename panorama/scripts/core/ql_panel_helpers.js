@@ -17,15 +17,15 @@
     "use strict";
 
     if (!QOL || !QOL.core || !QOL.ui) {
-        $.Msg("[QOLLock] core/ql_panel_helpers: namespace not found — aborting. " +
-              "Is core/ql_namespace.js loaded first?");
+        if (typeof $ !== "undefined" && $.Msg) {
+            $.Msg("[QOLLock] core/ql_panel_helpers: namespace not found — aborting. " +
+                  "Is core/ql_namespace.js loaded first?");
+        }
         return;
     }
 
     // -- Panel safety --
-    const isPanelAlive = (panel) => {
-        return !!(panel && typeof panel.IsValid === "function" && panel.IsValid());
-    };
+    const isPanelAlive = QOL_UTILS.IsPanelValid;
 
     const safeCreatePanel = (type, parent, id, properties) => {
         if (!isPanelAlive(parent) || typeof type !== "string" || !type) return null;
@@ -363,5 +363,7 @@
     QOL.normalizePaletteColorIndex = normalizePaletteIndex;
     QOL.washColorPalette = QOL_WASH_COLOR_PALETTE;
 
-    $.Msg("[QOLLock] core/ql_panel_helpers: attached to QOL.core.panel and QOL.ui.PanelHelpers");
+    if (typeof $ !== "undefined" && $.Msg) {
+        $.Msg("[QOLLock] core/ql_panel_helpers: attached to QOL.core.panel and QOL.ui.PanelHelpers");
+    }
 })();

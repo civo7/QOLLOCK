@@ -45,10 +45,10 @@
         create: function(ctx) {
             var Panel = (QOL.core && QOL.core.panel) ? QOL.core.panel : {};
             var State = QOL.state || (typeof globalThis !== "undefined" && globalThis.State) || {};
-            var Utils = (typeof QOL_UTILS !== "undefined" ? QOL_UTILS : (QOL.utils || {}));
-            var IsCfgEnabled = Utils.IsCfgEnabled || function(v) { return !!v && v !== "false" && v !== "0"; };
-            var IsPanelValid = Panel.isAlive || (Utils.IsPanelValid || function(p) { return p != null && typeof p.IsValid === "function" && p.IsValid(); });
-            var SetPanelOpacitySafe = Utils.SetPanelOpacitySafe || function(p, o) { if (p && p.style) p.style.opacity = String(o); };
+            var Utils = QOL.utils;
+            var IsCfgEnabled = QOL.utils.IsCfgEnabled;
+            var IsPanelValid = QOL.utils.IsPanelValid;
+            var SetPanelOpacitySafe = QOL.utils.SetPanelOpacitySafe;
             var SetPanelClassIfChanged = QOL.setPanelClassIfChanged || function(p, cls, val) { if (p && p.SetHasClass) p.SetHasClass(cls, !!val); };
             var IsStreetBrawlModeActive = function(r) { return QOL.isStreetBrawlModeActive ? QOL.isStreetBrawlModeActive(r) : false; };
             var GetGameSecondsForUrn = function() { return QOL.getGameSecondsForUrn ? QOL.getGameSecondsForUrn() : 0; };
@@ -77,7 +77,7 @@
             var _loop = null;
             var _root = null;
 
-            function FormatClockMmSs(totalSec) { var s = Math.max(0, Math.floor(Number(totalSec) || 0)); var mm = Math.floor(s / 60); var ss = s % 60; return String(mm) + ":" + (ss < 10 ? "0" + ss : String(ss)); }
+            var FormatClockMmSs = QOL.core.time.formatSeconds;
 
             function EnsureRejuvState() {
                 if (State.rejuvState) return State.rejuvState;

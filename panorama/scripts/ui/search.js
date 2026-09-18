@@ -26,16 +26,9 @@
     let _currentQuery = "";
     let _suppressChange = false;
 
-    const isAlive = (panel) => {
-        if (Q.core?.panel?.isAlive) return Q.core.panel.isAlive(panel);
-        return !!(panel && typeof panel.IsValid === "function" && panel.IsValid());
-    };
+    const isAlive = Q.core.panel.isAlive;
 
-    const createPanel = (type, parent, id, props = {}) => {
-        if (Q.core?.panel?.create) return Q.core.panel.create(type, parent, id, props);
-        if (typeof $.CreatePanel === "function") return $.CreatePanel(type, parent, id || "", props);
-        return null;
-    };
+    const createPanel = Q.core.panel.create;
 
     // =========================================================================
     // Search Matching

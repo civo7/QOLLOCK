@@ -5,11 +5,11 @@
     var _featureId = "ql_feat_healthbar_accent";
     var Panel = (QOL.core && QOL.core.panel) ? QOL.core.panel : {};
     var State = QOL.state || (typeof globalThis !== "undefined" && globalThis.State) || {};
-    var Utils = (typeof QOL_UTILS !== "undefined" ? QOL_UTILS : (QOL.utils || {}));
-    var GetCachedPanel = QOL.getCachedPanel || function(k) { return State.cachedPanels ? State.cachedPanels[k] : null; };
-    var SetCachedPanel = QOL.setCachedPanel || function(k, p) { if (State.cachedPanels) State.cachedPanels[k] = p; };
-    var IsPanelValid = Panel.isAlive || (Utils.IsPanelValid || function(p) { return p != null && typeof p.IsValid === "function" && p.IsValid(); });
-    var SetStyleSafe = Utils.SetStyleSafe || function(p, prop, val) { if (p && p.style) p.style[prop] = val; };
+    var Utils = QOL.utils;
+    var GetCachedPanel = QOL.getCachedPanel;
+    var SetCachedPanel = QOL.setCachedPanel;
+    var IsPanelValid = QOL.utils.IsPanelValid;
+    var SetStyleSafe = QOL.utils.SetStyleSafe;
     var SetWashColorSafe = Panel.setWashColor || QOL.setWashColorSafe;
     var NormalizePaletteColorIndex = Panel.normalizePaletteIndex || QOL.normalizePaletteColorIndex;
     var ResolveWashColorFromPalette = Panel.resolvePaletteColor || QOL.resolveWashColorFromPalette;

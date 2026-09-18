@@ -25,8 +25,10 @@
         }
         if (hidden) {
             try {
-                var t = String(hidden.text || "").replace(/[^0-9]/g, "");
-                if (t.length >= 1 && t.length <= 10) accountId = t;
+                var parsed = (typeof QOL_UTILS !== "undefined" && QOL_UTILS.ParseAccountId)
+                    ? QOL_UTILS.ParseAccountId(hidden.text)
+                    : String(hidden.text || "").replace(/[^0-9]/g, "");
+                if (parsed.length >= 1 && parsed.length <= 10) accountId = parsed;
             } catch(e) { $.Msg("[QOLLock][WARN][" + _featureId + "] HiddenAccountID read failed: " + (e && e.message ? e.message : String(e))); }
         }
 
@@ -38,7 +40,9 @@
                     var text = String(accList[i].text || "");
                     var m = text.match(/\[U:1:(\d+)\]/i);
                     if (m) { accountId = m[1]; break; }
-                    var digits = text.replace(/[^0-9]/g, "");
+                    var digits = (typeof QOL_UTILS !== "undefined" && QOL_UTILS.ParseAccountId)
+                        ? QOL_UTILS.ParseAccountId(text)
+                        : text.replace(/[^0-9]/g, "");
                     if (digits.length >= 1 && digits.length <= 10) { accountId = digits; break; }
                 } catch(e) { $.Msg("[QOLLock][WARN][" + _featureId + "] AccountID fallback read failed: " + (e && e.message ? e.message : String(e))); }
             }

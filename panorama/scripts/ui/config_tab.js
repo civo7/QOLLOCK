@@ -18,27 +18,11 @@
     let gConfigFeedbackLabel = null;
     let gConfigFeedbackClearToken = 0;
 
-    const isAlive = (panel) => {
-        if (Q.core?.panel?.isAlive) return Q.core.panel.isAlive(panel);
-        return !!(panel && typeof panel.IsValid === "function" && panel.IsValid());
-    };
+    const isAlive = Q.core.panel.isAlive;
 
-    const localize = (text) => {
-        if (typeof globalThis.LocalizeSettingsText === "function") {
-            return globalThis.LocalizeSettingsText(text, true);
-        }
-        if (typeof $.Localize === "function") {
-            return $.Localize(text);
-        }
-        return text;
-    };
+    const localize = Q.ui.renderer.localize;
 
-    const isRussian = () => {
-        if (typeof globalThis.IsRussianSettingsLanguage === "function") {
-            return globalThis.IsRussianSettingsLanguage();
-        }
-        return false;
-    };
+    const isRussian = Q.ui.renderer.isRussian;
 
     const getExportPrefix = () => {
         const semver = globalThis.QOL_SCHEMA_SEMVER ||
@@ -166,7 +150,7 @@
     };
 
     const setLocalizedConfigFeedbackMessage = (text, tone, durationMs) => {
-        setConfigFeedbackMessage(localize(text), tone, durationMs);
+        setConfigFeedbackMessage(localize(text, true), tone, durationMs);
     };
 
     const createSectionInlineIconButton = (titleLabel, buttonId, iconSrc, tooltipText) => {
@@ -194,7 +178,7 @@
                 Q.tooltip.showRowTooltip?.(
                     button,
                     "",
-                    localize(tooltipText),
+                    localize(tooltipText, true),
                     globalThis.PERF_IMPACT_TIER_NONE || "",
                     ""
                 );
@@ -469,7 +453,7 @@
                                     : false;
                                 setLocalizedConfigFeedbackMessage("Import: refreshing UI...", "info", 0);
                                 if (isAlive(importHeader)) {
-                                    importHeader.text = localize("Import Settings");
+                                    importHeader.text = localize("Import Settings", true);
                                 }
                                 applyBtn.RemoveClass("FailureState");
                                 applyBtn.AddClass("SuccessState");
@@ -502,7 +486,7 @@
                     });
                 } catch {
                     if (isAlive(importHeader)) {
-                        importHeader.text = localize("ERROR: Invalid String");
+                        importHeader.text = localize("ERROR: Invalid String", true);
                         if (importHeader.style) importHeader.style.color = "#ff4d4d";
                     }
                     applyBtn.RemoveClass("SuccessState");

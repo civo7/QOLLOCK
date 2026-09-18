@@ -20,13 +20,7 @@
         enabledByDefault: false,
         settings: [{ key: "ENABLE_HIDE_FAILED_HINT", type: "toggle", default: false }],
         create: function(ctx) {
-            function _findHud() {
-                var PH = (typeof QOL !== "undefined" && QOL.core && QOL.core.PanelHelpers) ? QOL.core.PanelHelpers : null;
-                if (PH && PH.findHud) return PH.findHud();
-                var c = $.GetContextPanel();
-                if (c && (c.id === "Hud" || (c.paneltype && c.paneltype === "CitadelHud"))) return c;
-                return (c && c.FindChildTraverse) ? c.FindChildTraverse("Hud") : c;
-            }
+            var _findHud = QOL.core.panel.findHud;
 
             return {
                 onEnable: function() {
@@ -42,8 +36,7 @@
         },
         test: function(ctx) {
             try {
-                var PH = (typeof QOL !== "undefined" && QOL.core && QOL.core.PanelHelpers) ? QOL.core.PanelHelpers : null;
-                var hud = PH && PH.findHud ? PH.findHud() : ($.GetContextPanel() ? ($.GetContextPanel().id === "Hud" ? $.GetContextPanel() : $.GetContextPanel().FindChildTraverse("Hud")) : null);
+                var hud = (typeof QOL !== "undefined" && QOL.core?.panel?.findHud) ? QOL.core.panel.findHud() : null;
                 if (!hud) return null;  // Skip — not in a match context
                 return {
                     passed: true,

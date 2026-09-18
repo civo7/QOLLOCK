@@ -44,35 +44,25 @@
             var _loop = null;
 
             // ── QOL delegates ──
-            function _getPanel(k) {
-                try { if (typeof QOL !== "undefined" && QOL.getCachedPanel) return QOL.getCachedPanel(k); } catch(e) {}
-                return null;
-            }
-            function _setPanel(k, v) {
-                try { if (typeof QOL !== "undefined" && QOL.setCachedPanel) QOL.setCachedPanel(k, v); } catch(e) {}
-            }
-            function _isPanelValid(p) {
-                try { if (typeof Utils !== "undefined" && Utils.IsPanelValid) return Utils.IsPanelValid(p); } catch(e) {}
-                return p && typeof p.IsValid === "function" && p.IsValid();
-            }
+            var _getPanel = QOL.getCachedPanel;
+            var _setPanel = QOL.setCachedPanel;
+            var _isPanelValid = QOL.utils.IsPanelValid;
             function _isPanelListValid(list) {
-                try { if (typeof Utils !== "undefined" && Utils.IsPanelListValid) return Utils.IsPanelListValid(list); } catch(e) {}
+                if (typeof QOL_UTILS !== "undefined" && QOL_UTILS.IsPanelListValid) return QOL_UTILS.IsPanelListValid(list);
                 if (!list || !list.length) return false;
                 for (var i = 0; i < list.length; i++) { if (!_isPanelValid(list[i])) return false; }
                 return true;
             }
-            function _setOpacitySafe(panel, val, fallback) {
-                try { if (typeof Utils !== "undefined" && Utils.SetPanelOpacitySafe) { Utils.SetPanelOpacitySafe(panel, val, fallback); return; } } catch(e) {}
-                try { panel.style.opacity = (val !== undefined && val !== null) ? val : fallback; } catch(e2) {}
-            }
+            var _setOpacitySafe = QOL.utils.SetPanelOpacitySafe;
             function _findAncestorWithClass(panel, cls) {
+                if (typeof QOL_UTILS !== "undefined" && QOL_UTILS.FindAncestorWithClass) return QOL_UTILS.FindAncestorWithClass(panel, cls);
                 try { if (typeof QOL !== "undefined" && QOL.findAncestorWithClass) return QOL.findAncestorWithClass(panel, cls); } catch(e) {}
                 var cur = panel;
                 while (cur) { if (cur.BHasClass && cur.BHasClass(cls)) return cur; try { cur = cur.GetParent(); } catch(e) { break; } }
                 return null;
             }
             function _hasClassInHierarchy(panel, cls) {
-                try { if (typeof Utils !== "undefined" && Utils.HasClassInHierarchy) return Utils.HasClassInHierarchy(panel, cls); } catch(e) {}
+                if (typeof QOL_UTILS !== "undefined" && QOL_UTILS.HasClassInHierarchy) return QOL_UTILS.HasClassInHierarchy(panel, cls);
                 var cur = panel;
                 while (cur) { if (cur.BHasClass && cur.BHasClass(cls)) return true; try { cur = cur.GetParent(); } catch(e) { break; } }
                 return false;

@@ -10,9 +10,7 @@ var State;
     'use strict';
 
     // IsPanelValid inline stub — mirrors ql_utils.js definition.
-    var IsPanelValid = (typeof QOL_UTILS !== "undefined" && QOL_UTILS.IsPanelValid)
-        ? QOL_UTILS.IsPanelValid
-        : function(p) { return p != null && typeof p.IsValid === "function" && p.IsValid(); };
+    var IsPanelValid = QOL_UTILS.IsPanelValid;
 
     // ── Panel cache accessors ──
     var GetCachedPanel = function(k) {

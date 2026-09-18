@@ -24,16 +24,20 @@
 
     var CLASS_RIGHT = "QolStatsRight";
 
-    function isPanelValid(p) {
-        return !!(p && p.IsValid && p.IsValid());
-    }
+    var isPanelValid = QOL.utils.IsPanelValid;
 
     function resetStatsPanel(panel) {
         if (!isPanelValid(panel)) return;
         try { panel.RemoveClass(CLASS_RIGHT); } catch(e) {}
-        try { panel.style.x = "0px"; } catch(e) {}
-        try { panel.style.y = "0px"; } catch(e) {}
-        try { panel.style.opacity = "1"; } catch(e) {}
+        if (typeof QOL_UTILS !== "undefined" && QOL_UTILS.ClearStyleSafe) {
+            QOL_UTILS.ClearStyleSafe(panel, "x");
+            QOL_UTILS.ClearStyleSafe(panel, "y");
+            QOL_UTILS.ClearStyleSafe(panel, "opacity");
+        } else {
+            try { panel.style.x = "0px"; } catch(e) {}
+            try { panel.style.y = "0px"; } catch(e) {}
+            try { panel.style.opacity = "1"; } catch(e) {}
+        }
     }
 
     function hasStatsPositionWork(cfg) {

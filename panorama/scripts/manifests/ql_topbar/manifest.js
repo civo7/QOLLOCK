@@ -67,12 +67,7 @@
                 return n;
             }
 
-            function _clearStyle(panel, prop) {
-                if (!panel || !panel.style || !prop) return;
-                try { delete panel.style[prop]; } catch (e0) {}
-                try { panel.style[prop] = null; } catch (e1) {}
-                try { panel.style[prop] = ""; } catch (e2) {}
-            }
+            var _clearStyle = QOL.utils.ClearStyleSafe;
 
             function _hasNonDefault(cfg) {
                 if (!cfg) return false;

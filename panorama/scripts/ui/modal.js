@@ -42,20 +42,9 @@
         }
     };
 
-    const isAlive = (panel) => {
-        if (Q.core?.panel?.isAlive) return Q.core.panel.isAlive(panel);
-        return !!(panel && typeof panel.IsValid === "function" && panel.IsValid());
-    };
+    const isAlive = Q.core.panel.isAlive;
 
-    const localize = (text) => {
-        if (typeof globalThis.LocalizeSettingsText === "function") {
-            return globalThis.LocalizeSettingsText(text, true);
-        }
-        if (typeof $.Localize === "function") {
-            return $.Localize(text);
-        }
-        return text;
-    };
+    const localize = Q.ui.renderer.localize;
 
     const prepareSettingsModalOpen = () => {
         try {
@@ -378,7 +367,7 @@
                 const empty = $.CreatePanel("Label", list, "");
                 if (empty) {
                     empty.AddClass("ConfigDiffEmpty");
-                    empty.text = localize("No setting changes detected.");
+                    empty.text = localize("No setting changes detected.", true);
                 }
             } else {
                 const createDiffCell = (parentPanel, rowData, rowIndex) => {

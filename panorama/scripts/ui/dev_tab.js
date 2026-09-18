@@ -33,7 +33,7 @@
         }
     };
 
-    const isAlive = (panel) => Boolean(panel && (!panel.IsValid || panel.IsValid()));
+    const isAlive = Q.core.panel.isAlive;
 
     // =========================================================================
     // HUD Bridge Panel Resolver

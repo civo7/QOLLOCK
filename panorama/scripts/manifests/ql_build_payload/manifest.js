@@ -104,9 +104,7 @@
     }
 
     // ── Panorama helpers ──
-    function _alive(p) {
-        return !!(p && typeof p.IsValid === "function" && p.IsValid());
-    }
+    var _alive = QOL.utils.IsPanelValid;
     function _find(root, id) {
         try { return (root && root.FindChildTraverse) ? root.FindChildTraverse(id) : null; } catch(e) { return null; }
     }
@@ -133,9 +131,7 @@
     function _root() {
         try { return $.GetContextPanel(); } catch(e) { return null; }
     }
-    function _now() {
-        try { return Date.now ? Date.now() : (new Date()).getTime(); } catch(e) { return 0; }
-    }
+    var _now = QOL.utils.PerfNowMs;
 
     // ── Context checks ──
     function _isShopOpen(root) {

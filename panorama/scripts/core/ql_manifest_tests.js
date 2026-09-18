@@ -36,7 +36,7 @@
     const MAX_TOTAL_MS = 2000;
     const YIELD_MS = 0.05;
 
-    const nowMs = () => (Date.now ? Date.now() : (new Date()).getTime());
+    const nowMs = QOL_UTILS.PerfNowMs;
 
     const emptyResults = () => ({
         token: "",

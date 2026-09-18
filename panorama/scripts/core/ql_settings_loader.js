@@ -34,12 +34,8 @@
         try { $.DispatchEvent("Activated", p); return true; } catch (_) {}
         return false;
     });
-    const setPanelOpacitySafe = (typeof QOL_UTILS !== "undefined" && QOL_UTILS.SetPanelOpacitySafe)
-        ? QOL_UTILS.SetPanelOpacitySafe
-        : ((p, o) => { if (p?.style) p.style.opacity = String(o); });
-    const QOL_WARN = (typeof QOL_UTILS !== "undefined" && QOL_UTILS.WarnLog)
-        ? QOL_UTILS.WarnLog
-        : (() => {});
+    const setPanelOpacitySafe = QOL_UTILS.SetPanelOpacitySafe;
+    const QOL_WARN = QOL_UTILS.WarnLog;
 
     // ── Engine HUD & Hideout Detection ──
     const isHudClassActive = (root, className) => {

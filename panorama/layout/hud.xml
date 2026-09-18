@@ -19,6 +19,7 @@
 		<!-- Core infrastructure (peer/thirdeye architecture)              -->
 		<!-- ============================================================= -->
 		<include src="s2r://panorama/scripts/core/ql_namespace.vjs_c" />
+		<include src="s2r://panorama/scripts/ql_utils.vjs_c" />
 		<include src="s2r://panorama/scripts/core/ql_logger.vjs_c" />
 		<include src="s2r://panorama/scripts/core/ql_event_bus.vjs_c" />
 		<include src="s2r://panorama/scripts/core/ql_scheduler.vjs_c" />
@@ -35,7 +36,6 @@
 		<!-- ============================================================= -->
 		<!-- Transitional runtime infrastructure                           -->
 		<!-- ============================================================= -->
-		<include src="s2r://panorama/scripts/ql_utils.vjs_c" />
 		<include src="s2r://panorama/scripts/ql_shared_presets.vjs_c" />
 		<include src="s2r://panorama/scripts/ql_bridge.vjs_c" />
 			<include src="s2r://panorama/scripts/ql_state.vjs_c" />

@@ -20,9 +20,9 @@
     var logger = QOL.core.Logger;
 
     var State = QOL.state || (typeof globalThis !== "undefined" && globalThis.State) || {};
-    var Utils = (typeof QOL_UTILS !== "undefined" ? QOL_UTILS : (QOL.utils || {}));
-    var IsPanelValid = (QOL.core && QOL.core.panel && QOL.core.panel.isAlive) || Utils.IsPanelValid || function(p) { return p != null && typeof p.IsValid === "function" && p.IsValid(); };
-    var PerfNowMs = Utils.PerfNowMs || (QOL.core && QOL.core.time && QOL.core.time.nowMs) || function() { return Date.now ? Date.now() : (new Date()).getTime(); };
+    var Utils = QOL.utils;
+    var IsPanelValid = QOL.utils.IsPanelValid;
+    var PerfNowMs = QOL.utils.PerfNowMs;
     var BuildWatermark = function(c) { return QOL.buildImagesInChatContainerWatermark ? QOL.buildImagesInChatContainerWatermark(c) : ""; };
     var FindChatMessageLabel = function(p) { return QOL.findChatMessageLabel ? QOL.findChatMessageLabel(p) : null; };
     var TryReadAccountIdFromKnownPartyPath = function(r) { return QOL.tryReadAccountIdFromKnownPartyPath ? QOL.tryReadAccountIdFromKnownPartyPath(r) : ""; };
@@ -40,6 +40,7 @@
     var TOP_FALLBACK_SCAN_INTERVAL_MS = 2000;
 
     function FindHudPanel(root) {
+        if (typeof QOL !== "undefined" && QOL.core?.panel?.findHud) return QOL.core.panel.findHud(root);
         if (!root || !root.FindChildTraverse) return null;
         try { return root.FindChildTraverse("Hud"); } catch(e) { return null; }
     }
@@ -99,14 +100,7 @@
         return CommitOwnerMatch(root, accountId === OWNER_ACCOUNT_ID, true);
     }
 
-    function GetContainer(root, cacheKey, panelId) {
-        var panel = IsPanelValid(State.cachedPanels[cacheKey]) ? State.cachedPanels[cacheKey] : null;
-        if (!panel && root && root.FindChildTraverse) {
-            panel = root.FindChildTraverse(panelId);
-            State.cachedPanels[cacheKey] = panel || null;
-        }
-        return panel;
-    }
+    var GetContainer = QOL.resolveCachedPanel;
 
     function FindEntry(cache, panel) {
         for (var i = 0; i < cache.length; i++) {
@@ -335,7 +329,7 @@
         test: function(ctx) {
             try {
                 var root = $.GetContextPanel();
-                var hud = root ? root.FindChildTraverse("Hud") : null;
+                var hud = (typeof QOL !== "undefined" && QOL.core?.panel?.findHud) ? QOL.core.panel.findHud() : (root ? root.FindChildTraverse("Hud") : null);
                 return {
                     passed: !!hud,
                     name: "Hud panel check",

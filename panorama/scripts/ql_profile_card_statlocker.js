@@ -13,18 +13,9 @@
     var gLastDisplayText = "";
     var gRetryCount = 0;
 
-    function IsPanelValid(panel) {
-        if (!panel) return false;
-        if (!panel.IsValid) return true;
-        try { return panel.IsValid(); } catch (e0) { return false; }
-    }
+    var IsPanelValid = QOL_UTILS.IsPanelValid;
 
-    function ParseAccountId(value) {
-        if (value === undefined || value === null) return "";
-        var digits = String(value).replace(/[^0-9]/g, "");
-        if (!digits || digits.length < 1 || digits.length > 10) return "";
-        return digits;
-    }
+    var ParseAccountId = QOL_UTILS.ParseAccountId;
 
     function ResolvePanels() {
         if (!IsPanelValid(gContext)) {

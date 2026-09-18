@@ -15,20 +15,9 @@
         : (typeof QOL !== "undefined" ? QOL : (globalThis.QOL = {}));
     Q.ui = Q.ui || {};
 
-    const isAlive = (panel) => {
-        if (Q.core?.panel?.isAlive) return Q.core.panel.isAlive(panel);
-        return !!(panel && typeof panel.IsValid === "function" && panel.IsValid());
-    };
+    const isAlive = Q.core.panel.isAlive;
 
-    const localize = (text) => {
-        if (typeof globalThis.LocalizeSettingsText === "function") {
-            return globalThis.LocalizeSettingsText(text, true);
-        }
-        if (typeof $.Localize === "function") {
-            return $.Localize(text);
-        }
-        return text;
-    };
+    const localize = Q.ui.renderer.localize;
 
     const HERO_BODY_LINES = [
         "This is a mod designed to give you complete freedom over your game.",
@@ -206,7 +195,7 @@
         if (groupTitle) {
             groupTitle.AddClass("SupportThanksGroupTitle");
             if (roleClass) groupTitle.AddClass(`${roleClass}Title`);
-            groupTitle.text = localize(title || "");
+            groupTitle.text = localize(title || "", true);
         }
 
         group.thanksGrid = createSupportThanksPlaques(group, entries, columns || 4);
@@ -251,7 +240,7 @@
             if (supportHeroTitle) {
                 supportHeroTitle.AddClass("SupportTabSectionTitle");
                 supportHeroTitle.AddClass("SupportHeroTitle");
-                supportHeroTitle.text = localize("Welcome to QOL Lock");
+                supportHeroTitle.text = localize("Welcome to QOL Lock", true);
             }
 
             const supportHeroBulletList = $.CreatePanel("Panel", supportIntroCard, "SupportHeroBulletList");
@@ -269,7 +258,7 @@
                     if (bulletLabel) {
                         bulletLabel.AddClass("SupportTabText");
                         bulletLabel.AddClass("SupportHeroBulletLabel");
-                        const heroLineText = localize(heroLine);
+                        const heroLineText = localize(heroLine, true);
                         bulletLabel.text = (heroLineText && heroLineText.endsWith("."))
                             ? heroLineText.slice(0, -1)
                             : heroLineText;
@@ -288,7 +277,7 @@
             if (supportCtaSectionTitle) {
                 supportCtaSectionTitle.AddClass("SupportTabSectionTitle");
                 supportCtaSectionTitle.AddClass("SupportCtaSectionTitle");
-                supportCtaSectionTitle.text = localize("Help, Contact & Support");
+                supportCtaSectionTitle.text = localize("Help, Contact & Support", true);
             }
 
             const supportCtaGrid = $.CreatePanel("Panel", supportCtaSection, "SupportCtaGrid");
@@ -337,13 +326,13 @@
                         const ctaBtnTitle = $.CreatePanel("Label", ctaText, "");
                         if (ctaBtnTitle) {
                             ctaBtnTitle.AddClass("SupportCtaBtnTitle");
-                            ctaBtnTitle.text = localize(def.title);
+                            ctaBtnTitle.text = localize(def.title, true);
                         }
 
                         const ctaBtnHint = $.CreatePanel("Label", ctaText, "");
                         if (ctaBtnHint) {
                             ctaBtnHint.AddClass("SupportCtaBtnHint");
-                            ctaBtnHint.text = localize(def.hint);
+                            ctaBtnHint.text = localize(def.hint, true);
                         }
 
                         if (typeof def.onactivate === "function") {
@@ -363,7 +352,7 @@
             const supportThanksTitle = $.CreatePanel("Label", supportThanksBlock, "");
             if (supportThanksTitle) {
                 supportThanksTitle.AddClass("SupportTabSectionTitle");
-                supportThanksTitle.text = localize("Credits");
+                supportThanksTitle.text = localize("Credits", true);
             }
 
             const supportThanksRule = $.CreatePanel("Panel", supportThanksBlock, "");

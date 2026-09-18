@@ -26,35 +26,11 @@
     // Helpers & Safety
     // =========================================================================
 
-    const isAlive = (panel) => {
-        if (Q.core?.panel?.isAlive) return Q.core.panel.isAlive(panel);
-        return !!(panel && typeof panel.IsValid === "function" && panel.IsValid());
-    };
+    const isAlive = Q.core.panel.isAlive;
 
-    const createPanel = (type, parent, id, props) => {
-        if (!isAlive(parent)) return null;
-        if (Q.core?.panel?.create) return Q.core.panel.create(type, parent, id, props);
-        try {
-            if (props) return $.CreatePanel(type, parent, id || "", props);
-            return $.CreatePanel(type, parent, id || "");
-        } catch (e) {
-            $.Msg(`[QOLLock][WARN][Window] CreatePanel('${type}') failed: ${e?.message || e}`);
-            return null;
-        }
-    };
+    const createPanel = Q.core.panel.create;
 
-    const localize = (text, keepRawIfMissing = false) => {
-        if (!text) return "";
-        if (typeof LocalizeSettingsText === "function") {
-            return LocalizeSettingsText(text, keepRawIfMissing);
-        }
-        if (typeof $.Localize === "function") {
-            const str = String(text);
-            if (str.startsWith("#")) return $.Localize(str);
-            return str;
-        }
-        return String(text);
-    };
+    const localize = Q.ui.renderer.localize;
 
     // =========================================================================
     // Window State

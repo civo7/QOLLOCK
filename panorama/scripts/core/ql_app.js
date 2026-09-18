@@ -19,6 +19,8 @@
     }
     const { ConfigStore, ConfigAdapter, FeatureRegistry, Logger } = QOL.core;
     const PanelHelpers = QOL.ui?.PanelHelpers || QOL.core.panel;
+    const _nowMs = (typeof QOL_UTILS !== "undefined" && QOL_UTILS.PerfNowMs) ? QOL_UTILS.PerfNowMs : () => (Date.now ? Date.now() : (new Date()).getTime());
+    const _parseRev = (typeof QOL_UTILS !== "undefined" && QOL_UTILS.ParseRevisionNumber) ? QOL_UTILS.ParseRevisionNumber : (v) => { const n = Number(v); return (!Number.isFinite(n) || n < 0) ? 0 : Math.floor(n); };
 
     if (!ConfigStore || !FeatureRegistry) {
         $.Msg(`[QOLLock] core/ql_app: dependencies missing (ConfigStore=${Boolean(ConfigStore)}, FeatureRegistry=${Boolean(FeatureRegistry)}) — aborting.`);
@@ -95,25 +97,7 @@
             _hudPanel = PanelHelpers.findHud();
             return _hudPanel;
         }
-        const ctx = $.GetContextPanel();
-        let hud = ctx?.FindChildTraverse ? ctx.FindChildTraverse("Hud") : null;
-        if (!hud && ctx) {
-            let absRoot = ctx;
-            let depth = 0;
-            while (absRoot.GetParent && depth < 64) {
-                absRoot = absRoot.GetParent();
-                depth++;
-            }
-            hud = absRoot?.FindChildTraverse ? absRoot.FindChildTraverse("Hud") : null;
-        }
-        if (hud) _hudPanel = hud;
-        return hud;
-    };
-
-
-    const _parseRev = (v) => {
-        const n = Number(v);
-        return (!Number.isFinite(n) || n < 0) ? 0 : Math.floor(n);
+        return null;
     };
 
     const _getSearchPanels = (hudPanel) => {
@@ -178,7 +162,7 @@
         if (!flatConfig) return;
         if (QOL?.core?.hud && typeof QOL.core.hud.applyRootClasses === "function") {
             try {
-                const nowMs = Date.now ? Date.now() : (new Date()).getTime();
+                const nowMs = _nowMs();
                 const isHideout = (QOL.isConnectedToHideout && QOL.isConnectedToHideout(hudPanel)) || false;
                 QOL.core.hud.applyRootClasses(hudPanel, flatConfig, nowMs, isHideout, true);
             } catch (e) {
@@ -371,7 +355,7 @@
             globalState.heroRestorePendingTarget = "";
             return;
         }
-        const now = Number(nowMs) || (Date.now ? Date.now() : (new Date()).getTime());
+        const now = Number(nowMs) || _nowMs();
         if (now < (globalState.heroRestorePendingNextMs || 0)) return;
         const elapsed = now - (Number(globalState.heroRestorePendingStartedMs) || now);
         if (elapsed >= 1200 || elapsed > 3000) {
@@ -397,7 +381,7 @@
 
         const poll = () => {
             if (!_booted) return;
-            const nowMs = Date.now ? Date.now() : (new Date()).getTime();
+            const nowMs = _nowMs();
             const hudPanel = _findHud();
             const best = _readBestConfig(hudPanel);
             const { raw, rev } = best;

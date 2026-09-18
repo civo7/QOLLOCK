@@ -34,9 +34,9 @@
         ],
         create(ctx) {
             const State = QOL.state || globalThis.State || {};
-            const Utils = (typeof QOL_UTILS !== "undefined" ? QOL_UTILS : (QOL.utils || {}));
-            const isPanelValid = (p) => QOL.core?.panel?.isAlive ? QOL.core.panel.isAlive(p) : (p != null && typeof p.IsValid === "function" && p.IsValid());
-            const perfNowMs = () => Utils.PerfNowMs ? Utils.PerfNowMs() : (QOL.core?.time?.nowMs ? QOL.core.time.nowMs() : Date.now());
+            const Utils = QOL.utils;
+            const isPanelValid = QOL.utils.IsPanelValid;
+            const perfNowMs = QOL.utils.PerfNowMs;
 
             const IMAGES_IN_CHAT_URL_REGEX = /^https?:\/\/\S+\.(?:png|jpg|jpeg|webp|gif)(?:\?\S*)?$/i;
             const IMAGES_IN_CHAT_MAX_W = 150;

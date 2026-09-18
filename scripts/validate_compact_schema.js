@@ -25,6 +25,8 @@ const settingsThemePath = path.join(projectRoot, "panorama", "scripts", "ui", "t
 const settingsControlsPath = path.join(projectRoot, "panorama", "scripts", "ui", "controls.js");
 const settingsPath = path.join(projectRoot, "panorama", "scripts", "ql_settings.js");
 const namespacePath = path.join(projectRoot, "panorama", "scripts", "core", "ql_namespace.js");
+const panelHelpersPath = path.join(projectRoot, "panorama", "scripts", "core", "ql_panel_helpers.js");
+const rendererPath = path.join(projectRoot, "panorama", "scripts", "ui", "renderer.js");
 const codecPath = path.join(projectRoot, "panorama", "scripts", "core", "ql_codec.js");
 
 function readFile(filePath) {
@@ -569,7 +571,7 @@ function runFuzzTests(settingsExports, coreExports, defaultConfig, settingsRegis
 
 function main() {
     const settingsContext = loadContext(
-        [utilsPath, sharedPath, bridgePath, configPath, settingsPreviewsPath, settingsTooltipsPath, settingsPersistencePath, settingsModalPath, settingsConfigTabPath, settingsCloudSyncPath, settingsSupportPath, settingsAudioPath, settingsConsoleTabPath, settingsArcadeTabPath, settingsDevTabPath, settingsGameplayTabsPath, settingsThemePath, settingsMetadataPath, settingsTabsPath, settingsControlsPath, settingsPath],
+        [namespacePath, utilsPath, panelHelpersPath, sharedPath, bridgePath, configPath, rendererPath, settingsPreviewsPath, settingsTooltipsPath, settingsPersistencePath, settingsModalPath, settingsConfigTabPath, settingsCloudSyncPath, settingsSupportPath, settingsAudioPath, settingsConsoleTabPath, settingsArcadeTabPath, settingsDevTabPath, settingsGameplayTabsPath, settingsThemePath, settingsMetadataPath, settingsTabsPath, settingsControlsPath, settingsPath],
         `globalThis.__schemaGuardExports = {
             sharedSemver: QOL_SCHEMA_SEMVER,
             sharedWireVersion: QOL_SCHEMA_WIRE_VERSION,
@@ -585,7 +587,7 @@ function main() {
         false
     );
     const coreContext = loadContext(
-        [sharedPath, bridgePath, namespacePath, codecPath],
+        [namespacePath, utilsPath, panelHelpersPath, sharedPath, bridgePath, codecPath],
         `globalThis.__schemaGuardExports = {
             latestSemver: QOL.core.codec.getLatestCompactSemver(),
             registry: QOL.core.codec.getCompactSchemaRegistry(),

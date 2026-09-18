@@ -32,20 +32,16 @@
             var _cachedSlots = []; // array of { playerPanel, hidden, shown }
             var _running = false;
 
-            function _isAlive(p) {
-                return !!(p && typeof p.IsValid === "function" && p.IsValid());
-            }
+            var _isAlive = QOL.utils.IsPanelValid;
 
             function _getTopBar() {
                 if (_isAlive(_topBar)) return _topBar;
                 _topBar = null;
-                var hud = QOL.ui && QOL.ui.PanelHelpers ? QOL.ui.PanelHelpers.findHud() : null;
-                if (!hud || !_isAlive(hud)) {
-                    var root = $.GetContextPanel();
-                    if (root && _isAlive(root)) {
-                        hud = root.FindChildTraverse ? root.FindChildTraverse("Hud") : root;
-                    }
-                }
+                var hud = (typeof QOL !== "undefined" && QOL.core && QOL.core.panel && QOL.core.panel.findHud)
+                    ? QOL.core.panel.findHud()
+                    : ((typeof QOL !== "undefined" && QOL.ui && QOL.ui.PanelHelpers && QOL.ui.PanelHelpers.findHud)
+                        ? QOL.ui.PanelHelpers.findHud()
+                        : null);
                 if (!hud || !_isAlive(hud)) return null;
                 _topBar = hud.FindChildTraverse ? (hud.FindChildTraverse("TopBar") || hud.FindChildTraverse("CitadelHudTopBar")) : null;
                 return _topBar;

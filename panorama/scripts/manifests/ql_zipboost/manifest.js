@@ -34,7 +34,7 @@
             var _nextSourceSearchMs = 0, _activeEndMs = 0, _wasInUse = false;
             var _lastState = null, _readyFlashUntilMs = 0;
 
-            function _isAlive(p) { return !!(p && typeof p.IsValid === "function" && p.IsValid()); }
+            var _isAlive = QOL.utils.IsPanelValid;
 
             function _isInHideout(root) {
                 try {

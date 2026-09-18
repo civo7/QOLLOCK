@@ -23,13 +23,7 @@
             { key: "ENABLE_CLEAN_STACKS", type: "toggle", default: false, label: "Clean Stacks", description: "Move ability stacks to bottom-center of ability icon" }
         ],
         create: function(ctx) {
-            function _findHud() {
-                var PH = (typeof QOL !== "undefined" && QOL.core && QOL.core.PanelHelpers) ? QOL.core.PanelHelpers : null;
-                if (PH && PH.findHud) return PH.findHud();
-                var c = $.GetContextPanel();
-                if (c && (c.id === "Hud" || (c.paneltype && c.paneltype === "CitadelHud"))) return c;
-                return (c && c.FindChildTraverse) ? c.FindChildTraverse("Hud") : c;
-            }
+            var _findHud = QOL.core.panel.findHud;
 
             function _apply(cfg) {
                 var h = _findHud();
@@ -65,8 +59,7 @@
         },
         test: function(ctx) {
             try {
-                var PH = (typeof QOL !== "undefined" && QOL.core && QOL.core.PanelHelpers) ? QOL.core.PanelHelpers : null;
-                var hud = PH && PH.findHud ? PH.findHud() : ($.GetContextPanel() ? ($.GetContextPanel().id === "Hud" ? $.GetContextPanel() : $.GetContextPanel().FindChildTraverse("Hud")) : null);
+                var hud = (typeof QOL !== "undefined" && QOL.core?.panel?.findHud) ? QOL.core.panel.findHud() : null;
                 if (!hud) return null;  // Skip — not in a match context
                 return { passed: true, name: "Ability icons Hud panel exists", message: "", assertions: [{ passed: true, name: "Hud panel exists" }] };
             } catch(e) { return { passed: false, name: "Ability icons panel check", message: (e && e.message ? e.message : String(e)) }; }

@@ -72,9 +72,7 @@
         }
     ];
 
-    function isAlive(p) {
-        return !!(p && typeof p.IsValid === "function" && p.IsValid());
-    }
+    var isAlive = QOL.utils.IsPanelValid;
 
     function extractFirstNumericToken(text) {
         if (!text || typeof text !== "string") return "";

@@ -79,9 +79,7 @@
           } }
     ];
 
-    function isPanelValid(p) {
-        return !!(p && p.IsValid && p.IsValid());
-    }
+    var isPanelValid = QOL.utils.IsPanelValid;
 
     function setPanelOpacitySafe(panel, opacityText, fallback) {
         if (!isPanelValid(panel)) return;

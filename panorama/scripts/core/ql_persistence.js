@@ -22,12 +22,7 @@
         return;
     }
 
-    const isAlive = (panel) => {
-        if (Q.core.panel?.isAlive) {
-            return Q.core.panel.isAlive(panel);
-        }
-        return !!(panel && typeof panel.IsValid === "function" && panel.IsValid());
-    };
+    const isAlive = Q.core.panel.isAlive;
 
     const getCached = (key) => {
         if (typeof Q.getCachedPanel === "function") {
@@ -76,13 +71,7 @@
         }
     };
 
-    const parseRevisionNumber = (v) => {
-        if (typeof QOL_UTILS !== "undefined" && QOL_UTILS.ParseRevisionNumber) {
-            return QOL_UTILS.ParseRevisionNumber(v);
-        }
-        const n = Number(v);
-        return (!Number.isFinite(n) || n < 0) ? 0 : Math.floor(n);
-    };
+    const parseRevisionNumber = QOL_UTILS.ParseRevisionNumber;
 
     /**
      * Finds and caches the absolute UI root panel by walking the parent chain.
@@ -91,14 +80,19 @@
         const cached = getCached("uiRoot");
         if (isAlive(cached)) return cached;
 
-        let p = typeof $.GetContextPanel === "function" ? $.GetContextPanel() : null;
-        let guard = 0;
-        while (p && p.GetParent && isAlive(p.GetParent()) && guard < 64) {
-            p = p.GetParent();
-            guard++;
-        }
-        if (guard >= 64) {
-            logWarn("ui", "GetUIRoot: parent-chain walk hit guard limit — panel hierarchy may be corrupted");
+        let p = null;
+        if (Q.core?.panel?.findRoot) {
+            p = Q.core.panel.findRoot();
+        } else {
+            p = typeof $.GetContextPanel === "function" ? $.GetContextPanel() : null;
+            let guard = 0;
+            while (p && p.GetParent && isAlive(p.GetParent()) && guard < 64) {
+                p = p.GetParent();
+                guard++;
+            }
+            if (guard >= 64) {
+                logWarn("ui", "GetUIRoot: parent-chain walk hit guard limit — panel hierarchy may be corrupted");
+            }
         }
         setCached("uiRoot", p);
         return p || null;
@@ -112,16 +106,17 @@
         if (isAlive(cached)) return cached;
 
         let hud = null;
-        if (root?.FindChildTraverse) {
-            try { hud = root.FindChildTraverse("Hud"); } catch (_) { hud = null; }
-        }
-        if (!isAlive(hud) && Q.core.hud?.findHud) {
+        if (Q.core?.panel?.findHud) {
+            hud = Q.core.panel.findHud(root);
+        } else if (Q.core.hud?.findHud) {
             hud = Q.core.hud.findHud();
+        } else if (root?.FindChildTraverse) {
+            try { hud = root.FindChildTraverse("Hud"); } catch (_) { hud = null; }
         }
         if (isAlive(hud)) {
             setCached("cachedHudPanel", hud);
         }
-        return hud;
+        return hud || null;
     };
 
     let _readStorageDiagLogged = false;

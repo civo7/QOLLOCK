@@ -78,6 +78,9 @@ var QOL_BRIDGE_ATTR_TO_CHANNEL = {};
 // ── Low-level safe attribute read/write ──
 
 function QOLBridgeReadAttr(panel, attrName, fallback) {
+    if (typeof QOL_UTILS !== "undefined" && QOL_UTILS.SafeGetAttribute) {
+        return QOL_UTILS.SafeGetAttribute(panel, attrName, fallback);
+    }
     if (!panel || !panel.GetAttributeString) return fallback !== undefined ? fallback : "";
     try {
         return String(panel.GetAttributeString(attrName, fallback !== undefined ? String(fallback) : "") || "");
@@ -85,6 +88,9 @@ function QOLBridgeReadAttr(panel, attrName, fallback) {
 }
 
 function QOLBridgeWriteAttr(panel, attrName, value) {
+    if (typeof QOL_UTILS !== "undefined" && QOL_UTILS.SafeSetAttribute) {
+        return QOL_UTILS.SafeSetAttribute(panel, attrName, value);
+    }
     if (!panel || !panel.SetAttributeString) return false;
     try {
         panel.SetAttributeString(attrName, String(value != null ? value : ""));

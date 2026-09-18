@@ -30,12 +30,7 @@
             var _loop = null;
             var PANEL_ID = "gold_and_ap_container";
 
-            function _clearStyle(p, prop) {
-                if (!p || !p.style || !prop) return;
-                try { delete p.style[prop]; } catch (e0) {}
-                try { p.style[prop] = null; } catch (e1) {}
-                try { p.style[prop] = ""; } catch (e2) {}
-            }
+            var _clearStyle = QOL.utils.ClearStyleSafe;
 
             function _hasNonDefault(cfg) {
                 if (!cfg) return false;

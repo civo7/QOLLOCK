@@ -7,8 +7,8 @@
 	</styles>
 	<scripts>
 		<include src="s2r://panorama/scripts/core/ql_namespace.vjs_c" />
-		<include src="s2r://panorama/scripts/core/ql_panel_helpers.vjs_c" />
 		<include src="s2r://panorama/scripts/ql_utils.vjs_c" />
+		<include src="s2r://panorama/scripts/core/ql_panel_helpers.vjs_c" />
 		<include src="s2r://panorama/scripts/ql_shared_presets.vjs_c" />
 		<include src="s2r://panorama/scripts/ql_bridge.vjs_c" />
 		<include src="s2r://panorama/scripts/ql_config.vjs_c" />

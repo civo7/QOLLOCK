@@ -62,20 +62,11 @@
     var _RE_DEG_GENERIC = /([+\-]?\d+(?:\.\d+)?)\s*deg/i;
     var _RE_POSITION_XY = /([+\-]?\d+(?:\.\d+)?)%\s*(?:,|\s+)\s*([+\-]?\d+(?:\.\d+)?)%/i;
 
-    function _nowMs() {
-        return Date.now ? Date.now() : (new Date()).getTime();
-    }
+    var _nowMs = QOL.utils.PerfNowMs;
 
-    function _isAlive(p) {
-        return !!(p && typeof p.IsValid === "function" && p.IsValid());
-    }
+    var _isAlive = QOL.utils.IsPanelValid;
 
-    function _norm360(deg) {
-        var out = deg % 360;
-        if (out < 0) out += 360;
-        if (out >= 360) out -= 360;
-        return out;
-    }
+    var _norm360 = QOL.utils.NormalizeDegrees360;
 
     function _norm180(deg) {
         var out = _norm360(deg);
@@ -265,12 +256,7 @@
             var _localPlayerPanelScanBackoffMs = 0;
 
             function _getHud() {
-                if (QOL.core && QOL.core.hud && QOL.core.hud.findHud) {
-                    return QOL.core.hud.findHud();
-                }
-                var ctx = $.GetContextPanel();
-                if (!ctx) return null;
-                return ctx.id === "Hud" ? ctx : (ctx.FindChildTraverse ? ctx.FindChildTraverse("Hud") : null);
+                return QOL.core?.panel?.findHud ? QOL.core.panel.findHud() : (QOL.core?.hud?.findHud ? QOL.core.hud.findHud() : null);
             }
 
             function _getGameplayHud(hud) {
@@ -535,12 +521,7 @@
                 return _minimapFlipClassTarget;
             }
 
-            function _clearStyle(p, prop) {
-                if (!p || !p.style || !prop) return;
-                try { delete p.style[prop]; } catch (e0) {}
-                try { p.style[prop] = null; } catch (e1) {}
-                try { p.style[prop] = ""; } catch (e2) {}
-            }
+            var _clearStyle = QOL.utils.ClearStyleSafe;
 
             function _applyStaticMinimapRotation(hud, nowMs, targetDeg) {
                 var target = _findMinimapRotateTarget(hud);

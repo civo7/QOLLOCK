@@ -35,12 +35,14 @@
             var _cacheInitialized = false;
             var _wasEnabled = false;
 
-            function _alive(p) {
-                return !!(p && typeof p.IsValid === "function" && p.IsValid());
-            }
+            var _alive = QOL.utils.IsPanelValid;
 
             function _listValid(list) {
                 if (!list) return false;
+                if (list.length === 0) return true;
+                if (typeof QOL_UTILS !== "undefined" && QOL_UTILS.IsPanelListValid) {
+                    return QOL_UTILS.IsPanelListValid(list);
+                }
                 for (var i = 0; i < list.length; i++) {
                     if (!_alive(list[i])) return false;
                 }
@@ -49,15 +51,13 @@
                 return true;
             }
 
-            function _isLikelyAccountId(digits) {
-                if (typeof digits !== "string" || digits.length < 1 || digits.length > 10) return false;
-                return /^\d{1,10}$/.test(digits);
-            }
-
             function _parseAccountId(text) {
+                if (typeof QOL_UTILS !== "undefined" && QOL_UTILS.ParseAccountId) {
+                    return QOL_UTILS.ParseAccountId(text);
+                }
                 if (text === undefined || text === null) return "";
                 var digits = String(text).replace(/[^0-9]/g, "");
-                return _isLikelyAccountId(digits) ? digits : "";
+                return (digits.length >= 1 && digits.length <= 10) ? digits : "";
             }
 
             function _findAccountIdInPanel(panel) {

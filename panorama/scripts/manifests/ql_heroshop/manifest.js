@@ -48,7 +48,7 @@
             var _styleSig = "";
             var _nextSearchMs = 0;
 
-            function _isAlive(p) { return p && typeof p.IsValid === "function" && p.IsValid(); }
+            var _isAlive = QOL.utils.IsPanelValid;
 
             function _normOffset(v, d) { var n = Math.round(Number(v)); return isFinite(n) ? n : d; }
             function _normOpacity(v, d) { var n = Number(v); return isFinite(n) && n >= 0 && n <= 1 ? n : d; }

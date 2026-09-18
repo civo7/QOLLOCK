@@ -168,11 +168,7 @@
         else if (typeof globalThis.MarkConfigDirty === "function") globalThis.MarkConfigDirty();
     };
 
-    const localize = (text, force) => {
-        if (typeof LocalizeSettingsText === "function") return LocalizeSettingsText(text, force);
-        if (typeof globalThis.LocalizeSettingsText === "function") return globalThis.LocalizeSettingsText(text, force);
-        return String(text || "");
-    };
+    const localize = Q.ui.renderer.localize;
 
     const setConfigFeedbackMessage = (msg, tone, holdMs) => {
         if (typeof SetConfigFeedbackMessage === "function") SetConfigFeedbackMessage(msg, tone, holdMs);
@@ -229,11 +225,7 @@
         else if (typeof globalThis.PublishPaletteColorBridge === "function") globalThis.PublishPaletteColorBridge(id, val);
     };
 
-    const isRussianLanguage = () => {
-        if (typeof IsRussianSettingsLanguage === "function") return IsRussianSettingsLanguage();
-        if (typeof globalThis.IsRussianSettingsLanguage === "function") return globalThis.IsRussianSettingsLanguage();
-        return false;
-    };
+    const isRussianLanguage = Q.ui.renderer.isRussian;
 
     const findRootPanel = () => {
         if (typeof FindRootPanel === "function") return FindRootPanel();

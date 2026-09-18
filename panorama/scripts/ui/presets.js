@@ -27,10 +27,7 @@
     let _highlightPollToken = 0;
     let _highlightPollRunning = false;
 
-    const isAlive = (panel) => {
-        if (Q.core?.panel?.isAlive) return Q.core.panel.isAlive(panel);
-        return !!(panel && typeof panel.IsValid === "function" && panel.IsValid());
-    };
+    const isAlive = Q.core.panel.isAlive;
 
     const getPresetsMap = () => {
         if (typeof globalThis !== "undefined" && globalThis.QOL_PRESETS) return globalThis.QOL_PRESETS;
@@ -39,22 +36,9 @@
         return {};
     };
 
-    const localize = (text) => {
-        if (typeof globalThis.LocalizeSettingsText === "function") {
-            return globalThis.LocalizeSettingsText(text, true);
-        }
-        if (typeof $.Localize === "function") {
-            return $.Localize(text);
-        }
-        return text;
-    };
+    const localize = Q.ui.renderer.localize;
 
-    const isRussian = () => {
-        if (typeof globalThis.IsRussianSettingsLanguage === "function") {
-            return globalThis.IsRussianSettingsLanguage();
-        }
-        return false;
-    };
+    const isRussian = Q.ui.renderer.isRussian;
 
     const NORMALIZERS = [
         "NormalizeNeutralCampFlags",
@@ -374,7 +358,7 @@
 
         button.AddClass("PresetApplySuccess");
         setExplicitActivePresetButton(button);
-        labelPanel.text = localize("SUCCESS");
+        labelPanel.text = localize("SUCCESS", true);
         queueActivePresetHighlightRefresh(0.01);
 
         if (typeof $.Schedule === "function") {

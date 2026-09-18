@@ -32,7 +32,7 @@
             var _pressById = {};
             var _untilById = {};
 
-            function _isAlive(p) { return p && typeof p.IsValid === "function" && p.IsValid(); }
+            var _isAlive = QOL.utils.IsPanelValid;
 
             function _scanSlots(root) {
                 var now = Date.now ? Date.now() : (new Date()).getTime();

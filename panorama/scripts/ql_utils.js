@@ -1,5 +1,5 @@
 // ql_utils.js — Shared utilities for QOLLOCK
-// Loaded BEFORE ql_core.js and ql_settings.js via hud.xml
+// Leaf helpers loaded before core modules and consumers in each XML context.
 (function() {
     'use strict';
     var exports = {};
@@ -7,14 +7,22 @@
     // ---- Panel Validation ----
 
     /**
-     * Returns true if the panel exists and is valid.
-     * Fixes the original bug where !panel.IsValid incorrectly returned true
-     * when .IsValid was undefined (not a function).
+     * Returns false for absent, destroyed, or invalidated panel handles.
      */
     function IsPanelValid(panel) {
-        return panel != null && typeof panel.IsValid === "function" && panel.IsValid();
+        try {
+            return !!(panel && typeof panel.IsValid === "function" && panel.IsValid());
+        } catch (e) { return false; }
     }
     exports.IsPanelValid = IsPanelValid;
+
+    // Profile labels may contain punctuation, but account IDs have at most ten digits.
+    function ParseAccountId(value) {
+        if (value === undefined || value === null) return "";
+        var digits = String(value).replace(/[^0-9]/g, "");
+        return digits.length >= 1 && digits.length <= 10 ? digits : "";
+    }
+    exports.ParseAccountId = ParseAccountId;
 
     // ---- Safe Attribute Access ----
 
@@ -50,12 +58,21 @@
 
     // ---- Panel Finding ----
 
+    function FindPanelsByClass(root, className) {
+        try {
+            if (root && className && typeof root.FindChildrenWithClassTraverse === "function") {
+                return root.FindChildrenWithClassTraverse(className) || [];
+            }
+        } catch (e) { /* Panel may disappear while resolving descendants. */ }
+        return [];
+    }
+    exports.FindPanelsByClass = FindPanelsByClass;
+
     /**
      * Find the first valid panel with the given class, traversing children.
      */
     function FindFirstPanelByClass(root, className) {
-        if (!root || typeof root.FindChildrenWithClassTraverse !== "function" || !className) return null;
-        var panels = root.FindChildrenWithClassTraverse(className) || [];
+        var panels = FindPanelsByClass(root, className);
         for (var i = 0; i < panels.length; i++) {
             if (IsPanelValid(panels[i])) return panels[i];
         }
@@ -818,10 +835,11 @@
     // ---- Export ----
 
     // Publish to global scope so other scripts can access it
+    if (typeof globalThis !== "undefined") {
+        globalThis.QOL_UTILS = exports;
+    }
     if (typeof window !== "undefined") {
         window.QOL_UTILS = exports;
-    } else if (typeof globalThis !== "undefined") {
-        globalThis.QOL_UTILS = exports;
     }
     // Note: ql_shared_presets.js (loaded after us) attaches QOL_UTILS
     // to the QOL bridge namespace as QOL.utils — see QOL namespace setup.

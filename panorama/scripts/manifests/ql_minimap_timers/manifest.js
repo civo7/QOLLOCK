@@ -43,15 +43,12 @@
         create: function(ctx) {
             var Panel = (QOL.core && QOL.core.panel) ? QOL.core.panel : {};
             var State = QOL.state || (typeof globalThis !== "undefined" && globalThis.State) || {};
-            var Utils = (typeof QOL_UTILS !== "undefined" ? QOL_UTILS : (QOL.utils || {}));
-            var IsCfgEnabled = Utils.IsCfgEnabled || function(cfg, key) {
-                var v = (typeof key !== "undefined" && cfg && typeof cfg === "object") ? cfg[key] : cfg;
-                return !!v && v !== "false" && v !== "0" && v !== 0;
-            };
-            var IsPanelValid = Panel.isAlive || (Utils.IsPanelValid || function(p) { return p != null && typeof p.IsValid === "function" && p.IsValid(); });
-            var GetCachedPanel = QOL.getCachedPanel || function(k) { return State.cachedPanels ? State.cachedPanels[k] : null; };
-            var SetCachedPanel = QOL.setCachedPanel || function(k, p) { if (State.cachedPanels) State.cachedPanels[k] = p; };
-            var ResolveCachedPanel = QOL.resolveCachedPanel || function(r, k, id) { return GetCachedPanel(k) || (r && r.FindChildTraverse ? r.FindChildTraverse(id) : null); };
+            var Utils = QOL.utils;
+            var IsCfgEnabled = QOL.utils.IsCfgEnabled;
+            var IsPanelValid = QOL.utils.IsPanelValid;
+            var GetCachedPanel = QOL.getCachedPanel;
+            var SetCachedPanel = QOL.setCachedPanel;
+            var ResolveCachedPanel = QOL.resolveCachedPanel;
             var SetPanelClassCached = QOL.setPanelClassCached || function(p, c, cls, val) { if (p && p.SetHasClass) p.SetHasClass(cls, !!val); };
             var IsHudClassActive = function(r, cls) { return (QOL.core && QOL.core.hud && QOL.core.hud.isClassActive) ? QOL.core.hud.isClassActive(cls) : (QOL.isHudClassActive ? QOL.isHudClassActive(r, cls) : false); };
             var hasClassInHierarchy = QOL.hasClassInHierarchy || function(p, cls) { return !!(p && p.BHasClass && p.BHasClass(cls)); };
@@ -149,7 +146,7 @@
             var _loop = null;
             var _root = null;
 
-            function FormatClockMmSs(totalSec) { var s = Math.max(0, Math.floor(Number(totalSec) || 0)); var mm = Math.floor(s / 60); var ss = s % 60; return String(mm) + ":" + (ss < 10 ? "0" + ss : String(ss)); }
+            var FormatClockMmSs = QOL.core.time.formatSeconds;
 
             function EnsureMinimapObjectiveTimers(root) {
                 var anchor = EnsureMinimapOverlayAnchor(root);

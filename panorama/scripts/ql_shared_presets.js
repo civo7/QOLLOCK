@@ -305,13 +305,7 @@ if (typeof QOL_CODEC.DeserializeCompactBinary !== "function") {
 
 var QOL_SCHEMA_UTILS = (typeof QOL_SCHEMA_UTILS === "object" && QOL_SCHEMA_UTILS) ? QOL_SCHEMA_UTILS : {};
 
-if (typeof QOL_SCHEMA_UTILS.ParseConfigStorageRevision !== "function") {
-    QOL_SCHEMA_UTILS.ParseConfigStorageRevision = function(rawValue) {
-        var n = Number(rawValue);
-        if (!isFinite(n) || n < 0) return 0;
-        return Math.floor(n);
-    };
-}
+QOL_SCHEMA_UTILS.ParseConfigStorageRevision = QOL_UTILS.ParseRevisionNumber;
 
 if (typeof QOL_SCHEMA_UTILS.ResolveConfigStorageTargets !== "function") {
     QOL_SCHEMA_UTILS.ResolveConfigStorageTargets = function(rootHint, panelHint) {

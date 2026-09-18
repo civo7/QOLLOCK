@@ -21,7 +21,7 @@
 
     const KEYBOARD_OVERLAY_WASH_COLOR_ATTR = "QOL_KEYBOARD_OVERLAY_WASH_COLOR";
 
-    const isAlive = (p) => Boolean(p && typeof p.IsValid === "function" && p.IsValid());
+    const isAlive = QOL.utils.IsPanelValid;
 
     const createKeyboardOverlayKey = (parent, spec) => {
         if (!parent || !spec) return null;
@@ -158,13 +158,8 @@
             let _washSig = "";
             let _boxCaches = null;
 
-            const getPanel = (k) => {
-                try { if (QOL.getCachedPanel) return QOL.getCachedPanel(k); } catch (_) {}
-                return null;
-            };
-            const setPanel = (k, v) => {
-                try { if (QOL.setCachedPanel) QOL.setCachedPanel(k, v); } catch (_) {}
-            };
+            const getPanel = QOL.getCachedPanel;
+            const setPanel = QOL.setCachedPanel;
             const getGameplayHud = (root) => {
                 try { if (QOL.getGameplayHudPanel) return QOL.getGameplayHudPanel(root); } catch (_) {}
                 return root;
@@ -381,8 +376,7 @@
         },
         test(ctx) {
             try {
-                const root = $.GetContextPanel();
-                const hud = root?.FindChildTraverse ? root.FindChildTraverse("Hud") : null;
+                const hud = QOL.core?.panel?.findHud ? QOL.core.panel.findHud() : null;
                 if (!hud) return null;
                 return {
                     passed: true,

@@ -40,13 +40,8 @@
                 try { if (typeof QOL !== "undefined" && QOL.state) return QOL.state; } catch(e) {}
                 return null;
             }
-            function _getCachedPanel(key) {
-                try { if (typeof QOL !== "undefined" && QOL.getCachedPanel) return QOL.getCachedPanel(key); } catch(e) {}
-                return null;
-            }
-            function _setCachedPanel(key, val) {
-                try { if (typeof QOL !== "undefined" && QOL.setCachedPanel) QOL.setCachedPanel(key, val); } catch(e) {}
-            }
+            var _getCachedPanel = QOL.getCachedPanel;
+            var _setCachedPanel = QOL.setCachedPanel;
             function _getGameSecondsForUrn(root) {
                 try { if (typeof QOL !== "undefined" && QOL.getGameSecondsForUrn) return QOL.getGameSecondsForUrn(root); } catch(e) {}
                 return 0;
@@ -59,14 +54,8 @@
                 try { if (typeof QOL !== "undefined" && QOL.panelIdTopBar) return QOL.panelIdTopBar; } catch(e) {}
                 return "TopBar";
             }
-            function _isPanelValid(p) {
-                try { if (typeof QOL !== "undefined" && QOL.utils && QOL.utils.IsPanelValid) return QOL.utils.IsPanelValid(p); } catch(e) {}
-                return !!(p && typeof p.IsValid === "function" && p.IsValid());
-            }
-            function _isCfgEnabled(cfg, key) {
-                try { if (typeof QOL !== "undefined" && QOL.utils && QOL.utils.IsCfgEnabled) return QOL.utils.IsCfgEnabled(cfg, key); } catch(e) {}
-                return Number(cfg[key]) === 1;
-            }
+            var _isPanelValid = QOL.utils.IsPanelValid;
+            var _isCfgEnabled = QOL.utils.IsCfgEnabled;
 
             // ── Constants (CVar-driven, GAME_VERSION_DEPENDENT) ──
             // Last verified: 2026-07-13 game patch (bzihnali: RIFT_INITIAL_DELAY changed 25s→20s)
@@ -94,12 +83,7 @@
             }
 
             // ── Helpers ──
-            function _formatClockMmSs(totalSec) {
-                var s = Math.max(0, Math.floor(Number(totalSec) || 0));
-                var mm = Math.floor(s / 60);
-                var ss = s % 60;
-                return String(mm) + ":" + (ss < 10 ? "0" + ss : String(ss));
-            }
+            var _formatClockMmSs = QOL.core.time.formatSeconds;
 
             function _findFirstPanelByClass(panel, className) {
                 if (!panel || !panel.FindChildrenWithClassTraverse) return null;

@@ -77,19 +77,15 @@
 
             var SIGNATURE_UI_SCALE_BASE_PCT = 90;
 
-            function _clearStyle(panel, prop) {
-                if (!panel || !panel.style || !prop) return;
-                try { delete panel.style[prop]; } catch (e0) {}
-                try { panel.style[prop] = null; } catch (e1) {}
-                try { panel.style[prop] = ""; } catch (e2) {}
-            }
+            var _clearStyle = QOL.utils.ClearStyleSafe;
 
             function _apply(cfg) {
                 var root = $.GetContextPanel();
                 var active = _hasNonDefault(cfg);
                 var wcIdx = active ? (Math.round(Number(cfg.BOTTOM_BAR_WASH_COLOR)) || 0) : 0;
-                var pal = (typeof QOL !== "undefined" && QOL.washColorPalette) ? QOL.washColorPalette : [];
-                var wc = (wcIdx > 0 && wcIdx < pal.length) ? pal[wcIdx] : "";
+                var wc = (typeof QOL !== "undefined" && QOL.core && QOL.core.panel && QOL.core.panel.resolvePaletteColor)
+                    ? QOL.core.panel.resolvePaletteColor(wcIdx)
+                    : ((typeof QOL !== "undefined" && QOL.washColorPalette && wcIdx > 0 && wcIdx < QOL.washColorPalette.length) ? QOL.washColorPalette[wcIdx] : "");
 
                 // Apply currency color BEFORE the panel guard — old feature
                 // applies it unconditionally (ql_feat_bottombar.js:93 before guard at :94).
@@ -126,8 +122,15 @@
 
                 if (bp.SetHasClass) bp.SetHasClass("qol-hidden", !enabled);
 
-                if (wc) bp.style.washColor = wc;
-                else _clearStyle(bp, "washColor");
+                if (wc) {
+                    if (typeof QOL !== "undefined" && QOL.core && QOL.core.panel && QOL.core.panel.setWashColor) {
+                        QOL.core.panel.setWashColor(bp, wc);
+                    } else {
+                        bp.style.washColor = wc;
+                    }
+                } else {
+                    _clearStyle(bp, "washColor");
+                }
 
                 if (Math.abs(opNum - 1.0) > 0.0001) bp.style.opacity = op;
                 else _clearStyle(bp, "opacity");

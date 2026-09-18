@@ -28,10 +28,7 @@
         clearState: () => globalThis.BUILD_CLEAR_STATE_ATTR || "QOL_BUILD_CLEAR_STATE",
     };
 
-    const isAlive = (panel) => {
-        if (Q.core?.panel?.isAlive) return Q.core.panel.isAlive(panel);
-        return !!(panel && typeof panel.IsValid === "function" && panel.IsValid());
-    };
+    const isAlive = Q.core.panel.isAlive;
 
     const findRootPanel = () => {
         if (typeof Q.core?.panel?.findRoot === "function") {
@@ -47,15 +44,7 @@
         return panel;
     };
 
-    const localize = (text) => {
-        if (typeof globalThis.LocalizeSettingsText === "function") {
-            return globalThis.LocalizeSettingsText(text, true);
-        }
-        if (typeof $.Localize === "function") {
-            return $.Localize(text);
-        }
-        return text;
-    };
+    const localize = Q.ui.renderer.localize;
 
     const setFeedbackMessage = (text, tone, durationMs) => {
         if (typeof Q.ui?.configTab?.setLocalizedConfigFeedbackMessage === "function") {
@@ -67,7 +56,7 @@
             return;
         }
         if (typeof globalThis.SetConfigFeedbackMessage === "function") {
-            globalThis.SetConfigFeedbackMessage(localize(text), tone, durationMs);
+            globalThis.SetConfigFeedbackMessage(localize(text, true), tone, durationMs);
         }
     };
 
@@ -202,12 +191,12 @@
             if (status.state === "pending" && tokenMatches) {
                 saveBtn.RemoveClass("FailureState");
                 saveBtn.AddClass("SuccessState");
-                if (saveLbl) saveLbl.text = localize(resolveBuildSavePendingLabel(status.msg || ""));
+                if (saveLbl) saveLbl.text = localize(resolveBuildSavePendingLabel(status.msg || ""), true);
                 setFeedbackForPending(status.msg || "");
                 if (elapsedMs >= timeoutMs) {
                     saveBtn.RemoveClass("SuccessState");
                     saveBtn.AddClass("FailureState");
-                    if (saveLbl) saveLbl.text = localize("TIMEOUT");
+                    if (saveLbl) saveLbl.text = localize("TIMEOUT", true);
                     setFeedbackMessage("Save timed out. Try again.", "error", 2600);
                     if (typeof $.Schedule === "function") $.Schedule(0.75, restoreDefault);
                     return;
@@ -219,7 +208,7 @@
             if (status.state === "success" && tokenMatches) {
                 saveBtn.RemoveClass("FailureState");
                 saveBtn.AddClass("SuccessState");
-                if (saveLbl) saveLbl.text = localize("SAVED");
+                if (saveLbl) saveLbl.text = localize("SAVED", true);
                 setFeedbackMessage("Save completed.", "success", 2200);
                 if (typeof $.Schedule === "function") $.Schedule(0.75, restoreDefault);
                 return;
@@ -228,7 +217,7 @@
             if (status.state === "failed" && tokenMatches) {
                 saveBtn.RemoveClass("SuccessState");
                 saveBtn.AddClass("FailureState");
-                if (saveLbl) saveLbl.text = localize("FAILED");
+                if (saveLbl) saveLbl.text = localize("FAILED", true);
                 setFeedbackMessage("Save failed.", "error", 2600);
                 if (typeof $.Schedule === "function") $.Schedule(0.75, restoreDefault);
                 return;
@@ -253,9 +242,9 @@
         if (gSaveButtonLastActionMs > nowMs - SAVE_BUTTON_DEBOUNCE_MS) return;
         gSaveButtonLastActionMs = nowMs;
 
-        const cfgSave = localize("SAVE");
-        const cfgQueued = localize("QUEUED");
-        const cfgFailed = localize("FAILED");
+        const cfgSave = localize("SAVE", true);
+        const cfgQueued = localize("QUEUED", true);
+        const cfgFailed = localize("FAILED", true);
 
         if (typeof onBeforeQueue === "function") {
             try { onBeforeQueue(); } catch {}
@@ -420,7 +409,7 @@
                     clearBtn.RemoveClass("SuccessState");
                     clearBtn.AddClass("FailureState");
                     clearBtn.AddClass("UserPromptState");
-                    if (clearLbl) clearLbl.text = localize(resolveBuildClearPendingLabel(pendingMsg));
+                    if (clearLbl) clearLbl.text = localize(resolveBuildClearPendingLabel(pendingMsg), true);
                     setFeedbackForPending(pendingMsg, true);
                     if (!forcedCloseForPrompt) {
                         forcedCloseForPrompt = true;
@@ -433,14 +422,14 @@
                     clearBtn.RemoveClass("UserPromptState");
                     clearBtn.RemoveClass("FailureState");
                     clearBtn.AddClass("SuccessState");
-                    if (clearLbl) clearLbl.text = localize(resolveBuildClearPendingLabel(pendingMsg));
+                    if (clearLbl) clearLbl.text = localize(resolveBuildClearPendingLabel(pendingMsg), true);
                     setFeedbackForPending(pendingMsg, false);
                 }
                 if (elapsedMs >= timeoutMs) {
                     clearBtn.RemoveClass("SuccessState");
                     clearBtn.AddClass("FailureState");
                     clearBtn.RemoveClass("UserPromptState");
-                    if (clearLbl) clearLbl.text = localize("TIMEOUT");
+                    if (clearLbl) clearLbl.text = localize("TIMEOUT", true);
                     setFeedbackMessage("Clear timed out. Try again.", "error", 2600);
                     if (typeof $.Schedule === "function") $.Schedule(0.75, restoreDefault);
                     return;
@@ -453,7 +442,7 @@
                 clearBtn.RemoveClass("FailureState");
                 clearBtn.AddClass("SuccessState");
                 clearBtn.RemoveClass("UserPromptState");
-                if (clearLbl) clearLbl.text = localize("CLEARED");
+                if (clearLbl) clearLbl.text = localize("CLEARED", true);
                 setFeedbackMessage("Clear completed.", "success", 2200);
                 if (typeof $.Schedule === "function") $.Schedule(0.75, restoreDefault);
                 return;
@@ -463,7 +452,7 @@
                 clearBtn.RemoveClass("SuccessState");
                 clearBtn.AddClass("FailureState");
                 clearBtn.RemoveClass("UserPromptState");
-                if (clearLbl) clearLbl.text = localize("FAILED");
+                if (clearLbl) clearLbl.text = localize("FAILED", true);
                 setFeedbackMessage("Clear failed.", "error", 2600);
                 if (typeof $.Schedule === "function") $.Schedule(0.75, restoreDefault);
                 return;

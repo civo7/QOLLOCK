@@ -28,7 +28,7 @@
     const throttleTimers = new Map();
     let debugEnabled = false;
 
-    const nowMs = () => (Date.now ? Date.now() : (new Date()).getTime());
+    const nowMs = QOL_UTILS.PerfNowMs;
 
     const store = (msg) => {
         buffer.push(msg);

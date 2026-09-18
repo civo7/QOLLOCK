@@ -6,6 +6,7 @@
 		<include src="s2r://panorama/styles/qol_profile_extensions.vcss_c" />
 	</styles>
 	<scripts>
+		<include src="s2r://panorama/scripts/ql_utils.vjs_c" />
 		<include src="s2r://panorama/scripts/ql_profile_statlocker.vjs_c" />
 	</scripts>
 	<snippets>

@@ -18,15 +18,16 @@
         return;
     }
 
-    const panelHelpers = Q.core.panel || Q.ui.PanelHelpers || {};
-    const isAlive = panelHelpers.isPanelAlive || panelHelpers.isAlive || ((p) => !!(p && typeof p.IsValid === "function" && p.IsValid()));
+    const panelHelpers = Q.core.panel;
+    const isAlive = panelHelpers.isAlive;
 
     /**
-     * Format seconds as M:SS (e.g. 65 -> "1:05"). Negative input clamps to 0.
+     * Format finite seconds as M:SS. Negative and invalid input clamps to 0.
      */
     const formatSeconds = (seconds) => {
-        const totalSeconds = Math.max(0, seconds | 0);
-        const minutes = (totalSeconds / 60) | 0;
+        const numeric = Number(seconds);
+        const totalSeconds = Number.isFinite(numeric) ? Math.max(0, Math.floor(numeric)) : 0;
+        const minutes = Math.floor(totalSeconds / 60);
         const sec = totalSeconds % 60;
         return `${minutes}:${sec < 10 ? `0${sec}` : sec}`;
     };

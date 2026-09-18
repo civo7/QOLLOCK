@@ -55,24 +55,17 @@
             }
             function _isHeroTesting(root) {
                 if (root && root.BHasClass && root.BHasClass("connectedToHeroTesting")) return true;
-                var hud = root && root.FindChildTraverse ? root.FindChildTraverse("Hud") : null;
+                var hud = (typeof QOL !== "undefined" && QOL.core && QOL.core.panel && QOL.core.panel.findHud)
+                    ? QOL.core.panel.findHud(root)
+                    : (root && root.FindChildTraverse ? root.FindChildTraverse("Hud") : null);
                 return !!(hud && hud.BHasClass && hud.BHasClass("connectedToHeroTesting"));
             }
             function _isCustomHudContextActive(root) {
                 try { if (typeof QOL !== "undefined" && QOL.isCustomHudContextActive) return QOL.isCustomHudContextActive(root); } catch(e) {}
                 return true;
             }
-            function _isPanelValid(p) {
-                try { if (typeof QOL !== "undefined" && QOL.utils && QOL.utils.IsPanelValid) return QOL.utils.IsPanelValid(p); } catch(e) {}
-                return !!(p && typeof p.IsValid === "function" && p.IsValid());
-            }
-            function _clampConfigNumber(val, def, min, max, round) {
-                try { if (typeof QOL !== "undefined" && QOL.utils && QOL.utils.ClampConfigNumber) return QOL.utils.ClampConfigNumber(val, def, min, max, round); } catch(e) {}
-                var v = Number(val); if (!isFinite(v)) v = def;
-                if (round) v = Math.round(v);
-                if (v < min) v = min; if (v > max) v = max;
-                return v;
-            }
+            var _isPanelValid = QOL.utils.IsPanelValid;
+            var _clampConfigNumber = QOL.utils.ClampConfigNumber;
             function _parseUnsecuredSoulsValue(valueText) {
                 if (typeof QOL_UTILS !== "undefined" && QOL_UTILS.ParseNumber) {
                     return Math.max(0, Math.round(QOL_UTILS.ParseNumber(valueText)));

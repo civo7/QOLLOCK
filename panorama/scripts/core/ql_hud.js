@@ -21,7 +21,7 @@
     }
 
     const _panelHelpers = Q.core.panel || Q.ui.PanelHelpers || {};
-    const isAlive = _panelHelpers.isPanelAlive || _panelHelpers.isAlive || ((p) => !!(p && typeof p.IsValid === "function" && p.IsValid()));
+    const isAlive = Q.core.panel.isAlive;
 
     let _cachedHud = null;
 
@@ -342,39 +342,9 @@
         }
     };
 
-    const hasClassInHierarchy = (panel, className) => {
-        if (!panel || !className) return false;
-        if (typeof QOL_UTILS !== "undefined" && typeof QOL_UTILS.HasClassInHierarchy === "function") {
-            return QOL_UTILS.HasClassInHierarchy(panel, className);
-        }
-        let cur = panel;
-        let depth = 0;
-        while (cur && depth < 32) {
-            try {
-                if (cur.BHasClass && cur.BHasClass(className)) return true;
-            } catch (_) {}
-            cur = cur.GetParent ? cur.GetParent() : null;
-            depth++;
-        }
-        return false;
-    };
+    const hasClassInHierarchy = QOL_UTILS.HasClassInHierarchy;
 
-    const findAncestorWithClass = (panel, className) => {
-        if (!panel || !className) return null;
-        if (typeof QOL_UTILS !== "undefined" && typeof QOL_UTILS.FindAncestorWithClass === "function") {
-            return QOL_UTILS.FindAncestorWithClass(panel, className);
-        }
-        let cur = panel;
-        let depth = 0;
-        while (cur && depth < 32) {
-            try {
-                if (cur.BHasClass && cur.BHasClass(className)) return cur;
-            } catch (_) {}
-            cur = cur.GetParent ? cur.GetParent() : null;
-            depth++;
-        }
-        return null;
-    };
+    const findAncestorWithClass = QOL_UTILS.FindAncestorWithClass;
 
     const resolvePassiveCooldownMode = (cfg) => {
         const masterEnabled = Number(cfg?.ENABLE_PASSIVE_COOLDOWN) === 1;

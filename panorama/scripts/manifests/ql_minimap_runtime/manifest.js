@@ -46,9 +46,7 @@
     var MINIMAP_CRATE_OVERLAY_MARKER_OPACITY = 0.75;
     var MINIMAP_CRATE_OVERLAY_MARKER_SIZE_PX = 2;
 
-    function isPanelValid(p) {
-        return !!(p && p.IsValid && p.IsValid());
-    }
+    var isPanelValid = QOL.utils.IsPanelValid;
 
     function isPanelListValid(list) {
         if (!Array.isArray(list) || list.length <= 0) return false;

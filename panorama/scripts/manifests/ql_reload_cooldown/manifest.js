@@ -29,13 +29,9 @@
     var _RE_RADIAL_CLIP_START = /radial\s*\(\s*([+\-]?\d+(?:\.\d+)?)\s*deg/i;
     var _RE_RADIAL_CLIP_END = /,\s*([+\-]?\d+(?:\.\d+)?)\s*deg\s*\)/i;
 
-    function _nowMs() {
-        return Date.now ? Date.now() : (new Date()).getTime();
-    }
+    var _nowMs = QOL.utils.PerfNowMs;
 
-    function _isAlive(p) {
-        return !!(p && typeof p.IsValid === "function" && p.IsValid());
-    }
+    var _isAlive = QOL.utils.IsPanelValid;
 
     function _parseRadialClipStartDeg(clipText) {
         if (!clipText || clipText.length === 0) return null;
@@ -100,12 +96,7 @@
             }
 
             function _getHud() {
-                if (QOL.core && QOL.core.hud && QOL.core.hud.findHud) {
-                    return QOL.core.hud.findHud();
-                }
-                var c = $.GetContextPanel();
-                if (!c) return null;
-                return c.id === "Hud" ? c : (c.FindChildTraverse ? c.FindChildTraverse("Hud") : null);
+                return QOL.core?.panel?.findHud ? QOL.core.panel.findHud() : (QOL.core?.hud?.findHud ? QOL.core.hud.findHud() : null);
             }
 
             function _hideLabel() {

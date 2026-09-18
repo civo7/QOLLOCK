@@ -80,27 +80,12 @@
                 try { if (typeof QOL !== "undefined" && QOL.state) return QOL.state; } catch(e) {}
                 return null;
             }
-            function _getCachedPanel(key) {
-                try { if (typeof QOL !== "undefined" && QOL.getCachedPanel) return QOL.getCachedPanel(key); } catch(e) {}
-                return null;
-            }
-            function _setCachedPanel(key, val) {
-                try { if (typeof QOL !== "undefined" && QOL.setCachedPanel) QOL.setCachedPanel(key, val); } catch(e) {}
-            }
-            function _isCfgEnabled(cfg, key) {
-                try { if (typeof QOL !== "undefined" && QOL.utils && QOL.utils.IsCfgEnabled) return QOL.utils.IsCfgEnabled(cfg, key); } catch(e) {}
-                return Number(cfg[key]) === 1;
-            }
-            function _isPanelValid(p) {
-                try { if (typeof QOL !== "undefined" && QOL.utils && QOL.utils.IsPanelValid) return QOL.utils.IsPanelValid(p); } catch(e) {}
-                return !!(p && typeof p.IsValid === "function" && p.IsValid());
-            }
-            function _setStyleSafe(panel, prop, value) {
-                try { if (typeof QOL !== "undefined" && QOL.utils && QOL.utils.SetStyleSafe) QOL.utils.SetStyleSafe(panel, prop, value); } catch(e) {}
-            }
-            function _clearStyleSafe(panel, prop) {
-                try { if (typeof QOL !== "undefined" && QOL.utils && QOL.utils.ClearStyleSafe) QOL.utils.ClearStyleSafe(panel, prop); } catch(e) {}
-            }
+            var _getCachedPanel = QOL.getCachedPanel;
+            var _setCachedPanel = QOL.setCachedPanel;
+            var _isCfgEnabled = QOL.utils.IsCfgEnabled;
+            var _isPanelValid = QOL.utils.IsPanelValid;
+            var _setStyleSafe = QOL.utils.SetStyleSafe;
+            var _clearStyleSafe = QOL.utils.ClearStyleSafe;
             function _setWashColorSafe(panel, color) {
                 try { if (typeof QOL !== "undefined" && QOL.utils && QOL.utils.SetWashColorSafe) QOL.utils.SetWashColorSafe(panel, color); } catch(e) {}
             }

@@ -28,11 +28,11 @@
         create: function(ctx) {
             var Panel = (QOL.core && QOL.core.panel) ? QOL.core.panel : {};
             var State = QOL.state || (typeof globalThis !== "undefined" && globalThis.State) || {};
-            var Utils = (typeof QOL_UTILS !== "undefined" ? QOL_UTILS : (QOL.utils || {}));
-            var IsCfgEnabled = Utils.IsCfgEnabled || function(v) { return !!v && v !== "false" && v !== "0"; };
-            var IsPanelValid = Panel.isAlive || (Utils.IsPanelValid || function(p) { return p != null && typeof p.IsValid === "function" && p.IsValid(); });
-            var GetCachedPanel = QOL.getCachedPanel || function(k) { return State.cachedPanels ? State.cachedPanels[k] : null; };
-            var SetCachedPanel = QOL.setCachedPanel || function(k, p) { if (State.cachedPanels) State.cachedPanels[k] = p; };
+            var Utils = QOL.utils;
+            var IsCfgEnabled = QOL.utils.IsCfgEnabled;
+            var IsPanelValid = QOL.utils.IsPanelValid;
+            var GetCachedPanel = QOL.getCachedPanel;
+            var SetCachedPanel = QOL.setCachedPanel;
             var ActivatePanelSafe = Panel.activate || QOL.activatePanelSafe;
             var IsPanelVisibleMaybe = Panel.isVisible || QOL.isPanelVisibleMaybe;
             var ReadPanelIdTextMaybe = Panel.readId || QOL.readPanelIdTextMaybe;

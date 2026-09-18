@@ -24,20 +24,9 @@
     let _dragHandlersBoundLeft = false;
     let _dragHandlersBoundRight = false;
 
-    const isAlive = (panel) => {
-        if (Q.core?.panel?.isAlive) return Q.core.panel.isAlive(panel);
-        return !!(panel && typeof panel.IsValid === "function" && panel.IsValid());
-    };
+    const isAlive = Q.core.panel.isAlive;
 
-    const localize = (text) => {
-        if (typeof globalThis.LocalizeSettingsText === "function") {
-            return globalThis.LocalizeSettingsText(text, true);
-        }
-        if (typeof $.Localize === "function") {
-            return $.Localize(text);
-        }
-        return text;
-    };
+    const localize = Q.ui.renderer.localize;
 
     const ensureDragToggleButtonContent = (btn) => {
         if (!isAlive(btn)) return;
@@ -65,7 +54,7 @@
 
             const label = $.CreatePanel("Label", btn, "DragToggleLabel");
             if (label) {
-                label.text = localize("Drag");
+                label.text = localize("Drag", true);
                 label.hittest = false;
             }
             return;
@@ -83,7 +72,7 @@
         }
         const labelExisting = btn.FindChildTraverse("DragToggleLabel");
         if (labelExisting) {
-            labelExisting.text = localize("Drag");
+            labelExisting.text = localize("Drag", true);
             labelExisting.hittest = false;
         }
     };
@@ -308,7 +297,7 @@
 
         btn.SetPanelEvent("onmouseover", () => {
             if (typeof $.DispatchEvent === "function") {
-                $.DispatchEvent("UIShowTextTooltip", btn, localize("Allows you to drag move some menus."));
+                $.DispatchEvent("UIShowTextTooltip", btn, localize("Allows you to drag move some menus.", true));
             }
         });
 

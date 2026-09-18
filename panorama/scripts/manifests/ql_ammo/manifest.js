@@ -39,7 +39,14 @@
             var _lastClipSig = "";
             var _lastColorSig = "";
 
-            function _clamp(v, lo, hi) { var n = Math.round(Number(v)); if (!isFinite(n)) return 0; return n < lo ? lo : n > hi ? hi : n; }
+            function _clamp(v, lo, hi) {
+                if (typeof QOL_UTILS !== "undefined" && QOL_UTILS.ClampConfigNumber) {
+                    return QOL_UTILS.ClampConfigNumber(v, lo, hi, 0);
+                }
+                var n = Math.round(Number(v));
+                if (!isFinite(n)) return 0;
+                return n < lo ? lo : n > hi ? hi : n;
+            }
 
             function _applyClipAngle(root, angle) {
                 var cs = root.FindChildTraverse("clip_status");
@@ -62,11 +69,17 @@
 
             function _applyTextColor(label, textColor) {
                 if (textColor) {
-                    try { label.style.color = textColor; } catch(e) {}
+                    if (typeof QOL_UTILS !== "undefined" && QOL_UTILS.SetStyleSafe) {
+                        QOL_UTILS.SetStyleSafe(label, "color", textColor);
+                    } else {
+                        try { label.style.color = textColor; } catch(e) {}
+                    }
                 } else {
-                    // ClearStyleSafe cascade: delete → null → "" (Panorama needs this;
-                    // setting "" alone does not reliably clear an inline color).
-                    try { label.style.color = null; } catch(e) {}
+                    if (typeof QOL_UTILS !== "undefined" && QOL_UTILS.ClearStyleSafe) {
+                        QOL_UTILS.ClearStyleSafe(label, "color");
+                    } else {
+                        try { label.style.color = null; } catch(e) {}
+                    }
                 }
             }
 
@@ -114,8 +127,9 @@
                 var ox = _clamp(cfg.AMMO_PANEL_X_OFFSET, -200, 200);
                 var oy = _clamp(cfg.AMMO_PANEL_Y_OFFSET, -200, 200);
                 var colorIdx = Number(cfg.AMMO_TEXT_COLOR) || 0;
-                var pal = (typeof QOL !== "undefined" && QOL.washColorPalette) ? QOL.washColorPalette : [];
-                var textColor = (colorIdx > 0 && colorIdx < pal.length) ? pal[colorIdx] : "";
+                var textColor = (typeof QOL !== "undefined" && QOL.core && QOL.core.panel && QOL.core.panel.resolvePaletteColor)
+                    ? QOL.core.panel.resolvePaletteColor(colorIdx)
+                    : ((typeof QOL !== "undefined" && QOL.washColorPalette && colorIdx > 0 && colorIdx < QOL.washColorPalette.length) ? QOL.washColorPalette[colorIdx] : "");
 
                 var sig = curScale + "|" + totScale + "|" + ox + "|" + oy + "|" + hideMagazine + "|" + hideAll + "|" + colorIdx;
                 if (_lastMainSig === sig) return;

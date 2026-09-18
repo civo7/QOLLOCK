@@ -70,12 +70,12 @@
         create: function(ctx) {
             var Panel = (QOL.core && QOL.core.panel) ? QOL.core.panel : {};
             var State = QOL.state || (typeof globalThis !== "undefined" && globalThis.State) || {};
-            var Utils = (typeof QOL_UTILS !== "undefined" ? QOL_UTILS : (QOL.utils || {}));
-            var IsCfgEnabled = Utils.IsCfgEnabled || function(v) { return !!v && v !== "false" && v !== "0"; };
-            var SetStyleSafe = Utils.SetStyleSafe || function(p, prop, val) { if (p && p.style) p.style[prop] = val; };
-            var SetPanelOpacitySafe = Utils.SetPanelOpacitySafe || function(p, o) { if (p && p.style) p.style.opacity = String(o); };
-            var GetCachedPanel = QOL.getCachedPanel || function(k) { return State.cachedPanels ? State.cachedPanels[k] : null; };
-            var SetCachedPanel = QOL.setCachedPanel || function(k, p) { if (State.cachedPanels) State.cachedPanels[k] = p; };
+            var Utils = QOL.utils;
+            var IsCfgEnabled = QOL.utils.IsCfgEnabled;
+            var SetStyleSafe = QOL.utils.SetStyleSafe;
+            var SetPanelOpacitySafe = QOL.utils.SetPanelOpacitySafe;
+            var GetCachedPanel = QOL.getCachedPanel;
+            var SetCachedPanel = QOL.setCachedPanel;
             var ResolvePassiveCooldownMode = function(cfg) {
                 if (typeof QOL.resolvePassiveCooldownMode === "function") return QOL.resolvePassiveCooldownMode(cfg);
                 var masterEnabled = IsCfgEnabled(cfg, "ENABLE_PASSIVE_COOLDOWN");
