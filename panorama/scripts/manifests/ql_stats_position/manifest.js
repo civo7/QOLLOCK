@@ -123,11 +123,16 @@
 
             var _currentRate = 0;
 
-            function _determineOptimalRate(cfg) {
-                if (Number(cfg.STATS_POSITION_HIDE_SCOREBOARD) === 1) {
-                    return 0.2; // 5Hz when scoreboard hide is active
+            function _onScoreboardToggle() {
+                if (typeof $ !== "undefined" && typeof $.Schedule === "function") {
+                    $.Schedule(0, _tick);
+                } else {
+                    _tick();
                 }
-                return 1.0; // 1Hz idle when static positioning is applied
+            }
+
+            function _determineOptimalRate() {
+                return 1.0; // 1Hz idle baseline; reactive via engine:scoreboard_toggle
             }
 
             function _syncLoop(cfg) {
@@ -145,10 +150,16 @@
 
             return {
                 onEnable: function() {
+                    if (ctx && ctx.events && typeof ctx.events.on === "function") {
+                        ctx.events.on("engine:scoreboard_toggle", _onScoreboardToggle);
+                    }
                     _syncLoop(ctx.config.view());
                     _tick();
                 },
                 onDisable: function() {
+                    if (ctx && ctx.events && typeof ctx.events.off === "function") {
+                        ctx.events.off("engine:scoreboard_toggle", _onScoreboardToggle);
+                    }
                     if (_loop) {
                         _loop.stop();
                         _loop = null;

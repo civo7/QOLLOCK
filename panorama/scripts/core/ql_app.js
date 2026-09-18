@@ -542,6 +542,46 @@
         } catch (e) {
             if (Logger) Logger.logDebug("App", `CitadelUserMsg_ForceShopClosed event not available: ${e?.message || e}`);
         }
+
+        try {
+            $.RegisterForUnhandledEvent("CitadelOpenUpgradeShop", () => {
+                if (QOL?.core?.EventBus) {
+                    try { QOL.core.EventBus.emit("engine:shop_opened"); } catch (_) {}
+                }
+            });
+        } catch (e) {
+            if (Logger) Logger.logDebug("App", `CitadelOpenUpgradeShop event not available: ${e?.message || e}`);
+        }
+
+        try {
+            $.RegisterForUnhandledEvent("CitadelExitUpgradeShop", () => {
+                if (QOL?.core?.EventBus) {
+                    try { QOL.core.EventBus.emit("engine:shop_closed"); } catch (_) {}
+                }
+            });
+        } catch (e) {
+            if (Logger) Logger.logDebug("App", `CitadelExitUpgradeShop event not available: ${e?.message || e}`);
+        }
+
+        try {
+            $.RegisterForUnhandledEvent("CitadelScoreboardToggle", () => {
+                if (QOL?.core?.EventBus) {
+                    try { QOL.core.EventBus.emit("engine:scoreboard_toggle"); } catch (_) {}
+                }
+            });
+        } catch (e) {
+            if (Logger) Logger.logDebug("App", `CitadelScoreboardToggle event not available: ${e?.message || e}`);
+        }
+
+        try {
+            $.RegisterForUnhandledEvent("CitadelToggleEscapeMenu", () => {
+                if (QOL?.core?.EventBus) {
+                    try { QOL.core.EventBus.emit("engine:escape_menu_toggled"); } catch (_) {}
+                }
+            });
+        } catch (e) {
+            if (Logger) Logger.logDebug("App", `CitadelToggleEscapeMenu event not available: ${e?.message || e}`);
+        }
     };
 
     // -- Public API --
