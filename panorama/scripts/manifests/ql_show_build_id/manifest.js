@@ -29,6 +29,14 @@
         create: (ctx) => {
             let _loop = null;
             let _lastSig = "";
+            let _isCollapsed = false;
+            let _lowerLeft = null;
+            let _buildPanel = null;
+            let _buildLabel = null;
+            let _sourcePanel = null;
+            let _nextSourceSearchMs = 0;
+
+            const _isAlive = QOL.utils.IsPanelValid;
 
             const _parseSelectedBuildInfoText = (rawText) => {
                 const raw = String(rawText || "").trim();
@@ -47,39 +55,52 @@
 
             const _ensurePanel = (root) => {
                 if (!root || !$.CreatePanel) return null;
-                const lowerLeft = root.FindChildTraverse ? root.FindChildTraverse("LowerLeft") : null;
-                if (!lowerLeft) return null;
+                if (!_isAlive(_lowerLeft)) {
+                    _lowerLeft = root.FindChildTraverse ? root.FindChildTraverse("LowerLeft") : null;
+                }
+                if (!_isAlive(_lowerLeft)) return null;
 
-                let panel = lowerLeft.FindChildTraverse ? lowerLeft.FindChildTraverse("selected_build_info") : null;
-                if (!panel) {
-                    try {
-                        panel = $.CreatePanel("Panel", lowerLeft, "selected_build_info", { hittest: "false", hittestchildren: "false" });
-                    } catch (_) {
-                        panel = null;
+                if (!_isAlive(_buildPanel)) {
+                    _buildPanel = _lowerLeft.FindChildTraverse ? _lowerLeft.FindChildTraverse("selected_build_info") : null;
+                    if (!_buildPanel) {
+                        try {
+                            _buildPanel = $.CreatePanel("Panel", _lowerLeft, "selected_build_info", { hittest: "false", hittestchildren: "false" });
+                        } catch (_) {
+                            _buildPanel = null;
+                        }
                     }
                 }
-                if (!panel) return null;
+                if (!_isAlive(_buildPanel)) return null;
 
-                let label = panel.FindChildTraverse ? panel.FindChildTraverse("build_info") : null;
-                if (!label) {
-                    try {
-                        label = $.CreatePanel("Label", panel, "build_info", { hittest: "false" });
-                    } catch (_) {
-                        label = null;
+                if (!_isAlive(_buildLabel)) {
+                    _buildLabel = _buildPanel.FindChildTraverse ? _buildPanel.FindChildTraverse("build_info") : null;
+                    if (!_buildLabel) {
+                        try {
+                            _buildLabel = $.CreatePanel("Label", _buildPanel, "build_info", { hittest: "false" });
+                        } catch (_) {
+                            _buildLabel = null;
+                        }
                     }
                 }
-                return label ? { panel, label } : null;
+                return _buildLabel ? { panel: _buildPanel, label: _buildLabel } : null;
             };
 
             const _collapse = () => {
+                if (_isCollapsed) return;
                 const root = $.GetContextPanel();
                 if (!root) return;
-                const lowerLeft = root.FindChildTraverse ? root.FindChildTraverse("LowerLeft") : null;
-                if (!lowerLeft) return;
-                const panel = lowerLeft.FindChildTraverse ? lowerLeft.FindChildTraverse("selected_build_info") : null;
-                if (panel && panel.style) {
-                    panel.style.visibility = "collapse";
+                if (!_isAlive(_lowerLeft)) {
+                    _lowerLeft = root.FindChildTraverse ? root.FindChildTraverse("LowerLeft") : null;
                 }
+                if (_isAlive(_lowerLeft)) {
+                    if (!_isAlive(_buildPanel)) {
+                        _buildPanel = _lowerLeft.FindChildTraverse ? _lowerLeft.FindChildTraverse("selected_build_info") : null;
+                    }
+                    if (_buildPanel && _buildPanel.style && _buildPanel.style.visibility !== "collapse") {
+                        _buildPanel.style.visibility = "collapse";
+                    }
+                }
+                _isCollapsed = true;
                 _lastSig = "";
             };
 
@@ -93,13 +114,27 @@
                     return;
                 }
 
-                const source = root.FindChildTraverse ? root.FindChildTraverse("SelectedBuildInfoTitle") : null;
-                const rawText = (source && typeof source.text === "string") ? source.text : "";
+                if (!_isAlive(_sourcePanel)) {
+                    const now = Date.now ? Date.now() : (new Date()).getTime();
+                    if (now < _nextSourceSearchMs) {
+                        _collapse();
+                        return;
+                    }
+                    _sourcePanel = root.FindChildTraverse ? root.FindChildTraverse("SelectedBuildInfoTitle") : null;
+                    if (!_isAlive(_sourcePanel)) {
+                        _nextSourceSearchMs = now + 3000;
+                        _collapse();
+                        return;
+                    }
+                }
+
+                const rawText = (_sourcePanel && typeof _sourcePanel.text === "string") ? _sourcePanel.text : "";
                 const parsed = _parseSelectedBuildInfoText(rawText);
                 if (!parsed) {
                     _collapse();
                     return;
                 }
+                _isCollapsed = false;
 
                 const target = _ensurePanel(root);
                 if (!target) return;
@@ -108,7 +143,7 @@
                 const displayText = `${parsed.visibility} Build: ${parsed.id}${showTitle ? " - " + parsed.name : ""}`;
                 const sig = `${displayText}|${showTitle ? "1" : "0"}`;
 
-                if (target.panel && target.panel.style) {
+                if (target.panel && target.panel.style && target.panel.style.visibility !== "visible") {
                     target.panel.style.visibility = "visible";
                 }
 

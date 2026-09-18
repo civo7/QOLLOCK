@@ -321,7 +321,7 @@
                 ? Number(cfg.PERF_OVERLAY_OPACITY)
                 : 0.75;
             var opacityStr = (opacity < 0.3 ? 0.3 : opacity > 1.0 ? 1.0 : opacity).toFixed(2);
-            overlay.style.opacity = opacityStr;
+            if (overlay.style.opacity !== opacityStr) overlay.style.opacity = opacityStr;
 
             // Read alert threshold
             var threshold = (cfg && cfg.PERF_ALERT_THRESHOLD_MS != null)

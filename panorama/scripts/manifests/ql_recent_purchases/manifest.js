@@ -83,7 +83,10 @@
 
     function setPanelOpacitySafe(panel, opacityText, fallback) {
         if (!isPanelValid(panel)) return;
-        try { panel.style.opacity = String(opacityText || fallback); } catch(e) {}
+        try {
+            var target = String(opacityText || fallback);
+            if (panel.style.opacity !== target) panel.style.opacity = target;
+        } catch(e) {}
     }
 
     function setStyleIfChanged(panel, prop, val) {
@@ -930,11 +933,11 @@
                     var panelOffsetY = normalizeHudOffsetNumber(cfg.RECENT_PURCHASES_PANEL_Y_OFFSET, 0);
                     var panelOpacityText = normalizeOpacityNumber(cfg.RECENT_PURCHASES_PANEL_OPACITY, 1.0).toFixed(2);
                     var panelScaleText = normalizeHudScaleNumber(cfg.RECENT_PURCHASES_PANEL_SCALE, 1.0).toFixed(2);
-                    _rpPanel.style.x = String(panelOffsetX) + "px";
-                    _rpPanel.style.y = String(-panelOffsetY) + "px";
+                    setStyleIfChanged(_rpPanel, "x", String(panelOffsetX) + "px");
+                    setStyleIfChanged(_rpPanel, "y", String(-panelOffsetY) + "px");
                     setPanelOpacitySafe(_rpPanel, panelOpacityText, 1.0);
-                    _rpPanel.style.preTransformScale2d = "1.00, 1.00";
-                    _rpPanel.style.uiScale = Math.round(Number(panelScaleText) * 100) + "%";
+                    setStyleIfChanged(_rpPanel, "preTransformScale2d", "1.00, 1.00");
+                    setStyleIfChanged(_rpPanel, "uiScale", Math.round(Number(panelScaleText) * 100) + "%");
                 }
 
                 var quickMax = Math.round(Number(cfg.RECENT_PURCHASES_QUICK_MAX) || RECENT_PURCHASE_QUICK_MAX_DEFAULT);
@@ -983,12 +986,12 @@
                         var quickPanel = _quickPurchasesPanel;
                         if (isPanelValid(quickPanel)) {
                             quickPanel.SetHasClass("rp_quick_scoreboard_active", scoreboardEnabled);
-                            quickPanel.style.marginTop = String(_computeQuickPurchasesMarginTopRP(root, cfg, rejuvEnabled, scoreboardEnabled)) + "px";
-                            quickPanel.style.x = String(quickOffsetX) + "px";
-                            quickPanel.style.y = String(-quickOffsetY) + "px";
+                            setStyleIfChanged(quickPanel, "marginTop", String(_computeQuickPurchasesMarginTopRP(root, cfg, rejuvEnabled, scoreboardEnabled)) + "px");
+                            setStyleIfChanged(quickPanel, "x", String(quickOffsetX) + "px");
+                            setStyleIfChanged(quickPanel, "y", String(-quickOffsetY) + "px");
                             setPanelOpacitySafe(quickPanel, quickOpacityText, 1.0);
-                            quickPanel.style.preTransformScale2d = "1.00, 1.00";
-                            quickPanel.style.uiScale = Math.round(Number(quickScaleText) * 100) + "%";
+                            setStyleIfChanged(quickPanel, "preTransformScale2d", "1.00, 1.00");
+                            setStyleIfChanged(quickPanel, "uiScale", Math.round(Number(quickScaleText) * 100) + "%");
                         }
                     }
                 }

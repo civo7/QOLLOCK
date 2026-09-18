@@ -101,7 +101,7 @@
 
             function _hideLabel() {
                 if (_isAlive(_cooldownLabel)) {
-                    _cooldownLabel.style.visibility = "collapse";
+                    if (_cooldownLabel.style.visibility !== "collapse") _cooldownLabel.style.visibility = "collapse";
                     if (_cooldownLabel.text !== "") _cooldownLabel.text = "";
                 }
                 _resetEstimate();
@@ -272,9 +272,9 @@
 
                 if (cooldownText && cooldownText.length > 0) {
                     if (_cooldownLabel.text !== cooldownText) _cooldownLabel.text = cooldownText;
-                    _cooldownLabel.style.visibility = "visible";
+                    if (_cooldownLabel.style.visibility !== "visible") _cooldownLabel.style.visibility = "visible";
                 } else {
-                    _cooldownLabel.style.visibility = "collapse";
+                    if (_cooldownLabel.style.visibility !== "collapse") _cooldownLabel.style.visibility = "collapse";
                     if (_cooldownLabel.text !== "") _cooldownLabel.text = "";
                 }
             }

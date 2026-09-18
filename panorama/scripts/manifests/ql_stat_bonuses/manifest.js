@@ -311,13 +311,16 @@
             var _lastShopOpen = null;
             var _nextTooltipScanMs = 0;
 
+            var _cachedStatsContainer = null;
+            var _nextStatsContainerSearchMs = 0;
+
             function _ensureOverlay(root) {
                 if (isAlive(_overlay)) return _overlay;
 
                 var gameplayHud = root.FindChildTraverse ? root.FindChildTraverse("gameplay_hud") : null;
                 if (!gameplayHud) return null;
 
-                _overlay = root.FindChildTraverse("QOLStatBonusesOverlay");
+                _overlay = gameplayHud.FindChildTraverse ? gameplayHud.FindChildTraverse("QOLStatBonusesOverlay") : null;
                 if (!_overlay) {
                     _overlay = $.CreatePanel("Panel", gameplayHud, "QOLStatBonusesOverlay", {
                         hittest: "false",
@@ -334,10 +337,10 @@
                         _statLabels[def.key] = lbl;
                     }
                 } else {
-                    _titleLabel = _overlay.FindChildTraverse("QOLStatBonusesTitle");
+                    _titleLabel = _overlay.FindChildTraverse ? _overlay.FindChildTraverse("QOLStatBonusesTitle") : null;
                     for (var j = 0; j < STAT_DEFS.length; j++) {
                         var d = STAT_DEFS[j];
-                        _statLabels[d.key] = _overlay.FindChildTraverse(d.labelId);
+                        _statLabels[d.key] = _overlay.FindChildTraverse ? _overlay.FindChildTraverse(d.labelId) : null;
                     }
                 }
                 return _overlay;
@@ -351,19 +354,29 @@
                 var nextSearch = _nextSourceSearchByKey[def.key] || 0;
                 if (nowMs < nextSearch) return null;
 
-                var found = null;
-                var statsContainer = root.FindChildTraverse ? (root.FindChildTraverse("HeroStatsDisplay") || root.FindChildTraverse("HeroStatsWeapon") || root.FindChildTraverse("CitadelHudHeroShop")) : null;
-                var searchTarget = statsContainer || root;
+                if (!isAlive(_cachedStatsContainer) && nowMs >= _nextStatsContainerSearchMs) {
+                    _cachedStatsContainer = root.FindChildTraverse ? (root.FindChildTraverse("HeroStatsDisplay") || root.FindChildTraverse("HeroStatsWeapon") || root.FindChildTraverse("CitadelHudHeroShop")) : null;
+                    if (!isAlive(_cachedStatsContainer)) {
+                        _nextStatsContainerSearchMs = nowMs + 3000;
+                    }
+                }
 
+                var statsContainer = isAlive(_cachedStatsContainer) ? _cachedStatsContainer : null;
+                if (!statsContainer) {
+                    _globalSourceSearchNextMs = nowMs + 1500;
+                    return null;
+                }
+
+                var found = null;
                 for (var i = 0; i < def.candidateIds.length; i++) {
                     var cid = def.candidateIds[i];
-                    if (searchTarget.FindChildTraverse) {
-                        found = searchTarget.FindChildTraverse(cid);
+                    if (statsContainer.FindChildTraverse) {
+                        found = statsContainer.FindChildTraverse(cid);
                         if (found) break;
                     }
                 }
-                if (!found && !statsContainer && searchTarget.FindChildrenWithClassTraverse) {
-                    var containers = searchTarget.FindChildrenWithClassTraverse("statAttributeContainer") || [];
+                if (!found && statsContainer.FindChildrenWithClassTraverse) {
+                    var containers = statsContainer.FindChildrenWithClassTraverse("statAttributeContainer") || [];
                     for (var c = 0; c < containers.length; c++) {
                         var panel = containers[c];
                         if (panel && def.candidateIds.indexOf(panel.id) !== -1) {
@@ -382,9 +395,6 @@
                         ? Math.min(_sourceSearchBackoffMs * 2, STAT_BONUSES_SOURCE_SEARCH_MAX_MS)
                         : STAT_BONUSES_SOURCE_SEARCH_MS;
                     _nextSourceSearchByKey[def.key] = nowMs + _sourceSearchBackoffMs;
-                    if (!statsContainer) {
-                        _globalSourceSearchNextMs = nowMs + 1500;
-                    }
                 }
                 return found;
             }
@@ -417,7 +427,7 @@
 
                 var breakdown = resolveStatBonusesTooltipBreakdownPanel(root);
                 if (!breakdown) {
-                    _nextTooltipScanMs = nowMs + 1000;
+                    _nextTooltipScanMs = nowMs + 2500;
                     return;
                 }
                 _nextTooltipScanMs = nowMs + STAT_BONUSES_TOOLTIP_SCAN_MS;

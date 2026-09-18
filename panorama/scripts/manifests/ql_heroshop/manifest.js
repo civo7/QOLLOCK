@@ -47,6 +47,7 @@
             var _classCache = {};
             var _styleSig = "";
             var _nextSearchMs = 0;
+            var _nextMainPanelSearchMs = 0;
 
             var _isAlive = QOL.utils.IsPanelValid;
 
@@ -109,6 +110,7 @@
                         _shopPanel = root.FindChildTraverse ? root.FindChildTraverse(PANEL_ID) : null;
                         _mainPanel = _isAlive(_shopPanel) && _shopPanel.FindChildTraverse ? _shopPanel.FindChildTraverse("MainPanel") : null;
                         _nextSearchMs = _isAlive(_shopPanel) ? 0 : (now + PANEL_SEARCH_MS);
+                        _nextMainPanelSearchMs = _isAlive(_mainPanel) ? 0 : (now + PANEL_SEARCH_MS);
                         _classCache = {};
                         _styleSig = "";
                     }
@@ -122,8 +124,9 @@
                         _setClass(_shopPanel, "shop_recent_purchases_active", recentPurchases);
 
                         // Refresh main panel cache if needed
-                        if (!_isAlive(_mainPanel) && _shopPanel.FindChildTraverse) {
+                        if (!_isAlive(_mainPanel) && _shopPanel.FindChildTraverse && now >= _nextMainPanelSearchMs) {
                             _mainPanel = _shopPanel.FindChildTraverse("MainPanel");
+                            if (!_isAlive(_mainPanel)) _nextMainPanelSearchMs = now + PANEL_SEARCH_MS;
                         }
                         if (_isAlive(_mainPanel)) {
                             var marginLeftText = shopOffsetX + "px";

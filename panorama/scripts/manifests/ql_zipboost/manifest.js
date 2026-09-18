@@ -15,7 +15,7 @@
     if (!FR) { $.Msg("[QOLLock] zipboost: FeatureRegistry not found — aborting"); return; }
 
     var ZIP_BOOST_READY_FLASH_MS = 2000;
-    var ZIP_BOOST_SOURCE_SEARCH_MS = 1730;
+    var ZIP_BOOST_SOURCE_SEARCH_MS = 3000;
 
     FR.register({
         id: "ql_zipboost",
@@ -33,6 +33,7 @@
             var _lastLayoutSig = "", _lastClassSig = "", _lastTitle = "", _lastStatus = "";
             var _nextSourceSearchMs = 0, _activeEndMs = 0, _wasInUse = false;
             var _lastState = null, _readyFlashUntilMs = 0;
+            var _cachedAbilitiesScope = null;
 
             var _isAlive = QOL.utils.IsPanelValid;
 
@@ -53,11 +54,15 @@
             }
 
             function _findZipBoostSource(root) {
-                if (!root || !root.FindChildTraverse) return null;
-                var byId = root.FindChildTraverse("citadel_ability_zipline_boost_");
+                if (!root) return null;
+                if (!_isAlive(_cachedAbilitiesScope)) {
+                    _cachedAbilitiesScope = root.FindChildTraverse ? (root.FindChildTraverse("abilities_container") || root.FindChildTraverse("abilitiesContainer") || root.FindChildTraverse("gameplay_hud")) : null;
+                }
+                var scope = _isAlive(_cachedAbilitiesScope) ? _cachedAbilitiesScope : root;
+                var byId = scope.FindChildTraverse ? scope.FindChildTraverse("citadel_ability_zipline_boost_") : null;
                 if (byId) return byId;
 
-                var candidates = root.FindChildrenWithClassTraverse ? root.FindChildrenWithClassTraverse("buttonContainer") : [];
+                var candidates = scope.FindChildrenWithClassTraverse ? scope.FindChildrenWithClassTraverse("buttonContainer") : [];
                 if (candidates) {
                     for (var i = 0; i < candidates.length; i++) {
                         var c = candidates[i];
@@ -93,10 +98,10 @@
 
             function _ensureOverlay(root) {
                 if (_isAlive(_overlay)) return _overlay;
-                _overlay = root.FindChildTraverse("QOLZipBoostOverlay");
+                var gp = root.FindChildTraverse ? root.FindChildTraverse("gameplay_hud") : null;
+                if (!_isAlive(gp)) return null;
+                _overlay = gp.FindChildTraverse ? gp.FindChildTraverse("QOLZipBoostOverlay") : null;
                 if (!_overlay) {
-                    var gp = root.FindChildTraverse("gameplay_hud");
-                    if (!_isAlive(gp)) return null;
                     _overlay = $.CreatePanel("Panel", gp, "QOLZipBoostOverlay",
                         { hittest: "false", hittestchildren: "false" });
                     $.CreatePanel("Panel", _overlay, "QOLZipBoostIcon");

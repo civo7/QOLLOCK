@@ -86,7 +86,15 @@
     /**
      * Whether the match is in street brawl mode.
      */
+    let _lastStreetBrawlCheckMs = 0;
+    let _lastStreetBrawlResult = false;
+
     const isStreetBrawl = (root) => {
+        const now = Date.now ? Date.now() : (new Date()).getTime();
+        if (!root && (now - _lastStreetBrawlCheckMs < 2000)) {
+            return _lastStreetBrawlResult;
+        }
+
         const BRAWL_CLASSES = [
             "gamemode_streetbrawl",
             "StreetBrawlInterstitial",
@@ -101,29 +109,50 @@
             return false;
         };
 
+        let result = false;
         try {
             const hud = findHud();
             if (isAlive(hud)) {
-                if (hasBrawlClass(hud)) return true;
-                const sb = hud.FindChildTraverse("StretBrawlContainer");
-                if (isAlive(sb) && (sb.visible || sb.BHasClass("visible") || sb.style?.visibility === "visible")) {
-                    return true;
+                if (hasBrawlClass(hud)) {
+                    result = true;
+                } else {
+                    const sb = resolveCachedPanel(hud, "streetBrawlContainer", "StretBrawlContainer");
+                    if (isAlive(sb) && (sb.visible || sb.BHasClass("visible") || sb.style?.visibility === "visible")) {
+                        result = true;
+                    } else {
+                        const gpHud = resolveCachedPanel(hud, "gameplayHud", "gameplay_hud");
+                        if (hasBrawlClass(gpHud)) {
+                            result = true;
+                        } else {
+                            const topBar = resolveCachedPanel(hud, "topBar", "TopBar");
+                            if (hasBrawlClass(topBar)) {
+                                result = true;
+                            }
+                        }
+                    }
                 }
-                const gpHud = hud.FindChildTraverse("gameplay_hud");
-                if (hasBrawlClass(gpHud)) return true;
-                const topBar = hud.FindChildTraverse("TopBar");
-                if (hasBrawlClass(topBar)) return true;
             }
-            if (isAlive(root)) {
-                if (hasBrawlClass(root)) return true;
-                let curr = root;
-                while (isAlive(curr)) {
-                    if (hasBrawlClass(curr)) return true;
-                    curr = curr.GetParent ? curr.GetParent() : null;
+            if (!result && isAlive(root)) {
+                if (hasBrawlClass(root)) {
+                    result = true;
+                } else {
+                    let curr = root;
+                    while (isAlive(curr)) {
+                        if (hasBrawlClass(curr)) {
+                            result = true;
+                            break;
+                        }
+                        curr = curr.GetParent ? curr.GetParent() : null;
+                    }
                 }
             }
         } catch (_) {}
-        return false;
+
+        if (!root) {
+            _lastStreetBrawlCheckMs = now;
+            _lastStreetBrawlResult = result;
+        }
+        return result;
     };
 
     const isHudClassActive = (root, className) => {
@@ -254,9 +283,20 @@
     const resolveCachedPanel = (root, cacheKey, childId) => {
         let p = getCachedPanel(cacheKey);
         if (!isAlive(p)) {
+            const s = getState();
+            if (!s._panelMissBackoff) s._panelMissBackoff = {};
+            const now = Date.now ? Date.now() : (new Date()).getTime();
+            if (s._panelMissBackoff[cacheKey] && now < s._panelMissBackoff[cacheKey]) {
+                return null;
+            }
             const r = root || findHud();
             p = r?.FindChildTraverse ? r.FindChildTraverse(childId) : null;
-            if (isAlive(p)) setCachedPanel(cacheKey, p);
+            if (isAlive(p)) {
+                delete s._panelMissBackoff[cacheKey];
+                setCachedPanel(cacheKey, p);
+            } else {
+                s._panelMissBackoff[cacheKey] = now + 2000;
+            }
         }
         return isAlive(p) ? p : null;
     };
@@ -438,10 +478,9 @@
     };
 
     const updateChatRuntime = (root, cfg) => {
-        const livePanel = root?.FindChildTraverse ? root.FindChildTraverse("Chat") : null;
-        const chatPanel = isAlive(livePanel) ? livePanel : getCachedPanel("chatPanel");
-        if (chatPanel !== getCachedPanel("chatPanel")) {
-            setCachedPanel("chatPanel", chatPanel);
+        let chatPanel = getCachedPanel("chatPanel");
+        if (!isAlive(chatPanel)) {
+            chatPanel = resolveCachedPanel(root, "chatPanel", "Chat");
         }
 
         const st = getState();

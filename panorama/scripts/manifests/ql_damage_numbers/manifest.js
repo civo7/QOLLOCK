@@ -217,14 +217,20 @@
                         return;
                     }
 
-                    var indicatorCacheValid = _isPanelListValid(_stateGet("indicatorPanelsCache", null));
+                    var cachedPanels = _stateGet("indicatorPanelsCache", null);
+                    var indicatorCacheValid = Array.isArray(cachedPanels) && (cachedPanels.length === 0 || _isPanelListValid(cachedPanels));
                     var panelCacheDue = _taskIsDue("hud_indicator_panel_cache", now);
                     var shouldRefreshPanels = !indicatorCacheValid || panelCacheDue || configSig !== lastConfigSig;
                     if (shouldRefreshPanels) {
                         var dmgContainer = _getPanel("dmgIndicators");
-                        if (!dmgContainer && root.FindChildTraverse) {
+                        var nextDmgSearch = _stateGet("nextDmgContainerSearchMs", 0);
+                        if (!dmgContainer && root.FindChildTraverse && now >= nextDmgSearch) {
                             dmgContainer = root.FindChildTraverse("CitadelHudDamageIndicators");
-                            _setPanel("dmgIndicators", dmgContainer);
+                            if (dmgContainer) {
+                                _setPanel("dmgIndicators", dmgContainer);
+                            } else {
+                                _stateSet("nextDmgContainerSearchMs", now + 2500);
+                            }
                         }
                         var indicatorPanels = [];
                         if (dmgContainer && dmgContainer.FindChildrenWithClassTraverse) {
