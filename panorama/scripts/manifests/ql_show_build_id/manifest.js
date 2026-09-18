@@ -194,7 +194,7 @@
                     target.label.style.fontSize = "16px";
                     target.label.style.fontWeight = "bold";
                     target.label.style.fontFamily = "oracle, blocky, sans-serif";
-                    target.label.style.color = "offWhite";
+                    target.label.style.color = "#FFEFD7";
                     target.label.style.textShadow = "0px 1px 3px 3.0 #000000cc";
                 }
             };
