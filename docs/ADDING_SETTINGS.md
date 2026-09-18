@@ -77,16 +77,16 @@ Locate the relevant tab (e.g. `hud`, `minimap`, `crosshair`, `items`, `gameplay`
 
 ---
 
-## Step 3: Add Localization (`panorama/scripts/ui/theme.js`)
+## Step 3: Add Localization (`panorama/scripts/ql_settings_loc/`)
 
-Add readable English and Russian strings in `panorama/scripts/ui/theme.js`:
+Add readable English and Russian strings in `panorama/scripts/ql_settings_loc/ql_settings_loc_en.js` and `panorama/scripts/ql_settings_loc/ql_settings_loc_ru.js` (and any other supported languages as needed):
 
 ```javascript
 "#QOL_MySetting": "Enable My Setting",
 "#QOL_MySetting_desc": "Displays custom information overlay on screen.",
 ```
 
-Tooltips and descriptions are displayed automatically when hovering rows in the Settings Window.
+Descriptions and tooltips are displayed automatically when hovering rows in the Settings Window. Run `npm test` to verify dictionary integrity across all 15 supported locales. See `docs/LOCALIZATION.md` for translation tooling details.
 
 ---
 

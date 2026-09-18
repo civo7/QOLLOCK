@@ -7,7 +7,13 @@
     "lint": "eslint . --quiet",
     "lint:all": "eslint .",
     "check:api": "node scripts/validate_game_api_usage.js",
-    "test": "node panorama/scripts/tools/qollock_smoke_test.js && node --test tests/*.test.js && node scripts/simulator/fuzz_build_storage.js 20 && node scripts/validate_compact_schema.js && npm run check:api && npm run lint"
+    "test": "node panorama/scripts/tools/qollock_smoke_test.js && node --test tests/*.test.js && node scripts/simulator/fuzz_build_storage.js 20 && node scripts/validate_compact_schema.js && npm run check:api && npm run lint",
+    "translations:export": "node scripts/export_translations.js",
+    "translations:import": "node scripts/import_translations.js",
+    "translations:json:export": "node scripts/export_locales_json.js",
+    "translations:json:import": "node scripts/import_locales_json.js",
+    "translations:missing": "node scripts/find_untranslated.js",
+    "translations:labels": "node scripts/find_untranslated_labels.js"
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",

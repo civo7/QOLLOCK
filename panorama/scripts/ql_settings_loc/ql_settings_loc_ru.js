@@ -63,7 +63,7 @@
     "Better Item Cooldowns": "Улучшенные перезарядки предметов",
     "Better Unsecured": "Улучшенные ненадежные души",
     "Better Unsecured Souls": "Улучшенные ненадежные души",
-    "BHOP UI": "Интерфейс для BHOP'a ",
+    "BHOP UI": "Интерфейс для BHOP'a",
     "Big Number": "Большие числа",
     "Big Numbers": "Большие числа",
     "Big Red": "Большой и красный",
