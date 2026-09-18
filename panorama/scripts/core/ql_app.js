@@ -515,12 +515,43 @@
         _configPollTimer = $.Schedule(0.25, poll);
     };
 
+    let _engineEventsRegistered = false;
+    const _registerEngineEvents = () => {
+        if (_engineEventsRegistered) return;
+        if (typeof $.RegisterForUnhandledEvent !== "function") return;
+        _engineEventsRegistered = true;
+
+        try {
+            $.RegisterForUnhandledEvent("CitadelGameStateChanged", () => {
+                const hud = _hudPanel || _findHud();
+                if (hud) _syncRootClasses(hud);
+                if (QOL?.core?.EventBus) {
+                    try { QOL.core.EventBus.emit("engine:game_state_changed"); } catch (_) {}
+                }
+            });
+        } catch (e) {
+            if (Logger) Logger.logDebug("App", `CitadelGameStateChanged event not available: ${e?.message || e}`);
+        }
+
+        try {
+            $.RegisterForUnhandledEvent("CitadelUserMsg_ForceShopClosed", () => {
+                if (QOL?.core?.EventBus) {
+                    try { QOL.core.EventBus.emit("engine:shop_closed"); } catch (_) {}
+                }
+            });
+        } catch (e) {
+            if (Logger) Logger.logDebug("App", `CitadelUserMsg_ForceShopClosed event not available: ${e?.message || e}`);
+        }
+    };
+
     // -- Public API --
     const boot = () => {
         if (_booted) {
             $.Msg("[QOLLock] App: already booted — skipping.");
             return true;
         }
+
+        _registerEngineEvents();
 
         $.Msg(`[QOLLock] App: booting QOLLock v${QOL.VERSION || "?.?.?"} (build ${QOL.BUILD || "?"})`);
 
