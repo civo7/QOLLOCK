@@ -275,6 +275,6 @@ test("ui/config_tab: renderConfigTab creates cards for General, Export, and Impo
     assert.ok(gameCard, "ConfigCardGameInterface exists");
 
     const toolsCard = list.FindChildTraverse("ConfigCardContentTools");
-    assert.ok(toolsCard, "ConfigCardContentTools exists");
+    assert.strictEqual(toolsCard, null, "ConfigCardContentTools must be removed from Config tab");
 });
 

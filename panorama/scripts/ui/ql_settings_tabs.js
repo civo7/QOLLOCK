@@ -19,7 +19,7 @@
 
     const FALLBACK_TAB_ORDER = [
         "Support", "Config", "Presets", "Console", "Arcade",
-        "Crosshair", "Healthbar", "HUD", "Minimap", "Shop", "Audio"
+        "Crosshair", "Healthbar", "HUD", "Overlay", "Minimap", "Shop", "Audio"
     ];
 
     function GetSettingsTabOrder() {
@@ -72,7 +72,7 @@
             },
             {
                 title: "Gameplay",
-                tabs: ["Crosshair", "Healthbar", "HUD", "Minimap", "Shop", "Audio"]
+                tabs: ["Crosshair", "Healthbar", "HUD", "Overlay", "Minimap", "Shop", "Audio"]
             }
         ];
     }

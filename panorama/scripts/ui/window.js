@@ -1201,7 +1201,7 @@
         });
 
         let curTab = (typeof globalThis.currentTab !== "undefined") ? globalThis.currentTab : _activeTab;
-        if (curTab === "Layout" || curTab === "Overlay") curTab = "HUD";
+        if (curTab === "Layout") curTab = "HUD";
         if (curTab === "Main") curTab = "Presets";
         if (curTab === "HUDControls" || curTab === "UI") curTab = "Config";
         _activeTab = curTab;
@@ -1224,8 +1224,7 @@
             }
             const hasLegacyTabs = tabBar.FindChildTraverse("TabButton_Layout") ||
                 tabBar.FindChildTraverse("TabButton_Main") ||
-                tabBar.FindChildTraverse("TabButton_UI") ||
-                tabBar.FindChildTraverse("TabButton_Overlay");
+                tabBar.FindChildTraverse("TabButton_UI");
             if (!allPresent || hasLegacyTabs) {
                 tabBar.DeleteAsync(0);
                 tabBar = null;

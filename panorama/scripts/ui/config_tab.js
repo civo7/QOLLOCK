@@ -269,22 +269,6 @@
                 globalThis.CreateRow(list, "Show Testing Tools", "ENABLE_FORCE_TESTING_TOOLS", "toggle", null, null, null, null, "Always Shown");
                 globalThis.CreateRow(list, "Hide Testing Tools", "ENABLE_HIDE_TESTING_TOOLS", "toggle", null, null, null, null, "Always Hidden");
                 globalThis.CreateRow(list, "Behavior Summary", "ENABLE_HIDE_BEHAVIOR_SUMMARY", "toggle", null, null, null, [{ invert: true }], "Metro Button");
-
-                if (typeof globalThis.CreateSeparator === "function") {
-                    globalThis.CreateSeparator(list);
-                }
-                globalThis.CreateSectionTitle(list, "Content & Tools");
-                globalThis.CreateRow(list, "Show Build ID", "ENABLE_SHOW_BUILD_ID", "toggle", null, null, null, null, "Shows your build information always for content creators");
-                globalThis.CreateRow(list, "Show Title", "ENABLE_SHOW_BUILD_ID_TITLE", "toggle", null, null, null, null, "");
-                globalThis.CreateRow(list, "Keyboard Overlay", "ENABLE_KEYBOARD_OVERLAY", "toggle", null, null, null, null, "Realtime Key Inputs");
-                globalThis.CreateRow(list, "Full Keys", "ENABLE_FULL_KEYBOARD_LAYOUT", "toggle", null, null, null, null, "");
-                if (typeof globalThis.CreateSliderRow === "function") {
-                    globalThis.CreateSliderRow(list, "Size", "KEYBOARD_OVERLAY_SCALE", "size_70_150", "");
-                    globalThis.CreateSliderRow(list, "Horizontal Offset", "KEYBOARD_OVERLAY_X_OFFSET", "offset_n1500_1500");
-                    globalThis.CreateSliderRow(list, "Vertical Offset", "KEYBOARD_OVERLAY_Y_OFFSET", "offset_n400_1000");
-                }
-                const palette = (typeof globalThis.QOL_COLOR_PALETTE_OPTIONS !== "undefined" ? globalThis.QOL_COLOR_PALETTE_OPTIONS : []);
-                globalThis.CreateRow(list, "Color", "KEYBOARD_OVERLAY_WASH_COLOR", "palette", null, null, null, palette, "Choose a preset color wash for the keyboard overlay.");
             }
             return;
         }
@@ -540,40 +524,6 @@
             createRow(cardSystem, "Show Testing Tools", "ENABLE_FORCE_TESTING_TOOLS", "toggle", null, null, null, null, "Always Shown");
             createRow(cardSystem, "Hide Testing Tools", "ENABLE_HIDE_TESTING_TOOLS", "toggle", null, null, null, null, "Always Hidden");
             createRow(cardSystem, "Behavior Summary", "ENABLE_HIDE_BEHAVIOR_SUMMARY", "toggle", null, null, null, [{ invert: true }], "Metro Button");
-        }
-
-        // --- Card: Content & Tools ---
-        const dividerAfterSystem = $.CreatePanel("Panel", list, "ConfigDividerAfterSystem");
-        dividerAfterSystem.AddClass("ConfigTabDivider");
-        dividerAfterSystem.AddClass("RowSeparator");
-
-        const cardTools = $.CreatePanel("Panel", list, "ConfigCardContentTools");
-        cardTools.AddClass("ConfigTabCard");
-        if (typeof globalThis.CreateSectionTitle === "function") {
-            globalThis.CreateSectionTitle(cardTools, "Content & Tools");
-        }
-        if (createAnimatedToggle) {
-            createAnimatedToggle(cardTools, "Show Build ID", "ENABLE_SHOW_BUILD_ID", "Shows your build information always for content creators", (sectionParent) => {
-                if (createRow) {
-                    createRow(sectionParent, "Show Title", "ENABLE_SHOW_BUILD_ID_TITLE", "toggle", null, null, null, null, "");
-                }
-            });
-            if (typeof globalThis.CreateSeparator === "function") {
-                globalThis.CreateSeparator(cardTools);
-            }
-            createAnimatedToggle(cardTools, "Keyboard", "ENABLE_KEYBOARD_OVERLAY", "Realtime Key Inputs", (sectionParent) => {
-                if (createRow) {
-                    createRow(sectionParent, "Full Keys", "ENABLE_FULL_KEYBOARD_LAYOUT", "toggle", null, null, null, null, "");
-                }
-                if (createSliderRow) {
-                    createSliderRow(sectionParent, "Size", "KEYBOARD_OVERLAY_SCALE", "size_70_150", "");
-                    createSliderRow(sectionParent, "Horizontal Offset", "KEYBOARD_OVERLAY_X_OFFSET", "offset_n1500_1500");
-                    createSliderRow(sectionParent, "Vertical Offset", "KEYBOARD_OVERLAY_Y_OFFSET", "offset_n400_1000");
-                }
-                if (createRow) {
-                    createRow(sectionParent, "Color", "KEYBOARD_OVERLAY_WASH_COLOR", "palette", null, null, null, palette, "Choose a preset color wash for the keyboard overlay.");
-                }
-            });
         }
     };
 

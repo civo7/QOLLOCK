@@ -41,10 +41,6 @@
                 {
                     title: "Matchmaking & Game",
                     features: ["ql_lane_with_party"]
-                },
-                {
-                    title: "Content & Stream",
-                    features: ["ql_show_build_id", "ql_keyboard"]
                 }
             ]
         },
@@ -159,12 +155,23 @@
                     features: ["ql_souls", "ql_unsecured_souls_timer", "ql_better_unsecured_hud"]
                 },
                 {
-                    title: "Indicators",
-                    features: ["ql_zipboost", "ql_compass"]
-                },
-                {
                     title: "Chat & Panels",
                     features: ["ql_chat_images", "ql_damage_report", "ql_stats_position"]
+                }
+            ]
+        },
+        {
+            id: "Overlay",
+            name: "Overlay",
+            icon: "s2r://panorama/images/icons/icon_graph.vsvg",
+            sections: [
+                {
+                    title: "Stream & Info",
+                    features: ["ql_show_build_id", "ql_keyboard"]
+                },
+                {
+                    title: "Navigation & Speed",
+                    features: ["ql_zipboost", "ql_compass"]
                 }
             ]
         },

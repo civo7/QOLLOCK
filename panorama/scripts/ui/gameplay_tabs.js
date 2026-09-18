@@ -373,34 +373,6 @@
         createSep(list);
 
         if (createAnimatedToggle) {
-            createAnimatedToggle(list, "Zipline Boost", "ENABLE_ZIP_BOOST", "Always Visible Boost", (sectionParent) => {
-                if (createSliderRow) {
-                    createSliderRow(sectionParent, "Size", "ZIP_BOOST_SCALE", "size_50_200", "");
-                    createSliderRow(sectionParent, "Horizontal Offset", "ZIP_BOOST_X_OFFSET", "offset_n2000_2000");
-                    createSliderRow(sectionParent, "Vertical Offset", "ZIP_BOOST_Y_OFFSET", "offset_0_1000");
-                }
-            });
-            createSep(list);
-            createAnimatedToggle(list, "Speed", "ENABLE_COMPASS_SPEED", "Show standalone movement speed.", (sectionParent) => {
-                if (createSliderRow) {
-                    createSliderRow(sectionParent, "Horizontal Offset", "COMPASS_SPEED_X_OFFSET", "offset_n2000_2000");
-                    createSliderRow(sectionParent, "Vertical Offset", "COMPASS_SPEED_Y_OFFSET", "offset_n2000_2000");
-                }
-            });
-            createSep(list);
-            createAnimatedToggle(list, "Compass", "ENABLE_COMPASS", "See your view angle.", (sectionParent) => {
-                if (createRow) {
-                    createRow(sectionParent, "Minimalist", "ENABLE_SIMPLIFY_COMPASS", "toggle", null, null, null, null, "Simplifies the Compass overlay to its bare elements.");
-                }
-                if (createSliderRow) {
-                    createSliderRow(sectionParent, "Horizontal Stretch", "COMPASS_STRETCH_X", "size_50_200");
-                    createSliderRow(sectionParent, "Vertical Stretch", "COMPASS_STRETCH_Y", "size_50_200");
-                    createSliderRow(sectionParent, "Size", "COMPASS_SCALE", "size_50_200");
-                    createSliderRow(sectionParent, "Horizontal Offset", "COMPASS_X_OFFSET", "offset_n2000_2000");
-                    createSliderRow(sectionParent, "Vertical Offset", "COMPASS_Y_OFFSET", "offset_n1000_300");
-                }
-            });
-            createSep(list);
             createAnimatedToggle(list, "Chat", "ENABLE_CHAT", "", (sectionParent) => {
                 if (createSliderRow) {
                     createSliderRow(sectionParent, "Size", "CHAT_SCALE", "size_50_200", "");
@@ -629,33 +601,9 @@
 
         createSep(list);
         if (createAnimatedToggle) {
-            createAnimatedToggle(list, "Zipline Boost", "ENABLE_ZIP_BOOST", "Always Visible Boost", (sectionParent) => {
-                if (createSliderRow) {
-                    createSliderRow(sectionParent, "Size", "ZIP_BOOST_SCALE", "size_50_200", "");
-                    createSliderRow(sectionParent, "Horizontal Offset", "ZIP_BOOST_X_OFFSET", "offset_n2000_2000");
-                    createSliderRow(sectionParent, "Vertical Offset", "ZIP_BOOST_Y_OFFSET", "offset_0_1000");
-                }
-            });
-            createSep(list);
-            createAnimatedToggle(list, "Ult Cooldowns", "ENABLE_ULT_COOLDOWNS", null, null);
-            createSep(list);
-            createAnimatedToggle(list, "Unsecured Timer", "ENABLE_UNSECURED_SOUL_TIMER", "Realtime Drain Countdown", (sectionParent) => {
-                if (createSliderRow) {
-                    createSliderRow(sectionParent, "Size", "UNSECURED_SOUL_TIMER_SCALE", "size_50_200", "");
-                    createSliderRow(sectionParent, "Horizontal Offset", "UNSECURED_SOUL_TIMER_X_OFFSET", "offset_n1500_1500");
-                    createSliderRow(sectionParent, "Vertical Offset", "UNSECURED_SOUL_TIMER_Y_OFFSET", "offset_n100_1000");
-                }
-            });
-            createSep(list);
-            createAnimatedToggle(list, "Unsecured Plus", "ENABLE_BETTER_UNSECURED", "Customizable Unsecured Souls", (sectionParent) => {
+            createAnimatedToggle(list, "Show Build ID", "ENABLE_SHOW_BUILD_ID", "Shows your build information always for content creators", (sectionParent) => {
                 if (createRow) {
-                    createRow(sectionParent, "Icon", "ENABLE_BETTER_UNSECURED_SHOW_ICON", "toggle", null, null, null, null, "");
-                    createRow(sectionParent, "Text", "ENABLE_BETTER_UNSECURED_SHOW_TEXT", "toggle", null, null, null, null, "");
-                }
-                if (createSliderRow) {
-                    createSliderRow(sectionParent, "Size", "UNSECURED_SOULS_HUD_SCALE", "size_50_200", "");
-                    createSliderRow(sectionParent, "Horizontal Offset", "UNSECURED_SOULS_HUD_X_OFFSET", "offset_n1000_2000");
-                    createSliderRow(sectionParent, "Vertical Offset", "UNSECURED_SOULS_HUD_Y_OFFSET", "offset_800_2000");
+                    createRow(sectionParent, "Show Title", "ENABLE_SHOW_BUILD_ID_TITLE", "toggle", null, null, null, null, "");
                 }
             });
             createSep(list);
@@ -670,6 +618,14 @@
                 }
                 if (createRow) {
                     createRow(sectionParent, "Color", "KEYBOARD_OVERLAY_WASH_COLOR", "palette", null, null, null, palette, "Choose a preset color wash for the keyboard overlay.");
+                }
+            });
+            createSep(list);
+            createAnimatedToggle(list, "Zipline Boost", "ENABLE_ZIP_BOOST", "Always Visible Boost", (sectionParent) => {
+                if (createSliderRow) {
+                    createSliderRow(sectionParent, "Size", "ZIP_BOOST_SCALE", "size_50_200", "");
+                    createSliderRow(sectionParent, "Horizontal Offset", "ZIP_BOOST_X_OFFSET", "offset_n2000_2000");
+                    createSliderRow(sectionParent, "Vertical Offset", "ZIP_BOOST_Y_OFFSET", "offset_0_1000");
                 }
             });
             createSep(list);

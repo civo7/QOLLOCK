@@ -61,6 +61,10 @@ Q.ui.layout = [
 
 If `Q.ui.layout` is not yet loaded (e.g. isolated test harness), it gracefully falls back to canonical defaults.
 
+### Canonical Tab Hierarchy
+- **General**: Support, Settings (`Config`), Presets, Console, Arcade
+- **Gameplay**: Crosshair, Healthbar, HUD, Overlay, Minimap, Shop, Audio
+
 ---
 
 ## 3. How to Move, Reorder, or Add Tabs

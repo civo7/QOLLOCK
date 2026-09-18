@@ -28,7 +28,7 @@ test("ui/tabs: exports tab definitions on QOL.ui.tabs and globalThis", () => {
 
     // Order
     const order = ctx.QOL.ui.tabs.GetSettingsTabOrder();
-    assert.strictEqual(order.length, 11);
+    assert.strictEqual(order.length, 12);
     assert.strictEqual(order[0], "Support");
     assert.strictEqual(order[1], "Config");
 
