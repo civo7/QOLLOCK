@@ -28,9 +28,19 @@
         create: function(ctx) {
             var _lastSig = "";
             var _loop = null;
+            var _cachedPanel = null;
             var PANEL_ID = "gold_and_ap_container";
 
             var _clearStyle = QOL.utils.ClearStyleSafe;
+            var _isAlive = (QOL.core && QOL.core.panel && QOL.core.panel.isAlive) ? QOL.core.panel.isAlive : QOL.utils.IsPanelValid;
+
+            function _getPanel() {
+                if (_isAlive(_cachedPanel)) return _cachedPanel;
+                var root = (QOL.core && QOL.core.hud && QOL.core.hud.findHud) ? QOL.core.hud.findHud() : $.GetContextPanel();
+                if (!root || !root.FindChildTraverse) return null;
+                _cachedPanel = root.FindChildTraverse(PANEL_ID);
+                return _cachedPanel;
+            }
 
             function _hasNonDefault(cfg) {
                 if (!cfg) return false;
@@ -42,9 +52,8 @@
             }
 
             function _apply(cfg) {
-                var root = $.GetContextPanel();
-                var panel = root.FindChildTraverse(PANEL_ID);
-                if (!panel) return;
+                var panel = _getPanel();
+                if (!panel) return false;
 
                 var active = _hasNonDefault(cfg);
                 var enabled = (cfg.HUD_SOULS_ENABLED === undefined || cfg.HUD_SOULS_ENABLED === true || Number(cfg.HUD_SOULS_ENABLED) === 1);
@@ -54,7 +63,7 @@
                 if (!isFinite(opNum)) opNum = 1.0;
                 var opacityText = opNum.toFixed(2);
                 var sig = offsetX + "|" + offsetY + "|" + opacityText + "|" + (enabled ? "1" : "0") + "|" + (active ? "1" : "0");
-                if (_lastSig === sig) return;
+                if (_lastSig === sig) return true;
                 _lastSig = sig;
 
                 if (panel.SetHasClass) panel.SetHasClass("qol-hidden", !enabled);
@@ -68,10 +77,17 @@
                     _clearStyle(panel, "y");
                     _clearStyle(panel, "opacity");
                 }
+                return true;
             }
 
             function _tick() {
-                try { _apply(ctx.config.all()); } catch(e) {
+                try {
+                    var applied = _apply(ctx.config.all());
+                    if (applied && _loop) {
+                        _loop.stop();
+                        _loop = null;
+                    }
+                } catch(e) {
                     if (typeof QOL !== "undefined" && QOL.core && QOL.core.Logger) {
                         QOL.core.Logger.logError("ql_souls", "_tick: " + (e.message || e));
                     }
@@ -80,9 +96,11 @@
 
             return {
                 onEnable: function() {
-                    _apply(ctx.config.all());
-                    var S = QOL.core.Scheduler;
-                    _loop = S && S.createPollLoop ? S.createPollLoop(_tick, 1.0, "ql_souls") : null;
+                    var applied = _apply(ctx.config.all());
+                    if (!applied) {
+                        var S = QOL.core.Scheduler;
+                        _loop = S && S.createPollLoop ? S.createPollLoop(_tick, 1.0, "ql_souls") : null;
+                    }
                 },
                 onDisable: function() {
                     if (_loop) { _loop.stop(); _loop = null; }
@@ -90,7 +108,7 @@
                     if (S) S.cancelAllForFeature("ql_souls");
                     _lastSig = "";
                     try {
-                        var p = $.GetContextPanel().FindChildTraverse(PANEL_ID);
+                        var p = _getPanel();
                         if (p) {
                             var isSupposed = FR && FR.isFeatureSupposedToBeEnabled ? FR.isFeatureSupposedToBeEnabled("ql_souls") : false;
                             if (p.SetHasClass) p.SetHasClass("qol-hidden", !isSupposed);
@@ -99,8 +117,15 @@
                             _clearStyle(p, "opacity");
                         }
                     } catch(e) {}
+                    _cachedPanel = null;
                 },
-                onSettingsChanged: function() { _apply(ctx.config.all()); }
+                onSettingsChanged: function() {
+                    var applied = _apply(ctx.config.all());
+                    if (!applied && !_loop) {
+                        var S = QOL.core.Scheduler;
+                        _loop = S && S.createPollLoop ? S.createPollLoop(_tick, 1.0, "ql_souls") : null;
+                    }
+                }
             };
         },
         test: function(ctx) {

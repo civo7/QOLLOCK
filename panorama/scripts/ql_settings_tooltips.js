@@ -197,8 +197,29 @@
         if (!isAlive(host)) return;
 
         const ctx = $.GetContextPanel ? $.GetContextPanel() : host;
-        const settingsWin = ctx.FindChildTraverse ? ctx.FindChildTraverse("SettingsWindow") : null;
-        const settingsList = ctx.FindChildTraverse ? ctx.FindChildTraverse("SettingsList") : null;
+
+        // Resolve SettingsWindow and SettingsList: first traverse upward from anchor, then fallback to ctx
+        let settingsWin = null;
+        let settingsList = null;
+        let cur = anchor;
+        let guard = 0;
+        while (cur && isAlive(cur) && guard < 32) {
+            if (!settingsList && cur.id === "SettingsList") settingsList = cur;
+            if (cur.id === "SettingsWindow") {
+                settingsWin = cur;
+                break;
+            }
+            cur = cur.GetParent ? cur.GetParent() : null;
+            guard++;
+        }
+        if (!settingsWin && ctx) {
+            settingsWin = ctx.FindChildTraverse ? ctx.FindChildTraverse("SettingsWindow") : null;
+        }
+        if (!settingsList && ctx) {
+            settingsList = ctx.FindChildTraverse ? ctx.FindChildTraverse("SettingsList") : null;
+        }
+
+        const isInsideWindow = isAlive(settingsWin) && (anchor === settingsWin || isDescendantOf(anchor, settingsWin));
 
         const hostW = Number(host.actuallayoutwidth) || 1920;
         const hostH = Number(host.actuallayoutheight) || 1080;
@@ -210,8 +231,6 @@
         const anchorW = Number(anchor.actuallayoutwidth) || 580;
         const anchorH = Number(anchor.actuallayoutheight) || 40;
 
-        const isInsideList = settingsList && isDescendantOf(anchor, settingsList);
-
         let winX = NaN;
         let winY = NaN;
         let winW = NaN;
@@ -220,13 +239,13 @@
         if (isAlive(settingsWin)) {
             winX = getAncestorOffset(settingsWin, host, "x");
             winY = getAncestorOffset(settingsWin, host, "y");
-            winW = Number(settingsWin.actuallayoutwidth);
-            winH = Number(settingsWin.actuallayoutheight);
+            winW = Number(settingsWin.actuallayoutwidth) || 720;
+            winH = Number(settingsWin.actuallayoutheight) || 720;
         }
 
         // Check obstacles on the right: Friends list (#RightSide)
         let rightBoundary = hostW - EDGE_MARGIN;
-        const rightSide = ctx.FindChildTraverse ? ctx.FindChildTraverse("RightSide") : null;
+        const rightSide = ctx ? ctx.FindChildTraverse?.("RightSide") : null;
         if (isAlive(rightSide) && Number(rightSide.actuallayoutwidth) > 0) {
             const rx = getAncestorOffset(rightSide, host, "x");
             if (isFinite(rx) && rx > (winX + (winW || 0))) {
@@ -235,7 +254,7 @@
         }
 
         let xRight, xLeft;
-        if (isInsideList && isFinite(winX) && isFinite(winW) && winW > 0) {
+        if (isInsideWindow && isFinite(winX) && winW > 0) {
             xRight = Math.round(winX + winW + GAP);
             xLeft = Math.round(winX - tipW - GAP);
         } else {
@@ -243,8 +262,8 @@
             xLeft = Math.round(anchorX - tipW - GAP);
         }
 
-        const spaceRight = rightBoundary - (isInsideList && isFinite(winX) && isFinite(winW) ? (winX + winW) : (anchorX + anchorW));
-        const spaceLeft = isInsideList && isFinite(winX) ? winX : anchorX;
+        const spaceRight = rightBoundary - (isInsideWindow && isFinite(winX) && winW > 0 ? (winX + winW) : (anchorX + anchorW));
+        const spaceLeft = (isInsideWindow && isFinite(winX)) ? winX : anchorX;
 
         let x;
         if (spaceRight >= (tipW + GAP)) {
@@ -337,20 +356,28 @@
         try { settingsContentHost = ctx.FindChildTraverse ? ctx.FindChildTraverse("SettingsContentHost") : null; } catch (_) {}
 
         let thumbY = 0;
-        if (settingsList && settingsList.FindChildTraverse) {
+        if (settingsList) {
             try {
-                const scrollBar = settingsList.FindChildTraverse("VerticalScrollBar");
+                let thumb = null;
+                const scrollBar = settingsList.FindChildTraverse ? settingsList.FindChildTraverse("VerticalScrollBar") : null;
                 if (scrollBar && scrollBar.FindChildTraverse) {
-                    const thumb = scrollBar.FindChildTraverse("ScrollThumb");
-                    if (isAlive(thumb)) {
-                        let sty = Number(thumb.scrolloffset_y);
-                        if (!isFinite(sty)) sty = Number(thumb.actualscrolloffset_y);
-                        if (!isFinite(sty) && typeof globalThis.GetPanelYOffsetWithinAncestor === "function") {
-                            sty = Number(globalThis.GetPanelYOffsetWithinAncestor(thumb, scrollBar));
-                        }
-                        if (!isFinite(sty)) sty = Number(thumb.actualyoffset);
-                        if (isFinite(sty)) thumbY = sty;
+                    thumb = scrollBar.FindChildTraverse("ScrollThumb");
+                }
+                if (!thumb && settingsList.FindChildTraverse) {
+                    thumb = settingsList.FindChildTraverse("ScrollThumb");
+                }
+                if (!thumb && settingsList.FindChildrenWithClassTraverse) {
+                    const thumbs = settingsList.FindChildrenWithClassTraverse("ScrollThumb");
+                    if (thumbs && thumbs.length > 0) thumb = thumbs[0];
+                }
+                if (isAlive(thumb)) {
+                    let sty = Number(thumb.actualyoffset);
+                    if (!isFinite(sty)) sty = Number(thumb.scrolloffset_y);
+                    if (!isFinite(sty)) sty = Number(thumb.actualscrolloffset_y);
+                    if (!isFinite(sty) && typeof globalThis.GetPanelYOffsetWithinAncestor === "function") {
+                        sty = Number(globalThis.GetPanelYOffsetWithinAncestor(thumb, scrollBar || settingsList));
                     }
+                    if (isFinite(sty)) thumbY = sty;
                 }
             } catch (_) {}
         }
@@ -540,11 +567,8 @@
     };
 
     const showRowTooltip = (anchor, _perfText, bodyText, perfTier, createdBy, options) => {
-        if (!isAlive(anchor) || isSuppressed()) return;
-        if (didScrollChange()) {
-            suppressForMs(SCROLL_SUPPRESS_MS);
-            return;
-        }
+        if (!isAlive(anchor)) return;
+
         if (!hasMeaningfulContent(perfTier, bodyText, createdBy, options)) {
             hideRowTooltip();
             return;
@@ -555,6 +579,28 @@
         const settingsList = ctx ? ctx.FindChildTraverse?.("SettingsList") : null;
         if (settingsList && isDescendantOf(anchor, settingsList)) {
             if (!isPanelVisibleInList(anchor, settingsList, host)) return;
+        }
+
+        // Establish scroll baseline at the moment hover begins
+        primeScrollSnapshot();
+
+        // If suppressed from active scrolling, wait until suppression expires rather than dropping the hover forever
+        if (isSuppressed()) {
+            cancelShow();
+            const delaySec = Math.max(COLD_HOVER_DELAY_SEC, ((_suppressUntilMs - Date.now()) / 1000) + 0.02);
+            _showTimer = $.Schedule(delaySec, () => {
+                _showTimer = null;
+                if (!isAlive(anchor) || isSuppressed()) return;
+                if (didScrollChange()) {
+                    suppressForMs(SCROLL_SUPPRESS_MS);
+                    return;
+                }
+                if (settingsList && isDescendantOf(anchor, settingsList)) {
+                    if (!isPanelVisibleInList(anchor, settingsList, host)) return;
+                }
+                executeShow(anchor, perfTier, bodyText, createdBy, options);
+            });
+            return;
         }
 
         cancelHide();

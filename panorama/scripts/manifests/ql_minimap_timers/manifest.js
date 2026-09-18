@@ -102,12 +102,33 @@
                 return null;
             }
 
+            var _cachedSpawners = null;
+
+            function _getSpawners(searchRoot) {
+                if (_cachedSpawners && _cachedSpawners.length > 0) {
+                    var allAlive = true;
+                    for (var k = 0; k < _cachedSpawners.length; k++) {
+                        if (!IsPanelValid(_cachedSpawners[k])) {
+                            allAlive = false;
+                            break;
+                        }
+                    }
+                    if (allAlive) return _cachedSpawners;
+                }
+                if (!IsPanelValid(searchRoot) || !searchRoot.FindChildrenWithClassTraverse) return null;
+                var found = searchRoot.FindChildrenWithClassTraverse("powerup_spawn");
+                if (found && found.length > 0) {
+                    _cachedSpawners = found;
+                }
+                return found;
+            }
+
             function DetectActiveBridgeBuffs(root, anchor) {
                 var result = { left: false, right: false };
                 var searchRoot = (anchor && IsPanelValid(anchor)) ? anchor : ((root && root.FindChildTraverse) ? (root.FindChildTraverse("HudMinimap") || root.FindChildTraverse("hud_minimap") || root) : root);
                 if (!IsPanelValid(searchRoot)) return result;
 
-                var spawners = searchRoot.FindChildrenWithClassTraverse ? searchRoot.FindChildrenWithClassTraverse("powerup_spawn") : null;
+                var spawners = _getSpawners(searchRoot);
                 if (!spawners || spawners.length === 0) return result;
 
                 for (var i = 0; i < spawners.length; i++) {
@@ -318,9 +339,12 @@
                 var bufR = be && brr < 10 && (brr % 2) === 1, bufY = be && !bufR && brr < 20 && (brr % 2) === 1;
                 var rwe = re && !spawnWaiting, rejR = re && (spawnWaiting || (rwe && rjr < 10 && (rjr % 2) === 1)), rejY = rwe && !rejR && rjr < 20 && (rjr % 2) === 1;
                 var bi = GetCachedPanel("minimapObjectiveBuffIcon"), bli = GetCachedPanel("minimapObjectiveBuffBridgeLeftIcon"), bri = GetCachedPanel("minimapObjectiveBuffBridgeRightIcon"), ri = GetCachedPanel("minimapObjectiveRejuvIcon");
+                if (!bbe && !rbe) {
+                    ApplyMinimapObjectiveTimersStandardMode(panels, overlay, {timerWidth:tw,timerHeight:th,timerGap:tg,timerPaddingX:tpx,timerRadius:tr,timerFont:tf,timerIcon:ti,bottomOffset:bo}, {buffEnabled:be,rejuvEnabled:re,buffRed:bufR,buffYellow:bufY,rejuvRed:rejR,rejuvYellow:rejY}, {buffIcon:bi,buffBridgeLeftIcon:bli,buffBridgeRightIcon:bri,rejuvIcon:ri}, bridgeText, rejuvText);
+                    return;
+                }
                 var btw = 48, bth = 18, btpx = 3, btr = 4, btf = 11, bho = 144;
                 var activeBuffs = DetectActiveBridgeBuffs(root, EnsureMinimapOverlayAnchor(root));
-                if (!bbe && !rbe) { ApplyMinimapObjectiveTimersStandardMode(panels, overlay, {timerWidth:tw,timerHeight:th,timerGap:tg,timerPaddingX:tpx,timerRadius:tr,timerFont:tf,timerIcon:ti,bottomOffset:bo}, {buffEnabled:be,rejuvEnabled:re,buffRed:bufR,buffYellow:bufY,rejuvRed:rejR,rejuvYellow:rejY}, {buffIcon:bi,buffBridgeLeftIcon:bli,buffBridgeRightIcon:bri,rejuvIcon:ri}, bridgeText, rejuvText); return; }
                 ApplyMinimapObjectiveTimersBridgeMode(panels, overlay, {timerWidth:tw,timerHeight:th,timerGap:tg,timerPaddingX:tpx,timerRadius:tr,timerFont:tf,timerIcon:ti,bottomOffset:bo}, {minimapSize:400,bridgeTimerWidth:btw,bridgeTimerHeight:bth,bridgeTimerPaddingX:btpx,bridgeTimerRadius:btr,bridgeTimerFont:btf,bridgeHorizontalOffset:bho}, {buffEnabled:be,buffOnBridgeEnabled:bbe,rejuvEnabled:re,rejuvOnBridgeEnabled:rbe,buffRed:bufR,buffYellow:bufY,rejuvRed:rejR,rejuvYellow:rejY}, {buffIcon:bi,buffBridgeLeftIcon:bli,buffBridgeRightIcon:bri,rejuvIcon:ri}, bridgeText, rejuvText, activeBuffs);
             }
 
@@ -366,6 +390,7 @@
                     var S = QOL.core.Scheduler; if (S) S.cancelAllForFeature("ql_minimap_timers");
                     var root = _root || $.GetContextPanel();
                     try { HideMinimapObjectiveTimers(root); } catch(e) {}
+                    _cachedSpawners = null;
                     SetCachedPanel("minimapObjectiveTimersRoot", null); SetCachedPanel("minimapObjectiveBuffPanel", null); SetCachedPanel("minimapObjectiveBuffTime", null); SetCachedPanel("minimapObjectiveBuffIcon", null);
                     SetCachedPanel("minimapObjectiveBuffBridgeLeftPanel", null); SetCachedPanel("minimapObjectiveBuffBridgeLeftTime", null); SetCachedPanel("minimapObjectiveBuffBridgeLeftIcon", null);
                     SetCachedPanel("minimapObjectiveBuffBridgeRightPanel", null); SetCachedPanel("minimapObjectiveBuffBridgeRightTime", null); SetCachedPanel("minimapObjectiveBuffBridgeRightIcon", null);

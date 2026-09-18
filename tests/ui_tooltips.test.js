@@ -335,3 +335,61 @@ test("ui/tooltips: scroll motion while visible automatically hides tooltip and s
     assert.strictEqual(tooltip.isVisible(), true, "Tooltip can open after suppression expires");
 });
 
+test("ui/tooltips: hovering a row after scrolling opens tooltip reliably without being dropped", () => {
+    const { ctx, doc, clock, list, scrollThumb } = createTestEnvironment();
+    const row1 = doc.create("Panel", { id: "Row1" });
+    row1.actuallayoutwidth = 580;
+    row1.actuallayoutheight = 40;
+    row1.actualxoffset = 10;
+    row1.actualyoffset = 80;
+    list.addChild(row1);
+
+    const row2 = doc.create("Panel", { id: "Row2" });
+    row2.actuallayoutwidth = 580;
+    row2.actuallayoutheight = 40;
+    row2.actualxoffset = 10;
+    row2.actualyoffset = 140;
+    list.addChild(row2);
+
+    const tooltip = ctx.QOL.tooltip;
+
+    // Show on row1, then hide
+    tooltip.showRowTooltip(row1, "", "Tooltip 1", "none", "Author");
+    clock.advance(150);
+    assert.strictEqual(tooltip.isVisible(), true);
+    tooltip.hideRowTooltip();
+    assert.strictEqual(tooltip.isVisible(), false);
+
+    // User scrolls the list while tooltip is closed
+    scrollThumb.actualyoffset = 120;
+    clock.advance(300); // 300ms passes after scroll stopped
+
+    // Now user hovers row2: should show after cold-hover delay, NOT be discarded by stale scroll change
+    tooltip.showRowTooltip(row2, "", "Tooltip 2", "none", "Author");
+    clock.advance(150);
+    assert.strictEqual(tooltip.isVisible(), true, "Tooltip on row2 must show after scroll has stopped");
+});
+
+test("ui/tooltips: elements inside SettingsWindow anchor outside the window, never on the scrollbar", () => {
+    const { ctx, doc, clock, rootPanel, settingsWin, list } = createTestEnvironment();
+    // Create an anchor at the far right of the list (e.g. a reset button or narrow control right beside scrollbar)
+    const resetBtn = doc.create("Panel", { id: "ResetBtn" });
+    resetBtn.actuallayoutwidth = 24;
+    resetBtn.actuallayoutheight = 24;
+    resetBtn.actualxoffset = 570; // far right of list (width 600)
+    resetBtn.actualyoffset = 100;
+    list.addChild(resetBtn);
+
+    const tooltip = ctx.QOL.tooltip;
+    tooltip.showRowTooltip(resetBtn, "", "Reset this setting", "none", "Author");
+    clock.advance(150);
+
+    const floatingTooltip = rootPanel.FindChildTraverse("QOLSettingsRowFloatingTooltip");
+    assert.ok(floatingTooltip, "Tooltip must be created");
+
+    // settingsWin: x = 400, width = 800 -> right edge is 1200
+    // Tooltip must be outside SettingsWindow at 1200 + gap(8) = 1208px, NOT at anchorX + anchorW (570 + 24 = 594px)
+    assert.strictEqual(floatingTooltip.style.x, "1208px", "Tooltip must anchor to SettingsWindow exterior, never the scrollbar");
+});
+
+
