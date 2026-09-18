@@ -260,18 +260,6 @@
         if (!root) return null;
         var byId = root.FindChildTraverse ? root.FindChildTraverse(STAT_BONUSES_TOOLTIP_BREAKDOWN_ID) : null;
         if (byId && isLikelyStatBreakdownContainer(byId)) return byId;
-
-        var subRows = root.FindChildrenWithClassTraverse ? (root.FindChildrenWithClassTraverse("SubStatValue") || []) : [];
-        for (var i = 0; i < subRows.length; i++) {
-            var fromSub = findAncestorLikelyStatBreakdownContainer(subRows[i], 6);
-            if (fromSub) return fromSub;
-        }
-
-        var mainRows = root.FindChildrenWithClassTraverse ? (root.FindChildrenWithClassTraverse("MainStatValue") || []) : [];
-        for (var j = 0; j < mainRows.length; j++) {
-            var fromMain = findAncestorLikelyStatBreakdownContainer(mainRows[j], 6);
-            if (fromMain) return fromMain;
-        }
         return null;
     }
 
@@ -319,6 +307,7 @@
             var _lastValues = {};
             var _nextSourceSearchByKey = {};
             var _sourceSearchBackoffMs = 0;
+            var _globalSourceSearchNextMs = 0;
             var _lastShopOpen = null;
             var _nextTooltipScanMs = 0;
 
@@ -358,19 +347,23 @@
                 var cached = _sourcePanels[def.key];
                 if (isAlive(cached)) return cached;
 
+                if (nowMs < _globalSourceSearchNextMs) return null;
                 var nextSearch = _nextSourceSearchByKey[def.key] || 0;
                 if (nowMs < nextSearch) return null;
 
                 var found = null;
+                var statsContainer = root.FindChildTraverse ? (root.FindChildTraverse("HeroStatsDisplay") || root.FindChildTraverse("HeroStatsWeapon") || root.FindChildTraverse("CitadelHudHeroShop")) : null;
+                var searchTarget = statsContainer || root;
+
                 for (var i = 0; i < def.candidateIds.length; i++) {
                     var cid = def.candidateIds[i];
-                    if (root.FindChildTraverse) {
-                        found = root.FindChildTraverse(cid);
+                    if (searchTarget.FindChildTraverse) {
+                        found = searchTarget.FindChildTraverse(cid);
                         if (found) break;
                     }
                 }
-                if (!found && root.FindChildrenWithClassTraverse) {
-                    var containers = root.FindChildrenWithClassTraverse("statAttributeContainer") || [];
+                if (!found && !statsContainer && searchTarget.FindChildrenWithClassTraverse) {
+                    var containers = searchTarget.FindChildrenWithClassTraverse("statAttributeContainer") || [];
                     for (var c = 0; c < containers.length; c++) {
                         var panel = containers[c];
                         if (panel && def.candidateIds.indexOf(panel.id) !== -1) {
@@ -389,6 +382,9 @@
                         ? Math.min(_sourceSearchBackoffMs * 2, STAT_BONUSES_SOURCE_SEARCH_MAX_MS)
                         : STAT_BONUSES_SOURCE_SEARCH_MS;
                     _nextSourceSearchByKey[def.key] = nowMs + _sourceSearchBackoffMs;
+                    if (!statsContainer) {
+                        _globalSourceSearchNextMs = nowMs + 1500;
+                    }
                 }
                 return found;
             }
@@ -418,10 +414,13 @@
 
             function _harvestTooltip(root, nowMs) {
                 if (nowMs < _nextTooltipScanMs) return;
-                _nextTooltipScanMs = nowMs + STAT_BONUSES_TOOLTIP_SCAN_MS;
 
                 var breakdown = resolveStatBonusesTooltipBreakdownPanel(root);
-                if (!breakdown) return;
+                if (!breakdown) {
+                    _nextTooltipScanMs = nowMs + 1000;
+                    return;
+                }
+                _nextTooltipScanMs = nowMs + STAT_BONUSES_TOOLTIP_SCAN_MS;
 
                 var goldenToken = extractGoldenStatuesValueFromBreakdownContainer(breakdown);
                 if (goldenToken) {
@@ -443,7 +442,7 @@
                 if (!enabled) {
                     if (_overlay) {
                         if (_overlay.SetHasClass) _overlay.SetHasClass("qol-hidden", true);
-                        else _overlay.style.visibility = "collapse";
+                        else if (_overlay.style.visibility !== "collapse") _overlay.style.visibility = "collapse";
                     }
                     return;
                 }
@@ -453,7 +452,7 @@
                 if (inHideout) {
                     if (_overlay) {
                         if (_overlay.SetHasClass) _overlay.SetHasClass("qol-hidden", true);
-                        else _overlay.style.visibility = "collapse";
+                        else if (_overlay.style.visibility !== "collapse") _overlay.style.visibility = "collapse";
                     }
                     return;
                 }
@@ -462,7 +461,7 @@
                 if (!overlay) return;
 
                 if (overlay.SetHasClass) overlay.SetHasClass("qol-hidden", false);
-                overlay.style.visibility = "visible";
+                if (overlay.style.visibility !== "visible") overlay.style.visibility = "visible";
 
                 // Layout / offsets
                 var sc = Number(cfg.STAT_BONUSES_SCALE) / 100;
@@ -484,6 +483,7 @@
                 if (shopOpen !== _lastShopOpen) {
                     _lastShopOpen = shopOpen;
                     _sourceSearchBackoffMs = 0;
+                    _globalSourceSearchNextMs = 0;
                     _nextSourceSearchByKey = {};
                 }
 
