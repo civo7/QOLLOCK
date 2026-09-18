@@ -244,14 +244,23 @@
                 _setCachedPanel("coloredHealthbarRegenTotal", null);
             }
 
+            var _nextHealthContainerScanMs = 0;
+
             function _resolveSelfPanels(root) {
-                var liveHealthContainer = (root && root.FindChildTraverse) ? root.FindChildTraverse(PANEL_ID_HEALTH_CONTAINER) : null;
-                var healthContainer = _isPanelValid(liveHealthContainer) ? liveHealthContainer : _getCachedPanel("healthContainer");
-                if (healthContainer !== _getCachedPanel("healthContainer")) {
-                    _setCachedPanel("healthContainer", healthContainer);
-                    _resetSelfPanelCache();
+                var healthContainer = _getCachedPanel("healthContainer");
+                if (!healthContainer || !_isPanelValid(healthContainer)) {
+                    var now = Date.now ? Date.now() : (new Date()).getTime();
+                    if (now < _nextHealthContainerScanMs) return null;
+                    healthContainer = (root && root.FindChildTraverse) ? root.FindChildTraverse(PANEL_ID_HEALTH_CONTAINER) : null;
+                    if (_isPanelValid(healthContainer)) {
+                        _setCachedPanel("healthContainer", healthContainer);
+                        _resetSelfPanelCache();
+                    } else {
+                        _nextHealthContainerScanMs = now + 1000;
+                        return null;
+                    }
                 }
-                var searchRoot = healthContainer || root;
+                var searchRoot = healthContainer;
                 if (!searchRoot) return null;
 
                 var regenTotal = _getCachedPanel("coloredHealthbarRegenTotal");
@@ -457,6 +466,20 @@
                 if (!State || !root) return;
                 if (nowMs < (State.enemyColoredHealthPanelCacheNextMs || 0)) return;
                 var previous = Array.isArray(State.enemyColoredHealthPanelCache) ? State.enemyColoredHealthPanelCache : [];
+                if (previous.length > 0) {
+                    var allValid = true;
+                    for (var vi = 0; vi < previous.length; vi++) {
+                        var ve = previous[vi];
+                        if (!ve || !_isPanelValid(ve.healthBar) || !_isPanelValid(ve.healthBarParent)) {
+                            allValid = false;
+                            break;
+                        }
+                    }
+                    if (allValid) {
+                        State.enemyColoredHealthPanelCacheNextMs = nowMs + ENEMY_COLORED_HEALTH_PANEL_SCAN_MS;
+                        return;
+                    }
+                }
                 var next = [];
                 var friendlyTeamClass = _resolveFriendlyTopBarTeamClass(root, nowMs);
                 function findPrevious(windowRoot, healthBar) {
@@ -488,7 +511,7 @@
                     });
                 }
                 State.enemyColoredHealthPanelCache = next;
-                State.enemyColoredHealthPanelCacheNextMs = nowMs + ENEMY_COLORED_HEALTH_PANEL_SCAN_MS;
+                State.enemyColoredHealthPanelCacheNextMs = nowMs + (next.length > 0 ? ENEMY_COLORED_HEALTH_PANEL_SCAN_MS : 2000);
             }
 
             function _resolveEnemyColor(pct, cfg, teamColorRgb) {
@@ -589,6 +612,20 @@
                 if (!State || !root) return;
                 if (nowMs < (State.allyColoredHealthPanelCacheNextMs || 0)) return;
                 var previous = Array.isArray(State.allyColoredHealthPanelCache) ? State.allyColoredHealthPanelCache : [];
+                if (previous.length > 0) {
+                    var allValid = true;
+                    for (var vi = 0; vi < previous.length; vi++) {
+                        var ve = previous[vi];
+                        if (!ve || !_isPanelValid(ve.healthBar) || !_isPanelValid(ve.healthBarParent)) {
+                            allValid = false;
+                            break;
+                        }
+                    }
+                    if (allValid) {
+                        State.allyColoredHealthPanelCacheNextMs = nowMs + ENEMY_COLORED_HEALTH_PANEL_SCAN_MS;
+                        return;
+                    }
+                }
                 var next = [];
                 function findPrevious(windowRoot, healthBar) {
                     for (var pi = 0; pi < previous.length; pi++) {
@@ -618,7 +655,7 @@
                     });
                 }
                 State.allyColoredHealthPanelCache = next;
-                State.allyColoredHealthPanelCacheNextMs = nowMs + ENEMY_COLORED_HEALTH_PANEL_SCAN_MS;
+                State.allyColoredHealthPanelCacheNextMs = nowMs + (next.length > 0 ? ENEMY_COLORED_HEALTH_PANEL_SCAN_MS : 2000);
             }
 
             function _resolveAllyColor(pct, cfg, teamColorRgb) {
