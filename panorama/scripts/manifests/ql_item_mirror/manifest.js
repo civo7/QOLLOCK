@@ -23,6 +23,7 @@
 
     var FEATURE_ID = "ql_item_mirror";
     var ITEM_MIRROR_ICON_BASE_SIZE_PX = 45;
+    // rate-exempt: 20Hz (50ms) active cadence during item drag mirror operation
     var ITEM_MIRROR_RENDER_INTERVAL_MS_ACTIVE = 50;
     var ITEM_MIRROR_RENDER_INTERVAL_MS_IDLE = 120;
     var ITEM_MIRROR_TEXT_PROBE_INTERVAL_MS = 80;

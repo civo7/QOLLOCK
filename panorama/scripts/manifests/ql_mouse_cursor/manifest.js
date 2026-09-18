@@ -169,6 +169,7 @@
             return {
                 onEnable: function() {
                     var S = QOL.core.Scheduler;
+                    // rate-exempt: 20Hz (0.05s) required for tracking custom mouse cursor coordinates
                     _loop = S && S.createPollLoop ? S.createPollLoop(_tick, 0.05, "ql_mouse_cursor") : null;
                 },
                 onDisable: function() {

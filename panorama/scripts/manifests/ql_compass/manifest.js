@@ -26,6 +26,7 @@
     var PANEL_ID_MINIMAP = "hud_minimap";
 
     // Timing & sampling constants
+    // rate-exempt: 20Hz (0.05s) required for smooth heading compass rotation
     var COMPASS_INTERVAL_SEC = 0.05;
     var COMPASS_INTERVAL_IDLE_SEC = 0.50;
     var COMPASS_TICK_STEP_DEG = 22.5;

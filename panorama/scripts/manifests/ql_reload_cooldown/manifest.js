@@ -23,6 +23,7 @@
     }
 
     var FEATURE_ID = "ql_reload_cooldown";
+    // rate-exempt: 20Hz (0.05s) active reload radial progress animation
     var FAST_INTERVAL_SEC = 0.05;
     var IDLE_INTERVAL_SEC = 0.50;
 

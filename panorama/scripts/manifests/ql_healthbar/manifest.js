@@ -133,6 +133,7 @@
             return {
                 onEnable: function() {
                     var S = QOL.core.Scheduler;
+                    // rate-exempt: 20Hz (0.05s) required for custom animated healthbars (budhud/minecraft)
                     _loop = S && S.createPollLoop ? S.createPollLoop(_tick, 0.05, "ql_healthbar") : null;
                     _update();
                 },

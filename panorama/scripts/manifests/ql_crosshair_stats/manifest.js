@@ -274,7 +274,11 @@
             }
 
             return {
-                onEnable: function() { var S = QOL.core.Scheduler; _loop = S && S.createPollLoop ? S.createPollLoop(_tick, 0.1, "ql_crosshair_stats") : null; },
+                onEnable: function() {
+                    var S = QOL.core.Scheduler;
+                    // rate-exempt: 10Hz (0.1s) required for responsive crosshair stats
+                    _loop = S && S.createPollLoop ? S.createPollLoop(_tick, 0.1, "ql_crosshair_stats") : null;
+                },
                 onDisable: function() {
                     if (_loop) { _loop.stop(); _loop = null; }
                     var root = $.GetContextPanel(); _removeOverlay(root);

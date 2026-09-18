@@ -760,6 +760,7 @@
             return {
                 onEnable: function() {
                     var S = QOL.core.Scheduler;
+                    // rate-exempt: 6Hz (0.16s) required for warning pulse animation cadence
                     _loop = S && S.createPollLoop ? S.createPollLoop(_tick, 0.16, "ql_color_warnings") : null;
                 },
                 onDisable: function() {
