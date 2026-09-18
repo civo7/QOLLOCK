@@ -249,7 +249,6 @@ test("INVARIANT 3: Full UI layout walk - all controls bind to valid DEFAULT_CONF
             },
             ui: {},
             events: { emit: () => {} },
-            preview: { startHeroHintPublisher: () => {} }
         },
         globalThis: null,
         setTimeout,
@@ -259,8 +258,8 @@ test("INVARIANT 3: Full UI layout walk - all controls bind to valid DEFAULT_CONF
 
     const scriptsToLoad = [
         "panorama/scripts/core/ql_namespace.js",
-        "panorama/scripts/core/ql_panel_helpers.js",
         "panorama/scripts/ql_utils.js",
+        "panorama/scripts/core/ql_panel_helpers.js",
         "panorama/scripts/ql_shared_presets.js",
         "panorama/scripts/ql_bridge.js",
         "panorama/scripts/ql_config.js",
@@ -358,7 +357,6 @@ test("INVARIANT 4: All 90+ community presets resolve, diff, and serialize into #
             },
             ui: {},
             events: { emit: () => {} },
-            preview: { startHeroHintPublisher: () => {} }
         },
         globalThis: null,
         setTimeout,
@@ -368,8 +366,8 @@ test("INVARIANT 4: All 90+ community presets resolve, diff, and serialize into #
 
     const scriptsToLoad = [
         "panorama/scripts/core/ql_namespace.js",
-        "panorama/scripts/core/ql_panel_helpers.js",
         "panorama/scripts/ql_utils.js",
+        "panorama/scripts/core/ql_panel_helpers.js",
         "panorama/scripts/ql_shared_presets.js",
         "panorama/scripts/ql_bridge.js",
         "panorama/scripts/ql_config.js",

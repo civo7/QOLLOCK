@@ -11,10 +11,10 @@ QOL.getSettingsConfig = function() { return MOD_CONFIG; };
 // ── QOL.import() for settings context (ql_utils.js now loaded via hud_escape_menu.xml) ──
 var _deps = QOL.import(["utils"]);
 var Utils = _deps.utils;
-var SafeLog = (Utils && Utils.SafeLog) ? Utils.SafeLog : function(fn, label) { try { return fn(); } catch(e) { return null; } };
-var SafeGetAttribute = (Utils && Utils.SafeGetAttribute) ? Utils.SafeGetAttribute : function(p, a, d) { try { return String((p && p.GetAttributeString) ? p.GetAttributeString(a, d || "") : d || ""); } catch(e) { return d || ""; } };
-var SafeSetAttribute = (Utils && Utils.SafeSetAttribute) ? Utils.SafeSetAttribute : function(p, a, v) { try { if (p && p.SetAttributeString) { p.SetAttributeString(a, String(v != null ? v : "")); return true; } } catch(e) { WarnLog("settings", "op failed: " + (e && e.message ? e.message : String(e || ""))); } return false; };
-var WarnLog = (Utils && Utils.WarnLog) ? Utils.WarnLog : function(cat, msg) { $.Msg("[QOLLock][WARN][" + cat + "] " + msg); };
+var SafeLog = QOL_UTILS.SafeLog;
+var SafeGetAttribute = QOL_UTILS.SafeGetAttribute;
+var SafeSetAttribute = QOL_UTILS.SafeSetAttribute;
+var WarnLog = QOL_UTILS.WarnLog;
 
 // Phase 2: Inject arcade dependencies (ql_arcade_games.js loads before ql_settings.js)
 
@@ -92,7 +92,7 @@ function ReadConfigRawFromStorage() {
         if (!target || !target.GetAttributeString) return "";
         try { return String(target.GetAttributeString(STORAGE_KEY, "") || ""); } catch (e0) { return ""; }
     };
-    var parseRev = (Utils && Utils.ParseRevisionNumber) || function(v) { var n = Number(v); if (!isFinite(n) || n < 0) return 0; return Math.floor(n); };
+    var parseRev = QOL_UTILS.ParseRevisionNumber;
     var readRev = function(target) {
         if (!target || !target.GetAttributeString) return 0;
         try { return parseRev(target.GetAttributeString(USER_EDIT_REV_ATTR, "")); } catch (e1) { return 0; }
@@ -302,7 +302,7 @@ function SaveAndSync() {
         return;
     }
     gLastSavedConfigRaw = data;
-    var parseRev = (Utils && Utils.ParseRevisionNumber) || function(v) { var n = Number(v); if (!isFinite(n) || n < 0) return 0; return Math.floor(n); };
+    var parseRev = QOL_UTILS.ParseRevisionNumber;
     var panelRev = (panel && panel.GetAttributeString) ? parseRev(panel.GetAttributeString(USER_EDIT_REV_ATTR, "")) : 0;
     var rootRev = (root && root.GetAttributeString) ? parseRev(root.GetAttributeString(USER_EDIT_REV_ATTR, "")) : 0;
     var hudRev = (hud && hud.GetAttributeString) ? parseRev(hud.GetAttributeString(USER_EDIT_REV_ATTR, "")) : 0;
@@ -333,4 +333,3 @@ function SaveAndSync() {
 // Window shell, navigation, list caching, and event listeners delegated to panorama/scripts/ui/window.js
 
 SyncConfigFromStorage();
-QOL.preview.startHeroHintPublisher();

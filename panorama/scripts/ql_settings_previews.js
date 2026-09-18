@@ -7,7 +7,7 @@
 
     var _deps = QOL.import(["utils"]);
     var Utils = _deps.utils;
-    var WarnLog = (Utils && Utils.WarnLog) ? Utils.WarnLog : function(cat, msg) { $.Msg("[QOLLock][WARN][" + cat + "] " + msg); };
+    var WarnLog = QOL_UTILS.WarnLog;
 
     // ── Preview globals ──
 
@@ -1989,26 +1989,6 @@ function WirePreviewToggleButton(btn) {
     });
 }
 
-    // ── Hero hint publisher ──
-
-function PublishHeroHintFromSettings() {
-    // GameInterfaceAPI confirmed absent — hero hint publishing from settings unavailable.
-    // Hero detection relies on HUD-side UI panel scanning.
-}
-
-var HERO_HINT_PUBLISH_INTERVAL_SEC = 1.0;
-
-function StartHeroHintPublisher() {
-    function tick() {
-        // Only publish hero hints while the settings window is open.
-        // No point running this poll when the player can't see the settings UI.
-        if (typeof IsSettingsWindowVisible === "function" && IsSettingsWindowVisible()) {
-            try { PublishHeroHintFromSettings(); } catch(e0) { WarnLog("settings", "op failed: " + (e0 && e0.message ? e0.message : String(e0 || ""))); }
-        }
-        $.Schedule(HERO_HINT_PUBLISH_INTERVAL_SEC, tick);
-    }
-    tick();
-}
 
     // ── Public API ──
     QOL.preview = {
@@ -2042,8 +2022,6 @@ function StartHeroHintPublisher() {
         isDamageReportPreviewConfig: IsDamageReportPreviewConfig,
         isShopPreviewConfig: IsShopPreviewConfig,
         isUnsecuredPlusPreviewConfig: IsUnsecuredPlusPreviewConfig,
-        isAdvancedItemCooldownModeEnabled: IsAdvancedItemCooldownModeEnabled,
-        // Hero hint
-        startHeroHintPublisher: StartHeroHintPublisher
+        isAdvancedItemCooldownModeEnabled: IsAdvancedItemCooldownModeEnabled
     };
 })();

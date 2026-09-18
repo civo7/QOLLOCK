@@ -194,7 +194,6 @@ test("SUPER TEST 2: Settings Window header, Presets tab click, diff modal, and a
             },
             ui: {},
             events: { emit: () => {} },
-            preview: { startHeroHintPublisher: () => {} }
         },
         globalThis: null,
         setTimeout,
@@ -205,6 +204,7 @@ test("SUPER TEST 2: Settings Window header, Presets tab click, diff modal, and a
     // Load presets and settings files
     const scriptsToLoad = [
         "panorama/scripts/core/ql_namespace.js",
+        "panorama/scripts/ql_utils.js",
         "panorama/scripts/ql_shared_presets.js",
         "panorama/scripts/ql_bridge.js",
         "panorama/scripts/ql_config.js",
@@ -338,12 +338,16 @@ test("SUPER TEST 3: Cross-isolate bridge synchronization (Settings -> #Hud -> HU
 
 test("SUPER TEST 4: All 90+ community presets resolve cleanly with complete schemas", () => {
     const sandbox = {
-        QOL: { ui: { presets: null } },
+        $: { Msg: () => {} },
+        QOL: { core: {}, ui: { presets: null } },
         globalThis: null,
     };
     sandbox.globalThis = sandbox;
 
     const files = [
+        "panorama/scripts/ql_utils.js",
+        "panorama/scripts/core/ql_panel_helpers.js",
+        "panorama/scripts/ui/renderer.js",
         "panorama/scripts/ql_shared_presets.js",
         "panorama/scripts/ql_config.js",
         "panorama/scripts/ui/presets.js"
