@@ -29,7 +29,7 @@
         create: (ctx) => {
             let _loop = null;
             let _lastSig = "";
-            let _isCollapsed = false;
+            let _isVisible = false;
             let _lowerLeft = null;
             let _buildPanel = null;
             let _buildLabel = null;
@@ -100,21 +100,16 @@
             };
 
             const _collapse = () => {
-                if (_isCollapsed) return;
-                const root = $.GetContextPanel();
-                if (!root) return;
-                if (!_isAlive(_lowerLeft)) {
-                    _lowerLeft = root.FindChildTraverse ? root.FindChildTraverse("LowerLeft") : null;
-                }
+                if (!_isVisible && _lastSig === "") return;
+                _isVisible = false;
                 if (_isAlive(_lowerLeft)) {
                     if (!_isAlive(_buildPanel)) {
                         _buildPanel = _lowerLeft.FindChildTraverse ? _lowerLeft.FindChildTraverse("selected_build_info") : null;
                     }
-                    if (_buildPanel && _buildPanel.style && _buildPanel.style.visibility !== "collapse") {
+                    if (_buildPanel && _buildPanel.style) {
                         _buildPanel.style.visibility = "collapse";
                     }
                 }
-                _isCollapsed = true;
                 _lastSig = "";
                 _namePanel = null;
             };
@@ -149,7 +144,6 @@
                     _collapse();
                     return;
                 }
-                _isCollapsed = false;
 
                 let buildName = parsed.name;
                 if (!buildName || buildName === "Unknown") {
@@ -173,14 +167,15 @@
                 const target = _ensurePanel(root);
                 if (!target) return;
 
+                if (!_isVisible) {
+                    if (target.panel && target.panel.style) target.panel.style.visibility = "visible";
+                    _isVisible = true;
+                }
+
                 const showTitle = cfg.ENABLE_SHOW_BUILD_ID_TITLE === true || Number(cfg.ENABLE_SHOW_BUILD_ID_TITLE) === 1;
                 const titlePart = (showTitle && buildName && buildName !== "Unknown") ? " - " + buildName : "";
                 const displayText = `${parsed.visibility} Build: ${parsed.id}${titlePart}`;
                 const sig = `${displayText}|${showTitle ? "1" : "0"}`;
-
-                if (target.panel && target.panel.style && target.panel.style.visibility !== "visible") {
-                    target.panel.style.visibility = "visible";
-                }
 
                 if (_lastSig === sig) return;
                 _lastSig = sig;

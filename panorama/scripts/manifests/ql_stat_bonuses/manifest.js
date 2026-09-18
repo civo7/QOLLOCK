@@ -310,6 +310,7 @@
             var _globalSourceSearchNextMs = 0;
             var _lastShopOpen = null;
             var _nextTooltipScanMs = 0;
+            var _overlayVisible = false;
 
             var _cachedStatsContainer = null;
             var _nextStatsContainerSearchMs = 0;
@@ -460,9 +461,10 @@
                 var hud = QOL.core && QOL.core.Hud;
                 var inHideout = hud && hud.isInHideout ? hud.isInHideout(root) : false;
                 if (inHideout) {
-                    if (_overlay) {
+                    if (_overlay && _overlayVisible) {
                         if (_overlay.SetHasClass) _overlay.SetHasClass("qol-hidden", true);
-                        else if (_overlay.style.visibility !== "collapse") _overlay.style.visibility = "collapse";
+                        _overlay.style.visibility = "collapse";
+                        _overlayVisible = false;
                     }
                     return;
                 }
@@ -470,8 +472,11 @@
                 var overlay = _ensureOverlay(root);
                 if (!overlay) return;
 
-                if (overlay.SetHasClass) overlay.SetHasClass("qol-hidden", false);
-                if (overlay.style.visibility !== "visible") overlay.style.visibility = "visible";
+                if (!_overlayVisible) {
+                    if (overlay.SetHasClass) overlay.SetHasClass("qol-hidden", false);
+                    overlay.style.visibility = "visible";
+                    _overlayVisible = true;
+                }
 
                 // Layout / offsets
                 var sc = Number(cfg.STAT_BONUSES_SCALE) / 100;
@@ -545,6 +550,7 @@
                     _goldenValues = {};
                     _lastValues = {};
                     _lastLayoutSig = "";
+                    _overlayVisible = false;
                 },
                 onSettingsChanged: function() {}
             };

@@ -86,6 +86,7 @@
             var _direction = 0;
             var _slopeEma = null;
             var _displayLock = null;
+            var _labelVisible = false;
 
             function _resetEstimate() {
                 _lastDeg = null;
@@ -101,7 +102,10 @@
 
             function _hideLabel() {
                 if (_isAlive(_cooldownLabel)) {
-                    if (_cooldownLabel.style.visibility !== "collapse") _cooldownLabel.style.visibility = "collapse";
+                    if (_labelVisible) {
+                        _cooldownLabel.style.visibility = "collapse";
+                        _labelVisible = false;
+                    }
                     if (_cooldownLabel.text !== "") _cooldownLabel.text = "";
                 }
                 _resetEstimate();
@@ -272,9 +276,15 @@
 
                 if (cooldownText && cooldownText.length > 0) {
                     if (_cooldownLabel.text !== cooldownText) _cooldownLabel.text = cooldownText;
-                    if (_cooldownLabel.style.visibility !== "visible") _cooldownLabel.style.visibility = "visible";
+                    if (!_labelVisible) {
+                        _cooldownLabel.style.visibility = "visible";
+                        _labelVisible = true;
+                    }
                 } else {
-                    if (_cooldownLabel.style.visibility !== "collapse") _cooldownLabel.style.visibility = "collapse";
+                    if (_labelVisible) {
+                        _cooldownLabel.style.visibility = "collapse";
+                        _labelVisible = false;
+                    }
                     if (_cooldownLabel.text !== "") _cooldownLabel.text = "";
                 }
             }

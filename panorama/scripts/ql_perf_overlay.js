@@ -20,6 +20,7 @@
     var _bodyLabel = null;
     var _wasVisible = false;
     var _alertCooldowns = {};
+    var _lastAppliedOpacityStr = "";
 
     // ---- 60-second rolling window ----
     var ROLLING_WINDOW_MS = 60000;
@@ -297,6 +298,7 @@
                     _windowSnapshots = [];
                     _prevTotalCount = -1;
                     _prevEntries = null;
+                    _lastAppliedOpacityStr = "";
                 }
                 _wasVisible = false;
                 return;
@@ -321,7 +323,10 @@
                 ? Number(cfg.PERF_OVERLAY_OPACITY)
                 : 0.75;
             var opacityStr = (opacity < 0.3 ? 0.3 : opacity > 1.0 ? 1.0 : opacity).toFixed(2);
-            if (overlay.style.opacity !== opacityStr) overlay.style.opacity = opacityStr;
+            if (_lastAppliedOpacityStr !== opacityStr) {
+                overlay.style.opacity = opacityStr;
+                _lastAppliedOpacityStr = opacityStr;
+            }
 
             // Read alert threshold
             var threshold = (cfg && cfg.PERF_ALERT_THRESHOLD_MS != null)

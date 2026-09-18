@@ -183,6 +183,8 @@
             var _quickSeenKeys = {};
             var _quickInitialized = false;
             var _quickActiveEntries = [];
+            var _rpPanelStyleSig = "";
+            var _quickPanelStyleSig = "";
 
             // Cached panel references
             var _rpPanel = null;
@@ -933,11 +935,15 @@
                     var panelOffsetY = normalizeHudOffsetNumber(cfg.RECENT_PURCHASES_PANEL_Y_OFFSET, 0);
                     var panelOpacityText = normalizeOpacityNumber(cfg.RECENT_PURCHASES_PANEL_OPACITY, 1.0).toFixed(2);
                     var panelScaleText = normalizeHudScaleNumber(cfg.RECENT_PURCHASES_PANEL_SCALE, 1.0).toFixed(2);
-                    setStyleIfChanged(_rpPanel, "x", String(panelOffsetX) + "px");
-                    setStyleIfChanged(_rpPanel, "y", String(-panelOffsetY) + "px");
-                    setPanelOpacitySafe(_rpPanel, panelOpacityText, 1.0);
-                    setStyleIfChanged(_rpPanel, "preTransformScale2d", "1.00, 1.00");
-                    setStyleIfChanged(_rpPanel, "uiScale", Math.round(Number(panelScaleText) * 100) + "%");
+                    var rpSig = panelOffsetX + "|" + panelOffsetY + "|" + panelOpacityText + "|" + panelScaleText;
+                    if (_rpPanelStyleSig !== rpSig) {
+                        setStyleIfChanged(_rpPanel, "x", String(panelOffsetX) + "px");
+                        setStyleIfChanged(_rpPanel, "y", String(-panelOffsetY) + "px");
+                        setPanelOpacitySafe(_rpPanel, panelOpacityText, 1.0);
+                        setStyleIfChanged(_rpPanel, "preTransformScale2d", "1.00, 1.00");
+                        setStyleIfChanged(_rpPanel, "uiScale", Math.round(Number(panelScaleText) * 100) + "%");
+                        _rpPanelStyleSig = rpSig;
+                    }
                 }
 
                 var quickMax = Math.round(Number(cfg.RECENT_PURCHASES_QUICK_MAX) || RECENT_PURCHASE_QUICK_MAX_DEFAULT);
@@ -986,12 +992,17 @@
                         var quickPanel = _quickPurchasesPanel;
                         if (isPanelValid(quickPanel)) {
                             quickPanel.SetHasClass("rp_quick_scoreboard_active", scoreboardEnabled);
-                            setStyleIfChanged(quickPanel, "marginTop", String(_computeQuickPurchasesMarginTopRP(root, cfg, rejuvEnabled, scoreboardEnabled)) + "px");
-                            setStyleIfChanged(quickPanel, "x", String(quickOffsetX) + "px");
-                            setStyleIfChanged(quickPanel, "y", String(-quickOffsetY) + "px");
-                            setPanelOpacitySafe(quickPanel, quickOpacityText, 1.0);
-                            setStyleIfChanged(quickPanel, "preTransformScale2d", "1.00, 1.00");
-                            setStyleIfChanged(quickPanel, "uiScale", Math.round(Number(quickScaleText) * 100) + "%");
+                            var mTop = _computeQuickPurchasesMarginTopRP(root, cfg, rejuvEnabled, scoreboardEnabled);
+                            var quickSig = mTop + "|" + quickOffsetX + "|" + quickOffsetY + "|" + quickOpacityText + "|" + quickScaleText;
+                            if (_quickPanelStyleSig !== quickSig) {
+                                setStyleIfChanged(quickPanel, "marginTop", String(mTop) + "px");
+                                setStyleIfChanged(quickPanel, "x", String(quickOffsetX) + "px");
+                                setStyleIfChanged(quickPanel, "y", String(-quickOffsetY) + "px");
+                                setPanelOpacitySafe(quickPanel, quickOpacityText, 1.0);
+                                setStyleIfChanged(quickPanel, "preTransformScale2d", "1.00, 1.00");
+                                setStyleIfChanged(quickPanel, "uiScale", Math.round(Number(quickScaleText) * 100) + "%");
+                                _quickPanelStyleSig = quickSig;
+                            }
                         }
                     }
                 }
