@@ -33,7 +33,6 @@
             var _lastLayoutSig = "", _lastClassSig = "", _lastTitle = "", _lastStatus = "";
             var _nextSourceSearchMs = 0, _activeEndMs = 0, _wasInUse = false;
             var _lastState = null, _readyFlashUntilMs = 0;
-            var _cachedAbilitiesScope = null;
 
             var _isAlive = QOL.utils.IsPanelValid;
 
@@ -55,19 +54,30 @@
 
             function _findZipBoostSource(root) {
                 if (!root) return null;
-                if (!_isAlive(_cachedAbilitiesScope)) {
-                    _cachedAbilitiesScope = root.FindChildTraverse ? (root.FindChildTraverse("abilities_container") || root.FindChildTraverse("abilitiesContainer") || root.FindChildTraverse("gameplay_hud")) : null;
+                var scope = (root.FindChildTraverse ? root.FindChildTraverse("gameplay_hud") : null) || root;
+                if (scope.FindChildTraverse) {
+                    var byId = scope.FindChildTraverse("citadel_ability_zipline_boost_") ||
+                               scope.FindChildTraverse("citadel_ability_zipline_boost") ||
+                               scope.FindChildTraverse("CitadelZiplineBoostIcon");
+                    if (byId) return byId;
                 }
-                var scope = _isAlive(_cachedAbilitiesScope) ? _cachedAbilitiesScope : root;
-                var byId = scope.FindChildTraverse ? scope.FindChildTraverse("citadel_ability_zipline_boost_") : null;
-                if (byId) return byId;
 
-                var candidates = scope.FindChildrenWithClassTraverse ? scope.FindChildrenWithClassTraverse("buttonContainer") : [];
-                if (candidates) {
-                    for (var i = 0; i < candidates.length; i++) {
-                        var c = candidates[i];
-                        if (c && c.BHasClass && c.BHasClass("citadel_ability_zipline_boost")) return c;
+                if (scope.FindChildrenWithClassTraverse) {
+                    var zips = scope.FindChildrenWithClassTraverse("citadel_ability_zipline_boost");
+                    if (zips && zips.length > 0) return zips[0];
+
+                    var candidates = scope.FindChildrenWithClassTraverse("buttonContainer");
+                    if (candidates) {
+                        for (var i = 0; i < candidates.length; i++) {
+                            var c = candidates[i];
+                            if (c && c.BHasClass && (c.BHasClass("citadel_ability_zipline_boost") || c.BHasClass("zipline_boost"))) return c;
+                        }
                     }
+                }
+
+                if (scope !== root && root.FindChildrenWithClassTraverse) {
+                    var rootZips = root.FindChildrenWithClassTraverse("citadel_ability_zipline_boost");
+                    if (rootZips && rootZips.length > 0) return rootZips[0];
                 }
                 return null;
             }
@@ -189,8 +199,8 @@
                 var isInUse = false;
 
                 if (_source) {
-                    isCooldown = _source.BHasClass && _source.BHasClass("on_cooldown");
-                    isInUse = _source.BHasClass && _source.BHasClass("in_use");
+                    isCooldown = _source.BHasClass && (_source.BHasClass("on_cooldown") || _source.BHasClass("cooling_down"));
+                    isInUse = _source.BHasClass && (_source.BHasClass("in_use") || _source.BHasClass("active"));
 
                     if (isInUse && !_wasInUse) {
                         _activeEndMs = nowMs + 32000;
@@ -205,7 +215,12 @@
 
                     if (!_isAlive(_countdownPanel) && _source.FindChildrenWithClassTraverse) {
                         var countdowns = _source.FindChildrenWithClassTraverse("Countdown") || [];
-                        _countdownPanel = countdowns.length > 0 ? countdowns[0] : null;
+                        if (countdowns.length > 0) {
+                            _countdownPanel = countdowns[0];
+                        } else {
+                            var cdTimers = _source.FindChildrenWithClassTraverse("cooldown_timer") || [];
+                            _countdownPanel = cdTimers.length > 0 ? cdTimers[0] : null;
+                        }
                     }
                     var countdown = (_countdownPanel && typeof _countdownPanel.text === "string") ? _countdownPanel.text : "";
                     if (isCooldown && (!countdown || countdown.trim() === "")) {
@@ -253,7 +268,7 @@
                 onEnable: function() {
                     _tick();
                     var S = QOL.core.Scheduler;
-                    _loop = S && S.createPollLoop ? S.createPollLoop(_tick, 2.0, "ql_zipboost") : null;
+                    _loop = S && S.createPollLoop ? S.createPollLoop(_tick, 0.4, "ql_zipboost") : null;
                 },
                 onDisable: function() {
                     if (_loop) { _loop.stop(); _loop = null; }

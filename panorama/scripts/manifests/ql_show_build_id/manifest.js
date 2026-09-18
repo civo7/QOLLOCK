@@ -38,18 +38,32 @@
 
             const _isAlive = QOL.utils.IsPanelValid;
 
+            let _namePanel = null;
+
             const _parseSelectedBuildInfoText = (rawText) => {
                 const raw = String(rawText || "").trim();
                 if (!raw || raw.length === 0) return null;
-                const parts = raw.split(" - ");
-                const buildId = String(parts[0] || "").replace(/,/g, "").trim();
-                const buildName = String(parts[1] || "").trim();
-                const buildVersion = parseInt(String(parts[2] || "0").replace(/,/g, ""), 10);
+                const match = raw.match(/^([\d,]+)(?:\s*-\s*(.*?))?(?:\s*-\s*([\d,]+))?$/);
+                let buildId = "";
+                let buildName = "";
+                let buildVersion = 0;
+
+                if (match) {
+                    buildId = String(match[1] || "").replace(/,/g, "").trim();
+                    buildName = String(match[2] || "").trim();
+                    buildVersion = parseInt(String(match[3] || "0").replace(/,/g, ""), 10);
+                } else {
+                    const parts = raw.split(" - ");
+                    buildId = String(parts[0] || "").replace(/,/g, "").trim();
+                    buildName = String(parts[1] || "").trim();
+                    buildVersion = parseInt(String(parts[2] || "0").replace(/,/g, ""), 10);
+                }
+
                 if (!buildId || buildId === "0") return null;
                 return {
                     id: buildId,
-                    name: buildName || "Unknown",
-                    visibility: buildVersion > 0 ? "Public" : "Private"
+                    name: (buildName && buildName !== "Unknown") ? buildName : "",
+                    visibility: (buildVersion > 0 || parseInt(buildId, 10) > 0) ? "Public" : "Private"
                 };
             };
 
@@ -102,6 +116,7 @@
                 }
                 _isCollapsed = true;
                 _lastSig = "";
+                _namePanel = null;
             };
 
             const _tick = () => {
@@ -136,11 +151,31 @@
                 }
                 _isCollapsed = false;
 
+                let buildName = parsed.name;
+                if (!buildName || buildName === "Unknown") {
+                    if (!_isAlive(_namePanel)) {
+                        _namePanel = root.FindChildTraverse ? (root.FindChildTraverse("SelectedBuildOuter") || root.FindChildTraverse("SelectedBuildName")) : null;
+                    }
+                    if (_isAlive(_namePanel)) {
+                        if (_namePanel.BHasClass && _namePanel.BHasClass("SelectedBuildName") && typeof _namePanel.text === "string") {
+                            const t = _namePanel.text.trim();
+                            if (t && !t.startsWith("#")) buildName = t;
+                        } else if (_namePanel.FindChildrenWithClassTraverse) {
+                            const list = _namePanel.FindChildrenWithClassTraverse("SelectedBuildName");
+                            if (list && list.length > 0 && typeof list[0].text === "string") {
+                                const t = list[0].text.trim();
+                                if (t && !t.startsWith("#")) buildName = t;
+                            }
+                        }
+                    }
+                }
+
                 const target = _ensurePanel(root);
                 if (!target) return;
 
                 const showTitle = cfg.ENABLE_SHOW_BUILD_ID_TITLE === true || Number(cfg.ENABLE_SHOW_BUILD_ID_TITLE) === 1;
-                const displayText = `${parsed.visibility} Build: ${parsed.id}${showTitle ? " - " + parsed.name : ""}`;
+                const titlePart = (showTitle && buildName && buildName !== "Unknown") ? " - " + buildName : "";
+                const displayText = `${parsed.visibility} Build: ${parsed.id}${titlePart}`;
                 const sig = `${displayText}|${showTitle ? "1" : "0"}`;
 
                 if (target.panel && target.panel.style && target.panel.style.visibility !== "visible") {

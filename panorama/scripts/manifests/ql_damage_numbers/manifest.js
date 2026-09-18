@@ -153,20 +153,32 @@
             function _applyStyle(meta, fontSizeText, indicatorSize, hideModesChanged, hideSmallNumbers, opacityText) {
                 if (!meta || !meta.panel) return;
                 var p = meta.panel; if (!_isPanelValid(p)) return;
-                if (meta.isCumulativeOrBatched) {
-                    try { if (p.style.fontSize) p.style.fontSize = null; } catch(e) {}
-                    return;
-                }
                 if (hideModesChanged) {
                     var container = _isPanelValid(meta.container) ? meta.container : _findAncestorWithClass(p, "HudIndicatorContainer");
                     if (container && container !== meta.container) meta.container = container;
                     if (p.style.opacity === "0" || p.style.opacity === "0.00") _setOpacitySafe(p, 1.0, 1.0);
                     if (container && (container.style.opacity === "0" || container.style.opacity === "0.00")) _setOpacitySafe(container, 1.0, 1.0);
                 }
-                var targetSize = fontSizeText;
-                try { var pid = p.id; if (pid === "Desc" || pid === "Effectiveness") { var capped = indicatorSize > 28 ? 28 : indicatorSize; targetSize = capped + "px"; } } catch(e) {}
-                if (p.style.fontSize !== targetSize) { try { p.style.fontSize = targetSize; } catch(e) {} }
-                if (hideSmallNumbers && meta.isSmallDamage) { _setOpacitySafe(p, 0, 0); return; }
+                if (!meta.isCumulativeOrBatched) {
+                    var targetSize = fontSizeText;
+                    try {
+                        var pid = p.id;
+                        if (pid === "Desc" || pid === "Effectiveness") {
+                            var capped = indicatorSize > 28 ? 28 : indicatorSize;
+                            targetSize = capped + "px";
+                        }
+                    } catch(e) {}
+                    if (p.style.fontSize !== targetSize) {
+                        try { p.style.fontSize = targetSize; } catch(e) {}
+                    }
+                } else {
+                    try { if (p.style.fontSize) p.style.fontSize = null; } catch(e) {}
+                }
+
+                if (hideSmallNumbers && meta.isSmallDamage) {
+                    _setOpacitySafe(p, 0, 0);
+                    return;
+                }
                 _setOpacitySafe(p, opacityText, 1.0);
             }
 
@@ -225,16 +237,20 @@
                         var dmgContainer = _getPanel("dmgIndicators");
                         var nextDmgSearch = _stateGet("nextDmgContainerSearchMs", 0);
                         if (!dmgContainer && root.FindChildTraverse && now >= nextDmgSearch) {
-                            dmgContainer = root.FindChildTraverse("CitadelHudDamageIndicators");
+                            dmgContainer = root.FindChildTraverse("HudEventIndicatorsPanel") ||
+                                           root.FindChildTraverse("CitadelDamageFeedbackDisplay") ||
+                                           root.FindChildTraverse("CitadelHudEventIndicatorsPanel") ||
+                                           root.FindChildTraverse("CitadelHudDamageIndicators");
                             if (dmgContainer) {
                                 _setPanel("dmgIndicators", dmgContainer);
                             } else {
                                 _stateSet("nextDmgContainerSearchMs", now + 2500);
                             }
                         }
+                        var searchScope = dmgContainer || (root.FindChildTraverse ? root.FindChildTraverse("gameplay_hud") : null) || root;
                         var indicatorPanels = [];
-                        if (dmgContainer && dmgContainer.FindChildrenWithClassTraverse) {
-                            indicatorPanels = dmgContainer.FindChildrenWithClassTraverse("HudIndicatorText") || [];
+                        if (searchScope && searchScope.FindChildrenWithClassTraverse) {
+                            indicatorPanels = searchScope.FindChildrenWithClassTraverse("HudIndicatorText") || [];
                         }
                         _stateSet("indicatorPanelsCache", indicatorPanels);
                         _taskSetDelay("hud_indicator_panel_cache", now, cacheRefreshMs);
@@ -289,9 +305,9 @@
     test: function(ctx) {
         try {
             var root = $.GetContextPanel();
-            var dmg = root ? root.FindChildTraverse("CitadelHudDamageIndicators") : null;
+            var dmg = root ? (root.FindChildTraverse("HudEventIndicatorsPanel") || root.FindChildTraverse("CitadelHudDamageIndicators")) : null;
             if (!dmg) return null;  // Skip — not in a match context
-            return { passed: true, name: "Damage indicators panel exists", message: "", assertions: [{ passed: true, name: "CitadelHudDamageIndicators panel exists" }] };
+            return { passed: true, name: "Damage indicators panel exists", message: "", assertions: [{ passed: true, name: "Damage indicators container exists" }] };
         } catch(e) { return { passed: false, name: "Damage numbers panel check", message: (e && e.message ? e.message : String(e)) }; }
     }
     });
