@@ -348,6 +348,7 @@
 
     QOL.core = QOL.core || {};
     QOL.core.panel = panelApi;
+    QOL.core.PanelHelpers = panelApi;
     QOL.ui = QOL.ui || {};
     QOL.ui.PanelHelpers = panelApi;
 

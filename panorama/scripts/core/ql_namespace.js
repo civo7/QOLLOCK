@@ -46,6 +46,7 @@
     // Forward/backward compat aliases
     Q.core.panel = Q.core.panel || {};
     Q.ui.PanelHelpers = Q.core.panel;
+    Q.core.PanelHelpers = Q.core.panel;
     Q.core.hud = Q.core.hud || {};
     Q.core.time = Q.core.time || {};
     Q.core.perf = Q.core.perf || {};

@@ -21,14 +21,18 @@
     }
 
     const _panelHelpers = Q.core.panel || Q.ui.PanelHelpers || {};
+    const _coreFindHud = (typeof _panelHelpers.findHud === "function") ? _panelHelpers.findHud : null;
     const isAlive = Q.core.panel.isAlive;
 
     let _cachedHud = null;
 
     /**
-     * Finds the primary Deadlock #Hud panel with caching.
+     * Finds the primary Deadlock #Hud panel with caching (delegates to core panel helper).
      */
     const findHud = (preferredRoot) => {
+        if (_coreFindHud) {
+            return _coreFindHud(preferredRoot);
+        }
         if (!preferredRoot && isAlive(_cachedHud)) return _cachedHud;
         _cachedHud = null;
 

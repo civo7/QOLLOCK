@@ -1968,18 +1968,23 @@
                     _mirror.visualOpacityText = opacity.toFixed(2);
                     _lastLayoutSig = layoutSig;
                 }
-                root.style.visibility = sources.length ? 'visible' : 'collapse';
+                var rootVis = sources.length ? 'visible' : 'collapse';
+                if (root.style.visibility !== rootVis) root.style.visibility = rootVis;
                 var activeKeys = {};
                 for (var i = 0; i < sources.length; i++) {
                     var slot = _ensureSlot(i);
                     if (!slot) continue;
-                    slot.icon.style.visibility = 'visible';
+                    if (slot.icon && slot.icon.style && slot.icon.style.visibility !== 'visible') {
+                        slot.icon.style.visibility = 'visible';
+                    }
                     slot.sourceKey = sources[i].key;
                     activeKeys[sources[i].key] = true;
                     _syncMirrorItemFromSourceMulti(slot, sources[i]);
                 }
                 for (var j = sources.length; j < _slots.length; j++) {
-                    if (_isAlive(_slots[j].icon)) _slots[j].icon.style.visibility = 'collapse';
+                    if (_isAlive(_slots[j].icon) && _slots[j].icon.style && _slots[j].icon.style.visibility !== 'collapse') {
+                        _slots[j].icon.style.visibility = 'collapse';
+                    }
                 }
                 for (var key of Object.keys(_mirror.slotStates)) {
                     if (!activeKeys[key]) delete _mirror.slotStates[key];
