@@ -85,17 +85,17 @@ Every feature in QOLLOCK is an isolated manifest located at `panorama/scripts/ma
 
     Q.core.FeatureRegistry.register({
         id: "ql_my_feature",
-        metadata: {
-            name: "My Feature Name",
-            description: "Clear explanation of what this feature does.",
-            category: "hud", // hud, minimap, crosshair, healthbar, overlay, audio, ui
-            perfTier: "low", // none, low, medium, high
-            author: "contributor_name", // author or community contributor name for tooltip credits
-        },
-        settings: {
-            MY_FEATURE_ENABLED: { type: "boolean", default: true },
-            MY_FEATURE_OPACITY: { type: "number", default: 100, min: 0, max: 100 },
-        },
+        enabledByDefault: false, // true to start enabled automatically, or false
+        enableKey: "MY_FEATURE_ENABLED", // (optional) single toggle key controlling feature lifecycle
+        // enableKeys: ["KEY_A", "KEY_B"], // (optional) multiple keys: enabled if ANY is true
+        settings: [
+            { key: "MY_FEATURE_ENABLED", type: "toggle", default: false },
+            { key: "MY_FEATURE_OPACITY", type: "slider", min: 0, max: 100, step: 5, default: 100 },
+            { key: "MY_FEATURE_MODE", type: "dropdown", default: "default", options: [
+                { label: "#QOL_ModeDefault", value: "default" },
+                { label: "#QOL_ModeCompact", value: "compact" }
+            ]}
+        ],
         create: (ctx) => {
             let _panel = null;
             let _pollLoop = null;
@@ -142,8 +142,8 @@ Every feature in QOLLOCK is an isolated manifest located at `panorama/scripts/ma
                 },
 
                 // ZERO-POLLING REACTIVITY: Instantly called when setting changes in UI (0ms latency)
-                onSettingsChanged: (key, value) => {
-                    if (key === "MY_FEATURE_OPACITY") {
+                onSettingsChanged: (payload) => {
+                    if (!payload || payload.key === "MY_FEATURE_OPACITY") {
                         _applyVisualState();
                     }
                 },
@@ -159,15 +159,25 @@ Every feature in QOLLOCK is an isolated manifest located at `panorama/scripts/ma
 
 ### Manifest Rules
 
-1. **Scoped Context (`ctx`)**:
+1. **`settings` Array Contract**:
+   - `settings` MUST be an **Array** (`settings: [ { key, type, default, ... } ]`). NEVER an object dictionary.
+   - Types supported by UI renderer: `"toggle"`, `"slider"`, `"dropdown"`, `"multitoggle"`, `"palette"`, `"hotkey"`.
+2. **No `metadata` Block**:
+   - Manifests do NOT have a `metadata` block. Author credits, descriptions, and feature tooltips belong in `panorama/scripts/ui/ql_settings_metadata.js` and `panorama/scripts/ql_settings_loc/`.
+3. **Lifecycle Control (`enableKey` / `enableKeys` / `enabledByDefault`)**:
+   - `enabledByDefault: boolean`: whether the feature is on when no config exists.
+   - `enableKey: string`: the primary config key controlling `onEnable()` / `onDisable()`.
+   - `enableKeys: string[]`: array of config keys; feature enables if ANY key is truthy.
+4. **Scoped Context (`ctx`)**:
    - `ctx.config.get(key, fallback)`: Read namespaced setting.
    - `ctx.config.set(key, value)`: Update setting and trigger reactive dispatch.
+   - `ctx.config.all()`: Return snapshot of all settings for this feature.
    - `ctx.events.on(event, handler)`: Scoped event listener automatically cleared on disable.
    - `ctx.events.emit(event, data)`: Dispatches event namespaced as `ql_my_feature:<event>`.
-2. **Zero-Polling Reactivity (`onSettingsChanged`)**:
+5. **Zero-Polling Reactivity (`onSettingsChanged`)**:
    - Never poll `ctx.config.get()` every scheduler tick.
-   - Apply setting changes immediately inside `onSettingsChanged(key, value, allSettings)`.
-3. **Scheduler Polling Frequency**:
+   - Apply setting changes immediately inside `onSettingsChanged(payload)` where `payload = { key, value, changes }`.
+6. **Scheduler Polling Frequency**:
    - **Idle / Event-Driven:** 0.5s – 1.0s (1–2Hz).
    - **Active Gameplay Tracking:** 0.05s – 0.1s (10–20Hz).
    - **NEVER** register ticks at 60Hz (0.016s) — Deadlock runs at 144–240Hz and excessive polling spikes CPU frame budget.

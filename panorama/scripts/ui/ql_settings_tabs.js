@@ -17,23 +17,54 @@
         : (typeof QOL !== "undefined" ? QOL : (globalThis.QOL = {}));
     Q.ui = Q.ui || {};
 
-    const TAB_ORDER = [
+    const FALLBACK_TAB_ORDER = [
         "Support", "Config", "Presets", "Crosshair", "Healthbar",
         "HUD", "Minimap", "Shop", "Audio", "Arcade", "Console"
     ];
 
     function GetSettingsTabOrder() {
-        return TAB_ORDER.slice();
+        if (Array.isArray(Q.ui?.layout)) {
+            const tabs = [];
+            for (let i = 0; i < Q.ui.layout.length; i++) {
+                const entry = Q.ui.layout[i];
+                if (entry && entry.id) tabs.push(entry.id);
+            }
+            if (tabs.length > 0) return tabs;
+        }
+        return FALLBACK_TAB_ORDER.slice();
     }
 
     function GetSettingsTabDisplayName(tabName) {
         const raw = String(tabName || "");
+        if (Array.isArray(Q.ui?.layout)) {
+            const found = Q.ui.layout.find((t) => t && t.id === raw);
+            if (found && found.name) return found.name;
+        }
         if (raw === "Config") return "Settings";
         if (raw === "MOG") return "MOGLOCK";
         return raw;
     }
 
     function GetSettingsTabGroups() {
+        if (Array.isArray(Q.ui?.layout)) {
+            const groups = [];
+            let currentGroup = null;
+            for (let i = 0; i < Q.ui.layout.length; i++) {
+                const entry = Q.ui.layout[i];
+                if (!entry) continue;
+                if (entry.heading) {
+                    currentGroup = { title: entry.heading, tabs: [] };
+                    groups.push(currentGroup);
+                } else if (entry.id) {
+                    if (!currentGroup) {
+                        currentGroup = { title: "General", tabs: [] };
+                        groups.push(currentGroup);
+                    }
+                    currentGroup.tabs.push(entry.id);
+                }
+            }
+            if (groups.length > 0) return groups;
+        }
         return [
             {
                 title: "General",
@@ -47,7 +78,12 @@
     }
 
     function GetSettingsTabIconSource(tabName) {
-        switch (String(tabName || "")) {
+        const raw = String(tabName || "");
+        if (Array.isArray(Q.ui?.layout)) {
+            const found = Q.ui.layout.find((t) => t && t.id === raw);
+            if (found && found.icon) return found.icon;
+        }
+        switch (raw) {
             case "Support": return "s2r://panorama/images/icons/icon_thumbsup.vsvg";
             case "Config": return "s2r://panorama/images/icons/icon_gear.vsvg";
             case "Presets": return "s2r://panorama/images/icons/icon_player.vsvg";

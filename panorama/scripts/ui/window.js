@@ -716,7 +716,7 @@
         }
     };
 
-    const renderSectionFeatures = (parent, features) => {
+    const renderSectionFeatures = (parent, features, sectionEnableKey) => {
         if (!Array.isArray(features) || !parent) return;
         const renderer = Q.ui?.renderer;
         if (!renderer) return;
@@ -731,6 +731,7 @@
 
             for (let j = 0; j < manifest.settings.length; j++) {
                 const setting = manifest.settings[j];
+                if (sectionEnableKey && setting.key === sectionEnableKey) continue;
                 if (hideToggle && setting.key === manifest.enableKey) continue;
 
                 let curVal;
@@ -781,7 +782,7 @@
                     section.enableKey,
                     section.description || "",
                     (sectionBody) => {
-                        renderSectionFeatures(sectionBody, section.features);
+                        renderSectionFeatures(sectionBody, section.features, section.enableKey);
                     },
                     { invert: section.invertToggle === true }
                 );
@@ -789,7 +790,7 @@
                 if (section.title) {
                     renderer.createSectionHeader(container, section.title, section.description || "");
                 }
-                renderSectionFeatures(container, section.features);
+                renderSectionFeatures(container, section.features, null);
             }
         }
 
@@ -810,14 +811,28 @@
             } catch (_) {}
         }
 
-        const customRenderer = _tabRenderers.get(tabId);
-        if (typeof customRenderer === "function") {
-            customRenderer(container, Q.ui.renderer);
+        const tabDef = typeof Q.ui?.getTabLayout === "function"
+            ? Q.ui.getTabLayout(tabId)
+            : (Array.isArray(Q.ui?.layout) ? Q.ui.layout.find((t) => t && t.id === tabId) : null);
+
+        // 1. If tab is explicitly defined as custom in layout (e.g. Presets, Console, Arcade, Support, Audio), delegate
+        if (tabDef && tabDef.custom) {
+            const customRenderer = _tabRenderers.get(tabId);
+            if (typeof customRenderer === "function") {
+                customRenderer(container, Q.ui.renderer);
+                return;
+            }
+        }
+
+        // 2. Layout-driven declarative rendering (sections & manifests)
+        if (container && renderLayoutTab(tabId, container)) {
             return;
         }
 
-        // Layout-driven declarative rendering
-        if (container && renderLayoutTab(tabId, container)) {
+        // 3. Fallback to registered custom renderer
+        const customRenderer = _tabRenderers.get(tabId);
+        if (typeof customRenderer === "function") {
+            customRenderer(container, Q.ui.renderer);
             return;
         }
 
@@ -1208,19 +1223,24 @@
 
         let tabBar = tabHost.FindChildTraverse("SettingsTabBar");
         if (tabBar) {
-            const hasLegacyLayoutTab = tabBar.FindChildTraverse("TabButton_Layout");
-            const hasLegacyMainTab = tabBar.FindChildTraverse("TabButton_Main");
-            const hasLegacyUiTab = tabBar.FindChildTraverse("TabButton_UI");
-            const hasLegacyOverlayTab = tabBar.FindChildTraverse("TabButton_Overlay");
-            const hasPresetsTab = tabBar.FindChildTraverse("TabButton_Presets");
-            const hasCrosshairTab = tabBar.FindChildTraverse("TabButton_Crosshair");
-            const hasHealthbarTab = tabBar.FindChildTraverse("TabButton_Healthbar");
-            const hasHudTab = tabBar.FindChildTraverse("TabButton_HUD");
-            const hasShopTab = tabBar.FindChildTraverse("TabButton_Shop");
-            const hasMinimapTab = tabBar.FindChildTraverse("TabButton_Minimap");
-            const hasAudioTab = tabBar.FindChildTraverse("TabButton_Audio");
-            const hasConfigTab = tabBar.FindChildTraverse("TabButton_Config");
-            if (hasLegacyLayoutTab || hasLegacyMainTab || hasLegacyUiTab || hasLegacyOverlayTab || !hasPresetsTab || !hasCrosshairTab || !hasHealthbarTab || !hasHudTab || !hasShopTab || !hasMinimapTab || !hasAudioTab || !hasConfigTab) {
+            const tabGroups = getTabGroups();
+            let allPresent = true;
+            for (let gi = 0; gi < tabGroups.length; gi++) {
+                const grp = tabGroups[gi];
+                for (let ti = 0; ti < grp.tabs.length; ti++) {
+                    const expectedId = "TabButton_" + String(grp.tabs[ti] || "").replace(/\s+/g, "");
+                    if (!tabBar.FindChildTraverse(expectedId)) {
+                        allPresent = false;
+                        break;
+                    }
+                }
+                if (!allPresent) break;
+            }
+            const hasLegacyTabs = tabBar.FindChildTraverse("TabButton_Layout") ||
+                tabBar.FindChildTraverse("TabButton_Main") ||
+                tabBar.FindChildTraverse("TabButton_UI") ||
+                tabBar.FindChildTraverse("TabButton_Overlay");
+            if (!allPresent || hasLegacyTabs) {
                 tabBar.DeleteAsync(0);
                 tabBar = null;
             }

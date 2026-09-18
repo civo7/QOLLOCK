@@ -53,3 +53,43 @@ test("ui/tabs: exports tab definitions on QOL.ui.tabs and globalThis", () => {
     assert.strictEqual(ctx.GetSettingsTabOrder, ctx.QOL.ui.tabs.GetSettingsTabOrder);
     assert.strictEqual(ctx.GetSettingsTabDisplayName, ctx.QOL.ui.tabs.GetSettingsTabDisplayName);
 });
+
+test("ui/tabs: dynamically reflects QOL.ui.layout ordering, custom names, and icons", () => {
+    const ctx = {
+        QOL: {
+            ui: {
+                layout: [
+                    { heading: "Custom Group" },
+                    { id: "MyTabA", name: "Custom Tab A", icon: "s2r://panorama/images/a.vsvg" },
+                    { id: "MyTabB", name: "Custom Tab B", icon: "s2r://panorama/images/b.vsvg" },
+                    { heading: "Another Group" },
+                    { id: "MyTabC", name: "Custom Tab C", icon: "s2r://panorama/images/c.vsvg" }
+                ]
+            }
+        },
+        globalThis: null
+    };
+    ctx.globalThis = ctx;
+
+    const script = fs.readFileSync(
+        path.join(__dirname, "../panorama/scripts/ui/ql_settings_tabs.js"),
+        "utf8"
+    );
+    vm.runInNewContext(script, ctx);
+
+    // Dynamic order
+    const order = ctx.QOL.ui.tabs.GetSettingsTabOrder();
+    assert.deepStrictEqual(JSON.parse(JSON.stringify(order)), ["MyTabA", "MyTabB", "MyTabC"]);
+
+    // Dynamic groups
+    const groups = ctx.QOL.ui.tabs.GetSettingsTabGroups();
+    assert.strictEqual(groups.length, 2);
+    assert.strictEqual(groups[0].title, "Custom Group");
+    assert.deepStrictEqual(JSON.parse(JSON.stringify(groups[0].tabs)), ["MyTabA", "MyTabB"]);
+    assert.strictEqual(groups[1].title, "Another Group");
+    assert.deepStrictEqual(JSON.parse(JSON.stringify(groups[1].tabs)), ["MyTabC"]);
+
+    // Dynamic display names & icons
+    assert.strictEqual(ctx.QOL.ui.tabs.GetSettingsTabDisplayName("MyTabA"), "Custom Tab A");
+    assert.strictEqual(ctx.QOL.ui.tabs.GetSettingsTabIconSource("MyTabB"), "s2r://panorama/images/b.vsvg");
+});

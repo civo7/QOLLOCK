@@ -220,3 +220,25 @@ test("window: renderTab renders layout-driven tab into content list", () => {
     QOL.ui.window.renderTab("Healthbar");
     assert.ok(env.list.Children().length > 0, "SettingsList should have rendered children for Healthbar tab");
 });
+
+test("window: renderLayoutTab suppresses section enableKey to avoid duplicate toggle row", () => {
+    const env = createTestEnvironment();
+    const { QOL } = env.sandbox;
+
+    QOL.core.FeatureRegistry.register({
+        id: "ql_passive_cooldown",
+        enableKey: "ENABLE_PASSIVE_COOLDOWN",
+        settings: [
+            { key: "ENABLE_PASSIVE_COOLDOWN", type: "toggle", label: "Passive Cooldowns", default: false },
+            { key: "PASSIVE_COOLDOWN_SIZE", type: "slider", label: "Size", min: 30, max: 60, default: 40 },
+        ],
+    });
+
+    const targetPanel = env.doc.create("Panel", { id: "CrosshairContainer" });
+    const rendered = QOL.ui.window.renderLayoutTab("Crosshair", targetPanel);
+    assert.strictEqual(rendered, true);
+
+    // Verify ENABLE_PASSIVE_COOLDOWN is NOT rendered as an inner SettingRow
+    const duplicateRow = targetPanel.FindChildTraverse("SettingRow_ENABLE_PASSIVE_COOLDOWN");
+    assert.strictEqual(duplicateRow, null, "Section enableKey should not be duplicated as an inner SettingRow");
+});

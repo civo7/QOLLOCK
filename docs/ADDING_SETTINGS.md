@@ -20,15 +20,18 @@ Every setting belongs to an isolated feature manifest.
 In `panorama/scripts/manifests/<feature_id>/manifest.js`:
 
 ```javascript
-settings: {
-    MY_SETTING_ENABLED: { type: "boolean", default: true },
-    MY_SETTING_SCALE:   { type: "number",  default: 100, min: 50, max: 150 },
-    MY_SETTING_MODE:    { type: "string",  default: "default" }
-}
+settings: [
+    { key: "MY_SETTING_ENABLED", type: "toggle", default: true },
+    { key: "MY_SETTING_SCALE",   type: "slider", min: 50, max: 150, step: 5, default: 100 },
+    { key: "MY_SETTING_MODE",    type: "dropdown", default: "default", options: [
+        { label: "#QOL_ModeDefault", value: "default" },
+        { label: "#QOL_ModeCompact", value: "compact" }
+    ]}
+]
 ```
 
 - Choose a safe default value that will not disrupt existing user setups.
-- Settings declared here are automatically registered with `QOL.core.ConfigStore`.
+- Settings declared in this array are automatically registered with `QOL.core.ConfigStore`.
 
 ---
 
