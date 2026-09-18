@@ -1123,180 +1123,222 @@
             createSliderRow(list, "Overlay Opacity", "PERF_OVERLAY_OPACITY", "opacity_perf", "Opacity of the performance overlay panel.");
         }
 
-        // 1. In-Game Benchmark (All Features ON)
-        const bmStressHeader = createTitle(list, "Benchmark (All Features ON)");
-        const bmStressBtn = (typeof createIconButton === "function")
-            ? createIconButton(bmStressHeader, "BenchmarkStressBtn", "s2r://panorama/images/icons/icon_play.vsvg", "1-Click Full Benchmark: Temporarily enables ALL 50 features on screen for 10s, benchmarks max CPU load, restores your config, and copies report to clipboard.")
-            : null;
-        const bmStressStatus = $.CreatePanel("Label", bmStressHeader, "BenchmarkStressStatus");
-        bmStressStatus.text = "Idle";
-        bmStressStatus.style.fontSize = "13px";
-        bmStressStatus.style.color = "#666";
-        bmStressStatus.style.marginLeft = "6px";
-        bmStressStatus.style.verticalAlign = "center";
+        // Helper to create a prominent, dedicated developer action row
+        const createDevActionRow = (parent, rowId, btnId, statusId, iconSrc, titleText, descText, btnText, onActivate) => {
+            const row = $.CreatePanel("Panel", parent, rowId || "");
+            row.AddClass("SettingRow");
+            row.AddClass("SettingRowAction");
+            row.style.height = "fit-children";
+            row.style.minHeight = "40px";
+            row.style.padding = "6px 12px";
+            row.style.flowChildren = "right";
+            row.style.width = "100%";
 
-        if (bmStressBtn) {
-            bmStressBtn.SetPanelEvent("onactivate", () => {
-                runInGameBenchmark(list, bmStressStatus, bmStressBtn, true);
-            });
-        }
+            const labelWrap = $.CreatePanel("Panel", row, "");
+            labelWrap.AddClass("SettingLabelContainer");
+            labelWrap.style.flowChildren = "down";
+            labelWrap.style.width = "fill-parent-flow(1.0)";
+            labelWrap.style.verticalAlign = "center";
 
-        // 2. In-Game Benchmark (Current Settings)
-        const bmNormalHeader = createTitle(list, "Benchmark (Current Config)");
-        const bmNormalBtn = (typeof createIconButton === "function")
-            ? createIconButton(bmNormalHeader, "BenchmarkRunBtn", "s2r://panorama/images/icons/icon_play.vsvg", "Run 10s benchmark on your current settings without changing anything, and copy report to clipboard.")
-            : null;
-        const bmNormalStatus = $.CreatePanel("Label", bmNormalHeader, "BenchmarkNormalStatus");
-        bmNormalStatus.text = "Idle";
-        bmNormalStatus.style.fontSize = "13px";
-        bmNormalStatus.style.color = "#666";
-        bmNormalStatus.style.marginLeft = "6px";
-        bmNormalStatus.style.verticalAlign = "center";
+            const label = $.CreatePanel("Label", labelWrap, "");
+            label.AddClass("SettingLabel");
+            label.style.fontWeight = "bold";
+            label.style.fontSize = "13px";
+            label.style.color = "#e8ecea";
+            label.text = titleText;
 
-        if (bmNormalBtn) {
-            bmNormalBtn.SetPanelEvent("onactivate", () => {
-                runInGameBenchmark(list, bmNormalStatus, bmNormalBtn, false);
-            });
-        }
+            if (descText) {
+                const desc = $.CreatePanel("Label", labelWrap, "");
+                desc.AddClass("SettingDescription");
+                desc.style.fontSize = "12px";
+                desc.style.color = "#7c8480";
+                desc.text = descText;
+            }
+
+            const actionGroup = $.CreatePanel("Panel", row, "");
+            actionGroup.AddClass("SettingActionGroup");
+            actionGroup.style.flowChildren = "right";
+            actionGroup.style.verticalAlign = "center";
+            actionGroup.style.horizontalAlign = "right";
+
+            let statusLbl = null;
+            if (statusId) {
+                statusLbl = $.CreatePanel("Label", actionGroup, statusId);
+                statusLbl.text = "Idle";
+                statusLbl.style.fontSize = "12px";
+                statusLbl.style.color = "#7c8480";
+                statusLbl.style.marginRight = "10px";
+                statusLbl.style.verticalAlign = "center";
+            }
+
+            const btn = $.CreatePanel("Button", actionGroup, btnId);
+            btn.AddClass("SettingActionBtn");
+            btn.style.minWidth = "150px";
+            btn.style.padding = "4px 12px";
+            btn.style.verticalAlign = "center";
+
+            const btnInner = $.CreatePanel("Panel", btn, "");
+            btnInner.AddClass("SettingActionBtnInner");
+            btnInner.style.flowChildren = "right";
+            btnInner.style.horizontalAlign = "center";
+            btnInner.style.verticalAlign = "center";
+
+            if (iconSrc) {
+                const icon = $.CreatePanel("Image", btnInner, "", {
+                    src: iconSrc,
+                    defaultsrc: "",
+                    scaling: "contain"
+                });
+                icon.AddClass("SettingActionBtnIcon");
+                icon.style.width = "15px";
+                icon.style.height = "15px";
+                icon.style.marginRight = "6px";
+                icon.style.verticalAlign = "center";
+            }
+
+            const btnLabel = $.CreatePanel("Label", btnInner, "");
+            btnLabel.AddClass("SettingActionBtnLabel");
+            btnLabel.style.fontSize = "12px";
+            btnLabel.style.fontWeight = "bold";
+            btnLabel.style.verticalAlign = "center";
+            btnLabel.text = btnText;
+
+            if (typeof onActivate === "function") {
+                btn.SetPanelEvent("onactivate", () => onActivate(statusLbl, btn));
+            }
+
+            return { row, btn, status: statusLbl };
+        };
+
         createSep(list);
 
-        // 2. Feature Isolation Test (FIT)
-        const fitHeader = createTitle(list, "Feature Test");
-        const fitBtn = (typeof createIconButton === "function")
-            ? createIconButton(fitHeader, "FeatureTestBtn", "s2r://panorama/images/icons/icon_play.vsvg", "Test each feature individually (enable → verify → disable).")
-            : null;
-        const fitStatus = $.CreatePanel("Label", fitHeader, "FeatureTestStatus");
-        fitStatus.text = "Idle";
-        fitStatus.style.fontSize = "13px";
-        fitStatus.style.color = "#666";
-        fitStatus.style.marginLeft = "6px";
-        fitStatus.style.verticalAlign = "center";
+        // 2. In-Game Benchmarks
+        createTitle(list, "In-Game Benchmarks");
 
-        if (fitBtn) {
-            fitBtn.SetPanelEvent("onactivate", () => {
-                runFeatureIsolationTest(fitStatus, fitBtn);
-            });
-        }
+        createDevActionRow(
+            list,
+            "DevBenchmarkStressRow",
+            "BenchmarkStressBtn",
+            "BenchmarkStressStatus",
+            "s2r://panorama/images/icons/icon_play.vsvg",
+            "Benchmark (All Features ON)",
+            "1-Click Full Benchmark: Temporarily enables ALL 50 features on screen for 10s, benchmarks max CPU load, restores your config, and copies report to clipboard.",
+            "Run Stress Test (10s)",
+            (statusLbl, btn) => runInGameBenchmark(list, statusLbl, btn, true)
+        );
 
-        // 3. Manifest Test Runner (Phase T2)
-        const mtHeader = createTitle(list, "Manifest Tests");
-        const mtBtn = (typeof createIconButton === "function")
-            ? createIconButton(mtHeader, "ManifestTestBtn", "s2r://panorama/images/icons/icon_play.vsvg", "Run all registered manifest test() hooks. Requires HUD context.")
-            : null;
-        const mtStatus = $.CreatePanel("Label", mtHeader, "ManifestTestStatus");
-        mtStatus.text = "Idle";
-        mtStatus.style.fontSize = "13px";
-        mtStatus.style.color = "#666";
-        mtStatus.style.marginLeft = "6px";
-        mtStatus.style.verticalAlign = "center";
+        createDevActionRow(
+            list,
+            "DevBenchmarkNormalRow",
+            "BenchmarkRunBtn",
+            "BenchmarkNormalStatus",
+            "s2r://panorama/images/icons/icon_play.vsvg",
+            "Benchmark (Current Config)",
+            "Run 10s benchmark on your current settings without changing anything, and copy report to clipboard.",
+            "Run Current (10s)",
+            (statusLbl, btn) => runInGameBenchmark(list, statusLbl, btn, false)
+        );
 
-        if (mtBtn) {
-            mtBtn.SetPanelEvent("onactivate", () => {
-                runManifestTests(mtStatus, mtBtn);
-            });
-        }
+        createSep(list);
 
-        // 4. Panel Tree Dump
-        const treeDumpHeader = createTitle(list, "Panel Tree Dump");
-        const treeDumpBtn = (typeof createIconButton === "function")
-            ? createIconButton(treeDumpHeader, "TreeDumpBtn", "s2r://panorama/images/icons/icon_play.vsvg", "Dump the live panel tree to the console log for the offline profiler. Requires HUD context; save your console log afterwards.")
-            : null;
-        const treeDumpStatus = $.CreatePanel("Label", treeDumpHeader, "TreeDumpStatus");
-        treeDumpStatus.text = "Idle";
-        treeDumpStatus.style.fontSize = "13px";
-        treeDumpStatus.style.color = "#666";
-        treeDumpStatus.style.marginLeft = "6px";
-        treeDumpStatus.style.verticalAlign = "center";
+        // 3. Testing & Diagnostics
+        createTitle(list, "Testing & Diagnostics");
 
-        if (treeDumpBtn) {
-            treeDumpBtn.SetPanelEvent("onactivate", () => {
-                requestPanelTreeDump(treeDumpStatus);
-            });
-        }
+        createDevActionRow(
+            list,
+            "DevFeatureTestRow",
+            "FeatureTestBtn",
+            "FeatureTestStatus",
+            "s2r://panorama/images/icons/icon_play.vsvg",
+            "Feature Test",
+            "Test each feature individually (enable → verify → disable).",
+            "Run Feature Test",
+            (statusLbl, btn) => runFeatureIsolationTest(statusLbl, btn)
+        );
 
-        // 5. Build Storage Dry Run
-        const bsDumpHeader = createTitle(list, "Build Storage Dry Run");
-        const bsDumpBtn = (typeof createIconButton === "function")
-            ? createIconButton(bsDumpHeader, "BsDumpBtn", "s2r://panorama/images/icons/icon_play.vsvg", "Perform a dry run of the build storage pipeline (switch hero, open shop, open popup) and dump tree to console. Requires HUD context.")
-            : null;
-        const bsDumpStatus = $.CreatePanel("Label", bsDumpHeader, "BsDumpStatus");
-        bsDumpStatus.text = "Idle";
-        bsDumpStatus.style.fontSize = "13px";
-        bsDumpStatus.style.color = "#666";
-        bsDumpStatus.style.marginLeft = "6px";
-        bsDumpStatus.style.verticalAlign = "center";
+        createDevActionRow(
+            list,
+            "DevManifestTestRow",
+            "ManifestTestBtn",
+            "ManifestTestStatus",
+            "s2r://panorama/images/icons/icon_play.vsvg",
+            "Manifest Tests",
+            "Run all registered manifest test() hooks. Requires HUD context.",
+            "Run Manifest Tests",
+            (statusLbl, btn) => runManifestTests(statusLbl, btn)
+        );
 
-        if (bsDumpBtn) {
-            bsDumpBtn.SetPanelEvent("onactivate", () => {
-                requestBuildStorageDryRun(bsDumpStatus);
-            });
-        }
+        createDevActionRow(
+            list,
+            "DevTreeDumpRow",
+            "TreeDumpBtn",
+            "TreeDumpStatus",
+            "s2r://panorama/images/icons/icon_play.vsvg",
+            "Panel Tree Dump",
+            "Dump the live panel tree to the console log for the offline profiler. Requires HUD context; save your console log afterwards.",
+            "Dump Tree",
+            (statusLbl) => requestPanelTreeDump(statusLbl)
+        );
 
-        // 6. In-Game Engine Audit (Direct output to console ~)
-        const auditHeader = createTitle(list, "In-Game Engine Audit");
-        const auditBtn = (typeof createIconButton === "function")
-            ? createIconButton(auditHeader, "EngineAuditBtn", "s2r://panorama/images/icons/icon_play.vsvg", "Run full in-game diagnostic audit. Outputs detailed pass/fail report to console (~) and clipboard.")
-            : null;
-        const auditStatus = $.CreatePanel("Label", auditHeader, "EngineAuditStatus");
-        auditStatus.text = "Idle";
-        auditStatus.style.fontSize = "13px";
-        auditStatus.style.color = "#666";
-        auditStatus.style.marginLeft = "6px";
-        auditStatus.style.verticalAlign = "center";
+        createDevActionRow(
+            list,
+            "DevBsDumpRow",
+            "BsDumpBtn",
+            "BsDumpStatus",
+            "s2r://panorama/images/icons/icon_play.vsvg",
+            "Build Storage Dry Run",
+            "Perform a dry run of the build storage pipeline (switch hero, open shop, open popup) and dump tree to console. Requires HUD context.",
+            "Run Storage Test",
+            (statusLbl) => requestBuildStorageDryRun(statusLbl)
+        );
 
-        if (auditBtn) {
-            auditBtn.SetPanelEvent("onactivate", () => {
-                runInGameEngineAudit(list, auditStatus, auditBtn);
-            });
-        }
+        createDevActionRow(
+            list,
+            "DevEngineAuditRow",
+            "EngineAuditBtn",
+            "EngineAuditStatus",
+            "s2r://panorama/images/icons/icon_play.vsvg",
+            "In-Game Engine Audit",
+            "Run full in-game diagnostic audit. Outputs detailed pass/fail report to console (~) and clipboard.",
+            "Run Engine Audit",
+            (statusLbl, btn) => runInGameEngineAudit(list, statusLbl, btn)
+        );
 
-        // 7. Test Suite + Copy Report
-        const suiteHeader = createTitle(list, "Test Suite");
-        const suiteBtn = (typeof createIconButton === "function")
-            ? createIconButton(suiteHeader, "FullSuiteBtn", "s2r://panorama/images/icons/icon_copy.vsvg", "Run all tests and copy a compact report to clipboard.")
-            : null;
-        const suiteStatus = $.CreatePanel("Label", suiteHeader, "FullSuiteStatus");
-        suiteStatus.text = "Idle";
-        suiteStatus.style.fontSize = "13px";
-        suiteStatus.style.color = "#666";
-        suiteStatus.style.marginLeft = "6px";
-        suiteStatus.style.verticalAlign = "center";
+        createDevActionRow(
+            list,
+            "DevFullSuiteRow",
+            "FullSuiteBtn",
+            "FullSuiteStatus",
+            "s2r://panorama/images/icons/icon_copy.vsvg",
+            "Test Suite",
+            "Run all tests and copy a compact report to clipboard.",
+            "Run Full Suite",
+            (statusLbl, btn) => runFullTestSuite(list, statusLbl, btn)
+        );
 
-        if (suiteBtn) {
-            suiteBtn.SetPanelEvent("onactivate", () => {
-                runFullTestSuite(list, suiteStatus, suiteBtn);
-            });
-        }
+        createDevActionRow(
+            list,
+            "DevPresetCycleRow",
+            "PresetCycleBtn",
+            "PresetCycleStatus",
+            "s2r://panorama/images/icons/icon_reorder.vsvg",
+            "Preset Cycle",
+            "Apply every preset and verify no features auto-disable. Click again to stop.",
+            "Cycle Presets",
+            (statusLbl, btn) => runPresetCycle(statusLbl, btn)
+        );
 
-        // 8. Preset Cycle (Robust)
-        const presetCycleHeader = createTitle(list, "Preset Cycle");
-        const presetCycleBtn = (typeof createIconButton === "function")
-            ? createIconButton(presetCycleHeader, "PresetCycleBtn", "s2r://panorama/images/icons/icon_reorder.vsvg", "Apply every preset and verify no features auto-disable. Click again to stop.")
-            : null;
-        const presetCycleStatus = $.CreatePanel("Label", presetCycleHeader, "PresetCycleStatus");
-        presetCycleStatus.text = "Idle";
-        presetCycleStatus.style.fontSize = "13px";
-        presetCycleStatus.style.color = "#666";
-        presetCycleStatus.style.marginLeft = "6px";
-        presetCycleStatus.style.verticalAlign = "center";
-
-        if (presetCycleBtn) {
-            presetCycleBtn.SetPanelEvent("onactivate", () => {
-                runPresetCycle(presetCycleStatus, presetCycleBtn);
-            });
-        }
-
-        // 9. Diagnostics Dump
-        const diagHeader = createTitle(list, "Diagnostics");
-        const copyLogsBtn = (typeof createIconButton === "function")
-            ? createIconButton(diagHeader, "DiagCopyLogsBtn", "s2r://panorama/images/icons/icon_copy.vsvg", "Copy QOLLock diagnostic logs to clipboard.")
-            : null;
-
-        if (copyLogsBtn) {
-            copyLogsBtn.SetPanelEvent("onactivate", () => {
-                copyDiagnosticsToClipboard(list, copyLogsBtn);
-            });
-        }
+        createDevActionRow(
+            list,
+            "DevDiagCopyLogsRow",
+            "DiagCopyLogsBtn",
+            null,
+            "s2r://panorama/images/icons/icon_copy.vsvg",
+            "Diagnostics",
+            "Copy QOLLock diagnostic logs to clipboard.",
+            "Copy Logs",
+            (_, btn) => copyDiagnosticsToClipboard(list, btn)
+        );
     }
 
     // Register tab with window manager if available
