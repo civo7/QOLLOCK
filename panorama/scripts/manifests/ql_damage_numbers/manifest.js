@@ -226,8 +226,11 @@
                             dmgContainer = root.FindChildTraverse("CitadelHudDamageIndicators");
                             _setPanel("dmgIndicators", dmgContainer);
                         }
-                        var searchRoot = dmgContainer || root;
-                        _stateSet("indicatorPanelsCache", (searchRoot && searchRoot.FindChildrenWithClassTraverse) ? searchRoot.FindChildrenWithClassTraverse("HudIndicatorText") || [] : []);
+                        var indicatorPanels = [];
+                        if (dmgContainer && dmgContainer.FindChildrenWithClassTraverse) {
+                            indicatorPanels = dmgContainer.FindChildrenWithClassTraverse("HudIndicatorText") || [];
+                        }
+                        _stateSet("indicatorPanelsCache", indicatorPanels);
                         _taskSetDelay("hud_indicator_panel_cache", now, cacheRefreshMs);
                     }
 

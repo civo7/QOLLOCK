@@ -379,6 +379,8 @@
     const _startConfigPolling = (hud) => {
         if (_configPollTimer) return;
 
+        let _nextRootClassSyncMs = 0;
+
         const poll = () => {
             if (!_booted) return;
             const nowMs = _nowMs();
@@ -395,8 +397,10 @@
 
             if (changed) {
                 _applyConfigUpdate(raw, rev, hudPanel, best.sourcePanel);
-            } else {
+                _nextRootClassSyncMs = nowMs + 1000;
+            } else if (nowMs >= _nextRootClassSyncMs) {
                 _syncRootClasses(hudPanel);
+                _nextRootClassSyncMs = nowMs + 1000;
             }
 
             _syncDiagnosticState(hudPanel, nowMs);

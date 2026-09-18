@@ -389,7 +389,8 @@
                 var scanCooldown = aggressiveScan ? MINIMAP_LOCAL_PLAYER_SCAN_COOLDOWN_FAST_MS : MINIMAP_LOCAL_PLAYER_SCAN_COOLDOWN_MS;
                 if (nowMs < _localPlayerPanelNextScanMs) return null;
 
-                var cones = hud.FindChildrenWithClassTraverse ? (hud.FindChildrenWithClassTraverse("client_cone_fov") || []) : [];
+                var searchScope = _findMinimapContainer(hud) || _findMinimapRotateTarget(hud) || hud;
+                var cones = searchScope && searchScope.FindChildrenWithClassTraverse ? (searchScope.FindChildrenWithClassTraverse("client_cone_fov") || []) : [];
                 for (var i = 0; i < cones.length; i++) {
                     var cp = cones[i];
                     if (!cp) continue;
@@ -402,7 +403,7 @@
                     }
                 }
 
-                var locals = hud.FindChildrenWithClassTraverse ? (hud.FindChildrenWithClassTraverse("localplayer") || []) : [];
+                var locals = searchScope && searchScope.FindChildrenWithClassTraverse ? (searchScope.FindChildrenWithClassTraverse("localplayer") || []) : [];
                 for (var k = 0; k < locals.length; k++) {
                     var p = locals[k];
                     if (p && p.BHasClass && p.BHasClass("player")) {
@@ -442,7 +443,8 @@
                     }
                 }
 
-                var locals = hud.FindChildrenWithClassTraverse ? (hud.FindChildrenWithClassTraverse("localplayer") || []) : [];
+                var searchScope = _findMinimapContainer(hud) || _findMinimapRotateTarget(hud) || hud;
+                var locals = searchScope && searchScope.FindChildrenWithClassTraverse ? (searchScope.FindChildrenWithClassTraverse("localplayer") || []) : [];
                 for (var i = 0; i < locals.length; i++) {
                     var img = locals[i].FindChildTraverse ? locals[i].FindChildTraverse("MainImage") : null;
                     if (img) {
@@ -785,26 +787,24 @@
                         _setStyleIfChanged(_compassReadout, "width", "100%");
                         _setStyleIfChanged(_compassReadout, "height", "40px");
                         _setStyleIfChanged(_compassReadout, "flowChildren", "none");
-                        _setStyleIfChanged(_compassReadout, "overflow", "noclip");
+                    if (_compassDegree) {
+                        _setStyleIfChanged(_compassDegree, "width", showSpeed ? "50%" : "100%");
+                        _setStyleIfChanged(_compassDegree, "textAlign", showSpeed ? "left" : "center");
+                        _setStyleIfChanged(_compassDegree, "horizontalAlign", "left");
+                        _setStyleIfChanged(_compassDegree, "verticalAlign", "center");
+                        _setStyleIfChanged(_compassDegree, "visibility", showCompass ? "visible" : "collapse");
+                    }
+                    if (_speedLabel) {
+                        _setStyleIfChanged(_speedLabel, "width", showCompass ? "50%" : "100%");
+                        _setStyleIfChanged(_speedLabel, "textAlign", showCompass ? "right" : "center");
+                        _setStyleIfChanged(_speedLabel, "horizontalAlign", showCompass ? "right" : "center");
+                        _setStyleIfChanged(_speedLabel, "verticalAlign", "center");
                     }
                     _layoutSig = layoutSig;
                 }
 
-                if (_compassDegree) {
-                    _setStyleIfChanged(_compassDegree, "width", showSpeed ? "50%" : "100%");
-                    _setStyleIfChanged(_compassDegree, "textAlign", showSpeed ? "left" : "center");
-                    _setStyleIfChanged(_compassDegree, "horizontalAlign", "left");
-                    _setStyleIfChanged(_compassDegree, "verticalAlign", "center");
-                    _setStyleIfChanged(_compassDegree, "visibility", showCompass ? "visible" : "collapse");
-                }
-
                 var speedVis = showSpeed ? "visible" : "collapse";
                 if (_speedRoot && _speedRoot.style.visibility !== speedVis) _speedRoot.style.visibility = speedVis;
-                if (_speedLabel) {
-                    _setStyleIfChanged(_speedLabel, "width", showCompass ? "50%" : "100%");
-                    _setStyleIfChanged(_speedLabel, "textAlign", showCompass ? "right" : "center");
-                    _setStyleIfChanged(_speedLabel, "horizontalAlign", showCompass ? "right" : "center");
-                    _setStyleIfChanged(_speedLabel, "verticalAlign", "center");
 
                     var speedOffsetX = Number(cfg.COMPASS_SPEED_X_OFFSET) || 0;
                     if (speedOffsetX < -2000) speedOffsetX = -2000; if (speedOffsetX > 2000) speedOffsetX = 2000;

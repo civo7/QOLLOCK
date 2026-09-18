@@ -85,7 +85,23 @@
                 return State.rejuvState;
             }
 
-            function GetRejuvPanel(state, root, key, id) { var panel = IsPanelValid(state.panels[key]) ? state.panels[key] : null; if (!panel) { panel = root ? root.FindChildTraverse(id) : null; state.panels[key] = panel || null; } return panel; }
+            function GetRejuvPanel(state, root, key, id) {
+                var panel = IsPanelValid(state.panels[key]) ? state.panels[key] : null;
+                if (!panel) {
+                    var now = Date.now ? Date.now() : (new Date()).getTime();
+                    var nextSearch = (state._nextPanelSearch && state._nextPanelSearch[key]) || 0;
+                    if (now < nextSearch) return null;
+                    panel = root ? root.FindChildTraverse(id) : null;
+                    if (panel && IsPanelValid(panel)) {
+                        state.panels[key] = panel;
+                    } else {
+                        state.panels[key] = null;
+                        if (!state._nextPanelSearch) state._nextPanelSearch = {};
+                        state._nextPanelSearch[key] = now + 2500;
+                    }
+                }
+                return panel;
+            }
 
             function RejuvResetImage(state, root) { var imgs = [GetRejuvPanel(state,root,"rImg","RejuvImg"), GetRejuvPanel(state,root,"rImgHUD","RejuvImgHUD")]; for (var i = 0; i < imgs.length; i++) { var img = imgs[i]; if (!img) continue; img.RemoveClass("rotating"); img.RemoveClass("buff"); img.RemoveClass("reverse"); img.RemoveClass("white"); } }
 
