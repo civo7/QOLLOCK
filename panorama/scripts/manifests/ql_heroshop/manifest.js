@@ -217,12 +217,29 @@
                 }
             }
 
+            function _onShopTransition() {
+                if (typeof $ !== "undefined" && typeof $.Schedule === "function") {
+                    $.Schedule(0, _tick);
+                } else {
+                    _tick();
+                }
+            }
+
             return {
                 onEnable: function() {
+                    if (ctx && ctx.events && typeof ctx.events.on === "function") {
+                        ctx.events.on("engine:shop_opened", _onShopTransition);
+                        ctx.events.on("engine:shop_closed", _onShopTransition);
+                    }
                     var S = QOL.core.Scheduler;
-                    _loop = S && S.createPollLoop ? S.createPollLoop(_tick, 0.2, "ql_heroshop") : null;
+                    _loop = S && S.createPollLoop ? S.createPollLoop(_tick, 1.0, "ql_heroshop") : null;
+                    _tick();
                 },
                 onDisable: function() {
+                    if (ctx && ctx.events && typeof ctx.events.off === "function") {
+                        ctx.events.off("engine:shop_opened", _onShopTransition);
+                        ctx.events.off("engine:shop_closed", _onShopTransition);
+                    }
                     if (_loop) { _loop.stop(); _loop = null; }
                     // Reset panels to default
                     if (_isAlive(_shopPanel)) {
@@ -255,6 +272,7 @@
                     if (root && QOL.core && QOL.core.hud && QOL.core.hud.applyRootClasses) {
                         QOL.core.hud.applyRootClasses(root, ctx.config.all(), Date.now ? Date.now() : (new Date()).getTime(), false);
                     }
+                    _tick();
                 }
             };
         },
