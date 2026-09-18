@@ -1,29 +1,66 @@
-# QOLLOCK Known Gotchas
+# QOLLOCK Known Gotchas & Engine Edge Cases
 
-## Panorama CSS Compatibility
-- Some CSS patterns that look valid in web CSS can break Panorama/Source 2 behavior.
-- Keep styling conservative and verify in-game after CSS changes.
+Critical runtime constraints and architectural traps discovered across Deadlock Source 2 Panorama development.
 
-## Runtime Image Source Availability
-- Some runtime item icons may not expose `src/defaultsrc` consistently.
-- Do not rely solely on icon path for critical matching unless verified.
+---
 
-## Classless Item Exceptions
-- Certain items need structural matching due to missing/unstable class signals.
-- Structural matches can collide; use explicit exclusions and deterministic fallback.
+## 1. Dynamic C++ Panel Generation (The 95% Rule)
 
-## Twin Structural Items
-- Spirit Shielding and Weapon Shielding can appear structurally identical.
-- Requires grouped resolver with sticky per-panel assignment to remain stable.
+- Over 95% of panels in Deadlock are constructed dynamically at runtime by C++ game code, not declared in XML files.
+- XML files in `pak01_dir/panorama/` show only the outermost scaffolding containers.
+- **Trap:** Searching XML files for panel IDs or class names often leads to false conclusions that an element does not exist.
+- **Rule:** Never guess panel hierarchies. Use the maintainer's Panorama Debugger to inspect live DOM trees and find real panel IDs and classes.
 
-## Debug Logging Side Effects
-- Verbose logs in hot paths can create noise and apparent lag.
-- Keep debug flags OFF outside focused diagnosis.
+---
 
-## Preset Binding Edge Cases
-- Bound accounts may appear “locked” if runtime preset marker logic is too aggressive.
-- Validate bound accounts can still manually change settings.
+## 2. Scrolled Containers (`overflow: squish scroll;`) & Layout Offsets
 
-## Pipeline Expectations
-- Project expectation is one game launch after final pack.
-- Multiple launches indicate pipeline flow regression.
+- In Source 2 Panorama, `panel.actualyoffset` and `panel.actualxoffset` represent **static layout offsets** relative to the parent layout flow.
+- When an `overflow: squish scroll;` container (such as `SettingsList`) scrolls, `actualyoffset` **does not decrease**.
+- **Trap:** Checking `actualyoffset >= viewportHeight` to determine visibility will falsely mark scrolled visible elements as "off-screen" and drop hover events or tooltips.
+- **Solution:**
+  - When handling mouse hover, rely on `GameUI.GetCursorPosition()` — if the user hovered over the element, it is definitively rendered under the cursor.
+  - When calculating visual Y programmatically, subtract the list's scroll offset (derived from `ScrollThumb.actualyoffset` ratio).
+
+---
+
+## 3. Style Churn & Layout Invalidation
+
+- Assigning `panel.style.property = val` repeatedly every tick forces Source 2 C++ to invalidate the style cache and recalculate layout across the panel subtree.
+- In high-refresh rate monitors (144Hz–240Hz), redundant style assignments cause microstutter and frame time spikes.
+- **Rule:** Always guard style mutations using `QOL.core.panel.setStyleIfChanged(panel, prop, val)` or string signature diffing (`_lastStyleSig`).
+
+---
+
+## 4. V8 JavaScript Environment (No Web APIs)
+
+- Deadlock runs modern V8 (ES6+ features like `const`, `let`, arrow functions, template literals, destructuring, `Map`, `Set` work).
+- **Trap:** There are **NO DOM or Web APIs**:
+  - No `window` or `document`
+  - No `fetch`, `XMLHttpRequest`, or WebSockets
+  - No `setTimeout` or `setInterval`
+- **Solution:** Use Panorama primitives:
+  - `$.Schedule(delaySec, callback)`
+  - `$.CancelScheduled(timerId)`
+  - `$.Msg(string)`
+  - `$.CreatePanel(type, parent, id)`
+  - `$.RegisterForUnhandledEvent(eventName, callback)`
+
+---
+
+## 5. VPK Repack Requirement
+
+- Editing `.js`, `.css`, or `.xml` source files does NOT affect the running game until compiled into `.vjs_c` / `.vcss_c` and repacked into `pak47.vpk`.
+- The compilation and repacking pipeline is managed directly by the maintainer.
+- Never assume an in-game behavior is changed without a fresh VPK repack.
+
+---
+
+## 6. Polling Rates & Frame Budgets
+
+- Deadlock's frame budget at 60fps is 16.6ms, but at 144fps it is only 6.9ms.
+- Features should **never** poll at 60Hz (0.016s).
+- Standard polling frequencies:
+  - **Idle / Event-Driven:** 0.5s – 1.0s (1–2Hz).
+  - **Active Tracking / Combat:** 0.05s – 0.1s (10–20Hz).
+- Use `onSettingsChanged` for instant 0ms response to settings adjustments instead of polling configuration stores.
