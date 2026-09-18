@@ -61,6 +61,7 @@
     let _lastThumbScrollY = NaN;
     let _lastX = NaN;
     let _lastY = NaN;
+    let _hoverCursorY = NaN;
 
     // -------------------------------------------------------------------------
     // Utilities
@@ -79,6 +80,108 @@
         if (!ctx) return null;
         const win = ctx.FindChildTraverse ? ctx.FindChildTraverse("SettingsWindow") : null;
         return (win && isAlive(win.GetParent?.())) ? win.GetParent() : ctx;
+    };
+
+    const captureCursorY = () => {
+        try {
+            const gameUi = (typeof GameUI !== "undefined") ? GameUI : (typeof globalThis !== "undefined" ? globalThis.GameUI : null);
+            if (gameUi && typeof gameUi.GetCursorPosition === "function") {
+                const c = gameUi.GetCursorPosition();
+                if (c && typeof c.y === "number" && isFinite(c.y) && c.y > 0) {
+                    return c.y;
+                }
+            }
+        } catch (_) {}
+        return NaN;
+    };
+
+    const readCursorY = () => {
+        if (isFinite(_hoverCursorY) && _hoverCursorY > 0) {
+            return _hoverCursorY;
+        }
+        return captureCursorY();
+    };
+
+    const readPanelScrollOffsetY = (panel) => {
+        if (!isAlive(panel)) return 0;
+        try {
+            const sy0 = Number(panel.scrolloffset_y);
+            if (isFinite(sy0) && sy0 !== 0) return sy0;
+        } catch (_) {}
+        try {
+            const syA = Number(panel.actualscrolloffset_y);
+            if (isFinite(syA) && syA !== 0) return syA;
+        } catch (_) {}
+        try {
+            const sy1 = Number(panel.scrolloffsetY);
+            if (isFinite(sy1) && sy1 !== 0) return sy1;
+        } catch (_) {}
+        try {
+            const sy2 = Number(panel.ScrollOffsetY);
+            if (isFinite(sy2) && sy2 !== 0) return sy2;
+        } catch (_) {}
+        try {
+            if (typeof panel.GetScrollOffset === "function") {
+                const so = panel.GetScrollOffset();
+                if (so && so.length >= 2) {
+                    const sy3 = Number(so[1]);
+                    if (isFinite(sy3) && sy3 !== 0) return sy3;
+                }
+            }
+        } catch (_) {}
+        return 0;
+    };
+
+    const getListScrollOffsetY = (list) => {
+        if (!isAlive(list)) return 0;
+        const direct = readPanelScrollOffsetY(list);
+        if (isFinite(direct) && direct > 0) return direct;
+
+        try {
+            let thumb = null;
+            const scrollBar = list.FindChildTraverse ? list.FindChildTraverse("VerticalScrollBar") : null;
+            if (scrollBar && scrollBar.FindChildTraverse) {
+                thumb = scrollBar.FindChildTraverse("ScrollThumb");
+            }
+            if (!thumb && list.FindChildTraverse) {
+                thumb = list.FindChildTraverse("ScrollThumb");
+            }
+            if (!thumb && list.FindChildrenWithClassTraverse) {
+                const thumbs = list.FindChildrenWithClassTraverse("ScrollThumb");
+                if (thumbs && thumbs.length > 0) thumb = thumbs[0];
+            }
+
+            if (isAlive(thumb)) {
+                let sty = Number(thumb.actualyoffset);
+                if (!isFinite(sty)) sty = Number(thumb.scrolloffset_y);
+                if (!isFinite(sty)) sty = Number(thumb.actualscrolloffset_y);
+                if (!isFinite(sty) && typeof globalThis.GetPanelYOffsetWithinAncestor === "function") {
+                    sty = Number(globalThis.GetPanelYOffsetWithinAncestor(thumb, scrollBar || list));
+                }
+                const barH = Number(scrollBar?.actuallayoutheight) || Number(list.actuallayoutheight) || 500;
+                const thumbH = Number(thumb.actuallayoutheight) || 40;
+                const track = Math.max(1, barH - thumbH);
+                if (isFinite(sty) && sty > 0 && track > 0) {
+                    let contentH = 0;
+                    if (typeof list.Children === "function") {
+                        const kids = list.Children();
+                        for (let i = 0; i < kids.length; i++) {
+                            const k = kids[i];
+                            if (k && k.id !== "VerticalScrollBar" && k.id !== "HorizontalScrollBar") {
+                                const kh = Number(k.actuallayoutheight);
+                                if (isFinite(kh) && kh > contentH) contentH = kh;
+                            }
+                        }
+                    }
+                    const listH = Number(list.actuallayoutheight) || 500;
+                    if (contentH > listH) {
+                        const ratio = Math.max(0, Math.min(1, sty / track));
+                        return ratio * (contentH - listH);
+                    }
+                }
+            }
+        } catch (_) {}
+        return 0;
     };
 
     const getAncestorOffset = (panel, ancestor, axis) => {
@@ -105,19 +208,61 @@
         return false;
     };
 
+    const getVisualAnchorY = (anchor, list, host) => {
+        if (!isAlive(anchor)) return NaN;
+
+        try {
+            if (typeof anchor.GetPositionWithinAncestor === "function" && isAlive(host)) {
+                const p = anchor.GetPositionWithinAncestor(host);
+                if (p && typeof p.y === "number" && isFinite(p.y)) return p.y;
+                if (Array.isArray(p) && isFinite(p[1])) return p[1];
+            }
+        } catch (_) {}
+        try {
+            if (typeof anchor.GetPositionWithinWindow === "function") {
+                const p = anchor.GetPositionWithinWindow();
+                if (p && typeof p.y === "number" && isFinite(p.y)) return p.y;
+                if (Array.isArray(p) && isFinite(p[1])) return p[1];
+            }
+        } catch (_) {}
+
+        const cursorY = readCursorY();
+        if (_activeAnchor === anchor && isFinite(cursorY) && cursorY > 0) {
+            const anchorH = Number(anchor.actuallayoutheight) || 40;
+            return cursorY - (anchorH * 0.5);
+        }
+
+        const layoutY = getAncestorOffset(anchor, host, "y");
+        if (!isFinite(layoutY)) return NaN;
+
+        if (isAlive(list) && isDescendantOf(anchor, list)) {
+            const scrollOffset = getListScrollOffsetY(list);
+            return layoutY - scrollOffset;
+        }
+
+        return layoutY;
+    };
+
     const isPanelVisibleInList = (anchor, list, host) => {
         if (!isAlive(anchor)) return false;
         if (!isAlive(list)) return true;
 
-        const anchorY = getAncestorOffset(anchor, host, "y");
         const anchorHeight = Number(anchor.actuallayoutheight);
-        const listY = getAncestorOffset(list, host, "y");
         const listHeight = Number(list.actuallayoutheight);
+        if (!isFinite(anchorHeight) || !isFinite(listHeight) || listHeight <= 0) return true;
 
-        if (!isFinite(anchorY) || !isFinite(anchorHeight) || !isFinite(listY) || !isFinite(listHeight)) return true;
-        if (listHeight <= 0) return true;
+        const listY = getAncestorOffset(list, host, "y");
+        if (!isFinite(listY)) return true;
 
-        if ((anchorY + anchorHeight <= listY + 4) || (anchorY >= listY + listHeight - 4)) {
+        const cursorY = readCursorY();
+        if (isFinite(cursorY) && cursorY > 0) {
+            return (cursorY >= listY - 4 && cursorY <= listY + listHeight + 4);
+        }
+
+        const visualAnchorY = getVisualAnchorY(anchor, list, host);
+        if (!isFinite(visualAnchorY)) return true;
+
+        if ((visualAnchorY + anchorHeight <= listY + 2) || (visualAnchorY >= listY + listHeight - 2)) {
             return false;
         }
         return true;
@@ -227,7 +372,10 @@
         const tipH = Number(_panel.actuallayoutheight) || 90;
 
         const anchorX = getAncestorOffset(anchor, host, "x");
-        const anchorY = getAncestorOffset(anchor, host, "y");
+        let visualAnchorY = getVisualAnchorY(anchor, settingsList, host);
+        if (!isFinite(visualAnchorY)) {
+            visualAnchorY = getAncestorOffset(anchor, host, "y");
+        }
         const anchorW = Number(anchor.actuallayoutwidth) || 580;
         const anchorH = Number(anchor.actuallayoutheight) || 40;
 
@@ -282,7 +430,13 @@
         }
 
         // Vertical centering on row, clamped strictly within SettingsWindow bounds
-        const anchorCenterY = anchorY + (anchorH * 0.5);
+        let anchorCenterY;
+        const cursorY = readCursorY();
+        if (isFinite(cursorY) && cursorY > 0 && isAlive(settingsList) && isDescendantOf(anchor, settingsList)) {
+            anchorCenterY = cursorY;
+        } else {
+            anchorCenterY = visualAnchorY + (anchorH * 0.5);
+        }
         const targetY = Math.round(anchorCenterY - (tipH * 0.5));
 
         let yMin = EDGE_MARGIN;
@@ -316,36 +470,6 @@
     // -------------------------------------------------------------------------
     // Scroll Snapshot & Dynamic Motion Tracking
     // -------------------------------------------------------------------------
-    const readPanelScrollOffsetY = (panel) => {
-        if (!isAlive(panel)) return 0;
-        try {
-            const sy0 = Number(panel.scrolloffset_y);
-            if (isFinite(sy0)) return sy0;
-        } catch (_) {}
-        try {
-            const syA = Number(panel.actualscrolloffset_y);
-            if (isFinite(syA)) return syA;
-        } catch (_) {}
-        try {
-            const sy1 = Number(panel.scrolloffsetY);
-            if (isFinite(sy1)) return sy1;
-        } catch (_) {}
-        try {
-            const sy2 = Number(panel.ScrollOffsetY);
-            if (isFinite(sy2)) return sy2;
-        } catch (_) {}
-        try {
-            if (typeof panel.GetScrollOffset === "function") {
-                const so = panel.GetScrollOffset();
-                if (so && so.length >= 2) {
-                    const sy3 = Number(so[1]);
-                    if (isFinite(sy3)) return sy3;
-                }
-            }
-        } catch (_) {}
-        return 0;
-    };
-
     const readScrollSnapshot = () => {
         const host = getHost();
         const ctx = $.GetContextPanel ? $.GetContextPanel() : host;
@@ -398,7 +522,9 @@
         const host = getHost();
         let curY = NaN;
         if (isAlive(_activeAnchor) && isAlive(host)) {
-            curY = getAncestorOffset(_activeAnchor, host, "y");
+            const ctx = $.GetContextPanel ? $.GetContextPanel() : host;
+            const settingsList = ctx ? ctx.FindChildTraverse?.("SettingsList") : null;
+            curY = getVisualAnchorY(_activeAnchor, settingsList, host);
         }
         _lastAnchorLocalY = curY;
     };
@@ -438,9 +564,11 @@
         }
 
         const host = getHost();
+        const ctx = $.GetContextPanel ? $.GetContextPanel() : host;
+        const settingsList = ctx ? ctx.FindChildTraverse?.("SettingsList") : null;
         let curY = NaN;
         if (isAlive(host)) {
-            curY = getAncestorOffset(anchor, host, "y");
+            curY = getVisualAnchorY(anchor, settingsList, host);
         }
 
         const anchorMoved = isFinite(_lastAnchorLocalY) && isFinite(curY) && Math.abs(curY - _lastAnchorLocalY) >= 1;
@@ -452,8 +580,6 @@
             return;
         }
 
-        const ctx = $.GetContextPanel ? $.GetContextPanel() : host;
-        const settingsList = ctx ? ctx.FindChildTraverse?.("SettingsList") : null;
         if (settingsList && isDescendantOf(anchor, settingsList)) {
             if (!isPanelVisibleInList(anchor, settingsList, host)) {
                 hideRowTooltip();
@@ -497,6 +623,7 @@
         cancelHide();
         stopTracking();
         _activeAnchor = null;
+        _hoverCursorY = NaN;
         _lastX = NaN;
         _lastY = NaN;
         if (isAlive(_panel)) {
@@ -520,6 +647,9 @@
         if (!panel || !isAlive(anchor)) return;
 
         _activeAnchor = anchor;
+        if (!isFinite(_hoverCursorY)) {
+            _hoverCursorY = captureCursorY();
+        }
         const bodyLine = localize(bodyText, true);
         const creatorName = String(createdBy || "").trim();
         const tier = normalizePerfTier(perfTier);
@@ -573,6 +703,9 @@
             hideRowTooltip();
             return;
         }
+
+        _activeAnchor = anchor;
+        _hoverCursorY = captureCursorY();
 
         const host = getHost();
         const ctx = $.GetContextPanel ? $.GetContextPanel() : host;

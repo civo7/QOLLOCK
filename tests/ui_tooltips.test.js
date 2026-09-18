@@ -392,4 +392,48 @@ test("ui/tooltips: elements inside SettingsWindow anchor outside the window, nev
     assert.strictEqual(floatingTooltip.style.x, "1208px", "Tooltip must anchor to SettingsWindow exterior, never the scrollbar");
 });
 
+test("ui/tooltips: scrolled row inside visible list viewport displays tooltip correctly", () => {
+    const { ctx, doc, clock, rootPanel, list } = createTestEnvironment();
+    // Simulate list scrolled down by 600px
+    list.actualscrolloffset_y = 600;
 
+    const row = doc.create("Panel", { id: "ScrolledRow" });
+    row.actuallayoutwidth = 580;
+    row.actuallayoutheight = 40;
+    row.actualxoffset = 10;
+    row.actualyoffset = 800; // un-scrolled layoutY = 200 + 50 + 800 = 1050; scrolled = 450 (inside 250..750)
+    list.addChild(row);
+
+    const tooltip = ctx.QOL.tooltip;
+    tooltip.showRowTooltip(row, "", "Scrolled item description", "none", "Author");
+    clock.advance(150);
+
+    assert.strictEqual(tooltip.isVisible(), true, "Scrolled row must show tooltip");
+    const floatingTooltip = rootPanel.FindChildTraverse("QOLSettingsRowFloatingTooltip");
+    assert.ok(floatingTooltip);
+    assert.strictEqual(floatingTooltip.style.y, "430px");
+});
+
+test("ui/tooltips: row tooltip aligns vertically with GameUI cursor position when available", () => {
+    const { ctx, doc, clock, rootPanel, list } = createTestEnvironment();
+    ctx.GameUI = {
+        GetCursorPosition: () => ({ x: 800, y: 460 })
+    };
+
+    const row = doc.create("Panel", { id: "CursorRow" });
+    row.actuallayoutwidth = 580;
+    row.actuallayoutheight = 40;
+    row.actualxoffset = 10;
+    row.actualyoffset = 1200; // far below unscrolled fold
+    list.addChild(row);
+
+    const tooltip = ctx.QOL.tooltip;
+    tooltip.showRowTooltip(row, "", "Cursor positioned item", "none", "Author");
+    clock.advance(150);
+
+    assert.strictEqual(tooltip.isVisible(), true, "Row hovered by cursor must show tooltip");
+    const floatingTooltip = rootPanel.FindChildTraverse("QOLSettingsRowFloatingTooltip");
+    assert.ok(floatingTooltip);
+    // targetY = 460 - (80 * 0.5) = 420px
+    assert.strictEqual(floatingTooltip.style.y, "420px");
+});
