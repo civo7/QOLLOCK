@@ -1,24 +1,21 @@
 # QOLLOCK — Deadlock Quality-of-Life Mod
 
-Personal project of maintainer (**predi-i**). High-performance modular Quality-of-Life mod for Valve's Deadlock (Source 2 Panorama engine).
+High-performance modular Quality-of-Life mod for Valve's Deadlock (Source 2 Panorama engine).
 
 ---
 
-## 1. Identity, Authority & Git Rules
+## 1. Development & Git Rules
 
-- **Maintainer:** `predi-i`
-- **Git Author & Committer:**
-  - `user.name = Predi-i`
-  - `user.email = Predi-i@users.noreply.github.com`
 - **Commit Rules:**
-  - Every commit MUST be authored and committed strictly as `Predi-i <Predi-i@users.noreply.github.com>`.
-  - **NEVER** pass `--author` flags that differ from git config (prevents duplicate GitHub avatar attribution).
-  - **NEVER** add `Co-authored-by` or secondary author trailers.
   - Make small, meaningful, logical commits after completing discrete steps.
   - **NEVER push without an explicit user request.** Never create Pull Requests.
 - **Pre-Commit Verification:**
   - Run and verify `npm test` before every commit.
   - Complete verification checks: 190+ unit tests, schema fuzz tests, smoke tests, `npm run check:api`, and `npm run lint`.
+- **Documentation Sync Rule:**
+  - Whenever modifying or adding any JavaScript code (core subsystem, feature manifest, or UI module), the corresponding markdown documentation in `docs/` (`docs/core/<name>.md`, `docs/features/<feature_id>.md`) MUST be updated or created in the **very same commit**.
+  - All documentation MUST be written in English.
+
 
 ---
 
@@ -93,7 +90,7 @@ Every feature in QOLLOCK is an isolated manifest located at `panorama/scripts/ma
             description: "Clear explanation of what this feature does.",
             category: "hud", // hud, minimap, crosshair, healthbar, overlay, audio, ui
             perfTier: "low", // none, low, medium, high
-            author: "predi-i",
+            author: "contributor_name", // author or community contributor name for tooltip credits
         },
         settings: {
             MY_FEATURE_ENABLED: { type: "boolean", default: true },
