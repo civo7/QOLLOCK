@@ -64,3 +64,17 @@ Critical runtime constraints and architectural traps discovered across Deadlock 
   - **Idle / Event-Driven:** 0.5s – 1.0s (1–2Hz).
   - **Active Tracking / Combat:** 0.05s – 0.1s (10–20Hz).
 - Use `onSettingsChanged` for instant 0ms response to settings adjustments instead of polling configuration stores.
+
+---
+
+## 7. Multi-Realm Panorama Architecture (`hud.xml` vs `hud_escape_menu.xml`)
+
+- In Source 2 Panorama, panels loaded from different XML root files execute in completely isolated V8 JavaScript realms.
+- `hud.xml` is the in-match HUD realm. It loads `core/`, `FeatureRegistry`, and all 50 gameplay feature manifests (`manifests/*/manifest.js`).
+- `hud_escape_menu.xml` is the settings menu realm. It loads UI scripts (`window.js`, `gameplay_tabs.js`, `renderer.js`, `presets.js`, `theme.js`, etc.), but **does NOT load feature manifests**.
+- **Trap:** Attempting to render settings controls dynamically via `Q.core.FeatureRegistry.getManifest(featureId)` inside the escape menu realm will encounter `manifest === undefined`, resulting in empty section containers with no controls underneath.
+- **Rule:**
+  - Gameplay settings tabs in the Escape Menu are rendered by their registered tab renderers (`_tabRenderers`, e.g. `QOL.ui.gameplayTabs` in `ui/gameplay_tabs.js`).
+  - `window.js` MUST call registered custom renderers first before any layout fallback.
+  - Manifests belong strictly in `hud.xml` for match-time runtime logic.
+

@@ -18,8 +18,8 @@
     Q.ui = Q.ui || {};
 
     const FALLBACK_TAB_ORDER = [
-        "Support", "Config", "Presets", "Crosshair", "Healthbar",
-        "HUD", "Minimap", "Shop", "Audio", "Arcade", "Console"
+        "Support", "Config", "Presets", "Console", "Arcade",
+        "Crosshair", "Healthbar", "HUD", "Minimap", "Shop", "Audio"
     ];
 
     function GetSettingsTabOrder() {

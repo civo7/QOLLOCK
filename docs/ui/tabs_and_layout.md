@@ -79,10 +79,20 @@ Because layout is purely declarative:
 
 ---
 
-## 4. Declarative vs Custom Tabs
+## 4. Tab Content Rendering Architecture
 
-- **Declarative Tabs (`sections: [...]`)**:
-  Rendered automatically by `window.js` (`renderLayoutTab`) via `renderer.js`. Reads setting definitions directly from the corresponding feature manifests.
-  If a section has `animatedToggle: true` and `enableKey: "..."`, the inner setting matching `enableKey` is automatically suppressed from the section body to prevent duplicate toggle rows.
-- **Custom Tabs (`custom: true`)**:
-  Tabs that require dedicated custom canvases or complex multi-pane widgets (such as `Presets`, `Console`, `Arcade`, `Support`, `Audio`) are marked `custom: true` and defer to their registered custom renderers (`_tabRenderers`).
+- **Registered Tab Renderers (`_tabRenderers`) Take Precedence**:
+  Because feature manifests are loaded strictly in `hud.xml` (the match HUD realm) and are **not** present in `hud_escape_menu.xml` (the settings menu realm), settings tabs in the escape menu cannot dynamically inspect `FeatureRegistry.getManifest()`.
+  Instead, tabs rely on dedicated, high-fidelity renderers registered with `Q.ui.window.registerTabRenderer(tabId, renderFn)`:
+  - `QOL.ui.gameplayTabs` (`ui/gameplay_tabs.js`): Renders Crosshair, Healthbar, HUD, Minimap, Shop, UI, Overlay.
+  - `QOL.ui.presets` (`ui/presets.js`): Renders Presets tab.
+  - `QOL.ui.configTab` (`ui/config_tab.js`): Renders Settings (Config) tab.
+  - `QOL.ui.support` (`ui/support.js`): Renders Support tab.
+  - `QOL.ui.audio` (`ui/audio.js`): Renders Audio tab.
+  - `QOL.ui.console` (`ui/console_tab.js`): Renders Console tab.
+  - `QOL.ui.arcade` (`ui/arcade_tab.js`): Renders Arcade tab.
+
+- **Declarative Fallback (`renderLayoutTab`)**:
+  If a tab does not register a custom renderer in `_tabRenderers`, `window.js` falls back to `renderLayoutTab(tabId, container)` to render any sections and manifests declared in `Q.ui.layout`.
+  When a section declares `animatedToggle: true` and `enableKey: "..."`, the setting matching `enableKey` is automatically suppressed from the section body to prevent duplicate toggle rows.
+

@@ -811,28 +811,14 @@
             } catch (_) {}
         }
 
-        const tabDef = typeof Q.ui?.getTabLayout === "function"
-            ? Q.ui.getTabLayout(tabId)
-            : (Array.isArray(Q.ui?.layout) ? Q.ui.layout.find((t) => t && t.id === tabId) : null);
-
-        // 1. If tab is explicitly defined as custom in layout (e.g. Presets, Console, Arcade, Support, Audio), delegate
-        if (tabDef && tabDef.custom) {
-            const customRenderer = _tabRenderers.get(tabId);
-            if (typeof customRenderer === "function") {
-                customRenderer(container, Q.ui.renderer);
-                return;
-            }
-        }
-
-        // 2. Layout-driven declarative rendering (sections & manifests)
-        if (container && renderLayoutTab(tabId, container)) {
-            return;
-        }
-
-        // 3. Fallback to registered custom renderer
         const customRenderer = _tabRenderers.get(tabId);
         if (typeof customRenderer === "function") {
             customRenderer(container, Q.ui.renderer);
+            return;
+        }
+
+        // Layout-driven declarative rendering
+        if (container && renderLayoutTab(tabId, container)) {
             return;
         }
 
