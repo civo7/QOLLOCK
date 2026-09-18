@@ -359,7 +359,11 @@
                         State.riftTimerLastMode = "";
                     }
                 },
-                onSettingsChanged: function() {}
+                onSettingsChanged: function() {
+                    var State = _getState();
+                    if (State) State.riftTimerLastText = "";
+                    _tick();
+                }
             };
         },
         test: function(ctx) {

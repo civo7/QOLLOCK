@@ -31,7 +31,15 @@
                     var h = _findHud();
                     if (h) h.RemoveClass("hide_failed_hint_active");
                 },
-                onSettingsChanged: function() {}
+                onSettingsChanged: function() {
+                    var h = _findHud();
+                    if (!h) return;
+                    if (ctx.config.getBool("ENABLE_HIDE_FAILED_HINT")) {
+                        h.AddClass("hide_failed_hint_active");
+                    } else {
+                        h.RemoveClass("hide_failed_hint_active");
+                    }
+                }
             };
         },
         test: function(ctx) {

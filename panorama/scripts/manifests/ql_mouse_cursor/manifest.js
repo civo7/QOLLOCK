@@ -182,7 +182,9 @@
                     if (_alive(_cursorPanel)) { try { _cursorPanel.DeleteAsync(0); } catch(e) {} }
                     _cursorPanel = null; _cursorImage = null; _imageBound = false; _lastX = null; _lastY = null;
                 },
-                onSettingsChanged: function() {}
+                onSettingsChanged: function() {
+                    _tick();
+                }
             };
         },
     test: function(ctx) {

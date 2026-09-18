@@ -372,7 +372,9 @@
                     SetCachedPanel("minimapObjectiveRejuvPanel", null); SetCachedPanel("minimapObjectiveRejuvTime", null); SetCachedPanel("minimapObjectiveRejuvIcon", null);
                     _root = null;
                 },
-                onSettingsChanged: function() {}
+                onSettingsChanged: function() {
+                    _tick();
+                }
             };
         },
         test: function(ctx) {

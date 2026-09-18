@@ -371,7 +371,10 @@
                     removeOverlay(root);
                     _boxCaches = null;
                 },
-                onSettingsChanged() {}
+                onSettingsChanged() {
+                    _boxCaches = null;
+                    _tick();
+                }
             };
         },
         test(ctx) {

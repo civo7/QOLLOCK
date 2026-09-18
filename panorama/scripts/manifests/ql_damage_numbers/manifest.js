@@ -299,7 +299,11 @@
                     _stateSet("lastIndicatorConfigSig", "");
                     _stateSet("lastIndicatorHideModesSig", "");
                 },
-                onSettingsChanged: function() {}
+                onSettingsChanged: function() {
+                    _stateSet("lastIndicatorConfigSig", "");
+                    _stateSet("lastIndicatorHideModesSig", "");
+                    _tick();
+                }
             };
         },
     test: function(ctx) {

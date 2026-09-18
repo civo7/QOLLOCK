@@ -769,7 +769,9 @@
                     _scoreboardWasOpen = false; _topBarWasVisible = false; _hideoutWasActive = false;
                     _stateSet("_showRankEnabled", false); _stateSet("_showRankTopBarVisible", false); _stateSet("showRankEscapeDone", "");
                 },
-                onSettingsChanged: function() {}
+                onSettingsChanged: function() {
+                    _tick();
+                }
             };
         },
     test: function(ctx) {

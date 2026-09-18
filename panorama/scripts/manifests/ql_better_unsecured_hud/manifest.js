@@ -373,7 +373,13 @@
                         State.unsecuredSouls.hudNextSearchMs = 0;
                     }
                 },
-                onSettingsChanged: function() {}
+                onSettingsChanged: function() {
+                    var State = _getState();
+                    if (State && State.unsecuredSouls) {
+                        State.unsecuredSouls.hudStyleSig = "";
+                    }
+                    _tick();
+                }
             };
         },
         test: function(ctx) {

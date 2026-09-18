@@ -336,7 +336,10 @@
                     _removeAll($.GetContextPanel());
                     _wasEnabled = false;
                 },
-                onSettingsChanged: function() {}
+                onSettingsChanged: function() {
+                    _nextScanMs = 0;
+                    _tick();
+                }
             };
         },
         test: function(ctx) {

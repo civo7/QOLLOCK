@@ -1038,7 +1038,11 @@
                     _cachedRejuvTimer = null;
                     _topBarPanel = null;
                 },
-                onSettingsChanged: function() {}
+                onSettingsChanged: function() {
+                    _lastVisibilitySig = null;
+                    _lastFilterSig = null;
+                    _tick();
+                }
             };
         },
         test: function(ctx) {

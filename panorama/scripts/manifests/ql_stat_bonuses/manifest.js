@@ -552,7 +552,10 @@
                     _lastLayoutSig = "";
                     _overlayVisible = false;
                 },
-                onSettingsChanged: function() {}
+                onSettingsChanged: function() {
+                    _lastLayoutSig = "";
+                    _tick();
+                }
             };
         },
         test: function(ctx) {

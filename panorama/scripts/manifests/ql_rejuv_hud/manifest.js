@@ -227,7 +227,10 @@
                     State.rejuvWasDisabled = true;
                     _root = null;
                 },
-                onSettingsChanged: function() {}
+                onSettingsChanged: function() {
+                    if (State && State.rejuvState) State.rejuvState.lastRuntimeFeatureSig = "";
+                    _tick();
+                }
             };
         },
         test: function(ctx) {

@@ -193,7 +193,10 @@
                     State.laneWithPartyLastState = "";
                     _root = null;
                 },
-                onSettingsChanged: function() {}
+                onSettingsChanged: function() {
+                    if (State) State.laneWithPartyNextApplyMs = 0;
+                    _tick();
+                }
             };
         },
         test: function(ctx) {

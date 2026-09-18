@@ -283,7 +283,14 @@
                     if (_loop) { _loop.stop(); _loop = null; }
                     var root = $.GetContextPanel(); _removeOverlay(root);
                 },
-                onSettingsChanged: function() {}
+                onSettingsChanged: function() {
+                    var st = _ensureState();
+                    if (st) {
+                        st.lastLayoutSig = "";
+                        st.lastContentSig = "";
+                    }
+                    _tick();
+                }
             };
         },
     test: function(ctx) {

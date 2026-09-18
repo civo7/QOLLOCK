@@ -783,7 +783,12 @@
                         State.allyColoredHealthPanelCacheNextMs = 0;
                     }
                 },
-                onSettingsChanged: function() {}
+                onSettingsChanged: function() {
+                    _resetSelfStyles(); _resetSelfPanelCache();
+                    _resetEnemyStyles();
+                    _resetAllyStyles();
+                    _tick();
+                }
             };
         },
         test: function(ctx) {

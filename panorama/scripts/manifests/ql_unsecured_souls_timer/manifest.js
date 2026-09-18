@@ -386,7 +386,10 @@
                     var root = $.GetContextPanel();
                     if (_isPanelValid(root)) _removeOverlay(root);
                 },
-                onSettingsChanged: function() {}
+                onSettingsChanged: function() {
+                    _timer.lastLayoutSig = "";
+                    _tick();
+                }
             };
         },
         test: function(ctx) {

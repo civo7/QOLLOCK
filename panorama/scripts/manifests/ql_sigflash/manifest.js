@@ -112,7 +112,10 @@
                     if (_loop) { _loop.stop(); _loop = null; }
                     _cleanup(); _wasEnabled = false;
                 },
-                onSettingsChanged: function() {}
+                onSettingsChanged: function() {
+                    _cleanup();
+                    _tick();
+                }
             };
         },
         test: function(ctx) {

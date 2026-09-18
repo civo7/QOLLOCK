@@ -323,7 +323,9 @@
                         for (var j = 0; j < btmCache.length; j++) DeleteInjected(btmCache[j]);
                     } catch(e) {}
                 },
-                onSettingsChanged: function() {}
+                onSettingsChanged: function() {
+                    _tick();
+                }
             };
         },
         test: function(ctx) {

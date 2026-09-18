@@ -260,7 +260,9 @@
                     State.onDeathArcadeRuntimeWasActive = false;
                     _root = null;
                 },
-                onSettingsChanged: function() {}
+                onSettingsChanged: function() {
+                    _tick();
+                }
             };
         },
         test: function(ctx) {
