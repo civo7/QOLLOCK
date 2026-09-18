@@ -174,6 +174,7 @@
             var _hudMinimapPanel = null;
             var _drawHudRoot = null;
             var _mapRenderPanel = null;
+            var _nextFallbackCastRangeScanMs = 0;
 
             function _ensureMinimapPanelCache(root) {
                 var ids = ["minimap_persp", "minimap_container", "minimap_frame", "HudMinimapContainer", PANEL_ID_MINIMAP];
@@ -218,10 +219,13 @@
                 if (!overlay) return null;
                 overlay.hittest = false;
                 overlay.hittestchildren = false;
-                overlay.style.backgroundImage = 'url("s2r://panorama/images/minimap/base/mm_tunnel_overlay_png_png.vtex")';
-                overlay.style.backgroundSize = "100% 100%";
-                overlay.style.backgroundRepeat = "no-repeat";
-                overlay.style.backgroundPosition = "center";
+                if (!overlay._tunnelStyleInitialized) {
+                    overlay.style.backgroundImage = 'url("s2r://panorama/images/minimap/base/mm_tunnel_overlay_png_png.vtex")';
+                    overlay.style.backgroundSize = "100% 100%";
+                    overlay.style.backgroundRepeat = "no-repeat";
+                    overlay.style.backgroundPosition = "center";
+                    overlay._tunnelStyleInitialized = true;
+                }
                 _tunnelOverlay = overlay;
                 return overlay;
             }
@@ -232,7 +236,7 @@
                 if (overlay.RemoveClass) overlay.RemoveClass("tunnel_locked_on");
                 if (overlay.SetHasClass) overlay.SetHasClass("qol-hidden", true);
                 else overlay.style.visibility = "collapse";
-                overlay.style.opacity = "0.75";
+                if (overlay.style.opacity !== "0.75") overlay.style.opacity = "0.75";
             }
 
             function _updateMinimapTunnelOverlay(root, cfg, activeZoomMode) {
@@ -261,7 +265,8 @@
                 if (opacity < 0) opacity = 0;
                 if (opacity > 1) opacity = 1;
                 if (overlay.AddClass) overlay.AddClass("tunnel_locked_on");
-                overlay.style.opacity = opacity.toFixed(2);
+                var opText = opacity.toFixed(2);
+                if (overlay.style.opacity !== opText) overlay.style.opacity = opText;
                 if (overlay.SetHasClass) overlay.SetHasClass("qol-hidden", false);
                 else overlay.style.visibility = "visible";
             }
@@ -425,9 +430,13 @@
                     if (castRange) rangePanels.push(castRange);
                 }
 
-                if (rangePanels.length <= 0 && root && root.FindChildTraverse) {
-                    var fallbackCastRange = root.FindChildTraverse("CastRange");
-                    if (fallbackCastRange) rangePanels.push(fallbackCastRange);
+                if (rangePanels.length <= 0 && _minimapCastRangeScaleApplied && root && root.FindChildTraverse) {
+                    var nowMs = (typeof QOL_UTILS !== "undefined" && QOL_UTILS.PerfNowMs) ? QOL_UTILS.PerfNowMs() : Date.now();
+                    if (nowMs >= _nextFallbackCastRangeScanMs) {
+                        _nextFallbackCastRangeScanMs = nowMs + 1000;
+                        var fallbackCastRange = root.FindChildTraverse("CastRange");
+                        if (fallbackCastRange) rangePanels.push(fallbackCastRange);
+                    }
                 }
 
                 for (var j = 0; j < rangePanels.length; j++) {
