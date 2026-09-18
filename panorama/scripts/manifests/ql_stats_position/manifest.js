@@ -121,10 +121,32 @@
                 _applied = true;
             }
 
+            var _currentRate = 0;
+
+            function _determineOptimalRate(cfg) {
+                if (Number(cfg.STATS_POSITION_HIDE_SCOREBOARD) === 1) {
+                    return 0.2; // 5Hz when scoreboard hide is active
+                }
+                return 1.0; // 1Hz idle when static positioning is applied
+            }
+
+            function _syncLoop(cfg) {
+                var targetRate = _determineOptimalRate(cfg);
+                if (_loop && _currentRate !== targetRate) {
+                    _loop.stop();
+                    _loop = null;
+                }
+                if (!_loop) {
+                    var S = QOL.core.Scheduler;
+                    _currentRate = targetRate;
+                    _loop = (S && S.createPollLoop) ? S.createPollLoop(_tick, targetRate, "ql_stats_position") : null;
+                }
+            }
+
             return {
                 onEnable: function() {
-                    var S = QOL.core.Scheduler;
-                    _loop = S && S.createPollLoop ? S.createPollLoop(_tick, 0.05, "ql_stats_position") : null;
+                    _syncLoop(ctx.config.view());
+                    _tick();
                 },
                 onDisable: function() {
                     if (_loop) {
@@ -140,8 +162,13 @@
                     _panel = null;
                     _sig = "";
                     _applied = false;
+                    _currentRate = 0;
                 },
-                onSettingsChanged: function() {}
+                onSettingsChanged: function() {
+                    _sig = "";
+                    _syncLoop(ctx.config.view());
+                    _tick();
+                }
             };
         },
         test: function(ctx) {
