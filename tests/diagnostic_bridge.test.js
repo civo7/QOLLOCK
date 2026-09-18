@@ -86,3 +86,22 @@ test("QOL_DiagRequest with bm_ token triggers benchmark and writes benchmark rep
     assert.ok(diag.benchmark.report.includes("QOLLOCK IN-GAME BENCHMARK REPORT"), "Report must include benchmark header");
     assert.strictEqual(typeof diag.benchmark.stats.totalJsMs, "number", "stats.totalJsMs must be a number");
 });
+
+test("QOL_DiagRequest with bm_ stress token enables all features and restores config", () => {
+    const hud = sim.createHud();
+    hud.assertLoaded();
+
+    const bmToken = "bm_2_stress_" + Date.now();
+    hud.root.SetAttributeString("QOL_DiagRequest", bmToken);
+
+    // Advance clock by 3 seconds (2s benchmark + 1s buffer)
+    hud.clock.advance(3000);
+
+    const rawDiag = hud.root.GetAttributeString("QOL_Diag", "");
+    assert.ok(rawDiag, "QOL_Diag must exist after benchmark");
+
+    const diag = JSON.parse(rawDiag);
+    assert.ok(diag.benchmark, "benchmark must be attached in QOL_Diag");
+    assert.strictEqual(diag.benchmark.token, bmToken, "benchmark.token must match bmToken");
+    assert.ok(diag.benchmark.report.includes("QOLLOCK IN-GAME BENCHMARK REPORT"), "Report must include benchmark header");
+});

@@ -1123,29 +1123,39 @@
             createSliderRow(list, "Overlay Opacity", "PERF_OVERLAY_OPACITY", "opacity_perf", "Opacity of the performance overlay panel.");
         }
 
-        // Benchmark Section (10s in-game profiling)
-        const bmHeader = createTitle(list, "10s Benchmark");
-        const bmRunBtn = (typeof createIconButton === "function")
-            ? createIconButton(bmHeader, "BenchmarkRunBtn", "s2r://panorama/images/icons/icon_play.vsvg", "Run 10s benchmark on current settings. Outputs clean breakdown to console (~) and copies to clipboard.")
-            : null;
+        // 1. In-Game Benchmark (All Features ON)
+        const bmStressHeader = createTitle(list, "Benchmark (All Features ON)");
         const bmStressBtn = (typeof createIconButton === "function")
-            ? createIconButton(bmHeader, "BenchmarkStressBtn", "s2r://panorama/images/icons/icon_reorder.vsvg", "Stress Test: Temporarily enables ALL features for 10s, benchmarks CPU load, restores original config, and copies report to clipboard.")
+            ? createIconButton(bmStressHeader, "BenchmarkStressBtn", "s2r://panorama/images/icons/icon_play.vsvg", "1-Click Full Benchmark: Temporarily enables ALL 50 features on screen for 10s, benchmarks max CPU load, restores your config, and copies report to clipboard.")
             : null;
-        const bmStatus = $.CreatePanel("Label", bmHeader, "BenchmarkStatus");
-        bmStatus.text = "Idle";
-        bmStatus.style.fontSize = "13px";
-        bmStatus.style.color = "#666";
-        bmStatus.style.marginLeft = "6px";
-        bmStatus.style.verticalAlign = "center";
+        const bmStressStatus = $.CreatePanel("Label", bmStressHeader, "BenchmarkStressStatus");
+        bmStressStatus.text = "Idle";
+        bmStressStatus.style.fontSize = "13px";
+        bmStressStatus.style.color = "#666";
+        bmStressStatus.style.marginLeft = "6px";
+        bmStressStatus.style.verticalAlign = "center";
 
-        if (bmRunBtn) {
-            bmRunBtn.SetPanelEvent("onactivate", () => {
-                runInGameBenchmark(list, bmStatus, bmRunBtn, false);
-            });
-        }
         if (bmStressBtn) {
             bmStressBtn.SetPanelEvent("onactivate", () => {
-                runInGameBenchmark(list, bmStatus, bmStressBtn, true);
+                runInGameBenchmark(list, bmStressStatus, bmStressBtn, true);
+            });
+        }
+
+        // 2. In-Game Benchmark (Current Settings)
+        const bmNormalHeader = createTitle(list, "Benchmark (Current Config)");
+        const bmNormalBtn = (typeof createIconButton === "function")
+            ? createIconButton(bmNormalHeader, "BenchmarkRunBtn", "s2r://panorama/images/icons/icon_play.vsvg", "Run 10s benchmark on your current settings without changing anything, and copy report to clipboard.")
+            : null;
+        const bmNormalStatus = $.CreatePanel("Label", bmNormalHeader, "BenchmarkNormalStatus");
+        bmNormalStatus.text = "Idle";
+        bmNormalStatus.style.fontSize = "13px";
+        bmNormalStatus.style.color = "#666";
+        bmNormalStatus.style.marginLeft = "6px";
+        bmNormalStatus.style.verticalAlign = "center";
+
+        if (bmNormalBtn) {
+            bmNormalBtn.SetPanelEvent("onactivate", () => {
+                runInGameBenchmark(list, bmNormalStatus, bmNormalBtn, false);
             });
         }
         createSep(list);

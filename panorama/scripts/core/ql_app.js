@@ -71,6 +71,45 @@
         return map;
     };
 
+    const _buildMaximalConfig = () => {
+        let base = {};
+        if (typeof QOL !== "undefined" && typeof QOL.buildDefaultConfig === "function") {
+            try { base = QOL.buildDefaultConfig(); } catch (_) {}
+        }
+        if (!base || Object.keys(base).length === 0) {
+            if (ConfigAdapter && typeof ConfigAdapter.exportToFlat === "function") {
+                try { base = ConfigAdapter.exportToFlat(); } catch (_) {}
+            }
+        }
+        const maxCfg = Object.assign({}, base);
+        for (const k in maxCfg) {
+            if (/^(ENABLE_|DISABLE_|HUD_.*_ENABLED$|SUPPORT_)/.test(k)) {
+                if (k.startsWith("DISABLE_")) continue;
+                maxCfg[k] = 1;
+            }
+        }
+        if (FeatureRegistry && typeof FeatureRegistry.getRegisteredIds === "function") {
+            const ids = FeatureRegistry.getRegisteredIds();
+            for (let i = 0; i < ids.length; i++) {
+                const m = FeatureRegistry.getManifest(ids[i]);
+                if (!m) continue;
+                if (m.enableKey) maxCfg[m.enableKey] = 1;
+                if (Array.isArray(m.enableKeys)) {
+                    for (let k = 0; k < m.enableKeys.length; k++) maxCfg[m.enableKeys[k]] = 1;
+                }
+                if (Array.isArray(m.settings)) {
+                    for (let s = 0; s < m.settings.length; s++) {
+                        const sk = m.settings[s].key;
+                        if (m.settings[s].type === "toggle" && !sk.startsWith("DISABLE_")) {
+                            maxCfg[sk] = 1;
+                        }
+                    }
+                }
+            }
+        }
+        return maxCfg;
+    };
+
     const _syncFeatureEnabledState = () => {
         if (!FeatureRegistry || !ConfigStore) return;
         const ids = (typeof FeatureRegistry.getRegisteredIds === "function")
@@ -319,15 +358,21 @@
                     let savedFlatConfig = null;
                     if (isStress) {
                         try {
-                            if (ConfigAdapter && typeof ConfigAdapter.exportToFlat === "function") {
+                            const globalState = (typeof State !== "undefined" && State) ? State :
+                                              ((typeof globalThis !== "undefined" && globalThis.State) ? globalThis.State : null);
+                            if (globalState?.lastConfig) {
+                                savedFlatConfig = Object.assign({}, globalState.lastConfig);
+                            } else if (ConfigAdapter && typeof ConfigAdapter.exportToFlat === "function") {
                                 savedFlatConfig = ConfigAdapter.exportToFlat();
                             }
-                            if (FeatureRegistry && typeof FeatureRegistry.getRegisteredIds === "function") {
-                                const allIds = FeatureRegistry.getRegisteredIds();
-                                for (let i = 0; i < allIds.length; i++) {
-                                    FeatureRegistry.enable(allIds[i]);
-                                }
+
+                            const maxConfig = _buildMaximalConfig();
+                            if (ConfigAdapter && typeof ConfigAdapter.loadFromFlat === "function") {
+                                ConfigAdapter.loadFromFlat(maxConfig, _enableKeyMap);
                             }
+                            _syncFeatureEnabledState();
+                            _syncRootClasses(hudPanel, maxConfig);
+                            if (Logger) Logger.logInfo("App", "Benchmark stress setup: all features enabled on screen");
                         } catch (e) {
                             if (Logger) Logger.logWarn("App", `Benchmark stress setup failed: ${e?.message || e}`);
                         }
@@ -338,9 +383,12 @@
                             QOL.core.Scheduler.startBenchmark(durSec, (report, stats) => {
                                 if (isStress && savedFlatConfig) {
                                     try {
-                                        if (ConfigAdapter && typeof ConfigAdapter.importFromFlat === "function") {
-                                            ConfigAdapter.importFromFlat(savedFlatConfig);
+                                        if (ConfigAdapter && typeof ConfigAdapter.loadFromFlat === "function") {
+                                            ConfigAdapter.loadFromFlat(savedFlatConfig, _enableKeyMap);
                                         }
+                                        _syncFeatureEnabledState();
+                                        _syncRootClasses(hudPanel, savedFlatConfig);
+                                        if (Logger) Logger.logInfo("App", "Benchmark stress restored: original user config restored");
                                     } catch (e) {
                                         if (Logger) Logger.logWarn("App", `Benchmark stress restore failed: ${e?.message || e}`);
                                     }
