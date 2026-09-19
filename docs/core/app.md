@@ -28,3 +28,14 @@ Deadlock C++ engine events are captured using `$.RegisterForUnhandledEvent` and 
 
 ## Cross-Isolate Config Polling Bridge
 Panorama executes settings UI (`EscapeMenu`) and game HUD in separate JavaScript execution contexts. `ql_app.js` maintains a 500ms heartbeat polling the serialized attribute on the HUD panel, allowing settings changed in the pause menu to propagate instantly to running game features.
+
+## In-Game Benchmark & Stress Test Harness
+`ql_app.js` coordinates live in-game performance benchmarks requested via `QOL_DiagRequest` tokens (prefixed `bm_`):
+- **Normal Benchmark (`bm_<dur>_normal_<token>`)**: Measures the CPU overhead and polling execution metrics of the user's active configuration over `<dur>` seconds without altering any settings.
+- **Stress Benchmark (`bm_<dur>_stress_<token>`)**:
+  - Automatically captures and preserves the player's active configuration (`_benchmarkSavedUserConfig`) and schema revision prior to starting.
+  - Generates a maximal configuration via `_buildMaximalConfig()`, enabling all registered features, toggles, multitoggles, and root CSS transformations on screen.
+  - Locks config polling (`_benchmarkStressActive = true`) to prevent periodic HUD synchronization passes from reverting root classes (e.g. Centered ESC Menu, Minimap transforms) or clobbering the stress testing state.
+  - Buffers any incoming user configuration edits during the benchmark so they are cleanly applied after completion without interfering with the test.
+  - Arms a safety timeout fallback timer (`durSec + 3s`) to guarantee player configuration restoration under abnormal terminations or scheduler errors.
+  - Upon benchmark completion, error, timeout, or application shutdown, triggers `_restoreStressBenchmark()` to cleanly restore original user settings, reload `ConfigAdapter`, re-sync manifests, and re-apply normal HUD CSS classes.

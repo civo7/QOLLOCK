@@ -41,6 +41,12 @@
     let _lastDiagForceToken = "";
     let _diagWriteNextMs = 0;
     let _lastBenchmarkReport = null;
+    let _benchmarkStressActive = false;
+    let _benchmarkStressConfig = null;
+    let _benchmarkSavedUserConfig = null;
+    let _benchmarkSavedRevision = 0;
+    let _benchmarkSavedConfigRaw = "";
+    let _benchmarkRestoreTimer = null;
 
     const _buildEnableKeyMap = () => {
         const map = {};
@@ -83,7 +89,7 @@
         }
         const maxCfg = Object.assign({}, base);
         for (const k in maxCfg) {
-            if (/^(ENABLE_|DISABLE_|HUD_.*_ENABLED$|SUPPORT_)/.test(k)) {
+            if (/^(ENABLE_|DISABLE_|HUD_.*_ENABLED$|SUPPORT_|SHOW_|MINIMAL_)/.test(k)) {
                 if (k.startsWith("DISABLE_")) continue;
                 maxCfg[k] = 1;
             }
@@ -99,9 +105,16 @@
                 }
                 if (Array.isArray(m.settings)) {
                     for (let s = 0; s < m.settings.length; s++) {
-                        const sk = m.settings[s].key;
-                        if (m.settings[s].type === "toggle" && !sk.startsWith("DISABLE_")) {
+                        const setting = m.settings[s];
+                        const sk = setting.key;
+                        if (!sk || sk.startsWith("DISABLE_")) continue;
+                        if (setting.type === "toggle") {
                             maxCfg[sk] = 1;
+                        } else if (setting.type === "multitoggle" && Array.isArray(setting.options)) {
+                            for (let o = 0; o < setting.options.length; o++) {
+                                const ok = setting.options[o]?.key;
+                                if (ok && !ok.startsWith("DISABLE_")) maxCfg[ok] = 1;
+                            }
                         }
                     }
                 }
@@ -194,10 +207,14 @@
         if (!hudPanel) hudPanel = _findHud();
         if (!hudPanel) return;
         if (!flatConfig) {
-            const globalState = (typeof State !== "undefined" && State) ? State :
-                              ((typeof globalThis !== "undefined" && globalThis.State) ? globalThis.State : null);
-            if (globalState?.lastConfig) flatConfig = globalState.lastConfig;
-            else if (ConfigAdapter) flatConfig = ConfigAdapter.exportToFlat();
+            if (_benchmarkStressActive && _benchmarkStressConfig) {
+                flatConfig = _benchmarkStressConfig;
+            } else {
+                const globalState = (typeof State !== "undefined" && State) ? State :
+                                  ((typeof globalThis !== "undefined" && globalThis.State) ? globalThis.State : null);
+                if (globalState?.lastConfig) flatConfig = globalState.lastConfig;
+                else if (ConfigAdapter) flatConfig = ConfigAdapter.exportToFlat();
+            }
         }
         if (!flatConfig) return;
         if (QOL?.core?.hud && typeof QOL.core.hud.applyRootClasses === "function") {
@@ -239,6 +256,44 @@
                 }
             }
             _syncRootClasses(hudPanel, flatConfig);
+        }
+    };
+
+    const _restoreStressBenchmark = (hudPanel, reason) => {
+        if (!_benchmarkStressActive) return;
+        _benchmarkStressActive = false;
+        _benchmarkStressConfig = null;
+        if (_benchmarkRestoreTimer) {
+            try { $.CancelScheduled(_benchmarkRestoreTimer); } catch (_) {}
+            _benchmarkRestoreTimer = null;
+        }
+
+        const saved = _benchmarkSavedUserConfig;
+        _benchmarkSavedUserConfig = null;
+        const savedRev = _benchmarkSavedRevision;
+        const savedRaw = _benchmarkSavedConfigRaw;
+
+        if (saved) {
+            try {
+                const globalState = (typeof State !== "undefined" && State) ? State :
+                                  ((typeof globalThis !== "undefined" && globalThis.State) ? globalThis.State : null);
+                if (globalState) {
+                    globalState.lastConfig = saved;
+                }
+                if (ConfigAdapter && typeof ConfigAdapter.loadFromFlat === "function") {
+                    ConfigAdapter.loadFromFlat(saved, _enableKeyMap);
+                }
+                _syncFeatureEnabledState();
+                _syncRootClasses(hudPanel, saved);
+                _lastRevision = savedRev;
+                _lastConfigRaw = savedRaw;
+                const restoredIds = (FeatureRegistry && typeof FeatureRegistry.getEnabledIds === "function")
+                    ? FeatureRegistry.getEnabledIds() : [];
+                if (Logger) Logger.logInfo("Benchmark", `Stress benchmark restored (${reason || "normal"}): original user config restored (${restoredIds.length} manifests active)`);
+                $.Msg(`[QOLLock][Benchmark] Stress benchmark finished (${reason || "normal"}). Restored to ${restoredIds.length} active manifests.`);
+            } catch (e) {
+                if (Logger) Logger.logWarn("Benchmark", `Benchmark stress restore failed: ${e?.message || e}`);
+            }
         }
     };
 
@@ -355,43 +410,72 @@
                     const durSec = parseFloat(parts[1]) || 10;
                     const isStress = parts[2] === "stress";
 
-                    let savedFlatConfig = null;
                     if (isStress) {
                         try {
                             const globalState = (typeof State !== "undefined" && State) ? State :
                                               ((typeof globalThis !== "undefined" && globalThis.State) ? globalThis.State : null);
-                            if (globalState?.lastConfig) {
-                                savedFlatConfig = Object.assign({}, globalState.lastConfig);
-                            } else if (ConfigAdapter && typeof ConfigAdapter.exportToFlat === "function") {
-                                savedFlatConfig = ConfigAdapter.exportToFlat();
+                            if (!_benchmarkStressActive) {
+                                let savedFlatConfig = null;
+                                if (ConfigAdapter && typeof ConfigAdapter.exportToFlat === "function") {
+                                    savedFlatConfig = ConfigAdapter.exportToFlat();
+                                } else if (globalState?.lastConfig && Object.keys(globalState.lastConfig).length > 0) {
+                                    savedFlatConfig = Object.assign({}, globalState.lastConfig);
+                                } else if (typeof QOL !== "undefined" && typeof QOL.buildDefaultConfig === "function") {
+                                    savedFlatConfig = QOL.buildDefaultConfig();
+                                }
+
+                                _benchmarkStressActive = true;
+                                _benchmarkSavedUserConfig = savedFlatConfig;
+                                _benchmarkSavedRevision = _lastRevision;
+                                _benchmarkSavedConfigRaw = _lastConfigRaw;
                             }
 
                             const maxConfig = _buildMaximalConfig();
+                            _benchmarkStressConfig = maxConfig;
+
+                            if (globalState) {
+                                globalState.lastConfig = maxConfig;
+                            }
                             if (ConfigAdapter && typeof ConfigAdapter.loadFromFlat === "function") {
                                 ConfigAdapter.loadFromFlat(maxConfig, _enableKeyMap);
                             }
                             _syncFeatureEnabledState();
                             _syncRootClasses(hudPanel, maxConfig);
-                            if (Logger) Logger.logInfo("App", "Benchmark stress setup: all features enabled on screen");
+
+                            if (_benchmarkRestoreTimer) {
+                                try { $.CancelScheduled(_benchmarkRestoreTimer); } catch (_) {}
+                                _benchmarkRestoreTimer = null;
+                            }
+                            _benchmarkRestoreTimer = $.Schedule(durSec + 3.0, () => {
+                                _restoreStressBenchmark(hudPanel, "safety-timeout");
+                            });
+
+                            const enabledIds = (FeatureRegistry && typeof FeatureRegistry.getEnabledIds === "function")
+                                ? FeatureRegistry.getEnabledIds() : [];
+                            const totalIds = (FeatureRegistry && typeof FeatureRegistry.getRegisteredIds === "function")
+                                ? FeatureRegistry.getRegisteredIds() : [];
+                            if (Logger) {
+                                Logger.logInfo("Benchmark", `Stress setup started: ${enabledIds.length}/${totalIds.length} manifests active, root HUD classes applied for ${durSec}s`);
+                            }
+                            $.Msg(`[QOLLock][Benchmark] Stress setup active: ${enabledIds.length} feature manifests running, root HUD classes active for ${durSec}s`);
                         } catch (e) {
-                            if (Logger) Logger.logWarn("App", `Benchmark stress setup failed: ${e?.message || e}`);
+                            _benchmarkStressActive = false;
+                            if (Logger) Logger.logWarn("Benchmark", `Benchmark stress setup failed: ${e?.message || e}`);
                         }
+                    } else {
+                        const enabledIds = (FeatureRegistry && typeof FeatureRegistry.getEnabledIds === "function")
+                            ? FeatureRegistry.getEnabledIds() : [];
+                        if (Logger) {
+                            Logger.logInfo("Benchmark", `Normal benchmark started: ${enabledIds.length} manifests active (current config) for ${durSec}s`);
+                        }
+                        $.Msg(`[QOLLock][Benchmark] Normal benchmark started: ${enabledIds.length} active manifests for ${durSec}s`);
                     }
 
                     if (QOL?.core?.Scheduler?.startBenchmark) {
                         try {
                             QOL.core.Scheduler.startBenchmark(durSec, (report, stats) => {
-                                if (isStress && savedFlatConfig) {
-                                    try {
-                                        if (ConfigAdapter && typeof ConfigAdapter.loadFromFlat === "function") {
-                                            ConfigAdapter.loadFromFlat(savedFlatConfig, _enableKeyMap);
-                                        }
-                                        _syncFeatureEnabledState();
-                                        _syncRootClasses(hudPanel, savedFlatConfig);
-                                        if (Logger) Logger.logInfo("App", "Benchmark stress restored: original user config restored");
-                                    } catch (e) {
-                                        if (Logger) Logger.logWarn("App", `Benchmark stress restore failed: ${e?.message || e}`);
-                                    }
+                                if (isStress) {
+                                    _restoreStressBenchmark(hudPanel, "complete");
                                 }
                                 _lastBenchmarkReport = {
                                     token: forceToken,
@@ -402,10 +486,12 @@
                                 _writeDiagSnapshot(hudPanel, forceToken);
                             });
                         } catch (bmErr) {
-                            if (Logger) Logger.logWarn("App", `Benchmark start failed: ${bmErr.message || bmErr}`);
+                            if (isStress) _restoreStressBenchmark(hudPanel, "error");
+                            if (Logger) Logger.logWarn("Benchmark", `Benchmark start failed: ${bmErr.message || bmErr}`);
                         }
                     } else if (Logger) {
-                        Logger.logWarn("App", "Benchmark requested but Scheduler.startBenchmark unavailable");
+                        if (isStress) _restoreStressBenchmark(hudPanel, "unavailable");
+                        Logger.logWarn("Benchmark", "Benchmark requested but Scheduler.startBenchmark unavailable");
                     }
                 }
 
@@ -499,10 +585,19 @@
             }
 
             if (changed) {
-                _applyConfigUpdate(raw, rev, hudPanel, best.sourcePanel);
-                _nextRootClassSyncMs = nowMs + 1000;
+                if (_benchmarkStressActive) {
+                    // While stress test is running, do not clobber maximal benchmark config.
+                    // Buffer incoming user config updates so they are cleanly restored at completion.
+                    const newest = (typeof QOL !== "undefined" && QOL.safeParseConfig) ? QOL.safeParseConfig(raw) : null;
+                    if (newest) _benchmarkSavedUserConfig = newest;
+                    _benchmarkSavedRevision = rev;
+                    _benchmarkSavedConfigRaw = raw;
+                } else {
+                    _applyConfigUpdate(raw, rev, hudPanel, best.sourcePanel);
+                    _nextRootClassSyncMs = nowMs + 1000;
+                }
             } else if (nowMs >= _nextRootClassSyncMs) {
-                _syncRootClasses(hudPanel);
+                _syncRootClasses(hudPanel, _benchmarkStressActive ? _benchmarkStressConfig : undefined);
                 _nextRootClassSyncMs = nowMs + 1000;
             }
 
@@ -620,7 +715,9 @@
         const globalState = (typeof State !== "undefined" && State) ? State :
                           ((typeof globalThis !== "undefined" && globalThis.State) ? globalThis.State : null);
         if (globalState) {
-            globalState.lastConfig = flatConfig || {};
+            globalState.lastConfig = (flatConfig && Object.keys(flatConfig).length > 0)
+                ? flatConfig
+                : ((ConfigAdapter && typeof ConfigAdapter.exportToFlat === "function") ? ConfigAdapter.exportToFlat() : {});
         }
 
         const featureConfig = ConfigStore.exportAll();
@@ -655,6 +752,9 @@
 
     const shutdown = () => {
         if (!_booted) return;
+        if (_benchmarkStressActive) {
+            _restoreStressBenchmark(_findHud(), "shutdown");
+        }
         _stopConfigPolling();
         if (FeatureRegistry) FeatureRegistry.shutdown();
         if (ConfigStore) {

@@ -69,18 +69,24 @@
                     bm.maxTickMs = elapsedMs;
                     bm.maxTickFeature = featureId;
                 }
-                if (elapsedMs >= 4) {
-                    bm.spikeCount += 1;
-                }
                 let feat = bm.byFeature[featureId];
                 if (!feat) {
-                    feat = { count: 0, totalMs: 0, maxMs: 0, spikes: 0 };
+                    feat = { count: 0, totalMs: 0, maxMs: 0, spikes: 0, spikeWarns: 0 };
                     bm.byFeature[featureId] = feat;
                 }
                 feat.count += 1;
                 feat.totalMs += elapsedMs;
                 if (elapsedMs > feat.maxMs) feat.maxMs = elapsedMs;
-                if (elapsedMs >= 4) feat.spikes += 1;
+                if (elapsedMs >= 4) {
+                    bm.spikeCount += 1;
+                    feat.spikes += 1;
+                }
+                if (elapsedMs >= 8) {
+                    feat.spikeWarns = (feat.spikeWarns || 0) + 1;
+                    if (feat.spikeWarns <= 3) {
+                        $.Msg(`[QOLLock][WARN][Benchmark] Execution spike: ${elapsedMs.toFixed(2)}ms in ${featureId}`);
+                    }
+                }
             }
         } catch (_) { /* best-effort — perf tracking is non-critical */ }
     };
@@ -218,6 +224,7 @@
     };
 
     let benchmarkTimer = null;
+    let benchmarkProgressTimer = null;
 
     const padL = (val, len) => {
         let s = String(val != null ? val : "");
@@ -312,6 +319,10 @@
             $.CancelScheduled(benchmarkTimer);
             benchmarkTimer = null;
         }
+        if (benchmarkProgressTimer !== null) {
+            $.CancelScheduled(benchmarkProgressTimer);
+            benchmarkProgressTimer = null;
+        }
 
         state.benchmarkActive = true;
         state.benchmarkStats = {
@@ -325,10 +336,32 @@
             byFeature: {}
         };
 
-        $.Msg(`[QOLLock] Starting ${durSec}s in-game benchmark...`);
+        let startActiveCount = 0;
+        try {
+            if (Q.core?.FeatureRegistry?.getEnabledIds) {
+                startActiveCount = Q.core.FeatureRegistry.getEnabledIds().length;
+            }
+        } catch (_) {}
+
+        $.Msg(`[QOLLock] Starting ${durSec}s in-game benchmark (${startActiveCount} active manifests)...`);
+
+        if (durSec >= 4) {
+            const halfDur = Math.floor(durSec / 2);
+            benchmarkProgressTimer = $.Schedule(halfDur, () => {
+                benchmarkProgressTimer = null;
+                if (!state.benchmarkActive || !state.benchmarkStats) return;
+                const bm = state.benchmarkStats;
+                const elapsed = Math.max(0.1, (nowMs() - bm.startTime) / 1000).toFixed(1);
+                $.Msg(`[QOLLock][Benchmark] Heartbeat: ${elapsed}s/${durSec}s elapsed | Ticks: ${bm.totalTicks} | JS time: ${bm.totalJsMs.toFixed(1)}ms | Spikes(>=4ms): ${bm.spikeCount}`);
+            });
+        }
 
         benchmarkTimer = $.Schedule(durSec, () => {
             benchmarkTimer = null;
+            if (benchmarkProgressTimer !== null) {
+                $.CancelScheduled(benchmarkProgressTimer);
+                benchmarkProgressTimer = null;
+            }
             const bm = state.benchmarkStats;
             state.benchmarkActive = false;
             const actualDurSec = Math.max(0.1, (nowMs() - (bm ? bm.startTime : 0)) / 1000);
@@ -361,6 +394,10 @@
                 if (benchmarkTimer !== null) {
                     $.CancelScheduled(benchmarkTimer);
                     benchmarkTimer = null;
+                }
+                if (benchmarkProgressTimer !== null) {
+                    $.CancelScheduled(benchmarkProgressTimer);
+                    benchmarkProgressTimer = null;
                 }
                 if (state) state.benchmarkActive = false;
             }

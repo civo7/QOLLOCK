@@ -90,12 +90,33 @@ test("QOL_DiagRequest with bm_ token triggers benchmark and writes benchmark rep
 test("QOL_DiagRequest with bm_ stress token enables all features and restores config", () => {
     const hud = sim.createHud();
     hud.assertLoaded();
+    const FR = hud.sandbox.global.QOL.core.FeatureRegistry;
+    const initialEnabledCount = FR.getEnabledIds().length;
+
+    assert.strictEqual(hud.root.BHasClass("center_esc_active"), false, "center_esc_active must be false initially");
 
     const bmToken = "bm_2_stress_" + Date.now();
     hud.root.SetAttributeString("QOL_DiagRequest", bmToken);
 
-    // Advance clock by 3 seconds (2s benchmark + 1s buffer)
-    hud.clock.advance(3000);
+    // Advance clock past initial poll (300ms)
+    hud.clock.advance(300);
+
+    assert.strictEqual(hud.root.BHasClass("center_esc_active"), true, "center_esc_active must be active at 300ms");
+    assert.strictEqual(hud.root.BHasClass("compass_active"), true, "compass_active must be active at 300ms");
+    assert.ok(FR.getEnabledIds().length >= 40, "At least 40 manifests must be active during stress benchmark");
+
+    // Advance past 1000ms root class sync (1500ms) — verify features do not prematurely deactivate
+    hud.clock.advance(1200);
+
+    assert.strictEqual(hud.root.BHasClass("center_esc_active"), true, "center_esc_active must remain active past 1.0s sync");
+    assert.strictEqual(hud.root.BHasClass("compass_active"), true, "compass_active must remain active past 1.0s sync");
+    assert.ok(FR.getEnabledIds().length >= 40, "Manifests must remain active past 1.0s sync");
+
+    // Advance past 2s benchmark finish and restore (3000ms total)
+    hud.clock.advance(1500);
+
+    assert.strictEqual(hud.root.BHasClass("center_esc_active"), false, "center_esc_active must be restored to false");
+    assert.strictEqual(FR.getEnabledIds().length, initialEnabledCount, "Enabled manifests count must restore to baseline");
 
     const rawDiag = hud.root.GetAttributeString("QOL_Diag", "");
     assert.ok(rawDiag, "QOL_Diag must exist after benchmark");

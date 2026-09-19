@@ -745,7 +745,10 @@
             return;
         }
 
-        try { hudPanel.SetAttributeString("QOL_DiagRequest", forceToken); } catch {}
+        try {
+            hudPanel.SetAttributeString("QOL_DiagRequest", forceToken);
+            $.Msg(`[QOLLock][DevTab] Requesting ${durSec}s ${modeStr} benchmark (token: ${forceToken})...`);
+        } catch {}
 
         const startTime = Date.now();
         setStatus(`Benchmarking: ${durSec}s left...`, "#66cc99");
@@ -764,6 +767,7 @@
             }
 
             if (elapsedMs > (durSec + 6) * 1000) {
+                $.Msg(`[QOLLock][DevTab][WARN] Benchmark timeout reached for ${forceToken} after ${Math.floor(elapsedMs / 1000)}s.`);
                 setStatus("Benchmark timeout", "#cc4444");
                 bmRunning = false;
                 setBtnActive(false);
@@ -795,6 +799,8 @@
                         const stats = diag.benchmark.stats || {};
                         const totalJs = (typeof stats.totalJsMs === "number") ? stats.totalJsMs.toFixed(1) : "?";
                         const setFeedback = Q.ui?.configTab?.setLocalizedConfigFeedbackMessage || globalThis.SetLocalizedConfigFeedbackMessage;
+
+                        $.Msg(`[QOLLock][DevTab] Benchmark finished: ${totalJs}ms JS execution time over ${durSec}s. Report ${copied ? "copied to clipboard" : "printed to console"}.`);
 
                         if (copied) {
                             setStatus(`Copied! ${totalJs}ms JS (Check ~)`, "#66cc99");

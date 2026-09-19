@@ -14,6 +14,7 @@ Provides a cooperative polling scheduler and performance timing harness (`QOL.co
 - `cancelAllForFeature(featureId)`: Cancels all active timers and loops associated with a given feature.
 - `getStats()`: Returns execution metrics dictionary `{ <featureId>: { count, total, max, slow } }`.
 - `resetStats()`: Resets all benchmark counters.
+- `startBenchmark(durationSec, onComplete)`: Initiates a live in-game benchmark over `durationSec` seconds with periodic progress heartbeats, spike detection alerts (>= 8ms), and structured console reporting upon completion. Returns `{ stop() }`.
 
 ## Performance Invariants
 - High-frequency polling (< 0.2s / > 5Hz) requires explicit `// rate-exempt: <reason>` documentation enforced by `tests/manifest_poll_rates.test.js`.
