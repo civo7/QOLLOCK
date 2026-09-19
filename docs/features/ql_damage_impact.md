@@ -11,7 +11,7 @@ Adjusts the scale, opacity, and positioning of the native directional damage imp
 | Config Key | Type | Default | Description |
 | :--- | :--- | :--- | :--- |
 | `ENABLE_DAMAGE_IMPACT` | `toggle` | `false` | Master toggle enabling custom scale, opacity, and offset overrides for damage impact indicators. |
-| `DAMAGE_IMPACT_SCALE` | `slider` | `1.0` | Uniform scale multiplier applied to the damage impact container (0.5 to 2.0). |
+| `DAMAGE_IMPACT_SCALE` | `slider` | `1.0` | Uniform scale multiplier applied relative to vanilla's native 80% baseline container scale (`80% * scale`, 0.5 to 2.0). |
 | `DAMAGE_IMPACT_OPACITY` | `slider` | `100` | Opacity percentage for directional damage flashes (0% to 100%). |
 | `DAMAGE_IMPACT_X_OFFSET` | `slider` | `0` | Horizontal pixel offset shifting the damage impact indicator. |
 | `DAMAGE_IMPACT_Y_OFFSET` | `slider` | `0` | Vertical pixel offset shifting the damage impact indicator. |
@@ -20,8 +20,8 @@ Adjusts the scale, opacity, and positioning of the native directional damage imp
 
 ### Activation & Lifecycle Hooks
 - **`onEnable()`**: Resolves `#damage_impact` within the HUD hierarchy, caches baseline properties, and invokes `_apply()`.
-- **`onDisable()`**: Reverts `#damage_impact` transforms, margins, and opacity to default values.
-- **`onSettingsChanged()`**: Synchronously runs `_apply()` to update styling (0ms latency).
+- **`onDisable()`**: Resets `#damage_impact` inline transforms, margins, uiScale, and opacity to null so vanilla styles govern.
+- **`onSettingsChanged()`**: Synchronously runs `_apply()` to update styling (0ms latency). If all settings are at default values (`!_hasNonDefault`), inline styles are cleanly cleared.
 - **`test()`**: Verifies that `#damage_impact` exists in the HUD DOM.
 
 ### DOM Injection & Target Panels

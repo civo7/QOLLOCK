@@ -59,15 +59,27 @@
                 var op = active ? Number(cfg.DAMAGE_IMPACT_OPACITY).toFixed(2) : "1.00";
                 var sc = active ? Number(cfg.DAMAGE_IMPACT_SCALE).toFixed(2) : "1.00";
 
-                var sig = ox + "|" + oy + "|" + op + "|" + sc + "|" + (enabled ? "1" : "0");
+                var sig = ox + "|" + oy + "|" + op + "|" + sc + "|" + (enabled ? "1" : "0") + "|" + (active ? "1" : "0");
                 if (_lastSig === sig) return;
                 _lastSig = sig;
+
+                if (!active) {
+                    if (panel.style.x) panel.style.x = null;
+                    if (panel.style.y) panel.style.y = null;
+                    if (panel.style.opacity) panel.style.opacity = null;
+                    if (panel.style.preTransformScale2d) panel.style.preTransformScale2d = null;
+                    if (panel.style.uiScale) panel.style.uiScale = null;
+                    if (panel.SetHasClass) panel.SetHasClass("qol-hidden", false);
+                    return;
+                }
 
                 panel.style.x = ox + "px";
                 panel.style.y = (-oy) + "px";
                 panel.style.opacity = op;
                 panel.style.preTransformScale2d = "1.00, 1.00";
-                panel.style.uiScale = Math.round(Number(sc) * 100) + "%";
+                // Vanilla Deadlock baseline for .damageImpactContainer is ui-scale: 80% (hud_damage_impact.css:10)
+                var baseScalePercent = 80;
+                panel.style.uiScale = Math.round(Number(sc) * baseScalePercent) + "%";
                 if (panel.SetHasClass) panel.SetHasClass("qol-hidden", !enabled);
             }
 
@@ -75,10 +87,22 @@
                 onEnable: function() { _apply(ctx.config.all()); },
                 onDisable: function() {
                     _lastSig = "";
-                    // Don't force the panel visible — the old feature had no onDisable
-                    // and left the panel in whatever state the user configured. Forcing
-                    // qol-hidden=false + opacity=1.00 would un-hide a panel the user
-                    // explicitly set ENABLE_DAMAGE_IMPACT=0 to hide.
+                    var root = $.GetContextPanel();
+                    var panel = null;
+                    try {
+                        if (typeof QOL.resolveCachedPanel === "function") {
+                            panel = QOL.resolveCachedPanel(root, "damageImpactPanel", "damage_impact");
+                        }
+                    } catch(e) {}
+                    if (!panel) { panel = (root && root.FindChildTraverse) ? root.FindChildTraverse("damage_impact") : null; }
+                    if (panel && panel.style) {
+                        if (panel.style.x) panel.style.x = null;
+                        if (panel.style.y) panel.style.y = null;
+                        if (panel.style.opacity) panel.style.opacity = null;
+                        if (panel.style.preTransformScale2d) panel.style.preTransformScale2d = null;
+                        if (panel.style.uiScale) panel.style.uiScale = null;
+                        if (panel.SetHasClass) panel.SetHasClass("qol-hidden", false);
+                    }
                 },
                 onSettingsChanged: function() { _apply(ctx.config.all()); }
             };
