@@ -34,7 +34,10 @@
                 onSettingsChanged: function() {
                     var h = _findHud();
                     if (!h) return;
-                    if (ctx.config.getBool("ENABLE_HIDE_FAILED_HINT")) {
+                    var enabled = (ctx.config && typeof ctx.config.getBool === "function")
+                        ? ctx.config.getBool("ENABLE_HIDE_FAILED_HINT")
+                        : Boolean(ctx.config && ctx.config.get ? ctx.config.get("ENABLE_HIDE_FAILED_HINT") : false);
+                    if (enabled) {
                         h.AddClass("hide_failed_hint_active");
                     } else {
                         h.RemoveClass("hide_failed_hint_active");

@@ -15,7 +15,7 @@ Manages the registration, lifecycle, and runtime sandboxing of all 50 feature ma
 - `createContext(featureId)`: Generates a scoped sandbox context passed to `manifest.create(ctx)`:
   - `ctx.id`: Feature ID string.
   - `ctx.events`: Scoped event emitter (`on`, `off`, `emit`). Emitted events are prefixed (`${featureId}:${event}`).
-  - `ctx.config`: Scoped accessor for `ConfigStore` (`get`, `all`).
+  - `ctx.config`: Scoped accessor for `ConfigStore` (`get`, `getBool`, `set`, `all`, `view`).
 - `enable(featureId)`: Instantiates and activates a feature safely.
 - `disable(featureId)`: Calls `onDisable()` and cleans up feature state.
 - `isEnabled(featureId)`: Boolean check if feature is actively running.

@@ -60,6 +60,7 @@
         },
         config: {
             get: (key) => ConfigStore.get(featureId, key),
+            getBool: (key) => Boolean(ConfigStore.get(featureId, key)),
             set: (key, value) => ConfigStore.set(featureId, key, value),
             all: () => ConfigStore.all(featureId),
             view: () => (ConfigStore.view ? ConfigStore.view(featureId) : ConfigStore.all(featureId))

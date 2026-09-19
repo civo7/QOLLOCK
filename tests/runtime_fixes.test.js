@@ -645,3 +645,36 @@ test("ql_compass MINIMAP_FLIP sets flip classes on hud_minimap and overlays corr
     assert.strictEqual(container.BHasClass("qol_minimap_flip_active"), false, "onDisable must remove qol_minimap_flip_active from container");
 });
 
+test("FeatureRegistry createContext exposes getBool and ql_cast_failed_hint onSettingsChanged succeeds", () => {
+    const hud = sim.createHud();
+    hud.assertLoaded();
+    const Q = hud.sandbox.global.QOL;
+    const FR = Q.core.FeatureRegistry;
+
+    const ctx = FR.createContext("ql_cast_failed_hint");
+    assert.strictEqual(typeof ctx.config.getBool, "function", "ctx.config.getBool must be a function");
+
+    // Initially false
+    assert.strictEqual(ctx.config.getBool("ENABLE_HIDE_FAILED_HINT"), false);
+
+    // Set to 1
+    Q.core.ConfigStore.set("ql_cast_failed_hint", "ENABLE_HIDE_FAILED_HINT", true);
+    assert.strictEqual(ctx.config.getBool("ENABLE_HIDE_FAILED_HINT"), true);
+
+    // Verify manifest create & onSettingsChanged
+    const manifest = FR.getManifest("ql_cast_failed_hint");
+    assert.ok(manifest, "ql_cast_failed_hint manifest must exist");
+    const instance = manifest.create(ctx);
+    assert.doesNotThrow(() => {
+        instance.onSettingsChanged();
+    }, "onSettingsChanged must not throw with getBool");
+    assert.strictEqual(hud.root.BHasClass("hide_failed_hint_active"), true);
+
+    // Toggle off
+    Q.core.ConfigStore.set("ql_cast_failed_hint", "ENABLE_HIDE_FAILED_HINT", false);
+    assert.doesNotThrow(() => {
+        instance.onSettingsChanged();
+    });
+    assert.strictEqual(hud.root.BHasClass("hide_failed_hint_active"), false);
+});
+
