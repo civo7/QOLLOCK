@@ -10,7 +10,7 @@
 //              ENABLE_TAB_ZOOM, ENABLE_ALT_ZOOM, MINIMAP_SMALL_SIZE,
 //              MINIMAP_LARGE_SIZE, MINIMAP_LARGE_SIZE_ALT, MINIMAP_LARGE_SIZE_TAB
 // CSS:         none
-// PATTERN:     Polling (0.3Hz). Self-scheduling via Scheduler.
+// PATTERN:     Polling (0.3s). Self-scheduling via Scheduler.
 // SPLIT FROM:  ql_rejuv_timers — HUD code extracted to ql_rejuv_hud
 // =============================================================================
 
@@ -102,9 +102,34 @@
                 return null;
             }
 
+            var _cachedMinimap = null;
             var _cachedSpawners = null;
+            var _nextSpawnerSearchMs = 0;
 
-            function _getSpawners(searchRoot) {
+            function _resolveMinimapPanel(root, anchor) {
+                if (IsPanelValid(_cachedMinimap)) return _cachedMinimap;
+                if (anchor && IsPanelValid(anchor)) {
+                    if (anchor.id === "hud_minimap" || anchor.id === "HudMinimap") {
+                        _cachedMinimap = anchor;
+                        return anchor;
+                    }
+                    var p = anchor.FindChildTraverse ? (anchor.FindChildTraverse("hud_minimap") || anchor.FindChildTraverse("HudMinimap")) : null;
+                    if (IsPanelValid(p)) {
+                        _cachedMinimap = p;
+                        return p;
+                    }
+                }
+                if (root && root.FindChildTraverse) {
+                    var pr = root.FindChildTraverse("hud_minimap") || root.FindChildTraverse("HudMinimap");
+                    if (IsPanelValid(pr)) {
+                        _cachedMinimap = pr;
+                        return pr;
+                    }
+                }
+                return (anchor && IsPanelValid(anchor)) ? anchor : null;
+            }
+
+            function _getSpawners(searchRoot, nowMs) {
                 if (_cachedSpawners && _cachedSpawners.length > 0) {
                     var allAlive = true;
                     for (var k = 0; k < _cachedSpawners.length; k++) {
@@ -114,21 +139,28 @@
                         }
                     }
                     if (allAlive) return _cachedSpawners;
+                    _cachedSpawners = null;
                 }
                 if (!IsPanelValid(searchRoot) || !searchRoot.FindChildrenWithClassTraverse) return null;
+                var now = nowMs || (Date.now ? Date.now() : (new Date()).getTime());
+                if (now < _nextSpawnerSearchMs) return null;
+
                 var found = searchRoot.FindChildrenWithClassTraverse("powerup_spawn");
                 if (found && found.length > 0) {
                     _cachedSpawners = found;
+                } else {
+                    // Back off 3s if no spawners present in DOM to prevent spamming tree traversal
+                    _nextSpawnerSearchMs = now + 3000;
                 }
                 return found;
             }
 
-            function DetectActiveBridgeBuffs(root, anchor) {
+            function DetectActiveBridgeBuffs(root, anchor, nowMs) {
                 var result = { left: false, right: false };
-                var searchRoot = (anchor && IsPanelValid(anchor)) ? anchor : ((root && root.FindChildTraverse) ? (root.FindChildTraverse("HudMinimap") || root.FindChildTraverse("hud_minimap") || root) : root);
+                var searchRoot = _resolveMinimapPanel(root, anchor);
                 if (!IsPanelValid(searchRoot)) return result;
 
-                var spawners = _getSpawners(searchRoot);
+                var spawners = _getSpawners(searchRoot, nowMs);
                 if (!spawners || spawners.length === 0) return result;
 
                 for (var i = 0; i < spawners.length; i++) {
@@ -344,7 +376,8 @@
                     return;
                 }
                 var btw = 48, bth = 18, btpx = 3, btr = 4, btf = 11, bho = 144;
-                var activeBuffs = DetectActiveBridgeBuffs(root, EnsureMinimapOverlayAnchor(root));
+                var nowMs = Date.now ? Date.now() : (new Date()).getTime();
+                var activeBuffs = DetectActiveBridgeBuffs(root, EnsureMinimapOverlayAnchor(root), nowMs);
                 ApplyMinimapObjectiveTimersBridgeMode(panels, overlay, {timerWidth:tw,timerHeight:th,timerGap:tg,timerPaddingX:tpx,timerRadius:tr,timerFont:tf,timerIcon:ti,bottomOffset:bo}, {minimapSize:400,bridgeTimerWidth:btw,bridgeTimerHeight:bth,bridgeTimerPaddingX:btpx,bridgeTimerRadius:btr,bridgeTimerFont:btf,bridgeHorizontalOffset:bho}, {buffEnabled:be,buffOnBridgeEnabled:bbe,rejuvEnabled:re,rejuvOnBridgeEnabled:rbe,buffRed:bufR,buffYellow:bufY,rejuvRed:rejR,rejuvYellow:rejY}, {buffIcon:bi,buffBridgeLeftIcon:bli,buffBridgeRightIcon:bri,rejuvIcon:ri}, bridgeText, rejuvText, activeBuffs);
             }
 
@@ -383,6 +416,7 @@
             return {
                 onEnable: function() {
                     var S = QOL.core.Scheduler;
+                    _tick();
                     _loop = S && S.createPollLoop ? S.createPollLoop(_tick, 0.3, "ql_minimap_timers") : null;
                 },
                 onDisable: function() {
@@ -391,6 +425,8 @@
                     var root = _root || $.GetContextPanel();
                     try { HideMinimapObjectiveTimers(root); } catch(e) {}
                     _cachedSpawners = null;
+                    _cachedMinimap = null;
+                    _nextSpawnerSearchMs = 0;
                     SetCachedPanel("minimapObjectiveTimersRoot", null); SetCachedPanel("minimapObjectiveBuffPanel", null); SetCachedPanel("minimapObjectiveBuffTime", null); SetCachedPanel("minimapObjectiveBuffIcon", null);
                     SetCachedPanel("minimapObjectiveBuffBridgeLeftPanel", null); SetCachedPanel("minimapObjectiveBuffBridgeLeftTime", null); SetCachedPanel("minimapObjectiveBuffBridgeLeftIcon", null);
                     SetCachedPanel("minimapObjectiveBuffBridgeRightPanel", null); SetCachedPanel("minimapObjectiveBuffBridgeRightTime", null); SetCachedPanel("minimapObjectiveBuffBridgeRightIcon", null);

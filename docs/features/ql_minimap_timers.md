@@ -24,7 +24,7 @@ Renders objective countdown timers directly onto the tactical minimap for Mid-Bo
 ## Architecture & Lifecycle
 
 ### Activation & Lifecycle Hooks
-- **`onEnable()`**: Locates the minimap overlay anchor (`minimap_container` or `minimap_persp`), builds the `QOLMinimapTimersRoot` panel structure, and registers a cooperative scheduler loop running at `0.3s` (~3.3Hz).
+- **`onEnable()`**: Locates the minimap overlay anchor (`minimap_container` or `minimap_persp`), builds the `QOLMinimapTimersRoot` panel structure, runs an immediate initial evaluation tick, and registers a cooperative scheduler loop running at `0.3s` (~3.3Hz).
 - **`onDisable()`**: Cancels the scheduler loop, collapses or hides timer overlays, and invalidates panel and spawner caches.
 - **`onSettingsChanged()`**: Synchronously runs an immediate evaluation tick (`_tick()`) to reconfigure timer layout and positioning.
 - **`test()`**: Verifies that `#hud_minimap` is present in the HUD tree.
@@ -44,7 +44,7 @@ Renders objective countdown timers directly onto the tactical minimap for Mid-Bo
   - `.buff_spawned`: Applied when an active buff is detected on the bridge.
 
 ### Engine Events & Polling Frequency
-- **Polling Frequency**: `0.3s` interval (~3.3Hz) cooperative polling loop via `QOL.core.Scheduler`.
+- **Polling Frequency**: `0.3s` interval (~3.3Hz) cooperative polling loop via `QOL.core.Scheduler`. Spawner detection targets `#hud_minimap` directly with a 3-second backoff when spawners are not present in DOM to prevent redundant tree traversals.
 - **State Coupling**: Reads live Rejuvenator data from `QOL.state.rejuvState` (maintained by `ql_rejuv_hud`).
 - **Engine Events**: None.
 
