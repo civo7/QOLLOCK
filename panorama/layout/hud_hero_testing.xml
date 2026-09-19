@@ -5,9 +5,13 @@
 		<include src="s2r://panorama/styles/citadel_base_styles.vcss_c" />
 		<include src="s2r://panorama/styles/hero_testing_menu.vcss_c" />
 	</styles>
+	<!-- ============================================================= -->
+	<!-- QOLLOCK CUSTOM: Sandbox++ Testing Tools Script -->
+	<!-- ============================================================= -->
 	<scripts>
 		<include src="s2r://panorama/scripts/ql_hero_testing.vjs_c" />
 	</scripts>
+	<!-- ============================================================= -->
 	<CitadelHudHeroTesting class="hud_hero_testing_root">
 		<GlobalClassListener classes="gScoreboardOpen gShopOpen" />
 		<Panel id="hero_testing_stub" onactivate="">

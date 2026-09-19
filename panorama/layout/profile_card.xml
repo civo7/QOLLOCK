@@ -3,22 +3,30 @@
 		<include src="s2r://panorama/styles/citadel_base_styles.vcss_c" />
 		<include src="s2r://panorama/styles/profile_card.vcss_c" />
 	</styles>
+	<!-- ============================================================= -->
+	<!-- QOLLOCK CUSTOM: Script Includes -->
+	<!-- ============================================================= -->
 	<scripts>
 		<include src="s2r://panorama/scripts/ql_utils.vjs_c" />
 		<include src="s2r://panorama/scripts/ql_profile_card_statlocker.vjs_c" />
 		<include src="s2r://panorama/scripts/features/ql_feat_showrank_card.vjs_c" />
 	</scripts>
+	<!-- ============================================================= -->
 	<CitadelProfileCard onload="if($.ShowRankCardLoaded)$.ShowRankCardLoaded();">
 		<Panel id="MiniProfileContainer" class="TopBottomFlow">
 			<Panel id="ContentsMain">
 				<Panel id="ContentsMainBackground" />
 				<Panel id="ContentsMainForeground">
 					<Panel id="AccountID">
-							<Label id="QOLProfileCardAccountID" class="HiddenAccountID" text="{i:r:account_id}" />
+						<!-- ============================================================= -->
+						<!-- QOLLOCK CUSTOM: Statlocker Profile Card Link & Account ID -->
+						<!-- ============================================================= -->
+						<Label id="QOLProfileCardAccountID" class="HiddenAccountID" text="{i:r:account_id}" />
 						<Button id="QOLStatlockerProfileCardLink">
 							<Label id="QOLStatlockerProfileCardLabel" class="AccountID" text="Friend ID:" />
 							<Image id="QOLStatlockerProfileCardIcon" src="s2r://panorama/images/qollock/statlocker_png.vtex" scaling="stretch-to-fit-preserve-aspect" />
 						</Button>
+						<!-- ============================================================= -->
 					</Panel>
 					<Panel id="HeroInfo">
 						<CitadelHeroImage id="HeroImage" />

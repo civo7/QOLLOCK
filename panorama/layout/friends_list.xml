@@ -3,7 +3,11 @@
 	<styles>
 		<include src="s2r://panorama/styles/citadel_base_styles.vcss_c" />
 		<include src="s2r://panorama/styles/friends_list.vcss_c" />
+		<!-- ============================================================= -->
+		<!-- QOLLOCK CUSTOM: Friend Search Style -->
+		<!-- ============================================================= -->
 		<include src="s2r://panorama/styles/friends_list_search.vcss_c" />
+		<!-- ============================================================= -->
 	</styles>
 	<scripts />
 	<snippets>
@@ -31,10 +35,14 @@
 		</snippet>
 	</snippets>
 	<CitadelFriendsList hittest="false">
+		<!-- ============================================================= -->
+		<!-- QOLLOCK CUSTOM: Friend Search Bar -->
+		<!-- ============================================================= -->
 		<Panel class="friendSearchContainer">
 			<TextEntry id="FriendSearchInput" acceptsfocus="true" acceptsinput="true" placeholder="Search friends..." />
 			<Button id="FriendSearchClear" />
 		</Panel>
+		<!-- ============================================================= -->
 		<Panel id="FriendsCategories" hittest="false" />
 		<Panel class="Footer">
 			<Panel class="RecommendSection">

@@ -31,6 +31,7 @@
 					</Panel>
 				</Panel>
 			</Panel>
+			<!-- QOLLOCK CUSTOM: Added onactivate to launch hero testing -->
 			<Panel id="HeroSandbox" class="playOptionContainer hasTasks" onactivate="CitadelStartHeroTesting(false)">
 				<Panel class="cardBorder" />
 				<Panel class="playOptionTop">

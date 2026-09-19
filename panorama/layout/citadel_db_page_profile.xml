@@ -3,12 +3,20 @@
 		<include src="s2r://panorama/styles/citadel_base_styles.vcss_c" />
 		<include src="s2r://panorama/styles/citadel_db_page_shared.vcss_c" />
 		<include src="s2r://panorama/styles/citadel_db_page_profile.vcss_c" />
+		<!-- ============================================================= -->
+		<!-- QOLLOCK CUSTOM: Profile Extensions Style -->
+		<!-- ============================================================= -->
 		<include src="s2r://panorama/styles/qol_profile_extensions.vcss_c" />
+		<!-- ============================================================= -->
 	</styles>
+	<!-- ============================================================= -->
+	<!-- QOLLOCK CUSTOM: Script Includes -->
+	<!-- ============================================================= -->
 	<scripts>
 		<include src="s2r://panorama/scripts/ql_utils.vjs_c" />
 		<include src="s2r://panorama/scripts/ql_profile_statlocker.vjs_c" />
 	</scripts>
+	<!-- ============================================================= -->
 	<snippets>
 		<snippet name="MatchBlockBig">
 			<Panel class="MatchBlockBig">
@@ -83,7 +91,11 @@
 									<Button id="ViewSteamProfile" onmouseout="UIHideTextTooltip();" onmouseover="UIShowTextTooltip( #Citadel_Profile_ViewSteamProfile );">
 										<Image src="s2r://panorama/images/profile/icon_steam_psd.vtex" />
 									</Button>
+									<!-- ============================================================= -->
+									<!-- QOLLOCK CUSTOM: Hidden Account ID for Statlocker -->
+									<!-- ============================================================= -->
 									<Label id="QOLProfileAccountID" class="HiddenAccountID" text="{i:r:account_id}" />
+									<!-- ============================================================= -->
 									<Label class="FriendID" text="#Citadel_Profile_FriendID" onmouseover="UIShowTextTooltip( #Citadel_Profile_CopyFriendCode )" onmouseout="UIHideTextTooltip()" onactivate="CitadelProfileCopyFriendCode()" />
 								</Panel>
 								<Button id="ForumButton" onactivate="CitadelJoinForum()">
@@ -119,6 +131,9 @@
 										<Label class="statSectionLabel" text="#Citadel_Profile_Stats_TitleSection" />
 										<Label class="statSectionName" text="{s:stat_section_name}" />
 									</Panel>
+									<!-- ============================================================= -->
+									<!-- QOLLOCK CUSTOM: Friend Profile Rank & Statlocker Link -->
+									<!-- ============================================================= -->
 									<Panel id="QOLFriendProfileTools">
 										<Label id="QOLFriendRankLabel" text="Friend's Rank" />
 										<Panel id="QOLFriendRankBadge">
@@ -130,6 +145,7 @@
 											<Label id="QOLProfileStatlockerLabel" text="Statlocker" />
 										</Button>
 									</Panel>
+									<!-- ============================================================= -->
 									<Panel id="StatsLeft">
 										<Panel class="StatRow">
 											<Panel id="GamesPlayedContainer" class="TextStat largeStat">

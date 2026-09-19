@@ -3,7 +3,13 @@
 	<styles>
 		<include src="s2r://panorama/styles/citadel_base_styles.vcss_c" />
 		<include src="s2r://panorama/styles/players_list_entry.vcss_c" />
+		<!-- ============================================================= -->
+		<!-- QOLLOCK CUSTOM: ShowRank styles                               -->
+		<!-- ============================================================= -->
 		<include src="s2r://panorama/styles/showrank.vcss_c" />
+		<!-- ============================================================= -->
+		<!-- END QOLLOCK CUSTOM                                            -->
+		<!-- ============================================================= -->
 	</styles>
 	<CitadelPlayersListEntry>
 		<Panel class="Controls">
@@ -15,11 +21,23 @@
 			<Panel class="Details">
 				<Label class="PlayerName" text="{s:player_name}" />
 				<Label class="PlayerHero" text="#Citadel_Player_Level_HeroLevel" />
+				<!-- ========================================================= -->
+				<!-- QOLLOCK CUSTOM: Hidden account and hero labels            -->
+				<!-- ========================================================= -->
 				<Label class="PlayerAccountHidden" text="" />
 				<Label class="PlayerHeroHidden" text="{g:citadel_hero_name:hero_id}" />
+				<!-- ========================================================= -->
+				<!-- END QOLLOCK CUSTOM                                        -->
+				<!-- ========================================================= -->
 			</Panel>
+			<!-- ============================================================= -->
+			<!-- QOLLOCK CUSTOM: Rank prediction badges on player list         -->
+			<!-- ============================================================= -->
 			<Image id="RankPredictionBadge" src="s2r://panorama/images/ranked/badges/rank0/badge_sm_psd.vtex" />
 			<Image id="RankPredictionBadgeOverlay" />
+			<!-- ============================================================= -->
+			<!-- END QOLLOCK CUSTOM                                            -->
+			<!-- ============================================================= -->
 		</Panel>
 	</CitadelPlayersListEntry>
 </root>

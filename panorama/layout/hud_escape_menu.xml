@@ -3,8 +3,15 @@
 	<styles>
 		<include src="s2r://panorama/styles/citadel_base_styles.vcss_c" />
 		<include src="s2r://panorama/styles/hud_escape_menu.vcss_c" />
+		<!-- ============================================================= -->
+		<!-- QOLLOCK CUSTOM: Settings Menu Styles -->
+		<!-- ============================================================= -->
 		<include src="s2r://panorama/styles/ql_settings.vcss_c" />
+		<!-- ============================================================= -->
 	</styles>
+	<!-- ============================================================= -->
+	<!-- QOLLOCK CUSTOM: Settings & Core Scripts -->
+	<!-- ============================================================= -->
 	<scripts>
 		<include src="s2r://panorama/scripts/core/ql_namespace.vjs_c" />
 		<include src="s2r://panorama/scripts/ql_utils.vjs_c" />
@@ -57,8 +64,12 @@
 		<include src="s2r://panorama/scripts/ui/friends.vjs_c" />
 		<include src="s2r://panorama/scripts/ql_settings.vjs_c" />
 	</scripts>
+	<!-- ============================================================= -->
 	<CitadelHudEscapeMenu oncancel="if ($.ForceCloseModSettings) { $.ForceCloseModSettings(); } else { $.DispatchEvent(&apos;CitadelResumePlaying&apos;, $.GetContextPanel()); }">
 		<Panel id="EscapeBackground" onactivate="if ($.ForceCloseModSettings) { $.ForceCloseModSettings(); } else { $.DispatchEvent(&apos;CitadelResumePlaying&apos;, $.GetContextPanel()); }" />
+		<!-- ============================================================= -->
+		<!-- QOLLOCK CUSTOM: Settings Modal Window -->
+		<!-- ============================================================= -->
 		<Panel id="SettingsWindow" hittest="true" onactivate="">
 			<Panel id="SettingsHeader">
 				<Label id="SettingsTitle" text="QOL LOCK" />
@@ -70,6 +81,7 @@
 				<Panel id="SettingsList" hittest="true" onload="if ($.BuildUI) { $.BuildUI(); }" />
 			</Panel>
 		</Panel>
+		<!-- ============================================================= -->
 		<Panel id="LeftStripeBlur" />
 		<Panel id="LeftStripe" hittest="false">
 			<Panel id="Menu" hittest="false">
@@ -119,12 +131,16 @@
 							<Label text="#Citadel_PlayerFeedback_Title" class="menuButtonLabel" />
 						</Button>
 					</Panel>
+					<!-- ============================================================= -->
+					<!-- QOLLOCK CUSTOM: Mod Settings Button -->
+					<!-- ============================================================= -->
 					<Panel class="SettingsRow">
 						<Button id="ModSettingsBtn" class="nav_menu_item minor" onactivate="if ($.ToggleSettingsWindow) { $.ToggleSettingsWindow(); }">
 							<Label text="QOL LOCK" class="menuButtonLabel" />
 							<Image id="ModSettingsGearIcon" class="smallIcon" src="s2r://panorama/images/icons/icon_gear.vsvg" />
 						</Button>
 					</Panel>
+					<!-- ============================================================= -->
 					<Panel class="SettingsRow">
 						<Button id="settings" class="nav_menu_item minor" onactivate="CitadelSettings()">
 							<Panel class="smallIcon GearIcon" />

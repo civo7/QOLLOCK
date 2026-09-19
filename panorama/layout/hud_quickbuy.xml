@@ -4,9 +4,13 @@
 		<include src="s2r://panorama/styles/hud_quickbuy.vcss_c" />
 		<include src="s2r://panorama/styles/hud_quickbuy_entry.vcss_c" />
 	</styles>
+	<!-- ============================================================= -->
+	<!-- QOLLOCK CUSTOM: Total Summary Script -->
+	<!-- ============================================================= -->
 	<scripts>
 		<include src="s2r://panorama/scripts/hud_quickbuy_total_summary.vjs_c" />
 	</scripts>
+	<!-- ============================================================= -->
 	<Panel class="HudQuickbuy" acceptsfocus="false" hittest="false" hittestchildren="true">
 		<Panel class="EmptyContents HudQuickbuyElement" hittest="false" hittestchildren="true">
 			<Panel class="PurchaseDisabledContainer">
@@ -30,6 +34,9 @@
 				<Label class="ItemReadyLabel" text="#Citadel_Hud_Quickbuy_ItemsReady" />
 			</Panel>
 		</Panel>
+		<!-- ============================================================= -->
+		<!-- QOLLOCK CUSTOM: Next Souls Needed & Upcoming Previews -->
+		<!-- ============================================================= -->
 		<Panel id="QuickbuyNextSoulsNeeded" hittest="false">
 			<Image class="goldIcon QuickbuyNextSoulsNeededIcon" hittest="false" />
 			<Label id="QuickbuyNextSoulsNeededLabel" text="0" hittest="false" />
@@ -72,6 +79,7 @@
 				</Panel>
 			</Panel>
 		</Panel>
+		<!-- ============================================================= -->
 		<Panel id="KeyboardHints" hittest="false" hittestchildren="false">
 			<Label class="hudHint itemName" text="{s:quickbuy_item_name}" />
 			<Label class="hudHint combatText" text="#Citadel_Hud_Autobuy_HudHint_CantPurchase" />
@@ -99,6 +107,9 @@
 				<Label class="emptyQueueLabel" html="true" text="#Citadel_Hud_Quickbuy_Empty" hittest="false" />
 			</Panel>
 		</Panel>
+		<!-- ============================================================= -->
+		<!-- QOLLOCK CUSTOM: Shop Total Summary -->
+		<!-- ============================================================= -->
 		<Panel id="QuickbuyShopTotalSummary" hittest="false">
 			<Panel class="QuickbuyShopTotalSummaryIconFrame" hittest="false">
 				<Image class="goldIcon QuickbuyShopTotalSummaryIcon" hittest="false" />
@@ -113,6 +124,7 @@
 				</Panel>
 			</Panel>
 		</Panel>
+		<!-- ============================================================= -->
 		<Panel id="QuickbuyShopSummary" onmouseactivate="CitadelQuickbuyToggleShopQueue()">
 			<CitadelModIcon id="QuickbuyShopSummaryModIcon" hittest="false" />
 			<Panel class="Labels">

@@ -18,10 +18,16 @@
 			<Panel id="TeamScoreFriendly" class="TeamScore">
 				<Panel class="ScoreBG" />
 				<Panel class="ScoreContainer">
+					<!-- ===================================================== -->
+					<!-- QOLLOCK CUSTOM: Friendly Team SPM container wrap      -->
+					<!-- ===================================================== -->
 					<Panel class="TopBottomFlow">
 						<Label class="ScoreLabel" html="true" text="{s:team_networth}" />
 						<Label id="TeamSPMDisplay_friendly" class="teamSPMDisplay" text="0/m" />
 					</Panel>
+					<!-- ===================================================== -->
+					<!-- END QOLLOCK CUSTOM                                    -->
+					<!-- ===================================================== -->
 					<Panel class="TeamIcon" />
 				</Panel>
 			</Panel>
@@ -29,10 +35,16 @@
 				<Panel class="ScoreBG" />
 				<Panel class="ScoreContainer">
 					<Panel class="TeamIcon" />
+					<!-- ===================================================== -->
+					<!-- QOLLOCK CUSTOM: Enemy Team SPM container wrap         -->
+					<!-- ===================================================== -->
 					<Panel class="TopBottomFlow">
 						<Label class="ScoreLabel" html="true" text="{s:team_networth}" />
 						<Label id="TeamSPMDisplay_enemy" class="teamSPMDisplay" text="0/m" />
 					</Panel>
+					<!-- ===================================================== -->
+					<!-- END QOLLOCK CUSTOM                                    -->
+					<!-- ===================================================== -->
 				</Panel>
 			</Panel>
 		</Panel>
@@ -56,6 +68,9 @@
 			<CitadelHudTopBarTeam id="TeamEnemy" team="3" />
 		</Panel>
 		<CitadelObjectivesMap id="ObjectivesMap" liveGame="true" />
+		<!-- ================================================================= -->
+		<!-- QOLLOCK CUSTOM: In-game Buff & Rejuvenator Timer HUD Panels       -->
+		<!-- ================================================================= -->
 		<Panel id="BuffHUD" class="BuffP" hittest="false">
 			<Label id="BuffTimeHUD" text="0:00" />
 			<Image id="BuffImgHUD" src="s2r://panorama/images/hud/modifiers/icon_powerup.svg" />
@@ -77,6 +92,9 @@
 			<Image id="RejuvImg" src="s2r://panorama/images/hud/modifiers/icon_rejuvenator.svg" />
 			<Label id="RejuvNum" text="1" />
 		</Panel>
+		<!-- ================================================================= -->
+		<!-- END QOLLOCK CUSTOM                                                -->
+		<!-- ================================================================= -->
 		<Panel id="RejuvenatorCharges">
 			<Panel id="RejuvenatorFriendly">
 				<Panel class="rejuvIcon" />

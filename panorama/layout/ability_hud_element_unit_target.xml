@@ -9,6 +9,7 @@
 			<Panel class="unit_target_instance">
 				<Panel id="unscaled_panel">
 					<Label class="stack_count" text="{d:stack_count}" />
+					<!-- QOLLOCK CUSTOM: class="qol_hint_target" added to both hint containers for CSS targeting -->
 					<Panel id="hint_container" class="qol_hint_target" />
 					<Panel id="scaled_panel">
 						<Panel class="target_shape">

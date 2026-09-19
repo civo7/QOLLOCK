@@ -3,7 +3,11 @@
 	<styles>
 		<include src="s2r://panorama/styles/hud_common.vcss_c" />
 		<include src="s2r://panorama/styles/citadel_base_styles.vcss_c" />
+		<!-- ============================================================= -->
+		<!-- QOLLOCK CUSTOM: Global Defines Style -->
+		<!-- ============================================================= -->
 		<include src="s2r://panorama/styles/qollock_defines.vcss_c" />
+		<!-- ============================================================= -->
 		<include src="s2r://panorama/styles/hud_health_container.vcss_c" />
 	</styles>
 	<snippets>
@@ -22,6 +26,9 @@
 	</snippets>
 	<Panel class="HealthContainerRoot" hittest="false">
 		<GlobalClassListener id="healthbar_container" hittest="false" classes="gAbilityUpgradeMenu" />
+		<!-- ============================================================= -->
+		<!-- QOLLOCK CUSTOM: Minecraft Hearts & Hotbar HUD -->
+		<!-- ============================================================= -->
 		<Panel id="MinecraftHeartsRoot" class="MinecraftHeartsRoot">
 			<CitadelStatusEffect id="StatusEffects" display_location="healthbar" max_modifiers="6" />
 			<Panel id="MinecraftShieldHeartsContainer" class="MinecraftShieldHeartsContainer">
@@ -61,6 +68,7 @@
 				</Panel>
 			</Panel>
 		</Panel>
+		<!-- ============================================================= -->
 		<Panel id="HealthBarContent">
 			<CitadelStatusEffect id="StatusEffects" display_location="healthbar" max_modifiers="6" />
 			<CitadelHudShieldsContainer id="HudShieldsContainer" />
