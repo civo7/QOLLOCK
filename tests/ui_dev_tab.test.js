@@ -46,7 +46,7 @@ function createTestEnvironment() {
     const sandbox = {
         $: mockDollar,
         QOL: {
-            VERSION: "3.2.0",
+            VERSION: "4.0.0",
             dumpDiagnostics: () => "=== QOLLOCK Diagnostics Dump ===\nAll systems nominal.\n",
             ui: {
                 window: {

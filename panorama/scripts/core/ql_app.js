@@ -763,7 +763,7 @@
                 try {
                     const flatExport = ConfigAdapter ? ConfigAdapter.exportToFlat() : {};
                     const envelope = JSON.stringify({
-                        schema: (QOL.schemaSemver || QOL.SCHEMA_SEMVER || "3.2.0"),
+                        schema: (QOL.schemaSemver || QOL.SCHEMA_SEMVER || "4.0.0"),
                         data: flatExport
                     });
                     hud.SetAttributeString(_CONFIG_ATTRIBUTE, envelope);

@@ -42,7 +42,7 @@
     const getCodec = () => (typeof QOL_CODEC === "object" && QOL_CODEC ? QOL_CODEC : {});
     const getSchemaUtils = () => (typeof QOL_COMPACT_SCHEMA_UTILS === "object" && QOL_COMPACT_SCHEMA_UTILS ? QOL_COMPACT_SCHEMA_UTILS : null);
 
-    const getLatestCompactSemver = () => (typeof QOL_LATEST_COMPACT_SEMVER !== "undefined" ? QOL_LATEST_COMPACT_SEMVER : "3.2.0");
+    const getLatestCompactSemver = () => (typeof QOL_LATEST_COMPACT_SEMVER !== "undefined" ? QOL_LATEST_COMPACT_SEMVER : "4.0.0");
     const getCompactSchemaRegistry = () => (typeof QOL_COMPACT_SCHEMA_REGISTRY !== "undefined" ? QOL_COMPACT_SCHEMA_REGISTRY : {});
     const getCompactWireToSemver = () => (typeof QOL_COMPACT_SCHEMA_WIRE_TO_SEMVER !== "undefined" ? QOL_COMPACT_SCHEMA_WIRE_TO_SEMVER : {});
     const getCompactDefaultHeroField = () => (typeof QOL_COMPACT_DEFAULT_HERO_FIELD !== "undefined" ? QOL_COMPACT_DEFAULT_HERO_FIELD : "DEFAULT_HERO");
@@ -77,7 +77,7 @@
     const getPayloadExportPrefix = () => {
         const semver = (typeof QOL_SCHEMA_SEMVER === "string" && QOL_SCHEMA_SEMVER.length > 0)
             ? QOL_SCHEMA_SEMVER
-            : "3.2.0";
+            : "4.0.0";
         return `[QOL-${semver.replace(/\./g, "-")}]:`;
     };
 

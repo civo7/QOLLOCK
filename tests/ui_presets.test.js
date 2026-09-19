@@ -63,7 +63,7 @@ function createTestEnvironment() {
     const sandbox = {
         $: mockDollar,
         QOL: {
-            VERSION: "3.2.0",
+            VERSION: "4.0.0",
             core: {
                 panel: {
                     isAlive: (p) => !!(p && p.IsValid && p.IsValid()),
@@ -191,6 +191,7 @@ test("presets: applyPresetByName applies preset and preserves UI settings", () =
 
     modConfig.DRAG_ENABLED = 1;
     modConfig.PREVIEWS_ENABLED = 0;
+    modConfig.ENABLE_UPDATE_CHECKER = 0;
 
     const ok = p.applyPresetByName("Clean");
     assert.strictEqual(ok, true);
@@ -199,6 +200,7 @@ test("presets: applyPresetByName applies preset and preserves UI settings", () =
     // UI layout preferences preserved
     assert.strictEqual(modConfig.DRAG_ENABLED, 1);
     assert.strictEqual(modConfig.PREVIEWS_ENABLED, 0);
+    assert.strictEqual(modConfig.ENABLE_UPDATE_CHECKER, 0);
 });
 
 test("presets: doesCurrentConfigMatchPreset accurately matches config", () => {

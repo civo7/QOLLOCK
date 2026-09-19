@@ -24,6 +24,7 @@ A centralized collection of global interface refinements, aspect ratio compatibi
 | `ENABLE_HIDE_TESTING_TOOLS` | `toggle` | `false` | Forcibly suppresses testing tools from the screen. |
 | `ENABLE_HIDE_BEHAVIOR_SUMMARY`| `toggle` | `false` | Inverted toggle to suppress the penalty behavior summary pop-up dialog. |
 | `ENABLE_LEGACY_COOLDOWNS` | `toggle` | `false` | Render cooldown durations on ability icons matching legacy Deadlock UI. |
+| `ENABLE_UPDATE_CHECKER` | `toggle` | `true` | Checks for new public QOLLOCK releases upon opening the settings menu. |
 
 *Note: Enabled by default (`enabledByDefault: true`).*
 

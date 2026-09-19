@@ -8,7 +8,7 @@
 
     // Increment this for every public QOLLOCK release, independently from the
     // Settings schema/version. Publish the same number through qollock-updates.
-    var QOL_UPDATE_MARKER = 2;
+    var QOL_UPDATE_MARKER = 3;
     var MARKER_BASE_URL = "https://raw.githubusercontent.com/Predi-i/qollock-updates/main/markers/";
     var CURRENT_MAX_RATIO = 1.35;
     var OUTDATED_MIN_RATIO = 4.0;
@@ -22,6 +22,11 @@
     var popupLayer = null;
 
     var IsValid = QOL_UTILS.IsPanelValid;
+
+    function IsUpdateCheckerEnabled() {
+        var cfg = (typeof MOD_CONFIG !== "undefined" && MOD_CONFIG) ? MOD_CONFIG : ((typeof QOL !== "undefined" && QOL.defaultConfig) ? QOL.defaultConfig : {});
+        return cfg.ENABLE_UPDATE_CHECKER !== 0 && cfg.ENABLE_UPDATE_CHECKER !== false;
+    }
 
     function FindRoot() {
         var root = null;
@@ -90,7 +95,7 @@
     }
 
     function ShowPopupIfSettingsOpen() {
-        if (!updateAvailable || hasBeenShown || !IsSettingsOpen()) return;
+        if (!IsUpdateCheckerEnabled() || !updateAvailable || hasBeenShown || !IsSettingsOpen()) return;
         var layer = EnsurePopup();
         if (IsValid(layer)) {
             layer.AddClass("UpdateAvailable");
@@ -105,6 +110,7 @@
     }
 
     function CheckForUpdate() {
+        if (!IsUpdateCheckerEnabled()) return;
         var root = FindRoot();
         if (!root) return;
         var token = ++requestToken;
@@ -144,7 +150,9 @@
                 DeleteProbe(host, image);
                 if (state === "outdated") {
                     updateAvailable = true;
-                    ShowPopupIfSettingsOpen();
+                    if (IsUpdateCheckerEnabled()) {
+                        ShowPopupIfSettingsOpen();
+                    }
                 }
                 return;
             }
@@ -158,11 +166,27 @@
     QOL.updateChecker = {
         marker: QOL_UPDATE_MARKER,
         onSettingsOpened: function() {
+            if (!IsUpdateCheckerEnabled()) {
+                if (IsValid(popupLayer)) popupLayer.RemoveClass("UpdateAvailable");
+                return;
+            }
             ShowPopupIfSettingsOpen();
             if (autoCheckStarted) return;
             autoCheckStarted = true;
             CheckForUpdate();
         },
-        classifyMarker: ClassifyMarker
+        onSettingsChanged: function() {
+            if (!IsUpdateCheckerEnabled()) {
+                if (IsValid(popupLayer)) popupLayer.RemoveClass("UpdateAvailable");
+            } else {
+                ShowPopupIfSettingsOpen();
+                if (!autoCheckStarted && IsSettingsOpen()) {
+                    autoCheckStarted = true;
+                    CheckForUpdate();
+                }
+            }
+        },
+        classifyMarker: ClassifyMarker,
+        isEnabled: IsUpdateCheckerEnabled
     };
 })();

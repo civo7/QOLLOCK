@@ -238,7 +238,7 @@ test("INVARIANT 3: Full UI layout walk - all controls bind to valid DEFAULT_CONF
     const sandbox = {
         $: mockDollar,
         QOL: {
-            VERSION: "3.2.0",
+            VERSION: "4.0.0",
             core: {
                 panel: {
                     isAlive: (p) => !!(p && p.IsValid && p.IsValid()),

@@ -6,8 +6,8 @@ QOLLOCK is a Deadlock (Source 2 Panorama engine) mod that customizes the in-game
 It runs in two JavaScript contexts — HUD (in-game panels) and Settings (settings UI) —
 and communicates between them via panel attribute bridges.
 
-**Version:** 3.2.0  
-**Schema:** 3.2.0 (wire version 2 — unchanged since 2.0.1)  
+**Version:** 4.0.0  
+**Schema:** 4.0.0 (wire version 2 — unchanged since 2.0.1)  
 **Features:** 31/38 FeatureRegistry manifests wired, 5 cut over, 37 old features, 94 presets  
 **Branch:** `full-rewrite`  
 **Primary File:** `panorama/scripts/ql_core.js` (~14.7K lines after Phase 10 wiring)

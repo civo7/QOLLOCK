@@ -1096,6 +1096,7 @@
                 // UI-only keys live in the raw config, never in the payload.
                 if (Object.prototype.hasOwnProperty.call(rawCfg, "DRAG_ENABLED")) merged.DRAG_ENABLED = rawCfg.DRAG_ENABLED;
                 if (Object.prototype.hasOwnProperty.call(rawCfg, "PREVIEWS_ENABLED")) merged.PREVIEWS_ENABLED = rawCfg.PREVIEWS_ENABLED;
+                if (Object.prototype.hasOwnProperty.call(rawCfg, "ENABLE_UPDATE_CHECKER")) merged.ENABLE_UPDATE_CHECKER = rawCfg.ENABLE_UPDATE_CHECKER;
 
                 merged = _callQol("mergeConfig", merged, [merged]) || merged;
 

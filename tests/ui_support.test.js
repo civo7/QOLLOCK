@@ -43,7 +43,7 @@ function createTestEnvironment() {
     const sandbox = {
         $: mockDollar,
         QOL: {
-            VERSION: "3.2.0",
+            VERSION: "4.0.0",
             core: {
                 panel: {
                     isAlive: (p) => !!(p && p.IsValid && p.IsValid()),

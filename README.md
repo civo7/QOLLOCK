@@ -59,4 +59,4 @@ repository:
 
 The Action creates the new current marker, retires all old markers and updates
 its README automatically. No image editing or manual upload is required. Do
-this for every public release, even when the Settings version remains `3.1.9`.
+this for every public release, even when the Settings version remains `4.0.0`.

@@ -54,7 +54,7 @@ function createTestEnvironment() {
     const sandbox = {
         $: mockDollar,
         QOL: {
-            VERSION: "3.2.0",
+            VERSION: "4.0.0",
             core: {
                 panel: {
                     isAlive: (p) => !!(p && p.IsValid && p.IsValid()),
@@ -64,7 +64,7 @@ function createTestEnvironment() {
             },
             ui: {
                 configTab: {
-                    getCurrentExportSettingsString: () => "[QOL-3-2-0]:valid_export_token",
+                    getCurrentExportSettingsString: () => "[QOL-4-0-0]:valid_export_token",
                     setLocalizedConfigFeedbackMessage: () => {},
                 },
             },
@@ -176,8 +176,8 @@ test("ui/cloud_sync: queueBuildSaveRequest validates payload and sets attributes
     assert.strictEqual(queueBuildSaveRequest(""), "");
     assert.strictEqual(queueBuildSaveRequest("invalid_token_no_brackets"), "");
 
-    // Valid format [QOL-3-2-0]:payload
-    const token = queueBuildSaveRequest("[QOL-3-2-0]:valid_export_token");
+    // Valid format [QOL-4-0-0]:payload
+    const token = queueBuildSaveRequest("[QOL-4-0-0]:valid_export_token");
     assert.ok(token);
     assert.ok(token.includes("_"));
 

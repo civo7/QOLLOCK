@@ -72,3 +72,4 @@ Each manifest registers with `QOL.core.FeatureRegistry` and owns its lifecycle (
 - `ql_perf`: In-game performance and scheduler FPS overlay.
 - `ql_build_payload`: Build category save and payload compression.
 - `ql_build_storage`: Local build storage and profile management.
+- `ql_update_checker`: Release update checker and version notifications.

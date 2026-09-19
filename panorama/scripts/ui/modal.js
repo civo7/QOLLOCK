@@ -127,6 +127,9 @@
         if (Object.prototype.hasOwnProperty.call(modConfig, "PREVIEWS_ENABLED")) {
             targetConfig.PREVIEWS_ENABLED = modConfig.PREVIEWS_ENABLED;
         }
+        if (Object.prototype.hasOwnProperty.call(modConfig, "ENABLE_UPDATE_CHECKER")) {
+            targetConfig.ENABLE_UPDATE_CHECKER = modConfig.ENABLE_UPDATE_CHECKER;
+        }
         return targetConfig;
     };
 

@@ -28,7 +28,7 @@
         const semver = globalThis.QOL_SCHEMA_SEMVER ||
             globalThis.LATEST_COMPACT_SEMVER ||
             Q.VERSION ||
-            "3.2.0";
+            "4.0.0";
         return `[QOL-${String(semver).replace(/\./g, "-")}]:`;
     };
 
@@ -232,6 +232,7 @@
             if (typeof globalThis.CreateSectionTitle === "function" && typeof globalThis.CreateRow === "function") {
                 globalThis.CreateSectionTitle(list, "General");
                 globalThis.CreateRow(list, "Preview", "PREVIEWS_ENABLED", "toggle", null, null, null, null, "Realtime Changes");
+                globalThis.CreateRow(list, "Update Checker", "ENABLE_UPDATE_CHECKER", "toggle", null, null, null, null, "Check for new QOLLOCK releases when opening settings.");
                 globalThis.CreateRow(list, "Language", "LANGUAGE", "dropdown", null, null, null, globalThis.SETTINGS_LANGUAGE_OPTIONS);
                 globalThis.CreateRow(list, "Default Hero", "DEFAULT_HERO", "dropdown", null, null, null, globalThis.DEFAULT_HERO_DROPDOWN_OPTIONS);
                 globalThis.CreateRow(list, "Troubleshoot", "TEST_SKYRUNNER", "actionbutton", null, null, null, [
@@ -283,6 +284,7 @@
         }
         if (typeof globalThis.CreateRow === "function") {
             globalThis.CreateRow(cardGeneral, "Preview Changes", "PREVIEWS_ENABLED", "toggle", null, null, null, null, "Realtime Changes");
+            globalThis.CreateRow(cardGeneral, "Update Checker", "ENABLE_UPDATE_CHECKER", "toggle", null, null, null, null, "Check for new QOLLOCK releases when opening settings.");
             globalThis.CreateRow(cardGeneral, "Language", "LANGUAGE", "dropdown", null, null, null, globalThis.SETTINGS_LANGUAGE_OPTIONS);
             globalThis.CreateRow(cardGeneral, "Default Hero", "DEFAULT_HERO", "dropdown", null, null, null, globalThis.DEFAULT_HERO_DROPDOWN_OPTIONS);
             globalThis.CreateRow(cardGeneral, "Troubleshoot", "TEST_SKYRUNNER", "actionbutton", null, null, null, [

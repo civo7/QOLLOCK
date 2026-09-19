@@ -189,6 +189,7 @@ function ApplyParsedConfigWithDiagnostics(parsed, schemaVersion) {
 
     var preservedDragEnabled = MOD_CONFIG.DRAG_ENABLED;
     var preservedPreviewsEnabled = MOD_CONFIG.PREVIEWS_ENABLED;
+    var preservedUpdateCheckerEnabled = MOD_CONFIG.ENABLE_UPDATE_CHECKER;
     var fieldMap = BuildSchemaFieldMap(schemaVersion);
     for (var defaultKey in DEFAULT_CONFIG) {
         MOD_CONFIG[defaultKey] = DEFAULT_CONFIG[defaultKey];
@@ -225,6 +226,9 @@ function ApplyParsedConfigWithDiagnostics(parsed, schemaVersion) {
     NormalizeLanguageSchemaMigration(MOD_CONFIG, parsed, schemaVersion || LATEST_COMPACT_SEMVER);
     MOD_CONFIG.DRAG_ENABLED = preservedDragEnabled;
     MOD_CONFIG.PREVIEWS_ENABLED = preservedPreviewsEnabled;
+    if (preservedUpdateCheckerEnabled !== undefined) {
+        MOD_CONFIG.ENABLE_UPDATE_CHECKER = preservedUpdateCheckerEnabled;
+    }
     SetRuntimePresetName("");
     return diagnostics;
 }

@@ -60,7 +60,7 @@ function createTestEnvironment() {
     const sandbox = {
         $: mockDollar,
         QOL: {
-            VERSION: "3.2.0",
+            VERSION: "4.0.0",
             core: {
                 panel: {
                     isAlive: (p) => !!(p && p.IsValid && p.IsValid()),
@@ -78,7 +78,7 @@ function createTestEnvironment() {
                 modal: {
                     tryApplyImportStringWithDiagnostics: () => ({
                         ok: true,
-                        schemaVersion: "3.2.0",
+                        schemaVersion: "4.0.0",
                         parsedConfig: Object.assign({}, defaultConfig),
                         candidateConfig: Object.assign({}, defaultConfig),
                         appliedKeys: 5,
@@ -101,8 +101,8 @@ function createTestEnvironment() {
             DEFAULT_CONFIG: Object.assign({}, defaultConfig),
             QOL_DEFAULT_CONFIG: Object.assign({}, defaultConfig),
             MOD_CONFIG: Object.assign({}, defaultConfig),
-            QOL_SCHEMA_SEMVER: "3.2.0",
-            LATEST_COMPACT_SEMVER: "3.2.0",
+            QOL_SCHEMA_SEMVER: "4.0.0",
+            LATEST_COMPACT_SEMVER: "4.0.0",
             gSearchCollectMode: false,
             gSearchCollectState: null,
             SETTINGS_LANGUAGE_OPTIONS: [{ id: "english", label: "English" }],
@@ -185,7 +185,7 @@ test("ui/config_tab: getCurrentExportSettingsString generates formatted prefix a
     const configTab = sandbox.QOL.ui.configTab;
 
     const exportStr = configTab.getCurrentExportSettingsString();
-    assert.strictEqual(exportStr, "[QOL-3-2-0]:bW9jay1jb21wYWN0LWJ5dGVz");
+    assert.strictEqual(exportStr, "[QOL-4-0-0]:bW9jay1jb21wYWN0LWJ5dGVz");
 });
 
 test("ui/config_tab: formatExportSettingsDisplayString splits long export payloads with newline", () => {
@@ -193,11 +193,11 @@ test("ui/config_tab: formatExportSettingsDisplayString splits long export payloa
     const configTab = sandbox.QOL.ui.configTab;
 
     // Short payload (<= 24 chars) is not wrapped
-    const shortPayload = "[QOL-3-2-0]:12345678901234567890";
+    const shortPayload = "[QOL-4-0-0]:12345678901234567890";
     assert.strictEqual(configTab.formatExportSettingsDisplayString(shortPayload), shortPayload);
 
     // Long payload (> 24 chars) gets a newline in the middle of payload
-    const longPayload = "[QOL-3-2-0]:ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+    const longPayload = "[QOL-4-0-0]:ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
     const formatted = configTab.formatExportSettingsDisplayString(longPayload);
     assert.ok(formatted.includes("\n"));
     assert.strictEqual(formatted.replace(/\n/g, ""), longPayload);
@@ -211,7 +211,7 @@ test("ui/config_tab: formatImportSettingsDisplayString only formats valid tagged
     const { sandbox } = createTestEnvironment();
     const configTab = sandbox.QOL.ui.configTab;
 
-    const validToken = "[QOL-3-2-0]:ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+    const validToken = "[QOL-4-0-0]:ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
     const formatted = configTab.formatImportSettingsDisplayString(validToken);
     assert.ok(formatted.includes("\n"));
 

@@ -7,7 +7,7 @@ Initializes the root `QOL` and `QOL.core` namespace hierarchy, establishes envir
 - Must load 1st among core scripts (defined in `hud.xml` and `hud_escape_menu.xml`).
 
 ## Interface (`QOL.core`)
-- `QOL.VERSION`: Current mod semantic version string (e.g. `3.2.0`).
+- `QOL.VERSION`: Current mod semantic version string (e.g. `4.0.0`).
 - `QOL.BUILD`: Build identifier timestamp.
 - `QOL.ROLE`: Active execution context role (`"hud"` in gameplay HUD, `"em"` in Escape Menu settings window).
 - `QOL.core.panel`: Alias for panel helpers.

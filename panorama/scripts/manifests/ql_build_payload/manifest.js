@@ -638,6 +638,7 @@
         if (rawCfg && typeof rawCfg === "object") {
             if (rawCfg.hasOwnProperty("DRAG_ENABLED")) merged.DRAG_ENABLED = rawCfg.DRAG_ENABLED;
             if (rawCfg.hasOwnProperty("PREVIEWS_ENABLED")) merged.PREVIEWS_ENABLED = rawCfg.PREVIEWS_ENABLED;
+            if (rawCfg.hasOwnProperty("ENABLE_UPDATE_CHECKER")) merged.ENABLE_UPDATE_CHECKER = rawCfg.ENABLE_UPDATE_CHECKER;
         }
 
         // 5. Run through mergeConfig normalize chain
