@@ -158,6 +158,11 @@ function SyncConfigFromStorage() {
     gLastSavedConfigRaw = WrapConfigForStorage(MOD_CONFIG);
     // $.persistentStorage confirmed absent — statlocker state persists via panel attrs only.
     if (QOL.arcade) QOL.arcade.updateBridgePollerState();
+
+    var applyHero = globalThis.ApplyDefaultHeroSelection || (QOL.ui && QOL.ui.controls && QOL.ui.controls.applyDefaultHeroSelection);
+    if (typeof applyHero === "function" && MOD_CONFIG && MOD_CONFIG.DEFAULT_HERO) {
+        applyHero(MOD_CONFIG.DEFAULT_HERO);
+    }
 }
 
 // PersistStatlockerProfileState — config persistence is via Skyrunner builds.

@@ -223,6 +223,10 @@
         if (typeof globalThis.SaveAndSync === "function") {
             globalThis.SaveAndSync();
         }
+        const applyHero = globalThis.ApplyDefaultHeroSelection || (Q.ui && Q.ui.controls && Q.ui.controls.applyDefaultHeroSelection);
+        if (typeof applyHero === "function" && globalThis.MOD_CONFIG && globalThis.MOD_CONFIG.DEFAULT_HERO) {
+            applyHero(globalThis.MOD_CONFIG.DEFAULT_HERO);
+        }
         if (typeof globalThis.RefreshSettingsLanguageUiAfterConfigChange === "function") {
             globalThis.RefreshSettingsLanguageUiAfterConfigChange(prevLang);
         }

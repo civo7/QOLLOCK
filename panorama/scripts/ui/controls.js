@@ -825,6 +825,7 @@
                 const root = findRootPanel();
                 if (root && root.SetAttributeString) {
                     root.SetAttributeString(HERO_HINT_ATTR, normalizedHeroId);
+                    root.SetAttributeString("QOL_LAST_SELECTED_HERO_HINT", normalizedHeroId);
                 }
             } catch (e1) {
                 warnLog("settings", "op failed: " + (e1 && e1.message ? e1.message : String(e1 || "")));

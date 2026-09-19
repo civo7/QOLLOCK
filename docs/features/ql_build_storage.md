@@ -36,3 +36,9 @@ Serves as the primary persistent configuration storage system for QOLLOCK. Becau
 - **Performance Tier**: Low during gameplay (0ms cost); transient Low-to-Medium CPU utilization only during active serialization/deserialization.
 - **Data Integrity**: Payloads include schema versioning, checksum validation, and payload length verification to guard against truncation or corruption.
 - **Anti-Flicker Protection**: Coordinates with engine classes (`BuildsLoading`, `Selected`, `gEditingBuilds`) so save operations occur silently without user interruption.
+
+### Hero Selection Propagation & Deserialization Resilience
+- **In-Engine Hero Propagation**: Updating `DEFAULT_HERO` dispatches `applyDefaultHeroSelection`, which registers both `QOL_HERO_HINT` and `QOL_LAST_SELECTED_HERO_HINT` attributes on the root HUD panel and issues the engine ConCommand `selecthero <hero>`.
+- **Load, Import, & Preset Synchronization**: In addition to interactive dropdown selection, `applyDefaultHeroSelection` is explicitly invoked during startup config synchronization (`SyncConfigFromStorage`), manual settings import (`ui/config_tab.js`), and preset application (`ui/presets.js`), ensuring imported or loaded hero profiles take effect immediately in-game.
+- **Defensive Field Resolution**: Compact binary serialization and deserialization in `ql_settings_persistence.js` resolve hero options, compact field identifiers, and default configurations through defensive accessors (`GetDefaultHeroOptions`, `GetCompactDefaultHeroField`, `GetDefaultConfig`), ensuring full compatibility across isolated unit test runners and runtime Panorama environments.
+
