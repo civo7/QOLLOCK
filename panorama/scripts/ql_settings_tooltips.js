@@ -462,8 +462,32 @@
         _lastX = x;
         _lastY = y;
         if (_panel.style) {
-            _panel.style.x = `${Math.round(x)}px`;
-            _panel.style.y = `${Math.round(y)}px`;
+            let hostScaleX = 1.0;
+            let hostScaleY = 1.0;
+            if (typeof host.actualuiscale_x === "number" && isFinite(host.actualuiscale_x) && host.actualuiscale_x > 0) {
+                hostScaleX = host.actualuiscale_x;
+            } else {
+                const actW = Number(host.actuallayoutwidth);
+                const desW = Number(host.desiredlayoutwidth);
+                if (isFinite(actW) && actW > 0 && isFinite(desW) && desW > 0) {
+                    hostScaleX = actW / desW;
+                }
+            }
+            if (typeof host.actualuiscale_y === "number" && isFinite(host.actualuiscale_y) && host.actualuiscale_y > 0) {
+                hostScaleY = host.actualuiscale_y;
+            } else {
+                const actH = Number(host.actuallayoutheight);
+                const desH = Number(host.desiredlayoutheight);
+                if (isFinite(actH) && actH > 0 && isFinite(desH) && desH > 0) {
+                    hostScaleY = actH / desH;
+                }
+            }
+
+            const styleX = Math.round(x / hostScaleX);
+            const styleY = Math.round(y / hostScaleY);
+
+            _panel.style.x = `${styleX}px`;
+            _panel.style.y = `${styleY}px`;
         }
     };
 

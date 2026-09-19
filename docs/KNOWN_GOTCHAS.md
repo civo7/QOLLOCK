@@ -78,3 +78,13 @@ Critical runtime constraints and architectural traps discovered across Deadlock 
   - `window.js` MUST call registered custom renderers first before any layout fallback.
   - Manifests belong strictly in `hud.xml` for match-time runtime logic.
 
+---
+
+## 8. Physical vs Virtual Coordinate Spaces (High DPI / 1440p / 4K Misalignment)
+
+- Source 2 Panorama CSS inline styles (`panel.style.x`, `panel.style.y`, `panel.style.marginRight`, etc.) evaluate values in **virtual design coordinates** (based on standard 1080p canvas proportions, scaled automatically by the engine root scale).
+- In contrast, layout geometry properties (`panel.actuallayoutwidth`, `panel.actuallayoutheight`, `panel.actualxoffset`, `GameUI.GetCursorPosition()`, `GetPositionWithinAncestor`) return **physical device pixels**.
+- **Trap:** Directly writing physical pixel values into inline styles (`panel.style.x = x + "px"`) causes double-scaling on non-1080p monitors. On 1440p (`1.333x`) and 4K (`2.0x`), coordinates are scaled twice by the engine, pushing tooltips, popups, and preview overlays far off the right or bottom edges of the screen.
+- **Solution:** Always normalize physical coordinates to virtual units before assigning inline styles by dividing by `host.actualuiscale_x` and `host.actualuiscale_y` (or `actuallayoutwidth / desiredlayoutwidth`).
+
+
