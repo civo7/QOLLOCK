@@ -669,8 +669,9 @@
         _voiceActorPrefixLabel.text = localize("Voice Actor:", true);
         _voiceActorValueLabel.text = voiceActor;
 
+        const hasPerf = !!(perfTier && perfTier !== "hidden" && perfTier !== "suppress");
         panel.SetHasClass("NoBody", bodyLine.length === 0);
-        panel.SetHasClass("NoPerf", tier === TIER_NONE);
+        panel.SetHasClass("NoPerf", !hasPerf);
         panel.SetHasClass("NoCreator", creatorName.length === 0 || isVoiceMode);
         panel.SetHasClass("VoiceMetaMode", isVoiceMode);
         panel.SetHasClass("NoVoiceMeta", !isVoiceMode);
@@ -909,7 +910,7 @@
     };
 
     const hasMeaningfulContent = (perfTier, bodyText, createdBy, options) => {
-        if (normalizePerfTier(perfTier) !== TIER_NONE) return true;
+        if (perfTier && perfTier !== "hidden" && perfTier !== "suppress") return true;
         if (String(bodyText || "").trim().length > 0) return true;
         if (String(createdBy || "").trim().length > 0) return true;
         if (options?.voiceMeta && (options.voiceMeta.author || options.voiceMeta.voiceActor)) return true;

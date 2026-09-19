@@ -169,7 +169,8 @@
         }
 
         if (setting.description) {
-            bindTooltip(row, setting.description, setting.perfImpact);
+            const perfTier = setting.perfImpact || (globalThis.SETTING_PERF_IMPACT_TIERS && globalThis.SETTING_PERF_IMPACT_TIERS[setting.key]) || "none";
+            bindTooltip(row, setting.description, perfTier);
         }
 
         return { row, labelContainer, label: labelPanel, controlGroup };

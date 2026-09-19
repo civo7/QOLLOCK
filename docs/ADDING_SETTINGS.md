@@ -4,13 +4,14 @@ This document is the standard checklist for adding a new configuration setting t
 
 ---
 
-## The 5-Step Checklist
+## The 6-Step Checklist
 
 1. **Declare in Feature Manifest (`panorama/scripts/manifests/<feature_id>/manifest.js`)**
 2. **Add Declarative Control in `panorama/scripts/ui/layout.js`**
-3. **Add Localization Strings in `panorama/scripts/ui/theme.js`**
+3. **Add Localization Strings in `panorama/scripts/ql_settings_loc/`**
 4. **Implement Reactive Handling in `manifest.js` (`onSettingsChanged`)**
-5. **Verify with Full Test Suite (`npm test`)**
+5. **Register Performance Tier in `panorama/scripts/ui/ql_settings_metadata.js`**
+6. **Verify with Full Test Suite (`npm test`)**
 
 ---
 
@@ -112,7 +113,17 @@ This guarantees 0ms response latency with zero CPU overhead while idle.
 
 ---
 
-## Step 5: Verification
+## Step 5: Register Performance Tier (`panorama/scripts/ui/ql_settings_metadata.js`)
+
+Register the setting's runtime performance impact in `SETTING_PERF_IMPACT_TIERS`:
+- `"none"` — Static layout offsets, sliders, colors, opacities, pure CSS class gates, zero recurring poll overhead. Displays as `FPS Impact: None` in row tooltips.
+- `"low"` — Periodic polling <= 0.20ms/tick (e.g. 1–2Hz idle loops, event-driven HUD updates).
+- `"medium"` — High-frequency tracking (e.g. 20Hz camera compass, active crosshair buffs, continuous topbar RGB wash calculations).
+- `"high"` — Reserved for unusually heavy workloads (> 1.0ms/tick).
+
+---
+
+## Step 6: Verification
 
 Run the test suite to ensure schema migration invariants, unit tests, and API contracts remain intact:
 

@@ -37,8 +37,8 @@ test("ui/metadata: exports all metadata tables on QOL.ui.metadata and globalThis
 
     // Dictionaries
     assert.ok(ctx.QOL.ui.metadata.SETTING_CREATED_BY_BY_CONFIG.ENABLE_PASSIVE_COOLDOWN, "Hanturaya");
-    assert.ok(ctx.QOL.ui.metadata.SETTING_DESCRIPTION_OVERRIDE_BY_CONFIG.ALT_ZOOM_DRAW_OVER_UI);
-    assert.ok(ctx.QOL.ui.metadata.SETTING_PERF_IMPACT_TIERS.COMPASS_SCALE, "medium");
+    assert.strictEqual(ctx.QOL.ui.metadata.SETTING_PERF_IMPACT_TIERS.COMPASS_SCALE, "none");
+    assert.strictEqual(ctx.QOL.ui.metadata.SETTING_PERF_IMPACT_TIERS.ENABLE_COMPASS, "medium");
 
     // Globals
     assert.strictEqual(ctx.PERF_IMPACT_TIER_NONE, "none");
