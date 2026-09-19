@@ -749,6 +749,10 @@
 	margin-top: 120px;
 	width: 200px;
 	height: 28px;
+	background-color: gradient( radial, 50% 50%, 0% 0%, 90% 90%, from( rgba(255, 217, 122, 0.18) ), to( rgba(255, 217, 122, 0.05) ) );
+	border: 2px solid rgba(255, 217, 122, 0.82);
+	border-radius: 4px;
+	box-shadow: fill rgba(255, 200, 90, 0.18) 0px 0px 16px 0px;
 	opacity: 0;
 	visibility: collapse;
 	transform: translateY(8px);
@@ -772,9 +776,10 @@
 {
 	width: 100%;
 	horizontal-align: center;
+	vertical-align: center;
 	text-align: center;
 	color: #ffd97a;
-	font-size: 16px;
+	font-size: 14px;
 	font-weight: bold;
 	letter-spacing: 1px;
 	text-transform: uppercase;

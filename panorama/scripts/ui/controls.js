@@ -1249,6 +1249,7 @@
             getConfig()[enableConfigId] = invertEnableToggle ? (nextEnabled ? 0 : 1) : (nextEnabled ? 1 : 0);
             applyBodyState(nextEnabled, true);
             saveAndSync();
+            getPreview().showForConfigId(enableConfigId);
         });
 
         if (buildRowsFn) {
