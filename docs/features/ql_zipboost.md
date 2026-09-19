@@ -32,7 +32,7 @@ Renders a specialized HUD overlay panel (`#QOLZipBoostOverlay`) tracking the sta
   - `Panel#QOLZipBoostOverlay.QOLZipBoostOverlay`: Base panel with `hittest = false` and `hittestchildren = false`.
   - `Panel#QOLZipBoostIcon`: Icon container.
   - `Panel#QOLZipBoostTextContainer`: Container for status labels.
-  - `Label#QOLZipBoostLabel`: Ability title label ("Zip Boost", dynamically refreshed from native `#context_label` when available).
+  - `Label#QOLZipBoostLabel`: Ability title label ("Zip Boost").
   - `Label#QOLZipBoostState`: State and timer label (e.g. `"READY"`, `"ACTIVE 28s"`, `"COOLDOWN 45s"`).
 - **Classes Toggled on `#QOLZipBoostOverlay`**:
   - `on_cooldown`: Applied during ability cooldown.
