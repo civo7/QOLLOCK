@@ -46,3 +46,4 @@ Renders an intuitive tactical compass tape (featuring 360-degree markings and ca
 - **Suppression**: Suppressed when connected to Hideout or Sandbox environments.
 - **Transform & Deadzone Caching**: Heading angles are filtered with a 0.15° deadband threshold in `_updateCompassTicks` to skip recalculating tick positions and mutating child styles when viewing angle is stationary.
 - **Layout Invalidation Guards**: `BHasClass` guards prevent redundant `SetHasClass("qol_minimap_flip_active")` calls on `#hud_minimap`, avoiding excessive C++ layout recalculations.
+- **Local Player Panel Fast-Path**: Alive cached references to the minimap player panel and main image return immediately without recursively re-evaluating 32-level parent hierarchy traversals on every 50ms tick.

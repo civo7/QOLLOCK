@@ -382,10 +382,7 @@
 
             function _findLocalMinimapPlayerPanel(hud, nowMs, aggressiveScan) {
                 if (_isAlive(_minimapLocalPlayerPanel)) {
-                    if (_panelHasAllClasses(_minimapLocalPlayerPanel, ["active", "player", "client_cone_fov", "enemy"]) ||
-                        (_minimapLocalPlayerPanel.BHasClass && _minimapLocalPlayerPanel.BHasClass("player") && _hasClassInHierarchy(_minimapLocalPlayerPanel, "localplayer"))) {
-                        return _minimapLocalPlayerPanel;
-                    }
+                    return _minimapLocalPlayerPanel;
                 }
 
                 var scanCooldown = aggressiveScan ? MINIMAP_LOCAL_PLAYER_SCAN_COOLDOWN_FAST_MS : MINIMAP_LOCAL_PLAYER_SCAN_COOLDOWN_MS;
@@ -424,11 +421,7 @@
 
             function _findLocalMinimapMainImage(hud, nowMs, aggressiveScan) {
                 if (_isAlive(_minimapLocalMainImage)) {
-                    var parent = _minimapLocalMainImage.GetParent ? _minimapLocalMainImage.GetParent() : null;
-                    if (_panelHasAllClasses(parent, ["active", "player", "client_cone_fov", "enemy"]) ||
-                        _hasClassInHierarchy(_minimapLocalMainImage, "localplayer")) {
-                        return _minimapLocalMainImage;
-                    }
+                    return _minimapLocalMainImage;
                 }
 
                 var scanCooldown = aggressiveScan ? MINIMAP_LOCAL_PLAYER_SCAN_COOLDOWN_FAST_MS : MINIMAP_LOCAL_PLAYER_SCAN_COOLDOWN_MS;

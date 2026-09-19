@@ -52,13 +52,23 @@
             var SetPanelClassCached = QOL.setPanelClassCached || function(p, c, cls, val) { if (p && p.SetHasClass) p.SetHasClass(cls, !!val); };
             var IsHudClassActive = function(r, cls) { return (QOL.core && QOL.core.hud && QOL.core.hud.isClassActive) ? QOL.core.hud.isClassActive(cls) : (QOL.isHudClassActive ? QOL.isHudClassActive(r, cls) : false); };
             var hasClassInHierarchy = QOL.hasClassInHierarchy || function(p, cls) { return !!(p && p.BHasClass && p.BHasClass(cls)); };
+            var _cachedAnchor = null;
             var EnsureMinimapOverlayAnchor = function(root) {
+                if (IsPanelValid(_cachedAnchor)) return _cachedAnchor;
                 if (typeof QOL.ensureMinimapOverlayAnchor === "function") {
                     var a = QOL.ensureMinimapOverlayAnchor(root);
-                    if (a) return a;
+                    if (IsPanelValid(a)) {
+                        _cachedAnchor = a;
+                        return a;
+                    }
                 }
                 if (!root || !root.FindChildTraverse) return null;
-                return root.FindChildTraverse("minimap_container") || root.FindChildTraverse("minimap_persp") || null;
+                var fallback = root.FindChildTraverse("minimap_container") || root.FindChildTraverse("minimap_persp") || null;
+                if (IsPanelValid(fallback)) {
+                    _cachedAnchor = fallback;
+                    return fallback;
+                }
+                return null;
             };
             var GetGameSecondsForUrn = function() { return QOL.getGameSecondsForUrn ? QOL.getGameSecondsForUrn() : 0; };
             var IsStreetBrawlModeActive = function(r) { return QOL.isStreetBrawlModeActive ? QOL.isStreetBrawlModeActive(r) : false; };
@@ -201,7 +211,15 @@
 
             var FormatClockMmSs = QOL.core.time.formatSeconds;
 
+            var _cachedPanelsStruct = null;
+
             function EnsureMinimapObjectiveTimers(root) {
+                if (_cachedPanelsStruct &&
+                    IsPanelValid(_cachedPanelsStruct.root) &&
+                    IsPanelValid(_cachedPanelsStruct.buffPanel) &&
+                    IsPanelValid(_cachedPanelsStruct.rejuvPanel)) {
+                    return _cachedPanelsStruct;
+                }
                 var anchor = EnsureMinimapOverlayAnchor(root);
                 if (!anchor) return null;
                 var overlay = GetCachedPanel("minimapObjectiveTimersRoot");
@@ -239,7 +257,8 @@
                 SetCachedPanel("minimapObjectiveBuffBridgeRightPanel", buffBridgeRightPanel); SetCachedPanel("minimapObjectiveBuffBridgeRightTime", buffBridgeRightTime); SetCachedPanel("minimapObjectiveBuffBridgeRightIcon", buffBridgeRightIcon);
                 SetCachedPanel("minimapObjectiveRejuvPanel", rejuvPanel); SetCachedPanel("minimapObjectiveRejuvTime", rejuvTime); SetCachedPanel("minimapObjectiveRejuvIcon", rejuvIcon);
                 if (overlay.MoveChildBefore && rejuvPanel && buffPanel) overlay.MoveChildBefore(rejuvPanel, buffPanel);
-                return { root: overlay, buffPanel: buffPanel, buffTime: buffTime, buffBridgeLeftPanel: buffBridgeLeftPanel, buffBridgeLeftTime: buffBridgeLeftTime, buffBridgeRightPanel: buffBridgeRightPanel, buffBridgeRightTime: buffBridgeRightTime, rejuvPanel: rejuvPanel, rejuvTime: rejuvTime };
+                _cachedPanelsStruct = { root: overlay, buffPanel: buffPanel, buffTime: buffTime, buffBridgeLeftPanel: buffBridgeLeftPanel, buffBridgeLeftTime: buffBridgeLeftTime, buffBridgeRightPanel: buffBridgeRightPanel, buffBridgeRightTime: buffBridgeRightTime, rejuvPanel: rejuvPanel, rejuvTime: rejuvTime };
+                return _cachedPanelsStruct;
             }
 
             function HideMinimapObjectiveTimers(root) {
@@ -431,6 +450,8 @@
                     try { HideMinimapObjectiveTimers(root); } catch(e) {}
                     _cachedSpawners = null;
                     _cachedMinimap = null;
+                    _cachedAnchor = null;
+                    _cachedPanelsStruct = null;
                     _nextSpawnerSearchMs = 0;
                     State.minimapObjectiveBridgePosSig = "";
                     SetCachedPanel("minimapObjectiveTimersRoot", null); SetCachedPanel("minimapObjectiveBuffPanel", null); SetCachedPanel("minimapObjectiveBuffTime", null); SetCachedPanel("minimapObjectiveBuffIcon", null);
