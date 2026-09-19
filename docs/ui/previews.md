@@ -64,7 +64,7 @@ ShowZipBoostPreview()  ShowCompassPreview()   ShowSpeedPreview()
 | Preview Type | Supported Config Keys | Description |
 | :--- | :--- | :--- |
 | **Zipline Boost** | `ENABLE_ZIP_BOOST`, `ZIP_BOOST_X_OFFSET`, `ZIP_BOOST_Y_OFFSET`, `ZIP_BOOST_SCALE` | Floating green glowing pill showing configured position and scale. |
-| **Speedometer** | `ENABLE_COMPASS_SPEED`, `COMPASS_SPEED_X_OFFSET`, `COMPASS_SPEED_Y_OFFSET` | Styled gold glow pill displaying `"SPEED: 8.5 m/s"` matching in-game speedometer coordinates. |
+| **Speedometer** | `ENABLE_COMPASS_SPEED`, `COMPASS_SPEED_X_OFFSET`, `COMPASS_SPEED_Y_OFFSET` | Styled square 50x50 gold glow pill displaying `"SPD"` matching in-game speedometer coordinates. |
 | **Compass** | `ENABLE_COMPASS`, `COMPASS_X_OFFSET`, `COMPASS_Y_OFFSET`, `COMPASS_SCALE`, `COMPASS_STRETCH_X`, `COMPASS_STRETCH_Y` | Bounding box showing compass placement and aspect ratio. |
 | **Crosshair Stats** | `ENABLE_CROSSHAIR_STATS`, `CROSSHAIR_STATS_X_OFFSET`, `CROSSHAIR_STATS_Y_OFFSET`, `CROSSHAIR_STATS_SCALE`, `CROSSHAIR_STATS_OPACITY` | Active stats indicator near crosshair. |
 | **Unsecured Souls** | `ENABLE_UNSECURED_SOUL_TIMER`, `UNSECURED_SOUL_TIMER_X_OFFSET`, `UNSECURED_SOUL_TIMER_Y_OFFSET`, `UNSECURED_SOUL_TIMER_SCALE` | Unsecured soul countdown preview. |

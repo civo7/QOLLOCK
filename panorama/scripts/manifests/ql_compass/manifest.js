@@ -808,6 +808,7 @@
                         _setStyleIfChanged(_compassReadout, "width", "100%");
                         _setStyleIfChanged(_compassReadout, "height", "40px");
                         _setStyleIfChanged(_compassReadout, "flowChildren", "none");
+                    }
                     if (_compassDegree) {
                         _setStyleIfChanged(_compassDegree, "width", showSpeed ? "50%" : "100%");
                         _setStyleIfChanged(_compassDegree, "textAlign", showSpeed ? "left" : "center");
@@ -827,30 +828,29 @@
                 var speedVis = showSpeed ? "visible" : "collapse";
                 if (_speedRoot && _speedRoot.style.visibility !== speedVis) _speedRoot.style.visibility = speedVis;
 
-                    var speedOffsetX = Number(cfg.COMPASS_SPEED_X_OFFSET) || 0;
-                    if (speedOffsetX < -2000) speedOffsetX = -2000; if (speedOffsetX > 2000) speedOffsetX = 2000;
-                    var speedOffsetY = Number(cfg.COMPASS_SPEED_Y_OFFSET) || 0;
-                    if (speedOffsetY < -2000) speedOffsetY = -2000; if (speedOffsetY > 2000) speedOffsetY = 2000;
+                var speedOffsetX = Number(cfg.COMPASS_SPEED_X_OFFSET) || 0;
+                if (speedOffsetX < -2000) speedOffsetX = -2000; if (speedOffsetX > 2000) speedOffsetX = 2000;
+                var speedOffsetY = Number(cfg.COMPASS_SPEED_Y_OFFSET) || 0;
+                if (speedOffsetY < -2000) speedOffsetY = -2000; if (speedOffsetY > 2000) speedOffsetY = 2000;
 
-                    if (_speedRoot) {
-                        var speedRootWidth = (showCompass ? boxWidth : 200) + "px";
-                        var speedBaseX = showCompass ? offsetX : 0;
-                        var speedBaseY = showCompass ? (appliedOffsetY + boxHeight + 14) : 120;
-                        var speedMarginLeft = Math.round(speedBaseX + speedOffsetX) + "px";
-                        var speedMarginTop = Math.round(speedBaseY - speedOffsetY) + "px";
+                if (_speedRoot) {
+                    var speedRootWidth = (showCompass ? boxWidth : 200) + "px";
+                    var speedBaseX = showCompass ? offsetX : 0;
+                    var speedBaseY = showCompass ? (appliedOffsetY + boxHeight + 14) : 120;
+                    var speedMarginLeft = Math.round(speedBaseX + speedOffsetX) + "px";
+                    var speedMarginTop = Math.round(speedBaseY - speedOffsetY) + "px";
 
-                        var speedLayoutSig = Math.round(speedOffsetX) + "|" + Math.round(speedOffsetY) + "|" +
-                            (showCompass ? "1" : "0") + "|" + Math.round(speedBaseX) + "|" + Math.round(speedBaseY) + "|" + speedRootWidth;
+                    var speedLayoutSig = Math.round(speedOffsetX) + "|" + Math.round(speedOffsetY) + "|" +
+                        (showCompass ? "1" : "0") + "|" + Math.round(speedBaseX) + "|" + Math.round(speedBaseY) + "|" + speedRootWidth;
 
-                        if (_speedOffsetSig !== speedLayoutSig) {
-                            if (_speedRoot.style.width !== speedRootWidth) _speedRoot.style.width = speedRootWidth;
-                            if (_speedRoot.style.marginLeft !== speedMarginLeft) _speedRoot.style.marginLeft = speedMarginLeft;
-                            if (_speedRoot.style.marginTop !== speedMarginTop) _speedRoot.style.marginTop = speedMarginTop;
-                            _speedOffsetSig = speedLayoutSig;
-                        }
+                    if (_speedOffsetSig !== speedLayoutSig) {
+                        if (_speedRoot.style.width !== speedRootWidth) _speedRoot.style.width = speedRootWidth;
+                        if (_speedRoot.style.marginLeft !== speedMarginLeft) _speedRoot.style.marginLeft = speedMarginLeft;
+                        if (_speedRoot.style.marginTop !== speedMarginTop) _speedRoot.style.marginTop = speedMarginTop;
+                        _speedOffsetSig = speedLayoutSig;
                     }
-                    if (!showSpeed && _speedLabel.text !== "") _speedLabel.text = "";
                 }
+                if (!showSpeed && _speedLabel && _speedLabel.text !== "") _speedLabel.text = "";
 
                 var heading360 = _getLocalPlayerHeadingDegrees(hud, nowMs);
 

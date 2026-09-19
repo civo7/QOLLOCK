@@ -937,7 +937,8 @@ function IsKeyboardOverlayPreviewConfig(configId) {
 }
 
 function IsItemCooldownPreviewConfig(configId) {
-    return configId === "ENABLE_OLD_ITEM_COOLDOWNS" ||
+    return configId === "ENABLE_PASSIVE_COOLDOWN" ||
+        configId === "ENABLE_OLD_ITEM_COOLDOWNS" ||
         configId === "PASSIVE_COOLDOWN_SIZE" ||
         configId === "PASSIVE_COOLDOWN_X" ||
         configId === "PASSIVE_COOLDOWN_Y" ||
@@ -1556,22 +1557,20 @@ function ShowSpeedPreview() {
     if (speedOffsetY < -2000) speedOffsetY = -2000;
     if (speedOffsetY > 2000) speedOffsetY = 2000;
 
-    // Right half / right-aligned when the compass shares the screen; full-width
-    // centered when alone. Same as core's speedLabel layout.
-    gSpeedPreviewLabel.style.width = showCompass ? "50%" : "100%";
-    gSpeedPreviewLabel.style.textAlign = showCompass ? "right" : "center";
-    gSpeedPreviewLabel.style.horizontalAlign = showCompass ? "right" : "center";
+    gSpeedPreviewLabel.style.width = "100%";
+    gSpeedPreviewLabel.style.height = "100%";
+    gSpeedPreviewLabel.style.textAlign = "center";
+    gSpeedPreviewLabel.style.horizontalAlign = "center";
+    gSpeedPreviewLabel.style.verticalAlign = "center";
 
-    // Root spans the box width and centers on it, so "right half" maps to the
-    // box's right half — no boxWidth/2 shift. +Y moves up (marginTop = base - y).
-    var rootWidth = (showCompass ? boxWidth : 200) + "px";
     var speedBaseX = showCompass ? compassOffsetX : 0;
     var speedBaseY = showCompass ? (appliedCompassOffsetY + boxHeight + 14) : compassBaselineY;
 
-    panel.style.width = rootWidth;
+    panel.style.width = "50px";
+    panel.style.height = "50px";
     panel.style.marginLeft = Math.round(speedBaseX + speedOffsetX) + "px";
     panel.style.marginTop = Math.round(speedBaseY - speedOffsetY) + "px";
-    gSpeedPreviewLabel.text = "SPEED: 8.5 m/s";
+    gSpeedPreviewLabel.text = "SPD";
 
     panel.AddClass("Visible");
     ScheduleHideSpeedPreview(1.5);

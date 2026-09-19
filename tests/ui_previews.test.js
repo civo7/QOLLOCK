@@ -234,7 +234,9 @@ test("ShowConfigPreviewForConfigId displays Speed preview correctly with formatt
 
     const speedLabel = rootPanel.FindChildTraverse("SpeedPreviewLabel");
     assert.ok(speedLabel, "SpeedPreviewLabel should exist");
-    assert.strictEqual(speedLabel.text, "SPEED: 8.5 m/s");
+    assert.strictEqual(speedLabel.text, "SPD");
+    assert.strictEqual(speedPanel.style.width, "50px");
+    assert.strictEqual(speedPanel.style.height, "50px");
 });
 
 test("ShowConfigPreviewForConfigId hides panel when feature toggle is disabled", () => {
