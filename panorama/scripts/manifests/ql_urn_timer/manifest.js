@@ -109,50 +109,10 @@
             }
 
             var _cachedMinimap = null;
-            var _cachedCapturePointBtns = null;
-            var _nextRiftScanMs = 0;
-            var _nextMinimapSearchMs = 0;
 
-            function _scanMinimapForRift(root, nowMs) {
-                if (_cachedCapturePointBtns && _cachedCapturePointBtns.length > 0) {
-                    var allAlive = true;
-                    for (var k = 0; k < _cachedCapturePointBtns.length; k++) {
-                        if (!_isPanelValid(_cachedCapturePointBtns[k])) {
-                            allAlive = false;
-                            break;
-                        }
-                    }
-                    if (allAlive) {
-                        var bestHasCp = false, bestHasKoth = false, bestHasActive = false;
-                        for (var j = 0; j < _cachedCapturePointBtns.length; j++) {
-                            var b = _cachedCapturePointBtns[j];
-                            if (!b.BHasClass || !b.BHasClass("capture_point")) continue;
-                            var hasKw = b.BHasClass("koth_warning");
-                            var hasAct = b.BHasClass("active");
-                            if (hasKw) {
-                                bestHasCp = true; bestHasKoth = true; bestHasActive = hasAct;
-                            } else if (hasAct && !bestHasKoth) {
-                                bestHasCp = true; bestHasActive = true;
-                            } else if (!bestHasActive && !bestHasKoth) {
-                                bestHasCp = true;
-                            }
-                        }
-                        if (bestHasCp) {
-                            return { hasCapturePoint: bestHasCp, hasKothWarning: bestHasKoth, isActive: bestHasActive };
-                        }
-                    }
-                    _cachedCapturePointBtns = null;
-                }
-
-                if (nowMs && nowMs < _nextRiftScanMs) {
-                    return { hasCapturePoint: false, hasKothWarning: false, isActive: false };
-                }
-
+            function _scanMinimapForRift(root) {
                 var minimapPanel = _cachedMinimap;
                 if (!_isPanelValid(minimapPanel)) {
-                    if (nowMs && nowMs < _nextMinimapSearchMs) {
-                        return { hasCapturePoint: false, hasKothWarning: false, isActive: false };
-                    }
                     var minimapIDs = ["hud_minimap", "minimap_persp", "minimap_container",
                         "minimap_frame", "HudMinimapContainer"];
                     minimapPanel = null;
@@ -161,46 +121,33 @@
                         if (p) { minimapPanel = p; break; }
                     }
                     _cachedMinimap = minimapPanel;
-                    if (!_isPanelValid(minimapPanel)) {
-                        if (nowMs) _nextMinimapSearchMs = nowMs + 1500;
-                        return { hasCapturePoint: false, hasKothWarning: false, isActive: false };
-                    }
                 }
                 if (!minimapPanel || !minimapPanel.FindChildrenWithClassTraverse) {
                     return { hasCapturePoint: false, hasKothWarning: false, isActive: false };
                 }
                 var mapButtons = minimapPanel.FindChildrenWithClassTraverse("map_button") || [];
-                var foundCpBtns = [];
-                var bestHasCpScan = false, bestHasKothScan = false, bestHasActiveScan = false;
+                var bestHasCp = false, bestHasKoth = false, bestHasActive = false;
                 var cvCount = 0;
                 for (var i = 0; i < mapButtons.length; i++) {
                     var btn = mapButtons[i];
                     if (!_isPanelValid(btn)) continue;
                     if (!btn.BHasClass) continue;
                     if (!btn.BHasClass("capture_point")) continue;
-                    foundCpBtns.push(btn);
                     cvCount++;
-                    var hasKwScan = btn.BHasClass("koth_warning");
-                    var hasActiveScan = btn.BHasClass("active");
-                    if (hasKwScan) {
-                        bestHasCpScan = true; bestHasKothScan = true; bestHasActiveScan = hasActiveScan;
+                    var hasKw = btn.BHasClass("koth_warning");
+                    var hasActive = btn.BHasClass("active");
+                    if (hasKw) {
+                        bestHasCp = true; bestHasKoth = true; bestHasActive = hasActive;
                         _debugLog("RIFT btn#" + cvCount + ": cp active=" +
-                            (hasActiveScan ? "Y" : "n") + " koth=Y *** WARNING *** btns=" + mapButtons.length);
-                    } else if (hasActiveScan && !bestHasKothScan) {
-                        bestHasCpScan = true; bestHasActiveScan = true;
+                            (hasActive ? "Y" : "n") + " koth=Y *** WARNING *** btns=" + mapButtons.length);
+                    } else if (hasActive && !bestHasKoth) {
+                        bestHasCp = true; bestHasActive = true;
                         _debugLog("RIFT btn#" + cvCount + ": cp active=Y koth=n *** ACTIVE *** btns=" + mapButtons.length);
-                    } else if (!bestHasActiveScan && !bestHasKothScan) {
-                        bestHasCpScan = true;
+                    } else if (!bestHasActive && !bestHasKoth) {
+                        bestHasCp = true;
                     }
                 }
-                if (foundCpBtns.length > 0) {
-                    _cachedCapturePointBtns = foundCpBtns;
-                    _nextRiftScanMs = 0;
-                } else {
-                    _cachedCapturePointBtns = null;
-                    if (nowMs) _nextRiftScanMs = nowMs + 1500;
-                }
-                return { hasCapturePoint: bestHasCpScan, hasKothWarning: bestHasKothScan, isActive: bestHasActiveScan };
+                return { hasCapturePoint: bestHasCp, hasKothWarning: bestHasKoth, isActive: bestHasActive };
             }
 
             function _checkMinimapRiftState(root, nowMs) {
@@ -418,9 +365,6 @@
                         State.riftTimerLastMode = "";
                     }
                     _cachedMinimap = null;
-                    _cachedCapturePointBtns = null;
-                    _nextRiftScanMs = 0;
-                    _nextMinimapSearchMs = 0;
                 },
                 onSettingsChanged: function() {
                     var State = _getState();
