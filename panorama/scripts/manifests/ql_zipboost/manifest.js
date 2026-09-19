@@ -29,9 +29,9 @@
         ],
         create: function(ctx) {
             var _loop = null, _overlay = null, _label = null, _stateLabel = null;
-            var _source = null;
+            var _source = null, _statusEffectsContainer = null;
             var _lastLayoutSig = "", _lastClassSig = "", _lastTitle = "", _lastStatus = "";
-            var _nextSourceSearchMs = 0, _activeEndMs = 0, _wasInUse = false;
+            var _nextSourceSearchMs = 0, _nextStatusSearchMs = 0, _activeEndMs = 0, _wasInUse = false;
             var _lastState = null, _readyFlashUntilMs = 0, _cooldownEndMs = 0;
 
             var _isAlive = QOL.utils.IsPanelValid;
@@ -64,19 +64,6 @@
                 if (scope.FindChildrenWithClassTraverse) {
                     var zips = scope.FindChildrenWithClassTraverse("citadel_ability_zipline_boost");
                     if (zips && zips.length > 0) return zips[0];
-
-                    var candidates = scope.FindChildrenWithClassTraverse("buttonContainer");
-                    if (candidates) {
-                        for (var i = 0; i < candidates.length; i++) {
-                            var c = candidates[i];
-                            if (c && c.BHasClass && (c.BHasClass("citadel_ability_zipline_boost") || c.BHasClass("zipline_boost"))) return c;
-                        }
-                    }
-                }
-
-                if (scope !== root && root.FindChildrenWithClassTraverse) {
-                    var rootZips = root.FindChildrenWithClassTraverse("citadel_ability_zipline_boost");
-                    if (rootZips && rootZips.length > 0) return rootZips[0];
                 }
                 return null;
             }
@@ -114,8 +101,10 @@
                 if (!panel || !panel.Children) return "";
                 var queue = [panel];
                 var best = "";
-                while (queue.length > 0) {
+                var visited = 0;
+                while (queue.length > 0 && visited < 15) {
                     var current = queue.shift();
+                    visited++;
                     if (!current) continue;
                     if (typeof current.text === "string") {
                         var t = current.text.trim();
@@ -158,6 +147,7 @@
             function _removeOverlay() {
                 if (_isAlive(_overlay)) { try { _overlay.DeleteAsync(0); } catch(e) {} }
                 _overlay = null; _label = null; _stateLabel = null; _source = null;
+                _statusEffectsContainer = null; _nextStatusSearchMs = 0;
                 _lastLayoutSig = ""; _lastClassSig = ""; _lastTitle = ""; _lastStatus = "";
                 _nextSourceSearchMs = 0; _activeEndMs = 0; _wasInUse = false;
                 _lastState = null; _readyFlashUntilMs = 0; _cooldownEndMs = 0;
@@ -218,7 +208,22 @@
                     }
                 }
 
-                var statusBuff = root.FindChildTraverse ? root.FindChildTraverse("status_citadel_ability_zipline_boost") : null;
+                // Scoped status buff lookup under #StatusEffects (never scan full root DOM on tick)
+                var statusBuff = null;
+                if (!_isAlive(_statusEffectsContainer)) {
+                    _statusEffectsContainer = null;
+                    if (nowMs >= _nextStatusSearchMs) {
+                        var gHud = (root.FindChildTraverse ? root.FindChildTraverse("gameplay_hud") : null) || root;
+                        _statusEffectsContainer = gHud.FindChildTraverse ? gHud.FindChildTraverse("StatusEffects") : null;
+                        if (!_statusEffectsContainer && gHud !== root && root.FindChildTraverse) {
+                            _statusEffectsContainer = root.FindChildTraverse("StatusEffects");
+                        }
+                        _nextStatusSearchMs = _statusEffectsContainer ? 0 : (nowMs + ZIP_BOOST_SOURCE_SEARCH_MS);
+                    }
+                }
+                if (_isAlive(_statusEffectsContainer) && _statusEffectsContainer.FindChildTraverse) {
+                    statusBuff = _statusEffectsContainer.FindChildTraverse("status_citadel_ability_zipline_boost");
+                }
                 var isBuffActive = _isAlive(statusBuff);
                 var isButtonVisible = !!(_source && _source.BHasClass && _source.BHasClass("active"));
                 var isButtonInUse = !!(_source && _source.BHasClass && _source.BHasClass("in_use"));
