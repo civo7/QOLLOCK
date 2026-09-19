@@ -70,6 +70,7 @@ ShowZipBoostPreview()  ShowCompassPreview()   ShowSpeedPreview()
 | **Unsecured Souls** | `ENABLE_UNSECURED_SOUL_TIMER`, `UNSECURED_SOUL_TIMER_X_OFFSET`, `UNSECURED_SOUL_TIMER_Y_OFFSET`, `UNSECURED_SOUL_TIMER_SCALE` | Unsecured soul countdown preview. |
 | **Keyboard Overlay**| `ENABLE_KEYBOARD_OVERLAY`, `KEYBOARD_OVERLAY_X_OFFSET`, `KEYBOARD_OVERLAY_Y_OFFSET`, `KEYBOARD_OVERLAY_SCALE` | Overlay footprint showing scaled dimensions. |
 | **Item Cooldown** | `PASSIVE_COOLDOWN_SIZE`, `PASSIVE_COOLDOWN_X_OFFSET`, `PASSIVE_COOLDOWN_Y_OFFSET` | Cooldown icon frame next to crosshair. |
+| **Minimap Size & Offset** | `MINIMAP_SMALL_SIZE`, `MINIMAP_X_OFFSET`, `MINIMAP_Y_OFFSET`, `MINIMAP_BASE_OPACITY` | Bounding circular reticle indicating exact minimap placement, diameter, and opacity. |
 
 ---
 
@@ -86,3 +87,12 @@ When a user interacts with a control in `panorama/scripts/ui/controls.js`:
 
 - **In-Game Feature Manifests**: Certain HUD manifests (e.g. `ql_zipboost` and `ql_compass`) intentionally include `_isInHideout(root)` guards in their active polling loops to disable unnecessary HUD clutter while in the sandbox/hideout.
 - **Settings Previews**: Settings previews are separate UI panels created directly under the escape menu context root (`CitadelHudEscapeMenu`). They function regardless of match or hideout status whenever `MOD_CONFIG.PREVIEWS_ENABLED === 1` and the settings window is open.
+
+---
+
+## 6. Resolution & Coordinate Space Scaling (DPI / Aspect Ratio Fix)
+
+- **Virtual vs. Physical Coordinates**: Source 2 Panorama inline styles (`style.x`, `style.y`, `style.marginRight`, `style.marginBottom`) operate in virtual layout design units (normalized 1920x1080 canvas), whereas runtime layout queries (`actuallayoutwidth`, `actuallayoutheight`, `actualxoffset`, `GetPositionWithinAncestor`) return unscaled physical device pixels.
+- **DPI Scaling**: On higher-DPI displays such as 1440p (`1.333x`) and 4K (`2.0x`), assigning raw physical pixels directly into CSS inline styles causes elements to drift off-target. Previews utilize `GetPreviewHostScale(host)` (`actualuiscale_x`, `actualuiscale_y`, or `actuallayoutwidth / desiredlayoutwidth`) to convert physical measurements back into virtual CSS units before assigning inline styles.
+- **Live Minimap Hierarchy Alignment**: In Deadlock, `#minimap_persp` is nested inside `.clamp_width` (which applies `max-width: 2000px; horizontal-align: center;`), introducing variable horizontal insets on ultrawide displays (16:10, 21:9, 32:9). When `#minimap_persp` is alive in the HUD hierarchy, `ShowMinimapSizePreview` computes its live physical distance to the right/bottom bounds of `contextRoot`, normalizes by `hostScale`, and sets `marginRight` / `marginBottom` dynamically. This guarantees 1:1 pixel-perfect alignment with the actual minimap across all resolutions, aspect ratios, and custom user offsets.
+

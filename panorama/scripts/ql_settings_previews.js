@@ -183,6 +183,53 @@ function SetPreviewPanelPosition(panel, x, y) {
     panel.style.marginTop = String(py) + "px";
 }
 
+function GetPreviewHostScale(host) {
+    var scaleX = 1.0;
+    var scaleY = 1.0;
+    if (!host) return { x: scaleX, y: scaleY };
+
+    if (typeof host.actualuiscale_x === "number" && isFinite(host.actualuiscale_x) && host.actualuiscale_x > 0) {
+        scaleX = host.actualuiscale_x;
+    } else {
+        var actW = Number(host.actuallayoutwidth);
+        var desW = Number(host.desiredlayoutwidth);
+        if (isFinite(actW) && actW > 0 && isFinite(desW) && desW > 0) {
+            scaleX = actW / desW;
+        }
+    }
+
+    if (typeof host.actualuiscale_y === "number" && isFinite(host.actualuiscale_y) && host.actualuiscale_y > 0) {
+        scaleY = host.actualuiscale_y;
+    } else {
+        var actH = Number(host.actuallayoutheight);
+        var desH = Number(host.desiredlayoutheight);
+        if (isFinite(actH) && actH > 0 && isFinite(desH) && desH > 0) {
+            scaleY = actH / desH;
+        }
+    }
+    return { x: scaleX, y: scaleY };
+}
+
+function GetPanelOffsetInAncestorSafe(panel, ancestor, axis) {
+    if (!panel || !ancestor) return 0;
+    if (axis === "x" && typeof globalThis.GetPanelXOffsetWithinAncestor === "function") {
+        return Number(globalThis.GetPanelXOffsetWithinAncestor(panel, ancestor)) || 0;
+    }
+    if (axis === "y" && typeof globalThis.GetPanelYOffsetWithinAncestor === "function") {
+        return Number(globalThis.GetPanelYOffsetWithinAncestor(panel, ancestor)) || 0;
+    }
+    var total = 0;
+    var cur = panel;
+    var guard = 0;
+    while (cur && cur !== ancestor && guard < 32) {
+        var off = (axis === "y") ? Number(cur.actualyoffset || 0) : Number(cur.actualxoffset || 0);
+        if (isFinite(off)) total += off;
+        cur = (cur.GetParent && typeof cur.GetParent === "function") ? cur.GetParent() : null;
+        guard++;
+    }
+    return total;
+}
+
 function GetMinimapPreviewAnchorParent() {
     var contextRoot = $.GetContextPanel();
     return contextRoot || null;
@@ -198,9 +245,12 @@ function GetMinimapPreviewRightInsetPx() {
     var minimapParent = minimapPersp.GetParent();
     if (!minimapParent) return 0;
 
+    var hostScale = GetPreviewHostScale(contextRoot);
+    var scaleX = (hostScale && hostScale.x > 0) ? hostScale.x : 1.0;
+
     var insetByOffset = Number(minimapParent.actualxoffset);
     if (isFinite(insetByOffset) && insetByOffset > 0) {
-        return Math.round(insetByOffset);
+        return Math.round(insetByOffset / scaleX);
     }
 
     var rootWidth = Number(contextRoot.actuallayoutwidth);
@@ -208,7 +258,7 @@ function GetMinimapPreviewRightInsetPx() {
     if (!isFinite(rootWidth) || !isFinite(parentWidth) || rootWidth <= parentWidth || parentWidth <= 0) {
         return 0;
     }
-    return Math.round((rootWidth - parentWidth) * 0.5);
+    return Math.round(((rootWidth - parentWidth) * 0.5) / scaleX);
 }
 
 
@@ -1230,9 +1280,46 @@ function ShowMinimapSizePreview(sizePx) {
     gMinimapSizePreviewCircle.style.width = previewDiameter + "px";
     gMinimapSizePreviewCircle.style.height = previewDiameter + "px";
     gMinimapSizePreviewCircle.style.opacity = opacityVal.toFixed(2);
-    var rightInset = GetMinimapPreviewRightInsetPx();
-    panel.style.marginRight = (gMinimapPreviewBaseRight - xOffset + rightInset) + "px";
-    panel.style.marginBottom = (gMinimapPreviewBaseBottom + yOffset) + "px";
+
+    var contextRoot = $.GetContextPanel ? $.GetContextPanel() : null;
+    var searchRoot = FindRootPanel() || contextRoot;
+    var minimapPersp = (searchRoot && searchRoot.FindChildTraverse) ? searchRoot.FindChildTraverse("minimap_persp") : null;
+    var alignedToLiveMinimap = false;
+
+    if (minimapPersp && (!minimapPersp.IsValid || minimapPersp.IsValid()) && contextRoot) {
+        var hostScale = GetPreviewHostScale(contextRoot);
+        var rootW = Number(contextRoot.actuallayoutwidth);
+        var rootH = Number(contextRoot.actuallayoutheight);
+        var mmW = Number(minimapPersp.actuallayoutwidth);
+        var mmH = Number(minimapPersp.actuallayoutheight);
+
+        if (isFinite(rootW) && rootW > 0 && isFinite(rootH) && rootH > 0 && isFinite(mmW) && mmW > 0 && isFinite(mmH) && mmH > 0) {
+            var mmX = GetPanelOffsetInAncestorSafe(minimapPersp, searchRoot, "x");
+            var mmY = GetPanelOffsetInAncestorSafe(minimapPersp, searchRoot, "y");
+            var ctxX = GetPanelOffsetInAncestorSafe(contextRoot, searchRoot, "x");
+            var ctxY = GetPanelOffsetInAncestorSafe(contextRoot, searchRoot, "y");
+            var relX = mmX - ctxX;
+            var relY = mmY - ctxY;
+
+            var actualRightDist = rootW - (relX + mmW);
+            var actualBottomDist = rootH - (relY + mmH);
+
+            if (isFinite(actualRightDist) && isFinite(actualBottomDist)) {
+                var virtualRight = Math.round(actualRightDist / (hostScale.x || 1.0));
+                var virtualBottom = Math.round(actualBottomDist / (hostScale.y || 1.0));
+                panel.style.marginRight = virtualRight + "px";
+                panel.style.marginBottom = virtualBottom + "px";
+                alignedToLiveMinimap = true;
+            }
+        }
+    }
+
+    if (!alignedToLiveMinimap) {
+        var rightInset = GetMinimapPreviewRightInsetPx();
+        panel.style.marginRight = (gMinimapPreviewBaseRight - xOffset + rightInset) + "px";
+        panel.style.marginBottom = (gMinimapPreviewBaseBottom + yOffset) + "px";
+    }
+
     gMinimapSizePreviewLabel.text = sizeVal + " px";
     panel.AddClass("Visible");
     ScheduleHideMinimapSizePreview(1.5);
