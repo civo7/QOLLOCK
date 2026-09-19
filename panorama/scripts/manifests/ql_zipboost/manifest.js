@@ -29,10 +29,10 @@
         ],
         create: function(ctx) {
             var _loop = null, _overlay = null, _label = null, _stateLabel = null;
-            var _source = null, _statusEffectsContainer = null;
+            var _source = null, _abilityNamePanel = null, _statusEffectsContainer = null;
             var _lastLayoutSig = "", _lastClassSig = "", _lastTitle = "", _lastStatus = "";
             var _nextSourceSearchMs = 0, _nextStatusSearchMs = 0, _activeEndMs = 0, _wasInUse = false;
-            var _lastState = null, _readyFlashUntilMs = 0, _cooldownEndMs = 0;
+            var _lastState = null, _readyFlashUntilMs = 0, _cooldownEndMs = 0, _cachedTitle = "";
 
             var _isAlive = QOL.utils.IsPanelValid;
 
@@ -146,11 +146,11 @@
 
             function _removeOverlay() {
                 if (_isAlive(_overlay)) { try { _overlay.DeleteAsync(0); } catch(e) {} }
-                _overlay = null; _label = null; _stateLabel = null; _source = null;
+                _overlay = null; _label = null; _stateLabel = null; _source = null; _abilityNamePanel = null;
                 _statusEffectsContainer = null; _nextStatusSearchMs = 0;
                 _lastLayoutSig = ""; _lastClassSig = ""; _lastTitle = ""; _lastStatus = "";
                 _nextSourceSearchMs = 0; _activeEndMs = 0; _wasInUse = false;
-                _lastState = null; _readyFlashUntilMs = 0; _cooldownEndMs = 0;
+                _lastState = null; _readyFlashUntilMs = 0; _cooldownEndMs = 0; _cachedTitle = "";
             }
 
             function _tick() {
@@ -205,6 +205,7 @@
                     if (nowMs >= _nextSourceSearchMs) {
                         _source = _findZipBoostSource(root);
                         _nextSourceSearchMs = _source ? 0 : (nowMs + ZIP_BOOST_SOURCE_SEARCH_MS);
+                        _abilityNamePanel = null;
                     }
                 }
 
@@ -231,7 +232,22 @@
 
                 var isInUse = isBuffActive || isButtonInUse;
                 var isCooldown = false;
-                var title = "Zip Boost";
+
+                if (_source) {
+                    if (!_isAlive(_abilityNamePanel) && _source.FindChildTraverse) {
+                        _abilityNamePanel = _source.FindChildTraverse("context_label") || null;
+                    }
+                    if (_abilityNamePanel && typeof _abilityNamePanel.text === "string") {
+                        var rawTitle = _abilityNamePanel.text;
+                        var tm = rawTitle.match(/AbilityName[^>]*>([^<]+)<\/span>/i);
+                        if (tm && tm[1]) {
+                            _cachedTitle = tm[1].trim();
+                        } else if (rawTitle && rawTitle.indexOf("<") === -1 && rawTitle !== "<empty>") {
+                            _cachedTitle = rawTitle.replace(/\d+.*$/, "").trim();
+                        }
+                    }
+                }
+                var title = _cachedTitle || "Zip Boost";
                 var status = "READY";
 
                 if (isButtonVisible && !isButtonCooldown && !isInUse) {
