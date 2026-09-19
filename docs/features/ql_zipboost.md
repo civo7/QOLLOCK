@@ -39,12 +39,16 @@ Renders a specialized HUD overlay panel (`#QOLZipBoostOverlay`) tracking the sta
   - `in_use`: Applied while the zipline speed boost is active.
   - `ready_flash`: Applied for 2000ms upon cooldown completion.
   - `qol-hidden`: Applied when in hideout or suppressed contexts.
-- **Monitored Native Panel**:
-  - `#citadel_ability_zipline_boost` (or `.citadel_ability_zipline_boost` / `.zipline_boost`) polled for `on_cooldown`, `cooling_down`, `in_use`, and `active` classes.
+- **Monitored Native Panels & Detection**:
+  - Buff indicator `#status_citadel_ability_zipline_boost` under `#StatusEffects` on the HUD root to detect active boost state.
+  - Native hint container `.buttonContainer.citadel_ability_zipline_boost` (or `#citadel_ability_zipline_boost`) polled for `.in_use` (boost active) and `.on_cooldown` / `.cooling_down` (cooldown active).
+  - Note: `.active` on `.buttonContainer` denotes prompt visibility in Deadlock's engine and is never conflated with boost activation; instead, when `.active` is present without cooldown or in-use flags, it resets any stale cooldown timestamps.
+  - Extracts cooldown seconds from `#context_label` HTML (`<span class="Countdown">{s:ability_cooldown}</span>`) and numeric fallbacks.
+  - **Cooldown Persistence**: Tracks `_cooldownEndMs` internally (calibrated from live seconds or initialized on boost usage based on `citadel_ability_zipline_boost` 360s cooldown / 32s duration from `abilities.vdata`), preserving accurate countdowns even when the player dismounts the zipline and the native hint is collapsed.
 
 ### Engine Events & Polling Frequency
 - **Polling Frequency**: 2.5Hz (`0.4s` interval).
-- **Source Lookup Throttle**: If the native zipline boost panel is absent, searches are throttled to every 3000ms (`ZIP_BOOST_SOURCE_SEARCH_MS`).
+- **Source Lookup Throttle**: If the native zipline boost panel is absent, searches are throttled to every 1500ms (`ZIP_BOOST_SOURCE_SEARCH_MS`).
 - **Engine Events**: None hooked; monitors native panel cooldown and active classes.
 
 ### Performance Tier & Caveats

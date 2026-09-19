@@ -15,7 +15,7 @@
     if (!FR) { $.Msg("[QOLLock] zipboost: FeatureRegistry not found — aborting"); return; }
 
     var ZIP_BOOST_READY_FLASH_MS = 2000;
-    var ZIP_BOOST_SOURCE_SEARCH_MS = 3000;
+    var ZIP_BOOST_SOURCE_SEARCH_MS = 1500;
 
     FR.register({
         id: "ql_zipboost",
@@ -29,10 +29,10 @@
         ],
         create: function(ctx) {
             var _loop = null, _overlay = null, _label = null, _stateLabel = null;
-            var _source = null, _abilityNamePanel = null, _countdownPanel = null;
+            var _source = null;
             var _lastLayoutSig = "", _lastClassSig = "", _lastTitle = "", _lastStatus = "";
             var _nextSourceSearchMs = 0, _activeEndMs = 0, _wasInUse = false;
-            var _lastState = null, _readyFlashUntilMs = 0;
+            var _lastState = null, _readyFlashUntilMs = 0, _cooldownEndMs = 0;
 
             var _isAlive = QOL.utils.IsPanelValid;
 
@@ -57,8 +57,7 @@
                 var scope = (root.FindChildTraverse ? root.FindChildTraverse("gameplay_hud") : null) || root;
                 if (scope.FindChildTraverse) {
                     var byId = scope.FindChildTraverse("citadel_ability_zipline_boost_") ||
-                               scope.FindChildTraverse("citadel_ability_zipline_boost") ||
-                               scope.FindChildTraverse("CitadelZiplineBoostIcon");
+                               scope.FindChildTraverse("citadel_ability_zipline_boost");
                     if (byId) return byId;
                 }
 
@@ -82,6 +81,35 @@
                 return null;
             }
 
+            function _extractCooldownSeconds(panel) {
+                if (!_isAlive(panel)) return null;
+                var candidates = [];
+                if (panel.FindChildTraverse) {
+                    var ctx = panel.FindChildTraverse("context_label");
+                    if (ctx) candidates.push(ctx);
+                }
+                candidates.push(panel);
+                for (var i = 0; i < candidates.length; i++) {
+                    var p = candidates[i];
+                    if (!_isAlive(p)) continue;
+                    var txt = (typeof p.text === "string") ? p.text : "";
+                    if (!txt) continue;
+                    var m = txt.match(/Countdown[^>]*>\s*(\d+(?:\.\d+)?)/i) ||
+                            txt.match(/\b(\d+(?:\.\d+)?)\s*s\b/i) ||
+                            txt.match(/\b(\d{1,4})\b/);
+                    if (m && m[1]) {
+                        var val = parseFloat(m[1]);
+                        if (isFinite(val) && val > 0 && val <= 600) return val;
+                    }
+                }
+                var fallbackNum = _findNumericLabelText(panel);
+                if (fallbackNum) {
+                    var fnVal = parseFloat(fallbackNum);
+                    if (isFinite(fnVal) && fnVal > 0 && fnVal <= 600) return fnVal;
+                }
+                return null;
+            }
+
             function _findNumericLabelText(panel) {
                 if (!panel || !panel.Children) return "";
                 var queue = [panel];
@@ -91,7 +119,7 @@
                     if (!current) continue;
                     if (typeof current.text === "string") {
                         var t = current.text.trim();
-                        var m = t.match(/^(\d+(?:\.\d+)?)/);
+                        var m = t.match(/(\d+(?:\.\d+)?)/);
                         if (m) {
                             var norm = m[1];
                             if (!best || norm.length <= best.length) {
@@ -129,11 +157,10 @@
 
             function _removeOverlay() {
                 if (_isAlive(_overlay)) { try { _overlay.DeleteAsync(0); } catch(e) {} }
-                _overlay = null; _label = null; _stateLabel = null;
-                _source = null; _abilityNamePanel = null; _countdownPanel = null;
+                _overlay = null; _label = null; _stateLabel = null; _source = null;
                 _lastLayoutSig = ""; _lastClassSig = ""; _lastTitle = ""; _lastStatus = "";
                 _nextSourceSearchMs = 0; _activeEndMs = 0; _wasInUse = false;
-                _lastState = null; _readyFlashUntilMs = 0;
+                _lastState = null; _readyFlashUntilMs = 0; _cooldownEndMs = 0;
             }
 
             function _tick() {
@@ -188,56 +215,55 @@
                     if (nowMs >= _nextSourceSearchMs) {
                         _source = _findZipBoostSource(root);
                         _nextSourceSearchMs = _source ? 0 : (nowMs + ZIP_BOOST_SOURCE_SEARCH_MS);
-                        _abilityNamePanel = null;
-                        _countdownPanel = null;
                     }
                 }
 
+                var statusBuff = root.FindChildTraverse ? root.FindChildTraverse("status_citadel_ability_zipline_boost") : null;
+                var isBuffActive = _isAlive(statusBuff);
+                var isButtonVisible = !!(_source && _source.BHasClass && _source.BHasClass("active"));
+                var isButtonInUse = !!(_source && _source.BHasClass && _source.BHasClass("in_use"));
+                var isButtonCooldown = !!(_source && _source.BHasClass && (_source.BHasClass("on_cooldown") || _source.BHasClass("cooling_down")));
+
+                var isInUse = isBuffActive || isButtonInUse;
+                var isCooldown = false;
                 var title = "Zip Boost";
                 var status = "READY";
-                var isCooldown = false;
-                var isInUse = false;
 
-                if (_source) {
-                    isCooldown = _source.BHasClass && (_source.BHasClass("on_cooldown") || _source.BHasClass("cooling_down"));
-                    isInUse = _source.BHasClass && (_source.BHasClass("in_use") || _source.BHasClass("active"));
-
-                    if (isInUse && !_wasInUse) {
-                        _activeEndMs = nowMs + 32000;
-                    }
-
-                    if (!_isAlive(_abilityNamePanel) && _source.FindChildrenWithClassTraverse) {
-                        var abilityNames = _source.FindChildrenWithClassTraverse("AbilityName") || [];
-                        _abilityNamePanel = abilityNames.length > 0 ? abilityNames[0] : null;
-                    }
-                    var abilityName = (_abilityNamePanel && typeof _abilityNamePanel.text === "string") ? _abilityNamePanel.text : "";
-                    if (abilityName && abilityName.length > 0) title = abilityName;
-
-                    if (!_isAlive(_countdownPanel) && _source.FindChildrenWithClassTraverse) {
-                        var countdowns = _source.FindChildrenWithClassTraverse("Countdown") || [];
-                        if (countdowns.length > 0) {
-                            _countdownPanel = countdowns[0];
-                        } else {
-                            var cdTimers = _source.FindChildrenWithClassTraverse("cooldown_timer") || [];
-                            _countdownPanel = cdTimers.length > 0 ? cdTimers[0] : null;
-                        }
-                    }
-                    var countdown = (_countdownPanel && typeof _countdownPanel.text === "string") ? _countdownPanel.text : "";
-                    if (isCooldown && (!countdown || countdown.trim() === "")) {
-                        countdown = _findNumericLabelText(_source);
-                        if (countdown && !countdown.endsWith("s")) countdown += "s";
-                    }
-
-                    if (isInUse) {
-                        var timeLeft = Math.ceil((_activeEndMs - nowMs) / 1000);
-                        if (timeLeft < 0) timeLeft = 0;
-                        status = "ACTIVE " + timeLeft + "s";
-                    } else if (isCooldown) {
-                        status = countdown && countdown.length > 0 ? ("COOLDOWN " + countdown) : "COOLDOWN";
-                    }
-
-                    _wasInUse = isInUse;
+                if (isButtonVisible && !isButtonCooldown && !isInUse) {
+                    _cooldownEndMs = 0;
                 }
+
+                if (isInUse) {
+                    if (!_wasInUse) {
+                        _activeEndMs = nowMs + 32000;
+                        _cooldownEndMs = nowMs + 360000;
+                    }
+                    var timeLeft = Math.ceil((_activeEndMs - nowMs) / 1000);
+                    if (timeLeft < 0) timeLeft = 0;
+                    status = "ACTIVE " + timeLeft + "s";
+                }
+
+                if (isButtonCooldown) {
+                    var liveSec = _extractCooldownSeconds(_source);
+                    if (typeof liveSec === "number" && liveSec > 0) {
+                        _cooldownEndMs = nowMs + (liveSec * 1000);
+                    } else if (!_cooldownEndMs || _cooldownEndMs <= nowMs) {
+                        _cooldownEndMs = nowMs + 360000;
+                    }
+                }
+
+                if (!isInUse) {
+                    if (_cooldownEndMs > nowMs) {
+                        isCooldown = true;
+                        var cdLeft = Math.ceil((_cooldownEndMs - nowMs) / 1000);
+                        status = "COOLDOWN " + cdLeft + "s";
+                    } else if (isButtonCooldown) {
+                        isCooldown = true;
+                        status = "COOLDOWN";
+                    }
+                }
+
+                _wasInUse = isInUse;
 
                 var currentState = isInUse ? "in_use" : (isCooldown ? "cooldown" : "ready");
                 if (currentState === "ready" && _lastState !== "ready") {
