@@ -113,8 +113,6 @@
             }
 
             var _cachedMinimap = null;
-            var _cachedSpawners = null;
-            var _nextSpawnerSearchMs = 0;
 
             function _resolveMinimapPanel(root, anchor) {
                 if (IsPanelValid(_cachedMinimap)) return _cachedMinimap;
@@ -139,38 +137,17 @@
                 return (anchor && IsPanelValid(anchor)) ? anchor : null;
             }
 
-            function _getSpawners(searchRoot, nowMs) {
-                if (_cachedSpawners && _cachedSpawners.length > 0) {
-                    var allAlive = true;
-                    for (var k = 0; k < _cachedSpawners.length; k++) {
-                        if (!IsPanelValid(_cachedSpawners[k])) {
-                            allAlive = false;
-                            break;
-                        }
-                    }
-                    if (allAlive) return _cachedSpawners;
-                    _cachedSpawners = null;
-                }
+            function _getSpawners(searchRoot) {
                 if (!IsPanelValid(searchRoot) || !searchRoot.FindChildrenWithClassTraverse) return null;
-                var now = nowMs || (Date.now ? Date.now() : (new Date()).getTime());
-                if (now < _nextSpawnerSearchMs) return null;
-
-                var found = searchRoot.FindChildrenWithClassTraverse("powerup_spawn");
-                if (found && found.length > 0) {
-                    _cachedSpawners = found;
-                } else {
-                    // Back off 1.5s if no spawners present in DOM to prevent spamming tree traversal
-                    _nextSpawnerSearchMs = now + 1500;
-                }
-                return found;
+                return searchRoot.FindChildrenWithClassTraverse("powerup_spawn");
             }
 
-            function DetectActiveBridgeBuffs(root, anchor, nowMs) {
+            function DetectActiveBridgeBuffs(root, anchor) {
                 var result = { left: false, right: false };
                 var searchRoot = _resolveMinimapPanel(root, anchor);
                 if (!IsPanelValid(searchRoot)) return result;
 
-                var spawners = _getSpawners(searchRoot, nowMs);
+                var spawners = _getSpawners(searchRoot);
                 if (!spawners || spawners.length === 0) return result;
 
                 for (var i = 0; i < spawners.length; i++) {
@@ -400,8 +377,7 @@
                     return;
                 }
                 var btw = 48, bth = 18, btpx = 3, btr = 4, btf = 11, bho = 144;
-                var nowMs = Date.now ? Date.now() : (new Date()).getTime();
-                var activeBuffs = DetectActiveBridgeBuffs(root, EnsureMinimapOverlayAnchor(root), nowMs);
+                var activeBuffs = DetectActiveBridgeBuffs(root, EnsureMinimapOverlayAnchor(root));
                 ApplyMinimapObjectiveTimersBridgeMode(panels, overlay, {timerWidth:tw,timerHeight:th,timerGap:tg,timerPaddingX:tpx,timerRadius:tr,timerFont:tf,timerIcon:ti,bottomOffset:bo}, {minimapSize:400,bridgeTimerWidth:btw,bridgeTimerHeight:bth,bridgeTimerPaddingX:btpx,bridgeTimerRadius:btr,bridgeTimerFont:btf,bridgeHorizontalOffset:bho}, {buffEnabled:be,buffOnBridgeEnabled:bbe,rejuvEnabled:re,rejuvOnBridgeEnabled:rbe,buffRed:bufR,buffYellow:bufY,rejuvRed:rejR,rejuvYellow:rejY}, {buffIcon:bi,buffBridgeLeftIcon:bli,buffBridgeRightIcon:bri,rejuvIcon:ri}, bridgeText, rejuvText, activeBuffs);
             }
 
@@ -448,11 +424,9 @@
                     var S = QOL.core.Scheduler; if (S) S.cancelAllForFeature("ql_minimap_timers");
                     var root = _root || $.GetContextPanel();
                     try { HideMinimapObjectiveTimers(root); } catch(e) {}
-                    _cachedSpawners = null;
                     _cachedMinimap = null;
                     _cachedAnchor = null;
                     _cachedPanelsStruct = null;
-                    _nextSpawnerSearchMs = 0;
                     State.minimapObjectiveBridgePosSig = "";
                     SetCachedPanel("minimapObjectiveTimersRoot", null); SetCachedPanel("minimapObjectiveBuffPanel", null); SetCachedPanel("minimapObjectiveBuffTime", null); SetCachedPanel("minimapObjectiveBuffIcon", null);
                     SetCachedPanel("minimapObjectiveBuffBridgeLeftPanel", null); SetCachedPanel("minimapObjectiveBuffBridgeLeftTime", null); SetCachedPanel("minimapObjectiveBuffBridgeLeftIcon", null);
