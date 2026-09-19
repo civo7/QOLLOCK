@@ -7,7 +7,90 @@
 
     var _deps = QOL.import(["utils"]);
     var Utils = _deps.utils;
-    var WarnLog = (Utils && Utils.WarnLog) ? Utils.WarnLog : function(cat, msg) { $.Msg("[QOLLock][WARN][" + cat + "] " + msg); };
+    var WarnLog = QOL_UTILS.WarnLog;
+
+    // ── Helper functions for preview panel DOM, context & styles ──
+
+    function SetPanelNonInteractive(panel) {
+        if (!panel || !panel.IsValid || !panel.IsValid()) return;
+        panel.hittest = false;
+        panel.hittestchildren = false;
+    }
+
+    function FindRootPanel() {
+        var root = $.GetContextPanel ? $.GetContextPanel() : null;
+        while (root && root.GetParent && root.GetParent()) {
+            root = root.GetParent();
+        }
+        return root;
+    }
+
+    function IsSettingsWindowVisible() {
+        if (typeof globalThis.IsSettingsWindowVisible === "function") {
+            return globalThis.IsSettingsWindowVisible();
+        }
+        var win = null;
+        try {
+            var ctx = $.GetContextPanel ? $.GetContextPanel() : null;
+            win = ctx ? ctx.FindChildTraverse("SettingsWindow") : null;
+        } catch (_) {}
+        return !!(win && win.BHasClass && win.BHasClass("Visible"));
+    }
+
+    var SetPanelOpacitySafe = (Utils && Utils.SetPanelOpacitySafe) ? Utils.SetPanelOpacitySafe : function(panel, opacityValue, fallbackValue) {
+        if (panel && panel.style) {
+            try {
+                var v = Number(opacityValue);
+                if (!isFinite(v)) v = Number(fallbackValue);
+                if (!isFinite(v)) v = 1.0;
+                panel.style.opacity = v.toFixed(2);
+            } catch(e) {
+                WarnLog("settings", "op failed: " + (e && e.message ? e.message : String(e || "")));
+            }
+        }
+    };
+
+    function GetPanelRectRelativeToContext(panel) {
+        if (!panel || !panel.IsValid || !panel.IsValid()) return null;
+        var context = $.GetContextPanel ? $.GetContextPanel() : null;
+        var root = FindRootPanel();
+        if (!context || !root) return null;
+        var getX = (typeof globalThis.GetPanelXOffsetWithinAncestor === "function")
+            ? globalThis.GetPanelXOffsetWithinAncestor
+            : (QOL.ui && QOL.ui.drag && QOL.ui.drag.getPanelXOffsetWithinAncestor);
+        var getY = (typeof globalThis.GetPanelYOffsetWithinAncestor === "function")
+            ? globalThis.GetPanelYOffsetWithinAncestor
+            : (QOL.ui && QOL.ui.drag && QOL.ui.drag.getPanelYOffsetWithinAncestor);
+        if (!getX || !getY) return null;
+        var panelX = getX(panel, root);
+        var panelY = getY(panel, root);
+        var contextX = getX(context, root);
+        var contextY = getY(context, root);
+        if (!isFinite(panelX) || !isFinite(panelY) || !isFinite(contextX) || !isFinite(contextY)) return null;
+        var width = Number(panel.actuallayoutwidth);
+        var height = Number(panel.actuallayoutheight);
+        if (!isFinite(width) || width < 0) width = 0;
+        if (!isFinite(height) || height < 0) height = 0;
+        return {
+            x: Math.round(panelX - contextX),
+            y: Math.round(panelY - contextY),
+            width: Math.round(width),
+            height: Math.round(height)
+        };
+    }
+
+    function LocalizeSettingsText(text, force) {
+        if (typeof globalThis.LocalizeSettingsText === "function") {
+            return globalThis.LocalizeSettingsText(text, force);
+        }
+        return String(text || "");
+    }
+
+    function SaveAndSync() {
+        if (typeof globalThis.SaveAndSync === "function") {
+            globalThis.SaveAndSync();
+        }
+    }
 
     // ── Preview globals ──
 
@@ -100,6 +183,53 @@ function SetPreviewPanelPosition(panel, x, y) {
     panel.style.marginTop = String(py) + "px";
 }
 
+function GetPreviewHostScale(host) {
+    var scaleX = 1.0;
+    var scaleY = 1.0;
+    if (!host) return { x: scaleX, y: scaleY };
+
+    if (typeof host.actualuiscale_x === "number" && isFinite(host.actualuiscale_x) && host.actualuiscale_x > 0) {
+        scaleX = host.actualuiscale_x;
+    } else {
+        var actW = Number(host.actuallayoutwidth);
+        var desW = Number(host.desiredlayoutwidth);
+        if (isFinite(actW) && actW > 0 && isFinite(desW) && desW > 0) {
+            scaleX = actW / desW;
+        }
+    }
+
+    if (typeof host.actualuiscale_y === "number" && isFinite(host.actualuiscale_y) && host.actualuiscale_y > 0) {
+        scaleY = host.actualuiscale_y;
+    } else {
+        var actH = Number(host.actuallayoutheight);
+        var desH = Number(host.desiredlayoutheight);
+        if (isFinite(actH) && actH > 0 && isFinite(desH) && desH > 0) {
+            scaleY = actH / desH;
+        }
+    }
+    return { x: scaleX, y: scaleY };
+}
+
+function GetPanelOffsetInAncestorSafe(panel, ancestor, axis) {
+    if (!panel || !ancestor) return 0;
+    if (axis === "x" && typeof globalThis.GetPanelXOffsetWithinAncestor === "function") {
+        return Number(globalThis.GetPanelXOffsetWithinAncestor(panel, ancestor)) || 0;
+    }
+    if (axis === "y" && typeof globalThis.GetPanelYOffsetWithinAncestor === "function") {
+        return Number(globalThis.GetPanelYOffsetWithinAncestor(panel, ancestor)) || 0;
+    }
+    var total = 0;
+    var cur = panel;
+    var guard = 0;
+    while (cur && cur !== ancestor && guard < 32) {
+        var off = (axis === "y") ? Number(cur.actualyoffset || 0) : Number(cur.actualxoffset || 0);
+        if (isFinite(off)) total += off;
+        cur = (cur.GetParent && typeof cur.GetParent === "function") ? cur.GetParent() : null;
+        guard++;
+    }
+    return total;
+}
+
 function GetMinimapPreviewAnchorParent() {
     var contextRoot = $.GetContextPanel();
     return contextRoot || null;
@@ -115,9 +245,12 @@ function GetMinimapPreviewRightInsetPx() {
     var minimapParent = minimapPersp.GetParent();
     if (!minimapParent) return 0;
 
+    var hostScale = GetPreviewHostScale(contextRoot);
+    var scaleX = (hostScale && hostScale.x > 0) ? hostScale.x : 1.0;
+
     var insetByOffset = Number(minimapParent.actualxoffset);
     if (isFinite(insetByOffset) && insetByOffset > 0) {
-        return Math.round(insetByOffset);
+        return Math.round(insetByOffset / scaleX);
     }
 
     var rootWidth = Number(contextRoot.actuallayoutwidth);
@@ -125,7 +258,7 @@ function GetMinimapPreviewRightInsetPx() {
     if (!isFinite(rootWidth) || !isFinite(parentWidth) || rootWidth <= parentWidth || parentWidth <= 0) {
         return 0;
     }
-    return Math.round((rootWidth - parentWidth) * 0.5);
+    return Math.round(((rootWidth - parentWidth) * 0.5) / scaleX);
 }
 
 
@@ -809,7 +942,8 @@ function ResolveCustomAnnouncerSlotScriptMetadata(slotIndex) {
 
 
 function IsZipBoostPreviewConfig(configId) {
-    return configId === "ZIP_BOOST_X_OFFSET" ||
+    return configId === "ENABLE_ZIP_BOOST" ||
+        configId === "ZIP_BOOST_X_OFFSET" ||
         configId === "ZIP_BOOST_Y_OFFSET" ||
         configId === "ZIP_BOOST_SCALE";
 }
@@ -830,7 +964,8 @@ function IsUnsecuredSoulsPreviewConfig(configId) {
 }
 
 function IsCompassPreviewConfig(configId) {
-    return configId === "COMPASS_SCALE" ||
+    return configId === "ENABLE_COMPASS" ||
+        configId === "COMPASS_SCALE" ||
         configId === "COMPASS_X_OFFSET" ||
         configId === "COMPASS_Y_OFFSET" ||
         configId === "COMPASS_STRETCH_X" ||
@@ -838,18 +973,23 @@ function IsCompassPreviewConfig(configId) {
 }
 
 function IsSpeedPreviewConfig(configId) {
-    return configId === "COMPASS_SPEED_X_OFFSET" ||
+    return configId === "ENABLE_COMPASS_SPEED" ||
+        configId === "COMPASS_SPEED_X_OFFSET" ||
         configId === "COMPASS_SPEED_Y_OFFSET";
 }
 
 function IsKeyboardOverlayPreviewConfig(configId) {
-    return configId === "KEYBOARD_OVERLAY_SCALE" ||
+    return configId === "ENABLE_KEYBOARD_OVERLAY" ||
+        configId === "KEYBOARD_OVERLAY_SCALE" ||
         configId === "KEYBOARD_OVERLAY_X_OFFSET" ||
-        configId === "KEYBOARD_OVERLAY_Y_OFFSET";
+        configId === "KEYBOARD_OVERLAY_Y_OFFSET" ||
+        configId === "ENABLE_FULL_KEYBOARD_LAYOUT";
 }
 
 function IsItemCooldownPreviewConfig(configId) {
-    return configId === "PASSIVE_COOLDOWN_SIZE" ||
+    return configId === "ENABLE_PASSIVE_COOLDOWN" ||
+        configId === "ENABLE_OLD_ITEM_COOLDOWNS" ||
+        configId === "PASSIVE_COOLDOWN_SIZE" ||
         configId === "PASSIVE_COOLDOWN_X" ||
         configId === "PASSIVE_COOLDOWN_Y" ||
         configId === "PASSIVE_COOLDOWN_OPACITY";
@@ -897,7 +1037,8 @@ function IsShopPreviewConfig(configId) {
 }
 
 function IsUnsecuredPlusPreviewConfig(configId) {
-    return configId === "UNSECURED_SOULS_HUD_SCALE" ||
+    return configId === "ENABLE_BETTER_UNSECURED" ||
+        configId === "UNSECURED_SOULS_HUD_SCALE" ||
         configId === "UNSECURED_SOULS_HUD_X_OFFSET" ||
         configId === "UNSECURED_SOULS_HUD_Y_OFFSET" ||
         configId === "ENABLE_BETTER_UNSECURED_SHOW_ICON" ||
@@ -1122,11 +1263,9 @@ function ShowMinimapSizePreview(sizePx) {
         HideMinimapSizePreview();
         return;
     }
+    if (!IsSettingsWindowVisible()) return;
     var panel = EnsureMinimapSizePreviewPanel();
     if (!panel || !gMinimapSizePreviewCircle || !gMinimapSizePreviewLabel) return;
-
-    var win = $.GetContextPanel().FindChildTraverse("SettingsWindow");
-    if (!win || !win.BHasClass || !win.BHasClass("Visible")) return;
 
     var sizeVal = Math.round(Number(sizePx) || 0);
     if (sizeVal <= 0) sizeVal = Math.round(Number(MOD_CONFIG.MINIMAP_SMALL_SIZE) || 0);
@@ -1141,12 +1280,49 @@ function ShowMinimapSizePreview(sizePx) {
     gMinimapSizePreviewCircle.style.width = previewDiameter + "px";
     gMinimapSizePreviewCircle.style.height = previewDiameter + "px";
     gMinimapSizePreviewCircle.style.opacity = opacityVal.toFixed(2);
-    var rightInset = GetMinimapPreviewRightInsetPx();
-    panel.style.marginRight = (gMinimapPreviewBaseRight - xOffset + rightInset) + "px";
-    panel.style.marginBottom = (gMinimapPreviewBaseBottom + yOffset) + "px";
+
+    var contextRoot = $.GetContextPanel ? $.GetContextPanel() : null;
+    var searchRoot = FindRootPanel() || contextRoot;
+    var minimapPersp = (searchRoot && searchRoot.FindChildTraverse) ? searchRoot.FindChildTraverse("minimap_persp") : null;
+    var alignedToLiveMinimap = false;
+
+    if (minimapPersp && (!minimapPersp.IsValid || minimapPersp.IsValid()) && contextRoot) {
+        var hostScale = GetPreviewHostScale(contextRoot);
+        var rootW = Number(contextRoot.actuallayoutwidth);
+        var rootH = Number(contextRoot.actuallayoutheight);
+        var mmW = Number(minimapPersp.actuallayoutwidth);
+        var mmH = Number(minimapPersp.actuallayoutheight);
+
+        if (isFinite(rootW) && rootW > 0 && isFinite(rootH) && rootH > 0 && isFinite(mmW) && mmW > 0 && isFinite(mmH) && mmH > 0) {
+            var mmX = GetPanelOffsetInAncestorSafe(minimapPersp, searchRoot, "x");
+            var mmY = GetPanelOffsetInAncestorSafe(minimapPersp, searchRoot, "y");
+            var ctxX = GetPanelOffsetInAncestorSafe(contextRoot, searchRoot, "x");
+            var ctxY = GetPanelOffsetInAncestorSafe(contextRoot, searchRoot, "y");
+            var relX = mmX - ctxX;
+            var relY = mmY - ctxY;
+
+            var actualRightDist = rootW - (relX + mmW);
+            var actualBottomDist = rootH - (relY + mmH);
+
+            if (isFinite(actualRightDist) && isFinite(actualBottomDist)) {
+                var virtualRight = Math.round(actualRightDist / (hostScale.x || 1.0));
+                var virtualBottom = Math.round(actualBottomDist / (hostScale.y || 1.0));
+                panel.style.marginRight = virtualRight + "px";
+                panel.style.marginBottom = virtualBottom + "px";
+                alignedToLiveMinimap = true;
+            }
+        }
+    }
+
+    if (!alignedToLiveMinimap) {
+        var rightInset = GetMinimapPreviewRightInsetPx();
+        panel.style.marginRight = (gMinimapPreviewBaseRight - xOffset + rightInset) + "px";
+        panel.style.marginBottom = (gMinimapPreviewBaseBottom + yOffset) + "px";
+    }
+
     gMinimapSizePreviewLabel.text = sizeVal + " px";
     panel.AddClass("Visible");
-    ScheduleHideMinimapSizePreview(1.2);
+    ScheduleHideMinimapSizePreview(1.5);
 }
 
 function ShowZoomMinimapPreview(mode, sizePx) {
@@ -1154,6 +1330,7 @@ function ShowZoomMinimapPreview(mode, sizePx) {
         HideMinimapSizePreview();
         return;
     }
+    if (!IsSettingsWindowVisible()) return;
     if (typeof mode !== "string") {
         sizePx = mode;
         mode = gZoomPreviewMode;
@@ -1164,9 +1341,6 @@ function ShowZoomMinimapPreview(mode, sizePx) {
 
     var panel = EnsureZoomMinimapPreviewPanel();
     if (!panel || !gZoomMinimapPreviewCircle || !gZoomMinimapPreviewLabel) return;
-
-    var win = $.GetContextPanel().FindChildTraverse("SettingsWindow");
-    if (!win || !win.BHasClass || !win.BHasClass("Visible")) return;
 
     var sizeVal = Math.round(Number(sizePx) || 0);
     if (sizeVal <= 0) sizeVal = Math.round(Number(MOD_CONFIG[keys.size]) || 0);
@@ -1188,7 +1362,7 @@ function ShowZoomMinimapPreview(mode, sizePx) {
     panel.style.marginTop = (gZoomPreviewBaseY - zoomY) + "px";
     gZoomMinimapPreviewLabel.text = sizeVal + " px";
     panel.AddClass("Visible");
-    ScheduleHideZoomMinimapPreview(1.2);
+    ScheduleHideZoomMinimapPreview(1.5);
 }
 
 function ShowZipBoostPreview() {
@@ -1196,11 +1370,15 @@ function ShowZipBoostPreview() {
         HideMinimapSizePreview();
         return;
     }
+    if (Number(MOD_CONFIG.ENABLE_ZIP_BOOST) === 0) {
+        if (gZipBoostPreviewPanel && gZipBoostPreviewPanel.IsValid && gZipBoostPreviewPanel.IsValid()) {
+            gZipBoostPreviewPanel.RemoveClass("Visible");
+        }
+        return;
+    }
+    if (!IsSettingsWindowVisible()) return;
     var panel = EnsureZipBoostPreviewPanel();
     if (!panel || !gZipBoostPreviewBox || !gZipBoostPreviewLabel) return;
-
-    var win = $.GetContextPanel().FindChildTraverse("SettingsWindow");
-    if (!win || !win.BHasClass || !win.BHasClass("Visible")) return;
 
     var xOffset = Math.round(Number(MOD_CONFIG.ZIP_BOOST_X_OFFSET) || 0);
     var yOffset = Math.round(Number(MOD_CONFIG.ZIP_BOOST_Y_OFFSET) || 0);
@@ -1218,7 +1396,7 @@ function ShowZipBoostPreview() {
     gZipBoostPreviewBox.style.uiScale = scale + "%";
     gZipBoostPreviewLabel.text = LocalizeSettingsText("ZIP BOOST", true) + " " + scale + "%";
     panel.AddClass("Visible");
-    ScheduleHideZipBoostPreview(1.2);
+    ScheduleHideZipBoostPreview(1.5);
 }
 
 function ShowCrosshairStatsPreview() {
@@ -1226,11 +1404,15 @@ function ShowCrosshairStatsPreview() {
         HideMinimapSizePreview();
         return;
     }
+    if (Number(MOD_CONFIG.ENABLE_CROSSHAIR_STATS) === 0) {
+        if (gCrosshairStatsPreviewPanel && gCrosshairStatsPreviewPanel.IsValid && gCrosshairStatsPreviewPanel.IsValid()) {
+            gCrosshairStatsPreviewPanel.RemoveClass("Visible");
+        }
+        return;
+    }
+    if (!IsSettingsWindowVisible()) return;
     var panel = EnsureCrosshairStatsPreviewPanel();
     if (!panel || !gCrosshairStatsPreviewBox || !gCrosshairStatsPreviewLabel) return;
-
-    var win = $.GetContextPanel().FindChildTraverse("SettingsWindow");
-    if (!win || !win.BHasClass || !win.BHasClass("Visible")) return;
 
     var xOffset = Math.round(Number(MOD_CONFIG.CROSSHAIR_STATS_X_OFFSET) || 0);
     var yOffset = Math.round(Number(MOD_CONFIG.CROSSHAIR_STATS_Y_OFFSET) || 0);
@@ -1255,7 +1437,7 @@ function ShowCrosshairStatsPreview() {
     gCrosshairStatsPreviewBox.style.opacity = opacity.toFixed(2);
     gCrosshairStatsPreviewLabel.text = LocalizeSettingsText("ACTIVE STATS", true);
     panel.AddClass("Visible");
-    ScheduleHideCrosshairStatsPreview(1.2);
+    ScheduleHideCrosshairStatsPreview(1.5);
 }
 
 function ShowUnsecuredSoulsPreview() {
@@ -1263,11 +1445,15 @@ function ShowUnsecuredSoulsPreview() {
         HideMinimapSizePreview();
         return;
     }
+    if (Number(MOD_CONFIG.ENABLE_UNSECURED_SOUL_TIMER) === 0) {
+        if (gUnsecuredSoulsPreviewPanel && gUnsecuredSoulsPreviewPanel.IsValid && gUnsecuredSoulsPreviewPanel.IsValid()) {
+            gUnsecuredSoulsPreviewPanel.RemoveClass("Visible");
+        }
+        return;
+    }
+    if (!IsSettingsWindowVisible()) return;
     var panel = EnsureUnsecuredSoulsPreviewPanel();
     if (!panel || !gUnsecuredSoulsPreviewLabel) return;
-
-    var win = $.GetContextPanel().FindChildTraverse("SettingsWindow");
-    if (!win || !win.BHasClass || !win.BHasClass("Visible")) return;
 
     var xOffset = Math.round(Number(MOD_CONFIG.UNSECURED_SOUL_TIMER_X_OFFSET) || 0);
     var yOffset = Math.round(Number(MOD_CONFIG.UNSECURED_SOUL_TIMER_Y_OFFSET) || 0);
@@ -1295,7 +1481,7 @@ function ShowUnsecuredSoulsPreview() {
     }
     gUnsecuredSoulsPreviewLabel.text = enabled ? "23s" : "SAFE";
     panel.AddClass("Visible");
-    ScheduleHideUnsecuredSoulsPreview(1.2);
+    ScheduleHideUnsecuredSoulsPreview(1.5);
 }
 
 function ShowConfigPreviewForConfigId(configId) {
@@ -1352,11 +1538,15 @@ function ShowCompassPreview() {
         HideMinimapSizePreview();
         return;
     }
+    if (MOD_CONFIG.ENABLE_COMPASS === 0) {
+        if (gCompassPreviewPanel && gCompassPreviewPanel.IsValid && gCompassPreviewPanel.IsValid()) {
+            gCompassPreviewPanel.RemoveClass("Visible");
+        }
+        return;
+    }
+    if (!IsSettingsWindowVisible()) return;
     var panel = EnsureCompassPreviewPanel();
     if (!panel || !gCompassPreviewBox) return;
-
-    var win = $.GetContextPanel().FindChildTraverse("SettingsWindow");
-    if (!win || !win.BHasClass || !win.BHasClass("Visible")) return;
 
     var scale = Math.round(Number(MOD_CONFIG.COMPASS_SCALE) || 100);
     var stretchX = Math.round(Number(MOD_CONFIG.COMPASS_STRETCH_X) || 100);
@@ -1400,7 +1590,7 @@ function ShowCompassPreview() {
     if (showSpeed) ShowSpeedPreview();
 
     panel.AddClass("Visible");
-    ScheduleHideCompassPreview(1.2);
+    ScheduleHideCompassPreview(1.5);
 }
 
 // Independent speed preview — mirrors core's UpdateCompassOverlay exactly:
@@ -1412,11 +1602,15 @@ function ShowSpeedPreview() {
         HideMinimapSizePreview();
         return;
     }
+    if (MOD_CONFIG.ENABLE_COMPASS_SPEED === 0) {
+        if (gSpeedPreviewPanel && gSpeedPreviewPanel.IsValid && gSpeedPreviewPanel.IsValid()) {
+            gSpeedPreviewPanel.RemoveClass("Visible");
+        }
+        return;
+    }
+    if (!IsSettingsWindowVisible()) return;
     var panel = EnsureSpeedPreviewPanel();
     if (!panel || !gSpeedPreviewLabel) return;
-
-    var win = $.GetContextPanel().FindChildTraverse("SettingsWindow");
-    if (!win || !win.BHasClass || !win.BHasClass("Visible")) return;
 
     var showCompass = (MOD_CONFIG.ENABLE_COMPASS !== 0);
 
@@ -1450,25 +1644,23 @@ function ShowSpeedPreview() {
     if (speedOffsetY < -2000) speedOffsetY = -2000;
     if (speedOffsetY > 2000) speedOffsetY = 2000;
 
-    // Right half / right-aligned when the compass shares the screen; full-width
-    // centered when alone. Same as core's speedLabel layout.
-    gSpeedPreviewLabel.style.width = showCompass ? "50%" : "100%";
-    gSpeedPreviewLabel.style.textAlign = showCompass ? "right" : "center";
-    gSpeedPreviewLabel.style.horizontalAlign = showCompass ? "right" : "center";
+    gSpeedPreviewLabel.style.width = "100%";
+    gSpeedPreviewLabel.style.height = "100%";
+    gSpeedPreviewLabel.style.textAlign = "center";
+    gSpeedPreviewLabel.style.horizontalAlign = "center";
+    gSpeedPreviewLabel.style.verticalAlign = "center";
 
-    // Root spans the box width and centers on it, so "right half" maps to the
-    // box's right half — no boxWidth/2 shift. +Y moves up (marginTop = base - y).
-    var rootWidth = (showCompass ? boxWidth : 200) + "px";
     var speedBaseX = showCompass ? compassOffsetX : 0;
     var speedBaseY = showCompass ? (appliedCompassOffsetY + boxHeight + 14) : compassBaselineY;
 
-    panel.style.width = rootWidth;
+    panel.style.width = "50px";
+    panel.style.height = "50px";
     panel.style.marginLeft = Math.round(speedBaseX + speedOffsetX) + "px";
     panel.style.marginTop = Math.round(speedBaseY - speedOffsetY) + "px";
     gSpeedPreviewLabel.text = "SPD";
 
     panel.AddClass("Visible");
-    ScheduleHideSpeedPreview(1.2);
+    ScheduleHideSpeedPreview(1.5);
 }
 
 function ShowKeyboardOverlayPreview() {
@@ -1476,11 +1668,15 @@ function ShowKeyboardOverlayPreview() {
         HideMinimapSizePreview();
         return;
     }
+    if (Number(MOD_CONFIG.ENABLE_KEYBOARD_OVERLAY) === 0) {
+        if (gKeyboardOverlayPreviewPanel && gKeyboardOverlayPreviewPanel.IsValid && gKeyboardOverlayPreviewPanel.IsValid()) {
+            gKeyboardOverlayPreviewPanel.RemoveClass("Visible");
+        }
+        return;
+    }
+    if (!IsSettingsWindowVisible()) return;
     var panel = EnsureKeyboardOverlayPreviewPanel();
     if (!panel || !gKeyboardOverlayPreviewBox || !gKeyboardOverlayPreviewLabel) return;
-
-    var win = $.GetContextPanel().FindChildTraverse("SettingsWindow");
-    if (!win || !win.BHasClass || !win.BHasClass("Visible")) return;
 
     var scale = Math.round(Number(MOD_CONFIG.KEYBOARD_OVERLAY_SCALE) || 100);
     var xOffset = Math.round(Number(MOD_CONFIG.KEYBOARD_OVERLAY_X_OFFSET) || 0);
@@ -1528,7 +1724,7 @@ function ShowKeyboardOverlayPreview() {
     gKeyboardOverlayPreviewBox.style.height = kbTotalHeight + "px";
     gKeyboardOverlayPreviewLabel.text = kbScaledWidth + "x" + kbTotalHeight;
     panel.AddClass("Visible");
-    ScheduleHideKeyboardOverlayPreview(1.2);
+    ScheduleHideKeyboardOverlayPreview(1.5);
 }
 
 function ShowItemCooldownPreview() {
@@ -1536,11 +1732,9 @@ function ShowItemCooldownPreview() {
         HideMinimapSizePreview();
         return;
     }
+    if (!IsSettingsWindowVisible()) return;
     var panel = EnsureItemCooldownPreviewPanel();
     if (!panel || !gItemCooldownPreviewRow || !gItemCooldownPreviewIcon) return;
-
-    var win = $.GetContextPanel().FindChildTraverse("SettingsWindow");
-    if (!win || !win.BHasClass || !win.BHasClass("Visible")) return;
 
     var size = Number(MOD_CONFIG.PASSIVE_COOLDOWN_SIZE);
     if (!isFinite(size)) size = 40;
@@ -1576,7 +1770,7 @@ function ShowItemCooldownPreview() {
     if (gItemCooldownPreviewLabel) gItemCooldownPreviewLabel.text = "7";
 
     panel.AddClass("Visible");
-    ScheduleHideItemCooldownPreview(1.2);
+    ScheduleHideItemCooldownPreview(1.5);
 }
 
 function ShowAmmoPreview() {
@@ -1989,24 +2183,6 @@ function WirePreviewToggleButton(btn) {
     });
 }
 
-    // ── Hero hint publisher ──
-
-function PublishHeroHintFromSettings() {
-    // GameInterfaceAPI confirmed absent — hero hint publishing from settings unavailable.
-    // Hero detection relies on HUD-side UI panel scanning.
-}
-
-function StartHeroHintPublisher() {
-    function tick() {
-        // Only publish hero hints while the settings window is open.
-        // No point running this poll when the player can't see the settings UI.
-        if (IsSettingsWindowVisible()) {
-            try { PublishHeroHintFromSettings(); } catch(e0) { WarnLog("settings", "op failed: " + (e0 && e0.message ? e0.message : String(e0 || ""))); }
-        }
-        $.Schedule(HERO_HINT_PUBLISH_INTERVAL_SEC, tick);
-    }
-    tick();
-}
 
     // ── Public API ──
     QOL.preview = {
@@ -2040,8 +2216,6 @@ function StartHeroHintPublisher() {
         isDamageReportPreviewConfig: IsDamageReportPreviewConfig,
         isShopPreviewConfig: IsShopPreviewConfig,
         isUnsecuredPlusPreviewConfig: IsUnsecuredPlusPreviewConfig,
-        isAdvancedItemCooldownModeEnabled: IsAdvancedItemCooldownModeEnabled,
-        // Hero hint
-        startHeroHintPublisher: StartHeroHintPublisher
+        isAdvancedItemCooldownModeEnabled: IsAdvancedItemCooldownModeEnabled
     };
 })();

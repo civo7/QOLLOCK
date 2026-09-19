@@ -3,17 +3,14 @@
 (function() {
     'use strict';
     var _featureId = "ql_feat_healthbar_fg";
-    // DEPENDS: state, utils, getCachedPanel, setCachedPanel, isHudVisibleForPlayerHealthbarRuntime, tryReadHeroFromPanelDetails
-    var _deps = QOL.import(["state", "utils", "getCachedPanel", "setCachedPanel",
-        "isHudVisibleForPlayerHealthbarRuntime", "tryReadHeroFromPanelDetails"]);
-    var State = _deps.state;
-    var Utils = _deps.utils;
-    var GetCachedPanel = _deps.getCachedPanel;
-    var SetCachedPanel = _deps.setCachedPanel;
-    var IsPanelValid = Utils.IsPanelValid;
-    var SetStyleSafe = Utils.SetStyleSafe;
-    var IsHudVisibleForPlayerHealthbarRuntime = _deps.isHudVisibleForPlayerHealthbarRuntime;
-    var TryReadHeroFromPanelDetails = _deps.tryReadHeroFromPanelDetails;
+    var Panel = (QOL.core && QOL.core.panel) ? QOL.core.panel : {};
+    var State = QOL.state || (typeof globalThis !== "undefined" && globalThis.State) || {};
+    var Utils = QOL.utils;
+    var GetCachedPanel = QOL.getCachedPanel;
+    var SetCachedPanel = QOL.setCachedPanel;
+    var IsPanelValid = QOL.utils.IsPanelValid;
+    var SetStyleSafe = QOL.utils.SetStyleSafe;
+    var TryReadHeroFromPanelDetails = function(p) { return QOL.tryReadHeroFromPanelDetails ? QOL.tryReadHeroFromPanelDetails(p) : ""; };
 
     // ── Constants ──
     var HEALTHBAR_TYPE_FG = 2;
@@ -207,6 +204,17 @@
         var heroImage = (IsPanelValid(levelAmount) && levelAmount.FindChildTraverse) ? levelAmount.FindChildTraverse("HeroImage") : null;
 
         if (fgEnabled) {
+            var healthContainer = root.FindChildTraverse ? root.FindChildTraverse("health_and_abilities_container") : null;
+            var fgIconPulseMid = false;
+            var fgIconPulseLow = false;
+            if (healthContainer && healthContainer.BHasClass) {
+                try { fgIconPulseMid = !!healthContainer.BHasClass("localPlayerMidHealth"); } catch (eMid) { fgIconPulseMid = false; }
+                try { fgIconPulseLow = !!healthContainer.BHasClass("localPlayerLowHealth"); } catch (eLow) { fgIconPulseLow = false; }
+            }
+            if (root.SetHasClass) {
+                root.SetHasClass("qol_fg_icon_health_mid", fgIconPulseMid);
+                root.SetHasClass("qol_fg_icon_health_low", fgIconPulseLow);
+            }
             if (State.fgHeroImageRuntimeStyleSig !== fgRuntimeStyleSig) {
                 if (IsPanelValid(levelAmount)) {
                     ApplyFgPlayerHealthbarRuntimeStyleToPanel(levelAmount, runtimeState, true, true);
@@ -214,6 +222,11 @@
                 State.fgHeroImageRuntimeStyleSig = fgRuntimeStyleSig;
             }
             return;
+        }
+
+        if (root.SetHasClass) {
+            root.SetHasClass("qol_fg_icon_health_mid", false);
+            root.SetHasClass("qol_fg_icon_health_low", false);
         }
 
         if (IsPanelValid(levelAmount)) {

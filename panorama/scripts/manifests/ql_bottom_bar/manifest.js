@@ -18,7 +18,8 @@
 
     FR.register({
         id: "ql_bottom_bar",
-        enabledByDefault: false,
+        enabledByDefault: true,
+        enableKey: "HUD_BOTTOM_BAR_ENABLED",
         settings: [
             { key: "HUD_BOTTOM_BAR_ENABLED", type: "toggle", default: true },
             { key: "BOTTOM_BAR_OPACITY", type: "slider", min: 0, max: 1, step: 0.05, default: 1.0 },
@@ -31,19 +32,22 @@
             var _lastSig = "";
 
             function _hasNonDefault(cfg) {
-                return Number(cfg.HUD_BOTTOM_BAR_ENABLED) !== 1 ||
-                    Number(cfg.BOTTOM_BAR_OPACITY) !== 1.0 ||
-                    Number(cfg.BOTTOM_BAR_SCALE) !== 1.0 ||
-                    Number(cfg.BOTTOM_BAR_X_OFFSET) !== 0 ||
-                    Number(cfg.BOTTOM_BAR_Y_OFFSET) !== 0 ||
-                    Number(cfg.BOTTOM_BAR_WASH_COLOR) !== 0;
+                if (!cfg) return false;
+                var enabled = (cfg.HUD_BOTTOM_BAR_ENABLED === undefined || cfg.HUD_BOTTOM_BAR_ENABLED === true || Number(cfg.HUD_BOTTOM_BAR_ENABLED) === 1);
+                return !enabled ||
+                    Number(cfg.BOTTOM_BAR_OPACITY !== undefined ? cfg.BOTTOM_BAR_OPACITY : 1.0) !== 1.0 ||
+                    Number(cfg.BOTTOM_BAR_SCALE !== undefined ? cfg.BOTTOM_BAR_SCALE : 1.0) !== 1.0 ||
+                    Number(cfg.BOTTOM_BAR_X_OFFSET || 0) !== 0 ||
+                    Number(cfg.BOTTOM_BAR_Y_OFFSET || 0) !== 0 ||
+                    Number(cfg.BOTTOM_BAR_WASH_COLOR || 0) !== 0;
             }
 
             function _applyCurrencyColor(root, washColor) {
                 var wc = washColor || "";
-                var sr = $.GetContextPanel();
-                var ap = sr.FindChildTraverse("APContainer");
-                var gap = sr.FindChildTraverse("gold_and_ap_container");
+                var sr = root || $.GetContextPanel();
+                if (!sr) return;
+                var ap = sr.FindChildTraverse ? sr.FindChildTraverse("APContainer") : null;
+                var gap = sr.FindChildTraverse ? sr.FindChildTraverse("gold_and_ap_container") : null;
                 var containers = [sr];
                 if (ap) containers.push(ap);
                 if (gap) containers.push(gap);
@@ -71,12 +75,17 @@
                     try { amounts[ij].style.color = wc; } catch(e) {}
             }
 
+            var SIGNATURE_UI_SCALE_BASE_PCT = 90;
+
+            var _clearStyle = QOL.utils.ClearStyleSafe;
+
             function _apply(cfg) {
                 var root = $.GetContextPanel();
                 var active = _hasNonDefault(cfg);
                 var wcIdx = active ? (Math.round(Number(cfg.BOTTOM_BAR_WASH_COLOR)) || 0) : 0;
-                var pal = (typeof QOL !== "undefined" && QOL.washColorPalette) ? QOL.washColorPalette : [];
-                var wc = (wcIdx > 0 && wcIdx < pal.length) ? pal[wcIdx] : "";
+                var wc = (typeof QOL !== "undefined" && QOL.core && QOL.core.panel && QOL.core.panel.resolvePaletteColor)
+                    ? QOL.core.panel.resolvePaletteColor(wcIdx)
+                    : ((typeof QOL !== "undefined" && QOL.washColorPalette && wcIdx > 0 && wcIdx < QOL.washColorPalette.length) ? QOL.washColorPalette[wcIdx] : "");
 
                 // Apply currency color BEFORE the panel guard — old feature
                 // applies it unconditionally (ql_feat_bottombar.js:93 before guard at :94).
@@ -85,22 +94,46 @@
                 var bp = root.FindChildTraverse("hud_signature");
                 if (!bp) return;
 
-                var enabled = Number(cfg.HUD_BOTTOM_BAR_ENABLED) === 1;
+                var enabled = (cfg.HUD_BOTTOM_BAR_ENABLED === undefined || cfg.HUD_BOTTOM_BAR_ENABLED === true || Number(cfg.HUD_BOTTOM_BAR_ENABLED) === 1);
                 var ox = Math.round(Number(active ? cfg.BOTTOM_BAR_X_OFFSET : 0)) || 0;
                 var oy = Math.round(Number(active ? cfg.BOTTOM_BAR_Y_OFFSET : 0)) || 0;
-                var op = active ? Number(cfg.BOTTOM_BAR_OPACITY).toFixed(2) : "1.00";
-                var sc = active ? Number(cfg.BOTTOM_BAR_SCALE).toFixed(2) : "1.00";
+                var opNum = active ? Number(cfg.BOTTOM_BAR_OPACITY !== undefined ? cfg.BOTTOM_BAR_OPACITY : 1.0) : 1.0;
+                if (!isFinite(opNum)) opNum = 1.0;
+                var scNum = active ? Number(cfg.BOTTOM_BAR_SCALE !== undefined ? cfg.BOTTOM_BAR_SCALE : 1.0) : 1.0;
+                if (!isFinite(scNum)) scNum = 1.0;
 
-                var sig = ox + "|" + oy + "|" + op + "|" + sc + "|" + wcIdx + "|" + (enabled ? "1" : "0");
+                var op = opNum.toFixed(2);
+                var scText = Math.round(SIGNATURE_UI_SCALE_BASE_PCT * scNum) + "%";
+
+                var sig = ox + "|" + oy + "|" + op + "|" + scText + "|" + wcIdx + "|" + (enabled ? "1" : "0");
                 if (_lastSig === sig) return;
                 _lastSig = sig;
 
-                bp.style.x = ox + "px";
-                bp.style.y = (-oy) + "px";
-                bp.style.preTransformScale2d = "1.00, 1.00";
-                bp.style.uiScale = Math.round(Number(sc) * 100) + "%";
+                if (ox !== 0) bp.style.x = ox + "px";
+                else _clearStyle(bp, "x");
+
+                if (oy !== 0) bp.style.y = (-oy) + "px";
+                else _clearStyle(bp, "y");
+
+                _clearStyle(bp, "preTransformScale2d");
+
+                if (Math.abs(scNum - 1.0) > 0.0001) bp.style.uiScale = scText;
+                else _clearStyle(bp, "uiScale");
+
                 if (bp.SetHasClass) bp.SetHasClass("qol-hidden", !enabled);
-                try { bp.style.washColor = wc; bp.style.opacity = op; } catch(e) {}
+
+                if (wc) {
+                    if (typeof QOL !== "undefined" && QOL.core && QOL.core.panel && QOL.core.panel.setWashColor) {
+                        QOL.core.panel.setWashColor(bp, wc);
+                    } else {
+                        bp.style.washColor = wc;
+                    }
+                } else {
+                    _clearStyle(bp, "washColor");
+                }
+
+                if (Math.abs(opNum - 1.0) > 0.0001) bp.style.opacity = op;
+                else _clearStyle(bp, "opacity");
             }
 
             return {
@@ -110,13 +143,16 @@
                     try {
                         var root = $.GetContextPanel();
                         _applyCurrencyColor(root, "");
-                        var bp = root.FindChildTraverse("hud_signature");
+                        var bp = root ? root.FindChildTraverse("hud_signature") : null;
                         if (bp && bp.style) {
-                            bp.style.x = "0px"; bp.style.y = "0px";
-                            bp.style.preTransformScale2d = "1.00, 1.00";
-                            bp.style.uiScale = "100%";
-                            bp.style.opacity = "1.00"; bp.style.washColor = "";
-                            if (bp.SetHasClass) bp.SetHasClass("qol-hidden", false);
+                            _clearStyle(bp, "x");
+                            _clearStyle(bp, "y");
+                            _clearStyle(bp, "preTransformScale2d");
+                            _clearStyle(bp, "uiScale");
+                            _clearStyle(bp, "opacity");
+                            _clearStyle(bp, "washColor");
+                            var isSupposed = FR && FR.isFeatureSupposedToBeEnabled ? FR.isFeatureSupposedToBeEnabled("ql_bottom_bar") : false;
+                            if (bp.SetHasClass) bp.SetHasClass("qol-hidden", !isSupposed);
                         }
                     } catch(e) {}
                 },

@@ -44,7 +44,7 @@
             var _combatStartMs = 0;
             var _signalActive = false;
 
-            function _isAlive(p) { return p && typeof p.IsValid === "function" && p.IsValid(); }
+            var _isAlive = QOL.utils.IsPanelValid;
 
             function _ensureOverlay(root) {
                 if (_isAlive(_overlay)) return _overlay;
@@ -106,8 +106,10 @@
 
             function _isCombatSignal(root, nowMs) {
                 try {
-                    if (typeof QOL !== "undefined" && QOL.isCombatSignalActive) {
-                        return QOL.isCombatSignalActive(root, nowMs);
+                    var fn = (typeof QOL !== "undefined" && QOL.isCombatSignalActive) ||
+                        (typeof QOL !== "undefined" && QOL.core && QOL.core.hud && QOL.core.hud.isCombatSignalActive);
+                    if (typeof fn === "function") {
+                        return fn(root, nowMs);
                     }
                 } catch(e) {}
                 return false;

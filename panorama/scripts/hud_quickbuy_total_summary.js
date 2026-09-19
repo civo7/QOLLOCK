@@ -1,7 +1,9 @@
 (function(){'use strict';
-var QUICKBUY_TOTAL_UPDATE_INTERVAL_SECONDS=0.05;
-// Phase 8.1: Degraded interval when shop closed or feature inactive (was 0.05s = 20Hz).
+// Event-driven: CitadelQuickbuyItemsChanged handles immediate queue changes.
+// Polling interval covers passive soul accumulation.
+var QUICKBUY_TOTAL_UPDATE_INTERVAL_SECONDS=0.5;
 var QUICKBUY_TOTAL_UPDATE_INTERVAL_IDLE_SECONDS=0.5;
+var _quickbuyScheduleHandle=null;
 var quickbuyUpcomingPreviewSlots=[
 	{
 		rootId:'QuickbuyUpcomingPreview2',
@@ -741,16 +743,25 @@ function ResetQuickbuyQueuePanels(contextPanel){
 	}
 }
 
+function _scheduleQuickbuyUpdate(delaySec) {
+	if (_quickbuyScheduleHandle !== null) {
+		try { $.CancelScheduled(_quickbuyScheduleHandle); } catch(e) {}
+		_quickbuyScheduleHandle = null;
+	}
+	_quickbuyScheduleHandle = $.Schedule(delaySec, UpdateQuickbuyQueueCostPanels);
+}
+
 function UpdateQuickbuyQueueCostPanels(){
+	_quickbuyScheduleHandle = null;
 	var contextPanel=$.GetContextPanel();
 	if(!contextPanel){
-		$.Schedule(QUICKBUY_TOTAL_UPDATE_INTERVAL_IDLE_SECONDS,UpdateQuickbuyQueueCostPanels);
+		_scheduleQuickbuyUpdate(QUICKBUY_TOTAL_UPDATE_INTERVAL_IDLE_SECONDS);
 		return;
 	}
 
 	if(!IsQuickbuyCostFeatureActive(contextPanel)){
 		ResetQuickbuyQueuePanels(contextPanel);
-		$.Schedule(QUICKBUY_TOTAL_UPDATE_INTERVAL_IDLE_SECONDS,UpdateQuickbuyQueueCostPanels);
+		_scheduleQuickbuyUpdate(QUICKBUY_TOTAL_UPDATE_INTERVAL_IDLE_SECONDS);
 		return;
 	}
 	var clickToNotifyActive=IsClickToNotifyActive(contextPanel);
@@ -760,7 +771,7 @@ function UpdateQuickbuyQueueCostPanels(){
 	var quickbuyQueuePanel=contextPanel.FindChildTraverse('QuickbuyQueue');
 	var quickbuySellQueuePanel=contextPanel.FindChildTraverse('QuickbuySellQueue');
 	if(!quickbuyTotalCostLabel){
-		$.Schedule(QUICKBUY_TOTAL_UPDATE_INTERVAL_SECONDS,UpdateQuickbuyQueueCostPanels);
+		_scheduleQuickbuyUpdate(QUICKBUY_TOTAL_UPDATE_INTERVAL_SECONDS);
 		return;
 	}
 
@@ -776,9 +787,18 @@ function UpdateQuickbuyQueueCostPanels(){
 
 	if(quickbuyNextSoulsNeededLabel)quickbuyNextSoulsNeededLabel.text=String(GetQuickbuyNextRemainingSouls(quickbuyQueueEntries));
 
-	$.Schedule(QUICKBUY_TOTAL_UPDATE_INTERVAL_SECONDS,UpdateQuickbuyQueueCostPanels);
+	_scheduleQuickbuyUpdate(QUICKBUY_TOTAL_UPDATE_INTERVAL_SECONDS);
+}
+
+// Engine event subscription: immediately updates queue when items are added, removed, or purchased
+if (typeof $.RegisterForUnhandledEvent === 'function') {
+	try {
+		$.RegisterForUnhandledEvent('CitadelQuickbuyItemsChanged', function() {
+			UpdateQuickbuyQueueCostPanels();
+		});
+	} catch(e) {}
 }
 
 InitializeQuickbuyRecipeComponents();
-$.Schedule(0.0,UpdateQuickbuyQueueCostPanels);
+_scheduleQuickbuyUpdate(0.0);
 })();

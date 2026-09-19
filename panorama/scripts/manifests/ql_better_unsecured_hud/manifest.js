@@ -36,7 +36,7 @@
             { key: "ENABLE_BETTER_UNSECURED", type: "toggle", default: false },
             { key: "UNSECURED_SOULS_HUD_SCALE", type: "slider", min: 50, max: 200, default: 100 },
             { key: "UNSECURED_SOULS_HUD_X_OFFSET", type: "slider", min: -1000, max: 2000, default: 0 },
-            { key: "UNSECURED_SOULS_HUD_Y_OFFSET", type: "slider", min: 800, max: 2000, default: 0 },
+            { key: "UNSECURED_SOULS_HUD_Y_OFFSET", type: "slider", min: 800, max: 2000, default: 1095 },
             { key: "ENABLE_BETTER_UNSECURED_SHOW_ICON", type: "toggle", default: false },
             { key: "ENABLE_BETTER_UNSECURED_SHOW_TEXT", type: "toggle", default: false },
             { key: "ENABLE_BETTER_UNSECURED_SHOW_ICON_TEXT", type: "toggle", default: false }
@@ -47,13 +47,8 @@
                 try { if (typeof QOL !== "undefined" && QOL.state) return QOL.state; } catch(e) {}
                 return null;
             }
-            function _getCachedPanel(key) {
-                try { if (typeof QOL !== "undefined" && QOL.getCachedPanel) return QOL.getCachedPanel(key); } catch(e) {}
-                return null;
-            }
-            function _setCachedPanel(key, val) {
-                try { if (typeof QOL !== "undefined" && QOL.setCachedPanel) QOL.setCachedPanel(key, val); } catch(e) {}
-            }
+            var _getCachedPanel = QOL.getCachedPanel;
+            var _setCachedPanel = QOL.setCachedPanel;
             function _getGameplayHudPanel(root) {
                 try { if (typeof QOL !== "undefined" && QOL.getGameplayHudPanel) return QOL.getGameplayHudPanel(root); } catch(e) {}
                 if (!root || !root.FindChildTraverse) return root || null;
@@ -67,21 +62,9 @@
                 try { if (typeof QOL !== "undefined" && QOL.parseUnsecuredSoulsValue) return QOL.parseUnsecuredSoulsValue(valueText); } catch(e) {}
                 return 0;
             }
-            function _isPanelValid(p) {
-                try { if (typeof QOL !== "undefined" && QOL.utils && QOL.utils.IsPanelValid) return QOL.utils.IsPanelValid(p); } catch(e) {}
-                return !!(p && typeof p.IsValid === "function" && p.IsValid());
-            }
-            function _isCfgEnabled(cfg, key) {
-                try { if (typeof QOL !== "undefined" && QOL.utils && QOL.utils.IsCfgEnabled) return QOL.utils.IsCfgEnabled(cfg, key); } catch(e) {}
-                return Number(cfg[key]) === 1;
-            }
-            function _clampConfigNumber(val, def, min, max, round) {
-                try { if (typeof QOL !== "undefined" && QOL.utils && QOL.utils.ClampConfigNumber) return QOL.utils.ClampConfigNumber(val, def, min, max, round); } catch(e) {}
-                var v = Number(val); if (!isFinite(v)) v = def;
-                if (round) v = Math.round(v);
-                if (v < min) v = min; if (v > max) v = max;
-                return v;
-            }
+            var _isPanelValid = QOL.utils.IsPanelValid;
+            var _isCfgEnabled = QOL.utils.IsCfgEnabled;
+            var _clampConfigNumber = QOL.utils.ClampConfigNumber;
             function _getPanelPositionRelativeToAncestor(child, ancestor) {
                 try { if (typeof QOL !== "undefined" && QOL.utils && QOL.utils.GetPanelPositionRelativeToAncestor) return QOL.utils.GetPanelPositionRelativeToAncestor(child, ancestor); } catch(e) {}
                 return null;
@@ -91,8 +74,9 @@
                 return (val != null && isFinite(val)) ? val : null;
             }
             function _getDefaultConfigYOffset() {
+                try { if (typeof globalThis !== "undefined" && globalThis.DEFAULT_CONFIG && globalThis.DEFAULT_CONFIG.UNSECURED_SOULS_HUD_Y_OFFSET != null) return Number(globalThis.DEFAULT_CONFIG.UNSECURED_SOULS_HUD_Y_OFFSET); } catch(e) {}
                 try { if (typeof QOL_DEFAULT_CONFIG !== "undefined" && QOL_DEFAULT_CONFIG.UNSECURED_SOULS_HUD_Y_OFFSET != null) return Number(QOL_DEFAULT_CONFIG.UNSECURED_SOULS_HUD_Y_OFFSET); } catch(e) {}
-                return 0;
+                return 1095;
             }
 
             // ── Constants ──
@@ -348,7 +332,7 @@
 
                     var scale = _clampConfigNumber(cfg.UNSECURED_SOULS_HUD_SCALE, 100, 50, 200, true);
                     var xOffset = _clampConfigNumber(cfg.UNSECURED_SOULS_HUD_X_OFFSET, 0, -1000, 2000, true);
-                    var yOffset = _clampConfigNumber(cfg.UNSECURED_SOULS_HUD_Y_OFFSET, 0, 800, 2000, true);
+                    var yOffset = _clampConfigNumber(cfg.UNSECURED_SOULS_HUD_Y_OFFSET, 1095, 800, 2000, true);
                     var fontPx = Math.round(14 * (scale / 100));
                     if (fontPx < 8) fontPx = 8;
                     if (fontPx > 72) fontPx = 72;
@@ -389,7 +373,13 @@
                         State.unsecuredSouls.hudNextSearchMs = 0;
                     }
                 },
-                onSettingsChanged: function() {}
+                onSettingsChanged: function() {
+                    var State = _getState();
+                    if (State && State.unsecuredSouls) {
+                        State.unsecuredSouls.hudStyleSig = "";
+                    }
+                    _tick();
+                }
             };
         },
         test: function(ctx) {

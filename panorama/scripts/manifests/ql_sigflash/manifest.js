@@ -32,34 +32,34 @@
             var _pressById = {};
             var _untilById = {};
 
-            function _isAlive(p) { return p && typeof p.IsValid === "function" && p.IsValid(); }
+            var _isAlive = QOL.utils.IsPanelValid;
 
             function _scanSlots(root) {
                 var now = Date.now ? Date.now() : (new Date()).getTime();
-                if (_slots.length && now < _nextScanMs) {
-                    var allAlive = true;
-                    for (var i = 0; i < _slots.length; i++) {
-                        if (!_isAlive(_slots[i].icon) || !_isAlive(_slots[i].binding)) { allAlive = false; break; }
+                if (now < _nextScanMs) {
+                    if (_slots.length > 0) {
+                        var allAlive = true;
+                        for (var i = 0; i < _slots.length; i++) {
+                            if (!_isAlive(_slots[i].icon) || !_isAlive(_slots[i].binding)) { allAlive = false; break; }
+                        }
+                        if (allAlive) return;
+                    } else {
+                        return;
                     }
-                    if (allAlive) return;
                 }
                 _slots = [];
+                _nextScanMs = now + SCAN_MS;
                 // Use the same panel path as the old feature: hud_signature, not bottomBarPanel.
                 // PANEL_ID_SIGNATURE = "hud_signature" (ql_core.js line 446).
-                var sig = root.FindChildTraverse("hud_signature");
+                var sig = root ? root.FindChildTraverse("hud_signature") : null;
                 if (!_isAlive(sig)) return;
                 for (var s = 1; s <= 4; s++) {
                     var icon = sig.FindChildTraverse("slot_signature_" + s);
                     if (!_isAlive(icon)) continue;
                     var binding = icon.FindChildTraverse ? icon.FindChildTraverse("ability_binding_component") : null;
-                    // Binding re-fetch fallback: if binding went invalid, try to re-fetch from icon.
-                    if (!_isAlive(binding) && icon.FindChildTraverse) {
-                        binding = icon.FindChildTraverse("ability_binding_component");
-                    }
                     if (!_isAlive(binding)) continue;
                     _slots.push({ id: "slot_signature_" + s, icon: icon, binding: binding });
                 }
-                _nextScanMs = now + SCAN_MS;
             }
 
             function _tick() {
@@ -112,7 +112,10 @@
                     if (_loop) { _loop.stop(); _loop = null; }
                     _cleanup(); _wasEnabled = false;
                 },
-                onSettingsChanged: function() {}
+                onSettingsChanged: function() {
+                    _cleanup();
+                    _tick();
+                }
             };
         },
         test: function(ctx) {

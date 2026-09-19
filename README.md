@@ -35,7 +35,7 @@ Skip with: `QOLLOCK_SKIP_HOOKS=true git commit ...`
 ### Regular workflow
 Use:
 
-`scripts/qollock_pipeline.ps1`
+`build_mod/build_mod.bat` (Windows), or `build_mod/build_mod.ps1` directly.
 
 Project expectation:
 - close Deadlock
@@ -59,4 +59,4 @@ repository:
 
 The Action creates the new current marker, retires all old markers and updates
 its README automatically. No image editing or manual upload is required. Do
-this for every public release, even when the Settings version remains `3.1.9`.
+this for every public release, even when the Settings version remains `4.0.0`.

@@ -43,20 +43,19 @@
             { key: "ENABLE_MINIMAP_REJUV_TIMER", type: "toggle", default: false }
         ],
         create: function(ctx) {
-            // ── QOL.import deps ──
-            var _deps = QOL.import(["getGameSecondsForUrn","getHighestRejuvChargeTokenOnPanel","isConnectedToHideout","isStreetBrawlModeActive","panelHasClassToken","panelIdTopBar","state","setPanelClassIfChanged","utils"]);
-            var State = _deps.state;
-            var Utils = _deps.utils;
-            var IsCfgEnabled = Utils.IsCfgEnabled;
-            var IsPanelValid = Utils.IsPanelValid;
-            var SetPanelOpacitySafe = Utils.SetPanelOpacitySafe;
-            var SetPanelClassIfChanged = _deps.setPanelClassIfChanged;
-            var IsStreetBrawlModeActive = _deps.isStreetBrawlModeActive;
-            var GetGameSecondsForUrn = _deps.getGameSecondsForUrn;
-            var PANEL_ID_TOP_BAR = _deps.panelIdTopBar;
-            var GetHighestRejuvChargeTokenOnPanel = _deps.getHighestRejuvChargeTokenOnPanel;
-            var isConnectedToHideout = _deps.isConnectedToHideout;
-            var PanelHasClassToken = _deps.panelHasClassToken;
+            var Panel = (QOL.core && QOL.core.panel) ? QOL.core.panel : {};
+            var State = QOL.state || (typeof globalThis !== "undefined" && globalThis.State) || {};
+            var Utils = QOL.utils;
+            var IsCfgEnabled = QOL.utils.IsCfgEnabled;
+            var IsPanelValid = QOL.utils.IsPanelValid;
+            var SetPanelOpacitySafe = QOL.utils.SetPanelOpacitySafe;
+            var SetPanelClassIfChanged = QOL.setPanelClassIfChanged || function(p, cls, val) { if (p && p.SetHasClass) p.SetHasClass(cls, !!val); };
+            var IsStreetBrawlModeActive = function(r) { return QOL.isStreetBrawlModeActive ? QOL.isStreetBrawlModeActive(r) : false; };
+            var GetGameSecondsForUrn = function() { return QOL.getGameSecondsForUrn ? QOL.getGameSecondsForUrn() : 0; };
+            var PANEL_ID_TOP_BAR = QOL.panelIdTopBar || "TopBar";
+            var GetHighestRejuvChargeTokenOnPanel = function(p) { return QOL.getHighestRejuvChargeTokenOnPanel ? QOL.getHighestRejuvChargeTokenOnPanel(p) : 0; };
+            var isConnectedToHideout = function(r) { return (QOL.core && QOL.core.hud && QOL.core.hud.isClassActive) ? (QOL.core.hud.isClassActive("connectedToHideout") || QOL.core.hud.isClassActive("InHideout")) : (QOL.isConnectedToHideout ? QOL.isConnectedToHideout(r) : false); };
+            var PanelHasClassToken = Panel.hasClassToken || QOL.panelHasClassToken || function(p, c) { return !!(p && p.BHasClass && p.BHasClass(c)); };
 
             // ── Constants ──
             var BRIDGE_DURATION_SEC = 300;
@@ -78,7 +77,7 @@
             var _loop = null;
             var _root = null;
 
-            function FormatClockMmSs(totalSec) { var s = Math.max(0, Math.floor(Number(totalSec) || 0)); var mm = Math.floor(s / 60); var ss = s % 60; return String(mm) + ":" + (ss < 10 ? "0" + ss : String(ss)); }
+            var FormatClockMmSs = QOL.core.time.formatSeconds;
 
             function EnsureRejuvState() {
                 if (State.rejuvState) return State.rejuvState;
@@ -86,7 +85,23 @@
                 return State.rejuvState;
             }
 
-            function GetRejuvPanel(state, root, key, id) { var panel = IsPanelValid(state.panels[key]) ? state.panels[key] : null; if (!panel) { panel = root ? root.FindChildTraverse(id) : null; state.panels[key] = panel || null; } return panel; }
+            function GetRejuvPanel(state, root, key, id) {
+                var panel = IsPanelValid(state.panels[key]) ? state.panels[key] : null;
+                if (!panel) {
+                    var now = Date.now ? Date.now() : (new Date()).getTime();
+                    var nextSearch = (state._nextPanelSearch && state._nextPanelSearch[key]) || 0;
+                    if (now < nextSearch) return null;
+                    panel = root ? root.FindChildTraverse(id) : null;
+                    if (panel && IsPanelValid(panel)) {
+                        state.panels[key] = panel;
+                    } else {
+                        state.panels[key] = null;
+                        if (!state._nextPanelSearch) state._nextPanelSearch = {};
+                        state._nextPanelSearch[key] = now + 2500;
+                    }
+                }
+                return panel;
+            }
 
             function RejuvResetImage(state, root) { var imgs = [GetRejuvPanel(state,root,"rImg","RejuvImg"), GetRejuvPanel(state,root,"rImgHUD","RejuvImgHUD")]; for (var i = 0; i < imgs.length; i++) { var img = imgs[i]; if (!img) continue; img.RemoveClass("rotating"); img.RemoveClass("buff"); img.RemoveClass("reverse"); img.RemoveClass("white"); } }
 
@@ -212,7 +227,10 @@
                     State.rejuvWasDisabled = true;
                     _root = null;
                 },
-                onSettingsChanged: function() {}
+                onSettingsChanged: function() {
+                    if (State && State.rejuvState) State.rejuvState.lastRuntimeFeatureSig = "";
+                    _tick();
+                }
             };
         },
         test: function(ctx) {

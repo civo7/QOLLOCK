@@ -3,13 +3,12 @@
 (function() {
     'use strict';
     var _featureId = "ql_feat_healthbar_mc";
-    // DEPENDS: state, utils, getCachedPanel, setCachedPanel
-    var _deps = QOL.import(["state", "utils", "getCachedPanel", "setCachedPanel"]);
-    var State = _deps.state;
-    var Utils = _deps.utils;
-    var GetCachedPanel = _deps.getCachedPanel;
-    var SetCachedPanel = _deps.setCachedPanel;
-    var IsPanelValid = Utils.IsPanelValid;
+    var Panel = (QOL.core && QOL.core.panel) ? QOL.core.panel : {};
+    var State = QOL.state || (typeof globalThis !== "undefined" && globalThis.State) || {};
+    var Utils = QOL.utils;
+    var GetCachedPanel = QOL.getCachedPanel;
+    var SetCachedPanel = QOL.setCachedPanel;
+    var IsPanelValid = QOL.utils.IsPanelValid;
 
     // ── Minecraft healthbar constants ──
     var MC_CHARGE_MAX_ANGLES = { 1: 90, 2: 42, 3: 26, 4: 20, 5: 15.5, 6: 13, 7: 10.86 };
@@ -76,8 +75,19 @@
         State.mcLastBarrierFullHearts = -1;
         State.mcLastBarrierHasHalf = null;
         State.mcLastBarrierLastSlotIsHalf = null;
+        State.mcLastBarrierHeartsNeeded = -1;
         State.mcWasEnabled = false;
         SetCachedPanel("mcHealthPercentLabel", null);
+        SetCachedPanel("mcCurrentHealthLabel", null);
+        SetCachedPanel("mcTotalHealthLabel", null);
+        SetCachedPanel("mcHealthRegenAndTotal", null);
+        SetCachedPanel("mcNumCurrent", null);
+        SetCachedPanel("mcNumTotal", null);
+        SetCachedPanel("mcHealthContainer", null);
+        SetCachedPanel("mcChargesContainer", null);
+        SetCachedPanel("mcFoodContainer", null);
+        State.mcCachedFoodIcons = [];
+        State.mcLoggedHealthContainerMiss = false;
     }
 
     function McStartHeartsBlink() {
@@ -297,7 +307,19 @@
                 return false;
             }
         }
-        if (State.mcBarrierHeartsCapacity === heartsNeeded && State.mcBarrierHeartsPanels.length === State.mcBarrierHeartsCapacity) return true;
+        // >=, not ==. heartsNeeded here is derived from total BARRIER, parsed off the
+        // shield bar's max label — and unlike total health that is not stable: bullet
+        // armour and shield items change it, and it can differ per shield application.
+        // With an equality test, a max that oscillates between two values ran
+        // RemoveAndDeleteChildren plus 3 CreatePanel per heart on every oscillation,
+        // up to 5 times a second. Panel construction is the most expensive single
+        // operation in Panorama, and shields are churning hardest mid-teamfight.
+        //
+        // The main heart path already gets this right (McEnsureHeartsCapacity uses
+        // >=), and over-allocated slots are harmless: the render loop collapses any
+        // slot past fullHearts, and isLastSlot compares against heartsNeeded rather
+        // than the array length, so a longer array still indexes correctly.
+        if (State.mcBarrierHeartsCapacity >= heartsNeeded && State.mcBarrierHeartsPanels.length >= State.mcBarrierHeartsCapacity) return true;
         GetCachedPanel("mcBarrierHearts").RemoveAndDeleteChildren();
         State.mcBarrierHeartsPanels = [];
         State.mcBarrierHeartContainerImages = [];
@@ -456,6 +478,7 @@
                 State.mcLastBarrierFullHearts = -1;
                 State.mcLastBarrierHasHalf = null;
                 State.mcLastBarrierLastSlotIsHalf = null;
+                State.mcLastBarrierHeartsNeeded = -1;
                 return;
             }
             var totalHalfSegments = Math.ceil(totalBarrier / MC_HP_PER_HALF_SEGMENT);
@@ -466,13 +489,36 @@
             var currentHalfSegments = Math.ceil(currentBarrier / MC_HP_PER_HALF_SEGMENT);
             var fullHearts = Math.floor(currentHalfSegments / 2);
             var hasHalfHeart = (currentHalfSegments % 2) === 1;
-            if (fullHearts === State.mcLastBarrierFullHearts && hasHalfHeart === State.mcLastBarrierHasHalf && lastSlotIsHalf === State.mcLastBarrierLastSlotIsHalf) return;
+            // heartsNeeded belongs in this signature because the loop below uses it to
+            // decide which slots are surplus and must be collapsed. It was left out
+            // while capacity was rebuilt on every change of it — the teardown masked
+            // the omission. Now that capacity only grows, a barrier maximum that drops
+            // within the existing capacity (500→300 while the barrier is empty) leaves
+            // fullHearts, hasHalfHeart and lastSlotIsHalf all unchanged, so the early
+            // return fires and the two surplus heart outlines stay on screen. The main
+            // heart path already includes its own count for the same reason
+            // (McUpdateHearts / mcLastContainerHeartsNeeded).
+            if (fullHearts === State.mcLastBarrierFullHearts &&
+                hasHalfHeart === State.mcLastBarrierHasHalf &&
+                lastSlotIsHalf === State.mcLastBarrierLastSlotIsHalf &&
+                heartsNeeded === State.mcLastBarrierHeartsNeeded) return;
             State.mcLastBarrierFullHearts = fullHearts;
             State.mcLastBarrierHasHalf = hasHalfHeart;
             State.mcLastBarrierLastSlotIsHalf = lastSlotIsHalf;
+            State.mcLastBarrierHeartsNeeded = heartsNeeded;
             for (var i = 0; i < State.mcBarrierHeartsPanels.length; i += 1) {
                 var container = State.mcBarrierHeartContainerImages[i];
                 var fill = State.mcBarrierHeartFillImages[i];
+                // Capacity only grows now (see McEnsureBarrierHeartsCapacity), so the
+                // array can be longer than heartsNeeded. Collapse the whole surplus
+                // slot: collapsing only its fill would leave a visible empty heart
+                // outline from a barrier maximum the player no longer has.
+                var slot = State.mcBarrierHeartsPanels[i];
+                if (i >= heartsNeeded) {
+                    if (slot) slot.style.visibility = "collapse";
+                    continue;
+                }
+                if (slot) slot.style.visibility = "visible";
                 var isLastSlot = lastSlotIsHalf && (i === heartsNeeded - 1);
                 container.SetImage(isLastSlot ? "s2r://panorama/images/minecraft/container_half_8x_png.vtex" : "s2r://panorama/images/minecraft/container_8x_png.vtex");
                 fill.RemoveClass("full"); fill.RemoveClass("half"); fill.RemoveClass("empty");
@@ -489,9 +535,51 @@
         } catch (error) { $.Msg("[QOLLock][MC] Error in McUpdateBarrierHearts: " + error); }
     }
 
-    function McParseDeferredDamage(hudRoot) {
+    // Resolve a pending-bar panel by id, caching both hits and misses.
+    //
+    // These two ids miss on every call: neither "pending_incoming_damage_Middle"
+    // nor "pending_incoming_heal_Middle" appears in any mod layout or in any of
+    // Valve's 457 layout files. The layouts declare
+    // <ProgressBarWithMiddle id="pending_incoming_damage"> (hud_health.xml:25) and
+    // vanilla CSS addresses the generated child by CLASS —
+    // "#pending_incoming_damage .ProgressBarMiddle" (hud_health.css:483) — so the
+    // "<parentId>Middle" id convention assumed here does not exist in Panorama.
+    //
+    // A FindChildTraverse miss is not a cheap null: it walks every descendant of
+    // the panel it was called on before returning. Called from McComputeHealthState
+    // on every MC tick, these two were ~10 whole-HUD walks a second for the length
+    // of a match, and the walk is longest exactly during a teamfight when the tree
+    // is at its largest.
+    //
+    // This is the perf fix only, and it deliberately preserves current behaviour:
+    // both functions still return 0, which means the deferred-damage and
+    // incoming-heal heart overlays stay non-functional as they have always been.
+    // Resolving them by class would switch on visuals users have never seen, so
+    // that belongs in its own change with its own in-game verification.
+    var MC_PENDING_BAR_PROBE_MS = 2000;
+
+    function McResolvePendingBar(hudRoot, cacheKey, panelId, nowMs) {
+        var cached = GetCachedPanel(cacheKey);
+        if (cached) return cached;
+        if (!hudRoot || !hudRoot.FindChildTraverse) return null;
+
+        var probe = State.mcPendingBarProbeNextMs || (State.mcPendingBarProbeNextMs = {});
+        if (nowMs < (Number(probe[cacheKey]) || 0)) return null;
+
+        var found = null;
+        try { found = hudRoot.FindChildTraverse(panelId); } catch (e) { found = null; }
+        if (found) {
+            SetCachedPanel(cacheKey, found);
+            probe[cacheKey] = 0;
+        } else {
+            probe[cacheKey] = nowMs + MC_PENDING_BAR_PROBE_MS;
+        }
+        return found;
+    }
+
+    function McParseDeferredDamage(hudRoot, nowMs) {
         try {
-            var damageBar = hudRoot.FindChildTraverse ? hudRoot.FindChildTraverse("pending_incoming_damage_Middle") : null;
+            var damageBar = McResolvePendingBar(hudRoot, "mcPendingDamageMiddle", "pending_incoming_damage_Middle", nowMs);
             if (!damageBar) return 0;
             var heightStr = damageBar.style && damageBar.style.height ? damageBar.style.height.toString() : "";
             var heightValue = parseFloat(heightStr) || 0;
@@ -499,9 +587,9 @@
         } catch (e) { $.Msg("[QOLLock][MC] Error in McParseDeferredDamage: " + e); return 0; }
     }
 
-    function McParseIncomingHeal(hudRoot) {
+    function McParseIncomingHeal(hudRoot, nowMs) {
         try {
-            var healBar = hudRoot.FindChildTraverse ? hudRoot.FindChildTraverse("pending_incoming_heal_Middle") : null;
+            var healBar = McResolvePendingBar(hudRoot, "mcPendingHealMiddle", "pending_incoming_heal_Middle", nowMs);
             if (!healBar) return 0;
             var heightStr = healBar.style && healBar.style.height ? healBar.style.height.toString() : "";
             var heightValue = parseFloat(heightStr) || 0;
@@ -510,43 +598,83 @@
     }
 
     function McReadHealthValues(hudRoot) {
-        if (!GetCachedPanel("mcHealthContainer")) {
-            var hc = hudRoot.FindChildTraverse ? hudRoot.FindChildTraverse("healthContainer") : null;
-            if (!hc) {
-                var all = hudRoot.FindChildrenWithClassTraverse ? hudRoot.FindChildrenWithClassTraverse("healthContainer") : null;
-                if (all && all.length > 0) hc = all[0];
+        if (!hudRoot) return null;
+
+        var regenTotal = GetCachedPanel("mcHealthRegenAndTotal");
+        if (!IsPanelValid(regenTotal)) {
+            regenTotal = hudRoot.FindChildTraverse ? hudRoot.FindChildTraverse("HealthRegenAndTotal") : null;
+            if (regenTotal) SetCachedPanel("mcHealthRegenAndTotal", regenTotal);
+        }
+
+        var currentLbl = GetCachedPanel("mcCurrentHealthLabel");
+        if (!IsPanelValid(currentLbl)) {
+            if (regenTotal) {
+                try {
+                    if (typeof QOL !== "undefined" && QOL.utils && QOL.utils.FindFirstPanelByClass) {
+                        currentLbl = QOL.utils.FindFirstPanelByClass(regenTotal, "currentHealthLabel");
+                    }
+                } catch (e1) {}
             }
-            if (!hc) {
-                if (!State.mcLoggedHealthContainerMiss) { $.Msg("[QOLLock][MC] Health container panel not found"); State.mcLoggedHealthContainerMiss = true; }
-                return null;
+            if (!currentLbl && hudRoot.FindChildrenWithClassTraverse) {
+                var cPanels = hudRoot.FindChildrenWithClassTraverse("currentHealthLabel") || [];
+                for (var ci = 0; ci < cPanels.length; ci++) {
+                    if (cPanels[ci] && String(cPanels[ci].id || "") !== "currentHealthOverHearts") {
+                        currentLbl = cPanels[ci];
+                        break;
+                    }
+                }
             }
-            State.mcLoggedHealthContainerMiss = false;
-            SetCachedPanel("mcHealthContainer", hc);
+            if (!currentLbl) {
+                currentLbl = hudRoot.FindChildTraverse ? (hudRoot.FindChildTraverse("currentHealthLabel") || hudRoot.FindChildTraverse("current_health") || hudRoot.FindChildTraverse("currentHealthOverHearts")) : null;
+            }
+            if (currentLbl) SetCachedPanel("mcCurrentHealthLabel", currentLbl);
         }
-        if (!GetCachedPanel("mcCurrentHealthLabel")) {
-            var hcPanel = GetCachedPanel("mcHealthContainer");
-            var lbl = hcPanel.FindChildTraverse ? hcPanel.FindChildTraverse("currentHealthLabel") : null;
-            if (!lbl) { var lbls = hcPanel.FindChildrenWithClassTraverse ? hcPanel.FindChildrenWithClassTraverse("currentHealthLabel") : null; if (lbls && lbls.length > 0) lbl = lbls[0]; }
-            if (!lbl) return null;
-            SetCachedPanel("mcCurrentHealthLabel", lbl);
+
+        var totalLbl = GetCachedPanel("mcTotalHealthLabel");
+        if (!IsPanelValid(totalLbl)) {
+            if (regenTotal) {
+                try {
+                    if (typeof QOL !== "undefined" && QOL.utils && QOL.utils.FindFirstPanelByClass) {
+                        totalLbl = QOL.utils.FindFirstPanelByClass(regenTotal, "totalHealthLabel");
+                    }
+                } catch (e2) {}
+            }
+            if (!totalLbl && hudRoot.FindChildrenWithClassTraverse) {
+                var tPanels = hudRoot.FindChildrenWithClassTraverse("totalHealthLabel") || [];
+                for (var ti = 0; ti < tPanels.length; ti++) {
+                    if (tPanels[ti] && String(tPanels[ti].id || "") !== "totalHealthOverHearts") {
+                        totalLbl = tPanels[ti];
+                        break;
+                    }
+                }
+            }
+            if (!totalLbl) {
+                totalLbl = hudRoot.FindChildTraverse ? (hudRoot.FindChildTraverse("totalHealthLabel") || hudRoot.FindChildTraverse("max_health") || hudRoot.FindChildTraverse("totalHealthOverHearts")) : null;
+            }
+            if (totalLbl) SetCachedPanel("mcTotalHealthLabel", totalLbl);
         }
-        if (!GetCachedPanel("mcTotalHealthLabel")) {
-            var hcPanel = GetCachedPanel("mcHealthContainer");
-            var lbl = hcPanel.FindChildTraverse ? hcPanel.FindChildTraverse("totalHealthLabel") : null;
-            if (!lbl) { var lbls = hcPanel.FindChildrenWithClassTraverse ? hcPanel.FindChildrenWithClassTraverse("totalHealthLabel") : null; if (lbls && lbls.length > 0) lbl = lbls[0]; }
-            if (!lbl) return null;
-            SetCachedPanel("mcTotalHealthLabel", lbl);
+
+        if (!currentLbl || !totalLbl) {
+            if (!State.mcLoggedHealthContainerMiss) {
+                $.Msg("[QOLLock][MC] Health label panels not found");
+                State.mcLoggedHealthContainerMiss = true;
+            }
+            return null;
         }
-        var currentHealth = parseInt(GetCachedPanel("mcCurrentHealthLabel").text.replace(/[^0-9]/g, ""), 10) || 0;
-        var totalHealth = parseInt(GetCachedPanel("mcTotalHealthLabel").text.replace(/[^0-9]/g, ""), 10) || 0;
+        State.mcLoggedHealthContainerMiss = false;
+
+        var currentText = currentLbl.text ? String(currentLbl.text) : "";
+        var totalText = totalLbl.text ? String(totalLbl.text) : "";
+        var currentHealth = parseInt(currentText.replace(/[^0-9]/g, ""), 10) || 0;
+        var totalHealth = parseInt(totalText.replace(/[^0-9]/g, ""), 10) || 0;
         return { currentHealth: currentHealth, totalHealth: totalHealth };
     }
 
-    function McComputeHealthState(currentHealth, totalHealth, hudRoot) {
-        var deferredFraction = McParseDeferredDamage(hudRoot);
+    function McComputeHealthState(currentHealth, totalHealth, hudRoot, nowMs) {
+        var deferredFraction = McParseDeferredDamage(hudRoot, nowMs);
         var deferredDamage = Math.round(deferredFraction * totalHealth);
         var trueCurrentHealth = Math.max(0, currentHealth - deferredDamage);
-        var incomingHealFraction = McParseIncomingHeal(hudRoot);
+        var incomingHealFraction = McParseIncomingHeal(hudRoot, nowMs);
         var incomingHealAmount = Math.round(incomingHealFraction * totalHealth);
         var healingHealth = Math.min(totalHealth, currentHealth + incomingHealAmount);
         var currentHalfSegments = Math.ceil(trueCurrentHealth / MC_HP_PER_HALF_SEGMENT);
@@ -555,51 +683,140 @@
         return { deferredDamage: deferredDamage, trueCurrentHealth: trueCurrentHealth, healingHealth: healingHealth, currentHalfSegments: currentHalfSegments, effectiveHalfSegments: effectiveHalfSegments, hasIncomingHeal: hasIncomingHeal };
     }
 
+    function McResolveChargesContainer(root) {
+        var cached = GetCachedPanel("mcChargesContainer");
+        if (IsPanelValid(cached)) return cached;
+
+        var searchRoot = root;
+        try {
+            var top = root;
+            while (top && top.GetParent && top.GetParent()) {
+                top = top.GetParent();
+            }
+            if (top) searchRoot = top;
+        } catch (e) {}
+
+        var container = null;
+
+        // Method 1: Find .ability_element_charges (Valve stamina reticle element)
+        if (searchRoot && searchRoot.FindChildrenWithClassTraverse) {
+            var elements = searchRoot.FindChildrenWithClassTraverse("ability_element_charges");
+            if (elements && elements.length > 0) {
+                for (var k = 0; k < elements.length; k++) {
+                    var c = elements[k].FindChildTraverse ? elements[k].FindChildTraverse("charges_container") : null;
+                    if (!c && elements[k].id === "charges_container") c = elements[k];
+                    if (c && c.FindChildrenWithClassTraverse && c.FindChildrenWithClassTraverse("charge").length > 0) {
+                        container = c;
+                        break;
+                    }
+                }
+            }
+        }
+
+        // Method 2: Search for .charge pips and take their parent
+        if (!container && searchRoot && searchRoot.FindChildrenWithClassTraverse) {
+            var allChargePips = searchRoot.FindChildrenWithClassTraverse("charge");
+            if (allChargePips && allChargePips.length > 0) {
+                for (var j = 0; j < allChargePips.length; j++) {
+                    var p = allChargePips[j].GetParent ? allChargePips[j].GetParent() : null;
+                    if (p && p.id === "charges_container") {
+                        container = p;
+                        break;
+                    }
+                }
+                if (!container && allChargePips[0].GetParent) {
+                    container = allChargePips[0].GetParent();
+                }
+            }
+        }
+
+        // Method 3: Direct traversal on searchRoot verifying it has .charge children
+        if (!container && searchRoot && searchRoot.FindChildTraverse) {
+            var direct = searchRoot.FindChildTraverse("charges_container");
+            if (direct && direct.FindChildrenWithClassTraverse && direct.FindChildrenWithClassTraverse("charge").length > 0) {
+                container = direct;
+            }
+        }
+
+        if (container) {
+            SetCachedPanel("mcChargesContainer", container);
+        }
+        return container;
+    }
+
     function McParseChargesForHunger(root) {
         try {
-            if (!GetCachedPanel("mcChargesContainer")) {
-                SetCachedPanel("mcChargesContainer", root && root.FindChildTraverse ? (root.FindChildTraverse("charges_container") || null) : null);
-            }
-            if (!GetCachedPanel("mcChargesContainer")) return null;
-            var allCharges = GetCachedPanel("mcChargesContainer").FindChildrenWithClassTraverse ? GetCachedPanel("mcChargesContainer").FindChildrenWithClassTraverse("charge") : null;
+            var container = McResolveChargesContainer(root);
+            if (!container) return null;
+
+            var allCharges = container.FindChildrenWithClassTraverse ? container.FindChildrenWithClassTraverse("charge") : null;
             if (!allCharges || allCharges.length === 0) return null;
+
             var maxCharges = 0;
             var activeCharges = [];
             for (var i = 0; i < allCharges.length; i += 1) {
-                if (allCharges[i].BHasClass("has_charge")) { maxCharges += 1; activeCharges.push(allCharges[i]); }
-            }
-            if (maxCharges === 0) return null;
-            var maxAngle = MC_CHARGE_MAX_ANGLES[maxCharges] || 26;
-            var totalChargeValue = 0;
-            for (var i = 0; i < activeCharges.length; i += 1) {
-                var charge = activeCharges[i];
-                var chargeFgElements = charge.FindChildrenWithClassTraverse ? charge.FindChildrenWithClassTraverse("charge_fg") : null;
-                if (!chargeFgElements || chargeFgElements.length === 0) continue;
-                var chargeFg = chargeFgElements[0];
-                if (chargeFg.BHasClass("finished")) {
-                    totalChargeValue += 1.0;
-                } else {
-                    var clipStyle = chargeFg.style && chargeFg.style.clip ? chargeFg.style.clip.toString() : "";
-                    var match = clipStyle.match(/radial\([^,]+,[^,]+,\s*([\d.]+)deg\s*\)/);
-                    if (match) totalChargeValue += Math.min(parseFloat(match[1]) / maxAngle, 1.0);
+                if (allCharges[i].BHasClass("has_charge")) {
+                    maxCharges += 1;
+                    activeCharges.push(allCharges[i]);
                 }
             }
-            return { percent: Math.round((totalChargeValue / maxCharges) * 100), chargesFilled: totalChargeValue, maxCharges: maxCharges };
-        } catch (e) { $.Msg("[QOLLock][MC] Error in McParseChargesForHunger: " + e); return null; }
+            if (maxCharges === 0) return null;
+
+            var maxAngle = MC_CHARGE_MAX_ANGLES[maxCharges] || 26;
+            var totalChargeValue = 0;
+
+            for (var i = 0; i < activeCharges.length; i += 1) {
+                var charge = activeCharges[i];
+                var isCharging = charge.BHasClass("charging");
+                var isDraining = charge.BHasClass("draining") || charge.BHasClass("drained");
+                var isDisabled = charge.BHasClass("disabled");
+
+                if (!isCharging && !isDraining && !isDisabled) {
+                    // Ready / full dash charge
+                    totalChargeValue += 1.0;
+                } else if (isCharging) {
+                    // Actively recharging
+                    var chargeFgElements = charge.FindChildrenWithClassTraverse ? charge.FindChildrenWithClassTraverse("charge_fg") : null;
+                    var chargeFg = (chargeFgElements && chargeFgElements.length > 0) ? chargeFgElements[0] : null;
+                    var clipStyle = (chargeFg && chargeFg.style && chargeFg.style.clip) ? chargeFg.style.clip.toString() : "";
+                    var match = clipStyle.match(/radial\([^,]+,[^,]+,\s*([\d.]+)deg\s*\)/);
+                    if (match) {
+                        var extentAngle = parseFloat(match[1]) || 0;
+                        var progress = (extentAngle > maxAngle) ? (extentAngle / 360) : (extentAngle / maxAngle);
+                        totalChargeValue += Math.min(Math.max(progress, 0.0), 1.0);
+                    } else {
+                        // Recharging
+                        totalChargeValue += 0.2;
+                    }
+                }
+                // isDraining || isDisabled -> 0.0
+            }
+
+            var hungerPercent = Math.round((totalChargeValue / maxCharges) * 100);
+            if (hungerPercent < 0) hungerPercent = 0;
+            if (hungerPercent > 100) hungerPercent = 100;
+
+            return { percent: hungerPercent, chargesFilled: totalChargeValue, maxCharges: maxCharges };
+        } catch (e) {
+            $.Msg("[QOLLock][MC] Error in McParseChargesForHunger: " + e);
+            return null;
+        }
     }
 
     function McUpdateFood(percent) {
         try {
             var hudRoot = GetCachedPanel("mcHudRoot");
             if (!hudRoot) return;
-            if (!GetCachedPanel("mcFoodContainer")) {
-                SetCachedPanel("mcFoodContainer", hudRoot.FindChildTraverse ? (hudRoot.FindChildTraverse("MinecraftFoodContainer") || null) : null);
-                if (!GetCachedPanel("mcFoodContainer")) { $.Msg("[QOLLock][MC] MinecraftFoodContainer not found"); return; }
-                var children = GetCachedPanel("mcFoodContainer").Children();
+            var foodContainer = GetCachedPanel("mcFoodContainer");
+            if (!IsPanelValid(foodContainer)) {
+                foodContainer = hudRoot.FindChildTraverse ? (hudRoot.FindChildTraverse("MinecraftFoodContainer") || null) : null;
+                SetCachedPanel("mcFoodContainer", foodContainer);
+                if (!foodContainer) { $.Msg("[QOLLock][MC] MinecraftFoodContainer not found"); return; }
+                var children = foodContainer.Children ? foodContainer.Children() : [];
                 State.mcCachedFoodIcons = [];
                 for (var i = 0; i < children.length; i += 1) { if (children[i].BHasClass("FoodIcon")) State.mcCachedFoodIcons.push(children[i]); }
             }
-            if (State.mcCachedFoodIcons.length === 0) return;
+            if (!State.mcCachedFoodIcons || State.mcCachedFoodIcons.length === 0) return;
             if (percent < 0) percent = 0;
             if (percent > 100) percent = 100;
             var totalHalfSegments = Math.round(percent / MC_FOOD_PERCENT_PER_HALF);
@@ -727,11 +944,25 @@
             mcPercentLabel.text = "  [" + String(Math.floor(mcPercent)) + "%]";
         }
 
-        var hs = McComputeHealthState(currentHealth, totalHealth, hudRoot);
+        var numCurrent = GetCachedPanel("mcNumCurrent");
+        if (!IsPanelValid(numCurrent)) {
+            numCurrent = hudRoot.FindChildTraverse ? hudRoot.FindChildTraverse("currentHealthOverHearts") : null;
+            if (numCurrent) SetCachedPanel("mcNumCurrent", numCurrent);
+        }
+        if (IsPanelValid(numCurrent)) numCurrent.text = String(currentHealth);
+
+        var numTotal = GetCachedPanel("mcNumTotal");
+        if (!IsPanelValid(numTotal)) {
+            numTotal = hudRoot.FindChildTraverse ? hudRoot.FindChildTraverse("totalHealthOverHearts") : null;
+            if (numTotal) SetCachedPanel("mcNumTotal", numTotal);
+        }
+        if (IsPanelValid(numTotal)) numTotal.text = "/ " + String(totalHealth);
+
+        var nowMsForMod = Date.now();
+        var hs = McComputeHealthState(currentHealth, totalHealth, hudRoot, nowMsForMod);
 
         McUpdateAnimationState(hs.currentHalfSegments, hs.effectiveHalfSegments, hs.hasIncomingHeal);
 
-        var nowMsForMod = Date.now();
         if (nowMsForMod >= (Number(State.mcCheckModifierNextMs) || 0)) {
             State.mcLastModifierResult = McCheckModifierActive(root, "AFFLICTED");
             State.mcCheckModifierNextMs = nowMsForMod + MC_MODIFIER_THROTTLE_MS;

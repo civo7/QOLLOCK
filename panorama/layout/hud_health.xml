@@ -3,16 +3,24 @@
 	<styles>
 		<include src="s2r://panorama/styles/citadel_base_styles.vcss_c" />
 		<include src="s2r://panorama/styles/hud_common.vcss_c" />
+		<!-- ============================================================= -->
+		<!-- QOLLOCK CUSTOM: Global Defines Style -->
+		<!-- ============================================================= -->
 		<include src="s2r://panorama/styles/qollock_defines.vcss_c" />
+		<!-- ============================================================= -->
 		<include src="s2r://panorama/styles/hud_health.vcss_c" />
 	</styles>
 	<scripts />
 	<Panel class="bars_container" hittest="false">
 		<Panel class="health_bar_line">
+			<!-- ============================================================= -->
+			<!-- QOLLOCK CUSTOM: Fortitude Cooldown Indicator -->
+			<!-- ============================================================= -->
 			<Panel id="cd_icons">
 				<Image class="fortitude_img" src="s2r://panorama/images/items/vitality/fortitude_sm_png.vtex" />
 				<Label id="fort_cd" text="0" />
 			</Panel>
+			<!-- ============================================================= -->
 			<Panel class="health_bar_border">
 				<ProgressBarWithMiddle id="health_bar" class="large_progress_bar" vertical="true">
 					<Panel class="progress_bar_numbers">

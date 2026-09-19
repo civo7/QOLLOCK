@@ -67,6 +67,28 @@ const HERO_SIGNATURES = {
     hero_werewolf: ["ability_werewolf_bite", "ability_werewolf_howl", "ability_werewolf_frenzy"],
 };
 
+/**
+ * Signature abilities for a hero the table does not name explicitly.
+ *
+ * Every hero in the real client shows its OWN abilities here — there is no such
+ * thing as a playable hero with a blank signature HUD. Returning ["","",""] for
+ * anything but Skyrunner and Billy modelled a state the game never produces, and
+ * it hid a real bug: the mod reads this HUD to work out which hero to put the
+ * player back on after a storage round trip (manifest.js _liveHero), and with
+ * only two heroes modelled there was no way to write a case where the live hero
+ * and the DEFAULT_HERO setting disagree — which is exactly the 2026-09-05 report,
+ * where a Billy player was restored onto hero_punkgoat.
+ *
+ * The ability_<hero>_<n> shape is the client's own: ability_werewolf_netshot,
+ * ability_skyrunner_flakshot.
+ */
+function signatureAbilitiesFor(hero) {
+    if (HERO_SIGNATURES[hero]) return HERO_SIGNATURES[hero];
+    const slug = String(hero || "").replace(/^hero_/, "");
+    if (!slug) return ["", "", ""];
+    return ["ability_" + slug + "_1", "ability_" + slug + "_2", "ability_" + slug + "_3"];
+}
+
 class BuildsModel {
     /**
      * @param {object}   opts
@@ -75,8 +97,12 @@ class BuildsModel {
      * @param {string}   [opts.titleMode]  TITLE_MODE.*
      * @param {string}   [opts.hero]       starting hero
      * @param {boolean}  [opts.inHideout]
+     * @param {string}   [opts.shopOpensTab] which nav tab the shop shows when it
+     *                    opens: "favorites" (default) reveals the build UI;
+     *                    "weapon"/"armor"/"tech"/"search" hide it, modelling a shop
+     *                    that reopened on a remembered non-builds tab.
      */
-    constructor({ sandbox, latency = {}, titleMode = TITLE_MODE.TOKEN, hero = "hero_werewolf", inHideout = true } = {}) {
+    constructor({ sandbox, latency = {}, titleMode = TITLE_MODE.TOKEN, hero = "hero_werewolf", inHideout = true, shopOpensTab = "favorites" } = {}) {
         this.sandbox = sandbox;
         this.doc = sandbox.doc;
         this.clock = sandbox.clock;
@@ -100,6 +126,16 @@ class BuildsModel {
         this.hero = hero;
         this.inHideout = inHideout;
         this.shopOpen = false;
+        // Which shop nav tab is active. The build UI (#ShopModsSelectedBuild, and
+        // with it BrowseBuildsButton) is revealed by CSS ONLY under the Favorites
+        // tab — citadel_hud_hero_shop.css:1002 gives #ShopModsSelectedBuild
+        // opacity:1 under .showingFavorites and the default rule holds it at
+        // opacity:0. So a shop sitting on any other tab has a BrowseBuildsButton
+        // that is present in the tree but transparent and inert, and its C++
+        // handler (bound by id, not an onactivate) does nothing. The tab PERSISTS
+        // across close/open: the client remembers it, which is why a shop the
+        // player last left on Weapon reopens on Weapon.
+        this.shopTab = shopOpensTab;
         // The open command is a toggle, and the shop takes shopOpenMs to appear. Both
         // facts are needed together: a second toggle sent inside that window must
         // CANCEL the opening, not queue a second one, or the harness cannot see the
@@ -149,6 +185,16 @@ class BuildsModel {
         this.shopPanel = root.addChild(mk("CitadelHudHeroShop", {
             id: "CitadelHudHeroShop", classes: ["CitadelHudHeroShop"]
         }));
+
+        // citadel_hud_hero_shop.xml:24-45 — the nav rail. Only FavoritesNav is
+        // modelled with behaviour: it is the tab that reveals the build UI, and
+        // the whole point of this rail in the harness is to prove the mod selects
+        // it. Activating it fires the XML's CitadelShopModsActivate(Favorites).
+        this.shopNavigation = this.shopPanel.addChild(mk("Panel", { id: "ShopNavigation" }));
+        this.favoritesNav = this.shopNavigation.addChild(
+            mk("Panel", { id: "FavoritesNav", classes: ["NavigationButton"] })
+        );
+        this.favoritesNav.SetPanelEvent("onmouseactivate", () => this.activateShopTab("favorites"));
 
         // citadel_hud_hero_shop.xml:56. `shopModsBuild` is declared on the type itself
         // (citadel_shop_mods_build.xml:20), so every instance carries it — which is the
@@ -384,14 +430,27 @@ class BuildsModel {
     }
 
     _renderAll() {
+        this._renderShopTabs();
         this._renderSignature();
         this._renderSelectedBuildHeader();
         this._renderCategories();
         this._renderBuildList();
     }
 
+    /**
+     * Mirror the active nav tab onto the shop panel the way C++ does.
+     *
+     * citadel_hud_hero_shop.css keys the build UI's visibility on
+     * .showingFavorites (line 1002), so that class IS the observable the mod's
+     * favorites gate reads. Only meaningful while the shop is open — a closed
+     * shop shows no tab.
+     */
+    _renderShopTabs() {
+        this.shopPanel.SetHasClass("showingFavorites", this.shopOpen && this.shopTab === "favorites");
+    }
+
     _renderSignature() {
-        const abilities = HERO_SIGNATURES[this.hero] || ["", "", ""];
+        const abilities = signatureAbilitiesFor(this.hero);
         this.signatureSlots.forEach(({ label }, i) => {
             label.text = abilities[i] || "";
             label.SetDialogVariable("ability_name", abilities[i] || "");
@@ -641,6 +700,15 @@ class BuildsModel {
      */
     openBuildBrowser() {
         this.counters.browserOpen++;
+        // The button is only interactable under the Favorites tab. On any other
+        // tab #ShopModsSelectedBuild is at opacity 0 and the C++ handler bound to
+        // BrowseBuildsButton does nothing — so a press here is a silent no-op, not
+        // an open. This is the whole 2026-09-06 report: the shop reopened on a
+        // non-builds tab and the loader hung at "Opening the build browser".
+        if (this.shopTab !== "favorites") {
+            this._trace("openBuildBrowser ignored (shop on '" + this.shopTab + "' tab, not favorites)");
+            return false;
+        }
         if (this.browseOpen) return true;
         this._trace("openBuildBrowser (Browse clicked)");
         this.buildsLoading = true;
@@ -670,6 +738,20 @@ class BuildsModel {
     }
 
     // ── Actions ───────────────────────────────────────────────────────────
+    /**
+     * Select a shop nav tab, the way clicking one of the rail buttons does.
+     *
+     * Only the Favorites tab has a modelled effect, because it is the only one
+     * that reveals the build UI. The class it toggles (.showingFavorites) is set
+     * in _renderShopTabs, so this just records the choice and re-renders.
+     */
+    activateShopTab(tab) {
+        this._trace("activateShopTab -> " + tab);
+        this.shopTab = tab;
+        this._renderShopTabs();
+        return true;
+    }
+
     switchHero(hero) {
         this.counters.heroSwitch++;
         this._trace(`switchHero -> ${hero}`);

@@ -995,7 +995,7 @@
 
 .minecraft_health_numbers_disabled #MinecraftHeartsHealthNumbers
 {
-	visibility: collapse;
+	opacity: 0;
 }
 
 .HealthContainerRoot

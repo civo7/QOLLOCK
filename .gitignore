@@ -2,6 +2,8 @@
 .DS_Store
 Thumbs.db
 .vscode
+node_modules/
+.eslintcache
 
 # Local temp/debug artifacts
 .tmp_*

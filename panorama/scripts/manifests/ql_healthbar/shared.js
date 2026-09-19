@@ -23,12 +23,7 @@
 
     // -- Shared reset helpers --
 
-    function clearStyle(panel, prop) {
-        var Utils = QOL.utils;
-        if (Utils && Utils.ClearStyleSafe) { Utils.ClearStyleSafe(panel, prop); return; }
-        try { delete panel.style[prop]; } catch(e0) {}
-        try { panel.style[prop] = ""; } catch(e1) {}
-    }
+    var clearStyle = QOL.utils.ClearStyleSafe;
 
     QOL.healthbar.resetMinimalistOffsetRuntime = function(panel) {
         if (!panel || !panel.style) return;
@@ -58,7 +53,7 @@
         var Utils = QOL.utils;
         var GetCachedPanel = QOL.getCachedPanel;
         var GetUIRoot = QOL.getUIRoot;
-        var PushUnique = Utils ? Utils.PushUnique : function(arr, val) { if (arr.indexOf(val) === -1) arr.push(val); };
+        var PushUnique = QOL_UTILS.PushUnique;
 
         var seen = [];
         function push(p) { if (p && typeof p.IsValid === "function" && p.IsValid()) PushUnique(seen, p); }

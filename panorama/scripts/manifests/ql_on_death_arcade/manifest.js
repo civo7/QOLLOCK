@@ -37,13 +37,12 @@
             { key: "ON_DEATH_GAME_WHACK_A_REM", type: "toggle", default: false }
         ],
         create: function(ctx) {
-            // ── QOL.import deps (verbatim from old feature) ──
-            var _deps = QOL.import(["isPanelVisibleMaybe","state","utils"]);
-            var State = _deps.state;
-            var Utils = _deps.utils;
-            var IsCfgEnabled = Utils.IsCfgEnabled;
-            var IsPanelValid = Utils.IsPanelValid;
-            var IsPanelVisibleMaybe = _deps.isPanelVisibleMaybe || function(p) { try { return p ? p.visible : false; } catch(e) { return false; } };
+            var Panel = (QOL.core && QOL.core.panel) ? QOL.core.panel : {};
+            var State = QOL.state || (typeof globalThis !== "undefined" && globalThis.State) || {};
+            var Utils = QOL.utils;
+            var IsCfgEnabled = QOL.utils.IsCfgEnabled;
+            var IsPanelValid = QOL.utils.IsPanelValid;
+            var IsPanelVisibleMaybe = Panel.isVisible || QOL.isPanelVisibleMaybe || function(p) { try { return p ? p.visible : false; } catch(e) { return false; } };
             // QOL_PANEL_ID_HUD is a bare global (loaded before manifests in hud.xml)
             var PANEL_ID_HUD = (typeof QOL_PANEL_ID_HUD !== "undefined") ? QOL_PANEL_ID_HUD : "Hud";
 
@@ -51,11 +50,11 @@
             var _root = null;
 
             function ResolveOnDeathArcadeBridgeRoot(panel) {
+                if (typeof QOL !== "undefined" && QOL.core && QOL.core.panel && QOL.core.panel.findRoot) {
+                    return QOL.core.panel.findRoot(panel) || panel;
+                }
                 var root = panel;
                 var depth = 0;
-                // hud.xml scripts run with #Hud as their context panel, while the
-                // settings isolate reads bridge attributes from the absolute
-                // WindowRoot. Walk up explicitly so both contexts share one host.
                 while (root && root.GetParent && depth < 64) {
                     var parent = null;
                     try { parent = root.GetParent(); } catch(e0) { parent = null; }
@@ -72,9 +71,7 @@
             var ON_DEATH_ARCADE_REQUEST_TOKEN_ATTR = "QOL_ON_DEATH_ARCADE_REQUEST_TOKEN";
             var ON_DEATH_ARCADE_TRIGGER_COOLDOWN_MS = 5000;
             // PushUnique is defined in ql_utils.js — use local fallback if not available.
-            var PushUnique = (typeof QOL !== "undefined" && typeof QOL.utils !== "undefined" && typeof QOL.utils.PushUnique === "function")
-                ? QOL.utils.PushUnique
-                : function(arr, item) { if (arr.indexOf(item) === -1) arr.push(item); };
+            var PushUnique = QOL_UTILS.PushUnique;
 
             // ── Helpers (verbatim from old feature) ──
             function ParseOnDeathArcadeRespawnSeconds(rawText) {
@@ -253,7 +250,9 @@
                     // Clear bridge attributes on disable
                     var root = IsPanelValid(_root) ? _root : ResolveOnDeathArcadeBridgeRoot($.GetContextPanel());
                     try { SetOnDeathArcadeBridgeAttributes(root, false, "", ""); } catch(e) {}
-                    try { SetOnDeathArcadeEscapeMenuOpen(root, false); } catch(e) {}
+                    if (State.onDeathArcadeWasDead) {
+                        try { SetOnDeathArcadeEscapeMenuOpen(root, false); } catch(e) {}
+                    }
                     State.onDeathArcadeWasDead = false;
                     State.onDeathArcadeLastTriggerMs = 0;
                     State.onDeathArcadeRespawnPanel = null;
@@ -261,7 +260,9 @@
                     State.onDeathArcadeRuntimeWasActive = false;
                     _root = null;
                 },
-                onSettingsChanged: function() {}
+                onSettingsChanged: function() {
+                    _tick();
+                }
             };
         },
         test: function(ctx) {

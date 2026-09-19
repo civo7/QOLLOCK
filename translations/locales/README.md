@@ -6,10 +6,10 @@ These JSON files are an **interchange artifact** for the
 
 ## Source of truth
 
-The translations that compile into the VPK live as per-language maps in
-`panorama/scripts/ql_settings.js` (`SETTINGS_RU_TEXT`, `SETTINGS_UK_TEXT`, …), keyed by the
-English source string. Panorama cannot read JSON at runtime, so **the JS maps stay canonical.**
-These JSON files are generated from those maps and merged back into them.
+The translations that compile into the VPK live as per-language modules in
+`panorama/scripts/ql_settings_loc/ql_settings_loc_<lang>.js`, keyed by the
+English source string. Panorama cannot read JSON at runtime, so **the JS modules stay canonical.**
+These JSON files are generated from those modules and merged back into them.
 
 **Private/public split:** This repo (`civo7/QOLLOCK`) is **private**. The workbench reads/writes
 from the **public mirror** [`Predi-i/QOLLOCK-translations`](https://github.com/Predi-i/QOLLOCK-translations),
@@ -18,7 +18,7 @@ which contains **only** `locales/` (no mod code). A GitHub Actions workflow auto
 
 ```
 Private QOLLOCK (this repo)         Public QOLLOCK-translations          Workbench
-  ql_settings.js maps                  locales/*.json                    (D1 database)
+  ql_settings_loc/*.js                 locales/*.json                    (D1 database)
         │  export_locales_json.js         │                                  │
         ▼                                 ▼  (Actions auto-sync)             │
   translations/locales/  ──────────────► locales/  ◄────── reads ◄──────────┤
@@ -30,17 +30,17 @@ Private QOLLOCK (this repo)         Public QOLLOCK-translations          Workben
 - `en/translation.json` — the **source catalog** the workbench reads (identity map: English → English).
 - `<lang>/translation.json` — the current translation baseline for each language (flat `English → translation`).
 
-11 languages: `ru uk pl bg be ja zh fr pt pt-BR es` (`be` = Belarusian, `pt-BR` = BR Portuguese).
+14 non-English languages: `ru uk pl bg be ja ko zh fr it tr pt pt-BR es` (`be` = Belarusian, `pt-BR` = BR Portuguese).
 
 ## Bridge scripts
 
 ```sh
-# maps  ->  JSON   (regenerate all 12 catalogs from ql_settings.js)
+# maps  ->  JSON   (regenerate catalogs from ql_settings_loc/)
 node scripts/export_locales_json.js
 
 # JSON  ->  maps   (merge a PR / a single file / the whole locales tree back in)
 node scripts/import_locales_json.js [path]      # default path: translations/locales
-node --check panorama/scripts/ql_settings.js    # always re-validate after import
+npm test                                       # validates syntax and locale integrity
 # then repack the VPK
 ```
 

@@ -19,9 +19,37 @@
 
     FR.register({
         id: "ql_topbar",
-        enabledByDefault: false,
+        enabledByDefault: true,
+        enableKey: "HUD_TOP_BAR_ENABLED",
         settings: [
             { key: "HUD_TOP_BAR_ENABLED", type: "toggle", default: true },
+            { key: "ENABLE_OBJ_MAP", type: "toggle", default: false, label: "Objective Map", description: "Show a visual indicator in the top bar of the current Guardians, Walkers, and Base." },
+            { key: "ENABLE_MISSING_HERO", type: "toggle", default: false, label: "Missing Hero Opaque", description: "Greys out heros in the top bar when missing on the map." },
+            { key: "ENABLE_OBJ_DMG", type: "toggle", default: false, label: "Objective Damage", description: "Shows the individual player's objective damage in the top bar." },
+            { key: "DISABLE_PLAYER_NAME_BLUR", type: "toggle", invert: true, default: false, label: "Top Bar Background", description: "The world blur behind player names in the top bar." },
+            {
+                key: "ENABLE_TOPBAR_ENEMY_HP_WARNING",
+                type: "multitoggle",
+                label: "Enemy HP Warning",
+                description: "Colored enemy top-bar health warnings when at significant thresholds.",
+                options: [
+                    { label: "25%", key: "ENABLE_TOPBAR_ENEMY_HP_WARNING_25" },
+                    { label: "65%", key: "ENABLE_TOPBAR_ENEMY_HP_WARNING_65" },
+                    { label: "75%", key: "ENABLE_TOPBAR_ENEMY_HP_WARNING_75" }
+                ]
+            },
+            {
+                key: "ENABLE_TOPBAR_ALLY_HP_WARNING",
+                type: "multitoggle",
+                label: "Ally HP Warning",
+                description: "Colored ally top-bar health warnings when at significant thresholds.",
+                options: [
+                    { label: "25%", key: "ENABLE_TOPBAR_ALLY_HP_WARNING_25" },
+                    { label: "65%", key: "ENABLE_TOPBAR_ALLY_HP_WARNING_65" },
+                    { label: "75%", key: "ENABLE_TOPBAR_ALLY_HP_WARNING_75" }
+                ]
+            },
+            { key: "ENABLE_URN_DIFF", type: "toggle", default: false },
             { key: "TOP_BAR_OPACITY", type: "slider", min: 0, max: 1, step: 0.05, default: 1.0 },
             { key: "TOP_BAR_SCALE", type: "slider", min: 0.5, max: 1.5, step: 0.05, default: 1.0 },
             { key: "TOP_BAR_X_OFFSET", type: "slider", min: -1500, max: 1500, step: 5, default: 0 },
@@ -39,12 +67,16 @@
                 return n;
             }
 
+            var _clearStyle = QOL.utils.ClearStyleSafe;
+
             function _hasNonDefault(cfg) {
-                return Number(cfg.HUD_TOP_BAR_ENABLED) !== 1 ||
-                    Number(cfg.TOP_BAR_OPACITY) !== 1.0 ||
-                    Number(cfg.TOP_BAR_SCALE) !== 1.0 ||
-                    Number(cfg.TOP_BAR_X_OFFSET) !== 0 ||
-                    Number(cfg.TOP_BAR_Y_OFFSET) !== 0;
+                if (!cfg) return false;
+                var enabled = (cfg.HUD_TOP_BAR_ENABLED === undefined || cfg.HUD_TOP_BAR_ENABLED === true || Number(cfg.HUD_TOP_BAR_ENABLED) === 1);
+                return !enabled ||
+                    Number(cfg.TOP_BAR_OPACITY !== undefined ? cfg.TOP_BAR_OPACITY : 1.0) !== 1.0 ||
+                    Number(cfg.TOP_BAR_SCALE !== undefined ? cfg.TOP_BAR_SCALE : 1.0) !== 1.0 ||
+                    Number(cfg.TOP_BAR_X_OFFSET || 0) !== 0 ||
+                    Number(cfg.TOP_BAR_Y_OFFSET || 0) !== 0;
             }
 
             function _apply(cfg) {
@@ -61,28 +93,45 @@
                 } catch(e) {}
 
                 var active = _hasNonDefault(cfg);
-                var enabled = Number(cfg.HUD_TOP_BAR_ENABLED) === 1;
+                var enabled = (cfg.HUD_TOP_BAR_ENABLED === undefined || cfg.HUD_TOP_BAR_ENABLED === true || Number(cfg.HUD_TOP_BAR_ENABLED) === 1);
                 var ox = Math.round(_clamp(active ? cfg.TOP_BAR_X_OFFSET : 0, -1500, 1500));
                 var oy = Math.round(_clamp(active ? cfg.TOP_BAR_Y_OFFSET : 0, -500, 500));
-                var op = _clamp(active ? cfg.TOP_BAR_OPACITY : 1.0, 0, 1).toFixed(2);
-                var sc = _clamp(active ? cfg.TOP_BAR_SCALE : 1.0, 0.5, 1.5).toFixed(2);
-                var shouldShow = enabled && hudVisible;
+                var opNum = active ? Number(cfg.TOP_BAR_OPACITY !== undefined ? cfg.TOP_BAR_OPACITY : 1.0) : 1.0;
+                if (!isFinite(opNum)) opNum = 1.0;
+                var scNum = active ? Number(cfg.TOP_BAR_SCALE !== undefined ? cfg.TOP_BAR_SCALE : 1.0) : 1.0;
+                if (!isFinite(scNum)) scNum = 1.0;
 
-                // hudVisible must be in the signature — when HUD visibility flips
-                // (spectating, escape menu, hideout) the sig changes and we re-apply.
-                var sig = ox + "|" + oy + "|" + op + "|" + sc + "|" + (enabled ? "1" : "0") + "|" + (hudVisible ? "1" : "0");
+                var op = opNum.toFixed(2);
+                var sc = scNum.toFixed(2);
+
+                if (topBar.SetHasClass) topBar.SetHasClass("qol-hidden", !enabled);
+
+                var sig = ox + "|" + oy + "|" + op + "|" + sc + "|" + (enabled ? "1" : "0") + "|" + (hudVisible ? "1" : "0") + "|" + (active ? "1" : "0");
                 if (_lastSig === sig) return;
                 _lastSig = sig;
 
-                if (topBar.SetHasClass) topBar.SetHasClass("qol-hidden", !shouldShow);
-                if (shouldShow) {
-                    topBar.style.x = ox + "px";
-                    topBar.style.y = (-oy) + "px";
+                if (enabled && active && hudVisible) {
+                    if (ox !== 0) topBar.style.x = ox + "px";
+                    else _clearStyle(topBar, "x");
+
+                    if (oy !== 0) topBar.style.y = (-oy) + "px";
+                    else _clearStyle(topBar, "y");
+
                     topBar.style.preTransformScale2d = "1.00, 1.00";
-                    topBar.style.uiScale = Math.round(Number(sc) * 100) + "%";
-                    try { topBar.style.opacity = op; } catch(e) {}
+                    if (Math.abs(scNum - 1.0) > 0.0001) topBar.style.uiScale = Math.round(scNum * 100) + "%";
+                    else _clearStyle(topBar, "uiScale");
+
+                    if (Math.abs(opNum - 1.0) > 0.0001) {
+                        try { topBar.style.opacity = op; } catch(e) {}
+                    } else {
+                        _clearStyle(topBar, "opacity");
+                    }
                 } else {
-                    try { delete topBar.style.opacity; } catch(e) { topBar.style.opacity = ""; }
+                    _clearStyle(topBar, "x");
+                    _clearStyle(topBar, "y");
+                    _clearStyle(topBar, "preTransformScale2d");
+                    _clearStyle(topBar, "uiScale");
+                    _clearStyle(topBar, "opacity");
                 }
             }
 
@@ -106,11 +155,25 @@
                     var S = QOL.core.Scheduler;
                     if (S) S.cancelAllForFeature("ql_topbar");
                     _lastSig = "";
-                    // Don't reset x/y to "0px" — the old feature had no onDisable and
-                    // left the panel position alone, just hiding via qol-hidden.
-                    // Forcing y="0px" would move the bar from its CSS-native position.
+                    var root = $.GetContextPanel ? $.GetContextPanel() : null;
+                    var topBar = root ? root.FindChildTraverse("TopBar") : null;
+                    if (topBar) {
+                        var isSupposed = FR && FR.isFeatureSupposedToBeEnabled ? FR.isFeatureSupposedToBeEnabled("ql_topbar") : false;
+                        if (topBar.SetHasClass) topBar.SetHasClass("qol-hidden", !isSupposed);
+                        _clearStyle(topBar, "x");
+                        _clearStyle(topBar, "y");
+                        _clearStyle(topBar, "preTransformScale2d");
+                        _clearStyle(topBar, "uiScale");
+                        _clearStyle(topBar, "opacity");
+                    }
                 },
-                onSettingsChanged: function() { _apply(ctx.config.all()); }
+                onSettingsChanged: function() {
+                    _apply(ctx.config.all());
+                    var root = $.GetContextPanel ? $.GetContextPanel() : null;
+                    if (root && QOL.core && QOL.core.hud && QOL.core.hud.applyRootClasses) {
+                        QOL.core.hud.applyRootClasses(root, ctx.config.all(), Date.now ? Date.now() : (new Date()).getTime(), false);
+                    }
+                }
             };
         },
         test: function(ctx) {

@@ -38,6 +38,7 @@ let _panelSeq = 0;
 class Panel {
     constructor(type, { id = "", classes = [], attributes = {}, text = "", doc = null } = {}) {
         this.type = type || "Panel";
+        this.paneltype = this.type;
         this.id = id || "";
         this._uid = ++_panelSeq;
         this._doc = doc;
@@ -143,6 +144,24 @@ class Panel {
 
     SetParent(parent) {
         if (parent && typeof parent.addChild === "function") parent.addChild(this);
+    }
+
+    MoveChildBefore(child, beforeChild) {
+        this._assertValid("MoveChildBefore");
+        if (!child) return;
+        const curIdx = this._children.indexOf(child);
+        if (curIdx < 0) return;
+        this._children.splice(curIdx, 1);
+        if (!beforeChild) {
+            this._children.push(child);
+            return;
+        }
+        const targetIdx = this._children.indexOf(beforeChild);
+        if (targetIdx < 0) {
+            this._children.push(child);
+        } else {
+            this._children.splice(targetIdx, 0, child);
+        }
     }
 
     RemoveAndDeleteChildren() {
@@ -293,6 +312,15 @@ class Panel {
 
     GetDialogVariable(name) {
         return this._dialogVars.get(name) || "";
+    }
+
+    ClearPropertyFromCode(prop) {
+        this._assertValid("ClearPropertyFromCode");
+        if (this.style && typeof prop === "string") {
+            delete this.style[prop];
+            return true;
+        }
+        return false;
     }
 
     // ── Events ────────────────────────────────────────────────────────────

@@ -59,30 +59,64 @@
             { key: "PASSIVE_COOLDOWN_SIZE", type: "slider", min: 30, max: 60, step: 1, default: 40 },
             { key: "PASSIVE_COOLDOWN_X", type: "slider", min: -50, max: 50, step: 1, default: 0 },
             { key: "PASSIVE_COOLDOWN_Y", type: "slider", min: -50, max: 50, step: 1, default: 0 },
-            { key: "PASSIVE_COOLDOWN_OPACITY", type: "slider", min: 0, max: 100, step: 5, default: 50 }
+            { key: "PASSIVE_COOLDOWN_OPACITY", type: "slider", min: 0, max: 100, step: 5, default: 50 },
+            { key: "ENABLE_PASSIVE_COOLDOWN", type: "toggle", default: true },
+            { key: "ENABLE_OLD_ITEM_COOLDOWNS", type: "toggle", default: false },
+            { key: "ITEM_FILTER_DEF_PASSIVE", type: "toggle", default: true },
+            { key: "ITEM_FILTER_OFF_PASSIVE", type: "toggle", default: true },
+            { key: "ITEM_FILTER_DEF_ACTIVE", type: "toggle", default: false },
+            { key: "ITEM_FILTER_OFF_ACTIVE", type: "toggle", default: false }
         ],
         create: function(ctx) {
-            // ── QOL.import deps (matches old feature verbatim) ──
-            var _deps = QOL.import(["ensureAbilitiesContainerPanelCache","ensureGameTimePanelCache","ensurePassiveHudPanelCache","getCachedPanel","getSharedSchemaUtils","isColorWarningEnabled","isConnectedToHideout","isPassiveCooldownBasicMode","isStreetBrawlModeActive","normalizeVoiceTypeValue","normalizeVoiceVolumeValue","resolvePassiveCooldownMode","setCachedPanel","setPanelClassCached","state","utils"]);
-            var GetCachedPanel = _deps.getCachedPanel;
-            var State = _deps.state;
-            var SetCachedPanel = _deps.setCachedPanel;
-            var Utils = _deps.utils;
-            var IsCfgEnabled = Utils.IsCfgEnabled;
-            var SetStyleSafe = Utils.SetStyleSafe;
-            var SetPanelOpacitySafe = Utils.SetPanelOpacitySafe;
-            var ResolvePassiveCooldownMode = _deps.resolvePassiveCooldownMode;
-            var IsStreetBrawlModeActive = _deps.isStreetBrawlModeActive;
-            var IsPassiveCooldownBasicMode = _deps.isPassiveCooldownBasicMode;
-            var IsColorWarningEnabled = _deps.isColorWarningEnabled;
-            var EnsureAbilitiesContainerPanelCache = _deps.ensureAbilitiesContainerPanelCache;
-            var EnsureGameTimePanelCache = _deps.ensureGameTimePanelCache;
-            var EnsurePassiveHudPanelCache = _deps.ensurePassiveHudPanelCache;
-            var NormalizeVoiceTypeValue = _deps.normalizeVoiceTypeValue;
-            var NormalizeVoiceVolumeValue = _deps.normalizeVoiceVolumeValue;
-            var GetSharedSchemaUtils = _deps.getSharedSchemaUtils;
-            var SetPanelClassCached = _deps.setPanelClassCached;
-            var isConnectedToHideout = _deps.isConnectedToHideout;
+            var Panel = (QOL.core && QOL.core.panel) ? QOL.core.panel : {};
+            var State = QOL.state || (typeof globalThis !== "undefined" && globalThis.State) || {};
+            var Utils = QOL.utils;
+            var IsCfgEnabled = QOL.utils.IsCfgEnabled;
+            var SetStyleSafe = QOL.utils.SetStyleSafe;
+            var SetPanelOpacitySafe = QOL.utils.SetPanelOpacitySafe;
+            var GetCachedPanel = QOL.getCachedPanel;
+            var SetCachedPanel = QOL.setCachedPanel;
+            var ResolvePassiveCooldownMode = function(cfg) {
+                if (typeof QOL.resolvePassiveCooldownMode === "function") return QOL.resolvePassiveCooldownMode(cfg);
+                var masterEnabled = IsCfgEnabled(cfg, "ENABLE_PASSIVE_COOLDOWN");
+                if (!masterEnabled) return "default";
+                var advancedModeEnabled = Number(cfg && cfg.ENABLE_OLD_ITEM_COOLDOWNS) !== 1;
+                return advancedModeEnabled ? "advanced" : "basic";
+            };
+            var IsStreetBrawlModeActive = function(r) { return QOL.isStreetBrawlModeActive ? QOL.isStreetBrawlModeActive(r) : false; };
+            var IsPassiveCooldownBasicMode = function(mode) {
+                if (typeof QOL.isPassiveCooldownBasicMode === "function") return QOL.isPassiveCooldownBasicMode(mode);
+                return mode === "basic";
+            };
+            var IsColorWarningEnabled = function(cfg) { return QOL.isColorWarningEnabled ? QOL.isColorWarningEnabled(cfg) : false; };
+
+            function _ensureCachedByIds(root, cacheKey, ids) {
+                if (State && State.cachedPanels && State.cachedPanels[cacheKey] && Utils && Utils.IsPanelValid && Utils.IsPanelValid(State.cachedPanels[cacheKey])) {
+                    return State.cachedPanels[cacheKey];
+                }
+                if (!root || !root.FindChildTraverse) return null;
+                var panel = null;
+                for (var i = 0; i < ids.length; i++) {
+                    panel = root.FindChildTraverse(ids[i]);
+                    if (panel) break;
+                }
+                if (State && State.cachedPanels) State.cachedPanels[cacheKey] = panel || null;
+                return panel || null;
+            }
+            var EnsureAbilitiesContainerPanelCache = function(root) {
+                return _ensureCachedByIds(root, "abilitiesContainer", ["abilities_container", "AbilitiesContainer"]);
+            };
+            var EnsureGameTimePanelCache = function(root) {
+                return _ensureCachedByIds(root, "gameTime", ["HudGameTime", "GameTime"]);
+            };
+            var EnsurePassiveHudPanelCache = function(root) {
+                return _ensureCachedByIds(root, "passiveHud", ["hud_passive_items"]);
+            };
+            var NormalizeVoiceTypeValue = function(v) { return QOL.normalizeVoiceTypeValue ? QOL.normalizeVoiceTypeValue(v) : v; };
+            var NormalizeVoiceVolumeValue = function(v) { return QOL.normalizeVoiceVolumeValue ? QOL.normalizeVoiceVolumeValue(v) : v; };
+            var GetSharedSchemaUtils = function() { return QOL.getSharedSchemaUtils ? QOL.getSharedSchemaUtils() : null; };
+            var SetPanelClassCached = QOL.setPanelClassCached || function(p, c, cls, val) { if (p && p.SetHasClass) p.SetHasClass(cls, !!val); };
+            var isConnectedToHideout = function(r) { return (QOL.core && QOL.core.hud && QOL.core.hud.isClassActive) ? (QOL.core.hud.isClassActive('connectedToHideout') || QOL.core.hud.isClassActive('InHideout')) : (QOL.isConnectedToHideout ? QOL.isConnectedToHideout(r) : false); };
 
             var _loop = null;
             var _root = null;
@@ -337,8 +371,7 @@
             // ── Main tick (adapted from UpdateLegacyAudioAndPassiveHudRuntime) ──
             function _tick() {
                 var root = _root || $.GetContextPanel(); if (root && !_root) _root = root;
-                // No enableKey → ConfigStore bucket is empty; read from global config
-                var cfg = (State.lastConfig) || {};
+                var cfg = (ctx.config && ctx.config.view) ? ctx.config.view() : (_lastFeatureConfig || {});
 
                 var passiveCooldownMode = ResolvePassiveCooldownMode(cfg);
                 var basicModeActive = IsPassiveCooldownBasicMode(passiveCooldownMode);
@@ -456,8 +489,11 @@
                 State.lastTime = currentTime;
             }
 
+            var _lastFeatureConfig = {};
+
             return {
                 onEnable: function() {
+                    _lastFeatureConfig = (ctx.config && ctx.config.all) ? ctx.config.all() : (globalThis.MOD_CONFIG || {});
                     var S = QOL.core.Scheduler;
                     _loop = S && S.createPollLoop ? S.createPollLoop(_tick, 0.5, "ql_legacy_audio_passive") : null;
                 },
@@ -474,7 +510,9 @@
                     SetCachedPanel("dl4dCaptionPanel", null); SetCachedPanel("passiveHud", null); SetCachedPanel("gameTime", null); SetCachedPanel("abilitiesContainer", null);
                     _root = null;
                 },
-                onSettingsChanged: function() {}
+                onSettingsChanged: function() {
+                    _lastFeatureConfig = (ctx.config && ctx.config.all) ? ctx.config.all() : (globalThis.MOD_CONFIG || {});
+                }
             };
         },
         test: function(ctx) {

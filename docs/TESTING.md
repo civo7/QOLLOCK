@@ -1,28 +1,25 @@
 # Testing QOLLOCK
 
-Nothing here models the game. That is the point.
+The current offline entry point is `npm test` (see `package.json`). It runs HUD
+script loading, the Node regression suite in `tests/`, build-storage fuzzing,
+compact-schema validation, API checks and ESLint.
 
-The behavioural suite that used to live in `tests/` was removed on 2026-08-23 —
-see "Why there is no behavioural suite" at the bottom. What remains either checks
-the code without claiming anything about the client, or runs inside the real
-client.
+Some tests use the panel simulator. They can verify JavaScript behavior under
+that model, but cannot prove real client panel structure, rendering or FPS.
 
 ## Layer 1 — static / load checks
 
 ```
-node panorama/scripts/tools/qollock_smoke_test.js   # every file loads, in order
-bash panorama/scripts/tools/check_bridges.sh        # QOL.import symbols are exported
-bash panorama/scripts/tools/validate_imports.sh     # imported symbols exist
-bash panorama/scripts/tools/check_manifests.sh      # manifest shape + hud.xml wiring
+node panorama/scripts/tools/qollock_smoke_test.js   # actual hud.xml script order
 node scripts/validate_compact_schema.js             # config codec round-trips
+npm run check:api                                  # known game API usage
+npm run lint                                      # JavaScript static checks
 ```
 
-These prove the code *loads* and that the codec is sound. The schema validator is
-the strongest thing in this file: 57 schema versions and ~450 fuzz cases, and it
-touches no panels at all, so it cannot be wrong about the client.
-
-They cannot catch a logic bug. The 2026-08 settings-loader failure passed all of
-them.
+The HUD smoke uses `scripts/simulator/layout.js`, includes `core/ql_app.js`, and
+fails when an included script is missing. It is not a settings-context smoke or
+a runtime behavior test. The schema validator exercises codec round-trips;
+load checks alone cannot catch gameplay or lifecycle bugs.
 
 ## Layer 2 — manifest `test()` hooks (run in the client)
 
@@ -45,8 +42,8 @@ Rules for a `test()` hook, learned the hard way:
   `CitadelHudHeroBuilds*` globals were absent — stricter than the code it tested,
   which already falls back to `DispatchEvent`. It cried wolf on a working build.
 
-The smoke test reports hook coverage (`41 manifests: 41 with test()`), which is a
-structural check only — it does not run them.
+The smoke test reports how many registered manifests have `test()` hooks. This
+is a structural check only — it does not run them.
 
 ## Layer 3 — frame-cost profiling
 
@@ -77,7 +74,7 @@ variants are only partially covered.
 
 ### The pieces it is built on
 
-`scripts/simulator/` remains for the profiler's sake only:
+`scripts/simulator/` supports the profiler and offline regression scenarios:
 
 | File | Responsibility |
 |---|---|
@@ -103,9 +100,9 @@ When vanilla Deadlock updates, re-check panel ids against
 `G:\GameTracking-Deadlock` — layout under
 `game/citadel/pak01_dir/panorama/layout/`, styles under `.../styles/`.
 
-## Why there is no behavioural suite
+## Historical warning: the removed behavioural suite
 
-`tests/` ran the real mod against a **modelled** panel tree. The model cannot know
+The suite removed in August 2026 ran the real mod against a **modelled** panel tree. The model cannot know
 which panels the client actually creates — several are conditional in C++ (a stat
 panel appears only once you have that stat) — so its answers about panel existence
 and label readability were guesses. Guesses fail in both directions:

@@ -25,6 +25,9 @@
 					</Panel>
 				</Panel>
 			</Panel>
+			<!-- ============================================================= -->
+			<!-- QOLLOCK CUSTOM: News Dashboard Card -->
+			<!-- ============================================================= -->
 			<Panel id="News" class="playOptionContainer playOptionContainerXS" onactivate="CitadelShowNewsPage()">
 				<Panel class="cardBorder" />
 				<Panel class="playOptionTop">
@@ -37,6 +40,7 @@
 					</Panel>
 				</Panel>
 			</Panel>
+			<!-- ============================================================= -->
 			<Panel id="HeroTesting" class="playOptionContainer" onactivate="CitadelShowHeroDetailsPage( 1 )">
 				<Panel class="cardBorder" />
 				<Panel class="playOptionTop">
@@ -49,6 +53,9 @@
 					</Panel>
 				</Panel>
 			</Panel>
+			<!-- ============================================================= -->
+			<!-- QOLLOCK CUSTOM: Hero Voting & Library Cards -->
+			<!-- ============================================================= -->
 			<Panel id="HeroVoting" class="playOptionContainer playOptionContainerXS">
 				<Panel class="cardBorder" />
 				<Panel class="playOptionTop">
@@ -73,6 +80,7 @@
 					</Panel>
 				</Panel>
 			</Panel>
+			<!-- ============================================================= -->
 			<Panel id="BrowsableShop" class="playOptionContainer" onactivate="CitadelShowDashboardShop()">
 				<Panel class="cardBorder" />
 				<Panel class="playOptionTop">
@@ -85,6 +93,9 @@
 					</Panel>
 				</Panel>
 			</Panel>
+			<!-- ============================================================= -->
+			<!-- QOLLOCK CUSTOM: Ranked Info & Global Leaderboard Cards -->
+			<!-- ============================================================= -->
 			<Panel id="RankedInfo" class="playOptionContainer playOptionContainerXS" onactivate="CitadelShowRankedInfo()">
 				<Panel class="cardBorder" />
 				<Panel class="playOptionTop">
@@ -109,6 +120,7 @@
 					</Panel>
 				</Panel>
 			</Panel>
+			<!-- ============================================================= -->
 		</Panel>
 	</CitadelTrainingPage>
 </root>

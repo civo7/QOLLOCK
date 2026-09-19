@@ -14,6 +14,7 @@ sandbox.window = sandbox;
 sandbox.console = console;
 vm.createContext(sandbox);
 try {
+    vm.runInContext(fs.readFileSync(path.join(__dirname, "..", "..", "ql_utils.js"), "utf8"), sandbox, { filename: "ql_utils.js" });
     vm.runInContext(src, sandbox, { filename: "ql_shared_presets.js" });
 } catch (e) {
     console.error("LOAD ERROR:", e.message);

@@ -10,8 +10,24 @@ const configPath = path.join(projectRoot, "panorama", "scripts", "ql_config.js")
 const settingsPreviewsPath = path.join(projectRoot, "panorama", "scripts", "ql_settings_previews.js");
 const settingsTooltipsPath = path.join(projectRoot, "panorama", "scripts", "ql_settings_tooltips.js");
 const settingsPersistencePath = path.join(projectRoot, "panorama", "scripts", "ql_settings_persistence.js");
+const settingsModalPath = path.join(projectRoot, "panorama", "scripts", "ui", "modal.js");
+const settingsConfigTabPath = path.join(projectRoot, "panorama", "scripts", "ui", "config_tab.js");
+const settingsCloudSyncPath = path.join(projectRoot, "panorama", "scripts", "ui", "cloud_sync.js");
+const settingsSupportPath = path.join(projectRoot, "panorama", "scripts", "ui", "support.js");
+const settingsAudioPath = path.join(projectRoot, "panorama", "scripts", "ui", "audio.js");
+const settingsConsoleTabPath = path.join(projectRoot, "panorama", "scripts", "ui", "console_tab.js");
+const settingsArcadeTabPath = path.join(projectRoot, "panorama", "scripts", "ui", "arcade_tab.js");
+const settingsDevTabPath = path.join(projectRoot, "panorama", "scripts", "ui", "dev_tab.js");
+const settingsGameplayTabsPath = path.join(projectRoot, "panorama", "scripts", "ui", "gameplay_tabs.js");
+const settingsMetadataPath = path.join(projectRoot, "panorama", "scripts", "ui", "ql_settings_metadata.js");
+const settingsTabsPath = path.join(projectRoot, "panorama", "scripts", "ui", "ql_settings_tabs.js");
+const settingsThemePath = path.join(projectRoot, "panorama", "scripts", "ui", "theme.js");
+const settingsControlsPath = path.join(projectRoot, "panorama", "scripts", "ui", "controls.js");
 const settingsPath = path.join(projectRoot, "panorama", "scripts", "ql_settings.js");
-const corePath = path.join(projectRoot, "panorama", "scripts", "ql_core.js");
+const namespacePath = path.join(projectRoot, "panorama", "scripts", "core", "ql_namespace.js");
+const panelHelpersPath = path.join(projectRoot, "panorama", "scripts", "core", "ql_panel_helpers.js");
+const rendererPath = path.join(projectRoot, "panorama", "scripts", "ui", "renderer.js");
+const codecPath = path.join(projectRoot, "panorama", "scripts", "core", "ql_codec.js");
 
 function readFile(filePath) {
     return fs.readFileSync(filePath, "utf8");
@@ -555,7 +571,7 @@ function runFuzzTests(settingsExports, coreExports, defaultConfig, settingsRegis
 
 function main() {
     const settingsContext = loadContext(
-        [utilsPath, sharedPath, bridgePath, configPath, settingsPreviewsPath, settingsTooltipsPath, settingsPersistencePath, settingsPath],
+        [namespacePath, utilsPath, panelHelpersPath, sharedPath, bridgePath, configPath, rendererPath, settingsPreviewsPath, settingsTooltipsPath, settingsPersistencePath, settingsModalPath, settingsConfigTabPath, settingsCloudSyncPath, settingsSupportPath, settingsAudioPath, settingsConsoleTabPath, settingsArcadeTabPath, settingsDevTabPath, settingsGameplayTabsPath, settingsThemePath, settingsMetadataPath, settingsTabsPath, settingsControlsPath, settingsPath],
         `globalThis.__schemaGuardExports = {
             sharedSemver: QOL_SCHEMA_SEMVER,
             sharedWireVersion: QOL_SCHEMA_WIRE_VERSION,
@@ -571,14 +587,14 @@ function main() {
         false
     );
     const coreContext = loadContext(
-        [sharedPath, bridgePath, corePath],
+        [namespacePath, utilsPath, panelHelpersPath, sharedPath, bridgePath, codecPath],
         `globalThis.__schemaGuardExports = {
-            latestSemver: BUILD_CATEGORY_LATEST_COMPACT_SEMVER,
-            registry: BUILD_CATEGORY_COMPACT_SCHEMA_REGISTRY,
-            serialize: SerializeBuildPayloadCompact,
-            deserialize: DeserializeBuildPayloadCompact
+            latestSemver: QOL.core.codec.getLatestCompactSemver(),
+            registry: QOL.core.codec.getCompactSchemaRegistry(),
+            serialize: QOL.core.codec.serializeBuildPayloadCompact,
+            deserialize: QOL.core.codec.deserializeBuildPayloadCompact
         };`,
-        true
+        false
     );
     var mirrorSettingsContext = null; // mirror not available
     var mirrorCoreContext = null; // mirror not available
@@ -674,7 +690,7 @@ function main() {
         }
     }
 
-    const targetedSemvers = ["2.0.0", "2.0.1", "2.1.0", "2.1.1", "2.2.3", "2.2.4", "2.2.5", "2.2.6", "2.2.7", "2.2.8", "2.2.9", "2.2.10", "2.3.0", "2.3.1", "2.3.2", "2.3.3", "2.3.4", "2.3.5", "2.3.6", "2.3.7", "2.4.0", "2.5.0", "2.5.1", "2.5.2", "2.5.3", "2.5.4", "2.5.5", "2.5.6", "2.5.7", "2.5.8", "2.5.9", "2.5.10", "2.5.11", "2.6.0", "2.6.1", "3.0.0", "3.0.1", "3.0.2", "3.0.3", "3.0.4", "3.0.5", "3.1.0", "3.1.1", "3.1.2", "3.1.3", "3.1.4", "3.1.5", "3.1.6", "3.1.7", "3.1.8", "3.1.9"];
+    const targetedSemvers = ["2.0.0", "2.0.1", "2.1.0", "2.1.1", "2.2.3", "2.2.4", "2.2.5", "2.2.6", "2.2.7", "2.2.8", "2.2.9", "2.2.10", "2.3.0", "2.3.1", "2.3.2", "2.3.3", "2.3.4", "2.3.5", "2.3.6", "2.3.7", "2.4.0", "2.5.0", "2.5.1", "2.5.2", "2.5.3", "2.5.4", "2.5.5", "2.5.6", "2.5.7", "2.5.8", "2.5.9", "2.5.10", "2.5.11", "2.6.0", "2.6.1", "3.0.0", "3.0.1", "3.0.2", "3.0.3", "3.0.4", "3.0.5", "3.1.0", "3.1.1", "3.1.2", "3.1.3", "3.1.4", "3.1.5", "3.1.6", "3.1.7", "3.1.8", "3.1.9", "3.2.0"];
     const topBarHpWarningKeys = [
         "ENABLE_TOPBAR_ENEMY_HP_WARNING",
         "ENABLE_TOPBAR_ENEMY_HP_WARNING_25",

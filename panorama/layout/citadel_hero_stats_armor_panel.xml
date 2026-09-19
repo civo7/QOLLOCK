@@ -14,6 +14,7 @@
 		</snippet>
 	</snippets>
 	<CitadelHeroStatsArmor>
+		<!-- QOLLOCK CUSTOM: Added gShopOpen to classes listener for shop-open visibility -->
 		<GlobalClassListener classes="gDetailView gShopOpen" />
 		<Panel id="BackgroundContainer" />
 		<Panel id="ArmorDisplayStats" class="displayStatsContainer">

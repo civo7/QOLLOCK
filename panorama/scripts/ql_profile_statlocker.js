@@ -16,18 +16,9 @@
     var gNextPanelSearchMs = 0;
     var gNextFallbackScanMs = 0;
 
-    function IsPanelValid(panel) {
-        if (!panel) return false;
-        if (!panel.IsValid) return true;
-        try { return panel.IsValid(); } catch (e0) { return false; }
-    }
-
-    function ParseAccountId(value) {
-        if (value === undefined || value === null) return "";
-        var digits = String(value).replace(/[^0-9]/g, "");
-        if (!digits || digits.length < 1 || digits.length > 10) return "";
-        return digits;
-    }
+    var IsPanelValid = QOL_UTILS.IsPanelValid;
+    var ParseAccountId = QOL_UTILS.ParseAccountId;
+    var HasClassInHierarchy = QOL_UTILS.HasClassInHierarchy;
 
     function ReadAccountIdFromPanel(panel) {
         if (!IsPanelValid(panel)) return "";
@@ -53,6 +44,7 @@
     }
 
     function HasAscendantClass(panel, className, maxDepth) {
+        if (HasClassInHierarchy) return HasClassInHierarchy(panel, className, maxDepth);
         var cur = panel;
         var depth = 0;
         while (IsPanelValid(cur) && depth < maxDepth) {
@@ -158,7 +150,7 @@
             return;
         }
 
-        var nowMs = Date.now ? Date.now() : (new Date()).getTime();
+        var nowMs = (QOL_UTILS && QOL_UTILS.PerfNowMs) ? QOL_UTILS.PerfNowMs() : Date.now();
         ResolvePanels(ctx, nowMs);
         var accountId = ReadAccountIdFromPanel(gAccountLabel);
         if (!accountId && nowMs >= gNextFallbackScanMs) {

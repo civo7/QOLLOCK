@@ -70,14 +70,14 @@
             ];
 
             // ── QOL delegates ──
-            function _getPanel(k) { try { if (typeof QOL !== "undefined" && QOL.getCachedPanel) return QOL.getCachedPanel(k); } catch(e) {} return null; }
-            function _setPanel(k, v) { try { if (typeof QOL !== "undefined" && QOL.setCachedPanel) QOL.setCachedPanel(k, v); } catch(e) {} }
-            function _isAlive(p) { try { if (typeof Utils !== "undefined" && Utils.IsPanelValid) return Utils.IsPanelValid(p); } catch(e) {} return p && typeof p.IsValid === "function" && p.IsValid(); }
+            var _getPanel = QOL.getCachedPanel;
+            var _setPanel = QOL.setCachedPanel;
+            var _isAlive = QOL.utils.IsPanelValid;
             function _isOn(cfg, k) { return Number(cfg[k]) === 1; }
             function _clamp(cfg, key, fallback, min, max) { var v = Number(cfg[key]); if (!isFinite(v)) v = fallback; if (v < min) v = min; if (v > max) v = max; return v; }
             function _getGameplayHud(root) { try { if (typeof QOL !== "undefined" && QOL.getGameplayHudPanel) return QOL.getGameplayHudPanel(root); } catch(e) {} return root; }
             function _isHudClassActive(root, cls) { try { if (typeof QOL !== "undefined" && QOL.isHudClassActive) return QOL.isHudClassActive(root, cls); } catch(e) {} return false; }
-            function _setOpacitySafe(panel, val, fb) { try { if (typeof Utils !== "undefined" && Utils.SetPanelOpacitySafe) { Utils.SetPanelOpacitySafe(panel, val, fb); return; } } catch(e) {} try { panel.style.opacity = (val !== undefined && val !== null) ? val : fb; } catch(e2) {} }
+            var _setOpacitySafe = QOL.utils.SetPanelOpacitySafe;
 
             // ── State helpers ──
             function _ensureState() {
@@ -274,12 +274,23 @@
             }
 
             return {
-                onEnable: function() { var S = QOL.core.Scheduler; _loop = S && S.createPollLoop ? S.createPollLoop(_tick, 0.1, "ql_crosshair_stats") : null; },
+                onEnable: function() {
+                    var S = QOL.core.Scheduler;
+                    // rate-exempt: 10Hz (0.1s) required for responsive crosshair stats
+                    _loop = S && S.createPollLoop ? S.createPollLoop(_tick, 0.1, "ql_crosshair_stats") : null;
+                },
                 onDisable: function() {
                     if (_loop) { _loop.stop(); _loop = null; }
                     var root = $.GetContextPanel(); _removeOverlay(root);
                 },
-                onSettingsChanged: function() {}
+                onSettingsChanged: function() {
+                    var st = _ensureState();
+                    if (st) {
+                        st.lastLayoutSig = "";
+                        st.lastContentSig = "";
+                    }
+                    _tick();
+                }
             };
         },
     test: function(ctx) {

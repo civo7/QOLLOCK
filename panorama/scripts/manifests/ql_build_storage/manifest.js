@@ -39,759 +39,30 @@
     if (!FR) { $.Msg("[QOLLock] ql_build_storage: FeatureRegistry not found — aborting"); return; }
 
     const LOG_TAG = "[QOLLock][ql_build_storage] ";
+    const Driver = (typeof QOL !== "undefined" && QOL.buildStorageDriver) || {};
 
-    // ── Identity ──
-    const STORAGE_HERO = "hero_skyrunner";
-    const FALLBACK_HERO = "hero_werewolf";
-    const BUILD_NAME = "QOLLOCK-Settings";
-
-    // Written by the old pipeline too (ql_feat_buildsave.js:74), so a build made
-    // before this manifest is still recognised by name.
-    const TOKEN_EXTRACT = /(\[QOL-\d+-\d+-\d+\]:[A-Za-z0-9\-_]+)/i;
-
-    // citadel_hud_hero_builds.xml:27 declares maxchars="512". Leave room rather
-    // than discovering the cap by silent truncation — a truncated token decodes
-    // to garbage, which is worse than a refused save.
-    const MAX_TOKEN_LEN = 500;
-
-    // ── Panel ids / classes (verified against Valve XML + live tree) ──
-    // citadel_hud_hero_builds.xml:27 — our carrier. In #EditBuildSection, so it
-    // only holds this build's text while the editor is open.
-    const PID_DESC_ENTRY   = "BuildDescriptionTextEntry";
-    const PID_NAME_ENTRY   = "BuildNameTextEntry";
-    // citadel_ui_build_selector.xml — the popup's list, spinner and details pane.
-    const PID_BUILD_LIST   = "HeroBuildList";
-    const PID_SELECTOR     = "HeroBuildSelector";
-    const PID_DETAILS      = "BuildDetails";
-    const PID_CREATE_BTN   = "CreateBuildButton";
-    const PID_BROWSE_BTN   = "BrowseBuildsButton";
-    const PID_SAVE_BTN     = "SaveBuildButton";
-    const PID_SELECTED_BUILD = "ShopModsSelectedBuild";
-    const CLASS_BUILD_ITEM = "HeroBuildListItem";
-    const CLASS_BUILD_NAME = "BuildName";
-    const CLASS_DESCRIPTION = "BuildDescription";
-    // citadel_ui_build_selector.css:334 — set by the client on the clicked item.
-    const CLASS_SELECTED   = "Selected";
-    // citadel_ui_build_selector.css:46 — present while the GC reply is outstanding.
-    const CLASS_LOADING    = "BuildsLoading";
-    // citadel_hud_hero_builds.css — on CitadelHudHeroBuilds while the editor is open.
-    const CLASS_EDITING    = "gEditingBuilds";
-    // citadel_ui_build_details.xml — #BuildDetails carries this when the build is ours.
-    const CLASS_CAN_EDIT   = "CanEditBuild";
-
-    // ── Bridge attributes (mirror ql_bridge.js:29-36) ──
-    const BRIDGE_REQUEST = "QOL_BUILD_SAVE_REQUEST";
-    const BRIDGE_STATE   = "QOL_BUILD_SAVE_STATE";
-    const BRIDGE_MSG     = "QOL_BUILD_SAVE_MSG";
-    const BRIDGE_TOKEN   = "QOL_BUILD_SAVE_TOKEN";
-    const BRIDGE_FORCE   = "QOL_BUILD_SAVE_FORCE";
-
-    // ── Timing ──
-    // Poll rates. Fast while a request is in flight, slow when idle.
-    const ACTIVE_RATE_SEC  = 0.2;
-    const DORMANT_RATE_SEC = 1.0;
-    const STEP_MS          = 120;   // gap between two UI actions
-    const SETTLE_MS        = 300;   // after a hero switch, before probing
-    // Give-up bounds. These never signal success — a class does.
-    const CONFIRM_TIMEOUT_MS = 4000;
-    const LOADING_TIMEOUT_MS = 12000;  // GC round trip; generous on purpose
-    const SELECT_TIMEOUT_MS  = 2000;
-    const EDITOR_TIMEOUT_MS  = 4000;
-    const COMMIT_TIMEOUT_MS  = 6000;
-    const VERIFY_TIMEOUT_MS  = 4000;
-    // A backstop, not a schedule. It must exceed the sum of the stage bounds below
-    // or it becomes the thing that fires first, reporting "overall timeout" for a
-    // stage that was still legitimately waiting.
-    const OVERALL_TIMEOUT_MS = 120000;
-    const SIGNATURE_HITS     = 2;
-    // Consecutive polls the list count must hold before it counts as settled.
-    const LIST_STABLE_HITS   = 3;
-
-    // ── Opening the shop ──
-    // Verified in-game 2026-08-24: this is the command that works, and it TOGGLES —
-    // sending it again while the shop is open closes it. So it is fired exactly once
-    // per run and never retried; gShopOpen is what we wait on.
-    //
-    // This used to delegate to QOL.tryOpenHeroShopForHeroProbe. That helper's first
-    // attempt is `open_item_shop`, which this build does not have, and
-    // dispatchCitadelConCommand returns true whenever $.DispatchEvent did not throw
-    // (ql_feat_buildbridge.js:56-65) — so the dead attempt reported success, the five
-    // real fallbacks under it became unreachable, and its own 1s internal throttle
-    // silently became the retry budget. Four throttled attempts against a 4s stage
-    // bound is exactly the failure this manifest was reporting as "could not reach
-    // the build list".
-    const SHOP_OPEN_CMD = "citadel_open_hero_sheet";
-    // Give-up bound for the shop appearing, deliberately generous: this lands right
-    // after a hero switch, and a cold switch does blocking model/animgraph/particle
-    // loads whose cost is entirely machine-dependent. A tight bound here is a coin
-    // toss, not a give-up bound.
-    const SHOP_OPEN_TIMEOUT_MS = 30000;
-    // Same reasoning, smaller job: one button press and a popup inflate. Not as
-    // small as it looks, which is why this is no longer 8s: the press lands right
-    // after a hero switch and a shop open, so the client is in the middle of exactly
-    // the blocking work the bound above allows for. The fuzzer produced an 8.9s
-    // reveal, and against an 8s bound the read gave up — then passed on a retry only
-    // because a leftover popup was still on screen for it, a success bought with a
-    // modal stranded on the player. The longer bound is only ever paid out in the
-    // case that was going to fail anyway.
-    const BROWSER_OPEN_TIMEOUT_MS = 16000;
-    // How long a Browse press stays our responsibility after the run gives up on it.
-    // Giving up means WE stop waiting, not that the client stopped inflating: the
-    // popup can still land, modal, on a player whose round trip is over. Held equal
-    // to the bound above so no reveal the pipeline was willing to wait for can
-    // outlive the cleanup that owns it — sweeping longer than that would start
-    // dismissing browsers the PLAYER opened.
-    const CLEANUP_SWEEP_MS = BROWSER_OPEN_TIMEOUT_MS;
-    // Minimum gap between two presses of the same non-idempotent button. The waiting
-    // stages call every STEP_MS, and none of these buttons is a no-op when pressed
-    // again:
-    //   Browse queues another popup reveal — a slow client returned ~20 popups one
-    //     after another (fuzzer seed 54).
-    //   Edit re-seeds the edit fields FROM THE BUILD, so a queued second open wipes
-    //     the token we just typed and the commit saves 0 chars (fuzzer seed 52).
-    //   Save commits again.
-    // Not the full stage window either: a press really can be lost — sabotage
-    // deletes the popup mid-inflate — and a stage that cannot press again inside its
-    // own budget just fails instead.
-    const REPRESS_MS = 1000;
-
-    // ── Hiding the machinery ──
-    // The round trip drives real game UI: the shop opens, the browser popup opens,
-    // rows get clicked. All of that is visible, and there is no reason for the user
-    // to watch it.
-    //
-    // 0.02 and not 0 or 0.01: IsPanelSuppressedMaybe (ql_core.js:2645-2651) treats
-    // opacity <= 0.01 as SUPPRESSED, and TryCloseBrowseBuildsPopupForLoader
-    // (ql_core.js:6566) refuses to activate a button it considers hidden. Dimming to
-    // 0.01 would therefore disarm the old pipeline's own popup closer — invisible to
-    // the eye either way, so take the value that does not booby-trap shared code.
-    const HIDE_OPACITY = "0.02";
-
-    // ── QOL delegate wrapper (MIGRATION_PATTERNS Pattern 10) ──
-    function _qol(name) {
-        try {
-            return (typeof QOL !== "undefined" && typeof QOL[name] !== "undefined") ? QOL[name] : undefined;
-        } catch(e) { return undefined; }
-    }
-    function _callQol(name, fallback, args) {
-        const fn = _qol(name);
-        if (typeof fn === "function") {
-            try { return fn.apply(null, args || []); } catch(e) { return fallback; }
-        }
-        return fallback;
-    }
-
-    // ── 3.1.9 MIGRATION — delete with legacy_3_1_9.js ──
-    /**
-     * The old-carrier reader, or undefined when the file is gone.
-     *
-     * Resolved lazily on every use rather than captured at load, so deleting
-     * legacy_3_1_9.js and its <include> cannot break this file at load time — the
-     * migration simply stops happening, which is the intended end state.
-     */
-    function _legacy() {
-        try {
-            const L = (typeof QOL !== "undefined") ? QOL.legacy319 : undefined;
-            return (L && typeof L.readCategoryToken === "function" &&
-                    typeof L.isOwnBuildRow === "function") ? L : undefined;
-        } catch(e) { return undefined; }
-    }
-
-    // ── Panorama helpers ──
-    function _alive(p) {
-        return !!(p && typeof p.IsValid === "function" && p.IsValid());
-    }
-    function _find(root, id) {
-        try { return (root && root.FindChildTraverse) ? root.FindChildTraverse(id) : null; } catch(e) { return null; }
-    }
-    function _findClass(root, cls) {
-        try { return (root && root.FindChildrenWithClassTraverse) ? (root.FindChildrenWithClassTraverse(cls) || []) : []; } catch(e) { return []; }
-    }
-    function _hasClass(panel, cls) {
-        if (!_alive(panel)) return false;
-        try { return typeof panel.BHasClass === "function" && panel.BHasClass(cls); } catch(e) { return false; }
-    }
-    function _root() {
-        try { return $.GetContextPanel(); } catch(e) { return null; }
-    }
-    function _now() {
-        try { return Date.now ? Date.now() : (new Date()).getTime(); } catch(e) { return 0; }
-    }
-    function _log(msg) {
-        try { $.Msg(LOG_TAG + msg); } catch(e) {}
-    }
-
-    /**
-     * Read a panel's text.
-     *
-     * The "text" attribute is tried first because it survives on panels whose
-     * .text accessor throws mid-teardown. Both are needed: Labels expose .text,
-     * TextEntry exposes both, and a panel deleted between the two reads must not
-     * take the tick down with it.
-     */
-    function _readText(panel) {
-        if (!_alive(panel)) return "";
-        try {
-            if (typeof panel.GetAttributeString === "function") {
-                const t = panel.GetAttributeString("text", "");
-                if (t) return String(t);
-            }
-            if (typeof panel.text !== "undefined" && panel.text !== null) return String(panel.text);
-        } catch(e) {}
-        return "";
-    }
-
-    function _extractToken(text) {
-        if (!text) return "";
-        const m = TOKEN_EXTRACT.exec(String(text).replace(/\s+/g, ""));
-        return m ? String(m[1]) : "";
-    }
-
-    // ── Context ──
-    function _isShopOpen(root)  { return _callQol("isHudClassActive", false, [root, "gShopOpen"]); }
-    function _inHideout(root)   { return _callQol("isConnectedToHideout", false, [root]); }
-    function _activate(panel)   { return _callQol("activatePanelSafe", false, [panel]); }
-
-    /** Ask the client to open the shop. Fired at most once per run — see SHOP_OPEN_CMD. */
-    function _fireShopOpen() {
-        return _callQol("dispatchCitadelConCommand", false, [SHOP_OPEN_CMD]);
-    }
-
-    /**
-     * Close the shop.
-     *
-     * CitadelExitUpgradeShop is the shop's OWN oncancel handler
-     * (citadel_hud_hero_shop.xml:19), so this is the client's close path and not a
-     * guess. Preferred over the console command for one reason: SHOP_OPEN_CMD is a
-     * toggle, and a toggle sent at the wrong moment opens what it was meant to
-     * shut.
-     *
-     * The toggle survives only as a fallback for a client with no such function,
-     * and only while gShopOpen still says open. Deliberately NOT re-checked after
-     * calling CitadelExitUpgradeShop: if the class clears asynchronously, a
-     * "did it work?" probe reads stale-open and the fallback would re-open the shop
-     * we just closed.
-     */
-    function _closeShop(root) {
-        try {
-            if (typeof CitadelExitUpgradeShop === "function") {
-                CitadelExitUpgradeShop();
-                return true;
-            }
-        } catch(e) {}
-        if (_isShopOpen(root)) return _fireShopOpen();
-        return false;
-    }
-
-    /**
-     * The build browser popup root.
-     *
-     * PopupBuildBrowser carries no id in vanilla XML, so walk up from
-     * #HeroBuildSelector (which does) until a .PopupPanel ancestor appears.
-     */
-    function _popup(root) {
-        let node = _find(root, PID_SELECTOR);
-        let guard = 0;
-        while (_alive(node) && guard < 12) {
-            if (_hasClass(node, "PopupPanel")) return node;
-            try { node = node.GetParent ? node.GetParent() : null; } catch(e) { node = null; }
-            guard++;
-        }
-        return null;
-    }
-
-    /**
-     * Is the browser open?
-     *
-     * popups_shared.css:26 sets `.PopupPanel.Hidden { visibility: visible; }` — a
-     * dismissed popup still reads as visible to the engine, so a visibility probe
-     * reports true on a CLOSED browser. The `Hidden` class is the discriminator.
-     */
-    function _isBrowseOpen(root) {
-        const popup = _popup(root);
-        if (!_alive(popup)) return false;
-        return !_hasClass(popup, "Hidden");
-    }
-
-    /**
-     * Is the list still waiting on the GC?
-     *
-     * citadel_ui_build_selector.css:46 — the selector carries BuildsLoading while
-     * the hero-build search is outstanding, which collapses #HeroBuildList and
-     * reveals the spinner. This is the honest "not ready yet" flag, and it is why
-     * this manifest needs no settle heuristics.
-     *
-     * #CreateBuildButton must NOT be used for this: it lives in the popup's
-     * .Header, a SIBLING of the selector, so it exists the instant the popup
-     * inflates regardless of the reply. Keying readiness on it is what made an
-     * empty mid-round-trip list read as "this hero has no builds".
-     */
-    function _isListLoading(root) {
-        return _hasClass(_find(root, PID_SELECTOR), CLASS_LOADING);
-    }
-
-    function _listItems(root) {
-        const list = _find(root, PID_BUILD_LIST);
-        return _alive(list) ? _findClass(list, CLASS_BUILD_ITEM) : [];
-    }
-
-    /** The literal build name shown in a list row — readable without clicking. */
-    function _itemName(item) {
-        if (!_alive(item)) return "";
-        const labels = _findClass(item, CLASS_BUILD_NAME);
-        for (let i = 0; i < labels.length; i++) {
-            const t = _readText(labels[i]);
-            if (t) return t;
-        }
-        return "";
-    }
-
-    /**
-     * The description of whichever build is currently selected.
-     *
-     * Reads Label.BuildDescription under #BuildDetails. Verified in the debugger:
-     * the client substitutes the resolved user string here, so this is a real
-     * read and not the localization template.
-     */
-    function _selectedDescription(root) {
-        const details = _find(root, PID_DETAILS);
-        if (!_alive(details)) return "";
-        const labels = _findClass(details, CLASS_DESCRIPTION);
-        for (let i = 0; i < labels.length; i++) {
-            const t = _readText(labels[i]);
-            if (t) return t;
-        }
-        return "";
-    }
-
-    function _isOurBuildSelected(root) {
-        return _hasClass(_find(root, PID_DETAILS), CLASS_CAN_EDIT);
-    }
-
-    /**
-     * Press Browse Builds, on every copy of the button that exists.
-     *
-     * Unlike its neighbours in citadel_shop_mods_build.xml:42-44, BrowseBuildsButton
-     * declares NO onactivate — C++ binds the handler by id at construction. The tree
-     * carries several CitadelShopModsBuild panels and only one is live, so a single
-     * FindChildTraverse can hand back an inert copy whose activation goes nowhere and
-     * reports success. Press them all; opening an already-open browser is a no-op.
-     */
-    function _pressBrowse(root) {
-        let pressed = false;
-        const owners = _findClass(root, "shopModsBuild");
-        for (let i = 0; i < owners.length; i++) {
-            if (_activate(_find(owners[i], PID_BROWSE_BTN))) pressed = true;
-        }
-        // Root-level lookup is the FALLBACK for a tree with no shopModsBuild panel,
-        // not an extra press. Unconditionally it re-pressed the button already
-        // pressed above — the traverse finds that same live copy — and every press
-        // queues its own popup reveal, so the stage was firing two per tick and ~80
-        // per attempt. Only reached when the class-based sweep found nothing.
-        if (!pressed && _activate(_find(root, PID_BROWSE_BTN))) pressed = true;
-        return pressed;
-    }
-
-    /**
-     * Dismiss the build browser popup.
-     *
-     * Identified by CLASS and HANDLER, never by label. Vanilla puts two buttons in
-     * the popup's .ButtonRow (citadel_popup_build_browser.xml:17-22): confirm is
-     * `SecondaryButton fill light` with onactivate
-     * CitadelBuildBrowserPopupConfirmBuild(), cancel is `SecondaryButton outline`
-     * with UIPopupButtonClicked(). Matching the word "Cancel" would break in every
-     * non-English client, and pressing the WRONG one applies the selected build to
-     * the player's loadout — so this excludes the confirm button explicitly and
-     * gives up rather than guessing. `outline` is confirmed present in the live tree
-     * (Panorama debugger, 2026-08-25).
-     */
-    function _closeBrowse(root) {
-        const popup = _popup(root);
-        if (!_alive(popup)) return false;
-
-        let buttons = _findClass(popup, "SecondaryButton");
-        if (!buttons || buttons.length === 0) {
-            // Fallback: Valve removed SecondaryButton class. The buttons are inside .ButtonRow.
-            buttons = [];
-            const rows = _findClass(popup, "ButtonRow");
-            for (let r = 0; r < rows.length; r++) {
-                const row = rows[r];
-                for (let c = 0; c < row.GetChildCount(); c++) {
-                    const child = row.GetChild(c);
-                    if (child) buttons.push(child);
-                }
-            }
-        }
-
-        let cancel = null;
-        for (let i = 0; i < buttons.length; i++) {
-            let handler = "";
-            try {
-                handler = String(buttons[i].GetAttributeString("onactivate", "") || "").toLowerCase();
-            } catch(e) {}
-            if (handler.indexOf("confirmbuild") !== -1) continue;   // never press confirm
-            if (_hasClass(buttons[i], "fill")) continue;            // confirm is `fill light`
-            if (_hasClass(buttons[i], "outline") || handler.indexOf("uipopupbuttonclicked") !== -1) {
-                cancel = buttons[i];
-                break;
-            }
-        }
-        if (cancel && _activate(cancel)) return true;
-        // PopupBuildBrowser declares oncancel="UIPopupButtonClicked()", so the
-        // engine's own cancel path is a legitimate second try. (ESC does not reach
-        // it — the popup does not take keyboard focus.)
-        try { $.DispatchEvent("Cancelled", popup); return true; } catch(e) {}
-        return false;
-    }
-
-    /**
-     * Panels to dim while the round trip runs.
-     *
-     * Re-resolved on every call rather than remembered: the popup is created lazily
-     * and the client rebuilds it (and the selector under it) when a build is
-     * selected, so a style set once is gone by the next stage. Applying every tick
-     * is idempotent and is the only thing that survives a rebuild.
-     *
-     * PopupManager itself is deliberately NOT dimmed even though it is the common
-     * ancestor of both the popup and its backdrop. It hosts every other popup too,
-     * so a run that died without restoring would leave the whole game unable to show
-     * one. Dimming the two known children keeps the blast radius to our own UI.
-     */
-    function _hideTargets(root) {
-        const out = [];
-        const popup = _popup(root);
-        if (_alive(popup)) out.push(popup);
-        // The popup's dim backdrop, a sibling under PopupManager (seen in the live
-        // tree 2026-08-25). Left alone it veils the screen on its own.
-        const backdrop = _find(root, "DimBackground");
-        if (_alive(backdrop)) out.push(backdrop);
-        const spinner = _find(root, "HeroBuildListLoading");
-        if (_alive(spinner)) out.push(spinner);
-        // The shop is reached by class AND by id, because neither alone is dependable:
-        // citadel_hud_hero_shop.xml:19 declares class="CitadelHudHeroShop" on the type
-        // of the same name, but panel ids in this tree have already proven unreliable
-        // (duplicate, C++-assigned instances) — so take whichever resolves and
-        // de-duplicate.
-        const shops = _findClass(root, "CitadelHudHeroShop");
-        for (let i = 0; i < shops.length; i++) {
-            if (_alive(shops[i]) && out.indexOf(shops[i]) === -1) out.push(shops[i]);
-        }
-        const shopById = _find(root, "CitadelHudHeroShop");
-        if (_alive(shopById) && out.indexOf(shopById) === -1) out.push(shopById);
-        return out;
-    }
-
-    /**
-     * Describe a panel the way a log reader needs it: what it IS, not that it exists.
-     *
-     * There is no classList in Panorama — BHasClass only answers about a name you
-     * already suspect — so this reports the id plus the handful of classes this file
-     * makes decisions on. Enough to tell the live panel from an inert duplicate,
-     * which is the distinction that has cost us the most.
-     */
-    function _describe(panel) {
-        if (!_alive(panel)) return "MISSING";
-        let out = "";
-        try { out = "#" + (panel.id || "(no id)"); } catch(e) { out = "#?"; }
-        const flags = [];
-        const probe = ["PopupPanel", "Hidden", CLASS_LOADING, CLASS_SELECTED,
-                       CLASS_CAN_EDIT, CLASS_EDITING, "shopModsBuild", "ShowMyBuilds"];
-        for (let i = 0; i < probe.length; i++) {
-            if (_hasClass(panel, probe[i])) flags.push(probe[i]);
-        }
-        if (flags.length) out += " ." + flags.join(".");
-        // Read the inline opacity back. Panorama does not always return what was
-        // written here, so an empty answer proves nothing — but a value does, and
-        // that is what settles "did our dim actually land on this panel".
-        try {
-            const op = String(panel.style.opacity || "");
-            if (op) out += " opacity=" + op;
-        } catch(e) {}
-        return out;
-    }
-
-    /**
-     * One block per run, emitted once the list is ready: what the tree ACTUALLY gave
-     * us, with the candidate counts.
-     *
-     * The counts are the point. Every hard bug in this file has been a lookup that
-     * returned something plausible and wrong — a second CitadelShopModsBuild that is
-     * not the live one, a HeroBuildSelector reached by id in a tree where ids are
-     * C++-assigned and duplicated. "Found it" cannot distinguish those; "3 matched,
-     * using the first" can.
-     *
-     * Also the only honest way to answer whether the dim landed: the manifest cannot
-     * see the screen, but it can say which panels it aimed at.
-     */
-    function _reportTree(root, label) {
-        const selectors = _findClass(root, "ShowMyBuilds");
-        const shops = _findClass(root, "CitadelHudHeroShop");
-        const owners = _findClass(root, "shopModsBuild");
-        const editors = _findClass(root, "CitadelHudHeroBuilds");
-        const editorById = _find(root, "CitadelHudHeroBuilds");
-        _log("tree[" + label + "]: popup " + _describe(_popup(root)) +
-             " | selector " + _describe(_find(root, PID_SELECTOR)) +
-             " (ShowMyBuilds x" + selectors.length + ")");
-        const details = _find(root, PID_DETAILS);
-        _log("tree[" + label + "]: list " + _describe(_find(root, PID_BUILD_LIST)) +
-             " | details " + _describe(details) +
-             " | descEntry " + _describe(_find(root, PID_DESC_ENTRY)));
-        if (details && _alive(details)) {
-            const btns = _findClass(details, "ButtonRow");
-            const btnPrimary = _findClass(details, "PrimaryButton");
-            _log("tree[" + label + "]: details ButtonRow x" + (btns ? btns.length : 0) + " PrimaryButton x" + (btnPrimary ? btnPrimary.length : 0));
-            if (btns && btns.length > 0) {
-                let btnStr = "";
-                for (let i = 0; i < btns[0].GetChildCount(); i++) {
-                    const c = btns[0].GetChild(i);
-                    let h = "";
-                    try { h = c.GetAttributeString("onactivate", ""); } catch(e) {}
-                    btnStr += (c.id || c.paneltype) + (h ? "[onactivate=" + h + "]" : "[]") + " ";
-                }
-                _log("tree[" + label + "]: details buttons: " + btnStr);
-            }
-        }
-        _log("tree[" + label + "]: shop x" + shops.length + " " + _describe(shops[0]) +
-             " | shopModsBuild x" + owners.length +
-             " | heroBuilds byClass x" + editors.length + " byId " + _describe(editorById));
-        const targets = _hideTargets(root);
-        let dim = "";
-        for (let i = 0; i < targets.length; i++) dim += (i ? ", " : "") + _describe(targets[i]);
-        _log("tree[" + label + "]: dim targets x" + targets.length + ": " + (dim || "NONE"));
-
-        const popup = _popup(root);
-        const popupMgr = popup ? popup.GetParent() : null;
-        if (popupMgr) {
-            let chstr = "";
-            for (let i = 0; i < popupMgr.GetChildCount(); i++) {
-                const child = popupMgr.GetChild(i);
-                if (child) {
-                    let vis = child.BHasClass("Hidden") ? "hidden" : "visible";
-                    let op = child.style.opacity || "none";
-                    chstr += child.id + "[" + vis + ", op:" + op + "] ";
-                }
-            }
-            _log("tree[" + label + "]: PopupManager children: " + chstr);
-        }
-    }
-
-    function _setHidden(root, hidden) {
-        // Opacity hiding removed per user request.
-        return 0;
-    }
-
-    // ── Editor ──
-    function _hudBuilds(root) {
-        const byClass = _findClass(root, "shopModsBuild");
-        for (let i = 0; i < byClass.length; i++) {
-            if (_alive(byClass[i])) return byClass[i];
-        }
-        return _find(root, PID_SELECTED_BUILD);
-    }
-
-    /**
-     * Is the build editor open?
-     *
-     * gEditingBuilds is set by the client on CitadelHudHeroBuilds. Only the
-     * client can set or clear it, which makes it the one trustworthy signal for
-     * both "editor opened" and "save committed" (it clears on commit).
-     */
-    function _isEditing(root) {
-        // By ID first, because that is what actually exists: hud.xml:221 declares
-        // <CitadelHudHeroBuilds id="CitadelHudHeroBuilds" hittest="false" /> with NO
-        // class attribute, and a panel's TYPE is not a class in Panorama. So the class
-        // sweep below matches nothing in the live client — the new tree trace reported
-        // "heroBuilds x0" — and this function has always been running on its fallback.
-        // Harmless, but a lookup that can never succeed is a lookup nobody can reason
-        // about. Kept anyway: a future layout may add the class, and it costs one pass.
-        if (_hasClass(_find(root, "CitadelHudHeroBuilds"), CLASS_EDITING)) return true;
-        const panels = _findClass(root, "CitadelHudHeroBuilds");
-        for (let i = 0; i < panels.length; i++) {
-            if (_hasClass(panels[i], CLASS_EDITING)) return true;
-        }
-        // The class may sit on an ancestor of the edit section rather than on a
-        // panel matching that class name, so fall back to the section's chain.
-        let node = _find(root, PID_DESC_ENTRY);
-        let guard = 0;
-        while (_alive(node) && guard < 8) {
-            if (_hasClass(node, CLASS_EDITING)) return true;
-            try { node = node.GetParent ? node.GetParent() : null; } catch(e) { node = null; }
-            guard++;
-        }
-        return false;
-    }
-
-    function _descEntry(root) { return _find(root, PID_DESC_ENTRY); }
-
-    /**
-     * Write into a TextEntry the way the client notices.
-     *
-     * SetText() is preferred because it honours the field's maxchars. Neither
-     * entry declares an XML handler (the builds panel subscribes by id), so the
-     * two dispatched events are what make C++ pick the change up.
-     */
-    function _setEntryText(entry, value) {
-        if (!_alive(entry)) return false;
-        let didSet = false;
-        if (typeof entry.SetText === "function") {
-            try { entry.SetText(value); didSet = true; } catch(e) {}
-        }
-        if (!didSet) {
-            try { entry.text = value; didSet = true; } catch(e) {}
-        }
-        try { $.DispatchEvent("TextEntryChanged", entry); } catch(e) {}
-        try { $.DispatchEvent("TextEntrySubmit", entry); } catch(e) {}
-        return didSet;
-    }
-
-    function _triggerEdit(root) {
-        let ok = false;
-        // The browser's own Edit button confirms the popup selection first
-        // (citadel_ui_build_details.xml:38 calls CitadelBuildBrowserPopupConfirmBuild
-        // then CitadelHudHeroBuildsEditSelectedBuild), so prefer it while the
-        // browser is open.
-        const details = _find(root, PID_DETAILS);
-        if (_alive(details)) {
-            if (_activate(_find(details, "EditBuildButton"))) ok = true;
-        }
-        if (!ok) {
-            try {
-                if (typeof CitadelHudHeroBuildsEditSelectedBuild === "function") {
-                    CitadelHudHeroBuildsEditSelectedBuild();
-                    ok = true;
-                }
-            } catch(e) {}
-        }
-        return ok;
-    }
-
-    function _triggerSave(root) {
-        let ok = false;
-        try {
-            if (typeof CitadelHudHeroBuildsSaveEdits === "function") {
-                CitadelHudHeroBuildsSaveEdits();
-                ok = true;
-            }
-        } catch(e) {}
-        // Fallback, not a second press: CitadelHudHeroBuildsSaveEdits above already
-        // committed, and pressing the button on top commits again. Same mistake the
-        // Browse path made, with the same fix.
-        if (!ok && _activate(_find(root, PID_SAVE_BTN))) ok = true;
-        return ok;
-    }
-
-    /**
-     * Leave edit mode WITHOUT committing.
-     *
-     * citadel_shop_mods_build.xml:30 —
-     *   <Panel id="CancelChangesButton" class="... EditModeButton"
-     *          onmouseactivate="CitadelHudHeroBuildsDiscardEdits()">
-     * so the global and the button are one action; the global goes first for the
-     * reason _triggerCreate explains.
-     *
-     * Save must not be the only way out. A run that dies anywhere between "enter the
-     * editor" and "the commit landed" leaves a half-typed token in a visible field,
-     * and pressing Save to tidy up would commit the very state we just decided not
-     * to trust. Discard throws it away, which is the right end for every failure.
-     */
-    function _triggerDiscard(root) {
-        try {
-            if (typeof CitadelHudHeroBuildsDiscardEdits === "function") {
-                CitadelHudHeroBuildsDiscardEdits();
-                return true;
-            }
-        } catch(e) {}
-        return _activate(_find(root, "CancelChangesButton"));
-    }
-
-    /**
-     * Create the storage build.
-     *
-     * The global function is tried FIRST, and the button only as a fallback, which
-     * is the opposite of the obvious order and the whole point of this function.
-     * citadel_popup_build_browser.xml:11 declares
-     *   onmouseactivate="CitadelHudHeroBuildsCreateNewBuild(); UIPopupButtonClicked();"
-     * so pressing #CreateBuildButton creates the build AND DISMISSES THE POPUP. The
-     * verify stage reads Label.BuildDescription under #BuildDetails, which lives
-     * inside that popup, so a first-ever save wrote 214 chars to disk and then
-     * reported "save not confirmed by the build (details read back 0 chars)" —
-     * observed in-game 2026-08-25, exactly as predicted from the XML. Calling the
-     * handler directly runs the create without the dismissal.
-     *
-     * Both are kept because the globals are the load-bearing half of this file
-     * (CitadelHudHeroBuildsEditSelectedBuild and ...SaveEdits are how edit and
-     * commit already work in-game), but a client that renames one should degrade to
-     * a working-with-a-reopen save rather than no save at all.
-     */
-    function _triggerCreate(root) {
-        try {
-            if (typeof CitadelHudHeroBuildsCreateNewBuild === "function") {
-                CitadelHudHeroBuildsCreateNewBuild();
-                return true;
-            }
-        } catch(e) {}
-        const popup = _popup(root);
-        if (_alive(popup) && _activate(_find(popup, PID_CREATE_BTN))) return true;
-        if (_activate(_find(root, PID_CREATE_BTN))) return true;
-        return false;
-    }
-
-    // ── Hero switch ──
-    // The old pipeline's post-restore shop pulse must be disarmed for our restores,
-    // and this is how long to hold it off. HERO_RESTORE_BLIND_SUCCESS_MS is 800 and
-    // HERO_RESTORE_MAX_WAIT_MS is 3200 (ql_core.js:667-669), on top of the 0.3s the
-    // restore is queued with — so this is that worst case with room to spare, not a
-    // number picked to feel safe.
-    const SHOP_PULSE_SUPPRESS_MS = 10000;
-
-    /**
-     * Disarm the old pipeline's post-restore shop pulse.
-     *
-     * queueDelayedHeroRestore finishes at QueueShopPulseAfterHeroRestore
-     * (ql_core.js:9196), which schedules PulseShopAfterBuildPayloadStartupReturn
-     * (ql_core.js:6490). That helper closes the shop, then opens it
-     * UNCONDITIONALLY (ql_core.js:6512-6535), then closes it again 0.05s later. It
-     * is a deliberate refresh pulse that the old category-name carrier needed —
-     * that carrier lived in the shop panel, so the shop had to be re-inflated to
-     * show the committed value. This manifest reads from the browser popup and
-     * needs none of it.
-     *
-     * Left armed it is the single most visible artefact of the whole round trip:
-     * opacity has already been restored by the time it fires, so the user watches
-     * the shop flash open by itself once the run is over. The fuzzer flagged it on
-     * 228 of 300 runs — including runs where the shop was correctly closed first,
-     * because the reopen is not conditional on anything.
-     *
-     * Suppressed through the helper's OWN throttle rather than by editing it: the
-     * guard is `if (now < State.heroRestoreShopPulseNextMs) return`, so arming that
-     * stamp is the sanctioned way to say "not this time" and leaves the old path
-     * intact for any caller that still wants it.
-     */
-    function _suppressShopPulse() {
-        try {
-            const State = QOL.state;
-            if (State) State.heroRestoreShopPulseNextMs = _now() + SHOP_PULSE_SUPPRESS_MS;
-        } catch(e) {}
-    }
-
-    function _switchToStorageHero() {
-        return _callQol("selectHeroForBuildSave", false, [STORAGE_HERO, "ql_build_storage"]);
-    }
-    function _returnHero(hero) {
-        return _callQol("queueDelayedHeroRestore", false, [hero, "ql_build_storage_return", 0.3]);
-    }
-    function _confirmStorageHero(root, now) {
-        const res = _callQol("confirmStorageHeroSignatureAbilities",
-            { confirmed: false }, [root, now, SIGNATURE_HITS]);
-        return !!(res && res.confirmed);
-    }
-    function _resolveReturnHero(ctx) {
-        let hero = "";
-        try { hero = String(ctx.config.get("DEFAULT_HERO") || ""); } catch(e) { hero = ""; }
-        if (!hero) hero = _callQol("getConfiguredDefaultHeroId", "", [null]) || "";
-        hero = _callQol("normalizeHeroId", hero, [hero]) || hero;
-        return hero || FALLBACK_HERO;
-    }
+    const {
+        STORAGE_HERO, FALLBACK_HERO, BUILD_NAME, TOKEN_EXTRACT, MAX_TOKEN_LEN,
+        PID_DESC_ENTRY, PID_NAME_ENTRY, PID_BUILD_LIST, PID_SELECTOR, PID_DETAILS,
+        PID_CREATE_BTN, PID_BROWSE_BTN, PID_SAVE_BTN, PID_SELECTED_BUILD, PID_FAVORITES_NAV,
+        CLASS_BUILD_ITEM, CLASS_BUILD_NAME, CLASS_DESCRIPTION, CLASS_SELECTED, CLASS_LOADING,
+        CLASS_EDITING, CLASS_SHOWING_FAVORITES, CLASS_CAN_EDIT,
+        BRIDGE_REQUEST, BRIDGE_STATE, BRIDGE_MSG, BRIDGE_TOKEN, BRIDGE_FORCE,
+        ACTIVE_RATE_SEC, DORMANT_RATE_SEC, STEP_MS, SETTLE_MS,
+        CONFIRM_TIMEOUT_MS, LOADING_TIMEOUT_MS, SELECT_TIMEOUT_MS, EDITOR_TIMEOUT_MS,
+        COMMIT_TIMEOUT_MS, VERIFY_TIMEOUT_MS, OVERALL_TIMEOUT_MS, SIGNATURE_HITS,
+        LIST_STABLE_HITS, LIST_NAME_LOG_MAX,
+        SHOP_OPEN_CMD, SHOP_OPEN_TIMEOUT_MS, BROWSER_OPEN_TIMEOUT_MS, FAVORITES_CONFIRM_MS,
+        CLEANUP_SWEEP_MS, REPRESS_MS, HIDE_OPACITY, SHOP_PULSE_SUPPRESS_MS,
+        _qol, _callQol, _legacy, _alive, _find, _findClass, _hasClass, _root, _now, _log,
+        _readText, _extractToken, _isShopOpen, _inHideout, _activate, _isFavoritesTab,
+        _selectFavoritesTab, _fireShopOpen, _closeShop, _popup, _isBrowseOpen, _isListLoading,
+        _listItems, _itemName, _selectedDescription, _isOurBuildSelected, _pressBrowse,
+        _closeBrowse, _hideTargets, _describe, _reportTree, _setHidden, _hudBuilds, _isEditing,
+        _descEntry, _setEntryText, _triggerEdit, _triggerSave, _triggerDiscard, _triggerCreate,
+        _suppressShopPulse, _switchToStorageHero, _returnHero, _confirmStorageHero, _liveHero,
+        _resolveReturnHero, _bridgeSurfaces
+    } = Driver;
 
     FR.register({
         id: "ql_build_storage",
@@ -837,7 +108,13 @@
                     stageAt: 0,          // when the current wait began
                     didSwitch: false,
                     shopCmdSent: false,  // the open command is a toggle — send it once
+                    shopWasOpen: false,  // the shop was up before we arrived
+                    shopRebindClosed: false, // we closed it once to force a rebind
+                    favPressedAt: 0,     // gate for _selectFavoritesTab re-presses
                     returnHero: "",
+                    returnHeroSource: "", // where returnHero came from, for the log
+                    gateFail: "",        // why _advanceToList gave up, verbatim
+                    confirmDetail: "",   // last thing the signature HUD said
                     cursor: 0,           // position within the candidate list
                     // Panels are never cached: selecting a build makes the client
                     // rebuild #HeroBuildList, so rows are re-resolved by index every
@@ -908,6 +185,7 @@
                 switch_hero:       [["start", "done"], ["switch_airheart", "active"]],
                 confirm_hero:      [["switch_airheart", "done"], ["confirm_airheart", "active"]],
                 open_shop:         [["confirm_airheart", "done"], ["prepare_build", "active"]],
+                select_favorites:  [["prepare_build", "active"]],
                 open_browser:      [["prepare_build", "active"]],
                 await_list:        [["prepare_build", "active"]],
                 pick_target:       [["prepare_build", "active"]],
@@ -923,6 +201,7 @@
                 switch_hero:       "Switching to Skyrunner",
                 confirm_hero:      "Confirming Skyrunner context",
                 open_shop:         "Opening the shop",
+                select_favorites:  "Opening the builds tab",
                 open_browser:      "Opening the build browser",
                 await_list:        "Waiting for the build list to settle",
                 pick_target:       "Selecting the storage build",
@@ -1127,6 +406,23 @@
                 _log("read: " + code + " — " + (detail || ""));
             }
 
+            /**
+             * Capture where to put the player back, once, at the top of a run.
+             *
+             * Logged here rather than at the restore. bridge:SwitchHero already
+             * traces the hero going back, but by then the decision is made and the
+             * trace cannot say whether it came from the live HUD or from a stale
+             * dropdown — which is precisely the distinction the 2026-09-05 save
+             * failure turned on.
+             */
+            function _captureReturnHero(root) {
+                const r = _resolveReturnHero(ctx, root);
+                _st.returnHero = r.hero;
+                _st.returnHeroSource = r.source;
+                _log("returnHero=" + r.hero + " via " + r.source);
+                return r.hero;
+            }
+
             function _finish(root, code, detail) {
                 // Tear the machinery down while it is still dimmed, and restore
                 // opacity as the very last act. Both halves of that order matter: the
@@ -1179,7 +475,15 @@
                     // Disarm before queueing: the restore is what eventually reaches
                     // the pulse, so the stamp has to be in place first.
                     _suppressShopPulse();
-                    _returnHero(_st.returnHero || _resolveReturnHero(ctx));
+                    // No late _resolveReturnHero fallback here. didSwitch is only
+                    // ever set after a run began, and every run begins by capturing
+                    // the hero, so an empty value at this point would mean the
+                    // capture itself failed — and resolving NOW reads a HUD that has
+                    // already been switched to Skyrunner, which _liveHero refuses,
+                    // so the "fallback" is just the stale dropdown wearing a
+                    // different hat. FALLBACK_HERO is at least honest about being a
+                    // guess.
+                    _returnHero(_st.returnHero || FALLBACK_HERO);
                 }
                 if (_st.mode === "read") {
                     _reportReadOutcome(code, detail);
@@ -1288,11 +592,30 @@
              * run with "could not reach the build list", after the list had already
              * been reached and enumerated.
              */
+            /**
+             * Record WHY the gate gave up, then say so.
+             *
+             * Every "fail" out of _advanceToList used to reach the same three call
+             * sites, which all logged the literal string "could not reach the build
+             * list". That is true of exactly one of the six ways this can fail. Both
+             * 2026-09-05 reports died in confirm_hero and both blamed the list, so
+             * the reports pointed at the list machinery for a hero-switch problem.
+             */
+            function _gateFail(reason) {
+                _st.gateFail = String(reason || "");
+                return "fail";
+            }
+
             function _advanceToList(root, now) {
                 switch (_st.stage) {
                     case "switch_hero":
+                        // Recorded BEFORE anything of ours touches the shop, because
+                        // "was it already open?" decides whether it has to be rebound
+                        // later (see open_shop). Nothing before this stage opens or
+                        // closes it, so this is the honest reading.
+                        _st.shopWasOpen = _isShopOpen(root);
                         if (!_switchToStorageHero()) {
-                            return "fail";
+                            return _gateFail("hero switch to " + STORAGE_HERO + " was refused");
                         }
                         _st.didSwitch = true;
                         // Overlay step keys come from ql_core.js:535 — the historical
@@ -1302,18 +625,51 @@
                         _go("confirm_hero", now, SETTLE_MS);
                         return "wait";
 
-                    case "confirm_hero":
-                        if (_confirmStorageHero(root, now)) {
+                    case "confirm_hero": {
+                        const res = _confirmStorageHero(root, now);
+                        // Carried so the timeout below can name the LAST thing the
+                        // HUD said, which is the whole diagnosis: "signature HUD not
+                        // found" and "slot 1 says Billy's ability" are different bugs
+                        // with different fixes and used to produce identical reports.
+                        _st.confirmDetail = res.detail || "";
+                        if (res.confirmed) {
+                            _log("confirm: " + STORAGE_HERO + " — " + (res.detail || "ok"));
                             _setStep("confirm_airheart", "done", "");
                             _setStep("read_payload", "active", "Opening the build browser");
                             _go("open_shop", now);
                             return "wait";
                         }
-                        if (_expired(now, CONFIRM_TIMEOUT_MS)) return "fail";
+                        if (_expired(now, CONFIRM_TIMEOUT_MS)) {
+                            return _gateFail("hero switch never took: " +
+                                (_st.confirmDetail || "no signature reading at all"));
+                        }
                         _st.nextAt = now + STEP_MS;
                         return "wait";
+                    }
 
                     case "open_shop":
+                        // A shop that was ALREADY open when the run began was inflated
+                        // for the previous hero, and switching hero underneath it does
+                        // not rebind it: #HeroBuildList keeps answering for whoever the
+                        // panel was built with. On 2026-09-05 that produced the worst
+                        // possible version of this failure — the confirm stage correctly
+                        // saw Skyrunner on the ability HUD, the browser correctly
+                        // opened, and the eleven rows inside it were all Billy's builds.
+                        // The run then concluded the account had no QOLLOCK-Settings
+                        // build and applied defaults, which is what authorises a save to
+                        // overwrite the real ones.
+                        //
+                        // Close it once and let the normal open below rebuild it against
+                        // the hero we just switched to. Costs a visible shop close on the
+                        // one path where the shop was already up; the alternative is
+                        // reading another hero's builds and believing them.
+                        if (_st.shopWasOpen && !_st.shopRebindClosed) {
+                            _st.shopRebindClosed = true;
+                            _log("shop was already open — closing it so it rebinds to " + STORAGE_HERO);
+                            _closeShop(root);
+                            _st.nextAt = now + STEP_MS;
+                            return "wait";
+                        }
                         if (!_isShopOpen(root)) {
                             // Fire once, then only ever wait on the class. Re-sending
                             // a toggle closes what the previous tick opened, which is
@@ -1322,16 +678,51 @@
                                 _st.shopCmdSent = true;
                                 _fireShopOpen();
                             }
-                            if (_expired(now, SHOP_OPEN_TIMEOUT_MS)) return "fail";
+                            if (_expired(now, SHOP_OPEN_TIMEOUT_MS)) {
+                                return _gateFail("shop never opened (gShopOpen stayed clear after " +
+                                    SHOP_OPEN_CMD + ")");
+                            }
                             _st.nextAt = now + STEP_MS;
                             return "wait";
                         }
-                        _go("open_browser", now);
+                        _go("select_favorites", now);
+                        return "wait";
+
+                    case "select_favorites":
+                        // The shop is open, but BrowseBuildsButton only works under
+                        // the Favorites tab (citadel_hud_hero_shop.css:1002 reveals
+                        // #ShopModsSelectedBuild there and nowhere else). A shop that
+                        // reopened on a remembered Weapon/Armor/Tech tab has a Browse
+                        // button that is present but transparent and inert, and the
+                        // run hangs at "Opening the build browser" until it times out
+                        // — the 2026-09-06 report. Nudge the tab, then wait for the
+                        // class to confirm.
+                        if (_isFavoritesTab(root)) {
+                            _go("open_browser", now);
+                            return "wait";
+                        }
+                        if (!_st.favPressedAt || (now - _st.favPressedAt) >= REPRESS_MS) {
+                            _st.favPressedAt = now;
+                            _selectFavoritesTab(root);
+                        }
+                        // Best-effort, not a hard gate: proceed if the class never
+                        // shows so a client that renders builds without it is not
+                        // bricked. open_browser is the real gate — if Browse truly
+                        // cannot be reached it fails there, with an honest message.
+                        if (_expired(now, FAVORITES_CONFIRM_MS)) {
+                            _log("favorites tab not confirmed after " + FAVORITES_CONFIRM_MS +
+                                 "ms — proceeding, open_browser will be the gate");
+                            _go("open_browser", now);
+                            return "wait";
+                        }
+                        _st.nextAt = now + STEP_MS;
                         return "wait";
 
                     case "open_browser":
                         if (!_isBrowseOpen(root)) {
-                            if (_expired(now, BROWSER_OPEN_TIMEOUT_MS)) return "fail";
+                            if (_expired(now, BROWSER_OPEN_TIMEOUT_MS)) {
+                                return _gateFail("build browser popup never opened");
+                            }
                             _openBrowse(root);
                             _st.nextAt = now + STEP_MS;
                             return "wait";
@@ -1359,7 +750,11 @@
                         // once through the prune path.
                         const selector = _find(root, PID_SELECTOR);
                         if (!_alive(selector) || _isListLoading(root)) {
-                            if (_expired(now, LOADING_TIMEOUT_MS)) return "fail";
+                            if (_expired(now, LOADING_TIMEOUT_MS)) {
+                                return _gateFail(_alive(selector)
+                                    ? "build list never finished loading (BuildsLoading held)"
+                                    : "#" + PID_SELECTOR + " never appeared");
+                            }
                             _st.nextAt = now + STEP_MS;
                             return "wait";
                         }
@@ -1371,7 +766,29 @@
                             _st.listStableHits++;
                         }
                         if (_st.listStableHits < LIST_STABLE_HITS) {
-                            if (_expired(now, LOADING_TIMEOUT_MS)) return "fail";
+                            if (_expired(now, LOADING_TIMEOUT_MS)) {
+                                return _gateFail("build list row count never settled (last " +
+                                    count + ")");
+                            }
+                            _st.nextAt = now + STEP_MS;
+                            return "wait";
+                        }
+                        // Whose builds are these? Defence in depth behind the shop
+                        // rebind in open_shop: that fix removes the cause, this one
+                        // refuses to act on the symptom if it ever returns by another
+                        // route. Only a POSITIVE disagreement fails — a client that
+                        // will not tell us the hero is left alone, because failing on
+                        // silence would break every load on a tree where these panels
+                        // carry no hero token, and no in-game evidence says whether
+                        // that is common. The reading is logged either way
+                        // (_collectCandidates), so the next report answers it.
+                        const lh = _listHero(root);
+                        if (lh.hero && lh.hero !== STORAGE_HERO) {
+                            if (_expired(now, LOADING_TIMEOUT_MS)) {
+                                return _gateFail("build list belongs to " + lh.hero +
+                                    " (via " + lh.source + "), not " + STORAGE_HERO +
+                                    " — refusing to read another hero's builds");
+                            }
                             _st.nextAt = now + STEP_MS;
                             return "wait";
                         }
@@ -1426,13 +843,51 @@
                 return (idx >= 0 && idx < items.length) ? items[idx] : null;
             }
 
+            /**
+             * Which hero the client currently believes it is showing builds for.
+             *
+             * ResolveBuildSaveStorageHeroSignal (ql_core.js:9124) reads it off the
+             * shop and build panels — #CitadelHudHeroBuilds, #HeroBuildSelector,
+             * .shopModsBuild — which is a DIFFERENT surface from the signature
+             * abilities the confirm stage watches. On 2026-09-05 those two disagreed:
+             * the player HUD had flipped to Skyrunner (Flakshot read cleanly) while
+             * the browser popup was still listing eleven Billy builds, so the run
+             * concluded the account had no settings build and applied defaults.
+             */
+            function _listHero(root) {
+                const sig = _callQol("resolveBuildSaveStorageHeroSignal",
+                                     { hero: "", source: "none" }, [root]) || {};
+                return {
+                    hero: String(sig.hero || ""),
+                    source: String(sig.source || "none")
+                };
+            }
+
             function _collectCandidates(root) {
                 const found = _candidateIndices(root);
                 _st.sawAnyBuild = found.total > 0;
                 _st.candidateCount = found.indices.length;
                 _st.cursor = 0;
+                const lh = _listHero(root);
                 _log("list: " + found.total + " build(s), " + found.indices.length +
-                     (_st.legacyPass ? " of them mine (3.1.9 sweep)" : " named " + BUILD_NAME));
+                     (_st.legacyPass ? " of them mine (3.1.9 sweep)" : " named " + BUILD_NAME) +
+                     " | listHero=" + (lh.hero || "?") + " via " + lh.source +
+                     " (want " + STORAGE_HERO + ")");
+                // Names, but only when nothing matched. A run that found its build
+                // needs no inventory; a run that found NOTHING is about to decide the
+                // account has no settings, and the names are what says whether that is
+                // true. Both 2026-09-05 reports logged "0 named QOLLOCK-Settings" over
+                // a list of Billy builds, and the row names alone would have named the
+                // bug — instead it took the screen recording to see it.
+                if (found.indices.length === 0 && found.total > 0) {
+                    const items = _listItems(root);
+                    const names = [];
+                    for (let i = 0; i < items.length && i < LIST_NAME_LOG_MAX; i++) {
+                        names.push(_itemName(items[i]) || "?");
+                    }
+                    _log("list rows: " + names.join(" / ") +
+                         (items.length > LIST_NAME_LOG_MAX ? " / +" + (items.length - LIST_NAME_LOG_MAX) + " more" : ""));
+                }
                 // Once per run, here: this is the first moment everything the round trip
                 // depends on exists at the same time — popup inflated, list replied,
                 // details pane built — so it is the only point where a snapshot is worth
@@ -1447,7 +902,7 @@
             // ── READ ──
             function _tickRead(root, now) {
                 const gate = _advanceToList(root, now);
-                if (gate === "fail") { _finish(root, "failed", "could not reach the build list"); return; }
+                if (gate === "fail") { _finish(root, "failed", _st.gateFail || "could not reach the build list"); return; }
                 if (gate === "wait") return;
 
                 switch (_st.stage) {
@@ -1641,6 +1096,7 @@
                 // UI-only keys live in the raw config, never in the payload.
                 if (Object.prototype.hasOwnProperty.call(rawCfg, "DRAG_ENABLED")) merged.DRAG_ENABLED = rawCfg.DRAG_ENABLED;
                 if (Object.prototype.hasOwnProperty.call(rawCfg, "PREVIEWS_ENABLED")) merged.PREVIEWS_ENABLED = rawCfg.PREVIEWS_ENABLED;
+                if (Object.prototype.hasOwnProperty.call(rawCfg, "ENABLE_UPDATE_CHECKER")) merged.ENABLE_UPDATE_CHECKER = rawCfg.ENABLE_UPDATE_CHECKER;
 
                 merged = _callQol("mergeConfig", merged, [merged]) || merged;
 
@@ -1654,7 +1110,14 @@
                     if (typeof WrapConfigForStorage === "function") wrapped = WrapConfigForStorage(merged);
                 } catch(e) { wrapped = merged; }
 
-                _st.returnHero = merged.DEFAULT_HERO || _resolveReturnHero(ctx);
+                // DELIBERATELY does not touch _st.returnHero. This used to read
+                // `merged.DEFAULT_HERO || _resolveReturnHero(ctx)`, which threw away
+                // the hero captured at the top of the run in favour of a value that
+                // just came out of the payload. That is the same class of bug as
+                // resolving the restore from the dropdown: loading a config whose
+                // DEFAULT_HERO happened to be someone else moved the player onto
+                // that hero. The payload says which hero OWNS the storage build; it
+                // has no opinion on who the player is.
                 _callQol("writeStorageConfigRawToUi", false, [root, wrapped]);
                 try {
                     const State = QOL.state;
@@ -1688,7 +1151,7 @@
 
             function _tickDump(root, now) {
                 const gate = _advanceToList(root, now);
-                if (gate === "fail") { _finish(root, "failed", "could not reach the build list"); return; }
+                if (gate === "fail") { _finish(root, "failed", _st.gateFail || "could not reach the build list"); return; }
                 if (gate === "wait") return;
 
                 switch (_st.stage) {
@@ -1701,7 +1164,7 @@
 
             function _tickWrite(root, now) {
                 const gate = _advanceToList(root, now);
-                if (gate === "fail") { _finish(root, "failed", "could not reach the build list"); return; }
+                if (gate === "fail") { _finish(root, "failed", _st.gateFail || "could not reach the build list"); return; }
                 if (gate === "wait") return;
 
                 switch (_st.stage) {
@@ -2023,7 +1486,7 @@
                             _reset();
                             _st.mode = "dump";
                             _st.startedAt = now;
-                            _st.returnHero = _resolveReturnHero(ctx);
+                            _captureReturnHero(root);
                             _go("switch_hero", now, 0);
                             _reschedule(ACTIVE_RATE_SEC);
                             return;
@@ -2075,7 +1538,7 @@
                             _st.token = req.token;
                             _st.requestToken = req.requestToken;
                             _st.startedAt = now;
-                            _st.returnHero = _resolveReturnHero(ctx);
+                            _captureReturnHero(root);
                             _callQol("beginSaveSettingsLoaderSession", undefined, [req.requestToken, now]);
                             _writeStatus(root, "pending", "starting");
                             _go("switch_hero", now, 0);
@@ -2087,7 +1550,7 @@
                         _reset();
                         _st.mode = "read";
                         _st.startedAt = now;
-                        _st.returnHero = _resolveReturnHero(ctx);
+                        _captureReturnHero(root);
                         // BeginSettingsLoaderSession (ql_core.js:5332) bails on an empty
                         // id, so passing "" never started a session at all — the read
                         // plate appeared only because _SetLoaderStepState turns the
@@ -2146,7 +1609,7 @@
                         // put them back.
                         if (_st.didSwitch) {
                             _suppressShopPulse();
-                            _returnHero(_st.returnHero || _resolveReturnHero(ctx));
+                            _returnHero(_st.returnHero || FALLBACK_HERO);
                         }
                     } catch(e) {}
                     _reset();

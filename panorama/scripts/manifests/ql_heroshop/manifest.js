@@ -19,9 +19,14 @@
 
     FR.register({
         id: "ql_heroshop",
-        enabledByDefault: false,
+        enabledByDefault: true,
+        enableKey: "HUD_SHOP_ENABLED",
         settings: [
             { key: "HUD_SHOP_ENABLED", type: "toggle", default: true },
+            { key: "ENABLE_HERO_SCENE_PANEL", type: "toggle", default: true, label: "Hero", description: "Shows your character in the shop menu." },
+            { key: "DISABLE_QUICK_BUY", type: "toggle", invert: true, default: false, label: "Quick Buy", description: "The item buying auto queue system in the shop menu." },
+            { key: "ENHANCED_QUICKBUY_COUNT", type: "slider", min: 1, max: 5, step: 1, default: 3, label: "Enhanced Count", description: "Controls how many enhanced quickbuy preview items are shown." },
+            { key: "ENABLE_QUICKBUY_CLICK_TO_NOTIFY", type: "toggle", default: false, label: "Click to Notify", description: "Notify your teammates in chat about how close you are to a quickbuy purchase." },
             { key: "SHOP_OFFSET_X", type: "slider", min: -500, max: 500, step: 5, default: 0 },
             { key: "SHOP_OFFSET_Y", type: "slider", min: -500, max: 500, step: 5, default: 0 },
             { key: "SHOP_OPACITY", type: "slider", min: 0, max: 1, step: 0.05, default: 1 },
@@ -42,13 +47,24 @@
             var _classCache = {};
             var _styleSig = "";
             var _nextSearchMs = 0;
+            var _nextMainPanelSearchMs = 0;
 
-            function _isAlive(p) { return p && typeof p.IsValid === "function" && p.IsValid(); }
+            var _isAlive = QOL.utils.IsPanelValid;
 
             function _normOffset(v, d) { var n = Math.round(Number(v)); return isFinite(n) ? n : d; }
             function _normOpacity(v, d) { var n = Number(v); return isFinite(n) && n >= 0 && n <= 1 ? n : d; }
             function _normScale(v, d) { var n = Number(v); return isFinite(n) && n >= 0.5 && n <= 1.5 ? n : d; }
-            function _isOn(cfg, k) { return Number(cfg[k]) === 1; }
+            function _isOn(cfg, k) {
+                if (!cfg) return false;
+                var v = cfg[k];
+                return v === true || Number(v) === 1;
+            }
+            function _isShopEnabled(cfg) {
+                if (!cfg) return true;
+                var v = cfg.HUD_SHOP_ENABLED;
+                if (v === undefined) return true;
+                return v === true || Number(v) === 1;
+            }
 
             function _setClass(panel, cls, on) {
                 if (!_isAlive(panel)) return;
@@ -60,9 +76,10 @@
             function _needsFeatures(cfg) {
                 var simplifyStats = _isOn(cfg, "ENABLE_SHOP_STATS") && _isOn(cfg, "ENABLE_SIMPLIFY_SHOP_STATS");
                 var recentPurchases = _isOn(cfg, "ENABLE_SHOP_RECENT_PURCHASES");
+                var shopEnabled = _isShopEnabled(cfg);
                 return simplifyStats || recentPurchases ||
                     Number(cfg.ENABLE_SIMPLIFY_SHOP) === 1 || Number(cfg.ENABLE_SIMPLIFY_ITEMS) === 1 ||
-                    Number(cfg.DISABLE_SHOP_BLUE) === 1 || !_isOn(cfg, "HUD_SHOP_ENABLED") ||
+                    Number(cfg.DISABLE_SHOP_BLUE) === 1 || !shopEnabled ||
                     _normOffset(cfg.SHOP_OFFSET_X, 0) !== 0 || _normOffset(cfg.SHOP_OFFSET_Y, 0) !== 0 ||
                     _normOpacity(cfg.SHOP_OPACITY, 1.0) !== 1.0 || _normScale(cfg.SHOP_SCALE, 1.0) !== 1.0;
             }
@@ -78,7 +95,7 @@
                     var shopOffsetY = _normOffset(cfg.SHOP_OFFSET_Y, 0);
                     var shopOpacity = _normOpacity(cfg.SHOP_OPACITY, 1.0);
                     var shopScale = _normScale(cfg.SHOP_SCALE, 1.0);
-                    var shopEnabled = _isOn(cfg, "HUD_SHOP_ENABLED");
+                    var shopEnabled = _isShopEnabled(cfg);
                     var simplifyStats = _isOn(cfg, "ENABLE_SHOP_STATS") && _isOn(cfg, "ENABLE_SIMPLIFY_SHOP_STATS");
                     var recentPurchases = _isOn(cfg, "ENABLE_SHOP_RECENT_PURCHASES");
                     var needsFeatures = _needsFeatures(cfg);
@@ -93,6 +110,7 @@
                         _shopPanel = root.FindChildTraverse ? root.FindChildTraverse(PANEL_ID) : null;
                         _mainPanel = _isAlive(_shopPanel) && _shopPanel.FindChildTraverse ? _shopPanel.FindChildTraverse("MainPanel") : null;
                         _nextSearchMs = _isAlive(_shopPanel) ? 0 : (now + PANEL_SEARCH_MS);
+                        _nextMainPanelSearchMs = _isAlive(_mainPanel) ? 0 : (now + PANEL_SEARCH_MS);
                         _classCache = {};
                         _styleSig = "";
                     }
@@ -106,8 +124,9 @@
                         _setClass(_shopPanel, "shop_recent_purchases_active", recentPurchases);
 
                         // Refresh main panel cache if needed
-                        if (!_isAlive(_mainPanel) && _shopPanel.FindChildTraverse) {
+                        if (!_isAlive(_mainPanel) && _shopPanel.FindChildTraverse && now >= _nextMainPanelSearchMs) {
                             _mainPanel = _shopPanel.FindChildTraverse("MainPanel");
+                            if (!_isAlive(_mainPanel)) _nextMainPanelSearchMs = now + PANEL_SEARCH_MS;
                         }
                         if (_isAlive(_mainPanel)) {
                             var marginLeftText = shopOffsetX + "px";
@@ -198,12 +217,29 @@
                 }
             }
 
+            function _onShopTransition() {
+                if (typeof $ !== "undefined" && typeof $.Schedule === "function") {
+                    $.Schedule(0, _tick);
+                } else {
+                    _tick();
+                }
+            }
+
             return {
                 onEnable: function() {
+                    if (ctx && ctx.events && typeof ctx.events.on === "function") {
+                        ctx.events.on("engine:shop_opened", _onShopTransition);
+                        ctx.events.on("engine:shop_closed", _onShopTransition);
+                    }
                     var S = QOL.core.Scheduler;
-                    _loop = S && S.createPollLoop ? S.createPollLoop(_tick, 0.2, "ql_heroshop") : null;
+                    _loop = S && S.createPollLoop ? S.createPollLoop(_tick, 1.0, "ql_heroshop") : null;
+                    _tick();
                 },
                 onDisable: function() {
+                    if (ctx && ctx.events && typeof ctx.events.off === "function") {
+                        ctx.events.off("engine:shop_opened", _onShopTransition);
+                        ctx.events.off("engine:shop_closed", _onShopTransition);
+                    }
                     if (_loop) { _loop.stop(); _loop = null; }
                     // Reset panels to default
                     if (_isAlive(_shopPanel)) {
@@ -223,13 +259,21 @@
                             _mainPanel.style.y = "0px";
                             _mainPanel.style.preTransformScale2d = "1.00, 1.00";
                             _mainPanel.style.uiScale = "100%";
-                            if (_mainPanel.SetHasClass) _mainPanel.SetHasClass("qol-hidden", false);
+                            var isSupposed = FR && FR.isFeatureSupposedToBeEnabled ? FR.isFeatureSupposedToBeEnabled("ql_heroshop") : false;
+                            if (_mainPanel.SetHasClass) _mainPanel.SetHasClass("qol-hidden", !isSupposed);
                             try { _mainPanel.style.opacity = "1.00"; } catch(e2) {}
                         } catch(e) {}
                     }
                     _shopPanel = null; _mainPanel = null; _classCache = {}; _styleSig = ""; _nextSearchMs = 0;
                 },
-                onSettingsChanged: function() { _styleSig = ""; }
+                onSettingsChanged: function() {
+                    _styleSig = "";
+                    var root = $.GetContextPanel ? $.GetContextPanel() : null;
+                    if (root && QOL.core && QOL.core.hud && QOL.core.hud.applyRootClasses) {
+                        QOL.core.hud.applyRootClasses(root, ctx.config.all(), Date.now ? Date.now() : (new Date()).getTime(), false);
+                    }
+                    _tick();
+                }
             };
         },
     test: function(ctx) {

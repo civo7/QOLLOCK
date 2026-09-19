@@ -13,6 +13,7 @@
 				<Panel class="mod_icon" />
 				<Label class="recentModPurchaseName" text="{s:recent_mod_name}" />
 				<Label class="recentModTierCost" text="{s:recent_tier_purchased}" />
+				<!-- QOLLOCK CUSTOM: Hero name binding for recent purchases popup -->
 				<Label class="recentModPurchaserHero" text="{s:recent_hero_name}" />
 			</Panel>
 		</snippet>
@@ -73,11 +74,17 @@
 				</Panel>
 			</Panel>
 			<Panel id="NavPanel" class="TopBottomFlow" hittest="false">
+				<!-- ========================================================= -->
+				<!-- QOLLOCK CUSTOM: Permanent hero stats display in shop      -->
+				<!-- ========================================================= -->
 				<Panel id="TestPanel">
 					<CitadelHeroStatsWeapon id="HeroStatsWeapon" class="heroStatsDisplay" bonus_type="Weapon" />
 					<CitadelHeroStatsArmor id="HeroStatsArmor" class="heroStatsDisplay" bonus_type="Armor" />
 					<CitadelHeroStatsTech id="HeroStatsTech" class="heroStatsDisplay" bonus_type="Tech" />
 				</Panel>
+				<!-- ========================================================= -->
+				<!-- END QOLLOCK CUSTOM                                        -->
+				<!-- ========================================================= -->
 				<CitadelHeroScenePanelNew id="HeroScenePanel" heroscenestyle="Shop" hittest="false" />
 				<Panel id="ShopNav">
 					<Panel class="ShopHeader">

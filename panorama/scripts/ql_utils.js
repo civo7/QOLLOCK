@@ -1,5 +1,5 @@
 // ql_utils.js — Shared utilities for QOLLOCK
-// Loaded BEFORE ql_core.js and ql_settings.js via hud.xml
+// Leaf helpers loaded before core modules and consumers in each XML context.
 (function() {
     'use strict';
     var exports = {};
@@ -7,14 +7,22 @@
     // ---- Panel Validation ----
 
     /**
-     * Returns true if the panel exists and is valid.
-     * Fixes the original bug where !panel.IsValid incorrectly returned true
-     * when .IsValid was undefined (not a function).
+     * Returns false for absent, destroyed, or invalidated panel handles.
      */
     function IsPanelValid(panel) {
-        return panel != null && typeof panel.IsValid === "function" && panel.IsValid();
+        try {
+            return !!(panel && typeof panel.IsValid === "function" && panel.IsValid());
+        } catch (e) { return false; }
     }
     exports.IsPanelValid = IsPanelValid;
+
+    // Profile labels may contain punctuation, but account IDs have at most ten digits.
+    function ParseAccountId(value) {
+        if (value === undefined || value === null) return "";
+        var digits = String(value).replace(/[^0-9]/g, "");
+        return digits.length >= 1 && digits.length <= 10 ? digits : "";
+    }
+    exports.ParseAccountId = ParseAccountId;
 
     // ---- Safe Attribute Access ----
 
@@ -50,12 +58,21 @@
 
     // ---- Panel Finding ----
 
+    function FindPanelsByClass(root, className) {
+        try {
+            if (root && className && typeof root.FindChildrenWithClassTraverse === "function") {
+                return root.FindChildrenWithClassTraverse(className) || [];
+            }
+        } catch (e) { /* Panel may disappear while resolving descendants. */ }
+        return [];
+    }
+    exports.FindPanelsByClass = FindPanelsByClass;
+
     /**
      * Find the first valid panel with the given class, traversing children.
      */
     function FindFirstPanelByClass(root, className) {
-        if (!root || typeof root.FindChildrenWithClassTraverse !== "function" || !className) return null;
-        var panels = root.FindChildrenWithClassTraverse(className) || [];
+        var panels = FindPanelsByClass(root, className);
         for (var i = 0; i < panels.length; i++) {
             if (IsPanelValid(panels[i])) return panels[i];
         }
@@ -730,13 +747,99 @@
     }
     exports.SetWashColorSafe = SetWashColorSafe;
 
+    const QOL_WASH_COLOR_PALETTE = [
+        "",
+        "#f7f4e8",
+        "#bfc7cf",
+        "#33363f",
+        "#ff3b47",
+        "#ff6f61",
+        "#ff8a2a",
+        "#ffb52e",
+        "#ffe45c",
+        "#a8f04f",
+        "#45d66b",
+        "#63f0b5",
+        "#24c6a8",
+        "#44e3ff",
+        "#64bfff",
+        "#3f78ff",
+        "#6157ff",
+        "#9b5cff",
+        "#c15cff",
+        "#ff4de3",
+        "#ff78bd",
+        "#ff5d89",
+        "#9a6743",
+        "#d9a441",
+        "#8cff4f",
+        "#7c4dff",
+        "#b8142f",
+        "#b9f4ff",
+        "#d7b2ff",
+        "#05070a"
+    ];
+    exports.QOL_WASH_COLOR_PALETTE = QOL_WASH_COLOR_PALETTE;
+
+    function NormalizePaletteColorIndex(value) {
+        var numeric = Math.round(Number(value));
+        if (!isFinite(numeric)) numeric = 0;
+        if (numeric < 0) numeric = 0;
+        if (numeric >= QOL_WASH_COLOR_PALETTE.length) numeric = 0;
+        return numeric;
+    }
+    exports.NormalizePaletteColorIndex = NormalizePaletteColorIndex;
+
+    function ResolveWashColorFromPalette(value) {
+        var index = NormalizePaletteColorIndex(value);
+        var color = QOL_WASH_COLOR_PALETTE[index] || "";
+        return color ? String(color) : "";
+    }
+    exports.ResolveWashColorFromPalette = ResolveWashColorFromPalette;
+
+    function ReadPaletteColorIndexWithPanelAttr(cfg, key, _attrName) {
+        return NormalizePaletteColorIndex(cfg && cfg[key]);
+    }
+    exports.ReadPaletteColorIndexWithPanelAttr = ReadPaletteColorIndexWithPanelAttr;
+
+    function ReadPlayerHealthbarAccentColorIndex(cfg) {
+        return ReadPaletteColorIndexWithPanelAttr(cfg, "PLAYER_HEALTHBAR_ACCENT_COLOR");
+    }
+    exports.ReadPlayerHealthbarAccentColorIndex = ReadPlayerHealthbarAccentColorIndex;
+
+    function ReadBottomBarWashColorIndex(cfg) {
+        return ReadPaletteColorIndexWithPanelAttr(cfg, "BOTTOM_BAR_WASH_COLOR");
+    }
+    exports.ReadBottomBarWashColorIndex = ReadBottomBarWashColorIndex;
+
+    function ReadKeyboardOverlayWashColorIndex(cfg) {
+        return ReadPaletteColorIndexWithPanelAttr(cfg, "KEYBOARD_OVERLAY_WASH_COLOR");
+    }
+    exports.ReadKeyboardOverlayWashColorIndex = ReadKeyboardOverlayWashColorIndex;
+
+    function ReadStaminaChargeColorIndex(cfg) {
+        return ReadPaletteColorIndexWithPanelAttr(cfg, "STAMINA_CHARGE_COLOR");
+    }
+    exports.ReadStaminaChargeColorIndex = ReadStaminaChargeColorIndex;
+
+    function ReadAmmoTextColorIndex(cfg) {
+        return ReadPaletteColorIndexWithPanelAttr(cfg, "AMMO_TEXT_COLOR");
+    }
+    exports.ReadAmmoTextColorIndex = ReadAmmoTextColorIndex;
+
+    function ReadMinimapIconColorIndex(cfg) {
+        return ReadPaletteColorIndexWithPanelAttr(cfg, "MINIMAP_ICON_COLOR");
+    }
+    exports.ReadMinimapIconColorIndex = ReadMinimapIconColorIndex;
+
     // ---- Export ----
 
     // Publish to global scope so other scripts can access it
+    if (typeof globalThis !== "undefined") {
+        globalThis.QOL_UTILS = exports;
+    }
     if (typeof window !== "undefined") {
         window.QOL_UTILS = exports;
-    } else if (typeof globalThis !== "undefined") {
-        globalThis.QOL_UTILS = exports;
     }
     // Note: ql_shared_presets.js (loaded after us) attaches QOL_UTILS
     // to the QOL bridge namespace as QOL.utils — see QOL namespace setup.

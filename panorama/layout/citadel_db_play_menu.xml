@@ -89,6 +89,9 @@
 								</Panel>
 							</Panel>
 						</Button>
+						<!-- ============================================================= -->
+						<!-- QOLLOCK CUSTOM: Practice 1v1 Versus Mode -->
+						<!-- ============================================================= -->
 						<Button id="Option_Versus" class="playoption option4 smallButton" onactivate="CitadelShowRosterConfirmPage( Testing1v1 );">
 							<Panel class="TextArea">
 								<Panel id="DescArea">
@@ -99,6 +102,7 @@
 								</Panel>
 							</Panel>
 						</Button>
+						<!-- ============================================================= -->
 					</Panel>
 					<Panel class="menu_divider" />
 				</Panel>

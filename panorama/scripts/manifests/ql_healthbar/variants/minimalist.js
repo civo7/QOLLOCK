@@ -3,14 +3,13 @@
 (function() {
     'use strict';
     var _featureId = "ql_feat_healthbar_minimalist";
-    // DEPENDS: state, utils, getCachedPanel, setCachedPanel
-    var _deps = QOL.import(["state", "utils", "getCachedPanel", "setCachedPanel"]);
-    var State = _deps.state;
-    var Utils = _deps.utils;
-    var GetCachedPanel = _deps.getCachedPanel;
-    var SetCachedPanel = _deps.setCachedPanel;
-    var IsCfgEnabled = Utils.IsCfgEnabled;
-    var IsPanelValid = Utils.IsPanelValid;
+    var Panel = (QOL.core && QOL.core.panel) ? QOL.core.panel : {};
+    var State = QOL.state || (typeof globalThis !== "undefined" && globalThis.State) || {};
+    var Utils = QOL.utils;
+    var GetCachedPanel = QOL.getCachedPanel;
+    var SetCachedPanel = QOL.setCachedPanel;
+    var IsCfgEnabled = QOL.utils.IsCfgEnabled;
+    var IsPanelValid = QOL.utils.IsPanelValid;
 
     // ── Constants ──
     var PANEL_ID_HEALTH_CONTAINER = "health_and_abilities_container";
@@ -50,7 +49,8 @@
 
         var classActive = !!(root && root.BHasClass && root.BHasClass("minimalist_healthbar_active"));
         var runtimeState = BuildPlayerHealthbarRuntimeStyleState(cfg, enabled, classActive);
-        var styleSig = runtimeState.finalOffsetX + "|" + runtimeState.finalOffsetY + "|" + runtimeState.scaleText + "|" + runtimeState.opacityText + "|" + ((enabled && classActive) ? "1" : "0");
+        var accentColor = (cfg && cfg.PLAYER_HEALTHBAR_ACCENT_COLOR !== undefined) ? cfg.PLAYER_HEALTHBAR_ACCENT_COLOR : 0;
+        var styleSig = runtimeState.finalOffsetX + "|" + runtimeState.finalOffsetY + "|" + runtimeState.scaleText + "|" + runtimeState.opacityText + "|" + ((enabled && classActive) ? "1" : "0") + "|" + accentColor;
 
         if (
             State.minimalistHealthbarOffsetApplied &&

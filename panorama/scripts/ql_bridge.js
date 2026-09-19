@@ -78,6 +78,9 @@ var QOL_BRIDGE_ATTR_TO_CHANNEL = {};
 // ── Low-level safe attribute read/write ──
 
 function QOLBridgeReadAttr(panel, attrName, fallback) {
+    if (typeof QOL_UTILS !== "undefined" && QOL_UTILS.SafeGetAttribute) {
+        return QOL_UTILS.SafeGetAttribute(panel, attrName, fallback);
+    }
     if (!panel || !panel.GetAttributeString) return fallback !== undefined ? fallback : "";
     try {
         return String(panel.GetAttributeString(attrName, fallback !== undefined ? String(fallback) : "") || "");
@@ -85,6 +88,9 @@ function QOLBridgeReadAttr(panel, attrName, fallback) {
 }
 
 function QOLBridgeWriteAttr(panel, attrName, value) {
+    if (typeof QOL_UTILS !== "undefined" && QOL_UTILS.SafeSetAttribute) {
+        return QOL_UTILS.SafeSetAttribute(panel, attrName, value);
+    }
     if (!panel || !panel.SetAttributeString) return false;
     try {
         panel.SetAttributeString(attrName, String(value != null ? value : ""));
@@ -158,6 +164,19 @@ QOL.bridge = {
     readAttr: QOLBridgeReadAttr,
     writeAttr: QOLBridgeWriteAttr
 };
+
+if (typeof QOL_UTILS === "object" && QOL_UTILS) {
+    QOL.readKeyboardOverlayWashColorIndex = QOL_UTILS.ReadKeyboardOverlayWashColorIndex;
+    QOL.readMinimapIconColorIndex = QOL_UTILS.ReadMinimapIconColorIndex;
+    QOL.readPlayerHealthbarAccentColorIndex = QOL_UTILS.ReadPlayerHealthbarAccentColorIndex;
+    QOL.readBottomBarWashColorIndex = QOL_UTILS.ReadBottomBarWashColorIndex;
+    QOL.readStaminaChargeColorIndex = QOL_UTILS.ReadStaminaChargeColorIndex;
+    QOL.readAmmoTextColorIndex = QOL_UTILS.ReadAmmoTextColorIndex;
+    QOL.readPaletteColorIndexWithPanelAttr = QOL_UTILS.ReadPaletteColorIndexWithPanelAttr;
+    QOL.normalizePaletteColorIndex = QOL_UTILS.NormalizePaletteColorIndex;
+    QOL.resolveWashColorFromPalette = QOL_UTILS.ResolveWashColorFromPalette;
+    QOL.washColorPalette = QOL_UTILS.QOL_WASH_COLOR_PALETTE;
+}
 
 // ── Self-test ──
 

@@ -1,858 +1,1057 @@
-// ql_settings_tooltips.js — Settings floating tooltip system (tooltip panel
-// management, scroll suppression, positioning, performance impact display,
-// section perf tooltip binding, created-by/description helpers)
-// Extracted from ql_settings.js, Phase 4
-(function() {
-    'use strict';
+// =============================================================================
+// QOLLOCK — panorama/scripts/ql_settings_tooltips.js
+// =============================================================================
+// Clean, robust ES6 rewrite of the settings floating tooltip subsystem.
+// OWNS: Floating tooltip panel, row hover show/hide, layout-safe positioning,
+//       perf impact calculation helpers, created-by/voice metadata helpers.
+// DOES NOT OWN: Tab layouts, declarative renderer, window shell, config persistence.
+// =============================================================================
 
-    var _deps = QOL.import(["utils"]);
-    var Utils = _deps.utils;
-    var WarnLog = (Utils && Utils.WarnLog) ? Utils.WarnLog : function(cat, msg) { $.Msg("[QOLLock][WARN][" + cat + "] " + msg); };
+(() => {
+    "use strict";
 
-    // ── Tooltip globals ──
+    const Q = (typeof globalThis !== "undefined" && globalThis.QOL)
+        ? globalThis.QOL
+        : (typeof QOL !== "undefined" ? QOL : (globalThis.QOL = {}));
 
-var SETTINGS_TOOLTIP_THEME_CLASS = "QOLSettingsTooltipThemeActive";
-var SETTINGS_TOOLTIP_PERF_CLASS_NONE = "QOLSettingsTooltipPerfNone";
-var SETTINGS_TOOLTIP_PERF_CLASS_LOW = "QOLSettingsTooltipPerfLow";
-var SETTINGS_TOOLTIP_PERF_CLASS_MEDIUM = "QOLSettingsTooltipPerfMedium";
-var SETTINGS_TOOLTIP_PERF_CLASS_HIGH = "QOLSettingsTooltipPerfHigh";
-var gSettingsRowFloatingTooltipPanel = null;
-var gSettingsRowFloatingTooltipPerfPrefixLabel = null;
-var gSettingsRowFloatingTooltipPerfValueLabel = null;
-var gSettingsRowFloatingTooltipBodyLabel = null;
-var gSettingsRowFloatingTooltipCreatorPrefixLabel = null;
-var gSettingsRowFloatingTooltipCreatorValueLabel = null;
-var gSettingsRowFloatingTooltipVoiceMetaAuthorPrefixLabel = null;
-var gSettingsRowFloatingTooltipVoiceMetaAuthorValueLabel = null;
-var gSettingsRowFloatingTooltipVoiceMetaActorPrefixLabel = null;
-var gSettingsRowFloatingTooltipVoiceMetaActorValueLabel = null;
-var gSettingsRowFloatingTooltipAnchor = null;
-var gSettingsRowFloatingTooltipLastCursorX = NaN;
-var gSettingsRowFloatingTooltipLastCursorY = NaN;
-var gSettingsRowFloatingTooltipLastX = NaN;
-var gSettingsRowFloatingTooltipLastY = NaN;
-var gSettingsRowFloatingTooltipTrackScheduled = false;
-var SETTINGS_ROW_FLOATING_TOOLTIP_TRACK_INTERVAL_SEC = 0.05;
-var SETTINGS_TOOLTIP_POSITION_DEBUG = false;
-var SETTINGS_TOOLTIP_POSITION_DEBUG_INTERVAL_MS = 200;
-var SETTINGS_TOOLTIP_SCROLL_SUPPRESS_MS = 180;
-var SETTINGS_TOOLTIP_DEFER_HIDE_SEC = 0.06;
-var gSettingsTooltipDebugNextMs = 0;
-var gSettingsTooltipLastListScrollY = NaN;
-var gSettingsTooltipLastHostScrollY = NaN;
-var gSettingsTooltipLastAnchorLocalY = NaN;
-var gSettingsTooltipSuppressUntilMs = 0;
-var gSettingsTooltipHideToken = 0;
-var gSettingsTooltipObservedListScrollY = NaN;
-var gSettingsTooltipObservedHostScrollY = NaN;
-var gSettingsTooltipLastScrollMoveMs = 0;
-var gSettingsTooltipLastSide = "";
-var gSettingsTooltipStyleToActualX = 1.0;
-var gSettingsTooltipStyleToActualY = 1.0;
-var gSettingsTooltipLastWrittenStyleX = NaN;
-var gSettingsTooltipLastWrittenStyleY = NaN;
-var gSettingsTooltipCalibrationFramesRemaining = 0;
+    // -------------------------------------------------------------------------
+    // Constants
+    // -------------------------------------------------------------------------
+    const TIER_NONE = "none";
+    const TIER_LOW = "low";
+    const TIER_MEDIUM = "medium";
+    const TIER_HIGH = "high";
 
-function ReadPanelScrollOffsetY(panel) {
-    if (!panel || !panel.IsValid || !panel.IsValid()) return 0;
-    var y = 0;
-    try {
-        var sy0 = Number(panel.scrolloffset_y);
-        if (isFinite(sy0)) return sy0;
-    } catch(e0) { WarnLog("settings", "op failed: " + (e0 && e0.message ? e0.message : String(e0 || ""))); }
-    try {
-        var sy1 = Number(panel.scrolloffsetY);
-        if (isFinite(sy1)) return sy1;
-    } catch(e1) { WarnLog("settings", "op failed: " + (e1 && e1.message ? e1.message : String(e1 || ""))); }
-    try {
-        var sy2 = Number(panel.ScrollOffsetY);
-        if (isFinite(sy2)) return sy2;
-    } catch(e2) { WarnLog("settings", "op failed: " + (e2 && e2.message ? e2.message : String(e2 || ""))); }
-    try {
-        if (typeof panel.GetScrollOffset === "function") {
-            var so = panel.GetScrollOffset();
-            if (so && so.length >= 2) {
-                var sy3 = Number(so[1]);
-                if (isFinite(sy3)) return sy3;
-            }
-        }
-    } catch(e3) { WarnLog("settings", "op failed: " + (e3 && e3.message ? e3.message : String(e3 || ""))); }
-    return y;
-}
+    const TIER_ORDER = { none: 0, low: 1, medium: 2, high: 3 };
+    const TIER_LABELS = { none: "None", low: "Low", medium: "Medium", high: "High" };
 
-function SettingsTooltipDebugLog(msg, force) {
-    if (!SETTINGS_TOOLTIP_POSITION_DEBUG) return;
-    var now = Date.now ? Date.now() : (new Date()).getTime();
-    if (!force && now < (gSettingsTooltipDebugNextMs || 0)) return;
-    gSettingsTooltipDebugNextMs = now + SETTINGS_TOOLTIP_POSITION_DEBUG_INTERVAL_MS;
-    $.Msg("[QOLLock][TooltipPos] " + String(msg || ""));
-}
+    const COLD_HOVER_DELAY_SEC = 0.08;
+    const DEFER_HIDE_SEC = 0.06;
+    const WARM_RECENT_MS = 250;
+    const SCROLL_SUPPRESS_MS = 250;
+    const TRACK_INTERVAL_SEC = 0.03;
+    const GAP = 8;
+    const EDGE_MARGIN = 8;
 
-function GetSettingsTooltipNowMs() {
-    return Date.now ? Date.now() : (new Date()).getTime();
-}
+    const THEME_CLASS = "QOLSettingsTooltipThemeActive";
 
-function SuppressSettingsTooltipForMs(durationMs, reason) {
-    var now = GetSettingsTooltipNowMs();
-    var ms = Number(durationMs);
-    if (!isFinite(ms) || ms < 0) ms = 0;
-    gSettingsTooltipSuppressUntilMs = now + ms;
-    if (reason) {
-        SettingsTooltipDebugLog("suppress ms=" + String(Math.round(ms)) + " reason=" + String(reason), true);
-    }
-}
+    // -------------------------------------------------------------------------
+    // State
+    // -------------------------------------------------------------------------
+    let _panel = null;
+    let _bodyLabel = null;
+    let _perfPrefixLabel = null;
+    let _perfValueLabel = null;
+    let _creatorPrefixLabel = null;
+    let _creatorValueLabel = null;
+    let _voiceAuthorPrefixLabel = null;
+    let _voiceAuthorValueLabel = null;
+    let _voiceActorPrefixLabel = null;
+    let _voiceActorValueLabel = null;
 
-function IsSettingsTooltipSuppressed() {
-    var until = Number(gSettingsTooltipSuppressUntilMs);
-    if (!isFinite(until) || until <= 0) return false;
-    return GetSettingsTooltipNowMs() < until;
-}
+    let _activeAnchor = null;
+    let _hideTimer = null;
+    let _showTimer = null;
+    let _trackTimer = null;
+    let _lastVisibleTime = 0;
+    let _suppressUntilMs = 0;
+    let _lastAnchorLocalY = NaN;
+    let _lastListScrollY = NaN;
+    let _lastHostScrollY = NaN;
+    let _lastThumbScrollY = NaN;
+    let _lastX = NaN;
+    let _lastY = NaN;
+    let _hoverCursorY = NaN;
 
-function UpdateSettingsTooltipScrollMotionWatch() {
-    var snap = ReadSettingsTooltipScrollSnapshot();
-    var listY = Number(snap.listY);
-    var hostY = Number(snap.hostY);
-    if (!isFinite(listY)) listY = 0;
-    if (!isFinite(hostY)) hostY = 0;
-    var moved = false;
-    if (isFinite(gSettingsTooltipObservedListScrollY) && Math.abs(listY - gSettingsTooltipObservedListScrollY) >= 1) moved = true;
-    if (isFinite(gSettingsTooltipObservedHostScrollY) && Math.abs(hostY - gSettingsTooltipObservedHostScrollY) >= 1) moved = true;
-    gSettingsTooltipObservedListScrollY = listY;
-    gSettingsTooltipObservedHostScrollY = hostY;
-    if (moved) gSettingsTooltipLastScrollMoveMs = GetSettingsTooltipNowMs();
-    return moved;
-}
+    // -------------------------------------------------------------------------
+    // Utilities
+    // -------------------------------------------------------------------------
+    const isAlive = QOL_UTILS.IsPanelValid;
 
-function IsSettingsTooltipInRecentScrollMotion() {
-    var now = GetSettingsTooltipNowMs();
-    var last = Number(gSettingsTooltipLastScrollMoveMs);
-    if (!isFinite(last) || last <= 0) return false;
-    return (now - last) < SETTINGS_TOOLTIP_SCROLL_SUPPRESS_MS;
-}
-
-function CancelSettingsRowFloatingTooltipHide() {
-    gSettingsTooltipHideToken++;
-}
-
-function HideSettingsRowFloatingTooltipDeferred(reason) {
-    CancelSettingsRowFloatingTooltipHide();
-    var token = gSettingsTooltipHideToken;
-    $.Schedule(SETTINGS_TOOLTIP_DEFER_HIDE_SEC, function() {
-        if (token !== gSettingsTooltipHideToken) return;
-        SettingsTooltipDebugLog("hide_deferred reason=" + String(reason || ""), true);
-        HideSettingsRowFloatingTooltip();
-    });
-}
-
-function IsSettingsRowFloatingTooltipVisible() {
-    var panel = gSettingsRowFloatingTooltipPanel;
-    if (!panel || !panel.IsValid || !panel.IsValid()) return false;
-    if (!panel.BHasClass) return false;
-    return !!panel.BHasClass("Visible");
-}
-
-function TickSettingsRowFloatingTooltipPosition() {
-    gSettingsRowFloatingTooltipTrackScheduled = false;
-    if (!IsSettingsRowFloatingTooltipVisible()) return;
-    var anchor = gSettingsRowFloatingTooltipAnchor;
-    if (!anchor || !anchor.IsValid || !anchor.IsValid()) {
-        HideSettingsRowFloatingTooltip();
-        return;
-    }
-    PositionSettingsRowFloatingTooltip(anchor);
-    gSettingsRowFloatingTooltipTrackScheduled = true;
-    $.Schedule(SETTINGS_ROW_FLOATING_TOOLTIP_TRACK_INTERVAL_SEC, TickSettingsRowFloatingTooltipPosition);
-}
-
-function EnsureSettingsRowFloatingTooltipTracking() {
-    if (gSettingsRowFloatingTooltipTrackScheduled) return;
-    gSettingsRowFloatingTooltipTrackScheduled = true;
-    $.Schedule(SETTINGS_ROW_FLOATING_TOOLTIP_TRACK_INTERVAL_SEC, TickSettingsRowFloatingTooltipPosition);
-}
-
-function ReadSettingsTooltipScrollSnapshot() {
-    var context = $.GetContextPanel();
-    if (!context) return { listY: 0, hostY: 0 };
-    var settingsList = null;
-    try { settingsList = context.FindChildTraverse("SettingsList"); } catch (eList) { settingsList = null; }
-    var settingsContentHost = null;
-    try { settingsContentHost = context.FindChildTraverse("SettingsContentHost"); } catch (eHost) { settingsContentHost = null; }
-    return {
-        listY: ReadPanelScrollOffsetY(settingsList),
-        hostY: ReadPanelScrollOffsetY(settingsContentHost)
+    const localize = (text, keepRaw = true) => {
+        if (!text) return "";
+        if (typeof LocalizeSettingsText === "function") return LocalizeSettingsText(text, keepRaw);
+        if (typeof $.Localize === "function" && String(text).startsWith("#")) return $.Localize(text);
+        return String(text);
     };
-}
 
-function PrimeSettingsTooltipScrollSnapshot() {
-    var snap = ReadSettingsTooltipScrollSnapshot();
-    gSettingsTooltipLastListScrollY = Number(snap.listY);
-    gSettingsTooltipLastHostScrollY = Number(snap.hostY);
-    var anchor = gSettingsRowFloatingTooltipAnchor;
-    var host = gSettingsRowFloatingTooltipPanel && gSettingsRowFloatingTooltipPanel.GetParent
-        ? gSettingsRowFloatingTooltipPanel.GetParent()
-        : null;
-    gSettingsTooltipLastAnchorLocalY = Number(GetPanelYOffsetWithinAncestor(anchor, host));
-}
+    const getHost = () => {
+        const ctx = $.GetContextPanel ? $.GetContextPanel() : null;
+        if (!ctx) return null;
+        const win = ctx.FindChildTraverse ? ctx.FindChildTraverse("SettingsWindow") : null;
+        return (win && isAlive(win.GetParent?.())) ? win.GetParent() : ctx;
+    };
 
-function DidSettingsTooltipScrollChange() {
-    var snap = ReadSettingsTooltipScrollSnapshot();
-    var listY = Number(snap.listY);
-    var hostY = Number(snap.hostY);
-    if (!isFinite(listY)) listY = 0;
-    if (!isFinite(hostY)) hostY = 0;
-    var hasBaseline = isFinite(gSettingsTooltipLastListScrollY) && isFinite(gSettingsTooltipLastHostScrollY);
-    var changed = false;
-    if (hasBaseline) {
-        changed =
-            Math.abs(listY - gSettingsTooltipLastListScrollY) >= 1 ||
-            Math.abs(hostY - gSettingsTooltipLastHostScrollY) >= 1;
-    }
-    gSettingsTooltipLastListScrollY = listY;
-    gSettingsTooltipLastHostScrollY = hostY;
-    return changed;
-}
-
-function EnsureSettingsRowFloatingTooltipPanel() {
-    var context = $.GetContextPanel();
-    if (!context) return null;
-
-    var settingsWin = null;
-    try { settingsWin = context.FindChildTraverse("SettingsWindow"); } catch (e0) { settingsWin = null; }
-    var host = (settingsWin && settingsWin.GetParent) ? settingsWin.GetParent() : context;
-    if (!host) host = context;
-
-    if (
-        gSettingsRowFloatingTooltipPanel &&
-        (!gSettingsRowFloatingTooltipPanel.IsValid || !gSettingsRowFloatingTooltipPanel.IsValid() || gSettingsRowFloatingTooltipPanel.GetParent() !== host)
-    ) {
-        try { gSettingsRowFloatingTooltipPanel.DeleteAsync(0); } catch(e1) { WarnLog("settings", "op failed: " + (e1 && e1.message ? e1.message : String(e1 || ""))); }
-        gSettingsRowFloatingTooltipPanel = null;
-        gSettingsRowFloatingTooltipPerfPrefixLabel = null;
-        gSettingsRowFloatingTooltipPerfValueLabel = null;
-        gSettingsRowFloatingTooltipBodyLabel = null;
-        gSettingsRowFloatingTooltipCreatorPrefixLabel = null;
-        gSettingsRowFloatingTooltipCreatorValueLabel = null;
-        gSettingsRowFloatingTooltipVoiceMetaAuthorPrefixLabel = null;
-        gSettingsRowFloatingTooltipVoiceMetaAuthorValueLabel = null;
-        gSettingsRowFloatingTooltipVoiceMetaActorPrefixLabel = null;
-        gSettingsRowFloatingTooltipVoiceMetaActorValueLabel = null;
-    }
-
-    if (!gSettingsRowFloatingTooltipPanel) {
-        gSettingsRowFloatingTooltipPanel = $.CreatePanel("Panel", host, "QOLSettingsRowFloatingTooltip");
-        gSettingsRowFloatingTooltipPanel.AddClass("QOLCustomRowTooltip");
-        gSettingsRowFloatingTooltipPanel.hittest = false;
-        gSettingsRowFloatingTooltipPanel.hittestchildren = false;
-
-        gSettingsRowFloatingTooltipBodyLabel = $.CreatePanel("Label", gSettingsRowFloatingTooltipPanel, "QOLSettingsRowFloatingTooltipText");
-        gSettingsRowFloatingTooltipBodyLabel.AddClass("QOLCustomRowTooltipText");
-
-        var perfRow = $.CreatePanel("Panel", gSettingsRowFloatingTooltipPanel, "QOLSettingsRowFloatingTooltipPerfRow");
-        perfRow.AddClass("QOLCustomRowTooltipPerfRow");
-
-        gSettingsRowFloatingTooltipPerfPrefixLabel = $.CreatePanel("Label", perfRow, "QOLSettingsRowFloatingTooltipPerfPrefix");
-        gSettingsRowFloatingTooltipPerfPrefixLabel.AddClass("QOLCustomRowTooltipPerfPrefix");
-        gSettingsRowFloatingTooltipPerfPrefixLabel.text = LocalizeSettingsText("FPS Impact:", true);
-
-        gSettingsRowFloatingTooltipPerfValueLabel = $.CreatePanel("Label", perfRow, "QOLSettingsRowFloatingTooltipPerfValue");
-        gSettingsRowFloatingTooltipPerfValueLabel.AddClass("QOLCustomRowTooltipPerfValue");
-
-        var creatorRow = $.CreatePanel("Panel", gSettingsRowFloatingTooltipPanel, "QOLSettingsRowFloatingTooltipCreatorRow");
-        creatorRow.AddClass("QOLCustomRowTooltipCreatorRow");
-
-        gSettingsRowFloatingTooltipCreatorPrefixLabel = $.CreatePanel("Label", creatorRow, "QOLSettingsRowFloatingTooltipCreatorPrefix");
-        gSettingsRowFloatingTooltipCreatorPrefixLabel.AddClass("QOLCustomRowTooltipCreatorPrefix");
-        gSettingsRowFloatingTooltipCreatorPrefixLabel.text = LocalizeSettingsText("Created By:", true);
-
-        gSettingsRowFloatingTooltipCreatorValueLabel = $.CreatePanel("Label", creatorRow, "QOLSettingsRowFloatingTooltipCreatorValue");
-        gSettingsRowFloatingTooltipCreatorValueLabel.AddClass("QOLCustomRowTooltipCreatorValue");
-
-        var voiceMetaAuthorRow = $.CreatePanel("Panel", gSettingsRowFloatingTooltipPanel, "QOLSettingsRowFloatingTooltipVoiceMetaAuthorRow");
-        voiceMetaAuthorRow.AddClass("QOLCustomRowTooltipVoiceMetaRow");
-
-        gSettingsRowFloatingTooltipVoiceMetaAuthorPrefixLabel = $.CreatePanel("Label", voiceMetaAuthorRow, "QOLSettingsRowFloatingTooltipVoiceMetaAuthorPrefix");
-        gSettingsRowFloatingTooltipVoiceMetaAuthorPrefixLabel.AddClass("QOLCustomRowTooltipVoiceMetaPrefix");
-        gSettingsRowFloatingTooltipVoiceMetaAuthorPrefixLabel.text = LocalizeSettingsText("Author:", true);
-
-        gSettingsRowFloatingTooltipVoiceMetaAuthorValueLabel = $.CreatePanel("Label", voiceMetaAuthorRow, "QOLSettingsRowFloatingTooltipVoiceMetaAuthorValue");
-        gSettingsRowFloatingTooltipVoiceMetaAuthorValueLabel.AddClass("QOLCustomRowTooltipVoiceMetaAuthorValue");
-
-        var voiceMetaActorRow = $.CreatePanel("Panel", gSettingsRowFloatingTooltipPanel, "QOLSettingsRowFloatingTooltipVoiceMetaActorRow");
-        voiceMetaActorRow.AddClass("QOLCustomRowTooltipVoiceMetaRow");
-
-        gSettingsRowFloatingTooltipVoiceMetaActorPrefixLabel = $.CreatePanel("Label", voiceMetaActorRow, "QOLSettingsRowFloatingTooltipVoiceMetaActorPrefix");
-        gSettingsRowFloatingTooltipVoiceMetaActorPrefixLabel.AddClass("QOLCustomRowTooltipVoiceMetaPrefix");
-        gSettingsRowFloatingTooltipVoiceMetaActorPrefixLabel.text = LocalizeSettingsText("Voice Actor:", true);
-
-        gSettingsRowFloatingTooltipVoiceMetaActorValueLabel = $.CreatePanel("Label", voiceMetaActorRow, "QOLSettingsRowFloatingTooltipVoiceMetaActorValue");
-        gSettingsRowFloatingTooltipVoiceMetaActorValueLabel.AddClass("QOLCustomRowTooltipVoiceMetaActorValue");
-    }
-    return gSettingsRowFloatingTooltipPanel;
-}
-
-function ApplySettingsRowFloatingTooltipTier(perfTier) {
-    var panel = gSettingsRowFloatingTooltipPanel;
-    if (!panel || !panel.IsValid || !panel.IsValid()) return;
-    var normalizedTier = NormalizePerfImpactTier(perfTier);
-    panel.SetHasClass("PerfNone", normalizedTier === PERF_IMPACT_TIER_NONE);
-    panel.SetHasClass("PerfLow", normalizedTier === PERF_IMPACT_TIER_LOW);
-    panel.SetHasClass("PerfMedium", normalizedTier === PERF_IMPACT_TIER_MEDIUM);
-    panel.SetHasClass("PerfHigh", normalizedTier === PERF_IMPACT_TIER_HIGH);
-}
-
-function NormalizeSettingsTooltipScaleFactor(value) {
-    var n = Number(value);
-    if (!isFinite(n) || n <= 0) return 1.0;
-    if (n < 0.05) return 0.05;
-    if (n > 20.0) return 20.0;
-    return n;
-}
-
-function GetSettingsTooltipHostAxisScale(actualSize, desiredSize) {
-    var actual = Number(actualSize);
-    if (!isFinite(actual) || actual <= 0) return 1.0;
-    var desired = Number(desiredSize);
-    if (!isFinite(desired) || desired <= 0) return 1.0;
-    return NormalizeSettingsTooltipScaleFactor(actual / desired);
-}
-
-function PositionSettingsRowFloatingTooltip(anchorPanel) {
-    var panel = gSettingsRowFloatingTooltipPanel;
-    if (!panel || !panel.IsValid || !panel.IsValid()) return;
-    if (!anchorPanel || !anchorPanel.IsValid || !anchorPanel.IsValid()) return;
-
-    var host = panel.GetParent ? panel.GetParent() : null;
-    if (!host || !host.IsValid || !host.IsValid()) return;
-
-    var anchorX = Number(GetPanelXOffsetWithinAncestor(anchorPanel, host));
-    var anchorY = Number(GetPanelYOffsetWithinAncestor(anchorPanel, host));
-    var anchorWidth = Number(anchorPanel.actuallayoutwidth);
-    var anchorHeight = Number(anchorPanel.actuallayoutheight);
-    var panelWidth = Number(panel.actuallayoutwidth);
-    var panelHeight = Number(panel.actuallayoutheight);
-    var hostWidth = Number(host.actuallayoutwidth);
-    var hostHeight = Number(host.actuallayoutheight);
-    var hostDesiredWidth = Number(host.desiredlayoutwidth);
-    var hostDesiredHeight = Number(host.desiredlayoutheight);
-
-    if (!isFinite(anchorX) || !isFinite(anchorY) || !isFinite(anchorWidth) || !isFinite(anchorHeight) ||
-        !isFinite(panelWidth) || panelWidth <= 0 || !isFinite(panelHeight) || panelHeight <= 0 ||
-        !isFinite(hostWidth) || hostWidth <= 0 || !isFinite(hostHeight) || hostHeight <= 0) {
-        $.Schedule(0.0, function() {
-            if (!gSettingsRowFloatingTooltipAnchor || gSettingsRowFloatingTooltipAnchor !== anchorPanel) return;
-            PositionSettingsRowFloatingTooltip(anchorPanel);
-        });
-        return;
-    }
-
-    var edgeMargin = 8;
-    var gap = 4;
-    var attachNudgeLeft = 12;
-    var xMin = edgeMargin;
-    var xMax = Math.max(xMin, Math.round(hostWidth - panelWidth - edgeMargin));
-    var xRight = Math.round(anchorX + anchorWidth + gap - attachNudgeLeft);
-    var xLeft = Math.round(anchorX - panelWidth - gap);
-
-    var side = "right";
-    var x = xRight;
-    if (xRight + panelWidth > hostWidth - edgeMargin && xLeft >= xMin) {
-        side = "left";
-        x = xLeft;
-    }
-    x = Math.max(xMin, Math.min(xMax, x));
-
-    var yMin = edgeMargin;
-    var yMax = Math.max(yMin, Math.round(hostHeight - panelHeight - edgeMargin));
-    var y = Math.round(anchorY + (anchorHeight * 0.5) - (panelHeight * 0.5));
-    y = Math.max(yMin, Math.min(yMax, y));
-
-    // Stabilize tooltip placement: if target anchor position is unchanged, skip
-    // re-writing style values to avoid visible oscillation on some rows.
-    if (
-        isFinite(gSettingsRowFloatingTooltipLastX) &&
-        isFinite(gSettingsRowFloatingTooltipLastY) &&
-        gSettingsTooltipLastSide === side &&
-        Math.abs(Number(gSettingsRowFloatingTooltipLastX) - Number(x)) < 0.5 &&
-        Math.abs(Number(gSettingsRowFloatingTooltipLastY) - Number(y)) < 0.5
-    ) {
-        return;
-    }
-
-    var hostScaleX = GetSettingsTooltipHostAxisScale(hostWidth, hostDesiredWidth);
-    var hostScaleY = GetSettingsTooltipHostAxisScale(hostHeight, hostDesiredHeight);
-    var styleToActualX = NormalizeSettingsTooltipScaleFactor(gSettingsTooltipStyleToActualX);
-    var styleToActualY = NormalizeSettingsTooltipScaleFactor(gSettingsTooltipStyleToActualY);
-
-    var styleX = Number(x) / (hostScaleX * styleToActualX);
-    var styleY = Number(y) / (hostScaleY * styleToActualY);
-    if (!isFinite(styleX) || !isFinite(styleY)) {
-        styleX = Number(x);
-        styleY = Number(y);
-    }
-
-    panel.style.x = String(Math.round(styleX)) + "px";
-    panel.style.y = String(Math.round(styleY)) + "px";
-    gSettingsTooltipLastWrittenStyleX = styleX;
-    gSettingsTooltipLastWrittenStyleY = styleY;
-
-    if ((Number(gSettingsTooltipCalibrationFramesRemaining) || 0) > 0) {
-        var appliedActualX = Number(GetPanelXOffsetWithinAncestor(panel, host));
-        var appliedActualY = Number(GetPanelYOffsetWithinAncestor(panel, host));
-        if (isFinite(appliedActualX) && Math.abs(styleX) >= 8) {
-            var measuredX = appliedActualX / (styleX * hostScaleX);
-            if (isFinite(measuredX) && measuredX > 0.05 && measuredX < 20.0) {
-                gSettingsTooltipStyleToActualX = (gSettingsTooltipStyleToActualX * 0.7) + (measuredX * 0.3);
+    const captureCursorY = () => {
+        try {
+            const gameUi = (typeof GameUI !== "undefined") ? GameUI : (typeof globalThis !== "undefined" ? globalThis.GameUI : null);
+            if (gameUi && typeof gameUi.GetCursorPosition === "function") {
+                const c = gameUi.GetCursorPosition();
+                if (c && typeof c.y === "number" && isFinite(c.y) && c.y > 0) {
+                    return c.y;
+                }
             }
+        } catch (_) {}
+        return NaN;
+    };
+
+    const readCursorY = () => {
+        if (isFinite(_hoverCursorY) && _hoverCursorY > 0) {
+            return _hoverCursorY;
         }
-        if (isFinite(appliedActualY) && Math.abs(styleY) >= 8) {
-            var measuredY = appliedActualY / (styleY * hostScaleY);
-            if (isFinite(measuredY) && measuredY > 0.05 && measuredY < 20.0) {
-                gSettingsTooltipStyleToActualY = (gSettingsTooltipStyleToActualY * 0.7) + (measuredY * 0.3);
+        return captureCursorY();
+    };
+
+    const readPanelScrollOffsetY = (panel) => {
+        if (!isAlive(panel)) return 0;
+        try {
+            const sy0 = Number(panel.scrolloffset_y);
+            if (isFinite(sy0) && sy0 !== 0) return sy0;
+        } catch (_) {}
+        try {
+            const syA = Number(panel.actualscrolloffset_y);
+            if (isFinite(syA) && syA !== 0) return syA;
+        } catch (_) {}
+        try {
+            const sy1 = Number(panel.scrolloffsetY);
+            if (isFinite(sy1) && sy1 !== 0) return sy1;
+        } catch (_) {}
+        try {
+            const sy2 = Number(panel.ScrollOffsetY);
+            if (isFinite(sy2) && sy2 !== 0) return sy2;
+        } catch (_) {}
+        try {
+            if (typeof panel.GetScrollOffset === "function") {
+                const so = panel.GetScrollOffset();
+                if (so && so.length >= 2) {
+                    const sy3 = Number(so[1]);
+                    if (isFinite(sy3) && sy3 !== 0) return sy3;
+                }
             }
+        } catch (_) {}
+        return 0;
+    };
+
+    const getListScrollOffsetY = (list) => {
+        if (!isAlive(list)) return 0;
+        const direct = readPanelScrollOffsetY(list);
+        if (isFinite(direct) && direct > 0) return direct;
+
+        try {
+            let thumb = null;
+            const scrollBar = list.FindChildTraverse ? list.FindChildTraverse("VerticalScrollBar") : null;
+            if (scrollBar && scrollBar.FindChildTraverse) {
+                thumb = scrollBar.FindChildTraverse("ScrollThumb");
+            }
+            if (!thumb && list.FindChildTraverse) {
+                thumb = list.FindChildTraverse("ScrollThumb");
+            }
+            if (!thumb && list.FindChildrenWithClassTraverse) {
+                const thumbs = list.FindChildrenWithClassTraverse("ScrollThumb");
+                if (thumbs && thumbs.length > 0) thumb = thumbs[0];
+            }
+
+            if (isAlive(thumb)) {
+                let sty = Number(thumb.actualyoffset);
+                if (!isFinite(sty)) sty = Number(thumb.scrolloffset_y);
+                if (!isFinite(sty)) sty = Number(thumb.actualscrolloffset_y);
+                if (!isFinite(sty) && typeof globalThis.GetPanelYOffsetWithinAncestor === "function") {
+                    sty = Number(globalThis.GetPanelYOffsetWithinAncestor(thumb, scrollBar || list));
+                }
+                const barH = Number(scrollBar?.actuallayoutheight) || Number(list.actuallayoutheight) || 500;
+                const thumbH = Number(thumb.actuallayoutheight) || 40;
+                const track = Math.max(1, barH - thumbH);
+                if (isFinite(sty) && sty > 0 && track > 0) {
+                    let contentH = 0;
+                    if (typeof list.Children === "function") {
+                        const kids = list.Children();
+                        for (let i = 0; i < kids.length; i++) {
+                            const k = kids[i];
+                            if (k && k.id !== "VerticalScrollBar" && k.id !== "HorizontalScrollBar") {
+                                const kh = Number(k.actuallayoutheight);
+                                if (isFinite(kh) && kh > contentH) contentH = kh;
+                            }
+                        }
+                    }
+                    const listH = Number(list.actuallayoutheight) || 500;
+                    if (contentH > listH) {
+                        const ratio = Math.max(0, Math.min(1, sty / track));
+                        return ratio * (contentH - listH);
+                    }
+                }
+            }
+        } catch (_) {}
+        return 0;
+    };
+
+    const getAncestorOffset = (panel, ancestor, axis) => {
+        if (!isAlive(panel) || !isAlive(ancestor)) return 0;
+        if (axis === "x" && typeof globalThis.GetPanelXOffsetWithinAncestor === "function") {
+            return Number(globalThis.GetPanelXOffsetWithinAncestor(panel, ancestor)) || 0;
         }
-        gSettingsTooltipCalibrationFramesRemaining = Math.max(0, (Number(gSettingsTooltipCalibrationFramesRemaining) || 0) - 1);
-    }
-    gSettingsRowFloatingTooltipLastX = x;
-    gSettingsRowFloatingTooltipLastY = y;
-    gSettingsTooltipLastSide = side;
-
-    var anchorId = "";
-    try { anchorId = String(anchorPanel.id || ""); } catch (eAid) { anchorId = ""; }
-    SettingsTooltipDebugLog(
-        "pos_simple anchor=" + (anchorId || "-") +
-        " side=" + side +
-        " x=" + String(Math.round(x)) +
-        " y=" + String(Math.round(y)) +
-        " style=" + String(Math.round(styleX)) + "," + String(Math.round(styleY)) +
-        " host=" + String(Math.round(hostWidth)) + "x" + String(Math.round(hostHeight)) +
-        " hScale=" + hostScaleX.toFixed(3) + "," + hostScaleY.toFixed(3) +
-        " s2a=" + gSettingsTooltipStyleToActualX.toFixed(3) + "," + gSettingsTooltipStyleToActualY.toFixed(3)
-    );
-}
-
-function TryGetCursorScreenPosition() {
-    // GameUI.GetCursorPosition confirmed absent.
-    return null;
-}
-
-function ShowSettingsRowFloatingTooltip(anchorPanel, perfText, bodyText, perfTier, createdBy, options) {
-    if (!anchorPanel || !anchorPanel.IsValid || !anchorPanel.IsValid()) return;
-    if (!HasMeaningfulFloatingTooltipContent(perfTier, bodyText, createdBy, options)) {
-        HideSettingsRowFloatingTooltip();
-        return;
-    }
-    CancelSettingsRowFloatingTooltipHide();
-    var bodyLine = LocalizeSettingsText(String(bodyText || ""), true);
-    var createdByName = String(createdBy || "").trim();
-    var tierKey = NormalizePerfImpactTier(perfTier);
-    var voiceMetaInfo = options && options.voiceMeta ? options.voiceMeta : null;
-    var voiceMetaAuthor = String(voiceMetaInfo && voiceMetaInfo.author ? voiceMetaInfo.author : "").trim();
-    var voiceMetaActor = String(voiceMetaInfo && voiceMetaInfo.voiceActor ? voiceMetaInfo.voiceActor : "").trim();
-    var useVoiceMetaMode = (voiceMetaAuthor.length > 0 || voiceMetaActor.length > 0);
-
-    var panel = EnsureSettingsRowFloatingTooltipPanel();
-    if (!panel || !panel.IsValid || !panel.IsValid()) return;
-    if (
-        !gSettingsRowFloatingTooltipPerfPrefixLabel ||
-        !gSettingsRowFloatingTooltipPerfValueLabel ||
-        !gSettingsRowFloatingTooltipBodyLabel ||
-        !gSettingsRowFloatingTooltipCreatorPrefixLabel ||
-        !gSettingsRowFloatingTooltipCreatorValueLabel ||
-        !gSettingsRowFloatingTooltipVoiceMetaAuthorPrefixLabel ||
-        !gSettingsRowFloatingTooltipVoiceMetaAuthorValueLabel ||
-        !gSettingsRowFloatingTooltipVoiceMetaActorPrefixLabel ||
-        !gSettingsRowFloatingTooltipVoiceMetaActorValueLabel
-    ) return;
-
-    var previousAnchor = gSettingsRowFloatingTooltipAnchor;
-    gSettingsRowFloatingTooltipAnchor = anchorPanel;
-    gSettingsTooltipCalibrationFramesRemaining = 2;
-    gSettingsRowFloatingTooltipPerfPrefixLabel.text = LocalizeSettingsText("FPS Impact:", true);
-    gSettingsRowFloatingTooltipPerfValueLabel.text = GetPerfImpactDisplayLabel(tierKey);
-    gSettingsRowFloatingTooltipBodyLabel.text = bodyLine;
-    gSettingsRowFloatingTooltipCreatorPrefixLabel.text = LocalizeSettingsText("Created By:", true);
-    gSettingsRowFloatingTooltipCreatorValueLabel.text = createdByName;
-    gSettingsRowFloatingTooltipVoiceMetaAuthorPrefixLabel.text = LocalizeSettingsText("Author:", true);
-    gSettingsRowFloatingTooltipVoiceMetaAuthorValueLabel.text = voiceMetaAuthor;
-    gSettingsRowFloatingTooltipVoiceMetaActorPrefixLabel.text = LocalizeSettingsText("Voice Actor:", true);
-    gSettingsRowFloatingTooltipVoiceMetaActorValueLabel.text = voiceMetaActor;
-    panel.SetHasClass("NoBody", bodyLine.length <= 0);
-    panel.SetHasClass("NoPerf", tierKey === PERF_IMPACT_TIER_NONE);
-    panel.SetHasClass("NoCreator", (createdByName.length <= 0) || useVoiceMetaMode);
-    panel.SetHasClass("VoiceMetaMode", useVoiceMetaMode);
-    panel.SetHasClass("NoVoiceMeta", !useVoiceMetaMode);
-    panel.SetHasClass("NoVoiceMetaAuthor", voiceMetaAuthor.length <= 0);
-    panel.SetHasClass("NoVoiceMetaActor", voiceMetaActor.length <= 0);
-    panel.SetHasClass("FooterSaveWarningTooltip", !!(options && options.footerSaveWarning));
-    ApplySettingsRowFloatingTooltipTier(tierKey);
-
-    var wasVisible = !!(panel.BHasClass && panel.BHasClass("Visible"));
-    var cursorNow = TryGetCursorScreenPosition();
-
-    panel.SetHasClass("Visible", true);
-    PositionSettingsRowFloatingTooltip(anchorPanel);
-    $.Schedule(0.0, function() {
-        if (!gSettingsRowFloatingTooltipAnchor || gSettingsRowFloatingTooltipAnchor !== anchorPanel) return;
-        PositionSettingsRowFloatingTooltip(anchorPanel);
-    });
-    if (cursorNow) {
-        gSettingsRowFloatingTooltipLastCursorX = cursorNow.x;
-        gSettingsRowFloatingTooltipLastCursorY = cursorNow.y;
-    }
-    var anchorId = "";
-    try { anchorId = String(anchorPanel.id || ""); } catch (eAid) { anchorId = ""; }
-    var sameAnchorAsLast = !!(previousAnchor && previousAnchor === anchorPanel);
-    SettingsTooltipDebugLog(
-        "show anchor=" + (anchorId || "-") +
-        " sameAnchor=" + (sameAnchorAsLast ? "1" : "0") +
-        " wasVisible=" + (wasVisible ? "1" : "0") +
-        " sameCursor=" + ((cursorNow && isFinite(gSettingsRowFloatingTooltipLastCursorX) && isFinite(gSettingsRowFloatingTooltipLastCursorY)) ? "1" : "0"),
-        true
-    );
-    PrimeSettingsTooltipScrollSnapshot();
-    EnsureSettingsRowFloatingTooltipTracking();
-}
-
-function HideSettingsRowFloatingTooltip() {
-    CancelSettingsRowFloatingTooltipHide();
-    gSettingsRowFloatingTooltipAnchor = null;
-    if (!gSettingsRowFloatingTooltipPanel || !gSettingsRowFloatingTooltipPanel.IsValid || !gSettingsRowFloatingTooltipPanel.IsValid()) return;
-    gSettingsRowFloatingTooltipPanel.SetHasClass("Visible", false);
-    gSettingsRowFloatingTooltipTrackScheduled = false;
-    gSettingsTooltipLastListScrollY = NaN;
-    gSettingsTooltipLastHostScrollY = NaN;
-    gSettingsTooltipLastAnchorLocalY = NaN;
-    SettingsTooltipDebugLog("hide", true);
-}
-
-function SetSettingsTooltipThemeActive(isActive) {
-    var root = FindRootPanel();
-    if (root && root.SetHasClass) {
-        root.SetHasClass(SETTINGS_TOOLTIP_THEME_CLASS, !!isActive);
-        var tooltipManager = null;
-        try { tooltipManager = root.FindChildTraverse ? root.FindChildTraverse("TooltipManager") : null; } catch (e0) { tooltipManager = null; }
-        if (tooltipManager && tooltipManager.SetHasClass) {
-            tooltipManager.SetHasClass(SETTINGS_TOOLTIP_THEME_CLASS, !!isActive);
+        if (axis === "y" && typeof globalThis.GetPanelYOffsetWithinAncestor === "function") {
+            return Number(globalThis.GetPanelYOffsetWithinAncestor(panel, ancestor)) || 0;
         }
-    }
-}
+        return 0;
+    };
 
-function SetSettingsTooltipPerfTierClass(perfTier) {
-    var tier = NormalizePerfImpactTier(perfTier);
-    var isNone = tier === PERF_IMPACT_TIER_NONE;
-    var isLow = tier === PERF_IMPACT_TIER_LOW;
-    var isMedium = tier === PERF_IMPACT_TIER_MEDIUM;
-    var isHigh = tier === PERF_IMPACT_TIER_HIGH;
-    var root = FindRootPanel();
-    if (root && root.SetHasClass) {
-        root.SetHasClass(SETTINGS_TOOLTIP_PERF_CLASS_NONE, isNone);
-        root.SetHasClass(SETTINGS_TOOLTIP_PERF_CLASS_LOW, isLow);
-        root.SetHasClass(SETTINGS_TOOLTIP_PERF_CLASS_MEDIUM, isMedium);
-        root.SetHasClass(SETTINGS_TOOLTIP_PERF_CLASS_HIGH, isHigh);
-    }
-    if (root && root.FindChildTraverse) {
-        var tooltipManager = null;
-        try { tooltipManager = root.FindChildTraverse("TooltipManager"); } catch (e0) { tooltipManager = null; }
-        if (tooltipManager && tooltipManager.SetHasClass) {
-            tooltipManager.SetHasClass(SETTINGS_TOOLTIP_PERF_CLASS_NONE, isNone);
-            tooltipManager.SetHasClass(SETTINGS_TOOLTIP_PERF_CLASS_LOW, isLow);
-            tooltipManager.SetHasClass(SETTINGS_TOOLTIP_PERF_CLASS_MEDIUM, isMedium);
-            tooltipManager.SetHasClass(SETTINGS_TOOLTIP_PERF_CLASS_HIGH, isHigh);
+    const isDescendantOf = (panel, ancestor) => {
+        if (!isAlive(panel) || !isAlive(ancestor)) return false;
+        let cur = panel;
+        let guard = 0;
+        while (cur && guard < 64) {
+            if (cur === ancestor) return true;
+            if (typeof cur.GetParent !== "function") break;
+            cur = cur.GetParent();
+            guard++;
         }
-    }
-}
+        return false;
+    };
 
-function ShowSettingsTextTooltip(anchorPanel, text, perfTier) {
-    if (!anchorPanel || !text) return;
-    SetSettingsTooltipPerfTierClass(perfTier || PERF_IMPACT_TIER_NONE);
-    $.DispatchEvent("UIShowTextTooltip", anchorPanel, text);
-}
+    const getVisualAnchorY = (anchor, list, host) => {
+        if (!isAlive(anchor)) return NaN;
 
-function HideSettingsTextTooltip() {
-    SetSettingsTooltipPerfTierClass(PERF_IMPACT_TIER_NONE);
-    $.DispatchEvent("UIHideTextTooltip");
-}
+        try {
+            if (typeof anchor.GetPositionWithinAncestor === "function" && isAlive(host)) {
+                const p = anchor.GetPositionWithinAncestor(host);
+                if (p && typeof p.y === "number" && isFinite(p.y)) return p.y;
+                if (Array.isArray(p) && isFinite(p[1])) return p[1];
+            }
+        } catch (_) {}
+        try {
+            if (typeof anchor.GetPositionWithinWindow === "function") {
+                const p = anchor.GetPositionWithinWindow();
+                if (p && typeof p.y === "number" && isFinite(p.y)) return p.y;
+                if (Array.isArray(p) && isFinite(p[1])) return p[1];
+            }
+        } catch (_) {}
 
-function HasMeaningfulFloatingTooltipContent(perfTier, bodyText, createdBy, options) {
-    var tierKey = NormalizePerfImpactTier(perfTier);
-    var hasPerf = tierKey !== PERF_IMPACT_TIER_NONE;
-    var hasBody = String(bodyText || "").trim().length > 0;
-    var hasCreator = String(createdBy || "").trim().length > 0;
-    var voiceMeta = options && options.voiceMeta ? options.voiceMeta : null;
-    var hasVoiceMeta =
-        String(voiceMeta && voiceMeta.author ? voiceMeta.author : "").trim().length > 0 ||
-        String(voiceMeta && voiceMeta.voiceActor ? voiceMeta.voiceActor : "").trim().length > 0;
-    return hasPerf || hasBody || hasCreator || hasVoiceMeta;
-}
-
-function NormalizePerfImpactTier(value) {
-    var key = String(value || "").toLowerCase();
-    if (PERF_IMPACT_TIER_ORDER.hasOwnProperty(key)) return key;
-    return PERF_IMPACT_TIER_NONE;
-}
-
-function MaxPerfImpactTier(a, b) {
-    var aa = NormalizePerfImpactTier(a);
-    var bb = NormalizePerfImpactTier(b);
-    return (PERF_IMPACT_TIER_ORDER[bb] > PERF_IMPACT_TIER_ORDER[aa]) ? bb : aa;
-}
-
-function GetEstimatedPerfImpactTier(configId, type, options) {
-    var tier = PERF_IMPACT_TIER_NONE;
-    var key = String(configId || "");
-    if (key && SETTING_PERF_IMPACT_TIERS.hasOwnProperty(key)) {
-        tier = MaxPerfImpactTier(tier, SETTING_PERF_IMPACT_TIERS[key]);
-    }
-    if (Array.isArray(options)) {
-        for (var i = 0; i < options.length; i++) {
-            var opt = options[i];
-            if (!opt || !opt.key) continue;
-            var optKey = String(opt.key || "");
-            if (!optKey || !SETTING_PERF_IMPACT_TIERS.hasOwnProperty(optKey)) continue;
-            tier = MaxPerfImpactTier(tier, SETTING_PERF_IMPACT_TIERS[optKey]);
+        const cursorY = readCursorY();
+        if (_activeAnchor === anchor && isFinite(cursorY) && cursorY > 0) {
+            const anchorH = Number(anchor.actuallayoutheight) || 40;
+            return cursorY - (anchorH * 0.5);
         }
-    }
-    if (type === "runtime_slider" || type === "runtime_buttongroup") {
-        tier = MaxPerfImpactTier(tier, PERF_IMPACT_TIER_NONE);
-    }
-    return tier;
-}
 
-function GetPerfImpactWeightForTier(tier) {
-    var normalized = NormalizePerfImpactTier(tier);
-    if (!PERF_IMPACT_TIER_ORDER.hasOwnProperty(normalized)) return 0;
-    return Number(PERF_IMPACT_TIER_ORDER[normalized]) || 0;
-}
+        const layoutY = getAncestorOffset(anchor, host, "y");
+        if (!isFinite(layoutY)) return NaN;
 
-function IsPerfImpactConfigKeyEnabled(configKey) {
-    var key = String(configKey || "");
-    if (!key || !MOD_CONFIG || !MOD_CONFIG.hasOwnProperty(key)) return false;
-    var value = MOD_CONFIG[key];
-    if (value === null || value === undefined) return false;
-    if (typeof value === "boolean") return value === true;
-    if (typeof value === "number") return Number(value) > 0;
-    if (typeof value === "string") {
-        var normalized = String(value).trim().toLowerCase();
-        if (!normalized) return false;
-        if (normalized === "0" || normalized === "false" || normalized === "off" || normalized === "none") return false;
+        if (isAlive(list) && isDescendantOf(anchor, list)) {
+            const scrollOffset = getListScrollOffsetY(list);
+            return layoutY - scrollOffset;
+        }
+
+        return layoutY;
+    };
+
+    const isPanelVisibleInList = (anchor, list, host) => {
+        if (!isAlive(anchor)) return false;
+        if (!isAlive(list)) return true;
+
+        const anchorHeight = Number(anchor.actuallayoutheight);
+        const listHeight = Number(list.actuallayoutheight);
+        if (!isFinite(anchorHeight) || !isFinite(listHeight) || listHeight <= 0) return true;
+
+        const listY = getAncestorOffset(list, host, "y");
+        if (!isFinite(listY)) return true;
+
+        const cursorY = readCursorY();
+        if (isFinite(cursorY) && cursorY > 0) {
+            return (cursorY >= listY - 4 && cursorY <= listY + listHeight + 4);
+        }
+
+        const visualAnchorY = getVisualAnchorY(anchor, list, host);
+        if (!isFinite(visualAnchorY)) return true;
+
+        if ((visualAnchorY + anchorHeight <= listY + 2) || (visualAnchorY >= listY + listHeight - 2)) {
+            return false;
+        }
         return true;
-    }
-    return !!value;
-}
-
-function GetSummedPerfImpactTierForConfigKeys(configKeys) {
-    if (!Array.isArray(configKeys) || configKeys.length <= 0) return PERF_IMPACT_TIER_NONE;
-    var totalWeight = 0;
-    var maxTier = PERF_IMPACT_TIER_NONE;
-    var seen = {};
-    for (var i = 0; i < configKeys.length; i++) {
-        var key = String(configKeys[i] || "");
-        if (!key || seen[key]) continue;
-        seen[key] = true;
-        if (!SETTING_PERF_IMPACT_TIERS.hasOwnProperty(key)) continue;
-        if (!IsPerfImpactConfigKeyEnabled(key)) continue;
-        var tier = NormalizePerfImpactTier(SETTING_PERF_IMPACT_TIERS[key]);
-        totalWeight += GetPerfImpactWeightForTier(tier);
-        maxTier = MaxPerfImpactTier(maxTier, tier);
-    }
-
-    if (totalWeight <= 0) return PERF_IMPACT_TIER_NONE;
-
-    var sumTier = PERF_IMPACT_TIER_LOW;
-    if (totalWeight >= 4) sumTier = PERF_IMPACT_TIER_HIGH;
-    else if (totalWeight >= 2) sumTier = PERF_IMPACT_TIER_MEDIUM;
-
-    return MaxPerfImpactTier(maxTier, sumTier);
-}
-
-function BuildPerfImpactLineForTier(tier) {
-    var normalizedTier = NormalizePerfImpactTier(tier);
-    return "FPS Impact: " + GetPerfImpactDisplayLabel(normalizedTier);
-}
-
-function GetPerfImpactDisplayLabel(tier) {
-    var normalizedTier = NormalizePerfImpactTier(tier);
-    var raw = PERF_IMPACT_LABEL_BY_TIER.hasOwnProperty(normalizedTier)
-        ? PERF_IMPACT_LABEL_BY_TIER[normalizedTier]
-        : PERF_IMPACT_LABEL_BY_TIER[PERF_IMPACT_TIER_NONE];
-    return LocalizeSettingsText(raw, true);
-}
-
-function GetSettingCreatedBy(configId, label) {
-    var key = String(configId || "");
-    if (key && SETTING_CREATED_BY_BY_CONFIG.hasOwnProperty(key)) {
-        return String(SETTING_CREATED_BY_BY_CONFIG[key] || "");
-    }
-    var labelKey = String(label || "");
-    if (labelKey && SETTING_CREATED_BY_BY_LABEL.hasOwnProperty(labelKey)) {
-        return String(SETTING_CREATED_BY_BY_LABEL[labelKey] || "");
-    }
-    return "";
-}
-
-function GetSectionCreatedBy(title) {
-    var key = String(title || "");
-    if (!key) return "";
-    if (!SECTION_CREATED_BY_BY_TITLE.hasOwnProperty(key)) return "";
-    return String(SECTION_CREATED_BY_BY_TITLE[key] || "");
-}
-
-function GetCurrentSettingsCategoryKey() {
-    var tabName = String(currentTab || "");
-    if (!tabName) return "";
-    var sectionName = String(gCurrentSettingsSectionTitle || "");
-    if (sectionName) return tabName + " / " + sectionName;
-    return tabName;
-}
-
-function GetSectionDescriptionOverride(tabName, title, fallbackDescription) {
-    var tabKey = String(tabName || "");
-    var titleKey = String(title || "");
-    if (tabKey && titleKey) {
-        var key = tabKey + "|" + titleKey;
-        if (SECTION_DESCRIPTION_OVERRIDE_BY_TAB_TITLE.hasOwnProperty(key)) {
-            return String(SECTION_DESCRIPTION_OVERRIDE_BY_TAB_TITLE[key] || "");
-        }
-    }
-    return String(fallbackDescription || "");
-}
-
-function GetCreatedByFromConfigKeys(configKeys) {
-    if (!Array.isArray(configKeys) || configKeys.length <= 0) return "";
-    var seen = {};
-    var names = [];
-    for (var i = 0; i < configKeys.length; i++) {
-        var key = String(configKeys[i] || "");
-        if (!key || seen[key]) continue;
-        seen[key] = true;
-        if (!SETTING_CREATED_BY_BY_CONFIG.hasOwnProperty(key)) continue;
-        var name = String(SETTING_CREATED_BY_BY_CONFIG[key] || "").trim();
-        if (!name) continue;
-        if (names.indexOf(name) === -1) names.push(name);
-    }
-    return names.join(", ");
-}
-
-function GetSettingDescriptionOverride(configId, label, fallbackDescription, categoryKey) {
-    var catKey = String(categoryKey || "");
-    var labelKey = String(label || "");
-    var key = String(configId || "");
-    var rowOverride = "";
-
-    if (catKey && labelKey) {
-        var rowKey = catKey + "|" + labelKey;
-        if (SETTING_DESCRIPTION_OVERRIDE_BY_CATEGORY_ROW.hasOwnProperty(rowKey)) {
-            rowOverride = String(SETTING_DESCRIPTION_OVERRIDE_BY_CATEGORY_ROW[rowKey] || "");
-        }
-    }
-
-    if (key === "VOICE_TYPE") {
-        var baseVoiceDesc = rowOverride;
-        if (!baseVoiceDesc && SETTING_DESCRIPTION_OVERRIDE_BY_CONFIG.hasOwnProperty(key)) {
-            baseVoiceDesc = String(SETTING_DESCRIPTION_OVERRIDE_BY_CONFIG[key] || "");
-        }
-        if (!baseVoiceDesc) baseVoiceDesc = String(fallbackDescription || "");
-        return BuildCustomAnnouncerVoiceDescription(baseVoiceDesc, MOD_CONFIG && MOD_CONFIG.VOICE_TYPE);
-    }
-
-    if (rowOverride) return rowOverride;
-
-    if (labelKey === "Size") return "Scales the element.";
-    if (labelKey === "Opacity") return "Changes the element's transparency.";
-    if (labelKey === "Horizontal Offset") return "Moves the element horizontally.";
-    if (labelKey === "Vertical Offset") return "Moves the element vertically.";
-    if (key && SETTING_DESCRIPTION_OVERRIDE_BY_CONFIG.hasOwnProperty(key)) {
-        return String(SETTING_DESCRIPTION_OVERRIDE_BY_CONFIG[key] || "");
-    }
-    return String(fallbackDescription || "");
-}
-
-function BuildPerfImpactTooltipLine(configId, type, options) {
-    var tier = GetEstimatedPerfImpactTier(configId, type, options);
-    return {
-        tier: tier,
-        line: BuildPerfImpactLineForTier(tier)
     };
-}
 
-function BuildSectionPerfImpactTooltipLineFromTitleRow(titleRow, enableConfigId, enableType, enableOptions) {
-    var tier = PERF_IMPACT_TIER_NONE;
-    var key = String(enableConfigId || "");
-    if (key) {
-        tier = GetEstimatedPerfImpactTier(key, enableType || "toggle", enableOptions || null);
-    }
-    return {
-        tier: tier,
-        line: BuildPerfImpactLineForTier(tier)
+    // -------------------------------------------------------------------------
+    // Tooltip DOM Management
+    // -------------------------------------------------------------------------
+    const ensureTooltipPanel = () => {
+        const host = getHost();
+        if (!host) return null;
+
+        if (isAlive(_panel) && typeof _panel.GetParent === "function" && _panel.GetParent() !== host) {
+            try { _panel.DeleteAsync(0); } catch (_) {}
+            _panel = null;
+            _bodyLabel = null;
+            _perfPrefixLabel = null;
+            _perfValueLabel = null;
+            _creatorPrefixLabel = null;
+            _creatorValueLabel = null;
+            _voiceAuthorPrefixLabel = null;
+            _voiceAuthorValueLabel = null;
+            _voiceActorPrefixLabel = null;
+            _voiceActorValueLabel = null;
+        }
+
+        if (!isAlive(_panel)) {
+            _panel = $.CreatePanel("Panel", host, "QOLSettingsRowFloatingTooltip");
+            _panel.AddClass("QOLCustomRowTooltip");
+            _panel.hittest = false;
+            _panel.hittestchildren = false;
+
+            _bodyLabel = $.CreatePanel("Label", _panel, "QOLSettingsRowFloatingTooltipText");
+            _bodyLabel.AddClass("QOLCustomRowTooltipText");
+
+            const perfRow = $.CreatePanel("Panel", _panel, "QOLSettingsRowFloatingTooltipPerfRow");
+            perfRow.AddClass("QOLCustomRowTooltipPerfRow");
+            _perfPrefixLabel = $.CreatePanel("Label", perfRow, "QOLSettingsRowFloatingTooltipPerfPrefix");
+            _perfPrefixLabel.AddClass("QOLCustomRowTooltipPerfPrefix");
+            _perfPrefixLabel.text = localize("FPS Impact:", true);
+            _perfValueLabel = $.CreatePanel("Label", perfRow, "QOLSettingsRowFloatingTooltipPerfValue");
+            _perfValueLabel.AddClass("QOLCustomRowTooltipPerfValue");
+
+            const creatorRow = $.CreatePanel("Panel", _panel, "QOLSettingsRowFloatingTooltipCreatorRow");
+            creatorRow.AddClass("QOLCustomRowTooltipCreatorRow");
+            _creatorPrefixLabel = $.CreatePanel("Label", creatorRow, "QOLSettingsRowFloatingTooltipCreatorPrefix");
+            _creatorPrefixLabel.AddClass("QOLCustomRowTooltipCreatorPrefix");
+            _creatorPrefixLabel.text = localize("Created By:", true);
+            _creatorValueLabel = $.CreatePanel("Label", creatorRow, "QOLSettingsRowFloatingTooltipCreatorValue");
+            _creatorValueLabel.AddClass("QOLCustomRowTooltipCreatorValue");
+
+            const voiceAuthorRow = $.CreatePanel("Panel", _panel, "QOLSettingsRowFloatingTooltipVoiceMetaAuthorRow");
+            voiceAuthorRow.AddClass("QOLCustomRowTooltipVoiceMetaRow");
+            _voiceAuthorPrefixLabel = $.CreatePanel("Label", voiceAuthorRow, "QOLSettingsRowFloatingTooltipVoiceMetaAuthorPrefix");
+            _voiceAuthorPrefixLabel.AddClass("QOLCustomRowTooltipVoiceMetaPrefix");
+            _voiceAuthorPrefixLabel.text = localize("Author:", true);
+            _voiceAuthorValueLabel = $.CreatePanel("Label", voiceAuthorRow, "QOLSettingsRowFloatingTooltipVoiceMetaAuthorValue");
+            _voiceAuthorValueLabel.AddClass("QOLCustomRowTooltipVoiceMetaAuthorValue");
+
+            const voiceActorRow = $.CreatePanel("Panel", _panel, "QOLSettingsRowFloatingTooltipVoiceMetaActorRow");
+            voiceActorRow.AddClass("QOLCustomRowTooltipVoiceMetaRow");
+            _voiceActorPrefixLabel = $.CreatePanel("Label", voiceActorRow, "QOLSettingsRowFloatingTooltipVoiceMetaActorPrefix");
+            _voiceActorPrefixLabel.AddClass("QOLCustomRowTooltipVoiceMetaPrefix");
+            _voiceActorPrefixLabel.text = localize("Voice Actor:", true);
+            _voiceActorValueLabel = $.CreatePanel("Label", voiceActorRow, "QOLSettingsRowFloatingTooltipVoiceMetaActorValue");
+            _voiceActorValueLabel.AddClass("QOLCustomRowTooltipVoiceMetaActorValue");
+        }
+        return _panel;
     };
-}
 
-function BindSectionPerfTooltip(titleRow, titleName, fallbackDescription, tabName, enableConfigId, enableType, enableOptions) {
-    if (!titleRow || !titleRow.SetPanelEvent) return;
-    var sectionCreatedBy = GetSectionCreatedBy(titleName);
-    var sectionDescription = GetSectionDescriptionOverride(tabName, titleName, fallbackDescription || "");
-    titleRow.SetPanelEvent("onmouseover", function() {
-        CancelSettingsRowFloatingTooltipHide();
-        var info = BuildSectionPerfImpactTooltipLineFromTitleRow(titleRow, enableConfigId, enableType, enableOptions);
-        var createdBy = sectionCreatedBy;
-        var localizedDescription = LocalizeSettingsText(sectionDescription || "");
-        var sectionTier = (info && info.tier) ? info.tier : PERF_IMPACT_TIER_NONE;
-        if (!HasMeaningfulFloatingTooltipContent(sectionTier, localizedDescription || "", createdBy)) {
-            HideSettingsRowFloatingTooltip();
+    // -------------------------------------------------------------------------
+    // Deterministic Positioning (Zero Ticks, No Overlaps)
+    // -------------------------------------------------------------------------
+    const positionTooltip = (anchor) => {
+        if (!isAlive(_panel) || !isAlive(anchor)) return;
+        const host = _panel.GetParent ? _panel.GetParent() : null;
+        if (!isAlive(host)) return;
+
+        const ctx = $.GetContextPanel ? $.GetContextPanel() : host;
+
+        // Resolve SettingsWindow and SettingsList: first traverse upward from anchor, then fallback to ctx
+        let settingsWin = null;
+        let settingsList = null;
+        let cur = anchor;
+        let guard = 0;
+        while (cur && isAlive(cur) && guard < 32) {
+            if (!settingsList && cur.id === "SettingsList") settingsList = cur;
+            if (cur.id === "SettingsWindow") {
+                settingsWin = cur;
+                break;
+            }
+            cur = cur.GetParent ? cur.GetParent() : null;
+            guard++;
+        }
+        if (!settingsWin && ctx) {
+            settingsWin = ctx.FindChildTraverse ? ctx.FindChildTraverse("SettingsWindow") : null;
+        }
+        if (!settingsList && ctx) {
+            settingsList = ctx.FindChildTraverse ? ctx.FindChildTraverse("SettingsList") : null;
+        }
+
+        const isInsideWindow = isAlive(settingsWin) && (anchor === settingsWin || isDescendantOf(anchor, settingsWin));
+
+        const hostW = Number(host.actuallayoutwidth) || 1920;
+        const hostH = Number(host.actuallayoutheight) || 1080;
+        const tipW = Number(_panel.actuallayoutwidth) || 280;
+        const tipH = Number(_panel.actuallayoutheight) || 90;
+
+        const anchorX = getAncestorOffset(anchor, host, "x");
+        let visualAnchorY = getVisualAnchorY(anchor, settingsList, host);
+        if (!isFinite(visualAnchorY)) {
+            visualAnchorY = getAncestorOffset(anchor, host, "y");
+        }
+        const anchorW = Number(anchor.actuallayoutwidth) || 580;
+        const anchorH = Number(anchor.actuallayoutheight) || 40;
+
+        let winX = NaN;
+        let winY = NaN;
+        let winW = NaN;
+        let winH = NaN;
+
+        if (isAlive(settingsWin)) {
+            winX = getAncestorOffset(settingsWin, host, "x");
+            winY = getAncestorOffset(settingsWin, host, "y");
+            winW = Number(settingsWin.actuallayoutwidth) || 720;
+            winH = Number(settingsWin.actuallayoutheight) || 720;
+        }
+
+        // Check obstacles on the right: Friends list (#RightSide)
+        let rightBoundary = hostW - EDGE_MARGIN;
+        const rightSide = ctx ? ctx.FindChildTraverse?.("RightSide") : null;
+        if (isAlive(rightSide) && Number(rightSide.actuallayoutwidth) > 0) {
+            const rx = getAncestorOffset(rightSide, host, "x");
+            if (isFinite(rx) && rx > (winX + (winW || 0))) {
+                rightBoundary = Math.min(rightBoundary, rx - EDGE_MARGIN);
+            }
+        }
+
+        let xRight, xLeft;
+        if (isInsideWindow && isFinite(winX) && winW > 0) {
+            xRight = Math.round(winX + winW + GAP);
+            xLeft = Math.round(winX - tipW - GAP);
+        } else {
+            xRight = Math.round(anchorX + anchorW + GAP);
+            xLeft = Math.round(anchorX - tipW - GAP);
+        }
+
+        const spaceRight = rightBoundary - (isInsideWindow && isFinite(winX) && winW > 0 ? (winX + winW) : (anchorX + anchorW));
+        const spaceLeft = (isInsideWindow && isFinite(winX)) ? winX : anchorX;
+
+        let x;
+        if (spaceRight >= (tipW + GAP)) {
+            // Tier 1: Fits cleanly to the right
+            x = xRight;
+        } else if (spaceLeft >= (tipW + GAP)) {
+            // Tier 2: Fits cleanly to the left (standard in 1080p / 16:10 open void)
+            x = xLeft;
+        } else {
+            // Tier 3: Inside safe zone over label, away from scrollbar
+            if (isFinite(winX)) {
+                x = Math.max(EDGE_MARGIN, winX + 160);
+            } else {
+                x = Math.max(EDGE_MARGIN, Math.min(hostW - tipW - EDGE_MARGIN, xRight));
+            }
+        }
+
+        // Vertical centering on row, clamped strictly within SettingsWindow bounds
+        let anchorCenterY;
+        const cursorY = readCursorY();
+        if (isFinite(cursorY) && cursorY > 0 && isAlive(settingsList) && isDescendantOf(anchor, settingsList)) {
+            anchorCenterY = cursorY;
+        } else {
+            anchorCenterY = visualAnchorY + (anchorH * 0.5);
+        }
+        const targetY = Math.round(anchorCenterY - (tipH * 0.5));
+
+        let yMin = EDGE_MARGIN;
+        let yMax = Math.max(yMin, Math.round(hostH - tipH - EDGE_MARGIN));
+
+        if (isFinite(winY) && isFinite(winH) && winH > 0) {
+            yMin = Math.max(yMin, Math.round(winY + 8));
+            yMax = Math.min(yMax, Math.round(winY + winH - tipH - 8));
+            if (yMax < yMin) yMax = yMin;
+        }
+
+        const y = Math.max(yMin, Math.min(yMax, targetY));
+
+        if (
+            isFinite(_lastX) &&
+            isFinite(_lastY) &&
+            Math.abs(_lastX - x) < 0.5 &&
+            Math.abs(_lastY - y) < 0.5
+        ) {
             return;
         }
-        ShowSettingsRowFloatingTooltip(
-            titleRow,
-            "",
-            localizedDescription || "",
-            sectionTier,
-            createdBy
-        );
-    });
-    titleRow.SetPanelEvent("onmouseout", function() {
-        HideSettingsRowFloatingTooltipDeferred("section_mouseout");
-    });
-}
 
-    // ── Public API ──
-    QOL.tooltip = {
-        // Show/hide tooltip — called from CreateRow, BindSectionPerfTooltip, etc.
-        showRowTooltip: ShowSettingsRowFloatingTooltip,
-        hideRowTooltip: HideSettingsRowFloatingTooltip,
-        hideTooltipDeferred: HideSettingsRowFloatingTooltipDeferred,
-        cancelHide: CancelSettingsRowFloatingTooltipHide,
-        isVisible: IsSettingsRowFloatingTooltipVisible,
-        // Text tooltip (used by preview toggle)
-        showTextTooltip: ShowSettingsTextTooltip,
-        hideTextTooltip: HideSettingsTextTooltip,
-        // Theme
-        setThemeActive: SetSettingsTooltipThemeActive,
-        // Perf impact helpers
-        buildPerfImpactLine: BuildPerfImpactTooltipLine,
-        buildSectionPerfLine: BuildSectionPerfImpactTooltipLineFromTitleRow,
-        bindSectionPerfTooltip: BindSectionPerfTooltip,
-        hasMeaningfulContent: HasMeaningfulFloatingTooltipContent,
-        getSettingCreatedBy: GetSettingCreatedBy,
-        getSectionCreatedBy: GetSectionCreatedBy,
-        getSectionDescriptionOverride: GetSectionDescriptionOverride,
-        getSettingDescriptionOverride: GetSettingDescriptionOverride,
-        getCurrentCategoryKey: GetCurrentSettingsCategoryKey,
-        getEstimatedPerfTier: GetEstimatedPerfImpactTier,
-        getSummedPerfTier: GetSummedPerfImpactTierForConfigKeys,
-        normalizePerfTier: NormalizePerfImpactTier,
-        maxPerfTier: MaxPerfImpactTier,
-        buildPerfLineForTier: BuildPerfImpactLineForTier,
-        getPerfDisplayLabel: GetPerfImpactDisplayLabel,
-        isPerfConfigEnabled: IsPerfImpactConfigKeyEnabled,
-        getCreatedByFromConfigKeys: GetCreatedByFromConfigKeys,
-        getPerfWeightForTier: GetPerfImpactWeightForTier,
-        // Tooltip scroll/position helpers (used externally)
-        suppressForMs: SuppressSettingsTooltipForMs,
-        isSuppressed: IsSettingsTooltipSuppressed,
-        // Perf tier constants (string literals — cannot reference ql_settings.js consts at load time)
-        TIER_NONE: "none",
-        TIER_LOW: "low",
-        TIER_MEDIUM: "medium",
-        TIER_HIGH: "high"
+        _lastX = x;
+        _lastY = y;
+        if (_panel.style) {
+            let hostScaleX = 1.0;
+            let hostScaleY = 1.0;
+            if (typeof host.actualuiscale_x === "number" && isFinite(host.actualuiscale_x) && host.actualuiscale_x > 0) {
+                hostScaleX = host.actualuiscale_x;
+            } else {
+                const actW = Number(host.actuallayoutwidth);
+                const desW = Number(host.desiredlayoutwidth);
+                if (isFinite(actW) && actW > 0 && isFinite(desW) && desW > 0) {
+                    hostScaleX = actW / desW;
+                }
+            }
+            if (typeof host.actualuiscale_y === "number" && isFinite(host.actualuiscale_y) && host.actualuiscale_y > 0) {
+                hostScaleY = host.actualuiscale_y;
+            } else {
+                const actH = Number(host.actuallayoutheight);
+                const desH = Number(host.desiredlayoutheight);
+                if (isFinite(actH) && actH > 0 && isFinite(desH) && desH > 0) {
+                    hostScaleY = actH / desH;
+                }
+            }
+
+            const styleX = Math.round(x / hostScaleX);
+            const styleY = Math.round(y / hostScaleY);
+
+            _panel.style.x = `${styleX}px`;
+            _panel.style.y = `${styleY}px`;
+        }
+    };
+
+    // -------------------------------------------------------------------------
+    // Scroll Snapshot & Dynamic Motion Tracking
+    // -------------------------------------------------------------------------
+    const readScrollSnapshot = () => {
+        const host = getHost();
+        const ctx = $.GetContextPanel ? $.GetContextPanel() : host;
+        if (!ctx) return { listY: 0, hostY: 0, thumbY: 0 };
+        let settingsList = null;
+        try { settingsList = ctx.FindChildTraverse ? ctx.FindChildTraverse("SettingsList") : null; } catch (_) {}
+        let settingsContentHost = null;
+        try { settingsContentHost = ctx.FindChildTraverse ? ctx.FindChildTraverse("SettingsContentHost") : null; } catch (_) {}
+
+        let thumbY = 0;
+        if (settingsList) {
+            try {
+                let thumb = null;
+                const scrollBar = settingsList.FindChildTraverse ? settingsList.FindChildTraverse("VerticalScrollBar") : null;
+                if (scrollBar && scrollBar.FindChildTraverse) {
+                    thumb = scrollBar.FindChildTraverse("ScrollThumb");
+                }
+                if (!thumb && settingsList.FindChildTraverse) {
+                    thumb = settingsList.FindChildTraverse("ScrollThumb");
+                }
+                if (!thumb && settingsList.FindChildrenWithClassTraverse) {
+                    const thumbs = settingsList.FindChildrenWithClassTraverse("ScrollThumb");
+                    if (thumbs && thumbs.length > 0) thumb = thumbs[0];
+                }
+                if (isAlive(thumb)) {
+                    let sty = Number(thumb.actualyoffset);
+                    if (!isFinite(sty)) sty = Number(thumb.scrolloffset_y);
+                    if (!isFinite(sty)) sty = Number(thumb.actualscrolloffset_y);
+                    if (!isFinite(sty) && typeof globalThis.GetPanelYOffsetWithinAncestor === "function") {
+                        sty = Number(globalThis.GetPanelYOffsetWithinAncestor(thumb, scrollBar || settingsList));
+                    }
+                    if (isFinite(sty)) thumbY = sty;
+                }
+            } catch (_) {}
+        }
+
+        return {
+            listY: readPanelScrollOffsetY(settingsList),
+            hostY: readPanelScrollOffsetY(settingsContentHost),
+            thumbY: isFinite(thumbY) ? thumbY : 0
+        };
+    };
+
+    const primeScrollSnapshot = () => {
+        const snap = readScrollSnapshot();
+        _lastListScrollY = Number(snap.listY);
+        _lastHostScrollY = Number(snap.hostY);
+        _lastThumbScrollY = Number(snap.thumbY);
+
+        const host = getHost();
+        let curY = NaN;
+        if (isAlive(_activeAnchor) && isAlive(host)) {
+            const ctx = $.GetContextPanel ? $.GetContextPanel() : host;
+            const settingsList = ctx ? ctx.FindChildTraverse?.("SettingsList") : null;
+            curY = getVisualAnchorY(_activeAnchor, settingsList, host);
+        }
+        _lastAnchorLocalY = curY;
+    };
+
+    const didScrollChange = () => {
+        const snap = readScrollSnapshot();
+        const listY = isFinite(Number(snap.listY)) ? Number(snap.listY) : 0;
+        const hostY = isFinite(Number(snap.hostY)) ? Number(snap.hostY) : 0;
+        const thumbY = isFinite(Number(snap.thumbY)) ? Number(snap.thumbY) : 0;
+
+        let changed = false;
+        if (isFinite(_lastListScrollY) && Math.abs(listY - _lastListScrollY) >= 1) changed = true;
+        if (isFinite(_lastHostScrollY) && Math.abs(hostY - _lastHostScrollY) >= 1) changed = true;
+        if (isFinite(_lastThumbScrollY) && Math.abs(thumbY - _lastThumbScrollY) >= 1) changed = true;
+
+        _lastListScrollY = listY;
+        _lastHostScrollY = hostY;
+        _lastThumbScrollY = thumbY;
+
+        return changed;
+    };
+
+    const stopTracking = () => {
+        if (_trackTimer) {
+            $.CancelScheduled(_trackTimer);
+            _trackTimer = null;
+        }
+    };
+
+    const tickTracking = () => {
+        _trackTimer = null;
+        if (!isVisible()) return;
+        const anchor = _activeAnchor;
+        if (!isAlive(anchor)) {
+            hideRowTooltip();
+            return;
+        }
+
+        const host = getHost();
+        const ctx = $.GetContextPanel ? $.GetContextPanel() : host;
+        const settingsList = ctx ? ctx.FindChildTraverse?.("SettingsList") : null;
+        let curY = NaN;
+        if (isAlive(host)) {
+            curY = getVisualAnchorY(anchor, settingsList, host);
+        }
+
+        const anchorMoved = isFinite(_lastAnchorLocalY) && isFinite(curY) && Math.abs(curY - _lastAnchorLocalY) >= 1;
+        const scrollChanged = didScrollChange();
+
+        if (anchorMoved || scrollChanged) {
+            suppressForMs(SCROLL_SUPPRESS_MS);
+            hideRowTooltip();
+            return;
+        }
+
+        if (settingsList && isDescendantOf(anchor, settingsList)) {
+            if (!isPanelVisibleInList(anchor, settingsList, host)) {
+                hideRowTooltip();
+                return;
+            }
+        }
+
+        positionTooltip(anchor);
+        _trackTimer = $.Schedule(TRACK_INTERVAL_SEC, tickTracking);
+    };
+
+    const ensureTracking = () => {
+        if (_trackTimer) return;
+        _trackTimer = $.Schedule(TRACK_INTERVAL_SEC, tickTracking);
+    };
+
+    // -------------------------------------------------------------------------
+    // Show / Hide Lifecycle
+    // -------------------------------------------------------------------------
+    const cancelHide = () => {
+        if (_hideTimer) {
+            $.CancelScheduled(_hideTimer);
+            _hideTimer = null;
+        }
+    };
+
+    const cancelShow = () => {
+        if (_showTimer) {
+            $.CancelScheduled(_showTimer);
+            _showTimer = null;
+        }
+    };
+
+    const isVisible = () => {
+        if (!isAlive(_panel) || !_panel.BHasClass) return false;
+        return !!_panel.BHasClass("Visible");
+    };
+
+    const hideRowTooltip = () => {
+        cancelShow();
+        cancelHide();
+        stopTracking();
+        _activeAnchor = null;
+        _hoverCursorY = NaN;
+        _lastX = NaN;
+        _lastY = NaN;
+        if (isAlive(_panel)) {
+            _panel.SetHasClass("Visible", false);
+            _lastVisibleTime = Date.now();
+        }
+    };
+
+    const hideTooltipDeferred = (_reason) => {
+        cancelShow();
+        cancelHide();
+        _hideTimer = $.Schedule(DEFER_HIDE_SEC, () => {
+            _hideTimer = null;
+            hideRowTooltip();
+        });
+    };
+
+    const executeShow = (anchor, perfTier, bodyText, createdBy, options) => {
+        cancelHide();
+        const panel = ensureTooltipPanel();
+        if (!panel || !isAlive(anchor)) return;
+
+        _activeAnchor = anchor;
+        if (!isFinite(_hoverCursorY)) {
+            _hoverCursorY = captureCursorY();
+        }
+        const bodyLine = localize(bodyText, true);
+        const creatorName = String(createdBy || "").trim();
+        const tier = normalizePerfTier(perfTier);
+
+        const voiceMeta = options?.voiceMeta || null;
+        const voiceAuthor = String(voiceMeta?.author || "").trim();
+        const voiceActor = String(voiceMeta?.voiceActor || "").trim();
+        const isVoiceMode = (voiceAuthor.length > 0 || voiceActor.length > 0);
+
+        _bodyLabel.text = bodyLine;
+        _perfPrefixLabel.text = localize("FPS Impact:", true);
+        _perfValueLabel.text = getPerfDisplayLabel(tier);
+        _creatorPrefixLabel.text = localize("Created By:", true);
+        _creatorValueLabel.text = creatorName;
+        _voiceAuthorPrefixLabel.text = localize("Author:", true);
+        _voiceAuthorValueLabel.text = voiceAuthor;
+        _voiceActorPrefixLabel.text = localize("Voice Actor:", true);
+        _voiceActorValueLabel.text = voiceActor;
+
+        const hasPerf = !!(perfTier && perfTier !== "hidden" && perfTier !== "suppress");
+        panel.SetHasClass("NoBody", bodyLine.length === 0);
+        panel.SetHasClass("NoPerf", !hasPerf);
+        panel.SetHasClass("NoCreator", creatorName.length === 0 || isVoiceMode);
+        panel.SetHasClass("VoiceMetaMode", isVoiceMode);
+        panel.SetHasClass("NoVoiceMeta", !isVoiceMode);
+        panel.SetHasClass("NoVoiceMetaAuthor", voiceAuthor.length === 0);
+        panel.SetHasClass("NoVoiceMetaActor", voiceActor.length === 0);
+        panel.SetHasClass("FooterSaveWarningTooltip", !!options?.footerSaveWarning);
+
+        panel.SetHasClass("PerfNone", tier === TIER_NONE);
+        panel.SetHasClass("PerfLow", tier === TIER_LOW);
+        panel.SetHasClass("PerfMedium", tier === TIER_MEDIUM);
+        panel.SetHasClass("PerfHigh", tier === TIER_HIGH);
+
+        positionTooltip(anchor);
+        panel.SetHasClass("Visible", true);
+        primeScrollSnapshot();
+        ensureTracking();
+
+        // Frame 0 layout settle check
+        $.Schedule(0.0, () => {
+            if (_activeAnchor === anchor && isVisible()) {
+                positionTooltip(anchor);
+            }
+        });
+    };
+
+    const showRowTooltip = (anchor, _perfText, bodyText, perfTier, createdBy, options) => {
+        if (!isAlive(anchor)) return;
+
+        if (!hasMeaningfulContent(perfTier, bodyText, createdBy, options)) {
+            hideRowTooltip();
+            return;
+        }
+
+        _activeAnchor = anchor;
+        _hoverCursorY = captureCursorY();
+
+        const host = getHost();
+        const ctx = $.GetContextPanel ? $.GetContextPanel() : host;
+        const settingsList = ctx ? ctx.FindChildTraverse?.("SettingsList") : null;
+        if (settingsList && isDescendantOf(anchor, settingsList)) {
+            if (!isPanelVisibleInList(anchor, settingsList, host)) return;
+        }
+
+        // Establish scroll baseline at the moment hover begins
+        primeScrollSnapshot();
+
+        // If suppressed from active scrolling, wait until suppression expires rather than dropping the hover forever
+        if (isSuppressed()) {
+            cancelShow();
+            const delaySec = Math.max(COLD_HOVER_DELAY_SEC, ((_suppressUntilMs - Date.now()) / 1000) + 0.02);
+            _showTimer = $.Schedule(delaySec, () => {
+                _showTimer = null;
+                if (!isAlive(anchor) || isSuppressed()) return;
+                if (didScrollChange()) {
+                    suppressForMs(SCROLL_SUPPRESS_MS);
+                    return;
+                }
+                if (settingsList && isDescendantOf(anchor, settingsList)) {
+                    if (!isPanelVisibleInList(anchor, settingsList, host)) return;
+                }
+                executeShow(anchor, perfTier, bodyText, createdBy, options);
+            });
+            return;
+        }
+
+        cancelHide();
+        const isWarm = isVisible() || ((Date.now() - _lastVisibleTime) < WARM_RECENT_MS);
+        if (options?.immediate || isWarm) {
+            cancelShow();
+            executeShow(anchor, perfTier, bodyText, createdBy, options);
+        } else {
+            cancelShow();
+            _showTimer = $.Schedule(COLD_HOVER_DELAY_SEC, () => {
+                _showTimer = null;
+                if (!isAlive(anchor) || isSuppressed()) return;
+                if (didScrollChange()) {
+                    suppressForMs(SCROLL_SUPPRESS_MS);
+                    return;
+                }
+                if (settingsList && isDescendantOf(anchor, settingsList)) {
+                    if (!isPanelVisibleInList(anchor, settingsList, host)) return;
+                }
+                executeShow(anchor, perfTier, bodyText, createdBy, options);
+            });
+        }
+    };
+
+    // -------------------------------------------------------------------------
+    // Suppression
+    // -------------------------------------------------------------------------
+    const suppressForMs = (ms) => {
+        const val = Number(ms) || 0;
+        _suppressUntilMs = Date.now() + Math.max(0, val);
+    };
+
+    const isSuppressed = () => Date.now() < _suppressUntilMs;
+
+    // -------------------------------------------------------------------------
+    // Text Tooltips & Theme
+    // -------------------------------------------------------------------------
+    const setThemeActive = (isActive) => {
+        const ctx = $.GetContextPanel ? $.GetContextPanel() : null;
+        let root = ctx;
+        while (root && root.GetParent && isAlive(root.GetParent())) root = root.GetParent();
+        if (root?.SetHasClass) {
+            root.SetHasClass(THEME_CLASS, !!isActive);
+            const tooltipManager = root.FindChildTraverse ? root.FindChildTraverse("TooltipManager") : null;
+            if (tooltipManager?.SetHasClass) {
+                tooltipManager.SetHasClass(THEME_CLASS, !!isActive);
+            }
+        }
+    };
+
+    const setSettingsTooltipPerfTierClass = (perfTier) => {
+        const tier = normalizePerfTier(perfTier);
+        const isNone = tier === TIER_NONE;
+        const isLow = tier === TIER_LOW;
+        const isMedium = tier === TIER_MEDIUM;
+        const isHigh = tier === TIER_HIGH;
+        const ctx = $.GetContextPanel ? $.GetContextPanel() : null;
+        let root = ctx;
+        while (root && root.GetParent && isAlive(root.GetParent())) root = root.GetParent();
+        if (root?.SetHasClass) {
+            root.SetHasClass("QOLSettingsTooltipPerfNone", isNone);
+            root.SetHasClass("QOLSettingsTooltipPerfLow", isLow);
+            root.SetHasClass("QOLSettingsTooltipPerfMedium", isMedium);
+            root.SetHasClass("QOLSettingsTooltipPerfHigh", isHigh);
+        }
+        const tooltipManager = root?.FindChildTraverse ? root.FindChildTraverse("TooltipManager") : null;
+        if (tooltipManager?.SetHasClass) {
+            tooltipManager.SetHasClass("QOLSettingsTooltipPerfNone", isNone);
+            tooltipManager.SetHasClass("QOLSettingsTooltipPerfLow", isLow);
+            tooltipManager.SetHasClass("QOLSettingsTooltipPerfMedium", isMedium);
+            tooltipManager.SetHasClass("QOLSettingsTooltipPerfHigh", isHigh);
+        }
+    };
+
+    const showTextTooltip = (anchor, text, perfTier) => {
+        if (!isAlive(anchor) || !text) return;
+        setSettingsTooltipPerfTierClass(perfTier || TIER_NONE);
+        $.DispatchEvent("UIShowTextTooltip", anchor, text);
+    };
+
+    const hideTextTooltip = () => {
+        setSettingsTooltipPerfTierClass(TIER_NONE);
+        $.DispatchEvent("UIHideTextTooltip");
+    };
+
+    // -------------------------------------------------------------------------
+    // Perf Impact & Metadata Helpers (100% Backward Compatible)
+    // -------------------------------------------------------------------------
+    const normalizePerfTier = (val) => {
+        const key = String(val || "").toLowerCase();
+        return TIER_ORDER.hasOwnProperty(key) ? key : TIER_NONE;
+    };
+
+    const maxPerfTier = (a, b) => {
+        const na = normalizePerfTier(a);
+        const nb = normalizePerfTier(b);
+        return (TIER_ORDER[nb] > TIER_ORDER[na]) ? nb : na;
+    };
+
+    const getPerfDisplayLabel = (tier) => {
+        const t = normalizePerfTier(tier);
+        return localize(TIER_LABELS[t] || "None", true);
+    };
+
+    const buildPerfLineForTier = (tier) => {
+        return `FPS Impact: ${getPerfDisplayLabel(tier)}`;
+    };
+
+    const getPerfWeightForTier = (tier) => TIER_ORDER[normalizePerfTier(tier)] || 0;
+
+    const isPerfConfigEnabled = (configKey) => {
+        const key = String(configKey || "");
+        const cfg = (typeof MOD_CONFIG !== "undefined") ? MOD_CONFIG : null;
+        if (!key || !cfg || !cfg.hasOwnProperty(key)) return false;
+        const value = cfg[key];
+        if (value === null || value === undefined) return false;
+        if (typeof value === "boolean") return value === true;
+        if (typeof value === "number") return Number(value) > 0;
+        if (typeof value === "string") {
+            const normalized = String(value).trim().toLowerCase();
+            if (!normalized) return false;
+            if (normalized === "0" || normalized === "false" || normalized === "off" || normalized === "none") return false;
+            return true;
+        }
+        return !!value;
+    };
+
+    const getSummedPerfTier = (configKeys) => {
+        if (!Array.isArray(configKeys) || configKeys.length === 0) return TIER_NONE;
+        let totalWeight = 0;
+        let maxTier = TIER_NONE;
+        const seen = {};
+        const tiers = globalThis.SETTING_PERF_IMPACT_TIERS || {};
+        for (const rawKey of configKeys) {
+            const key = String(rawKey || "");
+            if (!key || seen[key]) continue;
+            seen[key] = true;
+            if (!tiers.hasOwnProperty(key)) continue;
+            if (!isPerfConfigEnabled(key)) continue;
+            const tier = normalizePerfTier(tiers[key]);
+            totalWeight += getPerfWeightForTier(tier);
+            maxTier = maxPerfTier(maxTier, tier);
+        }
+        if (totalWeight <= 0) return TIER_NONE;
+        let sumTier = TIER_LOW;
+        if (totalWeight >= 4) sumTier = TIER_HIGH;
+        else if (totalWeight >= 2) sumTier = TIER_MEDIUM;
+        return maxPerfTier(maxTier, sumTier);
+    };
+
+    const getEstimatedPerfTier = (configId, _type, options) => {
+        let tier = TIER_NONE;
+        const tiers = globalThis.SETTING_PERF_IMPACT_TIERS || {};
+        const key = String(configId || "");
+        if (key && tiers[key]) tier = maxPerfTier(tier, tiers[key]);
+        if (Array.isArray(options)) {
+            for (const opt of options) {
+                if (opt?.key && tiers[opt.key]) tier = maxPerfTier(tier, tiers[opt.key]);
+            }
+        }
+        return tier;
+    };
+
+    const buildPerfImpactLine = (configId, type, options) => {
+        const tier = getEstimatedPerfTier(configId, type, options);
+        return { tier, line: buildPerfLineForTier(tier) };
+    };
+
+    const buildSectionPerfLine = (_titleRow, enableConfigId, enableType, enableOptions) => {
+        let tier = TIER_NONE;
+        if (enableConfigId) tier = getEstimatedPerfTier(enableConfigId, enableType || "toggle", enableOptions);
+        return { tier, line: buildPerfLineForTier(tier) };
+    };
+
+    const hasMeaningfulContent = (perfTier, bodyText, createdBy, options) => {
+        if (perfTier && perfTier !== "hidden" && perfTier !== "suppress") return true;
+        if (String(bodyText || "").trim().length > 0) return true;
+        if (String(createdBy || "").trim().length > 0) return true;
+        if (options?.voiceMeta && (options.voiceMeta.author || options.voiceMeta.voiceActor)) return true;
+        return false;
+    };
+
+    const getSettingCreatedBy = (configId, label) => {
+        const byConfig = globalThis.SETTING_CREATED_BY_BY_CONFIG || {};
+        if (configId && byConfig[configId]) return String(byConfig[configId]);
+        const byLabel = globalThis.SETTING_CREATED_BY_BY_LABEL || {};
+        if (label && byLabel[label]) return String(byLabel[label]);
+        return "";
+    };
+
+    const getSectionCreatedBy = (title) => {
+        const byTitle = globalThis.SECTION_CREATED_BY_BY_TITLE || {};
+        return (title && byTitle[title]) ? String(byTitle[title]) : "";
+    };
+
+    const getSectionDescriptionOverride = (tabName, title, fallback) => {
+        const overrides = globalThis.SECTION_DESCRIPTION_OVERRIDE_BY_TAB_TITLE || {};
+        const key = `${tabName}|${title}`;
+        return overrides[key] ? String(overrides[key]) : String(fallback || "");
+    };
+
+    const getSettingDescriptionOverride = (configId, label, fallback, categoryKey) => {
+        const catRowOverrides = globalThis.SETTING_DESCRIPTION_OVERRIDE_BY_CATEGORY_ROW || {};
+        if (categoryKey && label && catRowOverrides[`${categoryKey}|${label}`]) {
+            return String(catRowOverrides[`${categoryKey}|${label}`]);
+        }
+        if (label === "Size") return "Scales the element.";
+        if (label === "Opacity") return "Changes the element's transparency.";
+        if (label === "Horizontal Offset") return "Moves the element horizontally.";
+        if (label === "Vertical Offset") return "Moves the element vertically.";
+        const configOverrides = globalThis.SETTING_DESCRIPTION_OVERRIDE_BY_CONFIG || {};
+        if (configId && configOverrides[configId]) return String(configOverrides[configId]);
+        return String(fallback || "");
+    };
+
+    const getCurrentCategoryKey = () => {
+        const tab = String(globalThis.currentTab || "");
+        const sec = String(globalThis.gCurrentSettingsSectionTitle || "");
+        return (tab && sec) ? `${tab} / ${sec}` : tab;
+    };
+
+    const getCreatedByFromConfigKeys = (configKeys) => {
+        if (!Array.isArray(configKeys) || configKeys.length === 0) return "";
+        const seen = {};
+        const names = [];
+        const createdByByConfig = globalThis.SETTING_CREATED_BY_BY_CONFIG || {};
+        for (const rawKey of configKeys) {
+            const key = String(rawKey || "");
+            if (!key || seen[key]) continue;
+            seen[key] = true;
+            if (!createdByByConfig.hasOwnProperty(key)) continue;
+            const name = String(createdByByConfig[key] || "").trim();
+            if (!name) continue;
+            if (names.indexOf(name) === -1) names.push(name);
+        }
+        return names.join(", ");
+    };
+
+    const bindSectionPerfTooltip = (titleRow, titleName, fallbackDesc, tabName, enableConfigId, enableType, enableOptions) => {
+        if (!isAlive(titleRow) || !titleRow.SetPanelEvent) return;
+        const author = getSectionCreatedBy(titleName);
+        const desc = getSectionDescriptionOverride(tabName, titleName, fallbackDesc || "");
+        titleRow.SetPanelEvent("onmouseover", () => {
+            cancelHide();
+            const info = buildSectionPerfLine(titleRow, enableConfigId, enableType, enableOptions);
+            const tier = info.tier || TIER_NONE;
+            const localizedDesc = localize(desc);
+            if (!hasMeaningfulContent(tier, localizedDesc, author)) {
+                hideRowTooltip();
+                return;
+            }
+            showRowTooltip(titleRow, "", localizedDesc, tier, author);
+        });
+        titleRow.SetPanelEvent("onmouseout", () => {
+            hideTooltipDeferred("section_mouseout");
+        });
+    };
+
+    // -------------------------------------------------------------------------
+    // Public API Export
+    // -------------------------------------------------------------------------
+    Q.tooltip = {
+        showRowTooltip,
+        hideRowTooltip,
+        hideTooltipDeferred,
+        cancelHide,
+        isVisible,
+        showTextTooltip,
+        hideTextTooltip,
+        setThemeActive,
+        buildPerfImpactLine,
+        buildSectionPerfLine,
+        bindSectionPerfTooltip,
+        hasMeaningfulContent,
+        getSettingCreatedBy,
+        getSectionCreatedBy,
+        getSectionDescriptionOverride,
+        getSettingDescriptionOverride,
+        getCurrentCategoryKey,
+        getEstimatedPerfTier,
+        getSummedPerfTier,
+        normalizePerfTier,
+        maxPerfTier,
+        buildPerfLineForTier,
+        getPerfDisplayLabel,
+        isPerfConfigEnabled,
+        getCreatedByFromConfigKeys,
+        getPerfWeightForTier,
+        suppressForMs,
+        isSuppressed,
+        TIER_NONE,
+        TIER_LOW,
+        TIER_MEDIUM,
+        TIER_HIGH
     };
 })();

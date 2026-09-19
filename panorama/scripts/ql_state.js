@@ -10,9 +10,7 @@ var State;
     'use strict';
 
     // IsPanelValid inline stub — mirrors ql_utils.js definition.
-    var IsPanelValid = (typeof QOL_UTILS !== "undefined" && QOL_UTILS.IsPanelValid)
-        ? QOL_UTILS.IsPanelValid
-        : function(p) { return p != null && typeof p.IsValid === "function" && p.IsValid(); };
+    var IsPanelValid = QOL_UTILS.IsPanelValid;
 
     // ── Panel cache accessors ──
     var GetCachedPanel = function(k) {
@@ -589,16 +587,6 @@ var State;
         saveSettingsLoaderNextReassertMs: 0,
         saveSettingsLoaderLastRenderSig: "",
         saveSettingsLoaderStepStates: {},
-        clearSettingsLoaderSessionToken: "",
-        clearSettingsLoaderSessionActive: false,
-        clearSettingsLoaderSessionCompleted: false,
-        clearSettingsLoaderCurrentStep: "",
-        clearSettingsLoaderDetail: "",
-        clearSettingsLoaderResult: "",
-        clearSettingsLoaderShowUntilMs: 0,
-        clearSettingsLoaderNextReassertMs: 0,
-        clearSettingsLoaderLastRenderSig: "",
-        clearSettingsLoaderStepStates: {},
         buildSaveActiveToken: "",
         buildSaveStage: "",
         buildSaveStartedMs: 0,
@@ -827,6 +815,7 @@ var State;
 
     // ── Publish to QOL namespace ──
     if (typeof QOL !== "undefined") {
+        QOL.state = State;
         QOL.getCachedPanel = GetCachedPanel;
         QOL.setCachedPanel = SetCachedPanel;
         QOL.clearPanelCache = ClearPanelCache;

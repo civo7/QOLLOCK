@@ -12,57 +12,60 @@
 // Boundary validation: Checks QOL.core exists. Aborts with message if not.
 // =============================================================================
 
-(function () {
+(() => {
     "use strict";
 
-    if (!QOL || !QOL.core) {
-        $.Msg("[QOLLock] core/ql_event_bus: QOL.core not found — aborting. " +
-              "Is core/ql_namespace.js loaded first?");
+    const Q = (typeof globalThis !== "undefined" && globalThis.QOL) ? globalThis.QOL : (typeof QOL !== "undefined" ? QOL : null);
+    if (!Q?.core) {
+        $.Msg("[QOLLock] core/ql_event_bus: QOL.core not found — aborting. Is core/ql_namespace.js loaded first?");
         return;
     }
 
-    var _listeners = {};
+    const listeners = new Map();
 
-    function on(event, fn) {
+    const on = (event, fn) => {
         if (typeof event !== "string" || typeof fn !== "function") return;
-        if (!_listeners[event]) { _listeners[event] = []; }
-        _listeners[event].push(fn);
-    }
+        if (!listeners.has(event)) {
+            listeners.set(event, []);
+        }
+        listeners.get(event).push(fn);
+    };
 
-    function off(event, fn) {
+    const off = (event, fn) => {
         if (typeof event !== "string") return;
-        var list = _listeners[event];
+        const list = listeners.get(event);
         if (!list) return;
         if (typeof fn === "function") {
-            for (var i = list.length - 1; i >= 0; i--) {
-                if (list[i] === fn) { list.splice(i, 1); }
+            for (let i = list.length - 1; i >= 0; i--) {
+                if (list[i] === fn) {
+                    list.splice(i, 1);
+                }
             }
         } else {
-            delete _listeners[event];
+            listeners.delete(event);
         }
-    }
+    };
 
-    function emit(event, payload) {
+    const emit = (event, payload) => {
         if (typeof event !== "string") return;
-        var list = _listeners[event];
+        const list = listeners.get(event);
         if (!list || list.length === 0) return;
-        for (var i = 0; i < list.length; i++) {
+        for (let i = 0; i < list.length; i++) {
             try {
                 list[i](payload);
             } catch (e) {
                 // One crashing listener won't break others
                 if (typeof $ !== "undefined" && $.Msg) {
-                    $.Msg("[QOLLock][WARN][EventBus] listener '" + event +
-                          "' threw: " + (e && e.message ? e.message : String(e)));
+                    $.Msg(`[QOLLock][WARN][EventBus] listener '${event}' threw: ${e?.message || e}`);
                 }
             }
         }
-    }
+    };
 
-    QOL.core.EventBus = {
-        on: on,
-        off: off,
-        emit: emit
+    Q.core.EventBus = {
+        on,
+        off,
+        emit
     };
 
     $.Msg("[QOLLock] core/ql_event_bus: attached to QOL.core.EventBus");

@@ -34,9 +34,7 @@
             var _lastX = null;
             var _lastY = null;
 
-            function _alive(p) {
-                return !!(p && typeof p.IsValid === "function" && p.IsValid());
-            }
+            var _alive = QOL.utils.IsPanelValid;
 
             function _hasClass(root, name) {
                 if (!root || !root.BHasClass) return false;
@@ -62,8 +60,16 @@
             }
 
             function _inHideout(root) {
+                if (typeof QOL !== "undefined" && QOL.core?.hud?.isInHideout) {
+                    return QOL.core.hud.isInHideout(root);
+                }
                 if (!root || !root.BHasClass) return false;
-                try { var _hud = root.FindChildTraverse ? root.FindChildTraverse("Hud") : null; if (_hud && _hud.BHasClass && (_hud.BHasClass("connectedToHideout") || _hud.BHasClass("InHideout"))) return true; if (root.BHasClass && (root.BHasClass("connectedToHideout") || root.BHasClass("InHideout"))) return true; } catch(e) { return false; }
+                try {
+                    var _hud = (QOL.core?.panel?.findHud) ? QOL.core.panel.findHud(root) : (root.FindChildTraverse ? root.FindChildTraverse("Hud") : null);
+                    if (_hud && _hud.BHasClass && (_hud.BHasClass("connectedToHideout") || _hud.BHasClass("InHideout"))) return true;
+                    if (root.BHasClass && (root.BHasClass("connectedToHideout") || root.BHasClass("InHideout"))) return true;
+                } catch(e) { return false; }
+                return false;
             }
 
             function _getCursorPos() {
@@ -163,6 +169,7 @@
             return {
                 onEnable: function() {
                     var S = QOL.core.Scheduler;
+                    // rate-exempt: 20Hz (0.05s) required for tracking custom mouse cursor coordinates
                     _loop = S && S.createPollLoop ? S.createPollLoop(_tick, 0.05, "ql_mouse_cursor") : null;
                 },
                 onDisable: function() {
@@ -175,7 +182,9 @@
                     if (_alive(_cursorPanel)) { try { _cursorPanel.DeleteAsync(0); } catch(e) {} }
                     _cursorPanel = null; _cursorImage = null; _imageBound = false; _lastX = null; _lastY = null;
                 },
-                onSettingsChanged: function() {}
+                onSettingsChanged: function() {
+                    _tick();
+                }
             };
         },
     test: function(ctx) {

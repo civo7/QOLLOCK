@@ -20,22 +20,34 @@
         enabledByDefault: false,
         settings: [{ key: "ENABLE_HIDE_FAILED_HINT", type: "toggle", default: false }],
         create: function(ctx) {
+            var _findHud = QOL.core.panel.findHud;
+
             return {
                 onEnable: function() {
-                    var h = $.GetContextPanel().FindChildTraverse("Hud");
+                    var h = _findHud();
                     if (h) h.AddClass("hide_failed_hint_active");
                 },
                 onDisable: function() {
-                    var h = $.GetContextPanel().FindChildTraverse("Hud");
+                    var h = _findHud();
                     if (h) h.RemoveClass("hide_failed_hint_active");
                 },
-                onSettingsChanged: function() {}
+                onSettingsChanged: function() {
+                    var h = _findHud();
+                    if (!h) return;
+                    var enabled = (ctx.config && typeof ctx.config.getBool === "function")
+                        ? ctx.config.getBool("ENABLE_HIDE_FAILED_HINT")
+                        : Boolean(ctx.config && ctx.config.get ? ctx.config.get("ENABLE_HIDE_FAILED_HINT") : false);
+                    if (enabled) {
+                        h.AddClass("hide_failed_hint_active");
+                    } else {
+                        h.RemoveClass("hide_failed_hint_active");
+                    }
+                }
             };
         },
         test: function(ctx) {
             try {
-                var root = $.GetContextPanel();
-                var hud = root ? root.FindChildTraverse("Hud") : null;
+                var hud = (typeof QOL !== "undefined" && QOL.core?.panel?.findHud) ? QOL.core.panel.findHud() : null;
                 if (!hud) return null;  // Skip — not in a match context
                 return {
                     passed: true,

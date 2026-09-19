@@ -1,12 +1,8 @@
 // features/ql_spm/manifest.js
 // =============================================================================
-// QOLLOCK — Souls Per Minute (SPM) Display
+// QOLLOCK — Souls Per Minute (SPM) Display (Permanently Disabled)
 // =============================================================================
-// OWNS:        SPM calculation and display on top bar player/team panels
-// DOES NOT OWN: Soul values (read from game labels), top bar layout
-// DEPENDS ON:  QOL.core.FeatureRegistry, QOL.core.Scheduler
-// CONFIG KEYS: ENABLE_MIN_SOULS (toggle)
-// PATTERN:     Polling (1Hz). Rolling 60-sample window. Per-player + team.
+// Banned by GameBanana moderators — permanently disabled stub.
 // =============================================================================
 
 (function() {
@@ -22,62 +18,24 @@
             { key: "ENABLE_MIN_SOULS", type: "toggle", default: false }
         ],
         create: function(ctx) {
-            var _loop = null, _nextSample = 0;
-            var MAX_PLAYERS = 13, WINDOW = 60, TTL_MS = 140;
-            var _playerHistory = []; // [{souls: []}]
-            var _teamHistory = { friendly: [], enemy: [] };
-            var _warmup = true, _wasDisabled = false;
-
-            function _init() {
-                _playerHistory = []; _teamHistory = { friendly: [], enemy: [] };
-                for (var i = 0; i < MAX_PLAYERS; i++) _playerHistory.push({ souls: [], lastVal: 0 });
-                _warmup = true;
-            }
-
-            function _addSample(hist, val) {
-                hist.push(val); if (hist.length > WINDOW) hist.shift();
-            }
-
-            function _calc(hist) {
-                if (!hist || hist.length < 2) return 0;
-                return hist[hist.length - 1] - hist[0];
-            }
-
-            function _tick() {
-                var now = Date.now ? Date.now() : (new Date()).getTime();
-                if (!Number(ctx.config.get("ENABLE_MIN_SOULS"))) {
-                    if (!_wasDisabled) { _init(); _wasDisabled = true; }
-                    return;
-                }
-                if (_wasDisabled) { _init(); _wasDisabled = false; }
-                if (now < _nextSample) return;
-                _nextSample = now + 1000;
-
-                // Read soul values from game labels — these exist on top bar player panels
-                // The actual implementation reads HiddenGoldValue/SoulsValue labels
-                // For the manifest, we preserve the contract; full logic stays in legacy file
-                // until wired into hud.xml
-            }
-
-            _init();
+            // Permanently disabled per GameBanana moderator ruling
             return {
-                onEnable: function() {
-                    var S = QOL.core.Scheduler;
-                    _loop = S && S.createPollLoop ? S.createPollLoop(_tick, 1.0, "ql_spm") : null;
-                },
-                onDisable: function() {
-                    if (_loop) { _loop.stop(); _loop = null; }
-                    _init();
-                },
+                onEnable: function() {},
+                onDisable: function() {},
                 onSettingsChanged: function() {}
             };
         },
-    test: function(ctx) {
-        try {
-            var root = $.GetContextPanel();
-            var topBar = root ? root.FindChildTraverse("TopBar") : null;
-            return { passed: !!topBar, name: "SPM top bar panel exists", message: topBar ? "" : "TopBar not found", assertions: [{ passed: !!topBar, name: "TopBar panel exists" }] };
-        } catch(e) { return { passed: false, name: "SPM panel check", message: (e && e.message ? e.message : String(e)) }; }
-    }
+        test: function(ctx) {
+            try {
+                var root = $.GetContextPanel();
+                var topBar = root ? root.FindChildTraverse("TopBar") : null;
+                return {
+                    passed: !!topBar,
+                    name: "SPM top bar panel exists",
+                    message: topBar ? "" : "TopBar not found",
+                    assertions: [{ passed: !!topBar, name: "TopBar panel exists" }]
+                };
+            } catch(e) { return { passed: false, name: "SPM panel check", message: (e && e.message ? e.message : String(e)) }; }
+        }
     });
 })();

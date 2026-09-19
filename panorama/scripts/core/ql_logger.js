@@ -12,117 +12,117 @@
 // Boundary validation: Checks QOL.core exists. Aborts with message if not.
 // =============================================================================
 
-(function () {
+(() => {
     "use strict";
 
-    // -- Validate dependencies --
-    if (!QOL || !QOL.core) {
-        $.Msg("[QOLLock] core/ql_logger: QOL.core not found — aborting. " +
-              "Is core/ql_namespace.js loaded first?");
+    const Q = (typeof globalThis !== "undefined" && globalThis.QOL) ? globalThis.QOL : (typeof QOL !== "undefined" ? QOL : null);
+    if (!Q?.core) {
+        $.Msg("[QOLLock] core/ql_logger: QOL.core not found — aborting. Is core/ql_namespace.js loaded first?");
         return;
     }
 
-    // -- Configuration --
-    var MAX_ENTRIES = 500;
-    var ERROR_THROTTLE_MS = 2000;
+    const MAX_ENTRIES = 500;
+    const ERROR_THROTTLE_MS = 2000;
 
-    // -- Private state --
-    var _buffer = [];
-    var _throttleTimers = {};
-    var _debugEnabled = false;
+    const buffer = [];
+    const throttleTimers = new Map();
+    let debugEnabled = false;
 
-    function _nowMs() {
-        return Date.now ? Date.now() : $.FrameTime() * 1000;
-    }
+    const nowMs = QOL_UTILS.PerfNowMs;
 
-    function _store(msg) {
-        _buffer.push(msg);
-        if (_buffer.length > MAX_ENTRIES) { _buffer.shift(); }
-    }
+    const store = (msg) => {
+        buffer.push(msg);
+        if (buffer.length > MAX_ENTRIES) {
+            buffer.shift();
+        }
+    };
 
-    function _throttled(key, featureId, level, msg) {
-        var now = _nowMs();
-        if (_throttleTimers[key] && (now - _throttleTimers[key]) < ERROR_THROTTLE_MS) {
+    const throttled = (key, featureId, level, msg) => {
+        const now = nowMs();
+        const last = throttleTimers.get(key);
+        if (last && (now - last) < ERROR_THROTTLE_MS) {
             return;
         }
-        _throttleTimers[key] = now;
-        var formatted = "[QOLLock][" + level + "][" + featureId + "] " + msg;
+        throttleTimers.set(key, now);
+        const formatted = `[QOLLock][${level}][${featureId}] ${msg}`;
         $.Msg(formatted);
-        _store(formatted);
-    }
+        store(formatted);
+    };
 
     // -- Public API --
-    function logError(featureId, msg) {
+    const logError = (featureId, msg) => {
         if (typeof featureId !== "string" || typeof msg !== "string") return;
-        _throttled("err:" + featureId, featureId, "ERROR", msg);
-    }
+        throttled(`err:${featureId}`, featureId, "ERROR", msg);
+    };
 
-    function logWarn(featureId, msg) {
+    const logWarn = (featureId, msg) => {
         if (typeof featureId !== "string" || typeof msg !== "string") return;
-        _throttled("warn:" + featureId, featureId, "WARN", msg);
-    }
+        throttled(`warn:${featureId}`, featureId, "WARN", msg);
+    };
 
-    function logInfo(featureId, msg) {
+    const logInfo = (featureId, msg) => {
         if (typeof featureId !== "string" || typeof msg !== "string") return;
-        var formatted = "[QOLLock][INFO][" + featureId + "] " + msg;
+        const formatted = `[QOLLock][INFO][${featureId}] ${msg}`;
         $.Msg(formatted);
-        _store(formatted);
-    }
+        store(formatted);
+    };
 
-    function logDebug(featureId, msg) {
-        if (!_debugEnabled) return;
+    const logDebug = (featureId, msg) => {
+        if (!debugEnabled) return;
         if (typeof featureId !== "string" || typeof msg !== "string") return;
-        var formatted = "[QOLLock][DEBUG][" + featureId + "] " + msg;
+        const formatted = `[QOLLock][DEBUG][${featureId}] ${msg}`;
         $.Msg(formatted);
-        _store(formatted);
-    }
+        store(formatted);
+    };
 
-    function clearThrottle(featureId) {
+    const clearThrottle = (featureId) => {
         if (typeof featureId !== "string") return;
-        delete _throttleTimers["err:" + featureId];
-        delete _throttleTimers["warn:" + featureId];
-    }
+        throttleTimers.delete(`err:${featureId}`);
+        throttleTimers.delete(`warn:${featureId}`);
+    };
 
-    function setDebug(enabled) {
-        _debugEnabled = !!enabled;
-    }
+    const setDebug = (enabled) => {
+        debugEnabled = !!enabled;
+    };
 
-    function getReport() {
-        return _buffer.join("\n");
-    }
+    const getReport = () => buffer.join("\n");
 
-    function getErrors(n) {
-        var errors = [];
-        for (var i = _buffer.length - 1; i >= 0 && errors.length < (n || 20); i--) {
-            if (_buffer[i].indexOf("[ERROR]") !== -1 || _buffer[i].indexOf("[WARN]") !== -1) {
-                errors.push(_buffer[i]);
+    const getErrors = (n = 20) => {
+        const errors = [];
+        for (let i = buffer.length - 1; i >= 0 && errors.length < n; i--) {
+            if (buffer[i].includes("[ERROR]") || buffer[i].includes("[WARN]")) {
+                errors.push(buffer[i]);
             }
         }
         return errors;
-    }
-
-    function getCount() {
-        return _buffer.length;
-    }
-
-    function clear() {
-        _buffer.length = 0;
-    }
-
-    // -- Attach to namespace --
-    QOL.core.Logger = {
-        logError: logError,
-        logWarn: logWarn,
-        logInfo: logInfo,
-        logDebug: logDebug,
-        clearThrottle: clearThrottle,
-        setDebug: setDebug,
-        getReport: getReport,
-        getErrors: getErrors,
-        getCount: getCount,
-        clear: clear
     };
 
-    $.Msg("[QOLLock] core/ql_logger: attached to QOL.core.Logger " +
-          "(ring buffer: " + MAX_ENTRIES + " entries)");
+    const getCount = () => buffer.length;
+
+    const clear = () => {
+        buffer.length = 0;
+    };
+
+    // -- Attach to namespace --
+    const loggerApi = {
+        error: logError,
+        warn: logWarn,
+        info: logInfo,
+        debug: logDebug,
+        logError,
+        logWarn,
+        logInfo,
+        logDebug,
+        clearThrottle,
+        setDebug,
+        getReport,
+        getErrors,
+        getCount,
+        clear
+    };
+
+    Q.core.logger = loggerApi;
+    Q.core.Logger = loggerApi;
+
+    $.Msg(`[QOLLock] core/ql_logger: attached to QOL.core.logger and QOL.core.Logger (ring buffer: ${MAX_ENTRIES} entries)`);
 })();

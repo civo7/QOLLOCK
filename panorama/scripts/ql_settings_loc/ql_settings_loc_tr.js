@@ -814,7 +814,7 @@
     "Writing settings string to build...": "Ayarlar metin dizesi build'a yazılıyor...",
     "XQC": "XQC",
     "Yellow": "Sarı",
-    "You can download custom announcer packs, just download the correct one for the slot you want to replace.": "Özel spiker paketleri indirebilirsiniz. Sadece değiştirmek istediğiniz ",
+    "You can download custom announcer packs, just download the correct one for the slot you want to replace.": "Özel spiker paketleri indirebilirsiniz. Sadece değiştirmek istediğiniz",
     "You can support development by commissioning features or presets.": "Özellik veya hazır ayar sipariş ederek geliştirmeyi destekleyebilirsiniz.",
     "You win.": "Kazandın.",
     "ZIP BOOST": "ZIPLINE HIZLANDIRMASI",

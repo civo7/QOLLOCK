@@ -10,7 +10,7 @@
 //              ENABLE_TAB_ZOOM, ENABLE_ALT_ZOOM, MINIMAP_SMALL_SIZE,
 //              MINIMAP_LARGE_SIZE, MINIMAP_LARGE_SIZE_ALT, MINIMAP_LARGE_SIZE_TAB
 // CSS:         none
-// PATTERN:     Polling (0.3Hz). Self-scheduling via Scheduler.
+// PATTERN:     Polling (0.3s). Self-scheduling via Scheduler.
 // SPLIT FROM:  ql_rejuv_timers — HUD code extracted to ql_rejuv_hud
 // =============================================================================
 
@@ -41,29 +41,162 @@
             { key: "MINIMAP_LARGE_SIZE_TAB", type: "slider", min: 400, max: 1200, step: 10, default: 750 }
         ],
         create: function(ctx) {
-            var _deps = QOL.import(["ensureMinimapOverlayAnchor","getCachedPanel","getGameSecondsForUrn","hasClassInHierarchy","isConnectedToHideout","isHudClassActive","isStreetBrawlModeActive","resolveCachedPanel","state","setCachedPanel","setPanelClassCached","utils"]);
-            var GetCachedPanel = _deps.getCachedPanel;
-            var ResolveCachedPanel = _deps.resolveCachedPanel;
-            var State = _deps.state;
-            var SetCachedPanel = _deps.setCachedPanel;
-            var Utils = _deps.utils;
-            var IsCfgEnabled = Utils.IsCfgEnabled;
-            var IsPanelValid = Utils.IsPanelValid;
-            var SetPanelClassCached = _deps.setPanelClassCached;
-            var IsHudClassActive = _deps.isHudClassActive;
-            var hasClassInHierarchy = _deps.hasClassInHierarchy;
-            var EnsureMinimapOverlayAnchor = _deps.ensureMinimapOverlayAnchor;
-            var GetGameSecondsForUrn = _deps.getGameSecondsForUrn;
-            var IsStreetBrawlModeActive = _deps.isStreetBrawlModeActive;
-            var isConnectedToHideout = _deps.isConnectedToHideout;
+            var Panel = (QOL.core && QOL.core.panel) ? QOL.core.panel : {};
+            var State = QOL.state || (typeof globalThis !== "undefined" && globalThis.State) || {};
+            var Utils = QOL.utils;
+            var IsCfgEnabled = QOL.utils.IsCfgEnabled;
+            var IsPanelValid = QOL.utils.IsPanelValid;
+            var GetCachedPanel = QOL.getCachedPanel;
+            var SetCachedPanel = QOL.setCachedPanel;
+            var ResolveCachedPanel = QOL.resolveCachedPanel;
+            var SetPanelClassCached = QOL.setPanelClassCached || function(p, c, cls, val) { if (p && p.SetHasClass) p.SetHasClass(cls, !!val); };
+            var IsHudClassActive = function(r, cls) { return (QOL.core && QOL.core.hud && QOL.core.hud.isClassActive) ? QOL.core.hud.isClassActive(cls) : (QOL.isHudClassActive ? QOL.isHudClassActive(r, cls) : false); };
+            var hasClassInHierarchy = QOL.hasClassInHierarchy || function(p, cls) { return !!(p && p.BHasClass && p.BHasClass(cls)); };
+            var _cachedAnchor = null;
+            var EnsureMinimapOverlayAnchor = function(root) {
+                if (IsPanelValid(_cachedAnchor)) return _cachedAnchor;
+                if (typeof QOL.ensureMinimapOverlayAnchor === "function") {
+                    var a = QOL.ensureMinimapOverlayAnchor(root);
+                    if (IsPanelValid(a)) {
+                        _cachedAnchor = a;
+                        return a;
+                    }
+                }
+                if (!root || !root.FindChildTraverse) return null;
+                var fallback = root.FindChildTraverse("minimap_container") || root.FindChildTraverse("minimap_persp") || null;
+                if (IsPanelValid(fallback)) {
+                    _cachedAnchor = fallback;
+                    return fallback;
+                }
+                return null;
+            };
+            var GetGameSecondsForUrn = function() { return QOL.getGameSecondsForUrn ? QOL.getGameSecondsForUrn() : 0; };
+            var IsStreetBrawlModeActive = function(r) { return QOL.isStreetBrawlModeActive ? QOL.isStreetBrawlModeActive(r) : false; };
+            var isConnectedToHideout = function(r) { return (QOL.core && QOL.core.hud && QOL.core.hud.isClassActive) ? (QOL.core.hud.isClassActive("connectedToHideout") || QOL.core.hud.isClassActive("InHideout")) : (QOL.isConnectedToHideout ? QOL.isConnectedToHideout(r) : false); };
             var BRIDGE_DURATION_SEC = 300;
+
+            var POWERUP_BUFF_CLASSES = [
+                "powerup_gun",
+                "powerup_survival",
+                "powerup_casting",
+                "powerup_movement"
+            ];
+
+            function GetPowerupBridgeSide(panel) {
+                if (!IsPanelValid(panel)) return null;
+                var posText = "";
+                try {
+                    if (panel.style && typeof panel.style.position === "string") {
+                        posText = panel.style.position;
+                    }
+                } catch(e) {}
+                if (!posText && panel.GetAttributeString) {
+                    try { posText = panel.GetAttributeString("style", ""); } catch(e) {}
+                }
+                if (posText) {
+                    var match = posText.match(/([+\-]?\d+(?:\.\d+)?)%/);
+                    if (match && match[1]) {
+                        var xPct = parseFloat(match[1]);
+                        if (isFinite(xPct)) return xPct < 50 ? "left" : "right";
+                    }
+                }
+                try {
+                    var ox = panel.actualxoffset;
+                    if (typeof ox === "number" && isFinite(ox)) {
+                        var parent = panel.GetParent ? panel.GetParent() : null;
+                        var pw = parent && typeof parent.actuallayoutwidth === "number" ? parent.actuallayoutwidth : 0;
+                        if (pw > 0) return ox < (pw / 2) ? "left" : "right";
+                        if (ox > 0) return ox < 200 ? "left" : "right";
+                    }
+                } catch(e) {}
+                return null;
+            }
+
+            var _cachedMinimap = null;
+
+            function _resolveMinimapPanel(root, anchor) {
+                if (IsPanelValid(_cachedMinimap)) return _cachedMinimap;
+                if (anchor && IsPanelValid(anchor)) {
+                    if (anchor.id === "hud_minimap" || anchor.id === "HudMinimap") {
+                        _cachedMinimap = anchor;
+                        return anchor;
+                    }
+                    var p = anchor.FindChildTraverse ? (anchor.FindChildTraverse("hud_minimap") || anchor.FindChildTraverse("HudMinimap")) : null;
+                    if (IsPanelValid(p)) {
+                        _cachedMinimap = p;
+                        return p;
+                    }
+                }
+                if (root && root.FindChildTraverse) {
+                    var pr = root.FindChildTraverse("hud_minimap") || root.FindChildTraverse("HudMinimap");
+                    if (IsPanelValid(pr)) {
+                        _cachedMinimap = pr;
+                        return pr;
+                    }
+                }
+                return (anchor && IsPanelValid(anchor)) ? anchor : null;
+            }
+
+            function _getSpawners(searchRoot) {
+                if (!IsPanelValid(searchRoot) || !searchRoot.FindChildrenWithClassTraverse) return null;
+                return searchRoot.FindChildrenWithClassTraverse("powerup_spawn");
+            }
+
+            function DetectActiveBridgeBuffs(root, anchor) {
+                var result = { left: false, right: false };
+                var searchRoot = _resolveMinimapPanel(root, anchor);
+                if (!IsPanelValid(searchRoot)) return result;
+
+                var spawners = _getSpawners(searchRoot);
+                if (!spawners || spawners.length === 0) return result;
+
+                for (var i = 0; i < spawners.length; i++) {
+                    var p = spawners[i];
+                    if (!IsPanelValid(p)) continue;
+
+                    var isSpawned = false;
+                    for (var c = 0; c < POWERUP_BUFF_CLASSES.length; c++) {
+                        if (p.BHasClass && p.BHasClass(POWERUP_BUFF_CLASSES[c])) {
+                            isSpawned = true;
+                            break;
+                        }
+                    }
+                    if (!isSpawned && p.BHasClass && p.BHasClass("powerup_spawn") && p.BHasClass("active")) {
+                        isSpawned = true;
+                    }
+                    if (!isSpawned) continue;
+
+                    var side = GetPowerupBridgeSide(p);
+                    if (!side && spawners.length >= 2) {
+                        var x0 = Number(spawners[0].actualxoffset) || 0;
+                        var x1 = Number(spawners[1].actualxoffset) || 0;
+                        if (p === spawners[0]) {
+                            side = x0 <= x1 ? "left" : "right";
+                        } else {
+                            side = x1 > x0 ? "right" : "left";
+                        }
+                    }
+
+                    if (side === "left") result.left = true;
+                    else if (side === "right") result.right = true;
+                }
+                return result;
+            }
 
             var _loop = null;
             var _root = null;
 
-            function FormatClockMmSs(totalSec) { var s = Math.max(0, Math.floor(Number(totalSec) || 0)); var mm = Math.floor(s / 60); var ss = s % 60; return String(mm) + ":" + (ss < 10 ? "0" + ss : String(ss)); }
+            var FormatClockMmSs = QOL.core.time.formatSeconds;
+
+            var _cachedPanelsStruct = null;
 
             function EnsureMinimapObjectiveTimers(root) {
+                if (_cachedPanelsStruct &&
+                    IsPanelValid(_cachedPanelsStruct.root) &&
+                    IsPanelValid(_cachedPanelsStruct.buffPanel) &&
+                    IsPanelValid(_cachedPanelsStruct.rejuvPanel)) {
+                    return _cachedPanelsStruct;
+                }
                 var anchor = EnsureMinimapOverlayAnchor(root);
                 if (!anchor) return null;
                 var overlay = GetCachedPanel("minimapObjectiveTimersRoot");
@@ -101,14 +234,16 @@
                 SetCachedPanel("minimapObjectiveBuffBridgeRightPanel", buffBridgeRightPanel); SetCachedPanel("minimapObjectiveBuffBridgeRightTime", buffBridgeRightTime); SetCachedPanel("minimapObjectiveBuffBridgeRightIcon", buffBridgeRightIcon);
                 SetCachedPanel("minimapObjectiveRejuvPanel", rejuvPanel); SetCachedPanel("minimapObjectiveRejuvTime", rejuvTime); SetCachedPanel("minimapObjectiveRejuvIcon", rejuvIcon);
                 if (overlay.MoveChildBefore && rejuvPanel && buffPanel) overlay.MoveChildBefore(rejuvPanel, buffPanel);
-                return { root: overlay, buffPanel: buffPanel, buffTime: buffTime, buffBridgeLeftPanel: buffBridgeLeftPanel, buffBridgeLeftTime: buffBridgeLeftTime, buffBridgeRightPanel: buffBridgeRightPanel, buffBridgeRightTime: buffBridgeRightTime, rejuvPanel: rejuvPanel, rejuvTime: rejuvTime };
+                _cachedPanelsStruct = { root: overlay, buffPanel: buffPanel, buffTime: buffTime, buffBridgeLeftPanel: buffBridgeLeftPanel, buffBridgeLeftTime: buffBridgeLeftTime, buffBridgeRightPanel: buffBridgeRightPanel, buffBridgeRightTime: buffBridgeRightTime, rejuvPanel: rejuvPanel, rejuvTime: rejuvTime };
+                return _cachedPanelsStruct;
             }
 
             function HideMinimapObjectiveTimers(root) {
-                var overlay = GetCachedPanel("minimapObjectiveTimersRoot"); if (!overlay && root && root.FindChildTraverse) { overlay = root.FindChildTraverse("QOLMinimapTimersRoot"); if (overlay) SetCachedPanel("minimapObjectiveTimersRoot", overlay); }
-                if (!overlay) return;
+                var overlay = GetCachedPanel("minimapObjectiveTimersRoot");
+                if (!overlay || !IsPanelValid(overlay)) return;
                 if (overlay.SetHasClass) overlay.SetHasClass("qol-hidden", true); else if (overlay.style.visibility !== "collapse") overlay.style.visibility = "collapse";
                 State.minimapObjectiveScaleSig = "";
+                State.minimapObjectiveBridgePosSig = "";
                 if (overlay.style.preTransformScale2d !== "1.00, 1.00") overlay.style.preTransformScale2d = "1.00, 1.00";
                 var bp = GetCachedPanel("minimapObjectiveBuffPanel"), blp = GetCachedPanel("minimapObjectiveBuffBridgeLeftPanel"), brp = GetCachedPanel("minimapObjectiveBuffBridgeRightPanel"), rp = GetCachedPanel("minimapObjectiveRejuvPanel");
                 if (bp) { SetPanelClassCached(bp, State.minimapObjectiveBuffClassCache, "yellow", false); SetPanelClassCached(bp, State.minimapObjectiveBuffClassCache, "red", false); }
@@ -153,7 +288,7 @@
                 if (panels.rejuvPanel) { SetPanelClassCached(panels.rejuvPanel, State.minimapObjectiveRejuvClassCache, "yellow", ry); SetPanelClassCached(panels.rejuvPanel, State.minimapObjectiveRejuvClassCache, "red", rr); }
             }
 
-            function ApplyMinimapObjectiveTimersBridgeMode(panels, overlay, dims, bd, flags, icons, bridgeText, rejuvText) {
+            function ApplyMinimapObjectiveTimersBridgeMode(panels, overlay, dims, bd, flags, icons, bridgeText, rejuvText, activeBuffs) {
                 var tw = dims.timerWidth, th = dims.timerHeight, tg = dims.timerGap, tpx = dims.timerPaddingX, tr = dims.timerRadius, tf = dims.timerFont, ti = dims.timerIcon, bo = dims.bottomOffset;
                 var ms = bd.minimapSize, btw = bd.bridgeTimerWidth, bth = bd.bridgeTimerHeight, btpx = bd.bridgeTimerPaddingX, btr = bd.bridgeTimerRadius, btf = bd.bridgeTimerFont, bho = bd.bridgeHorizontalOffset;
                 var be = flags.buffEnabled, bbe = flags.buffOnBridgeEnabled, re = flags.rejuvEnabled, rbe = flags.rejuvOnBridgeEnabled, br = flags.buffRed, by = flags.buffYellow, rr = flags.rejuvRed, ry = flags.rejuvYellow;
@@ -161,7 +296,7 @@
                 var sso = Math.round(tw + (tg * 2));
                 var sig = [tw,th,tg,tpx,tr,tf,ti,bo,btw,bth,btpx,btr,btf,bho,sso,bbe?1:0,rbe?1:0].join("|");
                 if (State.minimapObjectiveScaleSig !== sig) {
-                    overlay.style.width = ms + "px"; overlay.style.height = ms + "px"; overlay.style.horizontalAlign = "center"; overlay.style.verticalAlign = "center"; overlay.style.marginLeft = "0px"; overlay.style.marginRight = "0px"; overlay.style.marginTop = "0px"; overlay.style.marginBottom = "0px"; overlay.style.preTransformScale2d = "1.00, 1.00";
+                    overlay.style.width = "400px"; overlay.style.height = "400px"; overlay.style.horizontalAlign = "center"; overlay.style.verticalAlign = "center"; overlay.style.marginLeft = "0px"; overlay.style.marginRight = "0px"; overlay.style.marginTop = "0px"; overlay.style.marginBottom = "0px"; overlay.style.preTransformScale2d = "1.00, 1.00";
                     if (panels.buffPanel) { panels.buffPanel.style.width = tw + "px"; panels.buffPanel.style.height = th + "px"; panels.buffPanel.style.margin = "0px"; panels.buffPanel.style.padding = "0px " + tpx + "px"; panels.buffPanel.style.borderRadius = tr + "px"; panels.buffPanel.style.ignoreParentFlow = bbe ? "true" : "false"; panels.buffPanel.style.horizontalAlign = "center"; panels.buffPanel.style.verticalAlign = bbe ? "bottom" : "center"; panels.buffPanel.style.marginTop = "0px"; panels.buffPanel.style.marginBottom = bbe ? (bo + "px") : "0px"; }
                     if (panels.rejuvPanel) { panels.rejuvPanel.style.width = tw + "px"; panels.rejuvPanel.style.height = th + "px"; panels.rejuvPanel.style.margin = "0px"; panels.rejuvPanel.style.padding = "0px " + tpx + "px"; panels.rejuvPanel.style.borderRadius = tr + "px"; panels.rejuvPanel.style.ignoreParentFlow = "true"; panels.rejuvPanel.style.horizontalAlign = "center"; panels.rejuvPanel.style.verticalAlign = rbe ? "center" : "bottom"; panels.rejuvPanel.style.marginLeft = (rbe ? 0 : sso) + "px"; panels.rejuvPanel.style.marginTop = "0px"; panels.rejuvPanel.style.marginBottom = rbe ? "0px" : (bo + "px"); }
                     if (bi) { bi.style.width = ti + "px"; bi.style.height = ti + "px"; if (bi.SetHasClass) bi.SetHasClass("qol-hidden", true); else bi.style.visibility = "collapse"; }
@@ -176,11 +311,31 @@
                 if (overlay.style.marginLeft !== "0px") overlay.style.marginLeft = "0px";
                 var sbbp = be && !bbe;
                 if (panels.buffPanel) { if (panels.buffPanel.SetHasClass) panels.buffPanel.SetHasClass("qol-hidden", !sbbp); else if (panels.buffPanel.style.visibility !== (sbbp ? "visible" : "collapse")) panels.buffPanel.style.visibility = sbbp ? "visible" : "collapse"; }
-                if (panels.buffBridgeLeftPanel) { if (panels.buffBridgeLeftPanel.SetHasClass) panels.buffBridgeLeftPanel.SetHasClass("qol-hidden", !bbe); else if (panels.buffBridgeLeftPanel.style.visibility !== (be ? "visible" : "collapse")) panels.buffBridgeLeftPanel.style.visibility = bbe ? "visible" : "collapse"; }
-                if (panels.buffBridgeRightPanel) { if (panels.buffBridgeRightPanel.SetHasClass) panels.buffBridgeRightPanel.SetHasClass("qol-hidden", !bbe); else if (panels.buffBridgeRightPanel.style.visibility !== (be ? "visible" : "collapse")) panels.buffBridgeRightPanel.style.visibility = bbe ? "visible" : "collapse"; }
+                var leftHidden = !bbe || !!(activeBuffs && activeBuffs.left);
+                var rightHidden = !bbe || !!(activeBuffs && activeBuffs.right);
+                if (panels.buffBridgeLeftPanel) {
+                    if (panels.buffBridgeLeftPanel.SetHasClass) {
+                        panels.buffBridgeLeftPanel.SetHasClass("qol-hidden", leftHidden);
+                        panels.buffBridgeLeftPanel.SetHasClass("buff_spawned", !!(activeBuffs && activeBuffs.left));
+                    } else if (panels.buffBridgeLeftPanel.style.visibility !== (leftHidden ? "collapse" : "visible")) {
+                        panels.buffBridgeLeftPanel.style.visibility = leftHidden ? "collapse" : "visible";
+                    }
+                }
+                if (panels.buffBridgeRightPanel) {
+                    if (panels.buffBridgeRightPanel.SetHasClass) {
+                        panels.buffBridgeRightPanel.SetHasClass("qol-hidden", rightHidden);
+                        panels.buffBridgeRightPanel.SetHasClass("buff_spawned", !!(activeBuffs && activeBuffs.right));
+                    } else if (panels.buffBridgeRightPanel.style.visibility !== (rightHidden ? "collapse" : "visible")) {
+                        panels.buffBridgeRightPanel.style.visibility = rightHidden ? "collapse" : "visible";
+                    }
+                }
                 if (panels.rejuvPanel) { if (panels.rejuvPanel.SetHasClass) panels.rejuvPanel.SetHasClass("qol-hidden", !re); else if (panels.rejuvPanel.style.visibility !== (re ? "visible" : "collapse")) panels.rejuvPanel.style.visibility = re ? "visible" : "collapse"; }
-                if (panels.buffPanel && sbbp) { panels.buffPanel.style.ignoreParentFlow = "true"; panels.buffPanel.style.verticalAlign = "bottom"; panels.buffPanel.style.marginTop = "0px"; panels.buffPanel.style.marginBottom = bo + "px"; panels.buffPanel.style.marginLeft = ((!re || rbe) ? 0 : (-sso)) + "px"; }
-                if (panels.rejuvPanel) { panels.rejuvPanel.style.ignoreParentFlow = "true"; if (rbe) { panels.rejuvPanel.style.verticalAlign = "center"; panels.rejuvPanel.style.marginLeft = "0px"; panels.rejuvPanel.style.marginTop = "0px"; panels.rejuvPanel.style.marginBottom = "0px"; } else { panels.rejuvPanel.style.verticalAlign = "bottom"; panels.rejuvPanel.style.marginTop = "0px"; panels.rejuvPanel.style.marginBottom = bo + "px"; panels.rejuvPanel.style.marginLeft = ((be && !bbe) || bbe ? sso : 0) + "px"; } }
+                var bridgePosSig = [bo, sso, sbbp ? 1 : 0, re ? 1 : 0, rbe ? 1 : 0, be ? 1 : 0, bbe ? 1 : 0].join("|");
+                if (State.minimapObjectiveBridgePosSig !== bridgePosSig) {
+                    if (panels.buffPanel && sbbp) { panels.buffPanel.style.ignoreParentFlow = "true"; panels.buffPanel.style.verticalAlign = "bottom"; panels.buffPanel.style.marginTop = "0px"; panels.buffPanel.style.marginBottom = bo + "px"; panels.buffPanel.style.marginLeft = ((!re || rbe) ? 0 : (-sso)) + "px"; }
+                    if (panels.rejuvPanel) { panels.rejuvPanel.style.ignoreParentFlow = "true"; if (rbe) { panels.rejuvPanel.style.verticalAlign = "center"; panels.rejuvPanel.style.marginLeft = "0px"; panels.rejuvPanel.style.marginTop = "0px"; panels.rejuvPanel.style.marginBottom = "0px"; } else { panels.rejuvPanel.style.verticalAlign = "bottom"; panels.rejuvPanel.style.marginTop = "0px"; panels.rejuvPanel.style.marginBottom = bo + "px"; panels.rejuvPanel.style.marginLeft = ((be && !bbe) || bbe ? sso : 0) + "px"; } }
+                    State.minimapObjectiveBridgePosSig = bridgePosSig;
+                }
                 if (ri) { if (ri.SetHasClass) ri.SetHasClass("qol-hidden", rbe); else ri.style.visibility = rbe ? "collapse" : "visible"; }
                 if (be && panels.buffBridgeLeftTime && panels.buffBridgeLeftTime.text !== bridgeText) panels.buffBridgeLeftTime.text = bridgeText;
                 if (be && panels.buffBridgeRightTime && panels.buffBridgeRightTime.text !== bridgeText) panels.buffBridgeRightTime.text = bridgeText;
@@ -190,8 +345,14 @@
                 // keeps whatever standard mode last set — a clock frozen mid-countdown.
                 if (sbbp && panels.buffTime && panels.buffTime.text !== bridgeText) panels.buffTime.text = bridgeText;
                 if (re && panels.rejuvTime && panels.rejuvTime.text !== rejuvText) panels.rejuvTime.text = rejuvText;
-                if (panels.buffBridgeLeftPanel) { SetPanelClassCached(panels.buffBridgeLeftPanel, State.minimapObjectiveBuffBridgeLeftClassCache, "yellow", by); SetPanelClassCached(panels.buffBridgeLeftPanel, State.minimapObjectiveBuffBridgeLeftClassCache, "red", br); }
-                if (panels.buffBridgeRightPanel) { SetPanelClassCached(panels.buffBridgeRightPanel, State.minimapObjectiveBuffBridgeRightClassCache, "yellow", by); SetPanelClassCached(panels.buffBridgeRightPanel, State.minimapObjectiveBuffBridgeRightClassCache, "red", br); }
+                if (panels.buffBridgeLeftPanel) {
+                    SetPanelClassCached(panels.buffBridgeLeftPanel, State.minimapObjectiveBuffBridgeLeftClassCache, "yellow", !leftHidden && by);
+                    SetPanelClassCached(panels.buffBridgeLeftPanel, State.minimapObjectiveBuffBridgeLeftClassCache, "red", !leftHidden && br);
+                }
+                if (panels.buffBridgeRightPanel) {
+                    SetPanelClassCached(panels.buffBridgeRightPanel, State.minimapObjectiveBuffBridgeRightClassCache, "yellow", !rightHidden && by);
+                    SetPanelClassCached(panels.buffBridgeRightPanel, State.minimapObjectiveBuffBridgeRightClassCache, "red", !rightHidden && br);
+                }
                 if (panels.buffPanel) { SetPanelClassCached(panels.buffPanel, State.minimapObjectiveBuffClassCache, "yellow", false); SetPanelClassCached(panels.buffPanel, State.minimapObjectiveBuffClassCache, "red", false); }
                 if (panels.rejuvPanel) { SetPanelClassCached(panels.rejuvPanel, State.minimapObjectiveRejuvClassCache, "yellow", ry); SetPanelClassCached(panels.rejuvPanel, State.minimapObjectiveRejuvClassCache, "red", rr); }
             }
@@ -203,16 +364,21 @@
                 var panels = EnsureMinimapObjectiveTimers(root); if (!panels || !panels.root) return;
                 var overlay = panels.root;
                 if (overlay.SetHasClass) overlay.SetHasClass("qol-hidden", false); else if (overlay.style.visibility !== "visible") overlay.style.visibility = "visible";
-                var ms = ResolveActiveMinimapObjectiveSize(root, cfg); if (!isFinite(ms)) ms = 400; if (ms < 200) ms = 200; if (ms > 1200) ms = 1200;
-                var msc = ms / 400.0; if (!isFinite(msc)) msc = 1.0; if (msc < 0.5) msc = 0.5; if (msc > 2.5) msc = 2.5;
-                var tw = Math.max(58, Math.round(72 * msc)), th = Math.max(22, Math.round(28 * msc)), tg = Math.max(24, Math.round(40 * msc)), tpx = Math.max(3, Math.round(5 * msc)), tr = Math.max(4, Math.round(5 * msc)), tf = Math.max(11, Math.round(14 * msc)), ti = Math.max(12, Math.round(16 * msc)), bo = Math.max(4, Math.round(ms * 0.10));
+                // Keep dimensions and offsets in base 400px layout coordinate space.
+                // Panorama's uiScale on #minimap_persp automatically handles vector scaling
+                // to any configured minimap size (550px, 700px, zoom, etc.) without layout drift.
+                var tw = 72, th = 28, tg = 40, tpx = 5, tr = 5, tf = 14, ti = 16, bo = 40;
                 var brr = Math.max(0, Math.floor(Number(remainingBridge) || 0)), rjr = Math.max(0, Math.floor(Number(remainingRejuv) || 0));
                 var bufR = be && brr < 10 && (brr % 2) === 1, bufY = be && !bufR && brr < 20 && (brr % 2) === 1;
                 var rwe = re && !spawnWaiting, rejR = re && (spawnWaiting || (rwe && rjr < 10 && (rjr % 2) === 1)), rejY = rwe && !rejR && rjr < 20 && (rjr % 2) === 1;
                 var bi = GetCachedPanel("minimapObjectiveBuffIcon"), bli = GetCachedPanel("minimapObjectiveBuffBridgeLeftIcon"), bri = GetCachedPanel("minimapObjectiveBuffBridgeRightIcon"), ri = GetCachedPanel("minimapObjectiveRejuvIcon");
-                var btw2 = Math.max(29, Math.round(tw * 0.5)), bth2 = Math.max(11, Math.round(th * 0.5)), btpx2 = Math.max(2, Math.round(tpx * 0.5)), btr2 = Math.max(2, Math.round(tr * 0.5)), btf2 = Math.max(8, Math.round(tf * 0.5)), bho2 = Math.round(ms * 0.35);
-                if (!bbe && !rbe) { ApplyMinimapObjectiveTimersStandardMode(panels, overlay, {timerWidth:tw,timerHeight:th,timerGap:tg,timerPaddingX:tpx,timerRadius:tr,timerFont:tf,timerIcon:ti,bottomOffset:bo}, {buffEnabled:be,rejuvEnabled:re,buffRed:bufR,buffYellow:bufY,rejuvRed:rejR,rejuvYellow:rejY}, {buffIcon:bi,buffBridgeLeftIcon:bli,buffBridgeRightIcon:bri,rejuvIcon:ri}, bridgeText, rejuvText); return; }
-                ApplyMinimapObjectiveTimersBridgeMode(panels, overlay, {timerWidth:tw,timerHeight:th,timerGap:tg,timerPaddingX:tpx,timerRadius:tr,timerFont:tf,timerIcon:ti,bottomOffset:bo}, {minimapSize:ms,bridgeTimerWidth:btw2,bridgeTimerHeight:bth2,bridgeTimerPaddingX:btpx2,bridgeTimerRadius:btr2,bridgeTimerFont:btf2,bridgeHorizontalOffset:bho2}, {buffEnabled:be,buffOnBridgeEnabled:bbe,rejuvEnabled:re,rejuvOnBridgeEnabled:rbe,buffRed:bufR,buffYellow:bufY,rejuvRed:rejR,rejuvYellow:rejY}, {buffIcon:bi,buffBridgeLeftIcon:bli,buffBridgeRightIcon:bri,rejuvIcon:ri}, bridgeText, rejuvText);
+                if (!bbe && !rbe) {
+                    ApplyMinimapObjectiveTimersStandardMode(panels, overlay, {timerWidth:tw,timerHeight:th,timerGap:tg,timerPaddingX:tpx,timerRadius:tr,timerFont:tf,timerIcon:ti,bottomOffset:bo}, {buffEnabled:be,rejuvEnabled:re,buffRed:bufR,buffYellow:bufY,rejuvRed:rejR,rejuvYellow:rejY}, {buffIcon:bi,buffBridgeLeftIcon:bli,buffBridgeRightIcon:bri,rejuvIcon:ri}, bridgeText, rejuvText);
+                    return;
+                }
+                var btw = 48, bth = 18, btpx = 3, btr = 4, btf = 11, bho = 144;
+                var activeBuffs = DetectActiveBridgeBuffs(root, EnsureMinimapOverlayAnchor(root));
+                ApplyMinimapObjectiveTimersBridgeMode(panels, overlay, {timerWidth:tw,timerHeight:th,timerGap:tg,timerPaddingX:tpx,timerRadius:tr,timerFont:tf,timerIcon:ti,bottomOffset:bo}, {minimapSize:400,bridgeTimerWidth:btw,bridgeTimerHeight:bth,bridgeTimerPaddingX:btpx,bridgeTimerRadius:btr,bridgeTimerFont:btf,bridgeHorizontalOffset:bho}, {buffEnabled:be,buffOnBridgeEnabled:bbe,rejuvEnabled:re,rejuvOnBridgeEnabled:rbe,buffRed:bufR,buffYellow:bufY,rejuvRed:rejR,rejuvYellow:rejY}, {buffIcon:bi,buffBridgeLeftIcon:bli,buffBridgeRightIcon:bri,rejuvIcon:ri}, bridgeText, rejuvText, activeBuffs);
             }
 
             // ── Main tick ──
@@ -250,6 +416,7 @@
             return {
                 onEnable: function() {
                     var S = QOL.core.Scheduler;
+                    _tick();
                     _loop = S && S.createPollLoop ? S.createPollLoop(_tick, 0.3, "ql_minimap_timers") : null;
                 },
                 onDisable: function() {
@@ -257,13 +424,19 @@
                     var S = QOL.core.Scheduler; if (S) S.cancelAllForFeature("ql_minimap_timers");
                     var root = _root || $.GetContextPanel();
                     try { HideMinimapObjectiveTimers(root); } catch(e) {}
+                    _cachedMinimap = null;
+                    _cachedAnchor = null;
+                    _cachedPanelsStruct = null;
+                    State.minimapObjectiveBridgePosSig = "";
                     SetCachedPanel("minimapObjectiveTimersRoot", null); SetCachedPanel("minimapObjectiveBuffPanel", null); SetCachedPanel("minimapObjectiveBuffTime", null); SetCachedPanel("minimapObjectiveBuffIcon", null);
                     SetCachedPanel("minimapObjectiveBuffBridgeLeftPanel", null); SetCachedPanel("minimapObjectiveBuffBridgeLeftTime", null); SetCachedPanel("minimapObjectiveBuffBridgeLeftIcon", null);
                     SetCachedPanel("minimapObjectiveBuffBridgeRightPanel", null); SetCachedPanel("minimapObjectiveBuffBridgeRightTime", null); SetCachedPanel("minimapObjectiveBuffBridgeRightIcon", null);
                     SetCachedPanel("minimapObjectiveRejuvPanel", null); SetCachedPanel("minimapObjectiveRejuvTime", null); SetCachedPanel("minimapObjectiveRejuvIcon", null);
                     _root = null;
                 },
-                onSettingsChanged: function() {}
+                onSettingsChanged: function() {
+                    _tick();
+                }
             };
         },
         test: function(ctx) {

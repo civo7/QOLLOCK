@@ -18,7 +18,7 @@
 
     FR.register({
         id: "ql_stamina",
-        enabledByDefault: false,
+        enabledByDefault: true,
         settings: [
             { key: "STAMINA_CHARGE_ANGLE", type: "slider", min: 0, max: 360, step: 1, default: 45 },
             { key: "STAMINA_CHARGE_COLOR", type: "palette", default: 0 }
@@ -46,12 +46,18 @@
             function _normalizeAngle(cfg) {
                 var angle = Math.round(Number(cfg.STAMINA_CHARGE_ANGLE));
                 if (!isFinite(angle)) angle = 45;
+                if (typeof QOL_UTILS !== "undefined" && QOL_UTILS.NormalizeDegrees360) {
+                    return QOL_UTILS.NormalizeDegrees360(angle);
+                }
                 if (angle < 0) angle = 0;
                 if (angle > 360) angle = 360;
                 return angle;
             }
 
             function _normalizeColorIndex(cfg) {
+                if (typeof QOL !== "undefined" && QOL.core && QOL.core.panel && QOL.core.panel.normalizePaletteIndex) {
+                    return QOL.core.panel.normalizePaletteIndex(cfg.STAMINA_CHARGE_COLOR);
+                }
                 var idx = Math.round(Number(cfg.STAMINA_CHARGE_COLOR));
                 if (!isFinite(idx)) idx = 0;
                 if (idx < 0) idx = 0;
@@ -108,7 +114,9 @@
                     _refreshColorPanels(root);
                     var pal = (typeof QOL !== "undefined" && QOL.washColorPalette) ? QOL.washColorPalette : [];
                     // Old feature clears to "transparent" (alpha=0 disables wash), not "".
-                    var wc = (colorIdx > 0 && colorIdx < pal.length) ? pal[colorIdx] : "transparent";
+                    var wc = (typeof QOL !== "undefined" && QOL.core && QOL.core.panel && QOL.core.panel.resolvePaletteColor && colorIdx > 0)
+                        ? QOL.core.panel.resolvePaletteColor(colorIdx)
+                        : ((colorIdx > 0 && colorIdx < pal.length) ? pal[colorIdx] : "transparent");
                     for (var i = 0; i < _colorPanels.length; i++) {
                         try { _colorPanels[i].style.washColor = wc; } catch(e) {}
                     }

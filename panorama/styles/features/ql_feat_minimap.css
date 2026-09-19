@@ -72,7 +72,9 @@
     height: 400px;
     transform: none;
     transform-origin: 100% 100%;
-    transition-property: opacity, margin, pre-transform-scale2d;
+    transition-property: opacity, margin, margin-left, margin-right, margin-top, margin-bottom, pre-transform-scale2d;
+    transition-duration: 0.12s;
+    transition-timing-function: ease-out;
 }
 
 #minimap_persp.gDetailView,
@@ -86,6 +88,12 @@
     width: 400px;
     height: 400px;
     margin-right: 15px;
+    transform: none;
+}
+
+#hud_minimap
+{
+    border-radius: 0%;
 }
 
 #HudMinimapContainer
@@ -98,6 +106,13 @@
 {
     width: 400px;
     height: 400px;
+}
+
+.map_button.doorman_doorway.ability_castrange #CastRange
+{
+    width: 100%;
+    height: 100%;
+    border-radius: 9999px;
 }
 
 /* ── Minimap Timers ── */
@@ -229,6 +244,27 @@
 }
 
 .minimap_rejuv_timer_disabled #QOLMinimapRejuvTimer
+{
+    visibility: collapse;
+}
+
+#QOLMinimapBuffBridgeLeftTimer
+{
+    margin-left: -144px;
+    margin-top: 0px;
+    margin-right: 0px;
+    margin-bottom: 0px;
+}
+
+#QOLMinimapBuffBridgeRightTimer
+{
+    margin-left: 144px;
+    margin-top: 0px;
+    margin-right: 0px;
+    margin-bottom: 0px;
+}
+
+.buff_spawned
 {
     visibility: collapse;
 }

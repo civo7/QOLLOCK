@@ -53,8 +53,8 @@
             var _hideoutWasActive = false;
 
             // ── Utilities ──
-            function _nowMs() { try { return Date.now ? Date.now() : 0; } catch(e) { return 0; } }
-            function _valid(p) { if (!p) return false; try { return p.IsValid ? p.IsValid() : true; } catch(e) { return false; } }
+            var _nowMs = QOL.utils.PerfNowMs;
+            var _valid = QOL.utils.IsPanelValid;
             function _isOn(cfg, k) { if (!cfg || !k) return false; return Number(cfg[k]) === 1; }
             function _hasClass(panel, cls) { try { return panel && panel.BHasClass && panel.BHasClass(cls); } catch(e) { return false; } }
             /**
@@ -78,19 +78,10 @@
              * four hideout states were undetectable, and the manifest's own test() bailed
              * with "skip" on every run because it gated on this same lookup.
              */
-            var _hudPanelCache = null;
             function _hudPanel(root) {
-                if (_valid(_hudPanelCache)) return _hudPanelCache;
-                _hudPanelCache = null;
-                try {
-                    if (typeof QOL !== "undefined" && QOL.ui && QOL.ui.PanelHelpers && QOL.ui.PanelHelpers.findHud) {
-                        _hudPanelCache = QOL.ui.PanelHelpers.findHud();
-                    }
-                } catch(e) { _hudPanelCache = null; }
-                if (!_valid(_hudPanelCache)) {
-                    try { _hudPanelCache = root ? root.FindChildTraverse("Hud") : null; } catch(e) { _hudPanelCache = null; }
-                }
-                return _valid(_hudPanelCache) ? _hudPanelCache : null;
+                if (typeof QOL !== "undefined" && QOL.core?.panel?.findHud) return QOL.core.panel.findHud(root);
+                if (typeof QOL !== "undefined" && QOL.ui?.PanelHelpers?.findHud) return QOL.ui.PanelHelpers.findHud();
+                return root ? root.FindChildTraverse("Hud") : null;
             }
             function _isInHideout(root) { var h = _hudPanel(root); return _hasClass(h, "InHideout") || _hasClass(h, "inHideoutIntro") || _hasClass(h, "connectedToHideout") || _hasClass(root, "connectedToHideout") || _hasClass(root, "InHideout"); }
             function _stateGet(k, d) { try { if (typeof QOL !== "undefined" && QOL.state) { var v = QOL.state[k]; return v !== undefined ? v : d; } } catch(e) {} return d; }
@@ -588,7 +579,6 @@
                                 var base = player.FindChildTraverse ? player.FindChildTraverse("RankPredictionBadgeTopBar") : null;
                                 _badgeVisible(base, true); _badgeVisible(lo, true);
                             }
-                        } else {
                         }
                     }
                     $.Schedule(_idleCount >= 3 ? 10.0 : 3.0, _tryLoad);
@@ -746,7 +736,6 @@
                 onEnable: function() {
                     _lifecycleToken++;
                     _wasEnabled = false; _fillToken = 0;
-                    _hudPanelCache = null;   // never carry a panel across a reload
                     _topBarCache = null; _playerContainersCache = null;
                     _resetTopBarInitBackoff();
                     _scoreboardWasOpen = false; _topBarWasVisible = null; _hideoutWasActive = false;
@@ -780,21 +769,19 @@
                     _scoreboardWasOpen = false; _topBarWasVisible = false; _hideoutWasActive = false;
                     _stateSet("_showRankEnabled", false); _stateSet("_showRankTopBarVisible", false); _stateSet("showRankEscapeDone", "");
                 },
-                onSettingsChanged: function() {}
+                onSettingsChanged: function() {
+                    _tick();
+                }
             };
         },
     test: function(ctx) {
         try {
             var root = $.GetContextPanel();
-            // Resolve through PanelHelpers, not root.FindChildTraverse("Hud"): in the
-            // HUD context the context panel IS Hud, and FindChildTraverse never returns
-            // the panel it was called on. This hook gated on that lookup, so it reported
-            // "skip" on every run since it was written and never checked anything —
-            // which is why none of the perf or binding regressions here were caught by
-            // the manifest test suite.
-            var hud = (typeof QOL !== "undefined" && QOL.ui && QOL.ui.PanelHelpers && QOL.ui.PanelHelpers.findHud)
-                ? QOL.ui.PanelHelpers.findHud()
-                : (root ? root.FindChildTraverse("Hud") : null);
+            var hud = (typeof QOL !== "undefined" && QOL.core && QOL.core.panel && QOL.core.panel.findHud)
+                ? QOL.core.panel.findHud()
+                : (typeof QOL !== "undefined" && QOL.ui && QOL.ui.PanelHelpers && QOL.ui.PanelHelpers.findHud)
+                    ? QOL.ui.PanelHelpers.findHud()
+                    : (root ? root.FindChildTraverse("Hud") : null);
             if (!hud) return null;  // Skip — not in a match context
             var topBar = root ? root.FindChildTraverse("TopBar") : null;
             if (!topBar) return null;  // Skip — TopBar not loaded

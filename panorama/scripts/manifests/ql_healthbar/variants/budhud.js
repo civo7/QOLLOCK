@@ -3,20 +3,17 @@
 (function() {
     'use strict';
     var _featureId = "ql_feat_healthbar_budhud";
-    // DEPENDS: state, utils, getCachedPanel, setCachedPanel, isColorWarningEnabled
-    var _deps = QOL.import(["state", "utils", "getCachedPanel", "setCachedPanel",
-        "isColorWarningEnabled"]);
-
-    var State = _deps.state;
-    var Utils = _deps.utils;
-    var GetCachedPanel = _deps.getCachedPanel;
-    var SetCachedPanel = _deps.setCachedPanel;
-    var IsCfgEnabled = Utils.IsCfgEnabled;
-    var IsPanelValid = Utils.IsPanelValid;
+    var Panel = (QOL.core && QOL.core.panel) ? QOL.core.panel : {};
+    var State = QOL.state || (typeof globalThis !== "undefined" && globalThis.State) || {};
+    var Utils = QOL.utils;
+    var GetCachedPanel = QOL.getCachedPanel;
+    var SetCachedPanel = QOL.setCachedPanel;
+    var IsCfgEnabled = QOL.utils.IsCfgEnabled;
+    var IsPanelValid = QOL.utils.IsPanelValid;
     var FindFirstPanelByClass = Utils.FindFirstPanelByClass;
     var ToRgbString = Utils.ToRgbString;
     var BlendRgb = Utils.BlendRgb;
-    var IsColorWarningEnabled = _deps.isColorWarningEnabled;
+    var IsColorWarningEnabled = function(cfg) { return QOL.isColorWarningEnabled ? QOL.isColorWarningEnabled(cfg) : false; };
 
     // ── Color constants ──
     var COLORED_HEALTHBAR_LOW_HP_THRESHOLD = 25;
@@ -75,8 +72,15 @@
         }
         if (!IsPanelValid(content)) return null;
 
+        // No parent check here. The one this used to carry — GetParent() !== root —
+        // was structurally always true: HealthRegenAndTotal is nested inside
+        // HealthContainerRoot (hud_health_container.xml:72), never a direct child of
+        // the HUD root passed in. So the cache never satisfied the guard and this ran
+        // a full-root FindChildTraverse every tick. GetCachedPanel already
+        // re-validates through IsValid() and drops dead refs, which is what the guard
+        // was reaching for.
         var regenTotal = GetCachedPanel("budhudHealthRegenAndTotal");
-        if (!regenTotal || (regenTotal.GetParent && regenTotal.GetParent() !== root)) {
+        if (!regenTotal) {
             regenTotal = root.FindChildTraverse ? root.FindChildTraverse("HealthRegenAndTotal") : null;
             SetCachedPanel("budhudHealthRegenAndTotal", regenTotal);
         }
@@ -110,6 +114,7 @@
                 try {
                     percentLabel = $.CreatePanel("Label", healthContainer, "HealthPercentLabel");
                 } catch (eCreate) {
+                    $.Msg("[QOLLock][WARN][" + _featureId + "] op failed: " + (eCreate && eCreate.message ? eCreate.message : String(eCreate || "")));
                     percentLabel = null;
                 }
             }

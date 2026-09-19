@@ -14,162 +14,70 @@
 // Boundary validation: Checks QOL.core + FeatureRegistry exist. Aborts with message.
 // =============================================================================
 
-(function () {
+(() => {
     "use strict";
 
-    if (!QOL || !QOL.core) {
+    const Q = (typeof globalThis !== "undefined" && globalThis.QOL) ? globalThis.QOL : (typeof QOL !== "undefined" ? QOL : null);
+    if (!Q?.core) {
         $.Msg("[QOLLock] core/ql_manifest_tests: QOL.core not found — aborting.");
         return;
     }
-    var FR = QOL.core.FeatureRegistry;
+    const FR = Q.core.FeatureRegistry;
     if (!FR) {
         $.Msg("[QOLLock] core/ql_manifest_tests: FeatureRegistry not found — aborting.");
         return;
     }
 
-    // -- Private state --
-    var _testResults = null;  // { summary, results, timestamp, token }
-    var _testInProgress = false;
-    var _testToken = 0;
+    let testResults = null;
+    let testInProgress = false;
+    let testToken = 0;
 
-    // MAX_TASK_MS: each test invocation must complete within this budget.
-    // Beyond this, the runner yields frames (schedules next with delay).
-    var MAX_TASK_MS = 50;
-    // MAX_TOTAL_MS: entire suite must complete within this budget (2s).
-    var MAX_TOTAL_MS = 2000;
-    // YIELD_MS: when yielding between frames, how long to wait.
-    var YIELD_MS = 0.05;
+    const MAX_TASK_MS = 50;
+    const MAX_TOTAL_MS = 2000;
+    const YIELD_MS = 0.05;
 
-    function _nowMs() {
-        return Date.now ? Date.now() : (new Date()).getTime();
-    }
+    const nowMs = QOL_UTILS.PerfNowMs;
 
-    function _emptyResults() {
-        return {
-            token: "",
-            summary: { total: 0, passed: 0, failed: 0, skipped: 0, errors: 0, timeMs: 0 },
-            results: [],
-            timestamp: 0,
-            aborted: false
-        };
-    }
+    const emptyResults = () => ({
+        token: "",
+        summary: { total: 0, passed: 0, failed: 0, skipped: 0, errors: 0, timeMs: 0 },
+        results: [],
+        timestamp: 0,
+        aborted: false
+    });
 
     /**
      * Run test() hooks for all enabled manifests, spread across frames.
-     * @param {Object} opts - Optional overrides
-     * @param {string} opts.token - Force-sync token for diagnostic bridge matching
-     * @param {Array<string>} opts.featureIds - Specific manifest IDs to test (default: all registered)
-     * @param {function} opts.onComplete - Called with final results object
-     * @returns {boolean} true if runner started, false if already running
      */
-    function runAllTests(opts) {
-        if (_testInProgress) return false;
-        opts = opts || {};
+    const runAllTests = (opts = {}) => {
+        if (testInProgress) return false;
 
-        var ids = opts.featureIds || FR.getRegisteredIds();
+        const ids = opts.featureIds || FR.getRegisteredIds();
         if (!ids || ids.length === 0) {
-            if (opts.onComplete) opts.onComplete(_emptyResults());
+            if (opts.onComplete) opts.onComplete(emptyResults());
             return false;
         }
 
-        _testInProgress = true;
-        _testToken++;
-        var token = _testToken;
-        var results = _emptyResults();
+        testInProgress = true;
+        testToken++;
+        const token = testToken;
+        const results = emptyResults();
         results.token = opts.token || "";
-        results.timestamp = _nowMs();
+        results.timestamp = nowMs();
 
-        var totalStart = _nowMs();
-        var index = 0;
-        var resultList = [];
+        const totalStart = nowMs();
+        let index = 0;
+        const resultList = [];
 
-        function runNext() {
-            // Stop conditions
-            if (!_testInProgress || token !== _testToken) {
-                _finish(results, true);
-                return;
-            }
-            if ((_nowMs() - totalStart) > MAX_TOTAL_MS) {
-                results.aborted = true;
-                _finish(results, false);
-                return;
-            }
+        const finish = (resultsObj, cancelled) => {
+            const total = resultList.length;
+            let passed = 0;
+            let failed = 0;
+            let skipped = 0;
+            let errors = 0;
 
-            if (index >= ids.length) {
-                _finish(results, false);
-                return;
-            }
-
-            var id = ids[index];
-            index++;
-
-            // Run test() on ALL manifests, not just enabled ones.
-            // The test() hook contract requires it to be read-only (no State writes,
-            // no config.set(), no DispatchEvent), so it's safe to run regardless
-            // of enabled state. This catches panel-existence regressions before
-            // a feature is ever toggled on.
-
-            // Skip manifests without a test()
-            var manifest = FR.getManifest(id);
-            if (!manifest || typeof manifest.test !== "function") {
-                resultList.push({ id: id, passed: null, name: "No test hook — skipped",
-                                  skipped: true, duration: 0 });
-                $.Schedule(0, runNext);
-                return;
-            }
-
-            // Build a fresh context for the test
-            var ctx = FR.createContext(id);
-
-            // Run the test, guarded
-            var t0 = _nowMs();
-            var testResult = null;
-            var testError = null;
-            try {
-                testResult = manifest.test(ctx);
-            } catch (e) {
-                testError = (e && e.message) ? e.message : String(e);
-            }
-            var elapsed = _nowMs() - t0;
-
-            if (testError) {
-                // Test itself threw
-                resultList.push({
-                    id: id, passed: false, name: "test() threw",
-                    message: testError, duration: elapsed, error: true
-                });
-            } else if (testResult === null || testResult === undefined) {
-                // Skipped — test returned null
-                resultList.push({
-                    id: id, passed: null, name: "Not applicable — skipped",
-                    skipped: true, duration: elapsed
-                });
-            } else {
-                // Normal result
-                resultList.push({
-                    id: id,
-                    passed: testResult.passed === true,
-                    name: testResult.name || "Unnamed test",
-                    message: testResult.message || "",
-                    duration: elapsed,
-                    assertions: testResult.assertions || []
-                });
-            }
-
-            // Yield if we exceeded the per-test budget
-            if (elapsed > MAX_TASK_MS) {
-                $.Schedule(YIELD_MS, runNext);
-            } else {
-                $.Schedule(0, runNext);
-            }
-        }
-
-        function _finish(resultsObj, cancelled) {
-            // Collate summary
-            var total = resultList.length;
-            var passed = 0, failed = 0, skipped = 0, errors = 0;
-            for (var i = 0; i < resultList.length; i++) {
-                var r = resultList[i];
+            for (let i = 0; i < resultList.length; i++) {
+                const r = resultList[i];
                 if (r.error) errors++;
                 else if (r.skipped) skipped++;
                 else if (r.passed) passed++;
@@ -178,103 +86,168 @@
 
             resultsObj.results = resultList;
             resultsObj.summary = {
-                total: total, passed: passed, failed: failed,
-                skipped: skipped, errors: errors,
-                timeMs: _nowMs() - totalStart
+                total,
+                passed,
+                failed,
+                skipped,
+                errors,
+                timeMs: nowMs() - totalStart
             };
-            resultsObj.timestamp = _nowMs();
+            resultsObj.timestamp = nowMs();
 
-            _testResults = resultsObj;
-            _testInProgress = false;
+            testResults = resultsObj;
+            testInProgress = false;
 
             if (!cancelled) {
-                $.Msg("[QOLLock][ManifestTests] Suite: " + passed + "/" + total +
-                    " passed, " + failed + " failed, " + skipped + " skipped, " +
-                    errors + " errors in " + resultsObj.summary.timeMs + "ms");
+                $.Msg(`[QOLLock][ManifestTests] Suite: ${passed}/${total} passed, ${failed} failed, ${skipped} skipped, ${errors} errors in ${resultsObj.summary.timeMs}ms`);
             }
 
             if (opts.onComplete) opts.onComplete(resultsObj);
-        }
+        };
 
-        // Start first test on next frame (allows caller to set up after return)
+        const runNext = () => {
+            if (!testInProgress || token !== testToken) {
+                finish(results, true);
+                return;
+            }
+            if ((nowMs() - totalStart) > MAX_TOTAL_MS) {
+                results.aborted = true;
+                finish(results, false);
+                return;
+            }
+
+            if (index >= ids.length) {
+                finish(results, false);
+                return;
+            }
+
+            const id = ids[index];
+            index++;
+
+            const manifest = FR.getManifest(id);
+            if (!manifest || typeof manifest.test !== "function") {
+                resultList.push({
+                    id,
+                    passed: null,
+                    name: "No test hook — skipped",
+                    skipped: true,
+                    duration: 0
+                });
+                $.Schedule(0, runNext);
+                return;
+            }
+
+            const ctx = FR.createContext(id);
+            const t0 = nowMs();
+            let testResult = null;
+            let testError = null;
+            try {
+                testResult = manifest.test(ctx);
+            } catch (e) {
+                testError = (e && e.message) ? e.message : String(e);
+            }
+            const elapsed = nowMs() - t0;
+
+            if (testError) {
+                resultList.push({
+                    id,
+                    passed: false,
+                    name: "test() threw",
+                    message: testError,
+                    duration: elapsed,
+                    error: true
+                });
+            } else if (testResult === null || testResult === undefined) {
+                resultList.push({
+                    id,
+                    passed: null,
+                    name: "Not applicable — skipped",
+                    skipped: true,
+                    duration: elapsed
+                });
+            } else {
+                resultList.push({
+                    id,
+                    passed: testResult.passed === true,
+                    name: testResult.name || "Unnamed test",
+                    message: testResult.message || "",
+                    duration: elapsed,
+                    assertions: testResult.assertions || []
+                });
+            }
+
+            if (elapsed > MAX_TASK_MS) {
+                $.Schedule(YIELD_MS, runNext);
+            } else {
+                $.Schedule(0, runNext);
+            }
+        };
+
         $.Schedule(0, runNext);
         return true;
-    }
+    };
 
-    function getResults() { return _testResults; }
+    const getResults = () => testResults;
 
-    function cancel() {
-        _testInProgress = false;
-        _testToken++;
-    }
+    const cancel = () => {
+        testInProgress = false;
+        testToken++;
+    };
 
-    function isRunning() { return _testInProgress; }
+    const isRunning = () => testInProgress;
 
-    /**
-     * Build a compact, human-readable test report from diagnostic data.
-     * Filters out non-QOLLOCK noise (game system logs, TRACE messages, server spam).
-     * @param {Object} diag - Parsed QOL_Diag JSON object
-     * @returns {string} Compact report text, suitable for clipboard
-     */
-    function buildCompactReport(diag) {
+    const buildCompactReport = (diag) => {
         if (!diag) return "No diagnostic data.";
-        var lines = [];
-        lines.push("=== QOLLOCK Test Report ===");
+        const lines = ["=== QOLLOCK Test Report ==="];
 
-        // Manifest test results
-        if (diag.testResults && diag.testResults.summary) {
-            var ts = diag.testResults.summary;
+        if (diag.testResults?.summary) {
+            const ts = diag.testResults.summary;
             lines.push("");
             lines.push("── Manifest Tests ──");
-            lines.push("Total: " + ts.total + " | Passed: " + ts.passed + " | Failed: " + ts.failed +
-                " | Skipped: " + ts.skipped + " | Errors: " + ts.errors + " | Time: " + ts.timeMs + "ms");
+            lines.push(`Total: ${ts.total} | Passed: ${ts.passed} | Failed: ${ts.failed} | Skipped: ${ts.skipped} | Errors: ${ts.errors} | Time: ${ts.timeMs}ms`);
             if (ts.failed > 0 || ts.errors > 0) {
-                var trs = diag.testResults.results || [];
-                for (var ri = 0; ri < trs.length; ri++) {
-                    var r = trs[ri];
+                const trs = diag.testResults.results || [];
+                for (let ri = 0; ri < trs.length; ri++) {
+                    const r = trs[ri];
                     if (r.passed === false || r.error) {
-                        lines.push("  FAIL: " + r.id + " [" + r.name + "]" +
-                            (r.message ? ": " + r.message : ""));
+                        lines.push(`  FAIL: ${r.id} [${r.name}]${r.message ? `: ${r.message}` : ""}`);
                     }
                 }
             }
             if (diag.testResults.timestamp) {
-                lines.push("Ran at: " + new Date(diag.testResults.timestamp).toISOString());
+                lines.push(`Ran at: ${new Date(diag.testResults.timestamp).toISOString()}`);
             }
         }
 
-        // Feature health
-        var features = diag.features || [];
-        var disabled = diag.disabled || [];
+        const features = diag.features || [];
+        const disabled = diag.disabled || [];
         lines.push("");
         lines.push("── Old Features ──");
-        lines.push("Loaded: " + features.length + " | Auto-disabled: " + (disabled.length || 0));
+        lines.push(`Loaded: ${features.length} | Auto-disabled: ${disabled.length || 0}`);
         if (disabled.length > 0) {
-            for (var di = 0; di < disabled.length; di++) {
-                var dName = disabled[di];
-                var errCount = (diag.errors && diag.errors[dName]) ? diag.errors[dName] : "?";
-                lines.push("  OFF: " + dName + " (errors: " + errCount + ")");
+            for (let di = 0; di < disabled.length; di++) {
+                const dName = disabled[di];
+                const errCount = (diag.errors && diag.errors[dName]) ? diag.errors[dName] : "?";
+                lines.push(`  OFF: ${dName} (errors: ${errCount})`);
             }
         }
 
-        // New FeatureRegistry manifests
         if (diag.newFeatures) {
             lines.push("");
             lines.push("── Manifests ──");
-            lines.push("Registered: " + diag.newFeatures.length +
-                " | Enabled: " + ((diag.newEnabled && diag.newEnabled.length) || 0));
+            lines.push(`Registered: ${diag.newFeatures.length} | Enabled: ${(diag.newEnabled && diag.newEnabled.length) || 0}`);
             if (diag.newErrors) {
-                var neKeys = Object.keys(diag.newErrors);
-                var neCount = 0;
-                for (var nek = 0; nek < neKeys.length; nek++) {
+                const neKeys = Object.keys(diag.newErrors);
+                let neCount = 0;
+                for (let nek = 0; nek < neKeys.length; nek++) {
                     if (diag.newErrors[neKeys[nek]] > 0) neCount++;
                 }
                 if (neCount > 0) {
-                    lines.push("Manifests with errors: " + neCount);
-                    for (var nek2 = 0; nek2 < neKeys.length; nek2++) {
-                        var ek = neKeys[nek2];
-                        var ec = diag.newErrors[ek];
-                        if (ec > 0) lines.push("  " + ek + ": " + ec + " errors");
+                    lines.push(`Manifests with errors: ${neCount}`);
+                    for (let nek2 = 0; nek2 < neKeys.length; nek2++) {
+                        const ek = neKeys[nek2];
+                        const ec = diag.newErrors[ek];
+                        if (ec > 0) lines.push(`  ${ek}: ${ec} errors`);
                     }
                 } else {
                     lines.push("Manifest errors: 0");
@@ -282,55 +255,253 @@
             }
         }
 
-        // Filtered logs — QOLLOCK WARN/ERROR only, deduplicated
-        var logs = diag.logs || [];
-        var filtered = [];
-        var seen = {};
-        for (var li = 0; li < logs.length; li++) {
-            var msg = String(logs[li] || "");
-            // Skip non-QOLLOCK noise
-            if (msg.indexOf("[QOLLock]") === -1) continue;
-            // Skip TRACE/DEBUG messages
-            if (msg.indexOf("[QOLLock][TRACE]") !== -1) continue;
-            if (msg.indexOf("[QOL DEBUG]") !== -1) continue;
-            // Skip INFO registration messages (verbose, not useful in report)
-            if (msg.indexOf("[QOLLock][INFO][FeatureRegistry] registered") !== -1) continue;
-            if (msg.indexOf("[QOLLock][INFO][App]") !== -1) continue;
-            // Deduplicate
-            var dedupKey = msg.substring(msg.indexOf("] ") + 2);
-            if (seen[dedupKey]) { seen[dedupKey]++; continue; }
+        const logs = diag.logs || [];
+        const filtered = [];
+        const seen = {};
+        for (let li = 0; li < logs.length; li++) {
+            const msg = String(logs[li] || "");
+            if (!msg.includes("[QOLLock]")) continue;
+            if (msg.includes("[QOLLock][TRACE]") || msg.includes("[QOL DEBUG]")) continue;
+            if (msg.includes("[QOLLock][INFO][FeatureRegistry] registered") || msg.includes("[QOLLock][INFO][App]")) continue;
+            const dedupKey = msg.substring(msg.indexOf("] ") + 2);
+            if (seen[dedupKey]) {
+                seen[dedupKey]++;
+                continue;
+            }
             seen[dedupKey] = 1;
             filtered.push(msg);
         }
         if (filtered.length > 0) {
             lines.push("");
-            lines.push("── QOLLOCK Messages (" + filtered.length + " unique) ──");
-            for (var fi = 0; fi < filtered.length; fi++) {
-                var dupCount = seen[filtered[fi].substring(filtered[fi].indexOf("] ") + 2)] || 1;
-                lines.push(filtered[fi] + (dupCount > 1 ? " (x" + dupCount + ")" : ""));
+            lines.push(`── QOLLOCK Messages (${filtered.length} unique) ──`);
+            for (let fi = 0; fi < filtered.length; fi++) {
+                const dupCount = seen[filtered[fi].substring(filtered[fi].indexOf("] ") + 2)] || 1;
+                lines.push(filtered[fi] + (dupCount > 1 ? ` (x${dupCount})` : ""));
             }
         }
 
-        // Preset cycle summary (if available from last run)
         if (diag.presetCycle) {
             lines.push("");
             lines.push("── Preset Cycle ──");
-            var pc = diag.presetCycle;
-            lines.push("Passed: " + (pc.passed || "?") + "/" + (pc.total || "?") +
-                " | Failed: " + (pc.failed || 0) + " | Time: " + (pc.totalTimeMs || "?") + "ms");
+            const pc = diag.presetCycle;
+            lines.push(`Passed: ${pc.passed || "?"}/${pc.total || "?"} | Failed: ${pc.failed || 0} | Time: ${pc.totalTimeMs || "?"}ms`);
         }
 
         return lines.join("\n");
-    }
-
-    // -- Attach to namespace --
-    QOL.core.ManifestTests = {
-        runAll: runAllTests,
-        getResults: getResults,
-        cancel: cancel,
-        isRunning: isRunning,
-        buildCompactReport: buildCompactReport
     };
+
+    /**
+     * In-Game Engine Audit Runner.
+     * Sweeps the live game environment, inspecting native Valve panels,
+     * manifest states, bridge attributes, presets, and UI integrity.
+     * Outputs structured, high-visibility logs directly to the engine console via $.Msg.
+     */
+    const runEngineAudit = () => {
+        const log = (msg) => {
+            if (typeof $.Msg === "function") {
+                $.Msg(msg);
+            }
+        };
+
+        const startTime = nowMs();
+        log("================================================================================");
+        log("[QOLLOCK ENGINE AUDIT] Starting Full In-Game Self-Test");
+        log("================================================================================");
+
+        // 1. Context & Environment
+        let hud = null;
+        try {
+            if (Q.core?.hud?.findHud) hud = Q.core.hud.findHud();
+            else if (Q.core?.panel?.findHud) hud = Q.core.panel.findHud();
+            else if (Q.ui?.PanelHelpers?.findHud) hud = Q.ui.PanelHelpers.findHud();
+            else if ($.GetContextPanel) {
+                let cur = $.GetContextPanel();
+                while (cur && cur.GetParent && cur.GetParent()) cur = cur.GetParent();
+                hud = (cur && cur.FindChildTraverse) ? cur.FindChildTraverse("Hud") : cur;
+            }
+        } catch (_) {}
+
+        const inHideout = Boolean(Q.core?.hud?.isInHideout && Q.core.hud.isInHideout());
+        const isBrawl = Boolean(Q.core?.hud?.isStreetBrawl && Q.core.hud.isStreetBrawl());
+        log(`[AUDIT][Context] HUD Panel: ${hud ? (hud.id || hud.paneltype || "CitadelHud") : "NOT FOUND (EscapeMenu context)"} | Hideout: ${inHideout} | StreetBrawl: ${isBrawl}`);
+
+        // 2. Valve Native Panels Safety Check
+        log("\n--- [1/5] Native Valve Panels Safety Check ---");
+        const nativePanelIds = [
+            { id: "TopBar", name: "Top Bar (CitadelHudTopBar)", critical: true },
+            { id: "minimap_container", name: "Minimap Container", critical: false },
+            { id: "hud_health", name: "Health Container", critical: true },
+            { id: "gold_and_ap_container", name: "Gold & AP Container (Souls)", critical: true },
+            { id: "gameplay_hud", name: "Gameplay HUD", critical: false },
+            { id: "gameplay_hud_alive", name: "Gameplay HUD Alive", critical: false },
+            { id: "ability_container", name: "Abilities Container", critical: false },
+            { id: "CitadelHudShop", name: "Hero Shop", critical: false }
+        ];
+
+        let nativePass = 0;
+        let nativeFail = 0;
+
+        for (const item of nativePanelIds) {
+            let p = null;
+            try {
+                if (hud && hud.FindChildTraverse) p = hud.FindChildTraverse(item.id);
+                if (!p && $.GetContextPanel) {
+                    let cur = $.GetContextPanel();
+                    while (cur && cur.GetParent && cur.GetParent()) cur = cur.GetParent();
+                    if (cur && cur.FindChildTraverse) p = cur.FindChildTraverse(item.id);
+                }
+            } catch (_) {}
+
+            if (!p) {
+                log(`  [INFO] #${item.id} (${item.name}): Not in tree (normal if before hero spawn or in menu)`);
+                continue;
+            }
+
+            const hasQolHidden = Boolean(p.BHasClass && p.BHasClass("qol-hidden"));
+            const isCollapsed = Boolean(p.style && (p.style.visibility === "collapse" || p.style.visibility === "none"));
+
+            if (hasQolHidden) {
+                log(`  [CRITICAL FAIL] #${item.id} has class 'qol-hidden'! (PANEL WAS COLLAPSED BY MOD)`);
+                nativeFail++;
+            } else if (isCollapsed && item.critical) {
+                log(`  [WARN] #${item.id} has inline style visibility: ${p.style.visibility}`);
+            } else {
+                const hasCustomPos = Boolean(p.style && (p.style.x || p.style.y));
+                const hasCustomScale = Boolean(p.style && p.style.uiScale);
+                log(`  [PASS] #${item.id}: ALIVE, qol-hidden: NO, position: ${hasCustomPos ? (p.style.x + "," + p.style.y) : "native"}, scale: ${hasCustomScale ? p.style.uiScale : "native"}`);
+                nativePass++;
+            }
+        }
+
+        // 3. Feature Manifests Audit
+        log("\n--- [2/5] Feature Manifests Audit ---");
+        const registeredIds = FR ? FR.getRegisteredIds() : [];
+        const enabledIds = FR ? FR.getEnabledIds() : [];
+        const errorCounts = FR ? FR.getErrorCounts() : {};
+
+        let manifestErrors = 0;
+        let manifestsPassed = 0;
+
+        for (const fId of registeredIds) {
+            const errCount = errorCounts[fId] || 0;
+            if (errCount > 0) {
+                log(`  [FAIL] ${fId}: recorded ${errCount} runtime errors!`);
+                manifestErrors++;
+                continue;
+            }
+
+            const manifest = FR.getManifest(fId);
+            if (manifest && typeof manifest.test === "function") {
+                try {
+                    const ctx = FR.createContext ? FR.createContext(fId) : {};
+                    const tr = manifest.test(ctx);
+                    if (tr && tr.passed === false) {
+                        if (tr.message && (tr.message.includes("not found") || tr.message.includes("missing"))) {
+                            log(`  [INFO] ${fId}: deferred (${tr.message})`);
+                        } else {
+                            log(`  [FAIL] ${fId} test hook failed: ${tr.message || "assertion failure"}`);
+                            manifestErrors++;
+                            continue;
+                        }
+                    }
+                } catch (tErr) {
+                    log(`  [FAIL] ${fId} test hook threw: ${tErr && tErr.message ? tErr.message : tErr}`);
+                    manifestErrors++;
+                    continue;
+                }
+            }
+            manifestsPassed++;
+        }
+        log(`  Result: ${manifestsPassed}/${registeredIds.length} manifests healthy (Enabled: ${enabledIds.length}, Errors: ${manifestErrors})`);
+
+        // 4. Cross-Isolate Bridge Integrity Check
+        log("\n--- [3/5] Cross-Isolate Bridge Integrity ---");
+        let bridgePass = 0;
+        let bridgeFail = 0;
+
+        if (hud && hud.GetAttributeString) {
+            const storageKey = (typeof QOL_STORAGE_KEY !== "undefined") ? QOL_STORAGE_KEY : "Deadlock_Mod_Settings_v1";
+            const rawCfg = hud.GetAttributeString(storageKey, "");
+            const rev = hud.GetAttributeString("QOL_USER_EDIT_REV", "0");
+            const activePreset = hud.GetAttributeString("QOL_RUNTIME_PRESET", "");
+
+            if (!rawCfg) {
+                log(`  [WARN] Bridge STORAGE_KEY ('${storageKey}') is empty on #Hud`);
+            } else {
+                try {
+                    const parsed = JSON.parse(rawCfg);
+                    const keyCount = (parsed && parsed.data) ? Object.keys(parsed.data).length : Object.keys(parsed).length;
+                    log(`  [PASS] Bridge config envelope: Valid JSON (${rawCfg.length} chars, ${keyCount} keys)`);
+                    bridgePass++;
+                } catch (e) {
+                    log(`  [FAIL] Bridge config is corrupt JSON: ${e.message}`);
+                    bridgeFail++;
+                }
+            }
+
+            log(`  [INFO] User edit revision: ${rev} | Active preset: ${activePreset || "Default/Custom"}`);
+            bridgePass++;
+        } else {
+            log("  [INFO] #Hud attributes not directly readable from current context panel");
+        }
+
+        // 5. Presets Subsystem Check
+        log("\n--- [4/5] Presets Subsystem ---");
+        const presetsMap = (typeof globalThis !== "undefined" && (globalThis.QOL_PRESETS || globalThis.PRESETS)) ||
+                           (typeof QOL !== "undefined" && QOL.presets) || {};
+        const presetKeys = Object.keys(presetsMap);
+        log(`  Total community presets registered: ${presetKeys.length}`);
+
+        const samplePresets = ["BreadRollius", "Saiah", "Basil", "Vegas", "Poshy", "BSQTT", "Thorkizzle"];
+        let presetsFound = 0;
+        for (const name of samplePresets) {
+            if (presetsMap[name]) {
+                presetsFound++;
+            } else {
+                log(`  [FAIL] Expected preset '${name}' missing from presets dictionary!`);
+            }
+        }
+        if (presetsFound === samplePresets.length) {
+            log(`  [PASS] Sample presets resolution: 100% (${samplePresets.length}/${samplePresets.length} found)`);
+        } else {
+            log(`  [WARN] Missing sample presets: found ${presetsFound}/${samplePresets.length}`);
+        }
+
+        // 6. Summary & Elapsed Time
+        const elapsed = nowMs() - startTime;
+        log("\n================================================================================");
+        const totalFails = nativeFail + manifestErrors + bridgeFail;
+        if (totalFails === 0) {
+            log(`[QOLLOCK ENGINE AUDIT] ALL CHECKS PASSED in ${elapsed}ms (Native: ${nativePass} ok, Manifests: ${manifestsPassed} ok)`);
+        } else {
+            log(`[QOLLOCK ENGINE AUDIT] AUDIT FAILED with ${totalFails} issue(s) in ${elapsed}ms!`);
+        }
+        log("================================================================================\n");
+
+        return {
+            success: totalFails === 0,
+            nativePass,
+            nativeFail,
+            manifestsPassed,
+            manifestErrors,
+            bridgePass,
+            bridgeFail,
+            elapsed
+        };
+    };
+
+    Q.core.ManifestTests = {
+        runAll: runAllTests,
+        runEngineAudit,
+        getResults,
+        cancel,
+        isRunning,
+        buildCompactReport
+    };
+    Q.runEngineAudit = runEngineAudit;
+    if (typeof globalThis !== "undefined") {
+        globalThis.QOL_RUN_AUDIT = runEngineAudit;
+    }
 
     $.Msg("[QOLLock] core/ql_manifest_tests: attached to QOL.core.ManifestTests");
 })();

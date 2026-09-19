@@ -24,7 +24,7 @@
 
     FR.register({
         id: "ql_damage_numbers",
-        enabledByDefault: false,
+        enabledByDefault: true,
         settings: [
             { key: "DAMAGE_NUMBER_OPACITY", type: "slider", min: 0, max: 1, step: 0.05, default: 1 },
             { key: "HUD_INDICATOR_SIZE", type: "slider", min: 10, max: 60, step: 1, default: 18 },
@@ -44,35 +44,25 @@
             var _loop = null;
 
             // ── QOL delegates ──
-            function _getPanel(k) {
-                try { if (typeof QOL !== "undefined" && QOL.getCachedPanel) return QOL.getCachedPanel(k); } catch(e) {}
-                return null;
-            }
-            function _setPanel(k, v) {
-                try { if (typeof QOL !== "undefined" && QOL.setCachedPanel) QOL.setCachedPanel(k, v); } catch(e) {}
-            }
-            function _isPanelValid(p) {
-                try { if (typeof Utils !== "undefined" && Utils.IsPanelValid) return Utils.IsPanelValid(p); } catch(e) {}
-                return p && typeof p.IsValid === "function" && p.IsValid();
-            }
+            var _getPanel = QOL.getCachedPanel;
+            var _setPanel = QOL.setCachedPanel;
+            var _isPanelValid = QOL.utils.IsPanelValid;
             function _isPanelListValid(list) {
-                try { if (typeof Utils !== "undefined" && Utils.IsPanelListValid) return Utils.IsPanelListValid(list); } catch(e) {}
+                if (typeof QOL_UTILS !== "undefined" && QOL_UTILS.IsPanelListValid) return QOL_UTILS.IsPanelListValid(list);
                 if (!list || !list.length) return false;
                 for (var i = 0; i < list.length; i++) { if (!_isPanelValid(list[i])) return false; }
                 return true;
             }
-            function _setOpacitySafe(panel, val, fallback) {
-                try { if (typeof Utils !== "undefined" && Utils.SetPanelOpacitySafe) { Utils.SetPanelOpacitySafe(panel, val, fallback); return; } } catch(e) {}
-                try { panel.style.opacity = (val !== undefined && val !== null) ? val : fallback; } catch(e2) {}
-            }
+            var _setOpacitySafe = QOL.utils.SetPanelOpacitySafe;
             function _findAncestorWithClass(panel, cls) {
+                if (typeof QOL_UTILS !== "undefined" && QOL_UTILS.FindAncestorWithClass) return QOL_UTILS.FindAncestorWithClass(panel, cls);
                 try { if (typeof QOL !== "undefined" && QOL.findAncestorWithClass) return QOL.findAncestorWithClass(panel, cls); } catch(e) {}
                 var cur = panel;
                 while (cur) { if (cur.BHasClass && cur.BHasClass(cls)) return cur; try { cur = cur.GetParent(); } catch(e) { break; } }
                 return null;
             }
             function _hasClassInHierarchy(panel, cls) {
-                try { if (typeof Utils !== "undefined" && Utils.HasClassInHierarchy) return Utils.HasClassInHierarchy(panel, cls); } catch(e) {}
+                if (typeof QOL_UTILS !== "undefined" && QOL_UTILS.HasClassInHierarchy) return QOL_UTILS.HasClassInHierarchy(panel, cls);
                 var cur = panel;
                 while (cur) { if (cur.BHasClass && cur.BHasClass(cls)) return true; try { cur = cur.GetParent(); } catch(e) { break; } }
                 return false;
@@ -169,11 +159,26 @@
                     if (p.style.opacity === "0" || p.style.opacity === "0.00") _setOpacitySafe(p, 1.0, 1.0);
                     if (container && (container.style.opacity === "0" || container.style.opacity === "0.00")) _setOpacitySafe(container, 1.0, 1.0);
                 }
-                var targetSize = fontSizeText;
-                try { var pid = p.id; if (pid === "Desc" || pid === "Effectiveness") { var capped = indicatorSize > 28 ? 28 : indicatorSize; targetSize = capped + "px"; } } catch(e) {}
-                if (p.style.fontSize !== targetSize) { try { p.style.fontSize = targetSize; } catch(e) {} }
-                if (meta.isCumulativeOrBatched) return;
-                if (hideSmallNumbers && meta.isSmallDamage) { _setOpacitySafe(p, 0, 0); return; }
+                if (!meta.isCumulativeOrBatched) {
+                    var targetSize = fontSizeText;
+                    try {
+                        var pid = p.id;
+                        if (pid === "Desc" || pid === "Effectiveness") {
+                            var capped = indicatorSize > 28 ? 28 : indicatorSize;
+                            targetSize = capped + "px";
+                        }
+                    } catch(e) {}
+                    if (p.style.fontSize !== targetSize) {
+                        try { p.style.fontSize = targetSize; } catch(e) {}
+                    }
+                } else {
+                    try { if (p.style.fontSize) p.style.fontSize = null; } catch(e) {}
+                }
+
+                if (hideSmallNumbers && meta.isSmallDamage) {
+                    _setOpacitySafe(p, 0, 0);
+                    return;
+                }
                 _setOpacitySafe(p, opacityText, 1.0);
             }
 
@@ -224,17 +229,30 @@
                         return;
                     }
 
-                    var indicatorCacheValid = _isPanelListValid(_stateGet("indicatorPanelsCache", null));
+                    var cachedPanels = _stateGet("indicatorPanelsCache", null);
+                    var indicatorCacheValid = Array.isArray(cachedPanels) && (cachedPanels.length === 0 || _isPanelListValid(cachedPanels));
                     var panelCacheDue = _taskIsDue("hud_indicator_panel_cache", now);
                     var shouldRefreshPanels = !indicatorCacheValid || panelCacheDue || configSig !== lastConfigSig;
                     if (shouldRefreshPanels) {
                         var dmgContainer = _getPanel("dmgIndicators");
-                        if (!dmgContainer && root.FindChildTraverse) {
-                            dmgContainer = root.FindChildTraverse("CitadelHudDamageIndicators");
-                            _setPanel("dmgIndicators", dmgContainer);
+                        var nextDmgSearch = _stateGet("nextDmgContainerSearchMs", 0);
+                        if (!dmgContainer && root.FindChildTraverse && now >= nextDmgSearch) {
+                            dmgContainer = root.FindChildTraverse("HudEventIndicatorsPanel") ||
+                                           root.FindChildTraverse("CitadelDamageFeedbackDisplay") ||
+                                           root.FindChildTraverse("CitadelHudEventIndicatorsPanel") ||
+                                           root.FindChildTraverse("CitadelHudDamageIndicators");
+                            if (dmgContainer) {
+                                _setPanel("dmgIndicators", dmgContainer);
+                            } else {
+                                _stateSet("nextDmgContainerSearchMs", now + 2500);
+                            }
                         }
-                        var searchRoot = dmgContainer || root;
-                        _stateSet("indicatorPanelsCache", (searchRoot && searchRoot.FindChildrenWithClassTraverse) ? searchRoot.FindChildrenWithClassTraverse("HudIndicatorText") || [] : []);
+                        var searchScope = dmgContainer || (root.FindChildTraverse ? root.FindChildTraverse("gameplay_hud") : null) || root;
+                        var indicatorPanels = [];
+                        if (searchScope && searchScope.FindChildrenWithClassTraverse) {
+                            indicatorPanels = searchScope.FindChildrenWithClassTraverse("HudIndicatorText") || [];
+                        }
+                        _stateSet("indicatorPanelsCache", indicatorPanels);
                         _taskSetDelay("hud_indicator_panel_cache", now, cacheRefreshMs);
                     }
 
@@ -281,15 +299,19 @@
                     _stateSet("lastIndicatorConfigSig", "");
                     _stateSet("lastIndicatorHideModesSig", "");
                 },
-                onSettingsChanged: function() {}
+                onSettingsChanged: function() {
+                    _stateSet("lastIndicatorConfigSig", "");
+                    _stateSet("lastIndicatorHideModesSig", "");
+                    _tick();
+                }
             };
         },
     test: function(ctx) {
         try {
             var root = $.GetContextPanel();
-            var dmg = root ? root.FindChildTraverse("CitadelHudDamageIndicators") : null;
+            var dmg = root ? (root.FindChildTraverse("HudEventIndicatorsPanel") || root.FindChildTraverse("CitadelHudDamageIndicators")) : null;
             if (!dmg) return null;  // Skip — not in a match context
-            return { passed: true, name: "Damage indicators panel exists", message: "", assertions: [{ passed: true, name: "CitadelHudDamageIndicators panel exists" }] };
+            return { passed: true, name: "Damage indicators panel exists", message: "", assertions: [{ passed: true, name: "Damage indicators container exists" }] };
         } catch(e) { return { passed: false, name: "Damage numbers panel check", message: (e && e.message ? e.message : String(e)) }; }
     }
     });

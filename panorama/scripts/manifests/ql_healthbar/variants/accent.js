@@ -3,21 +3,16 @@
 (function() {
     'use strict';
     var _featureId = "ql_feat_healthbar_accent";
-    // DEPENDS: state, utils, getCachedPanel, setCachedPanel, resolveWashColorFromPalette, setWashColorSafe, normalizePaletteColorIndex
-    var _deps = QOL.import(["state", "utils", "getCachedPanel", "setCachedPanel",
-        "resolveWashColorFromPalette", "setWashColorSafe",
-        "normalizePaletteColorIndex"
-    ]);
-
-    var State = _deps.state;
-    var Utils = _deps.utils;
-    var GetCachedPanel = _deps.getCachedPanel;
-    var SetCachedPanel = _deps.setCachedPanel;
-    var IsPanelValid = Utils.IsPanelValid;
-    var SetStyleSafe = Utils.SetStyleSafe;
-    var SetWashColorSafe = _deps.setWashColorSafe;
-    var NormalizePaletteColorIndex = _deps.normalizePaletteColorIndex;
-    var ResolveWashColorFromPalette = _deps.resolveWashColorFromPalette;
+    var Panel = (QOL.core && QOL.core.panel) ? QOL.core.panel : {};
+    var State = QOL.state || (typeof globalThis !== "undefined" && globalThis.State) || {};
+    var Utils = QOL.utils;
+    var GetCachedPanel = QOL.getCachedPanel;
+    var SetCachedPanel = QOL.setCachedPanel;
+    var IsPanelValid = QOL.utils.IsPanelValid;
+    var SetStyleSafe = QOL.utils.SetStyleSafe;
+    var SetWashColorSafe = Panel.setWashColor || QOL.setWashColorSafe;
+    var NormalizePaletteColorIndex = Panel.normalizePaletteIndex || QOL.normalizePaletteColorIndex;
+    var ResolveWashColorFromPalette = Panel.resolvePaletteColor || QOL.resolveWashColorFromPalette;
 
     // ── Functions ──
 

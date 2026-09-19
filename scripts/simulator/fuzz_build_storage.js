@@ -79,7 +79,7 @@ const SABOTAGE = [
 function buildScenario(rand, token) {
     // Same payload, stamped with the version 3.1.9 wrote. The schema is still in
     // the registry (ql_shared_presets.js:2030), so this really does decode.
-    const legacyToken = token.replace("[QOL-3-2-0]", "[QOL-3-1-9]");
+    const legacyToken = token.replace("[QOL-4-0-0]", "[QOL-3-1-9]");
     const both = [token, legacyToken];
     const roll = rand();
     if (roll < 0.20) return { specs: [], tokens: both };                     // empty storage
@@ -92,7 +92,7 @@ function buildScenario(rand, token) {
         ], tokens: both };
     if (roll < 0.72) return { specs: [{ title: "Someone else's build", description: "not a token" }], tokens: both };
     if (roll < 0.80) return {                                               // corrupt token
-        specs: [{ title: "QOLLOCK-Settings", description: "[QOL-3-2-0]:!!!!not-base64!!!!" }],
+        specs: [{ title: "QOLLOCK-Settings", description: "[QOL-4-0-0]:!!!!not-base64!!!!" }],
         tokens: both };
     // ── 3.1.9 MIGRATION scenarios — drop with legacy_3_1_9.js ──
     if (roll < 0.90) return {                                               // straight 3.1.9 user

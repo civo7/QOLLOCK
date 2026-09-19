@@ -747,8 +747,12 @@
 	vertical-align: top;
 	margin-left: 0px;
 	margin-top: 120px;
-	width: 200px;
-	height: 28px;
+	width: 50px;
+	height: 50px;
+	background-color: gradient( radial, 50% 50%, 0% 0%, 90% 90%, from( rgba(255, 217, 122, 0.18) ), to( rgba(255, 217, 122, 0.05) ) );
+	border: 2px solid rgba(255, 217, 122, 0.82);
+	border-radius: 6px;
+	box-shadow: fill rgba(255, 200, 90, 0.18) 0px 0px 16px 0px;
 	opacity: 0;
 	visibility: collapse;
 	transform: translateY(8px);
@@ -771,10 +775,12 @@
 #SpeedPreviewLabel
 {
 	width: 100%;
+	height: 100%;
 	horizontal-align: center;
+	vertical-align: center;
 	text-align: center;
 	color: #ffd97a;
-	font-size: 16px;
+	font-size: 15px;
 	font-weight: bold;
 	letter-spacing: 1px;
 	text-transform: uppercase;
@@ -1422,7 +1428,9 @@
 
 #CloseBtn
 {
+	ignore-parent-flow: true;
 	align: right center;
+	margin-right: 15px;
 	width: 32px;
 	height: 32px;
 	background-color: transparent;
@@ -3102,7 +3110,7 @@
 
 .QOLCustomRowTooltip.PerfNone .QOLCustomRowTooltipPerfValue
 {
-	color: #ffffff;
+	color: #9fe8bb;
 }
 
 .QOLCustomRowTooltip.PerfLow .QOLCustomRowTooltipPerfValue
@@ -13502,12 +13510,12 @@
 #SettingsHeaderCenterHost #SettingsSearchWrap,
 #SettingsHeaderCenterHost .SettingsHeaderSearchWrap
 {
-	/* Widen the search bar by 55px, extending leftward: the +55 width plus the
-	   28px margin-right (shifting the centered box left) push the search icon
-	   ~55px to the left while keeping the right edge in place. */
-	width: 455px;
-	max-width: 455px;
-	margin-right: 28px;
+	/* Widen the search bar leftward by 25px to equalize spacing:
+	   distance from moglock.gg to lupa icon (31px) equals
+	   distance from search bar right edge to close button X (31px). */
+	width: 480px;
+	max-width: 480px;
+	margin-right: 53px;
 }
 
 #SettingsTabRailFooter

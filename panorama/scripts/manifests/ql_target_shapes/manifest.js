@@ -26,17 +26,19 @@
         enabledByDefault: true,
         settings: [
             { key: "ENABLE_RED_DIAMOND", type: "toggle", default: false },
+            { key: "ENABLE_IMPROVED_HINT", type: "toggle", default: false, label: "Improved Hint" },
             { key: "UNIT_TARGET_SIZE", type: "slider", min: 50, max: 300, step: 5, default: 150 },
             { key: "UNIT_TARGET_OPACITY", type: "slider", min: 0, max: 1, step: 0.05, default: 1 },
             { key: "UNIT_TARGET_HINT_SIZE", type: "slider", min: 50, max: 200, step: 5, default: 100 }
         ],
         create: function(ctx) {
-            // ── QOL.import deps (verbatim from old feature) ──
-            var _deps = QOL.import(["getUnitTargetDefaultStyleTexts","state","utils"]);
-            var State = _deps.state;
-            var Utils = _deps.utils;
-            var SetPanelOpacitySafe = Utils.SetPanelOpacitySafe;
-            var GetUnitTargetDefaultStyleTexts = _deps.getUnitTargetDefaultStyleTexts;
+            var State = QOL.state || (typeof globalThis !== "undefined" && globalThis.State) || {};
+            var Utils = QOL.utils;
+            var SetPanelOpacitySafe = QOL.utils.SetPanelOpacitySafe;
+            var GetUnitTargetDefaultStyleTexts = QOL.getUnitTargetDefaultStyleTexts || function() {
+                return ResolveUnitTargetStyleTexts(QOL.buildDefaultConfig ? QOL.buildDefaultConfig() : {});
+            };
+            QOL.getUnitTargetDefaultStyleTexts = GetUnitTargetDefaultStyleTexts;
 
             var _loop = null;
             var _root = null;
@@ -95,7 +97,7 @@
 
             function TargetShapeDebugLogThrottled(sig, msg, nowMsDbg) {
                 if (!TARGET_SHAPE_DEBUG) return;
-                var nowDbg = Number(nowMsDbg) || (Date.now ? Date.now() : (new Date()).getTime());
+                var nowDbg = Number(nowMsDbg) || ((typeof QOL_UTILS !== "undefined" && QOL_UTILS.PerfNowMs) ? QOL_UTILS.PerfNowMs() : Date.now());
                 var sameSig = sig && sig === State.targetShapeDebugLastSig;
                 if (sameSig && nowDbg < (State.targetShapeDebugNextMs || 0)) return;
                 State.targetShapeDebugLastSig = sig || "";
@@ -105,15 +107,17 @@
 
             function IsCachedPanelListAlive(list) {
                 if (!list) return false;
+                if (list.length === 0) return true;
+                if (typeof QOL_UTILS !== "undefined" && QOL_UTILS.IsPanelListValid) {
+                    return QOL_UTILS.IsPanelListValid(list);
+                }
                 for (var i = 0; i < list.length; i++) {
-                    var panel = list[i];
-                    if (!panel) return false;
-                    if (panel.IsValid) {
-                        try { if (!panel.IsValid()) return false; }
-                        catch(ePanel) { return false; }
+                    if (typeof QOL_UTILS !== "undefined" && QOL_UTILS.IsPanelValid) {
+                        if (!QOL_UTILS.IsPanelValid(list[i])) return false;
+                    } else if (!list[i] || (list[i].IsValid && !list[i].IsValid())) {
+                        return false;
                     }
                 }
-                // An initialized empty cache is valid until its discovery timer.
                 return true;
             }
 
@@ -251,7 +255,13 @@
                     State.targetShapeDebugNextMs = 0;
                     _root = null;
                 },
-                onSettingsChanged: function() {}
+                onSettingsChanged: function() {
+                    var root = _root || ($.GetContextPanel ? $.GetContextPanel() : null);
+                    if (root && QOL.core && QOL.core.hud && QOL.core.hud.applyRootClasses) {
+                        var cfg = ctx.config.all ? ctx.config.all() : {};
+                        QOL.core.hud.applyRootClasses(root, cfg, Date.now ? Date.now() : (new Date()).getTime(), false);
+                    }
+                }
             };
         },
         test: function(ctx) {

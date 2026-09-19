@@ -1,12 +1,13 @@
 <root>
-	<scripts>
-
-	</scripts>
 	<styles>
 		<include src="s2r://panorama/styles/citadel_base_styles.vcss_c" />
 		<include src="s2r://panorama/styles/hud_ability_modifier_shared.vcss_c" />
 		<include src="s2r://panorama/styles/ability_hud_elements/element_common.vcss_c" />
+		<!-- ============================================================= -->
+		<!-- QOLLOCK CUSTOM: Legacy Progress Bar Styles -->
+		<!-- ============================================================= -->
 		<include src="s2r://panorama/styles/ability_hud_elements/element_progress_bar.vcss_c" />
+		<!-- ============================================================= -->
 		<include src="s2r://panorama/styles/ability_hud_elements/element_progress_bar_text.vcss_c" />
 	</styles>
 	<Citadel_AbilityHUDElement_Progress class="ability_element_progress">
@@ -15,6 +16,9 @@
 				<SplitLabel id="ability_name" text="{s:ability_name}" class="SplitLabelName" />
 				<Image id="ability_name_clipped" class="SplitLabelProgress" src="panel://ability_name" context="progress" progress="clip_right" />
 			</Panel>
+			<!-- ============================================================= -->
+			<!-- QOLLOCK CUSTOM: Legacy Cast Bar -->
+			<!-- ============================================================= -->
 			<Panel id="legacy_progress_container">
 				<Label class="legacy_castbar_name" text="{s:ability_name}" />
 				<Panel id="legacy_bar_container">
@@ -24,6 +28,7 @@
 					</Panel>
 				</Panel>
 			</Panel>
+			<!-- ============================================================= -->
 			<Panel id="hint_container">
 				<CitadelBinding id="CancelKeyBinding" />
 				<Label class="action slash" text="/" />

@@ -32,7 +32,11 @@
 			</Panel>
 		</Panel>
 		<Panel id="LevelAmount" class="ScalingStatImage">
+			<!-- ============================================================= -->
+			<!-- QOLLOCK CUSTOM: Hero Image inside Level Amount -->
+			<!-- ============================================================= -->
 			<CitadelHeroImage id="HeroImage" />
+			<!-- ============================================================= -->
 		</Panel>
 	</CitadelHudSoulAPContainer>
 </root>

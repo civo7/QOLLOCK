@@ -18,7 +18,8 @@
 
     FR.register({
         id: "ql_items",
-        enabledByDefault: false,
+        enabledByDefault: true,
+        enableKey: "HUD_ITEMS_ENABLED",
         settings: [
             { key: "HUD_ITEMS_ENABLED", type: "toggle", default: true },
             { key: "ITEMS_OPACITY", type: "slider", min: 0, max: 1, step: 0.05, default: 1.0 },
@@ -32,11 +33,13 @@
             var _loop = null;
 
             function _hasNonDefault(cfg) {
-                return Number(cfg.HUD_ITEMS_ENABLED) !== 1 ||
-                    Number(cfg.ITEMS_OPACITY) !== 1.0 ||
-                    Number(cfg.ITEMS_X_OFFSET) !== 0 ||
-                    Number(cfg.ITEMS_Y_OFFSET) !== 0 ||
-                    Number(cfg.ITEMS_WASH_COLOR) !== 0;
+                if (!cfg) return false;
+                var enabled = (cfg.HUD_ITEMS_ENABLED === undefined || cfg.HUD_ITEMS_ENABLED === true || Number(cfg.HUD_ITEMS_ENABLED) === 1);
+                return !enabled ||
+                    Number(cfg.ITEMS_OPACITY !== undefined ? cfg.ITEMS_OPACITY : 1.0) !== 1.0 ||
+                    Number(cfg.ITEMS_X_OFFSET || 0) !== 0 ||
+                    Number(cfg.ITEMS_Y_OFFSET || 0) !== 0 ||
+                    Number(cfg.ITEMS_WASH_COLOR || 0) !== 0;
             }
 
             function _resolveModsContainer(root) {
@@ -47,8 +50,23 @@
                 return null;
             }
 
-            function _clearOpacity(panel) { try { panel.style.opacity = ""; } catch(e) {} }
-            function _setOpacity(panel, val) { try { panel.style.opacity = val; } catch(e) {} }
+            function _clearOpacity(panel) {
+                if (typeof QOL_UTILS !== "undefined" && QOL_UTILS.ClearStyleSafe) {
+                    QOL_UTILS.ClearStyleSafe(panel, "opacity");
+                    return;
+                }
+                if (!panel || !panel.style) return;
+                try { delete panel.style.opacity; } catch(e1) {}
+                try { panel.style.opacity = null; } catch(e2) {}
+                try { panel.style.opacity = ""; } catch(e3) {}
+            }
+            function _setOpacity(panel, val) {
+                if (typeof QOL_UTILS !== "undefined" && QOL_UTILS.SetStyleSafe) {
+                    QOL_UTILS.SetStyleSafe(panel, "opacity", val);
+                    return;
+                }
+                try { panel.style.opacity = val; } catch(e) {}
+            }
 
             function _resetAllChildren(mc) {
                 // Reset BarGraphContainer, ModSection children, and mod_icon_single_container
@@ -71,13 +89,16 @@
                 if (!mc) return;
 
                 var active = _hasNonDefault(cfg);
-                var enabled = Number(cfg.HUD_ITEMS_ENABLED) === 1;
+                var enabled = (cfg.HUD_ITEMS_ENABLED === undefined || cfg.HUD_ITEMS_ENABLED === true || Number(cfg.HUD_ITEMS_ENABLED) === 1);
                 var ox = Math.round(Number(active ? cfg.ITEMS_X_OFFSET : 0)) || 0;
                 var oy = Math.round(Number(active ? cfg.ITEMS_Y_OFFSET : 0)) || 0;
-                var op = active ? Number(cfg.ITEMS_OPACITY).toFixed(2) : "1.00";
+                var opVal = active ? Number(cfg.ITEMS_OPACITY !== undefined ? cfg.ITEMS_OPACITY : 1.0) : 1.0;
+                if (!isFinite(opVal)) opVal = 1.0;
+                var op = opVal.toFixed(2);
                 var wcIdx = active ? (Math.round(Number(cfg.ITEMS_WASH_COLOR)) || 0) : 0;
-                var pal = (typeof QOL !== "undefined" && QOL.washColorPalette) ? QOL.washColorPalette : [];
-                var wc = (wcIdx > 0 && wcIdx < pal.length) ? pal[wcIdx] : "";
+                var wc = (typeof QOL !== "undefined" && QOL.core && QOL.core.panel && QOL.core.panel.resolvePaletteColor)
+                    ? QOL.core.panel.resolvePaletteColor(wcIdx)
+                    : ((typeof QOL !== "undefined" && QOL.washColorPalette && wcIdx > 0 && wcIdx < QOL.washColorPalette.length) ? QOL.washColorPalette[wcIdx] : "");
 
                 var sig = ox + "|" + oy + "|" + op + "|" + wcIdx + "|" + (enabled ? "1" : "0");
                 if (_lastSig === sig) return;
@@ -86,7 +107,14 @@
                 mc.style.x = ox + "px";
                 mc.style.y = (-oy) + "px";
                 if (mc.SetHasClass) mc.SetHasClass("qol-hidden", !enabled);
-                if (wc !== _lastWashColor) { try { mc.style.washColor = wc; } catch(e) {} _lastWashColor = wc; }
+                if (wc !== _lastWashColor) {
+                    if (typeof QOL !== "undefined" && QOL.core && QOL.core.panel && QOL.core.panel.setWashColor) {
+                        QOL.core.panel.setWashColor(mc, wc);
+                    } else {
+                        try { mc.style.washColor = wc; } catch(e) {}
+                    }
+                    _lastWashColor = wc;
+                }
                 _clearOpacity(mc);
 
                 var barGraph = mc.FindChildTraverse ? mc.FindChildTraverse("BarGraphContainer") : null;
@@ -131,7 +159,8 @@
                         if (mc && mc.style) {
                             mc.style.x = "0px"; mc.style.y = "0px"; mc.style.washColor = "";
                             _clearOpacity(mc);
-                            if (mc.SetHasClass) mc.SetHasClass("qol-hidden", false);
+                            var isSupposed = FR && FR.isFeatureSupposedToBeEnabled ? FR.isFeatureSupposedToBeEnabled("ql_items") : false;
+                            if (mc.SetHasClass) mc.SetHasClass("qol-hidden", !isSupposed);
                             // Also reset all child panels that _apply touches.
                             _resetAllChildren(mc);
                         }

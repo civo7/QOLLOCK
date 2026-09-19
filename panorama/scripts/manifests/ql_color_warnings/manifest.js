@@ -80,27 +80,12 @@
                 try { if (typeof QOL !== "undefined" && QOL.state) return QOL.state; } catch(e) {}
                 return null;
             }
-            function _getCachedPanel(key) {
-                try { if (typeof QOL !== "undefined" && QOL.getCachedPanel) return QOL.getCachedPanel(key); } catch(e) {}
-                return null;
-            }
-            function _setCachedPanel(key, val) {
-                try { if (typeof QOL !== "undefined" && QOL.setCachedPanel) QOL.setCachedPanel(key, val); } catch(e) {}
-            }
-            function _isCfgEnabled(cfg, key) {
-                try { if (typeof QOL !== "undefined" && QOL.utils && QOL.utils.IsCfgEnabled) return QOL.utils.IsCfgEnabled(cfg, key); } catch(e) {}
-                return Number(cfg[key]) === 1;
-            }
-            function _isPanelValid(p) {
-                try { if (typeof QOL !== "undefined" && QOL.utils && QOL.utils.IsPanelValid) return QOL.utils.IsPanelValid(p); } catch(e) {}
-                return !!(p && typeof p.IsValid === "function" && p.IsValid());
-            }
-            function _setStyleSafe(panel, prop, value) {
-                try { if (typeof QOL !== "undefined" && QOL.utils && QOL.utils.SetStyleSafe) QOL.utils.SetStyleSafe(panel, prop, value); } catch(e) {}
-            }
-            function _clearStyleSafe(panel, prop) {
-                try { if (typeof QOL !== "undefined" && QOL.utils && QOL.utils.ClearStyleSafe) QOL.utils.ClearStyleSafe(panel, prop); } catch(e) {}
-            }
+            var _getCachedPanel = QOL.getCachedPanel;
+            var _setCachedPanel = QOL.setCachedPanel;
+            var _isCfgEnabled = QOL.utils.IsCfgEnabled;
+            var _isPanelValid = QOL.utils.IsPanelValid;
+            var _setStyleSafe = QOL.utils.SetStyleSafe;
+            var _clearStyleSafe = QOL.utils.ClearStyleSafe;
             function _setWashColorSafe(panel, color) {
                 try { if (typeof QOL !== "undefined" && QOL.utils && QOL.utils.SetWashColorSafe) QOL.utils.SetWashColorSafe(panel, color); } catch(e) {}
             }
@@ -206,14 +191,23 @@
 
             function _estimateHealthPercentFromBarHeight(entry) {
                 if (!entry) return NaN;
-                var fillPanel = entry.healthBar || null;
-                var fillSize = fillPanel && _isPanelValid(fillPanel) ? Number(fillPanel.actuallayoutheight) : NaN;
-                if (!isFinite(fillSize) || fillSize < 0) return NaN;
-                var pct = (fillSize / 60) * 100;
-                if (!isFinite(pct)) return NaN;
-                if (pct < 0) pct = 0;
-                if (pct > 100) pct = 100;
-                return pct;
+                var barParent = entry.healthBarParent;
+                if (barParent && _isPanelValid(barParent)) {
+                    if (barParent.value !== undefined && barParent.max !== undefined && Number(barParent.max) > 0) {
+                        var pVal = Number(barParent.value);
+                        var pMax = Number(barParent.max);
+                        if (isFinite(pVal) && isFinite(pMax) && pMax > 0) {
+                            return Math.max(0, Math.min(100, (pVal / pMax) * 100));
+                        }
+                    }
+                    var parentH = Number(barParent.actuallayoutheight);
+                    var fillPanel = entry.healthBar;
+                    var fillH = fillPanel && _isPanelValid(fillPanel) ? Number(fillPanel.actuallayoutheight) : NaN;
+                    if (isFinite(fillH) && isFinite(parentH) && parentH > 0) {
+                        return Math.max(0, Math.min(100, (fillH / parentH) * 100));
+                    }
+                }
+                return NaN;
             }
 
             // ═══════════════════════════════════════════════
@@ -222,14 +216,16 @@
 
             function _resetSelfStyles() {
                 var State = _getState();
+                var barsPanel = _getCachedPanel("coloredHealthbarBarsPanel");
                 var healthBar = _getCachedPanel("coloredHealthbarHealthBar");
                 var progressLeft = _getCachedPanel("coloredHealthbarProgressLeft");
                 var currentHealth = _getCachedPanel("coloredHealthbarCurrentHealth");
-                if (healthBar) _setWashColorSafe(healthBar, "white");
-                if (progressLeft) _setWashColorSafe(progressLeft, "white");
+                if (barsPanel) _setWashColorSafe(barsPanel, "");
+                if (healthBar) _setWashColorSafe(healthBar, "");
+                if (progressLeft) _setWashColorSafe(progressLeft, "");
                 if (currentHealth) {
-                    _setStyleSafe(currentHealth, "color", "white");
-                    _setWashColorSafe(currentHealth, "white");
+                    _clearStyleSafe(currentHealth, "color");
+                    _setWashColorSafe(currentHealth, "");
                 }
                 if (State) {
                     State.coloredHealthbarLastColor = "";
@@ -240,53 +236,102 @@
             }
 
             function _resetSelfPanelCache() {
+                _setCachedPanel("coloredHealthbarBarsPanel", null);
                 _setCachedPanel("coloredHealthbarHealthBar", null);
                 _setCachedPanel("coloredHealthbarProgressLeft", null);
                 _setCachedPanel("coloredHealthbarCurrentHealth", null);
+                _setCachedPanel("coloredHealthbarTotalHealth", null);
+                _setCachedPanel("coloredHealthbarRegenTotal", null);
             }
 
+            var _nextHealthContainerScanMs = 0;
+
             function _resolveSelfPanels(root) {
-                var liveHealthContainer = (root && root.FindChildTraverse) ? root.FindChildTraverse(PANEL_ID_HEALTH_CONTAINER) : null;
-                var healthContainer = _isPanelValid(liveHealthContainer) ? liveHealthContainer : _getCachedPanel("healthContainer");
-                if (healthContainer !== _getCachedPanel("healthContainer")) {
-                    _setCachedPanel("healthContainer", healthContainer);
-                    _resetSelfPanelCache();
+                var healthContainer = _getCachedPanel("healthContainer");
+                if (!healthContainer || !_isPanelValid(healthContainer)) {
+                    var now = Date.now ? Date.now() : (new Date()).getTime();
+                    if (now < _nextHealthContainerScanMs) return null;
+                    healthContainer = (root && root.FindChildTraverse) ? root.FindChildTraverse(PANEL_ID_HEALTH_CONTAINER) : null;
+                    if (_isPanelValid(healthContainer)) {
+                        _setCachedPanel("healthContainer", healthContainer);
+                        _resetSelfPanelCache();
+                    } else {
+                        _nextHealthContainerScanMs = now + 1000;
+                        return null;
+                    }
                 }
-                if (!healthContainer) return null;
+                var searchRoot = healthContainer;
+                if (!searchRoot) return null;
+
+                var regenTotal = _getCachedPanel("coloredHealthbarRegenTotal");
+                if (!regenTotal || !_isPanelValid(regenTotal)) {
+                    regenTotal = searchRoot.FindChildTraverse ? searchRoot.FindChildTraverse("HealthRegenAndTotal") : null;
+                    _setCachedPanel("coloredHealthbarRegenTotal", regenTotal);
+                }
+
+                var currentHealthLabel = _getCachedPanel("coloredHealthbarCurrentHealth");
+                if (!currentHealthLabel || !_isPanelValid(currentHealthLabel)) {
+                    if (regenTotal) {
+                        try {
+                            if (typeof QOL !== "undefined" && QOL.utils && QOL.utils.FindFirstPanelByClass) {
+                                currentHealthLabel = QOL.utils.FindFirstPanelByClass(regenTotal, "currentHealthLabel");
+                            }
+                        } catch(eFind) {}
+                    }
+                    if (!currentHealthLabel && searchRoot.FindChildTraverse) {
+                        currentHealthLabel = searchRoot.FindChildTraverse("currentHealthLabel") || searchRoot.FindChildTraverse("current_health");
+                    }
+                    _setCachedPanel("coloredHealthbarCurrentHealth", currentHealthLabel);
+                }
+
+                var totalHealthLabel = _getCachedPanel("coloredHealthbarTotalHealth");
+                if (!totalHealthLabel || !_isPanelValid(totalHealthLabel)) {
+                    if (regenTotal) {
+                        try {
+                            if (typeof QOL !== "undefined" && QOL.utils && QOL.utils.FindFirstPanelByClass) {
+                                totalHealthLabel = QOL.utils.FindFirstPanelByClass(regenTotal, "totalHealthLabel");
+                            }
+                        } catch(eFindT) {}
+                    }
+                    if (!totalHealthLabel && searchRoot.FindChildTraverse) {
+                        totalHealthLabel = searchRoot.FindChildTraverse("totalHealthLabel") || searchRoot.FindChildTraverse("max_health");
+                    }
+                    _setCachedPanel("coloredHealthbarTotalHealth", totalHealthLabel);
+                }
+
+                var barsPanel = _getCachedPanel("coloredHealthbarBarsPanel");
+                if (!barsPanel || !_isPanelValid(barsPanel)) {
+                    if (searchRoot.FindChildTraverse) {
+                        barsPanel = searchRoot.FindChildTraverse("hud_health_bars_stacked") || searchRoot.FindChildTraverse("hud_health_bars");
+                    }
+                    _setCachedPanel("coloredHealthbarBarsPanel", barsPanel);
+                }
 
                 var healthBar = _getCachedPanel("coloredHealthbarHealthBar");
-                if (healthBar && !_isDescendantOf(healthBar, healthContainer)) { _resetSelfPanelCache(); healthBar = null; }
-                if (!healthBar) {
-                    var hudHealthBars = healthContainer.FindChildTraverse ? healthContainer.FindChildTraverse("hud_health_bars") : null;
-                    healthBar = hudHealthBars && hudHealthBars.FindChildTraverse ? hudHealthBars.FindChildTraverse("health_bar") : null;
-                    if (!healthBar && healthContainer.FindChildTraverse) healthBar = healthContainer.FindChildTraverse("health_bar");
+                if (!healthBar || !_isPanelValid(healthBar)) {
+                    if (searchRoot.FindChildTraverse) {
+                        healthBar = searchRoot.FindChildTraverse("health_bars_container") || searchRoot.FindChildTraverse("health_bar");
+                    }
                     _setCachedPanel("coloredHealthbarHealthBar", healthBar);
                 }
-                if (!healthBar) return null;
 
                 var progressLeft = _getCachedPanel("coloredHealthbarProgressLeft");
-                if (progressLeft && !_isDescendantOf(progressLeft, healthBar)) { _setCachedPanel("coloredHealthbarProgressLeft", null); progressLeft = null; }
-                if (!progressLeft) {
-                    progressLeft = healthBar.FindChild ? healthBar.FindChild("health_bar_left") : null;
-                    if (!progressLeft && healthBar.GetChildCount && healthBar.GetChild) {
-                        var childCount = healthBar.GetChildCount();
-                        for (var i = 0; i < childCount; i++) {
-                            var child = null;
-                            try { child = healthBar.GetChild(i); } catch(e) { child = null; }
-                            if (child && child.BHasClass && child.BHasClass("ProgressBarLeft")) { progressLeft = child; break; }
-                        }
+                if (!progressLeft || !_isPanelValid(progressLeft)) {
+                    if (healthBar && healthBar.FindChild) {
+                        progressLeft = healthBar.FindChild("health_bar_left");
                     }
                     _setCachedPanel("coloredHealthbarProgressLeft", progressLeft);
                 }
-                if (!progressLeft) return null;
 
-                var currentHealth = _getCachedPanel("coloredHealthbarCurrentHealth");
-                if (currentHealth && !_isDescendantOf(currentHealth, healthBar)) { _setCachedPanel("coloredHealthbarCurrentHealth", null); currentHealth = null; }
-                if (!currentHealth) {
-                    currentHealth = healthBar.FindChildTraverse ? healthBar.FindChildTraverse("current_health") : null;
-                    _setCachedPanel("coloredHealthbarCurrentHealth", currentHealth);
-                }
-                return { healthBar: healthBar, progressLeft: progressLeft, currentHealth: currentHealth };
+                return {
+                    healthContainer: healthContainer,
+                    regenTotal: regenTotal,
+                    currentHealth: currentHealthLabel,
+                    totalHealth: totalHealthLabel,
+                    barsPanel: barsPanel,
+                    healthBar: healthBar,
+                    progressLeft: progressLeft
+                };
             }
 
             function _resolveSelfColor(pct, cfg) {
@@ -323,37 +368,50 @@
                         State.coloredHealthbarEnabledPrev = enabled;
                     }
                     if (!enabled) {
-                        if (State.coloredHealthbarLastColor !== "" || _getCachedPanel("coloredHealthbarHealthBar") || _getCachedPanel("coloredHealthbarProgressLeft") || _getCachedPanel("coloredHealthbarCurrentHealth")) {
+                        if (State.coloredHealthbarLastColor !== "" || _getCachedPanel("coloredHealthbarBarsPanel") || _getCachedPanel("coloredHealthbarHealthBar") || _getCachedPanel("coloredHealthbarProgressLeft") || _getCachedPanel("coloredHealthbarCurrentHealth")) {
                             _resetSelfStyles(); _resetSelfPanelCache();
                         }
                         return;
                     }
                     var panels = _resolveSelfPanels(root);
-                    if (!panels || !panels.progressLeft) return;
-                    var progressLeft = panels.progressLeft;
-                    var parent = progressLeft.GetParent ? progressLeft.GetParent() : null;
-                    var val = parent ? parent.value : undefined;
-                    var max = parent ? parent.max : undefined;
+                    if (!panels) return;
                     var pct = 0;
-                    
-                    if (val !== undefined && max !== undefined && max > 0) {
-                        State.coloredHealthbarZeroHeightStreak = 0;
-                        pct = (val / max) * 100;
-                    } else {
-                        var pH = Number(progressLeft.actuallayoutheight);
-                        var cH = parent ? Number(parent.actuallayoutheight) : 0;
-                        if (!isFinite(pH) || !isFinite(cH) || cH <= 0) {
-                            State.coloredHealthbarZeroHeightStreak += 1;
-                            if (State.coloredHealthbarZeroHeightStreak >= 4) _resetSelfPanelCache();
-                            return;
+                    var parsed = false;
+
+                    if (panels.currentHealth && panels.totalHealth) {
+                        var curText = (panels.currentHealth.text != null) ? String(panels.currentHealth.text) : "";
+                        var totText = (panels.totalHealth.text != null) ? String(panels.totalHealth.text) : "";
+                        var curHp = parseInt(curText.replace(/[^0-9]/g, ""), 10);
+                        var totHp = parseInt(totText.replace(/[^0-9]/g, ""), 10);
+                        if (isFinite(curHp) && isFinite(totHp) && totHp > 0) {
+                            pct = (curHp / totHp) * 100;
+                            parsed = true;
                         }
-                        State.coloredHealthbarZeroHeightStreak = 0;
-                        pct = (pH / cH) * 100;
                     }
+
+                    if (!parsed && panels.progressLeft) {
+                        var progressLeft = panels.progressLeft;
+                        var parent = progressLeft.GetParent ? progressLeft.GetParent() : null;
+                        var val = parent ? parent.value : undefined;
+                        var max = parent ? parent.max : undefined;
+                        if (val !== undefined && max !== undefined && max > 0) {
+                            pct = (val / max) * 100;
+                            parsed = true;
+                        }
+                    }
+
+                    if (!parsed) return;
+                    if (pct < 0) pct = 0;
+                    if (pct > 100) pct = 100;
+
                     var color = _resolveSelfColor(pct, cfg);
+                    if (panels.barsPanel) _setWashColorSafe(panels.barsPanel, color);
                     if (panels.healthBar) _setWashColorSafe(panels.healthBar, color);
                     if (panels.progressLeft) _setWashColorSafe(panels.progressLeft, color);
-                    if (panels.currentHealth) { _setStyleSafe(panels.currentHealth, "color", color); _setWashColorSafe(panels.currentHealth, color); }
+                    if (panels.currentHealth) {
+                        _setStyleSafe(panels.currentHealth, "color", color);
+                        _setWashColorSafe(panels.currentHealth, color);
+                    }
                     State.coloredHealthbarLastColor = color;
                 } catch(e) {
                     _resetSelfStyles(); _resetSelfPanelCache();
@@ -408,6 +466,20 @@
                 if (!State || !root) return;
                 if (nowMs < (State.enemyColoredHealthPanelCacheNextMs || 0)) return;
                 var previous = Array.isArray(State.enemyColoredHealthPanelCache) ? State.enemyColoredHealthPanelCache : [];
+                if (previous.length > 0) {
+                    var allValid = true;
+                    for (var vi = 0; vi < previous.length; vi++) {
+                        var ve = previous[vi];
+                        if (!ve || !_isPanelValid(ve.healthBar) || !_isPanelValid(ve.healthBarParent)) {
+                            allValid = false;
+                            break;
+                        }
+                    }
+                    if (allValid) {
+                        State.enemyColoredHealthPanelCacheNextMs = nowMs + ENEMY_COLORED_HEALTH_PANEL_SCAN_MS;
+                        return;
+                    }
+                }
                 var next = [];
                 var friendlyTeamClass = _resolveFriendlyTopBarTeamClass(root, nowMs);
                 function findPrevious(windowRoot, healthBar) {
@@ -439,7 +511,7 @@
                     });
                 }
                 State.enemyColoredHealthPanelCache = next;
-                State.enemyColoredHealthPanelCacheNextMs = nowMs + ENEMY_COLORED_HEALTH_PANEL_SCAN_MS;
+                State.enemyColoredHealthPanelCacheNextMs = nowMs + (next.length > 0 ? ENEMY_COLORED_HEALTH_PANEL_SCAN_MS : 2000);
             }
 
             function _resolveEnemyColor(pct, cfg, teamColorRgb) {
@@ -540,6 +612,20 @@
                 if (!State || !root) return;
                 if (nowMs < (State.allyColoredHealthPanelCacheNextMs || 0)) return;
                 var previous = Array.isArray(State.allyColoredHealthPanelCache) ? State.allyColoredHealthPanelCache : [];
+                if (previous.length > 0) {
+                    var allValid = true;
+                    for (var vi = 0; vi < previous.length; vi++) {
+                        var ve = previous[vi];
+                        if (!ve || !_isPanelValid(ve.healthBar) || !_isPanelValid(ve.healthBarParent)) {
+                            allValid = false;
+                            break;
+                        }
+                    }
+                    if (allValid) {
+                        State.allyColoredHealthPanelCacheNextMs = nowMs + ENEMY_COLORED_HEALTH_PANEL_SCAN_MS;
+                        return;
+                    }
+                }
                 var next = [];
                 function findPrevious(windowRoot, healthBar) {
                     for (var pi = 0; pi < previous.length; pi++) {
@@ -569,7 +655,7 @@
                     });
                 }
                 State.allyColoredHealthPanelCache = next;
-                State.allyColoredHealthPanelCacheNextMs = nowMs + ENEMY_COLORED_HEALTH_PANEL_SCAN_MS;
+                State.allyColoredHealthPanelCacheNextMs = nowMs + (next.length > 0 ? ENEMY_COLORED_HEALTH_PANEL_SCAN_MS : 2000);
             }
 
             function _resolveAllyColor(pct, cfg, teamColorRgb) {
@@ -674,6 +760,7 @@
             return {
                 onEnable: function() {
                     var S = QOL.core.Scheduler;
+                    // rate-exempt: 6Hz (0.16s) required for warning pulse animation cadence
                     _loop = S && S.createPollLoop ? S.createPollLoop(_tick, 0.16, "ql_color_warnings") : null;
                 },
                 onDisable: function() {
@@ -696,7 +783,12 @@
                         State.allyColoredHealthPanelCacheNextMs = 0;
                     }
                 },
-                onSettingsChanged: function() {}
+                onSettingsChanged: function() {
+                    _resetSelfStyles(); _resetSelfPanelCache();
+                    _resetEnemyStyles();
+                    _resetAllyStyles();
+                    _tick();
+                }
             };
         },
         test: function(ctx) {

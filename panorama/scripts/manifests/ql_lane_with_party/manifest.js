@@ -26,18 +26,17 @@
             { key: "ENABLE_LANE_WITH_PARTY", type: "toggle", default: false }
         ],
         create: function(ctx) {
-            // ── QOL.import deps (verbatim from old feature) ──
-            var _deps = QOL.import(["activatePanelSafe","getCachedPanel","isPanelVisibleMaybe","readPanelIdTextMaybe","readPanelTextDeepMaybe","state","setCachedPanel","utils"]);
-            var GetCachedPanel = _deps.getCachedPanel;
-            var State = _deps.state;
-            var SetCachedPanel = _deps.setCachedPanel;
-            var Utils = _deps.utils;
-            var IsCfgEnabled = Utils.IsCfgEnabled;
-            var IsPanelValid = Utils.IsPanelValid;
-            var ActivatePanelSafe = _deps.activatePanelSafe;
-            var IsPanelVisibleMaybe = _deps.isPanelVisibleMaybe;
-            var ReadPanelIdTextMaybe = _deps.readPanelIdTextMaybe;
-            var ReadPanelTextDeepMaybe = _deps.readPanelTextDeepMaybe;
+            var Panel = (QOL.core && QOL.core.panel) ? QOL.core.panel : {};
+            var State = QOL.state || (typeof globalThis !== "undefined" && globalThis.State) || {};
+            var Utils = QOL.utils;
+            var IsCfgEnabled = QOL.utils.IsCfgEnabled;
+            var IsPanelValid = QOL.utils.IsPanelValid;
+            var GetCachedPanel = QOL.getCachedPanel;
+            var SetCachedPanel = QOL.setCachedPanel;
+            var ActivatePanelSafe = Panel.activate || QOL.activatePanelSafe;
+            var IsPanelVisibleMaybe = Panel.isVisible || QOL.isPanelVisibleMaybe;
+            var ReadPanelIdTextMaybe = Panel.readId || QOL.readPanelIdTextMaybe;
+            var ReadPanelTextDeepMaybe = Panel.readTextDeep || QOL.readPanelTextDeepMaybe;
 
             var _loop = null;
             var _root = null;
@@ -194,7 +193,10 @@
                     State.laneWithPartyLastState = "";
                     _root = null;
                 },
-                onSettingsChanged: function() {}
+                onSettingsChanged: function() {
+                    if (State) State.laneWithPartyNextApplyMs = 0;
+                    _tick();
+                }
             };
         },
         test: function(ctx) {

@@ -10,7 +10,22 @@
     // Functions that need QOL symbols should use direct global access.
     // _TLog is defined in ql_core.js (loads after us). Install a noop on the
     // global scope so calls don't crash; ql_core.js overwrites it later.
-    if (typeof _TLog === "undefined") { globalThis._TLog = function() {}; }
+    var _TLog = (typeof globalThis !== "undefined" && typeof globalThis._TLog === "function")
+        ? globalThis._TLog
+        : function(label, detail) { try { $.Msg("[QOLLock][TRACE][" + (label || "") + "] " + (detail || "")); } catch(e) {} };
+
+    var _heroReturnDebugLog = function(msg) {
+        if (typeof QOL !== "undefined" && typeof QOL.heroReturnDebugLog === "function" && QOL.heroReturnDebugLog !== _heroReturnDebugLog) {
+            try { QOL.heroReturnDebugLog(msg); } catch(e) {}
+        } else {
+            _TLog("bridge:HeroReturn", msg);
+        }
+    };
+    if (typeof QOL !== "undefined" && !QOL.heroReturnDebugLog) {
+        QOL.heroReturnDebugLog = _heroReturnDebugLog;
+    }
+
+    var _nowMs = (typeof QOL_UTILS !== "undefined" && QOL_UTILS.PerfNowMs) ? QOL_UTILS.PerfNowMs : function() { return Date.now ? Date.now() : (new Date()).getTime(); };
 
     // ── Constants (from ql_core.js) ──
     var BUILD_CATEGORY_PAYLOAD_STORAGE_HERO_ID = "hero_skyrunner";
@@ -67,7 +82,7 @@
     function SelectHeroForBuildSave(heroId, reason) {
         if (!heroId || heroId.length === 0) return false;
         var target = String(heroId);
-        var now = Date.now ? Date.now() : (new Date()).getTime();
+        var now = _nowMs();
         if (State.selectHeroLastTarget === target && (State.selectHeroLastMs || 0) > now - 1000) {
             return true;
         }
@@ -75,7 +90,7 @@
         State.selectHeroLastMs = now;
         var ok = DispatchCitadelConCommand("selecthero " + target);
         if (SETTINGS_LOADER_DEBUG) {
-            var now2 = Date.now ? Date.now() : (new Date()).getTime();
+            var now2 = _nowMs();
             var inLoaderContext =
                 !!State.settingsLoaderSessionActive ||
                 (State.settingsLoaderSessionCompleted && now2 < (State.settingsLoaderShowUntilMs || 0));
@@ -102,7 +117,7 @@
         if (!root) return false;
         if (!State.settingsLoaderSessionActive) return false;
         if (!State.buildCategoryPayloadSkyrunnerHeaderConfirmed) return false;
-        var now = Number(nowMs) || (Date.now ? Date.now() : (new Date()).getTime());
+        var now = Number(nowMs) || _nowMs();
         var confirmedAtMs = Number(State.buildCategoryPayloadSkyrunnerHeaderConfirmedMs) || 0;
         if (confirmedAtMs > 0 && (now - confirmedAtMs) > BUILD_SAVE_CLEAR_REUSE_SKYRUNNER_MAX_AGE_MS) {
             return false;
@@ -117,17 +132,17 @@
     function BeginHeroRestoreWithVerification(targetHero, contextLabel, nowMs) {
         var hero = NormalizeHeroId(targetHero);
         if (!hero || hero === BUILD_CATEGORY_PAYLOAD_STORAGE_HERO_ID) {
-            QOL.heroReturnDebugLog("restore begin skipped invalidTarget=" + (targetHero ? String(targetHero) : "-") + " ctx=" + (contextLabel ? String(contextLabel) : "-"));
+            _heroReturnDebugLog("restore begin skipped invalidTarget=" + (targetHero ? String(targetHero) : "-") + " ctx=" + (contextLabel ? String(contextLabel) : "-"));
             return false;
         }
-        var now = Number(nowMs) || (Date.now ? Date.now() : (new Date()).getTime());
+        var now = Number(nowMs) || _nowMs();
         var switched = SelectHeroForBuildSave(hero);
         State.heroRestorePendingTarget = hero;
         State.heroRestorePendingStartedMs = now;
         State.heroRestorePendingNextMs = now + HERO_RESTORE_VERIFY_DELAY_MS;
         State.heroRestorePendingRetries = 0;
         State.heroRestorePendingContext = contextLabel ? String(contextLabel) : "";
-        QOL.heroReturnDebugLog("restore begin target=" + hero + " ctx=" + (State.heroRestorePendingContext || "-") + " switchOk=" + (switched ? "1" : "0"));
+        _heroReturnDebugLog("restore begin target=" + hero + " ctx=" + (State.heroRestorePendingContext || "-") + " switchOk=" + (switched ? "1" : "0"));
         return switched;
     }
 
@@ -137,11 +152,11 @@
         var delay = Number(delaySec);
         if (!isFinite(delay) || delay < 0) delay = 0;
         if (typeof $.Schedule !== "function") {
-            var switchedImmediate = BeginHeroRestoreWithVerification(hero, contextLabel || "build_save_finish", Date.now ? Date.now() : (new Date()).getTime());
+            var switchedImmediate = BeginHeroRestoreWithVerification(hero, contextLabel || "build_save_finish", _nowMs());
             return switchedImmediate;
         }
         $.Schedule(delay, function() {
-            var switched = BeginHeroRestoreWithVerification(hero, contextLabel || "build_save_finish", Date.now ? Date.now() : (new Date()).getTime());
+            var switched = BeginHeroRestoreWithVerification(hero, contextLabel || "build_save_finish", _nowMs());
         });
         _TLog("bridge:QueueRestore", "hero=" + hero + " delayMs=" + (delay * 1000));
         return true;

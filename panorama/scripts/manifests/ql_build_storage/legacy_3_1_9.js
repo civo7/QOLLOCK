@@ -68,9 +68,7 @@
     // A row in #HeroBuildList is the local player's only if it carries this.
     const CLASS_OWN_ROW = "MyBuild";
 
-    function _alive(p) {
-        return !!(p && typeof p.IsValid === "function" && p.IsValid());
-    }
+    var _alive = QOL.utils.IsPanelValid;
     function _find(root, id) {
         try { return (root && root.FindChildTraverse) ? root.FindChildTraverse(id) : null; } catch(e) { return null; }
     }
