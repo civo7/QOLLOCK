@@ -110,8 +110,10 @@
 
             var _cachedMinimap = null;
             var _cachedCapturePointBtns = null;
+            var _nextRiftScanMs = 0;
+            var _nextMinimapSearchMs = 0;
 
-            function _scanMinimapForRift(root) {
+            function _scanMinimapForRift(root, nowMs) {
                 if (_cachedCapturePointBtns && _cachedCapturePointBtns.length > 0) {
                     var allAlive = true;
                     for (var k = 0; k < _cachedCapturePointBtns.length; k++) {
@@ -135,13 +137,22 @@
                                 bestHasCp = true;
                             }
                         }
-                        return { hasCapturePoint: bestHasCp, hasKothWarning: bestHasKoth, isActive: bestHasActive };
+                        if (bestHasCp) {
+                            return { hasCapturePoint: bestHasCp, hasKothWarning: bestHasKoth, isActive: bestHasActive };
+                        }
                     }
                     _cachedCapturePointBtns = null;
                 }
 
+                if (nowMs && nowMs < _nextRiftScanMs) {
+                    return { hasCapturePoint: false, hasKothWarning: false, isActive: false };
+                }
+
                 var minimapPanel = _cachedMinimap;
                 if (!_isPanelValid(minimapPanel)) {
+                    if (nowMs && nowMs < _nextMinimapSearchMs) {
+                        return { hasCapturePoint: false, hasKothWarning: false, isActive: false };
+                    }
                     var minimapIDs = ["hud_minimap", "minimap_persp", "minimap_container",
                         "minimap_frame", "HudMinimapContainer"];
                     minimapPanel = null;
@@ -150,6 +161,10 @@
                         if (p) { minimapPanel = p; break; }
                     }
                     _cachedMinimap = minimapPanel;
+                    if (!_isPanelValid(minimapPanel)) {
+                        if (nowMs) _nextMinimapSearchMs = nowMs + 1500;
+                        return { hasCapturePoint: false, hasKothWarning: false, isActive: false };
+                    }
                 }
                 if (!minimapPanel || !minimapPanel.FindChildrenWithClassTraverse) {
                     return { hasCapturePoint: false, hasKothWarning: false, isActive: false };
@@ -180,6 +195,10 @@
                 }
                 if (foundCpBtns.length > 0) {
                     _cachedCapturePointBtns = foundCpBtns;
+                    _nextRiftScanMs = 0;
+                } else {
+                    _cachedCapturePointBtns = null;
+                    if (nowMs) _nextRiftScanMs = nowMs + 1500;
                 }
                 return { hasCapturePoint: bestHasCpScan, hasKothWarning: bestHasKothScan, isActive: bestHasActiveScan };
             }
@@ -195,7 +214,7 @@
                     };
                 }
                 if (State) State.riftTimerLastCapturePointCheckMs = nowMs;
-                var scan = _scanMinimapForRift(root);
+                var scan = _scanMinimapForRift(root, nowMs);
                 if (State) {
                     State.riftTimerCapturePointValid = scan.hasCapturePoint;
                     State.riftTimerRiftIsActive = scan.isActive;
@@ -400,6 +419,8 @@
                     }
                     _cachedMinimap = null;
                     _cachedCapturePointBtns = null;
+                    _nextRiftScanMs = 0;
+                    _nextMinimapSearchMs = 0;
                 },
                 onSettingsChanged: function() {
                     var State = _getState();

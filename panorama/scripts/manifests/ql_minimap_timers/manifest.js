@@ -149,8 +149,8 @@
                 if (found && found.length > 0) {
                     _cachedSpawners = found;
                 } else {
-                    // Back off 3s if no spawners present in DOM to prevent spamming tree traversal
-                    _nextSpawnerSearchMs = now + 3000;
+                    // Back off 1.5s if no spawners present in DOM to prevent spamming tree traversal
+                    _nextSpawnerSearchMs = now + 1500;
                 }
                 return found;
             }
@@ -247,6 +247,7 @@
                 if (!overlay || !IsPanelValid(overlay)) return;
                 if (overlay.SetHasClass) overlay.SetHasClass("qol-hidden", true); else if (overlay.style.visibility !== "collapse") overlay.style.visibility = "collapse";
                 State.minimapObjectiveScaleSig = "";
+                State.minimapObjectiveBridgePosSig = "";
                 if (overlay.style.preTransformScale2d !== "1.00, 1.00") overlay.style.preTransformScale2d = "1.00, 1.00";
                 var bp = GetCachedPanel("minimapObjectiveBuffPanel"), blp = GetCachedPanel("minimapObjectiveBuffBridgeLeftPanel"), brp = GetCachedPanel("minimapObjectiveBuffBridgeRightPanel"), rp = GetCachedPanel("minimapObjectiveRejuvPanel");
                 if (bp) { SetPanelClassCached(bp, State.minimapObjectiveBuffClassCache, "yellow", false); SetPanelClassCached(bp, State.minimapObjectiveBuffClassCache, "red", false); }
@@ -333,8 +334,12 @@
                     }
                 }
                 if (panels.rejuvPanel) { if (panels.rejuvPanel.SetHasClass) panels.rejuvPanel.SetHasClass("qol-hidden", !re); else if (panels.rejuvPanel.style.visibility !== (re ? "visible" : "collapse")) panels.rejuvPanel.style.visibility = re ? "visible" : "collapse"; }
-                if (panels.buffPanel && sbbp) { panels.buffPanel.style.ignoreParentFlow = "true"; panels.buffPanel.style.verticalAlign = "bottom"; panels.buffPanel.style.marginTop = "0px"; panels.buffPanel.style.marginBottom = bo + "px"; panels.buffPanel.style.marginLeft = ((!re || rbe) ? 0 : (-sso)) + "px"; }
-                if (panels.rejuvPanel) { panels.rejuvPanel.style.ignoreParentFlow = "true"; if (rbe) { panels.rejuvPanel.style.verticalAlign = "center"; panels.rejuvPanel.style.marginLeft = "0px"; panels.rejuvPanel.style.marginTop = "0px"; panels.rejuvPanel.style.marginBottom = "0px"; } else { panels.rejuvPanel.style.verticalAlign = "bottom"; panels.rejuvPanel.style.marginTop = "0px"; panels.rejuvPanel.style.marginBottom = bo + "px"; panels.rejuvPanel.style.marginLeft = ((be && !bbe) || bbe ? sso : 0) + "px"; } }
+                var bridgePosSig = [bo, sso, sbbp ? 1 : 0, re ? 1 : 0, rbe ? 1 : 0, be ? 1 : 0, bbe ? 1 : 0].join("|");
+                if (State.minimapObjectiveBridgePosSig !== bridgePosSig) {
+                    if (panels.buffPanel && sbbp) { panels.buffPanel.style.ignoreParentFlow = "true"; panels.buffPanel.style.verticalAlign = "bottom"; panels.buffPanel.style.marginTop = "0px"; panels.buffPanel.style.marginBottom = bo + "px"; panels.buffPanel.style.marginLeft = ((!re || rbe) ? 0 : (-sso)) + "px"; }
+                    if (panels.rejuvPanel) { panels.rejuvPanel.style.ignoreParentFlow = "true"; if (rbe) { panels.rejuvPanel.style.verticalAlign = "center"; panels.rejuvPanel.style.marginLeft = "0px"; panels.rejuvPanel.style.marginTop = "0px"; panels.rejuvPanel.style.marginBottom = "0px"; } else { panels.rejuvPanel.style.verticalAlign = "bottom"; panels.rejuvPanel.style.marginTop = "0px"; panels.rejuvPanel.style.marginBottom = bo + "px"; panels.rejuvPanel.style.marginLeft = ((be && !bbe) || bbe ? sso : 0) + "px"; } }
+                    State.minimapObjectiveBridgePosSig = bridgePosSig;
+                }
                 if (ri) { if (ri.SetHasClass) ri.SetHasClass("qol-hidden", rbe); else ri.style.visibility = rbe ? "collapse" : "visible"; }
                 if (be && panels.buffBridgeLeftTime && panels.buffBridgeLeftTime.text !== bridgeText) panels.buffBridgeLeftTime.text = bridgeText;
                 if (be && panels.buffBridgeRightTime && panels.buffBridgeRightTime.text !== bridgeText) panels.buffBridgeRightTime.text = bridgeText;
@@ -427,6 +432,7 @@
                     _cachedSpawners = null;
                     _cachedMinimap = null;
                     _nextSpawnerSearchMs = 0;
+                    State.minimapObjectiveBridgePosSig = "";
                     SetCachedPanel("minimapObjectiveTimersRoot", null); SetCachedPanel("minimapObjectiveBuffPanel", null); SetCachedPanel("minimapObjectiveBuffTime", null); SetCachedPanel("minimapObjectiveBuffIcon", null);
                     SetCachedPanel("minimapObjectiveBuffBridgeLeftPanel", null); SetCachedPanel("minimapObjectiveBuffBridgeLeftTime", null); SetCachedPanel("minimapObjectiveBuffBridgeLeftIcon", null);
                     SetCachedPanel("minimapObjectiveBuffBridgeRightPanel", null); SetCachedPanel("minimapObjectiveBuffBridgeRightTime", null); SetCachedPanel("minimapObjectiveBuffBridgeRightIcon", null);

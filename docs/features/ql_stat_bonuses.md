@@ -27,7 +27,7 @@ The feature creates an unobtrusive on-screen HUD widget by extracting Golden Sta
 
 ### Activation & Lifecycle Hooks
 - **`onEnable()`**: Spawns a 5Hz (`0.2s` interval) polling loop via `QOL.core.Scheduler.createPollLoop(_tick, 0.2, "ql_stat_bonuses")`.
-- **`onDisable()`**: Halts the poll loop, deletes `_overlay` (`QOLStatBonusesOverlay`) via `DeleteAsync(0)`, clears label caches, and resets layout signatures.
+- **`onDisable()`**: Halts the poll loop, deletes `_overlay` (`QOLStatBonusesOverlay`) via `DeleteAsync(0)`, clears label and container caches (`_cachedStatsContainer`, `_containersByCandidateId`), resets search timers, and resets layout signatures.
 - **`onSettingsChanged()`**: Clears `_lastLayoutSig` and triggers an immediate `_tick()` to refresh layout scales and offsets.
 - **`test()`**: Verifies that the native `#gameplay_hud` anchor panel exists.
 
@@ -43,11 +43,12 @@ The feature creates an unobtrusive on-screen HUD widget by extracting Golden Sta
 
 ### Engine Events & Polling Frequency
 - **Polling Frequency**: 5Hz (`0.2s` interval).
-- **Tooltip Harvesting**: Scans for active shop stat breakdown tooltips every 250ms (`STAT_BONUSES_TOOLTIP_SCAN_MS`).
-- **Exponential Backoff**: When stat containers are not yet spawned in the DOM, lookup retries back off from 500ms up to 8000ms (`STAT_BONUSES_SOURCE_SEARCH_MAX_MS`).
+- **Tooltip Harvesting**: Scans for active shop stat breakdown tooltips every 250ms (`STAT_BONUSES_TOOLTIP_SCAN_MS`) when present, or backs off by 1500ms when breakdown panels are absent.
+- **Search Backoff**: When stat containers are not yet spawned in the DOM, lookup retries back off from 500ms up to a strict maximum cap of 1500ms (`STAT_BONUSES_SOURCE_SEARCH_MAX_MS`). Candidate container lookups are cached per cycle to prevent repeated tree traversals.
 
 ### Performance Tier & Caveats
-- **Performance Tier**: Low-to-Medium.
+- **Performance Tier**: Low (~0.03ms per tick).
 - **Suppression**: Suppressed when inside the Hideout / Sandbox lobby.
+- **Tree Traversal Optimization**: BFS numeric token extraction is capped to at most 30 visited nodes (`maxNodes`), eliminating multi-millisecond frame spikes during deep panel scans.
 - **Style Optimization**: Transforms and offsets are guarded by `_lastLayoutSig` (`scale|xOffset|yOffset`), ensuring zero style mutation passes when position is static.
 - **Label Text Diffing**: Label text updates check `_lastValues[key]` before assigning `lbl.text`, eliminating redundant Panorama layout reflows.

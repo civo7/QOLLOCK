@@ -44,11 +44,12 @@ Renders objective countdown timers directly onto the tactical minimap for Mid-Bo
   - `.buff_spawned`: Applied when an active buff is detected on the bridge.
 
 ### Engine Events & Polling Frequency
-- **Polling Frequency**: `0.3s` interval (~3.3Hz) cooperative polling loop via `QOL.core.Scheduler`. Spawner detection targets `#hud_minimap` directly with a 3-second backoff when spawners are not present in DOM to prevent redundant tree traversals.
+- **Polling Frequency**: `0.3s` interval (~3.3Hz) cooperative polling loop via `QOL.core.Scheduler`. Spawner detection targets `#hud_minimap` directly with a 1.5-second backoff (`1500ms`) when spawners are not present in DOM to prevent redundant tree traversals.
 - **State Coupling**: Reads live Rejuvenator data from `QOL.state.rejuvState` (maintained by `ql_rejuv_hud`).
 - **Engine Events**: None.
 
 ### Performance Tier & Caveats
-- **Performance Tier**: Low (`~0.05ms` per tick).
+- **Performance Tier**: Low (`~0.03ms` per tick).
 - **Suppression**: Automatically hidden when connected to the Hideout / Sandbox or during Street Brawl matches.
 - **Resolution Independence**: Layout offsets and plate dimensions are defined in a fixed 400px base coordinate space; Panorama's `uiScale` on `minimap_persp` automatically vector-scales the overlays to match any minimap size (550px, 750px, zoom, etc.) without offset drift or manual layout recalculation.
+- **Layout Invalidation Guards**: `ApplyMinimapObjectiveTimersBridgeMode` guards all inline style assignments behind `State.minimapObjectiveBridgePosSig`, completely bypassing style mutations when objective positions are unchanged.

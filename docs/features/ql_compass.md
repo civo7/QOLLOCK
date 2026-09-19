@@ -42,6 +42,7 @@ Renders an intuitive tactical compass tape (featuring 360-degree markings and ca
 - **Engine Events**: None.
 
 ### Performance Tier & Caveats
-- **Performance Tier**: Medium (~0.12ms/tick during high-speed rotation).
+- **Performance Tier**: Medium (~0.12ms/tick during high-speed rotation, near-zero when stationary).
 - **Suppression**: Suppressed when connected to Hideout or Sandbox environments.
-- **Transform Caching**: Heading angles are filtered with deadband thresholds to avoid redundant CSS transform updates when minor sub-degree orientation shifts occur.
+- **Transform & Deadzone Caching**: Heading angles are filtered with a 0.15° deadband threshold in `_updateCompassTicks` to skip recalculating tick positions and mutating child styles when viewing angle is stationary.
+- **Layout Invalidation Guards**: `BHasClass` guards prevent redundant `SetHasClass("qol_minimap_flip_active")` calls on `#hud_minimap`, avoiding excessive C++ layout recalculations.

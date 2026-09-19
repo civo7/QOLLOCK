@@ -38,6 +38,7 @@ Tracks the lifecycle, random spawn windows, and active state of the Soul Urn (Ki
 
 ### Engine Events & Polling Frequency
 - **Polling Frequency**: 2Hz (`0.5s` interval).
+- **Minimap Button Scan Backoff**: When capture point buttons or minimap panels are not present in the DOM, lookup retries back off by 1500ms (`_nextRiftScanMs` / `_nextMinimapSearchMs`) to avoid scanning dozens of `.map_button` elements on every 500ms tick.
 - **Game Version Constants (CVar-Aligned)**:
   - Initial Spawn Delay: 740s (`12m + 20s`)
   - Respawn Cycle: 420s (`7m`)
@@ -45,7 +46,7 @@ Tracks the lifecycle, random spawn windows, and active state of the Soul Urn (Ki
   - Early Warning Duration: `20s`
 
 ### Performance Tier & Caveats
-- **Performance Tier**: Low (2Hz tick).
+- **Performance Tier**: Low (2Hz tick, near-zero cost between spawn windows).
 - **Suppression**: Fully suppressed in Hideout / Sandbox lobbies (`_isConnectedToHideout`).
-- **Button Cache**: Caches resolved minimap capture buttons in `_cachedCapturePointBtns` to bypass recursive tree searches as long as the handles remain valid.
+- **Button Cache & Throttle**: Caches resolved minimap capture buttons in `_cachedCapturePointBtns` to bypass recursive tree searches as long as the handles remain valid, with 1.5s search throttling when inactive.
 - **Text Diffing**: Skips DOM updates if displayed text and active mode have not changed (`State.riftTimerLastText === displayText && State.riftTimerLastMode === mode`).

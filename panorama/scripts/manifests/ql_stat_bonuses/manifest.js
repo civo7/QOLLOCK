@@ -19,7 +19,7 @@
     }
 
     var STAT_BONUSES_SOURCE_SEARCH_MS = 500;
-    var STAT_BONUSES_SOURCE_SEARCH_MAX_MS = 8000;
+    var STAT_BONUSES_SOURCE_SEARCH_MAX_MS = 1500;
     var STAT_BONUSES_TOOLTIP_SCAN_MS = 250;
     var STAT_BONUSES_TOOLTIP_BREAKDOWN_ID = "StatsBreakdownContainer";
     var STAT_BONUSES_GOLDEN_ROW_KEYS = [
@@ -115,20 +115,23 @@
     }
 
     function tryExtractNumericTokenFromPanelTree(panel, maxNodes) {
-        if (!panel || !panel.Children) return "";
+        if (!panel || !isAlive(panel) || !panel.Children) return "";
         var queue = [panel];
         var visited = 0;
-        var limit = Math.max(10, Number(maxNodes) || 120);
+        var limit = Math.max(8, Math.min(Number(maxNodes) || 25, 30));
         while (queue.length > 0 && visited < limit) {
             var current = queue.shift();
             visited++;
-            if (!current) continue;
+            if (!current || !isAlive(current)) continue;
             if (typeof current.text === "string") {
                 var token = extractFirstNumericToken(current.text);
                 if (token) return token;
             }
-            var kids = current.Children ? current.Children() : [];
-            for (var i = 0; i < kids.length; i++) queue.push(kids[i]);
+            var kids = null;
+            try { kids = current.Children ? current.Children() : []; } catch (e) { kids = []; }
+            if (kids) {
+                for (var i = 0; i < kids.length; i++) queue.push(kids[i]);
+            }
         }
         return "";
     }
@@ -147,7 +150,7 @@
             var tokenByClass = extractFirstNumericToken(rawByClass);
             if (tokenByClass) return tokenByClass;
         }
-        return tryExtractNumericTokenFromPanelTree(sourcePanel, 40);
+        return tryExtractNumericTokenFromPanelTree(sourcePanel, 25);
     }
 
     function isStatBonusTokenZero(token) {
@@ -215,7 +218,7 @@
             if (!textMatchesAnyStatBonusKey(rowName, STAT_BONUSES_GOLDEN_ROW_KEYS)) continue;
             var rowValue = getFirstPanelTextByClass(row, "StatValue");
             var token = extractFirstNumericToken(rowValue);
-            if (!token) token = tryExtractNumericTokenFromPanelTree(row, 60);
+            if (!token) token = tryExtractNumericTokenFromPanelTree(row, 25);
             if (token) return token;
         }
         return "";
@@ -227,7 +230,7 @@
         if (!statName || statName.length === 0) return false;
         var statValue = getFirstPanelTextByClass(panel, "StatValue");
         if (statValue && statValue.length > 0) return true;
-        var token = tryExtractNumericTokenFromPanelTree(panel, 40);
+        var token = tryExtractNumericTokenFromPanelTree(panel, 20);
         return !!(token && token.length > 0);
     }
 
@@ -314,6 +317,7 @@
 
             var _cachedStatsContainer = null;
             var _nextStatsContainerSearchMs = 0;
+            var _containersByCandidateId = null;
 
             function _ensureOverlay(root) {
                 if (isAlive(_overlay)) return _overlay;
@@ -358,7 +362,9 @@
                 if (!isAlive(_cachedStatsContainer) && nowMs >= _nextStatsContainerSearchMs) {
                     _cachedStatsContainer = root.FindChildTraverse ? (root.FindChildTraverse("HeroStatsDisplay") || root.FindChildTraverse("HeroStatsWeapon") || root.FindChildTraverse("CitadelHudHeroShop")) : null;
                     if (!isAlive(_cachedStatsContainer)) {
-                        _nextStatsContainerSearchMs = nowMs + 3000;
+                        _nextStatsContainerSearchMs = nowMs + 1500;
+                    } else {
+                        _containersByCandidateId = null;
                     }
                 }
 
@@ -376,12 +382,26 @@
                         if (found) break;
                     }
                 }
-                if (!found && statsContainer.FindChildrenWithClassTraverse) {
-                    var containers = statsContainer.FindChildrenWithClassTraverse("statAttributeContainer") || [];
-                    for (var c = 0; c < containers.length; c++) {
-                        var panel = containers[c];
-                        if (panel && def.candidateIds.indexOf(panel.id) !== -1) {
-                            found = panel;
+                if (!found) {
+                    if (!_containersByCandidateId) {
+                        _containersByCandidateId = {};
+                        if (statsContainer.FindChildrenWithClassTraverse) {
+                            var containers = statsContainer.FindChildrenWithClassTraverse("statAttributeContainer") || [];
+                            for (var c = 0; c < containers.length; c++) {
+                                var cp = containers[c];
+                                if (cp && cp.id) {
+                                    _containersByCandidateId[cp.id] = cp;
+                                }
+                            }
+                        }
+                    }
+                    for (var k = 0; k < def.candidateIds.length; k++) {
+                        var candidate = _containersByCandidateId[def.candidateIds[k]];
+                        if (candidate && isAlive(candidate)) {
+                            found = candidate;
+                            break;
+                        } else if (candidate) {
+                            _containersByCandidateId = null;
                             break;
                         }
                     }
@@ -428,7 +448,7 @@
 
                 var breakdown = resolveStatBonusesTooltipBreakdownPanel(root);
                 if (!breakdown) {
-                    _nextTooltipScanMs = nowMs + 2500;
+                    _nextTooltipScanMs = nowMs + 1500;
                     return;
                 }
                 _nextTooltipScanMs = nowMs + STAT_BONUSES_TOOLTIP_SCAN_MS;
@@ -500,6 +520,7 @@
                     _sourceSearchBackoffMs = 0;
                     _globalSourceSearchNextMs = 0;
                     _nextSourceSearchByKey = {};
+                    _containersByCandidateId = null;
                 }
 
                 // Resolve sources and values
@@ -551,6 +572,12 @@
                     _lastValues = {};
                     _lastLayoutSig = "";
                     _overlayVisible = false;
+                    _cachedStatsContainer = null;
+                    _containersByCandidateId = null;
+                    _nextStatsContainerSearchMs = 0;
+                    _globalSourceSearchNextMs = 0;
+                    _nextTooltipScanMs = 0;
+                    _nextSourceSearchByKey = {};
                 },
                 onSettingsChanged: function() {
                     _lastLayoutSig = "";

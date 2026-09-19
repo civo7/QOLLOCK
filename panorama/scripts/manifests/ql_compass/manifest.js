@@ -369,6 +369,7 @@
                     }
                     _tickClassSigs = [];
                     _tickXTexts = [];
+                    _lastRenderedHeadingDeg = null;
                 }
 
                 return _compassRoot;
@@ -557,17 +558,21 @@
 
                 if (!enabled) {
                     _applyStaticMinimapRotation(hud, nowMs, 0);
-                    if (_isAlive(flipClassTarget)) {
+                    if (_isAlive(flipClassTarget) && flipClassTarget.BHasClass && flipClassTarget.BHasClass("qol_minimap_flip_active") !== staticFlipEnabled) {
                         flipClassTarget.SetHasClass("qol_minimap_flip_active", staticFlipEnabled);
                     }
-                    if (_isAlive(container)) {
+                    if (_isAlive(container) && container.BHasClass && container.BHasClass("qol_minimap_flip_active") !== staticFlipEnabled) {
                         container.SetHasClass("qol_minimap_flip_active", staticFlipEnabled);
                     }
                     return;
                 }
 
-                if (_isAlive(flipClassTarget)) flipClassTarget.SetHasClass("qol_minimap_flip_active", false);
-                if (_isAlive(container)) container.SetHasClass("qol_minimap_flip_active", false);
+                if (_isAlive(flipClassTarget) && flipClassTarget.BHasClass && flipClassTarget.BHasClass("qol_minimap_flip_active")) {
+                    flipClassTarget.SetHasClass("qol_minimap_flip_active", false);
+                }
+                if (_isAlive(container) && container.BHasClass && container.BHasClass("qol_minimap_flip_active")) {
+                    container.SetHasClass("qol_minimap_flip_active", false);
+                }
 
                 var target = _findMinimapRotateTarget(hud);
                 if (!_isAlive(target)) return;
@@ -660,16 +665,34 @@
                 _minimapRotateLastDeg = roundedDeg;
             }
 
+            var _lastRenderedHeadingDeg = null;
+            var _lastRenderedBoxWidth = 0;
+            var _lastRenderedStretchX = 0;
+            var _lastRenderedStretchY = 0;
+
             function _updateCompassTicks(heading360, boxWidthPx, stretchXFactor, stretchYFactor) {
                 if (!_compassTicks || _compassTicks.length === 0) return;
+                var boxWidth = Number(boxWidthPx) || 200;
+                var stretchX = Number(stretchXFactor) || 1.0;
+                var stretchY = Number(stretchYFactor) || 1.0;
+
+                if (_lastRenderedHeadingDeg !== null &&
+                    Math.abs(_shortestDelta(_lastRenderedHeadingDeg, heading360)) < 0.15 &&
+                    boxWidth === _lastRenderedBoxWidth &&
+                    stretchX === _lastRenderedStretchX &&
+                    stretchY === _lastRenderedStretchY) {
+                    return;
+                }
+                _lastRenderedHeadingDeg = heading360;
+                _lastRenderedBoxWidth = boxWidth;
+                _lastRenderedStretchX = stretchX;
+                _lastRenderedStretchY = stretchY;
+
                 var stepsPerTurn = Math.round(360 / COMPASS_TICK_STEP_DEG);
                 var centerIndex = Math.floor(COMPASS_TICK_COUNT / 2);
                 var unit = heading360 / COMPASS_TICK_STEP_DEG;
                 var base = Math.floor(unit);
                 var frac = unit - base;
-                var boxWidth = Number(boxWidthPx) || 200;
-                var stretchX = Number(stretchXFactor) || 1.0;
-                var stretchY = Number(stretchYFactor) || 1.0;
 
                 var halfWidth = boxWidth * 0.5;
                 var spacing = COMPASS_TICK_SPACING_PX * stretchX;
@@ -715,6 +738,10 @@
                 _speedSamples = [];
                 _tickClassSigs = [];
                 _tickXTexts = [];
+                _lastRenderedHeadingDeg = null;
+                _lastRenderedBoxWidth = 0;
+                _lastRenderedStretchX = 0;
+                _lastRenderedStretchY = 0;
             }
 
             function _hideCompassOverlay() {
@@ -935,9 +962,9 @@
                 if (!hasWork) {
                     _hideCompassOverlay();
                     var flipTarget = _findMinimapFlipClassTarget(hud);
-                    if (_isAlive(flipTarget)) flipTarget.SetHasClass("qol_minimap_flip_active", false);
+                    if (_isAlive(flipTarget) && flipTarget.BHasClass && flipTarget.BHasClass("qol_minimap_flip_active")) flipTarget.SetHasClass("qol_minimap_flip_active", false);
                     var container = _findMinimapContainer(hud);
-                    if (_isAlive(container)) container.SetHasClass("qol_minimap_flip_active", false);
+                    if (_isAlive(container) && container.BHasClass && container.BHasClass("qol_minimap_flip_active")) container.SetHasClass("qol_minimap_flip_active", false);
                     _applyStaticMinimapRotation(hud, _nowMs(), 0);
                     if (_loop) _loop.reschedule(COMPASS_INTERVAL_IDLE_SEC);
                     return;
