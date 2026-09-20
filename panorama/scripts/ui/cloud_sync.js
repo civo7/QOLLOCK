@@ -108,6 +108,8 @@
         switch (message) {
             case "starting":
                 return "START";
+            case "wait_hero":
+                return "WAIT HERO";
             case "switching_to_skyrunner":
             case "switching_to_airheart":
             case "switching_to_storage_hero":

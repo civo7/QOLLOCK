@@ -49,7 +49,7 @@
         CLASS_EDITING, CLASS_SHOWING_FAVORITES, CLASS_CAN_EDIT,
         BRIDGE_REQUEST, BRIDGE_STATE, BRIDGE_MSG, BRIDGE_TOKEN, BRIDGE_FORCE,
         ACTIVE_RATE_SEC, DORMANT_RATE_SEC, STEP_MS, SETTLE_MS,
-        CONFIRM_TIMEOUT_MS, LOADING_TIMEOUT_MS, SELECT_TIMEOUT_MS, EDITOR_TIMEOUT_MS,
+        HERO_WAIT_TIMEOUT_MS, CONFIRM_TIMEOUT_MS, LOADING_TIMEOUT_MS, SELECT_TIMEOUT_MS, EDITOR_TIMEOUT_MS,
         COMMIT_TIMEOUT_MS, VERIFY_TIMEOUT_MS, OVERALL_TIMEOUT_MS, SIGNATURE_HITS,
         LIST_STABLE_HITS, LIST_NAME_LOG_MAX,
         SHOP_OPEN_CMD, SHOP_OPEN_TIMEOUT_MS, BROWSER_OPEN_TIMEOUT_MS, FAVORITES_CONFIRM_MS,
@@ -182,6 +182,7 @@
              * would say less, not more.
              */
             const WRITE_STAGE_STEPS = {
+                wait_hero:         [["start", "active"]],
                 switch_hero:       [["start", "done"], ["switch_airheart", "active"]],
                 confirm_hero:      [["switch_airheart", "done"], ["confirm_airheart", "active"]],
                 open_shop:         [["confirm_airheart", "done"], ["prepare_build", "active"]],
@@ -198,6 +199,7 @@
             };
 
             const WRITE_STAGE_DETAIL = {
+                wait_hero:         "Waiting for hero to spawn",
                 switch_hero:       "Switching to Skyrunner",
                 confirm_hero:      "Confirming Skyrunner context",
                 open_shop:         "Opening the shop",
@@ -608,6 +610,39 @@
 
             function _advanceToList(root, now) {
                 switch (_st.stage) {
+                    case "wait_hero": {
+                        const live = _liveHero(root);
+                        if (live) {
+                            _st.returnHero = live;
+                            _st.returnHeroSource = "live";
+                            _log("returnHero=" + live + " via live");
+                            if (live === STORAGE_HERO) {
+                                _st.didSwitch = false;
+                                _setStep("start", "done", "");
+                                _setStep("switch_airheart", "done", "");
+                                _setStep("confirm_airheart", "done", "");
+                                _setStep("read_payload", "active", "Opening the build browser");
+                                _go("open_shop", now);
+                                return "wait";
+                            }
+                            _go("switch_hero", now, 0);
+                            return "wait";
+                        }
+                        if (_expired(now, HERO_WAIT_TIMEOUT_MS)) {
+                            _log("wait_hero: hero never spawned within " + HERO_WAIT_TIMEOUT_MS + "ms — deferring");
+                            _setHidden(root, false);
+                            if (_st.mode === "read") {
+                                _callQol("finalizeSettingsLoaderSession", undefined, ["skipped", "hero never spawned", now]);
+                                _st.stage = "idle";
+                                _reschedule(DORMANT_RATE_SEC);
+                                return "wait";
+                            }
+                            return _gateFail("hero never spawned to save settings");
+                        }
+                        _st.nextAt = now + STEP_MS;
+                        return "wait";
+                    }
+
                     case "switch_hero":
                         // Recorded BEFORE anything of ours touches the shop, because
                         // "was it already open?" decides whether it has to be rebound
@@ -620,6 +655,7 @@
                         _st.didSwitch = true;
                         // Overlay step keys come from ql_core.js:535 — the historical
                         // names say "airheart" where the hero is now Skyrunner.
+                        _setStep("start", "done", "");
                         _setStep("switch_airheart", "done", "");
                         _setStep("confirm_airheart", "active", "Confirming Skyrunner");
                         _go("confirm_hero", now, SETTLE_MS);
@@ -1447,6 +1483,10 @@
                 const token = _extractToken(_readBridge(root, BRIDGE_REQUEST));
                 if (!token) return null;
 
+                if (!_inHideout(root)) {
+                    return { reject: "not_in_hideout" };
+                }
+
                 if (token.length > MAX_TOKEN_LEN) {
                     return { reject: "token too large for the build description (" + token.length + " chars)" };
                 }
@@ -1487,7 +1527,7 @@
                             _st.mode = "dump";
                             _st.startedAt = now;
                             _captureReturnHero(root);
-                            _go("switch_hero", now, 0);
+                            _go("wait_hero", now, 0);
                             _reschedule(ACTIVE_RATE_SEC);
                             return;
                         }
@@ -1541,7 +1581,7 @@
                             _captureReturnHero(root);
                             _callQol("beginSaveSettingsLoaderSession", undefined, [req.requestToken, now]);
                             _writeStatus(root, "pending", "starting");
-                            _go("switch_hero", now, 0);
+                            _go("wait_hero", now, 0);
                             _reschedule(ACTIVE_RATE_SEC);
                             return;
                         }
@@ -1561,8 +1601,8 @@
                         // account: one per run is what the machine wants, since the
                         // stage === "done" guard above is what stops a second read.
                         _callQol("beginSettingsLoaderSession", undefined, ["storage_read_" + now, now]);
-                        _setStep("start", "done", "");
-                        _go("switch_hero", now, 0);
+                        _setStep("start", "active", "Waiting for hero spawn...");
+                        _go("wait_hero", now, 0);
                         _reschedule(ACTIVE_RATE_SEC);
                         return;
                     }

@@ -77,7 +77,8 @@
     const STEP_MS          = 120;   // gap between two UI actions
     const SETTLE_MS        = 300;   // after a hero switch, before probing
     // Give-up bounds. These never signal success — a class does.
-    const CONFIRM_TIMEOUT_MS = 4000;
+    const HERO_WAIT_TIMEOUT_MS = 15000; // boot-time load waits for hero pawn/crosshair to spawn
+    const CONFIRM_TIMEOUT_MS = 5000;    // generous to allow 2 nudges if command dropped
     const LOADING_TIMEOUT_MS = 12000;  // GC round trip; generous on purpose
     const SELECT_TIMEOUT_MS  = 2000;
     const EDITOR_TIMEOUT_MS  = 4000;
@@ -511,6 +512,9 @@
     }
 
     function _liveHero(root) {
+        const crosshairHero = _callQol("readHeroFromCrosshair", "", [root]);
+        if (crosshairHero) return crosshairHero;
+
         const scan = _callQol("readStorageHeroSignatureSlots", null, [root]);
         if (!scan || !scan.normalized) return "";
         const votes = {};
@@ -572,7 +576,7 @@
         CLASS_EDITING, CLASS_SHOWING_FAVORITES, CLASS_CAN_EDIT,
         BRIDGE_REQUEST, BRIDGE_STATE, BRIDGE_MSG, BRIDGE_TOKEN, BRIDGE_FORCE,
         ACTIVE_RATE_SEC, DORMANT_RATE_SEC, STEP_MS, SETTLE_MS,
-        CONFIRM_TIMEOUT_MS, LOADING_TIMEOUT_MS, SELECT_TIMEOUT_MS, EDITOR_TIMEOUT_MS,
+        HERO_WAIT_TIMEOUT_MS, CONFIRM_TIMEOUT_MS, LOADING_TIMEOUT_MS, SELECT_TIMEOUT_MS, EDITOR_TIMEOUT_MS,
         COMMIT_TIMEOUT_MS, VERIFY_TIMEOUT_MS, OVERALL_TIMEOUT_MS, SIGNATURE_HITS,
         LIST_STABLE_HITS, LIST_NAME_LOG_MAX,
         SHOP_OPEN_CMD, SHOP_OPEN_TIMEOUT_MS, BROWSER_OPEN_TIMEOUT_MS, FAVORITES_CONFIRM_MS,

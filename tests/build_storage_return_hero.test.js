@@ -144,4 +144,27 @@ test("the run selects the Favorites tab when the shop opens on another one", () 
         "the read failed instead of reaching the list\n" + h.diagnose());
 });
 
+test("wait_hero: waits for delayed hero spawn and reads successfully", () => {
+    // Simulate delayed hero spawn: hero starts empty, then spawns after 800ms
+    const h = sim.createHud({ hero: "", inHideout: true, boot: false });
+    for (const s of h.scripts.scripts) h.sandbox.load(s.absPath);
+    h.assertLoaded();
+
+    // Advance 600ms while hero has not spawned yet
+    h.clock.advanceBy(600, 100);
+    assert.strictEqual(h.game.hero, "");
+
+    // Hero spawns
+    h.game.hero = PLAYING;
+    h.game._renderAll();
+
+    // Complete the run
+    h.clock.advanceBy(45000, 200);
+
+    assert.strictEqual(h.game.hero, PLAYING,
+        `restored to ${h.game.hero} instead of ${PLAYING}\n` + h.diagnose());
+    assert.match(terminalReadLine(h), /read: (default|success)/,
+        "the read failed instead of completing after delayed hero spawn\n" + h.diagnose());
+});
+
 

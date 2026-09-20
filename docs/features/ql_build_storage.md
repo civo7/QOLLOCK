@@ -42,3 +42,12 @@ Serves as the primary persistent configuration storage system for QOLLOCK. Becau
 - **Load, Import, & Preset Synchronization**: In addition to interactive dropdown selection, `applyDefaultHeroSelection` is explicitly invoked during startup config synchronization (`SyncConfigFromStorage`), manual settings import (`ui/config_tab.js`), and preset application (`ui/presets.js`), ensuring imported or loaded hero profiles take effect immediately in-game.
 - **Defensive Field Resolution**: Compact binary serialization and deserialization in `ql_settings_persistence.js` resolve hero options, compact field identifiers, and default configurations through defensive accessors (`GetDefaultHeroOptions`, `GetCompactDefaultHeroField`, `GetDefaultConfig`), ensuring full compatibility across isolated unit test runners and runtime Panorama environments.
 
+### Pre-Switch Hero Readiness (`wait_hero`) & Crosshair Detection
+- **Crosshair Hero Detection (`readHeroFromCrosshair`)**: Modeled after ThirdEye persistence, the live player hero is detected directly from the HUD `#crosshair` -> `.citadel_ability_dash` container via `hero_<codename>` class membership. This is immune to ability HUD loading delays and reflects the exact live player pawn.
+- **Pre-Switch Readiness Gate (`wait_hero`)**: Rather than switching to `hero_skyrunner` immediately at tick 0 during hideout map load (where the engine may drop commands while spawning bot entities or transitioning game states), the state machine enters `wait_hero` (up to `HERO_WAIT_TIMEOUT_MS = 15000`). Once the player's pawn is alive:
+  - If the player is already playing `hero_skyrunner`, switching is skipped entirely (`_st.didSwitch = false`) and the machine jumps directly to `open_shop`.
+  - Otherwise, `_st.returnHero` is stamped from the live crosshair reading and the hero switch proceeds.
+  - If the hero never spawns within 15 seconds, the loader session gracefully defers without setting `configLoadState = "failed"`, preventing saving from being permanently locked out.
+- **Match Write Guard**: Save requests (`_pendingWrite`) require active hideout context (`_inHideout`); requests made in active matches are rejected with `not_in_hideout` to prevent invalid hero switching.
+
+
