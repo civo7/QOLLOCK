@@ -19,7 +19,7 @@
     Q.core = Q.core || {};
 
     const BRIDGE_PANEL_ID = "QOLStorageBridge";
-    const BRIDGE_LOCAL_URL = "file:///C:/";
+    const BRIDGE_LOCAL_URL = "https://predi-i.github.io/qollock-updates/bridge.html";
     const SETTINGS_STORAGE_KEY = "qollock_settings";
     const REQUEST_TIMEOUT_MS = 5000;
     const WATCHDOG_INTERVAL_SEC = 2.5;
@@ -518,6 +518,26 @@
                         : ((typeof globalThis !== "undefined" && globalThis.State) ? globalThis.State : null);
                     if (state) {
                         state.lastConfig = parsed;
+                    }
+
+                    if (Q.core?.configAdapter && typeof Q.core.configAdapter.loadFromFlat === "function") {
+                        try {
+                            const enableKeyMap = (typeof Q.core.app?._getEnableKeyMap === "function")
+                                ? Q.core.app._getEnableKeyMap() : null;
+                            Q.core.configAdapter.loadFromFlat(parsed, enableKeyMap);
+                        } catch (eAdapter) {
+                            _logWarn(`loadSettings: ConfigAdapter.loadFromFlat failed: ${eAdapter?.message || eAdapter}`);
+                        }
+                    }
+
+                    const syncFn = (typeof globalThis !== "undefined" && globalThis.SyncConfigFromStorage)
+                        ? globalThis.SyncConfigFromStorage : null;
+                    if (typeof syncFn === "function") {
+                        try { syncFn(); } catch (_) {}
+                    }
+
+                    if (Q.core?.eventBus && typeof Q.core.eventBus.emit === "function") {
+                        try { Q.core.eventBus.emit("config:loaded", { config: parsed, raw: rawText }); } catch (_) {}
                     }
                 }
 

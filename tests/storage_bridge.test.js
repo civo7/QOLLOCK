@@ -170,7 +170,7 @@ test("storage_bridge: init creates and styles CitadelHTMLPanel", () => {
     assert.strictEqual(panel.style.visibility, "visible");
     assert.strictEqual(panel.hittest, false);
     assert.strictEqual(panel.acceptsfocus, false);
-    assert.strictEqual(getLastSetUrl(), "file:///C:/");
+    assert.strictEqual(getLastSetUrl(), "https://predi-i.github.io/qollock-updates/bridge.html");
 });
 
 test("storage_bridge: handshake injects script and marks ready", () => {

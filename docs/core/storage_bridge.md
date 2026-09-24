@@ -11,8 +11,8 @@ Replaces legacy hero build hijacking with instant, robust LevelDB storage that r
 - `CitadelHTMLPanel` with ID `QOLStorageBridge` in `hud.xml` / `hud_escape_menu.xml`
 
 ## Mechanism & Architecture
-1. **CEF Instance**: An offscreen `<CitadelHTMLPanel id="QOLStorageBridge" class="QOLStorageBridge" ... />` is embedded in the HUD and Escape Menu with origin `file:///C:/`.
-2. **Persistence**: Chrome stores `file:///` local storage in Steam's shared LevelDB database under `%LOCALAPPDATA%\Steam\htmlcache\Default\Local Storage\leveldb\`. It persists across game sessions, reboots, and updates.
+1. **CEF Instance**: An offscreen `<CitadelHTMLPanel id="QOLStorageBridge" class="QOLStorageBridge" ... />` is embedded in the HUD and Escape Menu with origin `https://predi-i.github.io/qollock-updates/bridge.html`.
+2. **Persistence**: Chrome stores `https://predi-i.github.io` local storage in Steam's shared LevelDB database under `%LOCALAPPDATA%\Steam\htmlcache\Default\Local Storage\leveldb\`. It persists across game sessions, reboots, and updates without consuming API quotas or server compute.
 3. **IPC Bridge**:
    - Outbound commands are dispatched using `panel.SetURL("javascript:...")`.
    - Inbound results are passed through `document.title = "QOL_RES:" + JSON.stringify(...)`.
