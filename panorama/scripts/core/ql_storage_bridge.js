@@ -22,7 +22,7 @@
     const BRIDGE_LOCAL_URL = "https://predi-i.github.io/qollock-updates/bridge.html";
     const SETTINGS_STORAGE_KEY = "qollock_settings";
     const REQUEST_TIMEOUT_MS = 5000;
-    const WATCHDOG_INTERVAL_SEC = 2.5;
+    const WATCHDOG_INTERVAL_SEC = 20.0;
     const MAX_INIT_ATTEMPTS = 5;
 
     const CHUNK_SIZE = 1500;
@@ -355,6 +355,21 @@
                 storageBridgeApi.loadSettings((err, res) => {
                     if (err) {
                         _logWarn(`Startup autoload failed: ${err.message || err}`);
+                        _hasAutoloaded = false;
+                        if (typeof $.Schedule === "function") {
+                            $.Schedule(5.0, () => {
+                                if (!_hasAutoloaded && _bridgeReady) {
+                                    _hasAutoloaded = true;
+                                    storageBridgeApi.loadSettings((rErr, rRes) => {
+                                        if (rErr) {
+                                            _logWarn(`Startup autoload retry failed: ${rErr.message || rErr}`);
+                                        } else if (rRes && rRes.ok) {
+                                            _log("Saved settings restored successfully on retry from CEF storage.");
+                                        }
+                                    }).catch(() => {});
+                                }
+                            });
+                        }
                     } else if (res && res.notFound) {
                         _log("No saved settings found in CEF storage; using defaults.");
                     } else if (res && res.ok) {
@@ -365,13 +380,19 @@
             return;
         }
 
+        if (title.indexOf("QOL_BRIDGE_ERROR:") === 0) {
+            _bridgeReady = false;
+            _logWarn(`Bridge reported error: ${title.slice(17)}`);
+            return;
+        }
+
         if (title.indexOf("QOL_RES:") === 0) {
             _handleResponse(title.slice(8));
             return;
         }
 
-        // Local directory listing page loaded (Index of C:/)
-        if (!_isPageLoaded) {
+        // Local directory listing page loaded (Index of C:/ in tests or dev)
+        if (!_isPageLoaded && (title.indexOf("Index of") === 0 || title.indexOf("Directory listing") === 0)) {
             _isPageLoaded = true;
             _log(`CEF directory loaded (${title.slice(0, 40)}), injecting bridge script...`);
             _injectBridgeScript();
@@ -386,8 +407,8 @@
         _initAttempts++;
         if (_initAttempts < MAX_INIT_ATTEMPTS) {
             if (_isPanelAlive(_bridgePanel) && typeof _bridgePanel.SetURL === "function") {
-                _log(`Watchdog: bridge not ready yet (attempt ${_initAttempts}/${MAX_INIT_ATTEMPTS}), retrying...`);
-                _injectBridgeScript();
+                _log(`Watchdog: bridge not ready yet (attempt ${_initAttempts}/${MAX_INIT_ATTEMPTS}), retrying URL navigation...`);
+                _bridgePanel.SetURL(BRIDGE_LOCAL_URL);
             }
             if (typeof $.Schedule === "function") {
                 _watchdogTimer = $.Schedule(WATCHDOG_INTERVAL_SEC, _watchdogTick);

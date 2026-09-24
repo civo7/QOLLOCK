@@ -496,3 +496,27 @@ test("storage_bridge: rejects when incoming chunks arrive out of order", async (
 
     await assert.rejects(loadPromise, /Out of order chunk/);
 });
+
+test("storage_bridge: direct QOL_BRIDGE_READY marks ready without directory listing", () => {
+    const { sandbox, getLastSetUrl, fireTitleEvent } = createTestEnvironment();
+    const bridge = sandbox.QOL.core.storageBridge;
+    const panel = bridge.getPanel();
+
+    assert.strictEqual(bridge.isReady(), false);
+    fireTitleEvent(panel, "QOL_BRIDGE_READY");
+    assert.strictEqual(bridge.isReady(), true, "Bridge marked ready directly");
+    assert.strictEqual(getLastSetUrl(), "https://predi-i.github.io/qollock-updates/bridge.html", "No javascript injected");
+});
+
+test("storage_bridge: QOL_BRIDGE_ERROR marks ready as false", () => {
+    const { sandbox, fireTitleEvent } = createTestEnvironment();
+    const bridge = sandbox.QOL.core.storageBridge;
+    const panel = bridge.getPanel();
+
+    fireTitleEvent(panel, "QOL_BRIDGE_READY");
+    assert.strictEqual(bridge.isReady(), true);
+
+    fireTitleEvent(panel, "QOL_BRIDGE_ERROR:StorageAccessDenied");
+    assert.strictEqual(bridge.isReady(), false, "Bridge ready reset to false on error");
+});
+

@@ -26,6 +26,7 @@ Replaces legacy hero build hijacking with instant, robust LevelDB storage that r
    - 30-second TTL timers ensure orphaned save and load buffers are garbage collected.
    - Incoming stream chunks enforce strict sequence ordering (`expectedPart`), rejecting out-of-order chunks to prevent data corruption.
    - Top-level `try/catch` wrappers shield the Panorama UI event loop from unhandled exceptions.
+   - **20-Second Navigation Watchdog**: A 20-second interval watchdog retries `SetURL(BRIDGE_LOCAL_URL)` if the page does not become ready on cold startup, never executing inline JavaScript into uncommitted frames. Autoload errors automatically trigger scheduled retry passes.
 
 ## Interface (`QOL.core.storageBridge`)
 - `init(targetParent, options)`: Initializes or binds to the `CitadelHTMLPanel` bridge and attaches the `HTMLTitle` event handler.
