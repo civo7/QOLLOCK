@@ -194,6 +194,7 @@ function ApplyParsedConfig(parsed) {
     NormalizeShopItemNotificationsConfig(MOD_CONFIG, parsed);
     NormalizeQuickbuyDependencyConfig(MOD_CONFIG);
     NormalizeLanguageSchemaMigration(MOD_CONFIG, parsed, LATEST_COMPACT_SEMVER);
+    NormalizeDefaultHeroConfig(MOD_CONFIG, parsed);
 }
 
 function ClampToSchemaField(value, field) {

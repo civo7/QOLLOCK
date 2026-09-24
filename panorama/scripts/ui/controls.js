@@ -2242,7 +2242,6 @@
         } else if (type === "dropdown" && Array.isArray(options)) {
             const dropdownId = String(configId || "dropdown") + "_dropdown";
             let dropdownParent = row;
-            let defaultHeroIconPanel = null;
             let languageIconPanel = null;
             if (configId === "VOICE_TYPE") {
                 const voiceControlGroup = $.CreatePanel("Panel", row, "VoiceDropdownControlGroup");
@@ -2256,13 +2255,6 @@
                 languageIconPanel = $.CreatePanel("Image", languageControlGroup, "LanguageDropdownIcon");
                 languageIconPanel.AddClass("LanguageDropdownIcon");
                 dropdownParent = languageControlGroup;
-            } else if (configId === "DEFAULT_HERO") {
-                const defaultHeroControlGroup = $.CreatePanel("Panel", row, "DefaultHeroDropdownControlGroup");
-                defaultHeroControlGroup.AddClass("SettingControlRoot");
-                defaultHeroControlGroup.AddClass("DefaultHeroDropdownControlGroup");
-                defaultHeroIconPanel = $.CreatePanel("Image", defaultHeroControlGroup, "DefaultHeroDropdownHeroIcon");
-                defaultHeroIconPanel.AddClass("DefaultHeroDropdownHeroIcon");
-                dropdownParent = defaultHeroControlGroup;
             }
             const dropdown = $.CreatePanel("DropDown", dropdownParent, dropdownId);
             dropdown.AddClass("SettingsDropDown");
@@ -2270,20 +2262,12 @@
             dropdown.AddClass("SettingControlRoot");
             if (configId === "VOICE_TYPE") {
                 dropdown.AddClass("VoicePrimaryDropDown");
-            } else if (configId === "DEFAULT_HERO") {
-                dropdown.AddClass("DefaultHeroDropDown");
             }
             if (dropdown && dropdown.style) {
                 dropdown.style.width = (configId === "VOICE_TYPE")
                     ? "150px"
                     : ((configId === "LANGUAGE") ? "130px" : "150px");
             }
-            const syncDefaultHeroIcon = (heroValue) => {
-                if (!defaultHeroIconPanel || !defaultHeroIconPanel.IsValid || !defaultHeroIconPanel.IsValid()) return;
-                try { defaultHeroIconPanel.SetImage(getDefaultHeroIconPath(heroValue)); } catch (eHeroIcon) {
-                    warnLog("settings", "op failed: " + (eHeroIcon && eHeroIcon.message ? eHeroIcon.message : String(eHeroIcon || "")));
-                }
-            };
             const syncLanguageIcon = (languageValue) => {
                 if (!languageIconPanel || !languageIconPanel.IsValid || !languageIconPanel.IsValid()) return;
                 try { languageIconPanel.SetImage(getLanguageIconPath(languageValue)); } catch (eLanguageIcon) {
@@ -2309,21 +2293,7 @@
                 const optionPanel = $.CreatePanel("Label", dropdown, optionId);
                 optionPanel.AddClass("QOLSettingsDropDownItem");
                 optionPanel.AddClass("DropDownChild");
-                if (configId === "DEFAULT_HERO") {
-                    optionPanel.AddClass("DefaultHeroDropDownItem");
-                    try { optionPanel.style.backgroundImage = 'url("' + getDefaultHeroIconPath(optionValueKey) + '")'; } catch (eBgImg) {
-                        warnLog("settings", "op failed: " + (eBgImg && eBgImg.message ? eBgImg.message : String(eBgImg || "")));
-                    }
-                    try { optionPanel.style.backgroundRepeat = "no-repeat"; } catch (eBgRepeat) {
-                        warnLog("settings", "op failed: " + (eBgRepeat && eBgRepeat.message ? eBgRepeat.message : String(eBgRepeat || "")));
-                    }
-                    try { optionPanel.style.backgroundPosition = "10px 50%"; } catch (eBgPos) {
-                        warnLog("settings", "op failed: " + (eBgPos && eBgPos.message ? eBgPos.message : String(eBgPos || "")));
-                    }
-                    try { optionPanel.style.backgroundSize = "18px 18px"; } catch (eBgSize) {
-                        warnLog("settings", "op failed: " + (eBgSize && eBgSize.message ? eBgSize.message : String(eBgSize || "")));
-                    }
-                } else if (configId === "LANGUAGE") {
+                if (configId === "LANGUAGE") {
                     optionPanel.AddClass("LanguageDropDownItem");
                     try { optionPanel.style.backgroundImage = 'url("' + getLanguageIconPath(optionValueKey) + '")'; } catch (eLangBgImg) {
                         warnLog("settings", "op failed: " + (eLangBgImg && eLangBgImg.message ? eLangBgImg.message : String(eLangBgImg || "")));
@@ -2348,7 +2318,7 @@
                     })(optionId, optionValue);
                 }
 
-                const localizeOptionLabel = (configId !== "DEFAULT_HERO" && configId !== "VOICE_TYPE" && configId !== "LANGUAGE");
+                const localizeOptionLabel = (configId !== "VOICE_TYPE" && configId !== "LANGUAGE");
                 const optionLabelText = String(opt.label !== undefined && opt.label !== null ? opt.label : optionValueKey);
                 optionPanel.text = localizeOptionLabel ? localize(optionLabelText, true) : optionLabelText;
                 if (optionPanel.SetAttributeString) {
@@ -2404,9 +2374,7 @@
                     modCfg[configId] = valueByOptionId[selectedOptionId];
                 }
             }
-            if (configId === "DEFAULT_HERO") {
-                syncDefaultHeroIcon(modCfg[configId]);
-            } else if (configId === "LANGUAGE") {
+            if (configId === "LANGUAGE") {
                 syncLanguageIcon(modCfg[configId]);
             }
 
@@ -2454,9 +2422,7 @@
 
                 let selectionChanged = String(currentValue === undefined || currentValue === null ? "" : currentValue) !==
                     String(selectedValue === undefined || selectedValue === null ? "" : selectedValue);
-                if (configId === "DEFAULT_HERO") {
-                    applyDefaultHeroSelection(String(selectedValue || ""));
-                } else if (configId === "HEALTHBAR_TYPE") {
+                if (configId === "HEALTHBAR_TYPE") {
                     const previousTypeValue = currentValue;
                     applyHealthbarTypeSelection(selectedValue);
                     selectedValue = modCfg.HEALTHBAR_TYPE;
@@ -2467,9 +2433,7 @@
                     modCfg[configId] = selectedValue;
                     saveAndSync();
                     refreshRowChangedState();
-                    if (configId === "DEFAULT_HERO") {
-                        syncDefaultHeroIcon(selectedValue);
-                    } else if (configId === "LANGUAGE") {
+                    if (configId === "LANGUAGE") {
                         syncLanguageIcon(selectedValue);
                     }
                     if (configId === "LANGUAGE") {
@@ -2484,8 +2448,6 @@
                             requestSettingsListRefresh(0, false);
                         }
                     }
-                } else if (configId === "DEFAULT_HERO") {
-                    syncDefaultHeroIcon(selectedValue);
                 }
             };
 
@@ -2549,9 +2511,7 @@
                     }
                     dropdownSyncMute = false;
                 }
-                if (configId === "DEFAULT_HERO") {
-                    syncDefaultHeroIcon(modCfg[configId]);
-                } else if (configId === "LANGUAGE") {
+                if (configId === "LANGUAGE") {
                     syncLanguageIcon(modCfg[configId]);
                 }
                 refreshRowChangedState();

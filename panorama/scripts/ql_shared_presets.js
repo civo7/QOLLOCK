@@ -814,6 +814,20 @@ if (typeof QOL_SCHEMA_UTILS.MigrateSplitZoomKeys !== "function") {
     };
 }
 
+if (typeof QOL_SCHEMA_UTILS.NormalizeDefaultHeroConfig !== "function") {
+    QOL_SCHEMA_UTILS.NormalizeDefaultHeroConfig = function(configTarget, sourceConfig) {
+        if (!configTarget) return;
+        if (Object.prototype.hasOwnProperty.call(configTarget, "DEFAULT_HERO")) {
+            delete configTarget.DEFAULT_HERO;
+        }
+        if (sourceConfig && Object.prototype.hasOwnProperty.call(sourceConfig, "DEFAULT_HERO")) {
+            delete sourceConfig.DEFAULT_HERO;
+        }
+    };
+}
+
+var NormalizeDefaultHeroConfig = QOL_SCHEMA_UTILS.NormalizeDefaultHeroConfig;
+
 // ==========================================================================
 // QOL_COMPACT_SCHEMA — shared compact schema definitions
 // ==========================================================================
@@ -6583,13 +6597,6 @@ QOL_PRESETS["leah"] = {
     ULT_COOLDOWN_Y_OFFSET: 0
 };
 
-(function() {
-    for (var presetName in QOL_PRESETS) {
-        if (!QOL_PRESETS.hasOwnProperty(presetName) || presetName === "BreadRollius") continue;
-        QOL_PRESETS[presetName].ENABLE_UNSPENT_SOULS = 0;
-    }
-})();
-
 var QOL_ACCOUNT_PRESET_BINDINGS = {};
 
 QOL_PRESETS["Thorkizzle"] = {
@@ -6654,6 +6661,16 @@ QOL_PRESETS["Thorkizzle"] = {
     TAB_ZOOM_DRAW_OVER_UI: 1,
     TAB_ZOOM_OPACITY: 0.9
 };
+
+(function() {
+    for (var presetName in QOL_PRESETS) {
+        if (!QOL_PRESETS.hasOwnProperty(presetName)) continue;
+        if (presetName !== "BreadRollius") {
+            QOL_PRESETS[presetName].ENABLE_UNSPENT_SOULS = 0;
+        }
+        delete QOL_PRESETS[presetName].DEFAULT_HERO;
+    }
+})();
 
 if (typeof QOL_PRESETS === "object" && QOL_PRESETS) {
     if (typeof QOL === "object" && QOL) QOL.presets = QOL_PRESETS;

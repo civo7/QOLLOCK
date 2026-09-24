@@ -15,3 +15,4 @@ Bridges legacy flat configuration storage (over 300 flat global keys such as `EN
 ## Invariants & Architectural Notes
 - Maps legacy settings using an explicit mapping table (`OLD_TO_NEW`) supplemented by schema-derived key matching.
 - Ensures zero regressions for users migrating existing configurations stored in Deadlock HUD panel attributes.
+- Automatically strips legacy and obsolete settings keys on load (`DEFAULT_HERO` deleted, `ENABLE_MIN_SOULS` and `ENABLE_UNSPENT_SOULS` zeroed out), preventing deprecated settings from persisting into feature buckets or export payloads.

@@ -143,6 +143,7 @@ const QOLLOCK_GLOBALS = {
     CompareSchemaSemver: "readonly",
     NormalizeCompassSpeedSchemaMigration: "readonly",
     NormalizeLanguageSchemaMigration: "readonly",
+    NormalizeDefaultHeroConfig: "readonly",
     SafeParseConfig: "readonly",
     UnwrapConfigFromStorage: "readonly",
     QOL_DumpDiagnostics: "readonly",

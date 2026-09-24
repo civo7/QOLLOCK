@@ -50,10 +50,24 @@ function MergeConfig(config) {
     NormalizeTopbarAllyHpWarningConfig(merged, config);
     NormalizeShopItemNotificationsConfig(merged, config);
     NormalizeQuickbuyDependencyConfig(merged);
+    NormalizeDefaultHeroConfig(merged, config);
     return merged;
 }
 
 // ── Normalize wrappers (delegate to QOL_SCHEMA_UTILS) ──
+
+function NormalizeDefaultHeroConfig(configTarget, sourceConfig) {
+    if (GetSharedSchemaUtils() && typeof GetSharedSchemaUtils().NormalizeDefaultHeroConfig === "function") {
+        GetSharedSchemaUtils().NormalizeDefaultHeroConfig(configTarget, sourceConfig);
+    } else {
+        if (configTarget && Object.prototype.hasOwnProperty.call(configTarget, "DEFAULT_HERO")) {
+            delete configTarget.DEFAULT_HERO;
+        }
+        if (sourceConfig && Object.prototype.hasOwnProperty.call(sourceConfig, "DEFAULT_HERO")) {
+            delete sourceConfig.DEFAULT_HERO;
+        }
+    }
+}
 
 function NormalizeAmmoScaleConfig(configTarget, sourceConfig) {
     GetSharedSchemaUtils().NormalizeAmmoScaleConfig(configTarget, sourceConfig);
@@ -230,6 +244,7 @@ if (typeof QOL !== "undefined") {
     QOL.compareSchemaSemver = CompareSchemaSemver;
     QOL.normalizeCompassSpeedSchemaMigration = NormalizeCompassSpeedSchemaMigration;
     QOL.normalizeLanguageSchemaMigration = NormalizeLanguageSchemaMigration;
+    QOL.normalizeDefaultHeroConfig = NormalizeDefaultHeroConfig;
 }
 
 // ── Self-test ──
@@ -246,6 +261,7 @@ try {
     if (typeof NormalizeQuickbuyDependencyConfig !== "function") throw new Error("NormalizeQuickbuyDependencyConfig is not a function");
     if (typeof NormalizeCompassSpeedSchemaMigration !== "function") throw new Error("NormalizeCompassSpeedSchemaMigration is not a function");
     if (typeof NormalizeLanguageSchemaMigration !== "function") throw new Error("NormalizeLanguageSchemaMigration is not a function");
+    if (typeof NormalizeDefaultHeroConfig !== "function") throw new Error("NormalizeDefaultHeroConfig is not a function");
 
     // Verify publishing to QOL namespace
     if (typeof QOL !== "undefined") {

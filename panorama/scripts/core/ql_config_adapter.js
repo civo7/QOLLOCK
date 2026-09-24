@@ -210,6 +210,7 @@
 
         flatConfig.ENABLE_MIN_SOULS = 0;
         flatConfig.ENABLE_UNSPENT_SOULS = 0;
+        delete flatConfig.DEFAULT_HERO;
 
         const keyMap = buildKeyToFeatureMap();
         const processed = {};
@@ -265,6 +266,9 @@
         if (processed["ql_unspent"]) {
             processed["ql_unspent"]["enabled"] = false;
             processed["ql_unspent"]["ENABLE_UNSPENT_SOULS"] = false;
+        }
+        if (processed["_legacy"]) {
+            delete processed["_legacy"]["DEFAULT_HERO"];
         }
 
         let bucketCount = 0;

@@ -31,6 +31,7 @@
         "NormalizeQuickbuyDependencyConfig",
         "NormalizeCompassSpeedSchemaMigration",
         "NormalizeLanguageSchemaMigration",
+        "NormalizeDefaultHeroConfig",
         "NormalizeConfig",
     ];
 
