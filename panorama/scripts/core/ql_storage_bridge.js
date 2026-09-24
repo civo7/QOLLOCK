@@ -25,16 +25,51 @@
     const WATCHDOG_INTERVAL_SEC = 2.5;
     const MAX_INIT_ATTEMPTS = 5;
 
+    const CHUNK_SIZE = 1500;
+
     let _bridgePanel = null;
     let _bridgeReady = false;
     let _isPageLoaded = false;
     let _reqCounter = 0;
     let _pendingRequests = {};
-    let _readyCallbacks = [];
+    let _requestQueue = [];
+    let _activeRequest = null;
     let _watchdogTimer = null;
     let _initAttempts = 0;
     let _hasAutoloaded = false;
     let _autoloadEnabled = false;
+
+    const _b64Chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/=";
+
+    const _utf8ToBase64 = (str) => {
+        if (typeof str !== "string") str = String(str);
+        const btoaFn = (typeof globalThis !== "undefined" && typeof globalThis.btoa === "function")
+            ? globalThis.btoa : null;
+        if (btoaFn) {
+            try {
+                return btoaFn(unescape(encodeURIComponent(str)));
+            } catch (_) {}
+        }
+        try {
+            const utf8 = unescape(encodeURIComponent(str));
+            let res = "";
+            for (let i = 0; i < utf8.length; i += 3) {
+                const a = utf8.charCodeAt(i);
+                const b = i + 1 < utf8.length ? utf8.charCodeAt(i + 1) : NaN;
+                const c = i + 2 < utf8.length ? utf8.charCodeAt(i + 2) : NaN;
+                const b1 = (a >> 2) & 0x3F;
+                const b2 = ((a & 0x3) << 4) | ((b >> 4) & 0xF);
+                const b3 = ((b & 0xF) << 2) | ((c >> 6) & 0x3);
+                const b4 = c & 0x3F;
+                res += _b64Chars.charAt(b1) + _b64Chars.charAt(b2) +
+                    (isNaN(b) ? "=" : _b64Chars.charAt(b3)) +
+                    (isNaN(c) ? "=" : _b64Chars.charAt(b4));
+            }
+            return res;
+        } catch (_) {
+            return "";
+        }
+    };
 
     const _log = (msg) => {
         if (typeof QOL_INFO === "function") {
@@ -83,9 +118,14 @@
 
         const jsCode = "javascript:(function(){" +
             "var CHUNK_SIZE = 1500;" +
-            "var _loadBuffers = {};" +
-            "var _saveBuffers = {};" +
+            "var _loadBuffers = Object.create(null);" +
+            "var _saveBuffers = Object.create(null);" +
             "var _sendSeq = 0;" +
+            "function isValidId(id) { return typeof id === 'string' && /^qol_\\d+_\\d+$/.test(id); }" +
+            "function decodeText(text, isB64) {" +
+                "if (!isB64 || typeof text !== 'string') return String(text);" +
+                "try { return decodeURIComponent(escape(atob(text))); } catch (_) { try { return atob(text); } catch (__) { return String(text); } }" +
+            "}" +
             "function send(id, ok, data, err, extra) {" +
                 "var resp = { id: id, ok: !!ok, _seq: ++_sendSeq };" +
                 "if (data !== undefined) resp.data = data;" +
@@ -93,39 +133,45 @@
                 "if (extra) { for (var k in extra) { if (Object.prototype.hasOwnProperty.call(extra, k)) resp[k] = extra[k]; } }" +
                 "document.title = 'QOL_RES:' + JSON.stringify(resp);" +
             "}" +
-            "window.__qolSave = function(k, v, id) {" +
-                "try { localStorage.setItem(k, v); send(id, true); } catch (e) { send(id, false, undefined, e && e.message ? e.message : e); }" +
+            "window.__qolSave = function(k, v, id, isB64) {" +
+                "if (!isValidId(id)) return;" +
+                "try { localStorage.setItem(decodeText(k, isB64), decodeText(v, isB64)); send(id, true); } catch (e) { send(id, false, undefined, e && e.message ? e.message : e); }" +
             "};" +
-            "window.__qolSaveChunk = function(key, part, total, chunk, id) {" +
+            "window.__qolSaveChunk = function(key, part, total, chunk, id, isB64) {" +
+                "if (!isValidId(id)) return;" +
                 "try {" +
-                    "if (!_saveBuffers[id]) _saveBuffers[id] = new Array(total);" +
-                    "_saveBuffers[id][part] = chunk;" +
-                    "if (part + 1 === total) { var full = _saveBuffers[id].join(''); delete _saveBuffers[id]; localStorage.setItem(key, full); send(id, true); }" +
+                    "if (!Number.isInteger(part) || !Number.isInteger(total) || part < 0 || part >= total || total > 5000) { send(id, false, undefined, 'Invalid save chunk boundaries'); return; }" +
+                    "if (!_saveBuffers[id]) { _saveBuffers[id] = new Array(total); setTimeout(function() { if (_saveBuffers[id]) delete _saveBuffers[id]; }, 30000); }" +
+                    "_saveBuffers[id][part] = decodeText(chunk, isB64);" +
+                    "if (part + 1 === total) { var full = _saveBuffers[id].join(''); delete _saveBuffers[id]; localStorage.setItem(decodeText(key, isB64), full); send(id, true); }" +
                     "else { send(id, true, undefined, null, { savePartAck: part }); }" +
-                "} catch (e) { delete _saveBuffers[id]; send(id, false, undefined, e && e.message ? e.message : e); }" +
+                "} catch (e) { if (_saveBuffers[id]) delete _saveBuffers[id]; send(id, false, undefined, e && e.message ? e.message : e); }" +
             "};" +
-            "window.__qolLoad = function(k, id) {" +
+            "window.__qolLoad = function(k, id, isB64) {" +
+                "if (!isValidId(id)) return;" +
                 "try {" +
-                    "var val = localStorage.getItem(k);" +
+                    "var val = localStorage.getItem(decodeText(k, isB64));" +
                     "if (val === null || val === undefined || val.length <= CHUNK_SIZE) { send(id, true, val); return; }" +
                     "var chunks = [];" +
                     "for (var i = 0; i < val.length; i += CHUNK_SIZE) chunks.push(val.slice(i, i + CHUNK_SIZE));" +
                     "_loadBuffers[id] = chunks;" +
-                    "setTimeout(function() { delete _loadBuffers[id]; }, 30000);" +
+                    "setTimeout(function() { if (_loadBuffers[id]) delete _loadBuffers[id]; }, 30000);" +
                     "send(id, true, chunks[0], null, { chunked: true, part: 0, total: chunks.length });" +
                 "} catch (e) { send(id, false, undefined, e && e.message ? e.message : e); }" +
             "};" +
             "window.__qolNextChunk = function(id, part) {" +
+                "if (!isValidId(id)) return;" +
                 "try {" +
                     "var chunks = _loadBuffers[id];" +
-                    "if (!chunks || part >= chunks.length) { delete _loadBuffers[id]; send(id, false, undefined, 'Invalid chunk index'); return; }" +
+                    "if (!chunks || !Number.isInteger(part) || part < 0 || part >= chunks.length) { if (_loadBuffers[id]) delete _loadBuffers[id]; send(id, false, undefined, 'Invalid chunk index'); return; }" +
                     "var chunkData = chunks[part];" +
                     "if (part + 1 === chunks.length) delete _loadBuffers[id];" +
                     "send(id, true, chunkData, null, { chunked: true, part: part, total: chunks.length });" +
-                "} catch (e) { delete _loadBuffers[id]; send(id, false, undefined, e && e.message ? e.message : e); }" +
+                "} catch (e) { if (_loadBuffers[id]) delete _loadBuffers[id]; send(id, false, undefined, e && e.message ? e.message : e); }" +
             "};" +
-            "window.__qolRemove = function(k, id) {" +
-                "try { localStorage.removeItem(k); send(id, true); } catch (e) { send(id, false, undefined, e && e.message ? e.message : e); }" +
+            "window.__qolRemove = function(k, id, isB64) {" +
+                "if (!isValidId(id)) return;" +
+                "try { localStorage.removeItem(decodeText(k, isB64)); send(id, true); } catch (e) { send(id, false, undefined, e && e.message ? e.message : e); }" +
             "};" +
             "document.title = 'QOL_BRIDGE_READY:' + Date.now();" +
         "})();void(0);";
@@ -151,15 +197,8 @@
         _cancelPendingTimer(pending);
         const timeoutHandler = () => {
             if (Object.prototype.hasOwnProperty.call(_pendingRequests, reqId)) {
-                const req = _pendingRequests[reqId];
-                delete _pendingRequests[reqId];
                 const timeoutErr = new Error(`Bridge request timed out (${reqId})`);
-                if (typeof req.callback === "function") {
-                    try { req.callback(timeoutErr, null); } catch (_) {}
-                }
-                if (typeof req.reject === "function") {
-                    try { req.reject(timeoutErr); } catch (_) {}
-                }
+                _finishRequest(reqId, timeoutErr, null);
             }
         };
 
@@ -170,90 +209,133 @@
         }
     };
 
+    const _processQueue = () => {
+        if (_activeRequest !== null) return;
+        if (_requestQueue.length === 0) return;
+        if (!_bridgeReady) return;
+
+        const nextReq = _requestQueue.shift();
+        _activeRequest = nextReq;
+        nextReq.start();
+    };
+
+    const _finishRequest = (reqId, err, data) => {
+        const req = _pendingRequests[reqId];
+        if (req) {
+            delete _pendingRequests[reqId];
+            _cancelPendingTimer(req);
+            if (err) {
+                if (typeof req.callback === "function") {
+                    try { req.callback(err, null); } catch (_) {}
+                }
+                if (typeof req.reject === "function") {
+                    req.reject(err);
+                }
+            } else {
+                if (typeof req.callback === "function") {
+                    try { req.callback(null, data); } catch (_) {}
+                }
+                if (typeof req.resolve === "function") {
+                    req.resolve(data);
+                }
+            }
+        }
+
+        if (_activeRequest && _activeRequest.id === reqId) {
+            _activeRequest = null;
+            _processQueue();
+        }
+    };
+
     /**
      * Resolves pending requests upon receiving a QOL_RES: title notification.
      * Supports both single-frame payloads and sequential multi-frame chunked streams.
      */
     const _handleResponse = (payloadStr) => {
-        let resp = null;
         try {
-            resp = JSON.parse(payloadStr);
-        } catch (e) {
-            _logWarn(`_handleResponse JSON parse failed: ${e?.message || e} (raw: ${payloadStr})`);
-            return;
-        }
-
-        const reqId = resp && resp.id;
-        if (!reqId || !Object.prototype.hasOwnProperty.call(_pendingRequests, reqId)) {
-            return;
-        }
-
-        const pending = _pendingRequests[reqId];
-
-        if (!resp.ok) {
-            delete _pendingRequests[reqId];
-            _cancelPendingTimer(pending);
-            const err = new Error(resp.error || "CEF bridge request failed");
-            if (typeof pending.callback === "function") {
-                try { pending.callback(err, null); } catch (_) {}
-            }
-            if (typeof pending.reject === "function") {
-                pending.reject(err);
-            }
-            return;
-        }
-
-        // Chunked multi-part payload handling (bypasses 4096-char HTMLTitle engine truncation)
-        if (resp.chunked) {
-            if (!pending.chunks) {
-                pending.chunks = new Array(resp.total);
-            }
-            pending.chunks[resp.part] = resp.data;
-
-            const nextPart = resp.part + 1;
-            if (nextPart < resp.total) {
-                _resetPendingTimer(pending, reqId);
-                const nextChunkJs = `javascript:window.__qolNextChunk && window.__qolNextChunk('${reqId}', ${nextPart});void(0);`;
-                try {
-                    _bridgePanel.SetURL(nextChunkJs);
-                } catch (e) {
-                    delete _pendingRequests[reqId];
-                    _cancelPendingTimer(pending);
-                    const err = new Error(`Failed to request chunk ${nextPart}: ${e?.message || e}`);
-                    if (typeof pending.callback === "function") {
-                        try { pending.callback(err, null); } catch (_) {}
-                    }
-                    if (typeof pending.reject === "function") {
-                        pending.reject(err);
-                    }
-                }
+            let resp = null;
+            try {
+                resp = JSON.parse(payloadStr);
+            } catch (e) {
+                _logWarn(`_handleResponse JSON parse failed: ${e?.message || e} (raw: ${payloadStr})`);
                 return;
             }
 
-            // All chunks received and reassembled
-            delete _pendingRequests[reqId];
-            _cancelPendingTimer(pending);
-
-            const assembledData = pending.chunks.join("");
-            if (typeof pending.callback === "function") {
-                try { pending.callback(null, assembledData); } catch (_) {}
+            const reqId = resp && resp.id;
+            if (!reqId || !Object.prototype.hasOwnProperty.call(_pendingRequests, reqId)) {
+                return;
             }
-            if (typeof pending.resolve === "function") {
-                pending.resolve(assembledData);
+
+            const pending = _pendingRequests[reqId];
+
+            if (!resp.ok) {
+                const err = new Error(resp.error || "CEF bridge request failed");
+                _finishRequest(reqId, err, null);
+                return;
             }
-            return;
-        }
 
-        // Standard single-frame response
-        delete _pendingRequests[reqId];
-        _cancelPendingTimer(pending);
+            // Save chunk acknowledgment (Panorama -> CEF)
+            if (typeof resp.savePartAck === "number") {
+                const nextPart = resp.savePartAck + 1;
+                if (pending.saveChunks && nextPart < pending.saveChunks.length) {
+                    _resetPendingTimer(pending, reqId);
+                    const b64Key = pending.b64Key;
+                    const b64Chunk = pending.saveChunks[nextPart];
+                    const total = pending.saveChunks.length;
+                    const nextJs = `javascript:window.__qolSaveChunk && window.__qolSaveChunk('${b64Key}', ${nextPart}, ${total}, '${b64Chunk}', '${reqId}', true);void(0);`;
+                    try {
+                        _bridgePanel.SetURL(nextJs);
+                    } catch (e) {
+                        _finishRequest(reqId, new Error(`Failed to send save chunk ${nextPart}: ${e?.message || e}`), null);
+                    }
+                    return;
+                }
+            }
 
-        const resultData = resp.data !== undefined ? resp.data : true;
-        if (typeof pending.callback === "function") {
-            try { pending.callback(null, resultData); } catch (_) {}
-        }
-        if (typeof pending.resolve === "function") {
-            pending.resolve(resultData);
+            // Chunked load multi-part stream (CEF -> Panorama)
+            if (resp.chunked) {
+                if (!Number.isInteger(resp.total) || resp.total <= 0 || resp.total > 5000) {
+                    _finishRequest(reqId, new Error(`Invalid chunk total: ${resp.total}`), null);
+                    return;
+                }
+                if (!Number.isInteger(resp.part) || resp.part < 0 || resp.part >= resp.total) {
+                    _finishRequest(reqId, new Error(`Invalid chunk part: ${resp.part}`), null);
+                    return;
+                }
+                if (resp.part !== pending.expectedPart) {
+                    _finishRequest(reqId, new Error(`Out of order chunk: expected ${pending.expectedPart}, got ${resp.part}`), null);
+                    return;
+                }
+
+                if (!pending.chunks) {
+                    pending.chunks = new Array(resp.total);
+                }
+                pending.chunks[resp.part] = resp.data;
+                pending.expectedPart++;
+
+                const nextPart = pending.expectedPart;
+                if (nextPart < resp.total) {
+                    _resetPendingTimer(pending, reqId);
+                    const nextChunkJs = `javascript:window.__qolNextChunk && window.__qolNextChunk('${reqId}', ${nextPart});void(0);`;
+                    try {
+                        _bridgePanel.SetURL(nextChunkJs);
+                    } catch (e) {
+                        _finishRequest(reqId, new Error(`Failed to request chunk ${nextPart}: ${e?.message || e}`), null);
+                    }
+                    return;
+                }
+
+                // All load chunks received and reassembled
+                const assembledData = pending.chunks.join("");
+                _finishRequest(reqId, null, assembledData);
+                return;
+            }
+
+            // Standard single-frame response
+            const resultData = resp.data !== undefined ? resp.data : true;
+            _finishRequest(reqId, null, resultData);
+        } catch (eUnhandled) {
+            _logWarn(`Unhandled error in _handleResponse: ${eUnhandled?.message || eUnhandled}`);
         }
     };
 
@@ -266,11 +348,7 @@
         if (title.indexOf("QOL_BRIDGE_READY") === 0) {
             _bridgeReady = true;
             _log("Bridge connected and ready.");
-            const callbacks = _readyCallbacks.slice(0);
-            _readyCallbacks = [];
-            for (let i = 0; i < callbacks.length; i++) {
-                try { callbacks[i](); } catch (e) { _logWarn(`readyCallback error: ${e?.message || e}`); }
-            }
+            _processQueue();
 
             if (_autoloadEnabled && !_hasAutoloaded) {
                 _hasAutoloaded = true;
@@ -307,7 +385,7 @@
         if (_bridgeReady) return;
         _initAttempts++;
         if (_initAttempts < MAX_INIT_ATTEMPTS) {
-            if (_isPanelAlive(_bridgePanel) && typeof _bridgePanel.SetURL === "function") {
+            if (_isPanelAlive(_bridgePanel) && typeof _bridgePanel.SetURL !== "function") {
                 _log(`Watchdog: bridge not ready yet (attempt ${_initAttempts}/${MAX_INIT_ATTEMPTS}), retrying...`);
                 _injectBridgeScript();
             }
@@ -316,42 +394,51 @@
             }
         } else {
             _logWarn(`Watchdog: bridge failed to initialize after ${MAX_INIT_ATTEMPTS} attempts.`);
+            const queued = _requestQueue.slice(0);
+            _requestQueue = [];
+            _activeRequest = null;
+            const initErr = new Error(`Bridge initialization failed after ${MAX_INIT_ATTEMPTS} attempts`);
+            for (let i = 0; i < queued.length; i++) {
+                _finishRequest(queued[i].id, initErr, null);
+            }
         }
     };
 
     /**
-     * Dispatches a command to CEF and registers a pending request.
+     * Dispatches a command to CEF via the serialized FIFO request queue.
      */
-    const _sendRequest = (jsExpr, callback) => {
+    const _sendRequest = (startFn, callback, meta) => {
         const requestPromise = new Promise((resolve, reject) => {
             const reqId = `qol_${++_reqCounter}_${Date.now ? Date.now() : (new Date()).getTime()}`;
 
-            const execute = () => {
-                if (!_isPanelAlive(_bridgePanel) || typeof _bridgePanel.SetURL !== "function") {
-                    const err = new Error("Bridge panel unavailable");
-                    if (typeof callback === "function") callback(err, null);
-                    return reject(err);
-                }
-
-                _pendingRequests[reqId] = { resolve, reject, callback, timer: null };
-                _resetPendingTimer(_pendingRequests[reqId], reqId);
-
-                const fullJs = `javascript:${jsExpr(reqId)};void(0);`;
-                try {
-                    _bridgePanel.SetURL(fullJs);
-                } catch (e) {
-                    const pending = _pendingRequests[reqId];
-                    delete _pendingRequests[reqId];
-                    _cancelPendingTimer(pending);
-                    if (typeof callback === "function") callback(e, null);
-                    reject(e);
-                }
+            const req = {
+                id: reqId,
+                resolve,
+                reject,
+                callback,
+                timer: null,
+                expectedPart: 0,
+                chunks: null,
+                start: () => {
+                    if (!_isPanelAlive(_bridgePanel) || typeof _bridgePanel.SetURL !== "function") {
+                        const err = new Error("Bridge panel unavailable");
+                        return _finishRequest(reqId, err, null);
+                    }
+                    _resetPendingTimer(req, reqId);
+                    try {
+                        startFn(reqId);
+                    } catch (e) {
+                        _finishRequest(reqId, e, null);
+                    }
+                },
+                ...(meta || {})
             };
 
+            _pendingRequests[reqId] = req;
+            _requestQueue.push(req);
+
             if (_bridgeReady) {
-                execute();
-            } else {
-                _readyCallbacks.push(execute);
+                _processQueue();
             }
         });
 
@@ -435,29 +522,49 @@
     };
 
     /**
-     * Low-level key/value save.
+     * Low-level key/value save with automatic Base64 encoding and multi-part chunking.
      */
     const save = (key, val, callback) => {
         const valStr = typeof val === "string" ? val : JSON.stringify(val);
-        const escapedKey = JSON.stringify(String(key));
-        const escapedVal = JSON.stringify(valStr);
-        return _sendRequest((id) => `window.__qolSave && window.__qolSave(${escapedKey}, ${escapedVal}, '${id}')`, callback);
+        const b64Key = _utf8ToBase64(String(key));
+
+        if (valStr.length <= CHUNK_SIZE) {
+            const b64Val = _utf8ToBase64(valStr);
+            return _sendRequest((id) => {
+                _bridgePanel.SetURL(`javascript:window.__qolSave && window.__qolSave('${b64Key}', '${b64Val}', '${id}', true);void(0);`);
+            }, callback);
+        }
+
+        // Multi-part save for large configs (SEC-02)
+        const chunks = [];
+        for (let i = 0; i < valStr.length; i += CHUNK_SIZE) {
+            chunks.push(_utf8ToBase64(valStr.slice(i, i + CHUNK_SIZE)));
+        }
+
+        return _sendRequest((id) => {
+            const total = chunks.length;
+            _bridgePanel.SetURL(`javascript:window.__qolSaveChunk && window.__qolSaveChunk('${b64Key}', 0, ${total}, '${chunks[0]}', '${id}', true);void(0);`);
+        }, callback, { b64Key, saveChunks: chunks });
     };
 
     /**
      * Low-level key/value load.
      */
     const load = (key, callback) => {
-        const escapedKey = JSON.stringify(String(key));
-        return _sendRequest((id) => `window.__qolLoad && window.__qolLoad(${escapedKey}, '${id}')`, callback);
+        const b64Key = _utf8ToBase64(String(key));
+        return _sendRequest((id) => {
+            _bridgePanel.SetURL(`javascript:window.__qolLoad && window.__qolLoad('${b64Key}', '${id}', true);void(0);`);
+        }, callback);
     };
 
     /**
      * Low-level key removal.
      */
     const remove = (key, callback) => {
-        const escapedKey = JSON.stringify(String(key));
-        return _sendRequest((id) => `window.__qolRemove && window.__qolRemove(${escapedKey}, '${id}')`, callback);
+        const b64Key = _utf8ToBase64(String(key));
+        return _sendRequest((id) => {
+            _bridgePanel.SetURL(`javascript:window.__qolRemove && window.__qolRemove('${b64Key}', '${id}', true);void(0);`);
+        }, callback);
     };
 
     /**
@@ -544,14 +651,14 @@
                 const rawText = String(data);
                 let parsed = null;
 
-                if (typeof UnwrapConfigFromStorage === "function") {
+                if (typeof SafeParseConfig === "function") {
+                    parsed = SafeParseConfig(rawText);
+                }
+                if (!parsed && typeof UnwrapConfigFromStorage === "function") {
                     const unwrap = UnwrapConfigFromStorage(rawText);
                     if (unwrap && unwrap.config) {
                         parsed = unwrap.config;
                     }
-                }
-                if (!parsed && typeof SafeParseConfig === "function") {
-                    parsed = SafeParseConfig(rawText);
                 }
                 if (!parsed) {
                     try { parsed = JSON.parse(rawText); } catch (_) { parsed = null; }
@@ -567,6 +674,9 @@
                 }
 
                 if (parsed && typeof parsed === "object") {
+                    delete parsed.__proto__;
+                    delete parsed.constructor;
+                    delete parsed.prototype;
                     const modCfg = (typeof MOD_CONFIG !== "undefined" && MOD_CONFIG)
                         ? MOD_CONFIG
                         : ((typeof globalThis !== "undefined" && globalThis.MOD_CONFIG) ? globalThis.MOD_CONFIG : null);

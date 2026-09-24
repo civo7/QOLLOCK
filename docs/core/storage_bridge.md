@@ -15,15 +15,22 @@ Replaces legacy hero build hijacking with instant, robust LevelDB storage that r
 2. **Persistence**: Chrome stores `https://predi-i.github.io` local storage in Steam's shared LevelDB database under `%LOCALAPPDATA%\Steam\htmlcache\Default\Local Storage\leveldb\`. It persists across game sessions, reboots, and updates without consuming API quotas or server compute.
 3. **IPC Bridge & Sequential Chunking**:
    - Outbound commands are dispatched using `panel.SetURL("javascript:...")`.
+   - **URL Fragment & Character Safety**: All keys, values, and chunks passed via `SetURL` are UTF-8 Base64 encoded. This prevents Chromium URL parsing from treating `#` (e.g. hex colors `#00FF00`) as fragment delimiters, which would otherwise truncate scripts.
+   - **FIFO Request Serialization**: Requests and multi-part chunk streams are serialized through an asynchronous FIFO queue (`_requestQueue`), preventing title event coalescing and race conditions during rapid saves or overlapping loads.
    - Inbound results are passed through `document.title = "QOL_RES:" + JSON.stringify(...)`.
    - Panorama catches changes via the native `HTMLTitle` event handler, resolving the corresponding asynchronous request.
-   - **4KB Title Buffer Limit**: Source 2 C++ engine (`panoramauiclient.dll` / `client.dll`) truncates window title strings received from `ISteamHTMLSurface` to 4096 characters (4088 after the prefix). To support arbitrary configuration payloads (e.g. ~9KB+ configs), the bridge uses sequential multi-frame chunking (1500-char chunks) via `__qolLoad` and `__qolNextChunk`, reassembling chunks client-side in Panorama before resolving.
-4. **Resilience**: Features automatic panel discovery, dynamic panel creation fallback, periodic watchdog script injection, request timeouts (5000ms refreshed per chunk), and queued request dispatching when initializing.
+   - **Symmetric Chunking**: To bypass the Source 2 C++ engine 4096-character `HTMLTitle` buffer limit and URL length constraints, both reading (`__qolLoad` / `__qolNextChunk`) and writing (`__qolSaveChunk`) operate in sequential 1500-character chunks with acknowledgment handshakes.
+4. **Resilience & Security**:
+   - Dictionaries in `bridge.html` are instantiated with `Object.create(null)` to eliminate in-realm prototype pollution.
+   - Request IDs are strictly validated with `/^qol_\d+_\d+$/`.
+   - 30-second TTL timers ensure orphaned save and load buffers are garbage collected.
+   - Incoming stream chunks enforce strict sequence ordering (`expectedPart`), rejecting out-of-order chunks to prevent data corruption.
+   - Top-level `try/catch` wrappers shield the Panorama UI event loop from unhandled exceptions.
 
 ## Interface (`QOL.core.storageBridge`)
 - `init(targetParent, options)`: Initializes or binds to the `CitadelHTMLPanel` bridge and attaches the `HTMLTitle` event handler.
 - `isReady()`: Returns `true` if the CEF bridge is initialized and ready for IPC.
-- `save(key, val, callback)`: Saves a raw string key-value pair into CEF `localStorage`. Returns a Promise.
+- `save(key, val, callback)`: Saves a raw string key-value pair into CEF `localStorage`. Automatically handles Base64 encoding and chunked saving for large payloads. Returns a Promise.
 - `load(key, callback)`: Loads a string value by key from CEF `localStorage`. Handles multi-frame chunked reassembly automatically. Returns a Promise resolving to string or `null`.
 - `remove(key, callback)`: Removes a key from CEF `localStorage`. Returns a Promise.
 - `saveSettings(configOrRaw, callback)`: Saves the current QOLLOCK config to CEF `localStorage` under `Deadlock_Mod_Settings_v1` and updates the root panel bridge attribute. Returns a Promise.
@@ -36,4 +43,5 @@ Replaces legacy hero build hijacking with instant, robust LevelDB storage that r
 - Zero hero switching, shop opening, or favorites panel manipulation is required.
 - Saving completes asynchronously within 5–15 milliseconds (down from 20–30 seconds under legacy build storage).
 - Sequential chunking guarantees safe transfer of any payload size without hitting the C++ engine 4KB title buffer limitation.
+- Strict FIFO queue guarantees serialized execution and prevents title race conditions.
 
