@@ -300,3 +300,93 @@ test("storage_bridge: clearSettings calls __qolRemove", async () => {
     const res = await clearPromise;
     assert.strictEqual(res.ok, true);
 });
+
+test("storage_bridge: chunked response transfers and reassembles across multiple HTMLTitle events", async () => {
+    const { sandbox, getLastSetUrl, fireTitleEvent } = createTestEnvironment();
+    const bridge = sandbox.QOL.core.storageBridge;
+    const panel = bridge.getPanel();
+
+    fireTitleEvent(panel, "Index of C:/");
+    fireTitleEvent(panel, "QOL_BRIDGE_READY:" + Date.now());
+
+    const loadPromise = bridge.load("large_data");
+    const loadUrl = getLastSetUrl();
+    const reqMatch = loadUrl.match(/'(qol_\d+_\d+)'/);
+    assert.ok(reqMatch, "Request ID matched");
+    const reqId = reqMatch[1];
+
+    const chunk0 = "A".repeat(1500);
+    const chunk1 = "B".repeat(1500);
+    const chunk2 = "C".repeat(1000);
+
+    // 1. Part 0 arrives
+    fireTitleEvent(panel, `QOL_RES:{"id":"${reqId}","ok":true,"data":"${chunk0}","chunked":true,"part":0,"total":3}`);
+    assert.ok(getLastSetUrl().includes(`__qolNextChunk('${reqId}', 1)`), "Requested part 1");
+
+    // 2. Part 1 arrives
+    fireTitleEvent(panel, `QOL_RES:{"id":"${reqId}","ok":true,"data":"${chunk1}","chunked":true,"part":1,"total":3}`);
+    assert.ok(getLastSetUrl().includes(`__qolNextChunk('${reqId}', 2)`), "Requested part 2");
+
+    // 3. Part 2 (final) arrives
+    fireTitleEvent(panel, `QOL_RES:{"id":"${reqId}","ok":true,"data":"${chunk2}","chunked":true,"part":2,"total":3}`);
+
+    const result = await loadPromise;
+    assert.strictEqual(result, chunk0 + chunk1 + chunk2);
+    assert.strictEqual(result.length, 4000);
+});
+
+test("storage_bridge: loadSettings correctly applies large >9KB chunked configuration", async () => {
+    const { sandbox, getLastSetUrl, fireTitleEvent } = createTestEnvironment();
+    const bridge = sandbox.QOL.core.storageBridge;
+    const panel = bridge.getPanel();
+
+    fireTitleEvent(panel, "Index of C:/");
+    fireTitleEvent(panel, "QOL_BRIDGE_READY:" + Date.now());
+
+    const loadSettingsPromise = bridge.loadSettings();
+    const loadUrl = getLastSetUrl();
+    const reqMatch = loadUrl.match(/'(qol_\d+_\d+)'/);
+    assert.ok(reqMatch, "Request ID matched");
+    const reqId = reqMatch[1];
+
+    // Build a large config payload (>9000 bytes, similar to real Deadlock config)
+    const largeCfg = {
+        LANGUAGE: "korean",
+        PREVIEWS_ENABLED: 1,
+        MINIMAP_SCALE: 2.0,
+    };
+    for (let i = 0; i < 300; i++) {
+        largeCfg[`FEATURE_KEY_${i}`] = i * 2;
+    }
+    const fullPayloadStr = JSON.stringify({
+        schema: "4.0.0",
+        data: largeCfg,
+    });
+    assert.ok(fullPayloadStr.length > 5000, `Payload must be large: ${fullPayloadStr.length} chars`);
+
+    // Slice into 1500 char chunks
+    const CHUNK_SIZE = 1500;
+    const chunks = [];
+    for (let i = 0; i < fullPayloadStr.length; i += CHUNK_SIZE) {
+        chunks.push(fullPayloadStr.slice(i, i + CHUNK_SIZE));
+    }
+
+    // Stream each chunk sequentially
+    for (let i = 0; i < chunks.length; i++) {
+        const respPayload = {
+            id: reqId,
+            ok: true,
+            data: chunks[i],
+            chunked: true,
+            part: i,
+            total: chunks.length,
+        };
+        fireTitleEvent(panel, `QOL_RES:${JSON.stringify(respPayload)}`);
+    }
+
+    const res = await loadSettingsPromise;
+    assert.strictEqual(res.ok, true);
+    assert.strictEqual(sandbox.MOD_CONFIG.LANGUAGE, "korean");
+    assert.strictEqual(sandbox.MOD_CONFIG.MINIMAP_SCALE, 2.0);
+    assert.strictEqual(sandbox.MOD_CONFIG.FEATURE_KEY_299, 598);
+});

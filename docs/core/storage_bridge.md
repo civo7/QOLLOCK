@@ -13,17 +13,18 @@ Replaces legacy hero build hijacking with instant, robust LevelDB storage that r
 ## Mechanism & Architecture
 1. **CEF Instance**: An offscreen `<CitadelHTMLPanel id="QOLStorageBridge" class="QOLStorageBridge" ... />` is embedded in the HUD and Escape Menu with origin `https://predi-i.github.io/qollock-updates/bridge.html`.
 2. **Persistence**: Chrome stores `https://predi-i.github.io` local storage in Steam's shared LevelDB database under `%LOCALAPPDATA%\Steam\htmlcache\Default\Local Storage\leveldb\`. It persists across game sessions, reboots, and updates without consuming API quotas or server compute.
-3. **IPC Bridge**:
+3. **IPC Bridge & Sequential Chunking**:
    - Outbound commands are dispatched using `panel.SetURL("javascript:...")`.
    - Inbound results are passed through `document.title = "QOL_RES:" + JSON.stringify(...)`.
    - Panorama catches changes via the native `HTMLTitle` event handler, resolving the corresponding asynchronous request.
-4. **Resilience**: Features automatic panel discovery, dynamic panel creation fallback, periodic watchdog script injection, request timeouts (5000ms), and queued request dispatching when initializing.
+   - **4KB Title Buffer Limit**: Source 2 C++ engine (`panoramauiclient.dll` / `client.dll`) truncates window title strings received from `ISteamHTMLSurface` to 4096 characters (4088 after the prefix). To support arbitrary configuration payloads (e.g. ~9KB+ configs), the bridge uses sequential multi-frame chunking (1500-char chunks) via `__qolLoad` and `__qolNextChunk`, reassembling chunks client-side in Panorama before resolving.
+4. **Resilience**: Features automatic panel discovery, dynamic panel creation fallback, periodic watchdog script injection, request timeouts (5000ms refreshed per chunk), and queued request dispatching when initializing.
 
 ## Interface (`QOL.core.storageBridge`)
 - `init(targetParent, options)`: Initializes or binds to the `CitadelHTMLPanel` bridge and attaches the `HTMLTitle` event handler.
 - `isReady()`: Returns `true` if the CEF bridge is initialized and ready for IPC.
 - `save(key, val, callback)`: Saves a raw string key-value pair into CEF `localStorage`. Returns a Promise.
-- `load(key, callback)`: Loads a string value by key from CEF `localStorage`. Returns a Promise resolving to string or `null`.
+- `load(key, callback)`: Loads a string value by key from CEF `localStorage`. Handles multi-frame chunked reassembly automatically. Returns a Promise resolving to string or `null`.
 - `remove(key, callback)`: Removes a key from CEF `localStorage`. Returns a Promise.
 - `saveSettings(configOrRaw, callback)`: Saves the current QOLLOCK config to CEF `localStorage` under `Deadlock_Mod_Settings_v1` and updates the root panel bridge attribute. Returns a Promise.
 - `loadSettings(callback)`: Loads and validates the QOLLOCK config from CEF `localStorage`. Applies valid settings into active UI panel attributes. Returns a Promise.
@@ -34,3 +35,5 @@ Replaces legacy hero build hijacking with instant, robust LevelDB storage that r
 - No network requests, Cloudflare workers, or API quotas are consumed.
 - Zero hero switching, shop opening, or favorites panel manipulation is required.
 - Saving completes asynchronously within 5–15 milliseconds (down from 20–30 seconds under legacy build storage).
+- Sequential chunking guarantees safe transfer of any payload size without hitting the C++ engine 4KB title buffer limitation.
+

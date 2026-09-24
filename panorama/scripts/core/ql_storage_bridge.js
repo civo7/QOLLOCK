@@ -82,29 +82,50 @@
         if (!_isPanelAlive(_bridgePanel) || typeof _bridgePanel.SetURL !== "function") return;
 
         const jsCode = "javascript:(function(){" +
+            "var CHUNK_SIZE = 1500;" +
+            "var _loadBuffers = {};" +
+            "var _saveBuffers = {};" +
+            "var _sendSeq = 0;" +
+            "function send(id, ok, data, err, extra) {" +
+                "var resp = { id: id, ok: !!ok, _seq: ++_sendSeq };" +
+                "if (data !== undefined) resp.data = data;" +
+                "if (err) resp.error = String(err);" +
+                "if (extra) { for (var k in extra) { if (Object.prototype.hasOwnProperty.call(extra, k)) resp[k] = extra[k]; } }" +
+                "document.title = 'QOL_RES:' + JSON.stringify(resp);" +
+            "}" +
             "window.__qolSave = function(k, v, id) {" +
+                "try { localStorage.setItem(k, v); send(id, true); } catch (e) { send(id, false, undefined, e && e.message ? e.message : e); }" +
+            "};" +
+            "window.__qolSaveChunk = function(key, part, total, chunk, id) {" +
                 "try {" +
-                    "localStorage.setItem(k, v);" +
-                    "document.title = 'QOL_RES:' + JSON.stringify({ id: id, ok: true });" +
-                "} catch (e) {" +
-                    "document.title = 'QOL_RES:' + JSON.stringify({ id: id, ok: false, error: String(e && e.message ? e.message : e) });" +
-                "}" +
+                    "if (!_saveBuffers[id]) _saveBuffers[id] = new Array(total);" +
+                    "_saveBuffers[id][part] = chunk;" +
+                    "if (part + 1 === total) { var full = _saveBuffers[id].join(''); delete _saveBuffers[id]; localStorage.setItem(key, full); send(id, true); }" +
+                    "else { send(id, true, undefined, null, { savePartAck: part }); }" +
+                "} catch (e) { delete _saveBuffers[id]; send(id, false, undefined, e && e.message ? e.message : e); }" +
             "};" +
             "window.__qolLoad = function(k, id) {" +
                 "try {" +
                     "var val = localStorage.getItem(k);" +
-                    "document.title = 'QOL_RES:' + JSON.stringify({ id: id, ok: true, data: val });" +
-                "} catch (e) {" +
-                    "document.title = 'QOL_RES:' + JSON.stringify({ id: id, ok: false, error: String(e && e.message ? e.message : e) });" +
-                "}" +
+                    "if (val === null || val === undefined || val.length <= CHUNK_SIZE) { send(id, true, val); return; }" +
+                    "var chunks = [];" +
+                    "for (var i = 0; i < val.length; i += CHUNK_SIZE) chunks.push(val.slice(i, i + CHUNK_SIZE));" +
+                    "_loadBuffers[id] = chunks;" +
+                    "setTimeout(function() { delete _loadBuffers[id]; }, 30000);" +
+                    "send(id, true, chunks[0], null, { chunked: true, part: 0, total: chunks.length });" +
+                "} catch (e) { send(id, false, undefined, e && e.message ? e.message : e); }" +
+            "};" +
+            "window.__qolNextChunk = function(id, part) {" +
+                "try {" +
+                    "var chunks = _loadBuffers[id];" +
+                    "if (!chunks || part >= chunks.length) { delete _loadBuffers[id]; send(id, false, undefined, 'Invalid chunk index'); return; }" +
+                    "var chunkData = chunks[part];" +
+                    "if (part + 1 === chunks.length) delete _loadBuffers[id];" +
+                    "send(id, true, chunkData, null, { chunked: true, part: part, total: chunks.length });" +
+                "} catch (e) { delete _loadBuffers[id]; send(id, false, undefined, e && e.message ? e.message : e); }" +
             "};" +
             "window.__qolRemove = function(k, id) {" +
-                "try {" +
-                    "localStorage.removeItem(k);" +
-                    "document.title = 'QOL_RES:' + JSON.stringify({ id: id, ok: true });" +
-                "} catch (e) {" +
-                    "document.title = 'QOL_RES:' + JSON.stringify({ id: id, ok: false, error: String(e && e.message ? e.message : e) });" +
-                "}" +
+                "try { localStorage.removeItem(k); send(id, true); } catch (e) { send(id, false, undefined, e && e.message ? e.message : e); }" +
             "};" +
             "document.title = 'QOL_BRIDGE_READY:' + Date.now();" +
         "})();void(0);";
@@ -116,8 +137,42 @@
         }
     };
 
+    const _cancelPendingTimer = (pending) => {
+        if (!pending || !pending.timer) return;
+        if (typeof $.CancelScheduled === "function") {
+            try { $.CancelScheduled(pending.timer); } catch (_) {}
+        } else if (typeof clearTimeout === "function") {
+            try { clearTimeout(pending.timer); } catch (_) {}
+        }
+        pending.timer = null;
+    };
+
+    const _resetPendingTimer = (pending, reqId) => {
+        _cancelPendingTimer(pending);
+        const timeoutHandler = () => {
+            if (Object.prototype.hasOwnProperty.call(_pendingRequests, reqId)) {
+                const req = _pendingRequests[reqId];
+                delete _pendingRequests[reqId];
+                const timeoutErr = new Error(`Bridge request timed out (${reqId})`);
+                if (typeof req.callback === "function") {
+                    try { req.callback(timeoutErr, null); } catch (_) {}
+                }
+                if (typeof req.reject === "function") {
+                    try { req.reject(timeoutErr); } catch (_) {}
+                }
+            }
+        };
+
+        if (typeof $.Schedule === "function") {
+            pending.timer = $.Schedule(REQUEST_TIMEOUT_MS / 1000, timeoutHandler);
+        } else if (typeof setTimeout === "function") {
+            pending.timer = setTimeout(timeoutHandler, REQUEST_TIMEOUT_MS);
+        }
+    };
+
     /**
      * Resolves pending requests upon receiving a QOL_RES: title notification.
+     * Supports both single-frame payloads and sequential multi-frame chunked streams.
      */
     const _handleResponse = (payloadStr) => {
         let resp = null;
@@ -134,22 +189,10 @@
         }
 
         const pending = _pendingRequests[reqId];
-        delete _pendingRequests[reqId];
 
-        if (pending.timer && typeof $.CancelScheduled === "function") {
-            try { $.CancelScheduled(pending.timer); } catch (_) {}
-        } else if (pending.timer && typeof clearTimeout === "function") {
-            try { clearTimeout(pending.timer); } catch (_) {}
-        }
-
-        if (resp.ok) {
-            if (typeof pending.callback === "function") {
-                try { pending.callback(null, resp.data !== undefined ? resp.data : true); } catch (_) {}
-            }
-            if (typeof pending.resolve === "function") {
-                pending.resolve(resp.data !== undefined ? resp.data : true);
-            }
-        } else {
+        if (!resp.ok) {
+            delete _pendingRequests[reqId];
+            _cancelPendingTimer(pending);
             const err = new Error(resp.error || "CEF bridge request failed");
             if (typeof pending.callback === "function") {
                 try { pending.callback(err, null); } catch (_) {}
@@ -157,6 +200,60 @@
             if (typeof pending.reject === "function") {
                 pending.reject(err);
             }
+            return;
+        }
+
+        // Chunked multi-part payload handling (bypasses 4096-char HTMLTitle engine truncation)
+        if (resp.chunked) {
+            if (!pending.chunks) {
+                pending.chunks = new Array(resp.total);
+            }
+            pending.chunks[resp.part] = resp.data;
+
+            const nextPart = resp.part + 1;
+            if (nextPart < resp.total) {
+                _resetPendingTimer(pending, reqId);
+                const nextChunkJs = `javascript:window.__qolNextChunk && window.__qolNextChunk('${reqId}', ${nextPart});void(0);`;
+                try {
+                    _bridgePanel.SetURL(nextChunkJs);
+                } catch (e) {
+                    delete _pendingRequests[reqId];
+                    _cancelPendingTimer(pending);
+                    const err = new Error(`Failed to request chunk ${nextPart}: ${e?.message || e}`);
+                    if (typeof pending.callback === "function") {
+                        try { pending.callback(err, null); } catch (_) {}
+                    }
+                    if (typeof pending.reject === "function") {
+                        pending.reject(err);
+                    }
+                }
+                return;
+            }
+
+            // All chunks received and reassembled
+            delete _pendingRequests[reqId];
+            _cancelPendingTimer(pending);
+
+            const assembledData = pending.chunks.join("");
+            if (typeof pending.callback === "function") {
+                try { pending.callback(null, assembledData); } catch (_) {}
+            }
+            if (typeof pending.resolve === "function") {
+                pending.resolve(assembledData);
+            }
+            return;
+        }
+
+        // Standard single-frame response
+        delete _pendingRequests[reqId];
+        _cancelPendingTimer(pending);
+
+        const resultData = resp.data !== undefined ? resp.data : true;
+        if (typeof pending.callback === "function") {
+            try { pending.callback(null, resultData); } catch (_) {}
+        }
+        if (typeof pending.resolve === "function") {
+            pending.resolve(resultData);
         }
     };
 
@@ -236,39 +333,16 @@
                     return reject(err);
                 }
 
-                let timer = null;
-                const timeoutHandler = () => {
-                    if (Object.prototype.hasOwnProperty.call(_pendingRequests, reqId)) {
-                        const pending = _pendingRequests[reqId];
-                        delete _pendingRequests[reqId];
-                        const timeoutErr = new Error(`Bridge request timed out (${reqId})`);
-                        if (typeof pending.callback === "function") {
-                            try { pending.callback(timeoutErr, null); } catch (_) {}
-                        }
-                        if (typeof pending.reject === "function") {
-                            try { pending.reject(timeoutErr); } catch (_) {}
-                        }
-                    }
-                };
-
-                if (typeof $.Schedule === "function") {
-                    timer = $.Schedule(REQUEST_TIMEOUT_MS / 1000, timeoutHandler);
-                } else if (typeof setTimeout === "function") {
-                    timer = setTimeout(timeoutHandler, REQUEST_TIMEOUT_MS);
-                }
-
-                _pendingRequests[reqId] = { resolve, reject, callback, timer };
+                _pendingRequests[reqId] = { resolve, reject, callback, timer: null };
+                _resetPendingTimer(_pendingRequests[reqId], reqId);
 
                 const fullJs = `javascript:${jsExpr(reqId)};void(0);`;
                 try {
                     _bridgePanel.SetURL(fullJs);
                 } catch (e) {
+                    const pending = _pendingRequests[reqId];
                     delete _pendingRequests[reqId];
-                    if (timer && typeof $.CancelScheduled === "function") {
-                        try { $.CancelScheduled(timer); } catch (_) {}
-                    } else if (timer && typeof clearTimeout === "function") {
-                        try { clearTimeout(timer); } catch (_) {}
-                    }
+                    _cancelPendingTimer(pending);
                     if (typeof callback === "function") callback(e, null);
                     reject(e);
                 }
