@@ -37,7 +37,7 @@
             { key: "UNSECURED_SOULS_HUD_SCALE", type: "slider", min: 50, max: 200, default: 100 },
             { key: "UNSECURED_SOULS_HUD_X_OFFSET", type: "slider", min: -1000, max: 2000, default: 0 },
             { key: "UNSECURED_SOULS_HUD_Y_OFFSET", type: "slider", min: 800, max: 2000, default: 1095 },
-            { key: "ENABLE_BETTER_UNSECURED_SHOW_ICON", type: "toggle", default: false },
+            { key: "ENABLE_BETTER_UNSECURED_SHOW_ICON", type: "toggle", default: true },
             { key: "ENABLE_BETTER_UNSECURED_SHOW_TEXT", type: "toggle", default: false },
             { key: "ENABLE_BETTER_UNSECURED_SHOW_ICON_TEXT", type: "toggle", default: false }
         ],
@@ -72,6 +72,11 @@
             function _readSafePanelLayoutOffset(val) {
                 try { if (typeof QOL !== "undefined" && QOL.utils && QOL.utils.ReadSafePanelLayoutOffset) return QOL.utils.ReadSafePanelLayoutOffset(val); } catch(e) {}
                 return (val != null && isFinite(val)) ? val : null;
+            }
+            function _getDefaultConfigXOffset() {
+                try { if (typeof globalThis !== "undefined" && globalThis.DEFAULT_CONFIG && globalThis.DEFAULT_CONFIG.UNSECURED_SOULS_HUD_X_OFFSET != null) return Number(globalThis.DEFAULT_CONFIG.UNSECURED_SOULS_HUD_X_OFFSET); } catch(e) {}
+                try { if (typeof QOL_DEFAULT_CONFIG !== "undefined" && QOL_DEFAULT_CONFIG.UNSECURED_SOULS_HUD_X_OFFSET != null) return Number(QOL_DEFAULT_CONFIG.UNSECURED_SOULS_HUD_X_OFFSET); } catch(e) {}
+                return 0;
             }
             function _getDefaultConfigYOffset() {
                 try { if (typeof globalThis !== "undefined" && globalThis.DEFAULT_CONFIG && globalThis.DEFAULT_CONFIG.UNSECURED_SOULS_HUD_Y_OFFSET != null) return Number(globalThis.DEFAULT_CONFIG.UNSECURED_SOULS_HUD_Y_OFFSET); } catch(e) {}
@@ -127,12 +132,12 @@
             function _findLabel(root, container) {
                 var label = null;
                 if (container && container.FindChildTraverse) {
-                    label = container.FindChildTraverse("hudDeathGoldLabel");
-                    if (!label) label = container.FindChildTraverse("hudDealthGoldLabel");
+                    label = container.FindChildTraverse("hudDealthGoldLabel");
+                    if (!label) label = container.FindChildTraverse("hudDeathGoldLabel");
                 }
                 if (!label && root && root.FindChildTraverse) {
-                    label = root.FindChildTraverse("hudDeathGoldLabel");
-                    if (!label) label = root.FindChildTraverse("hudDealthGoldLabel");
+                    label = root.FindChildTraverse("hudDealthGoldLabel");
+                    if (!label) label = root.FindChildTraverse("hudDeathGoldLabel");
                 }
                 if (!label && container && container.FindChildrenWithClassTraverse) {
                     var labels = container.FindChildrenWithClassTraverse("death_penalty_gold") || [];
@@ -160,7 +165,8 @@
                 if (!overlay) {
                     overlay = root.FindChildTraverse ? root.FindChildTraverse("QOLBetterUnsecuredOverlay") : null;
                     if (!overlay) {
-                        var parent = _getGameplayHudPanel(root);
+                        var parent = root && root.FindChildTraverse ? root.FindChildTraverse("StatsAndModsContainer") : null;
+                        if (!_isPanelValid(parent)) parent = _getGameplayHudPanel(root);
                         if (!parent) return null;
                         overlay = $.CreatePanel("Panel", parent, "QOLBetterUnsecuredOverlay", {
                             hittest: "false", hittestchildren: "false"
@@ -239,11 +245,12 @@
                     baseX = (cachedBaseX !== null) ? cachedBaseX : 0;
                     baseY = (cachedBaseY !== null) ? cachedBaseY : 0;
                 }
-                var targetX = baseX + xOffset;
+                var unsecuredHudBaselineX = _getDefaultConfigXOffset();
+                if (!isFinite(unsecuredHudBaselineX)) unsecuredHudBaselineX = 0;
                 var unsecuredHudBaselineY = _getDefaultConfigYOffset();
                 if (!isFinite(unsecuredHudBaselineY)) unsecuredHudBaselineY = 0;
-                var reflectedYOffset = (2 * unsecuredHudBaselineY) - yOffset;
-                var targetY = baseY + reflectedYOffset;
+                var targetX = 115 + (xOffset - unsecuredHudBaselineX);
+                var targetY = 130 - (yOffset - unsecuredHudBaselineY);
                 if (!isFinite(targetX) || !isFinite(targetY) || Math.abs(targetX) > PANEL_LAYOUT_OFFSET_ABS_MAX || Math.abs(targetY) > PANEL_LAYOUT_OFFSET_ABS_MAX) {
                     if (!overlay.BHasClass || !overlay.BHasClass("qol-hidden")) { if (overlay.SetHasClass) overlay.SetHasClass("qol-hidden", true); else overlay.style.visibility = "collapse"; }
                     State.unsecuredSouls.hudStyleSig = "hidden_invalid_pos";
@@ -253,8 +260,10 @@
                 if (sig === State.unsecuredSouls.hudStyleSig) return;
 
                 if (!overlay.BHasClass || !overlay.BHasClass("qol-hidden")) { if (overlay.SetHasClass) overlay.SetHasClass("qol-hidden", false); else overlay.style.visibility = "visible"; }
-                overlay.style.x = targetX + "px";
-                overlay.style.y = targetY + "px";
+                overlay.style.marginLeft = targetX + "px";
+                overlay.style.marginBottom = targetY + "px";
+                overlay.style.x = null;
+                overlay.style.y = null;
 
                 if (mirrorIcon.SetHasClass) mirrorIcon.SetHasClass("qol-hidden", !showIcon); else mirrorIcon.style.visibility = showIcon ? "visible" : "collapse";
                 if (mirrorText.SetHasClass) mirrorText.SetHasClass("qol-hidden", !showText); else mirrorText.style.visibility = showText ? "visible" : "collapse";

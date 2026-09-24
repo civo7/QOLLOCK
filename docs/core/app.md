@@ -26,8 +26,10 @@ Deadlock C++ engine events are captured using `$.RegisterForUnhandledEvent` and 
 - `CitadelToggleEscapeMenu` → `engine:escape_menu_toggled` (reactive escape menu state)
 - `CitadelGameStateChanged` → `engine:game_state_changed` (reactive match phase transitions)
 
-## Cross-Isolate Config Polling Bridge
+## Cross-Isolate Config Polling Bridge & Match Lifecycle
 Panorama executes settings UI (`EscapeMenu`) and game HUD in separate JavaScript execution contexts. `ql_app.js` maintains a 500ms heartbeat polling the serialized attribute on the HUD panel, allowing settings changed in the pause menu to propagate instantly to running game features.
+
+When a player leaves a match, the HUD panel is destroyed by the engine while the V8 runtime may persist. If the HUD panel becomes invalid during polling or `CitadelGameStateChanged`, `ql_app.js` triggers `shutdown()` to halt timers, cancel scheduler loops, and release feature listeners. Furthermore, `boot()` detects stale instances with invalid HUD handles and performs a clean reboot, preventing compounding polling overhead and frame jitter across successive matches.
 
 ## In-Game Benchmark & Stress Test Harness
 `ql_app.js` coordinates live in-game performance benchmarks requested via `QOL_DiagRequest` tokens (prefixed `bm_`):

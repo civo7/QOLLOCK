@@ -96,6 +96,9 @@
                 },
                 {
                     title: "Ammo Status",
+                    animatedToggle: true,
+                    enableKey: "ENABLE_AMMO_STATUS",
+                    description: "Visual indicator of your current ammo",
                     features: ["ql_ammo"]
                 },
                 {

@@ -16,6 +16,7 @@ Provides a cooperative polling scheduler and performance timing harness (`QOL.co
 - `resetStats()`: Resets all benchmark counters.
 - `startBenchmark(durationSec, onComplete)`: Initiates a live in-game benchmark over `durationSec` seconds with periodic progress heartbeats, spike detection alerts (>= 8ms), and structured console reporting upon completion. Returns `{ stop() }`.
 
-## Performance Invariants
+## Performance & Lifecycle Invariants
 - High-frequency polling (< 0.2s / > 5Hz) requires explicit `// rate-exempt: <reason>` documentation enforced by `tests/manifest_poll_rates.test.js`.
 - Features that can be event-driven should use native engine events and reduce their idle polling rate to 1.0s or 0.5s.
+- Polling loops created via `createPollLoop` verify the validity of their owner panel context (`$.GetContextPanel()`). If the owner panel is destroyed (such as when leaving a match back to the lobby), the loop automatically self-terminates (`loop.stop()`), eliminating orphaned background timers and post-match stuttering/hitching.

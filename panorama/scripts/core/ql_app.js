@@ -525,8 +525,12 @@
 
         const poll = () => {
             if (!_booted) return;
+            const hudPanel = _hudPanel || _findHud();
+            if (hudPanel && typeof hudPanel.IsValid === "function" && !hudPanel.IsValid()) {
+                shutdown();
+                return;
+            }
             const nowMs = _nowMs();
-            const hudPanel = _findHud();
             const best = _readBestConfig(hudPanel);
             const { raw, rev } = best;
 
@@ -570,6 +574,10 @@
         try {
             $.RegisterForUnhandledEvent("CitadelGameStateChanged", () => {
                 const hud = _hudPanel || _findHud();
+                if (hud && typeof hud.IsValid === "function" && !hud.IsValid()) {
+                    shutdown();
+                    return;
+                }
                 if (hud) _syncRootClasses(hud);
                 if (QOL?.core?.EventBus) {
                     try { QOL.core.EventBus.emit("engine:game_state_changed"); } catch (_) {}
@@ -633,8 +641,13 @@
     // -- Public API --
     const boot = () => {
         if (_booted) {
-            $.Msg("[QOLLock] App: already booted — skipping.");
-            return true;
+            if (_hudPanel && typeof _hudPanel.IsValid === "function" && !_hudPanel.IsValid()) {
+                $.Msg("[QOLLock] App: previous HUD panel invalid — shutting down before reboot.");
+                shutdown();
+            } else {
+                $.Msg("[QOLLock] App: already booted — skipping.");
+                return true;
+            }
         }
 
         _registerEngineEvents();

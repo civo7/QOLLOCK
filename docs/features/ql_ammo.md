@@ -24,10 +24,14 @@ Provides granular control over the Deadlock weapon ammo HUD and circular clip ri
 ## Architecture & Lifecycle
 
 ### Activation & Lifecycle Hooks
+- **`isEnabled(cfg)`**: Dynamically enables the feature whenever any ammo toggle is active (`ENABLE_AMMO_STATUS`, `ENABLE_HIDE_MAGAZINE`, `ENABLE_HIDE_AMMO_ALL`) OR whenever any slider/color setting is customized away from default (`AMMO_CURRENT_SCALE !== 100`, `AMMO_TOTAL_SCALE !== 100`, `AMMO_PANEL_SCALE !== 100`, `AMMO_PANEL_X_OFFSET !== 0`, `AMMO_PANEL_Y_OFFSET !== 0`, `AMMO_CLIP_ANGLE !== 0`, `AMMO_TEXT_COLOR !== 0`). This ensures slider edits take effect immediately even if the master toggle is inactive.
 - **`onEnable()`**: Locates `#ammo_panel` and `#clip_status` within the HUD hierarchy, caches their initial properties, and calls `_apply()`.
-- **`onDisable()`**: Restores original layout transforms, scales, margins, visibility flags, and clears signature caches.
+- **`onDisable()`**: Restores original layout transforms, scales, margins, visibility flags, clears inline font sizes/widths (setting them to `null` to restore native engine styling), and clears signature caches.
 - **`onSettingsChanged()`**: Synchronously runs `_apply()` to re-evaluate transformations and colors on change.
 - **`test()`**: Verifies that the native `#ammo_panel` exists in the active HUD hierarchy.
+
+### Scaling & Resolution Sizing
+- When scale settings (`AMMO_CURRENT_SCALE`, `AMMO_TOTAL_SCALE`) are at neutral default (100), inline `fontSize`, `width`, and `marginLeft` styles are kept at `null`, allowing the native engine CSS to scale dynamically with the player's screen resolution rather than being pinned to fixed pixel values. Custom scales (> 100) apply scaled pixel dimensions.
 
 ### DOM Injection & Target Panels
 - **DOM Creation**: Zero DOM elements created; operates directly on native engine panels.

@@ -27,14 +27,14 @@ Creates a dedicated, highly customizable HUD overlay for unsecured souls that ca
 - **`test()`**: Verifies that `gameplay_hud` and native `#hudDeathGoldContainer` exist in the DOM.
 
 ### DOM Injection & Target Panels
-- **Parent Container**: Injected under `gameplay_hud` (or root `#Hud` if `gameplay_hud` is unmounted).
+- **Parent Container**: Injected under `StatsAndModsContainer` (or `gameplay_hud` / root `#Hud` if unmounted).
 - **Injected Panels**:
-  - `Panel#QOLBetterUnsecuredOverlay`: Main container positioned via transform margins.
-  - `Image#QOLBetterUnsecuredIcon`: Displays the soul icon graphic.
-  - `Label#QOLBetterUnsecuredLabel`: Primary numeric label mirroring current unsecured souls.
-  - `Label#QOLBetterUnsecuredSubLabel`: Supplementary text badge.
+  - `Panel#QOLBetterUnsecuredOverlay`: Main container positioned via `marginLeft` and `marginBottom` offsets aligned with `StatsAndModsContainer` (preventing coordinate displacement caused by `vertical-align: bottom`).
+  - `Panel#QOLBetterUnsecuredMirrorIcon`: Displays the soul urn icon graphic.
+  - `Label#QOLBetterUnsecuredMirrorLabel`: Primary numeric label mirroring current unsecured souls.
+  - `Label#QOLBetterUnsecuredMirrorText`: Supplementary text badge.
 - **Native Read Targets**:
-  - `#hudDeathGoldContainer` -> `#hudDeathGoldLabel` / `#hudUnsecuredLabel`.
+  - `#gold_and_ap_container` -> `.hudDeathGoldContainer` -> `#hudDealthGoldLabel` (or `#hudDeathGoldLabel`).
 
 ### Engine Events & Polling Frequency
 - **Polling Frequency**: 5Hz (`0.2s` interval) cooperative polling loop via `QOL.core.Scheduler`.

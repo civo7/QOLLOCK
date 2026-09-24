@@ -112,10 +112,15 @@
         let rate = (typeof rateSec === "number" && rateSec > 0) ? rateSec : 0.2;
         let handle = null;
         let hadError = false;
+        const owner = (typeof $ !== "undefined" && typeof $.GetContextPanel === "function") ? $.GetContextPanel() : null;
         let loop = null;
 
         const tick = () => {
             if (stopped) return;
+            if (owner && typeof owner.IsValid === "function" && !owner.IsValid()) {
+                loop.stop();
+                return;
+            }
             let perfActive = false;
             try {
                 const s = getState();

@@ -100,3 +100,12 @@ Because layout is purely declarative:
   If a tab does not register a custom renderer in `_tabRenderers`, `window.js` falls back to `renderLayoutTab(tabId, container)` to render any sections and manifests declared in `Q.ui.layout`.
   When a section declares `animatedToggle: true` and `enableKey: "..."`, the setting matching `enableKey` is automatically suppressed from the section body to prevent duplicate toggle rows.
 
+---
+
+## 5. Tab Rail & Window Action Controls
+
+- **Tab Footer Actions (`DragToggleBtnRail`)**:
+  The bottom of the sidebar rail (`tabFooter`) houses global mod actions alongside Discord and Version links. `DragToggleBtnRail` toggles free-form dragging mode (`MOD_CONFIG.DRAG_ENABLED`) via `Q.ui.drag.wireDragToggleButton`.
+- **Window Close Semantics (`forceCloseModSettings`)**:
+  Closing the settings window (via the header close button 'X' or ESC handling) toggles the visibility of the `SettingsWindow` panel without dispatching `CitadelResumePlaying`. This ensures that closing the QOLLOCK settings window preserves Deadlock's native Escape Menu rather than dismissing the pause state.
+

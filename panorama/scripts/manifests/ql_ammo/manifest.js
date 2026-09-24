@@ -22,6 +22,19 @@
         id: "ql_ammo",
         enabledByDefault: false,
         enableKeys: ["ENABLE_AMMO_STATUS", "ENABLE_HIDE_MAGAZINE", "ENABLE_HIDE_AMMO_ALL"],
+        isEnabled: function(cfg) {
+            if (!cfg) return false;
+            var isTrue = function(v) { return v === true || v === 1 || String(v) === "true"; };
+            if (isTrue(cfg.ENABLE_AMMO_STATUS) || isTrue(cfg.ENABLE_HIDE_MAGAZINE) || isTrue(cfg.ENABLE_HIDE_AMMO_ALL)) return true;
+            if (cfg.AMMO_CURRENT_SCALE != null && Number(cfg.AMMO_CURRENT_SCALE) !== 100) return true;
+            if (cfg.AMMO_TOTAL_SCALE != null && Number(cfg.AMMO_TOTAL_SCALE) !== 100) return true;
+            if (cfg.AMMO_PANEL_SCALE != null && Number(cfg.AMMO_PANEL_SCALE) !== 100) return true;
+            if (cfg.AMMO_PANEL_X_OFFSET != null && Number(cfg.AMMO_PANEL_X_OFFSET) !== 0) return true;
+            if (cfg.AMMO_PANEL_Y_OFFSET != null && Number(cfg.AMMO_PANEL_Y_OFFSET) !== 0) return true;
+            if (cfg.AMMO_CLIP_ANGLE != null && Number(cfg.AMMO_CLIP_ANGLE) !== 0) return true;
+            if (cfg.AMMO_TEXT_COLOR != null && Number(cfg.AMMO_TEXT_COLOR) !== 0) return true;
+            return false;
+        },
         settings: [
             { key: "ENABLE_AMMO_STATUS", type: "toggle", default: false },
             { key: "ENABLE_HIDE_MAGAZINE", type: "toggle", default: false },
@@ -41,10 +54,10 @@
 
             function _clamp(v, lo, hi) {
                 if (typeof QOL_UTILS !== "undefined" && QOL_UTILS.ClampConfigNumber) {
-                    return QOL_UTILS.ClampConfigNumber(v, lo, hi, 0);
+                    return QOL_UTILS.ClampConfigNumber(v, lo, lo, hi, true);
                 }
                 var n = Math.round(Number(v));
-                if (!isFinite(n)) return 0;
+                if (!isFinite(n)) return lo;
                 return n < lo ? lo : n > hi ? hi : n;
             }
 
@@ -94,16 +107,16 @@
                     var vals = ap.FindChildrenWithClassTraverse("weapon_ammo") || [];
                     for (var vi = 0; vi < vals.length; vi++) {
                         if (!vals[vi]) continue;
-                        vals[vi].style.fontSize = valFont + "px";
-                        vals[vi].style.width = valWidth + "px";
+                        vals[vi].style.fontSize = (curScale === 100) ? null : (valFont + "px");
+                        vals[vi].style.width = (curScale === 100) ? null : (valWidth + "px");
                         _applyTextColor(vals[vi], textColor);
                     }
                     var maxs = ap.FindChildrenWithClassTraverse("weapon_ammo_max") || [];
                     for (var mi = 0; mi < maxs.length; mi++) {
                         if (!maxs[mi]) continue;
-                        maxs[mi].style.fontSize = maxFont + "px";
-                        maxs[mi].style.width = maxWidth + "px";
-                        maxs[mi].style.marginLeft = maxMl + "px";
+                        maxs[mi].style.fontSize = (totScale === 100) ? null : (maxFont + "px");
+                        maxs[mi].style.width = (totScale === 100) ? null : (maxWidth + "px");
+                        maxs[mi].style.marginLeft = (totScale === 100) ? null : (maxMl + "px");
                         _applyTextColor(maxs[mi], textColor);
                     }
                     var infs = ap.FindChildrenWithClassTraverse("weapon_ammo_infinite") || [];
@@ -136,9 +149,9 @@
                 _lastMainSig = sig;
 
                 _applyChildren(ap, curScale, totScale, textColor);
-                ap.style.x = ox + "px";
-                ap.style.y = (80 - oy) + "px";
-                ap.style.preTransformScale2d = "1.00, 1.00";
+                ap.style.x = (ox !== 0) ? (ox + "px") : null;
+                ap.style.y = (oy !== 0) ? ((80 - oy) + "px") : null;
+                ap.style.preTransformScale2d = null;
                 if (ap.SetHasClass) ap.SetHasClass("qol-hidden", false);
                 try { ap.style.opacity = "1.00"; } catch(e) {}
             }
@@ -151,8 +164,9 @@
                         var root = $.GetContextPanel();
                         var ap = root.FindChildTraverse("ammo_panel");
                         if (ap && ap.style) {
-                            ap.style.x = "0px"; ap.style.y = "80px";
-                            ap.style.preTransformScale2d = "1.00, 1.00";
+                            ap.style.x = null;
+                            ap.style.y = null;
+                            ap.style.preTransformScale2d = null;
                             _applyChildren(ap, 100, 100, "");
                         }
                         var cs = root.FindChildTraverse("clip_status");

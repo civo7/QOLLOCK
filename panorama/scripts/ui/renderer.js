@@ -965,8 +965,54 @@
     // Animated Inline Toggle Section
     // =========================================================================
 
-    const createAnimatedInlineToggleSection = (parent, title, enableSetting, currentValue, onChange, buildRowsFn) => {
-        let enabled = (currentValue !== undefined) ? !!currentValue : (enableSetting.default ?? false);
+    const createAnimatedInlineToggleSection = (parent, title, enableSettingOrKey, currentValueOrDesc, onChangeOrBuildRows, buildRowsFnOrOptions) => {
+        let enableKey = "";
+        let defaultValue = false;
+        if (typeof enableSettingOrKey === "object" && enableSettingOrKey !== null) {
+            enableKey = enableSettingOrKey.key || "";
+            defaultValue = enableSettingOrKey.default ?? false;
+        } else if (typeof enableSettingOrKey === "string") {
+            enableKey = enableSettingOrKey;
+            defaultValue = (typeof Q.core?.ConfigStore?.getDefault === "function")
+                ? Q.core.ConfigStore.getDefault(enableKey)
+                : false;
+        }
+
+        let actualBuildRowsFn = null;
+        let actualOnChange = null;
+        let enabled = false;
+
+        if (typeof onChangeOrBuildRows === "function" && typeof buildRowsFnOrOptions !== "function") {
+            actualBuildRowsFn = onChangeOrBuildRows;
+            const options = buildRowsFnOrOptions || {};
+            actualOnChange = (typeof options.onChange === "function")
+                ? options.onChange
+                : (k, v) => {
+                    const finalVal = options.invert ? (v ? 0 : 1) : (v ? 1 : 0);
+                    if (typeof globalThis.MOD_CONFIG === "object" && globalThis.MOD_CONFIG) {
+                        globalThis.MOD_CONFIG[k] = finalVal;
+                    }
+                    if (Q.core?.ConfigStore) {
+                        try { Q.core.ConfigStore.setFlat(k, finalVal); } catch (_) {}
+                    }
+                    if (typeof globalThis.MarkConfigDirty === "function") {
+                        globalThis.MarkConfigDirty();
+                    } else if (typeof globalThis.SaveAndSync === "function") {
+                        globalThis.SaveAndSync();
+                    }
+                };
+            const rawVal = (typeof globalThis.MOD_CONFIG === "object" && globalThis.MOD_CONFIG && Object.prototype.hasOwnProperty.call(globalThis.MOD_CONFIG, enableKey))
+                ? globalThis.MOD_CONFIG[enableKey]
+                : ((typeof Q.core?.ConfigStore?.getFlat === "function") ? Q.core.ConfigStore.getFlat(enableKey) : defaultValue);
+            const boolVal = (rawVal === true || rawVal === 1 || String(rawVal) === "true");
+            enabled = options.invert ? !boolVal : boolVal;
+        } else {
+            actualBuildRowsFn = (typeof buildRowsFnOrOptions === "function") ? buildRowsFnOrOptions : null;
+            actualOnChange = (typeof onChangeOrBuildRows === "function") ? onChangeOrBuildRows : null;
+            enabled = (currentValueOrDesc !== undefined && typeof currentValueOrDesc !== "string")
+                ? !!currentValueOrDesc
+                : (typeof defaultValue === "boolean" ? defaultValue : false);
+        }
 
         const safeId = String(title || "Section").replace(/[^A-Za-z0-9]/g, "");
         const titleRow = createPanel("Panel", parent, `${safeId}SectionTitleRow`);
@@ -1046,10 +1092,17 @@
         const activate = () => {
             const next = !enabled;
             applyState(next, true);
-            if (typeof onChange === "function") {
-                onChange(enableSetting.key, next);
+            if (typeof actualOnChange === "function") {
+                actualOnChange(enableKey, next);
             }
-            updateDependents(enableSetting.key, next);
+            if (enableKey) {
+                updateDependents(enableKey, next);
+                if (typeof globalThis !== "undefined" && typeof globalThis.ShowConfigPreviewForConfigId === "function") {
+                    try { globalThis.ShowConfigPreviewForConfigId(enableKey); } catch (_) {}
+                } else if (Q?.preview?.showConfigPreviewForConfigId) {
+                    try { Q.preview.showConfigPreviewForConfigId(enableKey); } catch (_) {}
+                }
+            }
         };
 
         if (switchButton) {
@@ -1058,8 +1111,8 @@
             toggleBtn.SetPanelEvent("onactivate", activate);
         }
 
-        if (body && typeof buildRowsFn === "function") {
-            buildRowsFn(body);
+        if (body && typeof actualBuildRowsFn === "function") {
+            actualBuildRowsFn(body);
         }
 
         return { row: titleRow, body, applyState };
