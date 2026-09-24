@@ -2607,8 +2607,6 @@
             }
             if (isArcadePlayAction) {
                 actionBtn.AddClass("ArcadePlayActionBtn");
-            } else if (configId === "TEST_SKYRUNNER") {
-                actionBtn.AddClass("TestSkyrunnerActionBtn");
             }
             const actionInner = $.CreatePanel("Panel", actionBtn, "");
             actionInner.AddClass("SettingActionBtnInner");
@@ -2704,17 +2702,6 @@
                 } else if (configId === "OPEN_BLACKJACK") {
                     getArcade().openBlackjack();
                     handled = true;
-                } else if (configId === "TEST_SKYRUNNER") {
-                    handled = applyDefaultHeroSelection("hero_skyrunner");
-                    if (handled) {
-                        setLocalizedConfigFeedbackMessage("Skyrunner switch sent.", "success", 1400);
-                    } else {
-                        setLocalizedConfigFeedbackMessage("Failed to switch hero.", "error", 1800);
-                        actionBtn.AddClass("FailureState");
-                        $.Schedule(0.35, () => {
-                            if (actionBtn && actionBtn.IsValid && actionBtn.IsValid()) actionBtn.RemoveClass("FailureState");
-                        });
-                    }
                 } else if (configId === "OPEN_OLD_ITEM_FILTERS_DOWNLOAD") {
                     $.DispatchEvent("ExternalBrowserGoToURL", "https://gamebanana.com/mods/601444");
                     handled = true;

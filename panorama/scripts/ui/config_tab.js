@@ -235,9 +235,6 @@
                 globalThis.CreateRow(list, "Update Checker", "ENABLE_UPDATE_CHECKER", "toggle", null, null, null, null, "Check for new QOLLOCK releases when opening settings.");
                 globalThis.CreateRow(list, "Language", "LANGUAGE", "dropdown", null, null, null, globalThis.SETTINGS_LANGUAGE_OPTIONS);
                 globalThis.CreateRow(list, "Default Hero", "DEFAULT_HERO", "dropdown", null, null, null, globalThis.DEFAULT_HERO_DROPDOWN_OPTIONS);
-                globalThis.CreateRow(list, "Troubleshoot", "TEST_SKYRUNNER", "actionbutton", null, null, null, [
-                    { label: "Swap" },
-                ], "Switch to the Skyrunner storage hero. Your settings are saved in shop builds; if saving breaks, clear these builds and save again.");
                 globalThis.CreateRow(list, "Theme", "SETTINGS_THEME", "buttongroup", null, null, null, globalThis.SETTINGS_THEME_OPTIONS);
 
                 if (typeof globalThis.CreateSeparator === "function") {
@@ -287,9 +284,6 @@
             globalThis.CreateRow(cardGeneral, "Update Checker", "ENABLE_UPDATE_CHECKER", "toggle", null, null, null, null, "Check for new QOLLOCK releases when opening settings.");
             globalThis.CreateRow(cardGeneral, "Language", "LANGUAGE", "dropdown", null, null, null, globalThis.SETTINGS_LANGUAGE_OPTIONS);
             globalThis.CreateRow(cardGeneral, "Default Hero", "DEFAULT_HERO", "dropdown", null, null, null, globalThis.DEFAULT_HERO_DROPDOWN_OPTIONS);
-            globalThis.CreateRow(cardGeneral, "Troubleshoot", "TEST_SKYRUNNER", "actionbutton", null, null, null, [
-                { label: "Swap" },
-            ], "Switch to the Skyrunner storage hero. Your settings are saved in shop builds; if saving breaks, clear these builds and save again.");
             globalThis.CreateRow(cardGeneral, "Theme", "SETTINGS_THEME", "buttongroup", null, null, null, globalThis.SETTINGS_THEME_OPTIONS);
         }
 

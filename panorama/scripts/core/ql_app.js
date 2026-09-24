@@ -518,53 +518,6 @@
         _writeDiagSnapshot(hudPanel, "");
     };
 
-    const _syncLoaderOverlays = (hudPanel, nowMs) => {
-        const globalState = (typeof State !== "undefined" && State) ? State :
-                          ((typeof globalThis !== "undefined" && globalThis.State) ? globalThis.State : null);
-        if (!globalState) return;
-        const settingsShowing = Boolean(globalState.settingsLoaderSessionActive || globalState.settingsLoaderSessionCompleted);
-        const saveShowing = Boolean(globalState.saveSettingsLoaderSessionActive || globalState.saveSettingsLoaderSessionCompleted);
-
-        if (settingsShowing || saveShowing) {
-            if (settingsShowing && QOL && typeof QOL.updateSettingsLoaderOverlay === "function") {
-                try { QOL.updateSettingsLoaderOverlay(hudPanel, nowMs); } catch (_) {}
-            }
-            if (!settingsShowing && saveShowing && QOL && typeof QOL.updateSaveSettingsLoaderOverlay === "function") {
-                try { QOL.updateSaveSettingsLoaderOverlay(hudPanel, nowMs); } catch (_) {}
-            }
-        }
-    };
-
-    const _syncPendingHeroRestore = (nowMs) => {
-        const globalState = (typeof State !== "undefined" && State) ? State :
-                          ((typeof globalThis !== "undefined" && globalThis.State) ? globalThis.State : null);
-        if (!globalState?.heroRestorePendingTarget) return;
-        const targetHero = (QOL && QOL.normalizeHeroId) ? QOL.normalizeHeroId(globalState.heroRestorePendingTarget) : globalState.heroRestorePendingTarget;
-        if (!targetHero) {
-            globalState.heroRestorePendingTarget = "";
-            return;
-        }
-        const now = Number(nowMs) || _nowMs();
-        if (now < (globalState.heroRestorePendingNextMs || 0)) return;
-        const elapsed = now - (Number(globalState.heroRestorePendingStartedMs) || now);
-        if (elapsed >= 1200 || elapsed > 3000) {
-            if (QOL && typeof QOL.queueShopPulseAfterHeroRestore === "function") {
-                QOL.queueShopPulseAfterHeroRestore(now);
-            }
-            globalState.heroRestorePendingTarget = "";
-            return;
-        }
-        if ((Number(globalState.heroRestorePendingRetries) || 0) < 3) {
-            if (QOL && typeof QOL.selectHeroForBuildSave === "function") {
-                QOL.selectHeroForBuildSave(targetHero, "restore_retry");
-            }
-            globalState.heroRestorePendingRetries = (Number(globalState.heroRestorePendingRetries) || 0) + 1;
-            globalState.heroRestorePendingNextMs = now + 450;
-            return;
-        }
-        globalState.heroRestorePendingNextMs = now + 450;
-    };
-
     const _startConfigPolling = (hud) => {
         if (_configPollTimer) return;
 
@@ -602,8 +555,6 @@
             }
 
             _syncDiagnosticState(hudPanel, nowMs);
-            _syncLoaderOverlays(hudPanel, nowMs);
-            _syncPendingHeroRestore(nowMs);
 
             _configPollTimer = $.Schedule(0.25, poll);
         };

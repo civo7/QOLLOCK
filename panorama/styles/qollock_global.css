@@ -306,3 +306,12 @@
     visibility: collapse;
 }
 
+/* ── Local CEF Storage Bridge panel ── */
+.QOLStorageBridge
+{
+    width: 2px;
+    height: 2px;
+    opacity: 0.01;
+    visibility: visible;
+}
+

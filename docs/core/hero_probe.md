@@ -9,7 +9,7 @@ Provides hero identity resolution from UI panels, command strings, crosshair das
 
 ## Key Interface (`QOL.core.heroProbe`)
 - `readHeroFromCrosshair(root)`: Discovers `#crosshair` -> `.citadel_ability_dash` and reads the active player pawn's `hero_<codename>` CSS class. Immune to ability panel loading delays.
-- `confirmSignatureAbilities(root, nowMs, requiredHits)`: Verifies that the storage hero (`hero_skyrunner`) signature abilities are present in `#hud_signature` across consecutive scheduler hits.
+- `confirmSignatureAbilities(root, nowMs, requiredHits)`: Legacy signature verification helper for `#hud_signature`.
 - `readSignatureSlots(root)`: Reads ability names from `#hud_signature` slots.
 - `readHeroFromPanelDetails(panel)`: Resolves a normalized hero identifier from panel attributes, classes, and metadata text.
 - `resolvePlayableHeroAlias(token)`: Normalizes loose or internal hero names into canonical `hero_<name>` strings.

@@ -1,6 +1,6 @@
 # QOLLOCK Feature Manifest Catalog
 
-QOLLOCK contains 50 isolated feature manifests located under `panorama/scripts/manifests/<feature_id>/manifest.js`.
+QOLLOCK contains 48 isolated feature manifests located under `panorama/scripts/manifests/<feature_id>/manifest.js`.
 Each manifest registers with `QOL.core.FeatureRegistry` and owns its lifecycle (`onEnable`, `onDisable`, `onSettingsChanged`, `test`).
 
 ---
@@ -70,6 +70,4 @@ Each manifest registers with `QOL.core.FeatureRegistry` and owns its lifecycle (
 - `ql_on_death_arcade`: Mini-games (Minesweeper, Flappy, Aim Trainer) on death screen.
 - `ql_ui_controls`: UI control primitives and interactive widgets.
 - `ql_perf`: In-game performance and scheduler FPS overlay.
-- `ql_build_payload`: Build category save and payload compression.
-- `ql_build_storage`: Local build storage and profile management.
 - `ql_update_checker`: Release update checker and version notifications.

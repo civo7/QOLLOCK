@@ -1,0 +1,302 @@
+// tests/storage_bridge.test.js
+// =============================================================================
+// Unit tests for Chromium Embedded Framework (CEF) Local Storage Bridge
+// (panorama/scripts/core/ql_storage_bridge.js)
+// =============================================================================
+
+"use strict";
+
+const test = require("node:test");
+const assert = require("node:assert");
+const fs = require("node:fs");
+const path = require("node:path");
+const vm = require("node:vm");
+
+const { Document } = require("../scripts/simulator/panel.js");
+const { Clock } = require("../scripts/simulator/clock.js");
+
+function createTestEnvironment() {
+    const clock = new Clock(1000);
+    const doc = new Document(clock);
+    const rootPanel = doc.create("Panel", { id: "Root" });
+    const hudPanel = doc.create("Panel", { id: "Hud" });
+    rootPanel.addChild(hudPanel);
+
+    const attributes = new Map();
+    const eventHandlers = new Map();
+    let lastSetUrl = "";
+
+    const addPanelMethods = (p) => {
+        p.SetAttributeString = (name, val) => attributes.set(`${p.id || ""}:${name}`, String(val));
+        p.GetAttributeString = (name, fallback) => {
+            const key = `${p.id || ""}:${name}`;
+            return attributes.has(key) ? attributes.get(key) : fallback;
+        };
+        p.SetURL = (url) => {
+            lastSetUrl = url;
+        };
+    };
+
+    addPanelMethods(rootPanel);
+    addPanelMethods(hudPanel);
+
+    const mockDollar = {
+        Msg: () => {},
+        Schedule: (delaySec, cb) => setTimeout(cb, delaySec * 1000),
+        CancelScheduled: (id) => clearTimeout(id),
+        CreatePanel: (type, parent, id) => {
+            const p = doc.create(type, { id: id || "" });
+            addPanelMethods(p);
+            if (parent && typeof parent.addChild === "function") {
+                parent.addChild(p);
+            }
+            return p;
+        },
+        GetContextPanel: () => hudPanel,
+        RegisterEventHandler: (eventName, panel, callback) => {
+            const key = `${panel.id || ""}:${eventName}`;
+            eventHandlers.set(key, callback);
+        },
+        DispatchEvent: () => {},
+        Localize: (s) => s,
+    };
+
+    const sandbox = {
+        $: mockDollar,
+        QOL: {
+            core: {
+                panel: {
+                    isAlive: (p) => !!(p && p.IsValid && p.IsValid()),
+                    create: (type, parent, id) => mockDollar.CreatePanel(type, parent, id),
+                    findRoot: () => rootPanel,
+                },
+                persistence: {
+                    writeStorageConfigRawToUi: (root, raw) => {
+                        root.SetAttributeString("Deadlock_Mod_Settings_v1", raw);
+                    },
+                    readStorageConfigRawFromUi: (root) => {
+                        return root.GetAttributeString("Deadlock_Mod_Settings_v1", "");
+                    },
+                },
+            },
+        },
+        globalThis: {},
+        WrapConfigForStorage: (cfg) => JSON.stringify({ schema: "4.0.0", data: cfg }),
+        UnwrapConfigFromStorage: (raw) => {
+            try {
+                const parsed = JSON.parse(raw);
+                if (parsed && parsed.data) return { config: parsed.data, schema: parsed.schema };
+            } catch (_) {}
+            return null;
+        },
+        SafeParseConfig: (raw) => {
+            try {
+                const parsed = JSON.parse(raw);
+                return parsed.data || parsed;
+            } catch (_) {
+                return null;
+            }
+        },
+        MOD_CONFIG: {
+            LANGUAGE: "english",
+            PREVIEWS_ENABLED: 1,
+            MINIMAP_SCALE: 1.0,
+        },
+        State: {
+            lastConfig: null,
+        },
+        setTimeout,
+        clearTimeout,
+    };
+
+    sandbox.globalThis.QOL = sandbox.QOL;
+    sandbox.globalThis.$ = mockDollar;
+    sandbox.globalThis.MOD_CONFIG = sandbox.MOD_CONFIG;
+    sandbox.globalThis.State = sandbox.State;
+
+    const bridgeCode = fs.readFileSync(
+        path.resolve(__dirname, "../panorama/scripts/core/ql_storage_bridge.js"),
+        "utf8"
+    );
+    vm.runInNewContext(bridgeCode, sandbox);
+    if (sandbox.QOL?.core?.storageBridge) {
+        sandbox.QOL.core.storageBridge.enableAutoload(false);
+    }
+
+    return {
+        sandbox,
+        doc,
+        rootPanel,
+        hudPanel,
+        attributes,
+        getLastSetUrl: () => lastSetUrl,
+        fireTitleEvent: (panel, title) => {
+            const key = `${panel.id || ""}:HTMLTitle`;
+            const handler = eventHandlers.get(key);
+            if (handler) {
+                handler(panel, title);
+            }
+        },
+    };
+}
+
+test("storage_bridge: exports public API on QOL.core.storageBridge, QOL.core.storage, and globalThis", () => {
+    const { sandbox } = createTestEnvironment();
+    const bridge = sandbox.QOL.core.storageBridge;
+
+    assert.ok(bridge, "QOL.core.storageBridge exists");
+    assert.strictEqual(sandbox.QOL.core.storage, bridge);
+    assert.strictEqual(sandbox.globalThis.QOLStorageBridge, bridge);
+
+    assert.strictEqual(typeof bridge.init, "function");
+    assert.strictEqual(typeof bridge.isReady, "function");
+    assert.strictEqual(typeof bridge.getPanel, "function");
+    assert.strictEqual(typeof bridge.save, "function");
+    assert.strictEqual(typeof bridge.load, "function");
+    assert.strictEqual(typeof bridge.remove, "function");
+    assert.strictEqual(typeof bridge.saveSettings, "function");
+    assert.strictEqual(typeof bridge.loadSettings, "function");
+    assert.strictEqual(typeof bridge.clearSettings, "function");
+});
+
+test("storage_bridge: init creates and styles CitadelHTMLPanel", () => {
+    const { sandbox, hudPanel, getLastSetUrl } = createTestEnvironment();
+    const bridge = sandbox.QOL.core.storageBridge;
+
+    const panel = bridge.getPanel();
+    assert.ok(panel, "Bridge panel was created");
+    assert.strictEqual(panel.id, "QOLStorageBridge");
+    assert.ok(panel.BHasClass("QOLStorageBridge"), "Has CSS class QOLStorageBridge");
+    assert.strictEqual(panel.style.visibility, "visible");
+    assert.strictEqual(panel.hittest, false);
+    assert.strictEqual(panel.acceptsfocus, false);
+    assert.strictEqual(getLastSetUrl(), "file:///C:/");
+});
+
+test("storage_bridge: handshake injects script and marks ready", () => {
+    const { sandbox, getLastSetUrl, fireTitleEvent } = createTestEnvironment();
+    const bridge = sandbox.QOL.core.storageBridge;
+    const panel = bridge.getPanel();
+
+    assert.strictEqual(bridge.isReady(), false);
+
+    // 1. Directory page loads
+    fireTitleEvent(panel, "Index of C:/");
+    assert.ok(getLastSetUrl().startsWith("javascript:"), "Script injected on page load");
+    assert.ok(getLastSetUrl().includes("__qolSave"));
+    assert.ok(getLastSetUrl().includes("__qolLoad"));
+
+    // 2. Ready notification arrives
+    fireTitleEvent(panel, "QOL_BRIDGE_READY:" + Date.now());
+    assert.strictEqual(bridge.isReady(), true, "Bridge is now marked ready");
+});
+
+test("storage_bridge: save and load round trip through CEF title responses", async () => {
+    const { sandbox, getLastSetUrl, fireTitleEvent } = createTestEnvironment();
+    const bridge = sandbox.QOL.core.storageBridge;
+    const panel = bridge.getPanel();
+
+    // Establish ready
+    fireTitleEvent(panel, "Index of C:/");
+    fireTitleEvent(panel, "QOL_BRIDGE_READY:" + Date.now());
+
+    // 1. Save operation
+    let savePromise = bridge.save("test_key", "test_value");
+    const saveUrl = getLastSetUrl();
+    assert.ok(saveUrl.includes("window.__qolSave"));
+    assert.ok(saveUrl.includes("test_key"));
+    assert.ok(saveUrl.includes("test_value"));
+
+    const saveReqMatch = saveUrl.match(/'(qol_\d+_\d+)'/);
+    assert.ok(saveReqMatch, "Request ID matched");
+    const saveReqId = saveReqMatch[1];
+
+    // Simulate CEF response
+    fireTitleEvent(panel, `QOL_RES:{"id":"${saveReqId}","ok":true}`);
+    const saveResult = await savePromise;
+    assert.strictEqual(saveResult, true);
+
+    // 2. Load operation
+    let loadPromise = bridge.load("test_key");
+    const loadUrl = getLastSetUrl();
+    assert.ok(loadUrl.includes("window.__qolLoad"));
+    const loadReqMatch = loadUrl.match(/'(qol_\d+_\d+)'/);
+    assert.ok(loadReqMatch, "Request ID matched");
+    const loadReqId = loadReqMatch[1];
+
+    fireTitleEvent(panel, `QOL_RES:{"id":"${loadReqId}","ok":true,"data":"test_value"}`);
+    const loadResult = await loadPromise;
+    assert.strictEqual(loadResult, "test_value");
+});
+
+test("storage_bridge: saveSettings wraps config and writes to UI attributes and CEF", async () => {
+    const { sandbox, getLastSetUrl, fireTitleEvent, rootPanel } = createTestEnvironment();
+    const bridge = sandbox.QOL.core.storageBridge;
+    const panel = bridge.getPanel();
+
+    fireTitleEvent(panel, "Index of C:/");
+    fireTitleEvent(panel, "QOL_BRIDGE_READY:" + Date.now());
+
+    const testConfig = { LANGUAGE: "russian", PREVIEWS_ENABLED: 0 };
+    let savePromise = bridge.saveSettings(testConfig);
+
+    const setUrl = getLastSetUrl();
+    assert.ok(setUrl.includes("qollock_settings"));
+
+    // Check UI panel attribute was also updated immediately
+    const uiAttr = rootPanel.GetAttributeString("Deadlock_Mod_Settings_v1", "");
+    assert.ok(uiAttr.includes('"schema":"4.0.0"'));
+    assert.ok(uiAttr.includes('"LANGUAGE":"russian"'));
+
+    const reqMatch = setUrl.match(/'(qol_\d+_\d+)'/);
+    fireTitleEvent(panel, `QOL_RES:{"id":"${reqMatch[1]}","ok":true}`);
+
+    const res = await savePromise;
+    assert.strictEqual(res.ok, true);
+});
+
+test("storage_bridge: loadSettings unwraps and updates MOD_CONFIG", async () => {
+    const { sandbox, getLastSetUrl, fireTitleEvent } = createTestEnvironment();
+    const bridge = sandbox.QOL.core.storageBridge;
+    const panel = bridge.getPanel();
+
+    fireTitleEvent(panel, "Index of C:/");
+    fireTitleEvent(panel, "QOL_BRIDGE_READY:" + Date.now());
+
+    let loadPromise = bridge.loadSettings();
+    const loadUrl = getLastSetUrl();
+    const reqMatch = loadUrl.match(/'(qol_\d+_\d+)'/);
+
+    const savedPayload = JSON.stringify({
+        schema: "4.0.0",
+        data: { LANGUAGE: "german", PREVIEWS_ENABLED: 1, MINIMAP_SCALE: 1.5 }
+    });
+
+    fireTitleEvent(panel, `QOL_RES:{"id":"${reqMatch[1]}","ok":true,"data":${JSON.stringify(savedPayload)}}`);
+
+    const res = await loadPromise;
+    assert.strictEqual(res.ok, true);
+    assert.strictEqual(sandbox.MOD_CONFIG.LANGUAGE, "german");
+    assert.strictEqual(sandbox.MOD_CONFIG.MINIMAP_SCALE, 1.5);
+    assert.strictEqual(sandbox.State.lastConfig.LANGUAGE, "german");
+});
+
+test("storage_bridge: clearSettings calls __qolRemove", async () => {
+    const { sandbox, getLastSetUrl, fireTitleEvent } = createTestEnvironment();
+    const bridge = sandbox.QOL.core.storageBridge;
+    const panel = bridge.getPanel();
+
+    fireTitleEvent(panel, "Index of C:/");
+    fireTitleEvent(panel, "QOL_BRIDGE_READY:" + Date.now());
+
+    let clearPromise = bridge.clearSettings();
+    const clearUrl = getLastSetUrl();
+    assert.ok(clearUrl.includes("window.__qolRemove"));
+    assert.ok(clearUrl.includes("qollock_settings"));
+
+    const reqMatch = clearUrl.match(/'(qol_\d+_\d+)'/);
+    fireTitleEvent(panel, `QOL_RES:{"id":"${reqMatch[1]}","ok":true}`);
+
+    const res = await clearPromise;
+    assert.strictEqual(res.ok, true);
+});

@@ -25595,3 +25595,12 @@
 	color: rgba(200, 230, 215, 0.95);
 	font-weight: bold;
 }
+
+/* ── Local CEF Storage Bridge panel ── */
+.QOLStorageBridge
+{
+	width: 2px;
+	height: 2px;
+	opacity: 0.01;
+	visibility: visible;
+}
