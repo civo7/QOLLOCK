@@ -385,7 +385,7 @@
         if (_bridgeReady) return;
         _initAttempts++;
         if (_initAttempts < MAX_INIT_ATTEMPTS) {
-            if (_isPanelAlive(_bridgePanel) && typeof _bridgePanel.SetURL !== "function") {
+            if (_isPanelAlive(_bridgePanel) && typeof _bridgePanel.SetURL === "function") {
                 _log(`Watchdog: bridge not ready yet (attempt ${_initAttempts}/${MAX_INIT_ATTEMPTS}), retrying...`);
                 _injectBridgeScript();
             }
