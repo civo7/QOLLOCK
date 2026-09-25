@@ -259,7 +259,7 @@
                 var sig = String(scale) + "|" + String(targetX) + "|" + String(targetY) + "|" + String(fontPx) + "|" + sourceText + "|" + unsecuredText + "|" + (showIcon ? "1" : "0") + "|" + (showText ? "1" : "0");
                 if (sig === State.unsecuredSouls.hudStyleSig) return;
 
-                if (!overlay.BHasClass || !overlay.BHasClass("qol-hidden")) { if (overlay.SetHasClass) overlay.SetHasClass("qol-hidden", false); else overlay.style.visibility = "visible"; }
+                if (overlay.SetHasClass) overlay.SetHasClass("qol-hidden", false); else overlay.style.visibility = "visible";
                 overlay.style.marginLeft = targetX + "px";
                 overlay.style.marginBottom = targetY + "px";
 
@@ -268,7 +268,7 @@
                 if (showText && mirrorText.text !== unsecuredText) mirrorText.text = unsecuredText;
 
                 if (mirrorLabel.text !== sourceText) mirrorLabel.text = sourceText;
-                if (!mirrorLabel.BHasClass || !mirrorLabel.BHasClass("qol-hidden")) { if (mirrorLabel.SetHasClass) mirrorLabel.SetHasClass("qol-hidden", false); else mirrorLabel.style.visibility = "visible"; }
+                if (mirrorLabel.SetHasClass) mirrorLabel.SetHasClass("qol-hidden", false); else mirrorLabel.style.visibility = "visible";
                 mirrorLabel.style.fontSize = fontPx + "px";
                 mirrorLabel.style.x = "0px";
                 mirrorLabel.style.y = "0px";

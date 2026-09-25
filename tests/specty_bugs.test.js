@@ -5,7 +5,7 @@
 // 2. "Enabling Visual on Ammo makes it really tiny? DIsabling it makes it big" - neutral scale leaves font size null
 // 3. "Cant move qol lock settings menu anymore" - DragToggleBtnRail in tabFooter
 // 4. "Hitting X on QolLock settings also closes the escape menu" - CitadelResumePlaying not fired
-// 5. "Unsecured Plus no work" - marginLeft/marginBottom positioning & default icon enabled
+// 5. Unsecured Plus must recover after zero souls or a temporarily missing source.
 // =============================================================================
 
 "use strict";
@@ -228,42 +228,42 @@ test("Bug 4: Closing SettingsWindow does not close the Escape Menu", () => {
     assert.strictEqual(resumePlayingFired, false, "CitadelResumePlaying must NOT be dispatched when closing mod settings");
 });
 
-test("Bug 5: ql_better_unsecured_hud positions overlay with marginLeft/marginBottom and defaults icon to enabled", () => {
-    const hud = sim.createHud();
+test("Unsecured Plus recovers after zero souls and a late native label", () => {
+    const hud = sim.createHud({ inHideout: false });
     hud.assertLoaded();
-    const QOL = hud.sandbox.global.QOL;
-    const FR = QOL.core.FeatureRegistry;
-    const defaultCfg = hud.sandbox.global.QOL_DEFAULT_CONFIG;
-
-    const manifest = FR.getManifest("ql_better_unsecured_hud");
-    assert.ok(manifest, "ql_better_unsecured_hud must be registered");
-
-    // Setting default check
-    const iconSetting = manifest.settings.find((s) => s.key === "ENABLE_BETTER_UNSECURED_SHOW_ICON");
-    assert.strictEqual(iconSetting.default, true, "ENABLE_BETTER_UNSECURED_SHOW_ICON must default to true");
-
-    // Create container and label in DOM
+    const create = hud.sandbox.global.$.CreatePanel;
     const root = hud.root;
-    const statsContainer = hud.sandbox.global.$.CreatePanel("Panel", root, "StatsAndModsContainer");
-    const goldContainer = hud.sandbox.global.$.CreatePanel("Panel", root, "gold_and_ap_container");
-    const deathGoldContainer = hud.sandbox.global.$.CreatePanel("Panel", goldContainer, "");
-    deathGoldContainer.AddClass("hudDeathGoldContainer");
-    const dealthGoldLabel = hud.sandbox.global.$.CreatePanel("Label", deathGoldContainer, "hudDealthGoldLabel");
-    dealthGoldLabel.AddClass("death_penalty_gold");
-    dealthGoldLabel.text = "125";
-
-    // Enable better unsecured HUD
-    const newConfig = Object.assign({}, defaultCfg, {
-        ENABLE_BETTER_UNSECURED: 1,
-        UNSECURED_SOULS_HUD_X_OFFSET: defaultCfg.UNSECURED_SOULS_HUD_X_OFFSET,
-        UNSECURED_SOULS_HUD_Y_OFFSET: defaultCfg.UNSECURED_SOULS_HUD_Y_OFFSET
+    // IDs/classes from Valve's hud.xml and hud_gold_and_ap_container.xml.
+    // This fixture checks JS visibility transitions, not Panorama rendering.
+    const stats = create("Panel", root, "StatsAndModsContainer");
+    const gold = create("Panel", stats, "gold_and_ap_container");
+    const container = create("Panel", gold, "");
+    container.AddClass("hudDeathGoldContainer");
+    const config = Object.assign({}, hud.sandbox.global.QOL_DEFAULT_CONFIG, {
+        ENABLE_BETTER_UNSECURED: 1
     });
-    hud.root.SetAttributeString("Deadlock_Mod_Settings_v1", JSON.stringify({ schema: "3.1.9", data: newConfig }));
+    root.SetAttributeString("Deadlock_Mod_Settings_v1", JSON.stringify({ schema: "4.0.0", data: config }));
     hud.clock.advance(1000);
-
     const overlay = root.FindChildTraverse("QOLBetterUnsecuredOverlay");
-    assert.ok(overlay, "QOLBetterUnsecuredOverlay must be created");
-    assert.strictEqual(overlay.style.marginLeft, "115px", "marginLeft must be 115px (115 + 0)");
-    assert.strictEqual(overlay.style.marginBottom, "130px", "marginBottom must be 130px (130 - 0)");
-    assert.notStrictEqual(overlay.style.x, "115px", "overlay must not set style.x to avoid alias conflict");
+    assert.ok(overlay.BHasClass("qol-hidden"), "No source yet: overlay stays hidden");
+
+    const label = create("Label", container, "hudDealthGoldLabel");
+    label.AddClass("death_penalty_gold");
+    const mirror = overlay.FindChildTraverse("QOLBetterUnsecuredMirrorLabel");
+    for (const value of ["125", "0", "250", "0", "125"]) {
+        label.text = value;
+        hud.clock.advance(250);
+        assert.strictEqual(overlay.BHasClass("qol-hidden"), value === "0", `Visibility after ${value} souls`);
+        if (value !== "0") assert.strictEqual(mirror.text, value);
+    }
+    config.ENABLE_BETTER_UNSECURED = 0;
+    root.SetAttributeString("Deadlock_Mod_Settings_v1", JSON.stringify({ schema: "4.0.0", data: config }));
+    hud.clock.advance(1000);
+    assert.strictEqual(root.FindChildTraverse("QOLBetterUnsecuredOverlay"), null);
+    config.ENABLE_BETTER_UNSECURED = 1;
+    root.SetAttributeString("Deadlock_Mod_Settings_v1", JSON.stringify({ schema: "4.0.0", data: config }));
+    hud.clock.advance(1000);
+    const restored = root.FindChildTraverse("QOLBetterUnsecuredOverlay");
+    assert.strictEqual(restored.BHasClass("qol-hidden"), false);
+    assert.strictEqual(restored.FindChildTraverse("QOLBetterUnsecuredMirrorLabel").text, "125");
 });

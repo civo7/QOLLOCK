@@ -22,14 +22,14 @@ Creates a dedicated, highly customizable HUD overlay for unsecured souls that ca
 
 ### Activation & Lifecycle Hooks
 - **`onEnable()`**: Resolves `gameplay_hud`, constructs the `QOLBetterUnsecuredOverlay` panel tree, and registers a cooperative scheduler loop running at 5Hz (`0.2s`).
-- **`onDisable()`**: Cancels the scheduler loop, calls `safeDeletePanel` on `_panel`, and cleans up cached references.
+- **`onDisable()`**: Stops the polling loop, deletes the overlay with `DeleteAsync(0)`, and clears cached source/mirror references and layout signature.
 - **`onSettingsChanged()`**: Synchronizes transforms, scale, and visibility flags immediately upon config dispatch.
-- **`test()`**: Verifies that `gameplay_hud` and native `#hudDeathGoldContainer` exist in the DOM.
+- **`test()`**: Checks only whether `gameplay_hud` exists; it does not verify source text readability or overlay rendering.
 
 ### DOM Injection & Target Panels
 - **Parent Container**: Injected under `StatsAndModsContainer` (or `gameplay_hud` / root `#Hud` if unmounted).
 - **Injected Panels**:
-  - `Panel#QOLBetterUnsecuredOverlay`: Main container positioned via `marginLeft` and `marginBottom` offsets aligned with `StatsAndModsContainer` (preventing coordinate displacement caused by `vertical-align: bottom`).
+  - `Panel#QOLBetterUnsecuredOverlay`: Positioned via `marginLeft` and `marginBottom`, using the `115/130` baseline from the legacy runtime loaded at the 3.2.0 schema commit (`0907222`).
   - `Panel#QOLBetterUnsecuredMirrorIcon`: Displays the soul urn icon graphic.
   - `Label#QOLBetterUnsecuredMirrorLabel`: Primary numeric label mirroring current unsecured souls.
   - `Label#QOLBetterUnsecuredMirrorText`: Supplementary text badge.
@@ -41,8 +41,9 @@ Creates a dedicated, highly customizable HUD overlay for unsecured souls that ca
 - **Engine Events**: None.
 
 ### Performance Tier & Caveats
-- **Performance Tier**: Low (`~0.04ms` per tick).
+- **Runtime cost**: Not measured here; no per-tick millisecond or FPS guarantee.
 - **Suppression**:
   - Automatically hidden via `qol-hidden` (`visibility: collapse`) whenever unsecured soul count is zero (`sourceValue <= 0`), preventing screen clutter when not carrying souls.
-  - Fully visible in Hero Testing (`connectedToHeroTesting`) once souls are gathered, avoiding `.InHideout` opacity overrides.
+  - A later positive count must remove `qol-hidden`, including when the source label appears after the overlay. The manifest cutover (`cb46e0b`) omitted the legacy runtime's unconditional unhide; the transition regression now covers that case.
 - **Style Optimization**: Position coordinates, scale values, and visibility states are cached and diffed via signature comparison before applying style modifications.
+- **Verification boundary**: Offline checks cover count/visibility transitions and disable/re-enable. Native text access, placement, ancestor visibility in Hero Testing, and final rendering require a maintainer-built VPK and an in-game check.
