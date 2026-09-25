@@ -11,12 +11,12 @@ Creates a dedicated, highly customizable HUD overlay for unsecured souls that ca
 | Config Key | Type | Default | Description |
 | :--- | :--- | :--- | :--- |
 | `ENABLE_BETTER_UNSECURED` | `toggle` | `false` | Master toggle to enable the enhanced unsecured souls HUD overlay. |
-| `UNSECURED_SOULS_HUD_SCALE` | `slider` | `1.0` | Scale multiplier for the unsecured souls HUD element (0.5 to 2.5). |
-| `UNSECURED_SOULS_HUD_X_OFFSET` | `slider` | `0` | Horizontal pixel offset shifting the overlay position. |
-| `UNSECURED_SOULS_HUD_Y_OFFSET` | `slider` | `0` | Vertical pixel offset shifting the overlay position. |
+| `UNSECURED_SOULS_HUD_SCALE` | `slider` | `100` | Scale multiplier percentage for the unsecured souls HUD element (50 to 200). |
+| `UNSECURED_SOULS_HUD_X_OFFSET` | `slider` | `0` | Horizontal pixel offset shifting the overlay position (-1000 to 2000). |
+| `UNSECURED_SOULS_HUD_Y_OFFSET` | `slider` | `1095` | Vertical pixel offset shifting the overlay position (800 to 2000). |
 | `ENABLE_BETTER_UNSECURED_SHOW_ICON` | `toggle` | `true` | Toggles display of the unsecured soul urn icon. |
-| `ENABLE_BETTER_UNSECURED_SHOW_TEXT` | `toggle` | `true` | Toggles display of the numeric unsecured souls counter. |
-| `ENABLE_BETTER_UNSECURED_SHOW_ICON_TEXT` | `toggle` | `false` | Toggles display of the secondary text label indicator. |
+| `ENABLE_BETTER_UNSECURED_SHOW_TEXT` | `toggle` | `false` | Toggles display of the secondary text label indicator. |
+| `ENABLE_BETTER_UNSECURED_SHOW_ICON_TEXT` | `toggle` | `false` | Legacy key: toggles display of both icon and text simultaneously. |
 
 ## Architecture & Lifecycle
 
@@ -43,6 +43,6 @@ Creates a dedicated, highly customizable HUD overlay for unsecured souls that ca
 ### Performance Tier & Caveats
 - **Performance Tier**: Low (`~0.04ms` per tick).
 - **Suppression**:
-  - Suppressed in the Hideout/Sandbox lobby (`connectedToHideout` / `InHideout`).
-  - Hides automatically via the `hidden_zero` CSS class whenever unsecured soul count drops to zero to prevent screen clutter.
+  - Automatically hidden via `qol-hidden` (`visibility: collapse`) whenever unsecured soul count is zero (`sourceValue <= 0`), preventing screen clutter when not carrying souls.
+  - Fully visible in Hero Testing (`connectedToHeroTesting`) once souls are gathered, avoiding `.InHideout` opacity overrides.
 - **Style Optimization**: Position coordinates, scale values, and visibility states are cached and diffed via signature comparison before applying style modifications.

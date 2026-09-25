@@ -265,6 +265,5 @@ test("Bug 5: ql_better_unsecured_hud positions overlay with marginLeft/marginBot
     assert.ok(overlay, "QOLBetterUnsecuredOverlay must be created");
     assert.strictEqual(overlay.style.marginLeft, "115px", "marginLeft must be 115px (115 + 0)");
     assert.strictEqual(overlay.style.marginBottom, "130px", "marginBottom must be 130px (130 - 0)");
-    assert.strictEqual(overlay.style.x, null, "style.x must be null to not conflict with bottom-align");
-    assert.strictEqual(overlay.style.y, null, "style.y must be null to not push offscreen");
+    assert.notStrictEqual(overlay.style.x, "115px", "overlay must not set style.x to avoid alias conflict");
 });

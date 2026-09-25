@@ -201,12 +201,12 @@
 .InHideout #QOLKeyboardOverlayRoot,
 .InHideout #QOLZipBoostOverlay,
 .InHideout #QOLStatBonusesOverlay,
-.InHideout #QOLCompassRoot,
-.InHideout #QOLBetterUnsecuredOverlay
+.InHideout #QOLCompassRoot
 {
     opacity: 0;
 }
 
+.connectedToHeroTesting #QOLBetterUnsecuredOverlay,
 .connectedToHeroTesting #QOLItemMirrorRoot
 {
     opacity: 1;

@@ -262,8 +262,6 @@
                 if (!overlay.BHasClass || !overlay.BHasClass("qol-hidden")) { if (overlay.SetHasClass) overlay.SetHasClass("qol-hidden", false); else overlay.style.visibility = "visible"; }
                 overlay.style.marginLeft = targetX + "px";
                 overlay.style.marginBottom = targetY + "px";
-                overlay.style.x = null;
-                overlay.style.y = null;
 
                 if (mirrorIcon.SetHasClass) mirrorIcon.SetHasClass("qol-hidden", !showIcon); else mirrorIcon.style.visibility = showIcon ? "visible" : "collapse";
                 if (mirrorText.SetHasClass) mirrorText.SetHasClass("qol-hidden", !showText); else mirrorText.style.visibility = showText ? "visible" : "collapse";
