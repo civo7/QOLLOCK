@@ -101,11 +101,56 @@
         if (list.length === 0) loops.delete(featureId);
     };
 
+    let _lastHideoutCheckMs = 0;
+    let _cachedInHideout = false;
+    const HIDEOUT_CHECK_INTERVAL_MS = 250;
+    const HIDEOUT_IDLE_RATE_SEC = 1.5;
+
+    const isMatchInHideout = () => {
+        const now = nowMs();
+        if (now - _lastHideoutCheckMs < HIDEOUT_CHECK_INTERVAL_MS) {
+            return _cachedInHideout;
+        }
+        _lastHideoutCheckMs = now;
+        try {
+            const hud = (Q.core?.panel?.findHud && Q.core.panel.findHud()) ||
+                        (typeof $ !== "undefined" && typeof $.GetContextPanel === "function" ? $.GetContextPanel() : null);
+            if (hud && typeof hud.BHasClass === "function") {
+                _cachedInHideout = hud.BHasClass("InHideout");
+                return _cachedInHideout;
+            }
+        } catch (_) {}
+        _cachedInHideout = false;
+        return false;
+    };
+
+    const wakeAllLoops = () => {
+        _lastHideoutCheckMs = 0;
+        _cachedInHideout = false;
+        loops.forEach((list) => {
+            if (!Array.isArray(list)) return;
+            for (let i = 0; i < list.length; i++) {
+                const l = list[i];
+                if (l && typeof l.wake === "function") {
+                    try { l.wake(); } catch (_) {}
+                }
+            }
+        });
+    };
+
+    if (EventBus && typeof EventBus.on === "function") {
+        try {
+            EventBus.on("engine:game_state_changed", () => {
+                wakeAllLoops();
+            });
+        } catch (_) {}
+    }
+
     // -- Public API --
-    const createPollLoop = (callback, rateSec, featureId) => {
+    const createPollLoop = (callback, rateSec, featureId, options) => {
         if (typeof callback !== "function") {
             $.Msg("[QOLLock][WARN][Scheduler] createPollLoop requires a function callback");
-            return { stop: () => {}, reschedule: () => {} };
+            return { stop: () => {}, reschedule: () => {}, wake: () => {} };
         }
 
         let stopped = false;
@@ -121,6 +166,18 @@
                 loop.stop();
                 return;
             }
+
+            const inHideout = isMatchInHideout();
+            const allowInHideout = !!(options && options.runsInHideout);
+
+            if (inHideout && !allowInHideout) {
+                // In-match feature: back off to idle rate when in Hideout (main menu)
+                if (!stopped) {
+                    handle = $.Schedule(HIDEOUT_IDLE_RATE_SEC, tick);
+                }
+                return;
+            }
+
             let perfActive = false;
             try {
                 const s = getState();
@@ -170,6 +227,14 @@
                 if (typeof newRateSec === "number" && newRateSec > 0) {
                     rate = newRateSec;
                 }
+            },
+            wake: () => {
+                if (stopped) return;
+                if (handle !== null) {
+                    $.CancelScheduled(handle);
+                    handle = null;
+                }
+                tick();
             }
         };
 
@@ -414,6 +479,8 @@
         createPollLoop,
         cancelAll: cancelAllForFeature,
         cancelAllForFeature,
+        wakeAllLoops,
+        isMatchInHideout,
         getTimings,
         resetTimings,
         startBenchmark,

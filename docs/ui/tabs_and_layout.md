@@ -102,10 +102,8 @@ Because layout is purely declarative:
 
 ---
 
-## 5. Tab Rail & Window Action Controls
+## 5. Window Action Controls
 
-- **Tab Footer Actions (`DragToggleBtnRail`)**:
-  The bottom of the sidebar rail (`tabFooter`) houses global mod actions alongside Discord and Version links. `DragToggleBtnRail` toggles free-form dragging mode (`MOD_CONFIG.DRAG_ENABLED`) via `Q.ui.drag.wireDragToggleButton`.
 - **Window Close Semantics (`forceCloseModSettings`)**:
   Closing the settings window (via the header close button 'X' or ESC handling) toggles the visibility of the `SettingsWindow` panel without dispatching `CitadelResumePlaying`. This ensures that closing the QOLLOCK settings window preserves Deadlock's native Escape Menu rather than dismissing the pause state.
 

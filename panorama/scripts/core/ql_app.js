@@ -578,6 +578,11 @@
                     shutdown();
                     return;
                 }
+                try {
+                    if (typeof ClearPanelCache === "function") ClearPanelCache();
+                    if (typeof PanelCache !== "undefined" && typeof PanelCache.clear === "function") PanelCache.clear();
+                    if (QOL?.panelCache && typeof QOL.panelCache.clear === "function") QOL.panelCache.clear();
+                } catch (_) {}
                 if (hud) _syncRootClasses(hud);
                 if (QOL?.core?.EventBus) {
                     try { QOL.core.EventBus.emit("engine:game_state_changed"); } catch (_) {}

@@ -19,4 +19,7 @@ Provides a cooperative polling scheduler and performance timing harness (`QOL.co
 ## Performance & Lifecycle Invariants
 - High-frequency polling (< 0.2s / > 5Hz) requires explicit `// rate-exempt: <reason>` documentation enforced by `tests/manifest_poll_rates.test.js`.
 - Features that can be event-driven should use native engine events and reduce their idle polling rate to 1.0s or 0.5s.
-- Polling loops created via `createPollLoop` verify the validity of their owner panel context (`$.GetContextPanel()`). If the owner panel is destroyed (such as when leaving a match back to the lobby), the loop automatically self-terminates (`loop.stop()`), eliminating orphaned background timers and post-match stuttering/hitching.
+- **Persistent HUD & Hideout Lifecycle Gating**: Deadlock's `CitadelHud` persists across match transitions and gains the `.InHideout` class when returning to the main menu lobby (sandbox environment). In this state, native in-game HUD elements are collapsed by Valve's CSS (`opacity: 0; pre-transform-scale2d: 0.9`).
+- **Idle Rate Backoff (1.5s)**: In-match polling loops created via `createPollLoop` automatically detect `.InHideout` and back off execution to `1.5s` (skipping DOM traversals and style mutations). This prevents render-thread layout thrashing, avoids resetting CSS transitions, and completely eliminates post-match frame hitching and jitter at 200 FPS. Features requiring hideout execution can specify `options.runsInHideout = true`.
+- **Instant Match Wakeup (`wakeAllLoops`)**: Upon receiving `engine:game_state_changed` (e.g. entering a match), `wakeAllLoops()` immediately awakens all backed-off loops, resuming configured polling frequencies (e.g. 50ms) without delay.
+

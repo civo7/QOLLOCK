@@ -87,4 +87,25 @@ Critical runtime constraints and architectural traps discovered across Deadlock 
 - **Trap:** Directly writing physical pixel values into inline styles (`panel.style.x = x + "px"`) causes double-scaling on non-1080p monitors. On 1440p (`1.333x`) and 4K (`2.0x`), coordinates are scaled twice by the engine, pushing tooltips, popups, and preview overlays far off the right or bottom edges of the screen.
 - **Solution:** Always normalize physical coordinates to virtual units before assigning inline styles by dividing by `host.actualuiscale_x` and `host.actualuiscale_y` (or `actuallayoutwidth / desiredlayoutwidth`).
 
+---
+
+## 9. Persistent CitadelHud & Post-Match Frame Jitter (.InHideout Transition)
+
+- `CitadelHud` is **never destroyed** between matches. In Deadlock, the main menu lobby is a live 3D sandbox ("Hideout").
+- Upon match exit back to the lobby, `CitadelHud` receives the `.InHideout` class, which triggers a native 210ms compositor transition:
+  ```css
+  .InHideout #TopBar, .InHideout #health_and_abilities_container, ... {
+      opacity: 0;
+      pre-transform-scale2d: 0.9;
+      transition-property: opacity, pre-transform-scale2d;
+      transition-duration: 0.21s;
+  }
+  ```
+- **Trap:** In-match features running 20Hz polling loops in the lobby that write inline styles (`style.opacity = 1` or clear styles) interrupt this transition every 50ms, dirtying C++ render layers. Simultaneously, searching for collapsed match panels with recursive DOM walks (`CollectFromSubtree(root)`) stalls the render thread presentation. At 200 FPS (5.0ms frame budget), this produces severe visual hitching/jittering without spiking V8 JavaScript execution time.
+- **Rule:**
+  - Feature poll loops must back off to `1.5s` idle intervals during `.InHideout` via `QOL.core.Scheduler`.
+  - When panel traversal fails to find expected containers, back off probe scans rather than walking the full DOM root every tick.
+  - Flush cached panels via `PanelCache.clear()` on `CitadelGameStateChanged`.
+
+
 

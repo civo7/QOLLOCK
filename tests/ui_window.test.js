@@ -229,9 +229,6 @@ test("window: footer renders Discord and Version buttons", () => {
     const discordBtn = footer.FindChildTraverse("FooterDiscordRailButton");
     assert.ok(discordBtn, "FooterDiscordRailButton must exist");
 
-    const dragBtn = footer.FindChildTraverse("DragToggleBtnRail");
-    assert.ok(dragBtn, "DragToggleBtnRail must exist");
-
     const versionBtn = footer.FindChildTraverse("FooterVersionLabel");
     assert.ok(versionBtn, "FooterVersionLabel must exist");
 });

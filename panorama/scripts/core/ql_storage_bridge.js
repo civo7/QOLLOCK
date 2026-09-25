@@ -350,6 +350,23 @@
             _log("Bridge connected and ready.");
             _processQueue();
 
+            if (_bridgePanel) {
+                try {
+                    if (typeof _bridgePanel.AddClass === "function") {
+                        _bridgePanel.AddClass("BridgeReady");
+                    }
+                    if (typeof _bridgePanel.SetAttributeString === "function") {
+                        _bridgePanel.SetAttributeString("QOL_BridgeReady", "1");
+                    }
+                } catch (_) {}
+            }
+            if (_watchdogTimer) {
+                if (typeof $.CancelScheduled === "function") {
+                    try { $.CancelScheduled(_watchdogTimer); } catch (_) {}
+                }
+                _watchdogTimer = null;
+            }
+
             if (_autoloadEnabled && !_hasAutoloaded) {
                 _hasAutoloaded = true;
                 storageBridgeApi.loadSettings((err, res) => {
@@ -474,20 +491,38 @@
      * Initializes or locates the CitadelHTMLPanel bridge.
      */
     const init = (targetParent, options) => {
-        if (_isPanelAlive(_bridgePanel)) return _bridgePanel;
-
         if (options && typeof options.autoload === "boolean") {
             _autoloadEnabled = options.autoload;
         }
 
-        const parent = targetParent || _findRootPanel() || (typeof $.GetContextPanel === "function" ? $.GetContextPanel() : null);
-        if (!parent) {
-            _logWarn("init: no parent panel found to mount storage bridge");
-            return null;
+        if (_isPanelAlive(_bridgePanel)) {
+            if (_bridgeReady && _autoloadEnabled && !_hasAutoloaded) {
+                _hasAutoloaded = true;
+                storageBridgeApi.loadSettings().catch(() => {});
+            }
+            return _bridgePanel;
         }
 
-        let panel = parent.FindChildTraverse ? parent.FindChildTraverse(BRIDGE_PANEL_ID) : null;
+        const root = _findRootPanel();
+        let panel = null;
+        if (root && root.FindChildTraverse) {
+            panel = root.FindChildTraverse(BRIDGE_PANEL_ID);
+        }
         if (!_isPanelAlive(panel)) {
+            const fallbackParent = targetParent || (typeof $.GetContextPanel === "function" ? $.GetContextPanel() : null);
+            if (fallbackParent && fallbackParent.FindChildTraverse) {
+                panel = fallbackParent.FindChildTraverse(BRIDGE_PANEL_ID);
+            }
+        }
+
+        const isReused = _isPanelAlive(panel);
+
+        if (!isReused) {
+            const parent = root || targetParent || (typeof $.GetContextPanel === "function" ? $.GetContextPanel() : null);
+            if (!parent) {
+                _logWarn("init: no parent panel found to mount storage bridge");
+                return null;
+            }
             if (typeof $.CreatePanel === "function") {
                 try {
                     panel = $.CreatePanel("CitadelHTMLPanel", parent, BRIDGE_PANEL_ID);
@@ -504,8 +539,6 @@
         }
 
         _bridgePanel = panel;
-        _bridgeReady = false;
-        _isPageLoaded = false;
 
         // Panel presentation setup: keep minimal, non-interactive, but visible so Chromium timers tick
         panel.AddClass("QOLStorageBridge");
@@ -526,17 +559,35 @@
             }
         }
 
-        if (typeof panel.SetURL === "function") {
-            try {
-                panel.SetURL(BRIDGE_LOCAL_URL);
-                _log(`Mounting bridge URL: ${BRIDGE_LOCAL_URL}`);
-            } catch (e) {
-                _logWarn(`panel.SetURL failed: ${e?.message || e}`);
+        const isAlreadyReady = (panel.BHasClass && panel.BHasClass("BridgeReady")) ||
+            (panel.GetAttributeString && panel.GetAttributeString("QOL_BridgeReady", "") === "1");
+
+        if (isAlreadyReady) {
+            _bridgeReady = true;
+            _isPageLoaded = true;
+            if (_autoloadEnabled && !_hasAutoloaded) {
+                _hasAutoloaded = true;
+                storageBridgeApi.loadSettings().catch(() => {});
             }
+            return _bridgePanel;
         }
 
-        if (typeof $.Schedule === "function") {
-            _watchdogTimer = $.Schedule(WATCHDOG_INTERVAL_SEC, _watchdogTick);
+        _bridgeReady = false;
+        _isPageLoaded = false;
+
+        if (!isReused) {
+            if (typeof panel.SetURL === "function") {
+                try {
+                    panel.SetURL(BRIDGE_LOCAL_URL);
+                    _log(`Mounting bridge URL: ${BRIDGE_LOCAL_URL}`);
+                } catch (e) {
+                    _logWarn(`panel.SetURL failed: ${e?.message || e}`);
+                }
+            }
+
+            if (typeof $.Schedule === "function") {
+                _watchdogTimer = $.Schedule(WATCHDOG_INTERVAL_SEC, _watchdogTick);
+            }
         }
 
         return _bridgePanel;
@@ -801,7 +852,9 @@
     // Auto-initialize when loaded into a live Panorama panel context
     if (typeof $ !== "undefined" && typeof $.GetContextPanel === "function") {
         try {
-            init($.GetContextPanel(), { autoload: true });
+            const ctx = $.GetContextPanel();
+            const isEscapeMenu = !!(ctx && (ctx.id === "EscapeMenu" || (Q.ROLE && Q.ROLE === "em")));
+            init(ctx, { autoload: !isEscapeMenu });
         } catch (e) {
             _logWarn(`Auto-init failed: ${e?.message || e}`);
         }

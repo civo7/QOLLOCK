@@ -299,19 +299,6 @@
         const footerRule = createPanel("Panel", _tabRailFooter, "SettingsTabRailFooterRule");
         if (footerRule) footerRule.AddClass("SettingsTabRailFooterRule");
 
-        // 0. Drag Button
-        const dragBtn = createPanel("Button", _tabRailFooter, "DragToggleBtnRail");
-        if (dragBtn) {
-            dragBtn.AddClass("TabItem");
-            dragBtn.AddClass("TabAction");
-            dragBtn.AddClass("DragToggleTabAction");
-            if (Q.ui?.drag?.wireDragToggleButton) {
-                Q.ui.drag.wireDragToggleButton(dragBtn, findShell());
-            } else if (typeof globalThis.WireDragToggleButton === "function") {
-                globalThis.WireDragToggleButton(dragBtn, findShell());
-            }
-        }
-
         // 1. Discord Button
         const discordBtn = createPanel("Button", _tabRailFooter, "FooterDiscordRailButton");
         if (discordBtn) {
@@ -1357,21 +1344,6 @@
             const newsFooterBtn = tabFooter.FindChildTraverse("FooterNewsLinkButton");
             if (newsFooterBtn) newsFooterBtn.DeleteAsync(0);
 
-            let dragFooterBtn = tabFooter.FindChildTraverse("DragToggleBtnRail");
-            if (!dragFooterBtn) {
-                dragFooterBtn = createPanel("Button", tabFooter, "DragToggleBtnRail");
-            }
-            if (dragFooterBtn) {
-                dragFooterBtn.AddClass("TabItem");
-                dragFooterBtn.AddClass("TabAction");
-                dragFooterBtn.AddClass("DragToggleTabAction");
-                if (Q.ui?.drag?.wireDragToggleButton) {
-                    Q.ui.drag.wireDragToggleButton(dragFooterBtn, win);
-                } else if (typeof globalThis.WireDragToggleButton === "function") {
-                    globalThis.WireDragToggleButton(dragFooterBtn, win);
-                }
-            }
-
             let saveFooterBtn = tabFooter.FindChildTraverse("FooterSaveBuildButton");
             let discordFooterBtn = tabFooter.FindChildTraverse("FooterDiscordRailButton");
             if (!discordFooterBtn) {
@@ -1450,9 +1422,6 @@
                         globalThis.ActivateBuildSaveFromUi(saveFooterBtn, saveFooterLabel);
                     }
                 });
-                if (tabFooter.MoveChildBefore && dragFooterBtn && discordFooterBtn) {
-                    try { tabFooter.MoveChildBefore(dragFooterBtn, discordFooterBtn); } catch (_) {}
-                }
                 if (tabFooter.MoveChildBefore && discordFooterBtn && saveFooterBtn) {
                     try { tabFooter.MoveChildBefore(discordFooterBtn, saveFooterBtn); } catch (_) {}
                 }
@@ -1508,6 +1477,8 @@
         if (staleSubHeader) staleSubHeader.DeleteAsync(0);
         const staleSubHeaderActions = tabHost.FindChildTraverse("SettingsSubHeaderActions");
         if (staleSubHeaderActions) staleSubHeaderActions.DeleteAsync(0);
+        const dragBtnRailExisting = tabHost.FindChildTraverse("DragToggleBtnRail");
+        if (dragBtnRailExisting) dragBtnRailExisting.DeleteAsync(0);
         const previewBtnRailExisting = tabHost.FindChildTraverse("PreviewToggleBtnRail");
         if (previewBtnRailExisting) previewBtnRailExisting.DeleteAsync(0);
         const impBtnRailExisting = tabHost.FindChildTraverse("ImportSettingsBtnRail");

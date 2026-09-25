@@ -651,9 +651,7 @@
                         CollectFromSubtree(subtree);
                     }
             
-                    if (out.length === 0) {
-                        CollectFromSubtree(root);
-                    }
+                    // Do not perform exhaustive full-DOM scan when focused mod roots are absent/collapsed
                     return out;
                 }
             
@@ -1928,6 +1926,14 @@
                     if (_loop) _loop.reschedule(ITEM_MIRROR_RENDER_INTERVAL_MS_IDLE / 1000);
                     return;
                 }
+                var inHideout = (QOL?.core?.hud?.isInHideout)
+                    ? QOL.core.hud.isInHideout(hud)
+                    : !!(hud && hud.BHasClass && (hud.BHasClass("InHideout") || hud.BHasClass("connectedToHideout")));
+                if (inHideout) {
+                    if (_overlay) _hideOverlay();
+                    if (_loop) _loop.reschedule(ITEM_MIRROR_RENDER_INTERVAL_MS_IDLE / 1000);
+                    return;
+                }
                 var nowMs = _nowMs();
                 var abilities = hud.FindChildTraverse('abilitiesContainer');
                 var shopOpen = !!(abilities && abilities.BHasClass('gShopOpen'));
@@ -1938,12 +1944,13 @@
                     return;
                 }
                 var sources = _mirror.sources;
-                var sourcesValid = sources.every(function(s) { return _isAlive(s.ownerIcon) && _isAlive(s.iconContainer); });
-                if (shopJustClosed || !sourcesValid || sources.length === 0 || nowMs >= _nextScanMs) {
+                var sourcesValid = sources.length > 0 && sources.every(function(s) { return _isAlive(s.ownerIcon) && _isAlive(s.iconContainer); });
+                var needsScan = shopJustClosed || (nowMs >= _nextScanMs);
+                if (needsScan) {
                     var scan = _buildItemMirrorSourcesMulti(hud, cfg);
                     var signature = 'modsContainers=' + scan.modsContainersCount + ';scan=' + scan.scannedCount + ';found=' + scan.matches.length + ';' + scan.structureSummary.join(';');
                     var stable = signature === _lastSignature && sourcesValid && sources.length > 0 && scan.matches.length > 0;
-                    _nextScanMs = nowMs + (stable && !shopJustClosed ? 5270 : ITEM_MIRROR_PROBE_SCAN_MS);
+                    _nextScanMs = nowMs + (stable && !shopJustClosed ? 5270 : (scan.matches.length === 0 ? 1500 : ITEM_MIRROR_PROBE_SCAN_MS));
                     _lastSignature = signature;
                     sources = _reconcileItemMirrorSourcesMulti(scan.matches);
                 }

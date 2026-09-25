@@ -75,6 +75,7 @@
             function _tick() {
                 var root = $.GetContextPanel();
                 if (!root) return;
+                if (root.BHasClass && root.BHasClass("InHideout")) return;
 
                 var cfg = ctx.config.view();
                 var panel = _getStatsPanel(root);

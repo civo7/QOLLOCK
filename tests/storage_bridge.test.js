@@ -42,7 +42,11 @@ function createTestEnvironment() {
 
     const mockDollar = {
         Msg: () => {},
-        Schedule: (delaySec, cb) => setTimeout(cb, delaySec * 1000),
+        Schedule: (delaySec, cb) => {
+            const t = setTimeout(cb, delaySec * 1000);
+            if (t && typeof t.unref === "function") t.unref();
+            return t;
+        },
         CancelScheduled: (id) => clearTimeout(id),
         CreatePanel: (type, parent, id) => {
             const p = doc.create(type, { id: id || "" });
@@ -519,4 +523,25 @@ test("storage_bridge: QOL_BRIDGE_ERROR marks ready as false", () => {
     fireTitleEvent(panel, "QOL_BRIDGE_ERROR:StorageAccessDenied");
     assert.strictEqual(bridge.isReady(), false, "Bridge ready reset to false on error");
 });
+
+test("storage_bridge: init reuses existing panel from root without creating duplicate", () => {
+    const { sandbox, rootPanel } = createTestEnvironment();
+    const bridge = sandbox.QOL.core.storageBridge;
+    const initialPanel = bridge.getPanel();
+    assert.ok(initialPanel);
+
+    // Escape menu context panel
+    const escapeMenu = {
+        id: "EscapeMenu",
+        paneltype: "CitadelEscapeMenu",
+        GetParent: () => rootPanel,
+        FindChildTraverse: (id) => (id === "QOLStorageBridge" ? null : null),
+        IsValid: () => true
+    };
+
+    // Call init from escape menu context
+    const reusedPanel = bridge.init(escapeMenu, { autoload: false });
+    assert.strictEqual(reusedPanel, initialPanel, "Must reuse existing CitadelHTMLPanel from root");
+});
+
 

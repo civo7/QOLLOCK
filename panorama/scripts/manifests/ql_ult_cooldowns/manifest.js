@@ -129,6 +129,11 @@
             function _tick() {
                 if (!_running) return;
 
+                var topBar = _getTopBar();
+                if (!_isAlive(topBar) || (topBar.BHasClass && topBar.BHasClass("InHideout"))) {
+                    return;
+                }
+
                 // Quick pass if cached slots are all alive
                 var allAlive = _cachedSlots.length > 0;
                 for (var s = 0; s < _cachedSlots.length; s++) {

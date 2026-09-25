@@ -75,7 +75,7 @@ test("Bug 1 & 2: ql_ammo enables when slider is customized and neutral scale lea
     assert.strictEqual(ap.style.y, null);
 });
 
-test("Bug 3: DragToggleBtnRail exists in window tabFooter and toggles drag state", () => {
+test("Bug 3: setupSettingsWindowDragging attaches drag handles to header without rail toggle button", () => {
     const { Document } = require("../scripts/simulator/panel.js");
     const { Clock } = require("../scripts/simulator/clock.js");
 
@@ -127,7 +127,7 @@ test("Bug 3: DragToggleBtnRail exists in window tabFooter and toggles drag state
             ui: {},
             events: { emit: () => {} },
         },
-        MOD_CONFIG: { DRAG_ENABLED: 0 },
+        MOD_CONFIG: { DRAG_ENABLED: 1 },
         setTimeout,
         clearTimeout,
     };
@@ -143,13 +143,12 @@ test("Bug 3: DragToggleBtnRail exists in window tabFooter and toggles drag state
     sandbox.QOL.ui.window.buildUI();
 
     const dragBtn = win.FindChildTraverse("DragToggleBtnRail");
-    assert.ok(dragBtn, "DragToggleBtnRail must be created in SettingsWindow");
-    assert.strictEqual(dragBtn.BHasClass("DragToggleTabAction"), true, "Must have DragToggleTabAction class");
+    assert.strictEqual(dragBtn, null, "DragToggleBtnRail must NOT be in SettingsWindow UI");
 
-    // Click drag button
-    dragBtn.activate();
-    assert.strictEqual(sandbox.MOD_CONFIG.DRAG_ENABLED, 1, "Clicking drag button must enable DRAG_ENABLED");
-    assert.strictEqual(dragBtn.BHasClass("Active"), true, "Drag button must have Active class when enabled");
+    const leftHandle = header.FindChildTraverse("SettingsHeaderDragAreaLeft");
+    const rightHandle = header.FindChildTraverse("SettingsHeaderDragAreaRight");
+    assert.ok(leftHandle, "SettingsHeaderDragAreaLeft must exist");
+    assert.ok(rightHandle, "SettingsHeaderDragAreaRight must exist");
 });
 
 test("Bug 4: Closing SettingsWindow does not close the Escape Menu", () => {

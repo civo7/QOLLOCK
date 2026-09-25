@@ -45,4 +45,6 @@ Replaces legacy hero build hijacking with instant, robust LevelDB storage that r
 - Saving completes asynchronously within 5–15 milliseconds (down from 20–30 seconds under legacy build storage).
 - Sequential chunking guarantees safe transfer of any payload size without hitting the C++ engine 4KB title buffer limitation.
 - Strict FIFO queue guarantees serialized execution and prevents title race conditions.
+- **Singleton Panel Reuse**: `init()` checks for an existing `QOLStorageBridge` on the root panel across all Panorama script contexts. This prevents duplicate `CitadelHTMLPanel` creation and dual navigations when both `hud.xml` and `hud_escape_menu.xml` are active.
+- **Realm-Aware Autoloading**: Autoloading on startup is restricted to the primary HUD realm (`Q.ROLE === "hud"`). The Escape Menu realm reuses the existing panel for user saves/loads while avoiding duplicate boot loads.
 
