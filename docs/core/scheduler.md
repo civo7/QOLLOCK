@@ -9,17 +9,17 @@ Provides a cooperative polling scheduler and performance timing harness (`QOL.co
 
 ## Interface (`QOL.core.Scheduler`)
 - `createPollLoop(fn, intervalSec, featureId)`: Creates and starts a managed polling loop ticking at `intervalSec`. Returns a controller object `{ stop(), reschedule(newIntervalSec) }`.
-- `schedule(delaySec, fn, featureId)`: One-shot delayed execution wrapped with error isolation and timing metrics.
-- `cancel(handle)`: Cancels a pending scheduled handle.
-- `cancelAllForFeature(featureId)`: Cancels all active timers and loops associated with a given feature.
-- `getStats()`: Returns execution metrics dictionary `{ <featureId>: { count, total, max, slow } }`.
-- `resetStats()`: Resets all benchmark counters.
+- `schedule(fn, intervalSec, featureId)`: Alias of `createPollLoop`; this is recurring, not one-shot execution.
+- `cancelAllForFeature(featureId)` / `cancelAll(featureId)`: Stops the registered polling loops for a feature.
+- `getTimings(featureId?)`: Returns recorded timings for one feature or all features while profiling is enabled.
+- `resetTimings(featureId?)`: Clears recorded timings.
 - `startBenchmark(durationSec, onComplete)`: Initiates a live in-game benchmark over `durationSec` seconds with periodic progress heartbeats, spike detection alerts (>= 8ms), and structured console reporting upon completion. Returns `{ stop() }`.
 
 ## Performance & Lifecycle Invariants
 - High-frequency polling (< 0.2s / > 5Hz) requires explicit `// rate-exempt: <reason>` documentation enforced by `tests/manifest_poll_rates.test.js`.
 - Features that can be event-driven should use native engine events and reduce their idle polling rate to 1.0s or 0.5s.
-- **Persistent HUD & Hideout Lifecycle Gating**: Deadlock's `CitadelHud` persists across match transitions and gains the `.InHideout` class when returning to the main menu lobby (sandbox environment). In this state, native in-game HUD elements are collapsed by Valve's CSS (`opacity: 0; pre-transform-scale2d: 0.9`).
-- **Idle Rate Backoff (1.5s)**: In-match polling loops created via `createPollLoop` automatically detect `.InHideout` and back off execution to `1.5s` (skipping DOM traversals and style mutations). This prevents render-thread layout thrashing, avoids resetting CSS transitions, and completely eliminates post-match frame hitching and jitter at 200 FPS. Features requiring hideout execution can specify `options.runsInHideout = true`.
-- **Instant Match Wakeup (`wakeAllLoops`)**: Upon receiving `engine:game_state_changed` (e.g. entering a match), `wakeAllLoops()` immediately awakens all backed-off loops, resuming configured polling frequencies (e.g. 50ms) without delay.
+- Poll loops stop when their owning context panel becomes invalid. This protects callbacks from touching destroyed HUD trees.
+- The scheduler does not suppress callbacks based on `.InHideout`. Features need their callbacks to hide stale overlays, restore native UI, or handle lobby controls. The removed blanket gate prevented the custom cursor from clearing `cursor:none` on entry to Hideout.
+- Hideout work reduction belongs inside each feature, after required cleanup. Keep probe backoff and style-signature caching where their behavior is understood.
+- Source checks and offline scenarios cannot establish FPS improvements, compositor costs, or whether the client preserves a HUD across every transition. Measure those in the game after repacking.
 

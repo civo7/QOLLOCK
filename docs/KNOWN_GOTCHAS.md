@@ -89,23 +89,12 @@ Critical runtime constraints and architectural traps discovered across Deadlock 
 
 ---
 
-## 9. Persistent CitadelHud & Post-Match Frame Jitter (.InHideout Transition)
+## 9. Hideout Transitions and Feature Cleanup
 
-- `CitadelHud` is **never destroyed** between matches. In Deadlock, the main menu lobby is a live 3D sandbox ("Hideout").
-- Upon match exit back to the lobby, `CitadelHud` receives the `.InHideout` class, which triggers a native 210ms compositor transition:
-  ```css
-  .InHideout #TopBar, .InHideout #health_and_abilities_container, ... {
-      opacity: 0;
-      pre-transform-scale2d: 0.9;
-      transition-property: opacity, pre-transform-scale2d;
-      transition-duration: 0.21s;
-  }
-  ```
-- **Trap:** In-match features running 20Hz polling loops in the lobby that write inline styles (`style.opacity = 1` or clear styles) interrupt this transition every 50ms, dirtying C++ render layers. Simultaneously, searching for collapsed match panels with recursive DOM walks (`CollectFromSubtree(root)`) stalls the render thread presentation. At 200 FPS (5.0ms frame budget), this produces severe visual hitching/jittering without spiking V8 JavaScript execution time.
-- **Rule:**
-  - Feature poll loops must back off to `1.5s` idle intervals during `.InHideout` via `QOL.core.Scheduler`.
-  - When panel traversal fails to find expected containers, back off probe scans rather than walking the full DOM root every tick.
-  - Flush cached panels via `PanelCache.clear()` on `CitadelGameStateChanged`.
-
-
+- Valve's `hud.css` has `.InHideout` rules that set opacity and scale on HUD containers; `StatsAndModsContainer.gShopOpen` has a separate visibility treatment.
+- These CSS rules do not establish that `CitadelHud` is never destroyed, or that a particular JS change fixes post-match frame jitter. Both lifecycle and rendering claims require in-game evidence.
+- Do not skip all feature callbacks in the scheduler during Hideout. Callbacks can own cleanup: `ql_mouse_cursor` removes the root class that hides the native cursor, and item mirrors remove their overlays.
+- Stop loops when their owning context panel is invalid. While it remains valid, let each feature apply its own visibility and idle-work policy.
+- When no sources are found, back off probe scans rather than retrying the full tree every tick. When changing this behavior, also check recovery after sources are recreated.
+- `CitadelGameStateChanged` clears panel caches. It is not proof that all game classes and dynamically created panels have already reached their final state.
 
