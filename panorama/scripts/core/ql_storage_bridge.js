@@ -224,6 +224,14 @@
         if (req) {
             delete _pendingRequests[reqId];
             _cancelPendingTimer(req);
+            // A timed-out request may still be waiting for readiness or another request.
+            // Remove it before callbacks can enqueue more work or a later handshake drains it.
+            for (let i = 0; i < _requestQueue.length; i++) {
+                if (_requestQueue[i].id === reqId) {
+                    _requestQueue.splice(i, 1);
+                    break;
+                }
+            }
             if (err) {
                 if (typeof req.callback === "function") {
                     try { req.callback(err, null); } catch (_) {}
@@ -520,8 +528,8 @@
         }
 
         let panel = null;
-        if (parent.FindChildTraverse) {
-            panel = parent.FindChildTraverse(BRIDGE_PANEL_ID);
+        if (parent.FindChild) {
+            panel = parent.FindChild(BRIDGE_PANEL_ID);
         }
 
         if (!_isPanelAlive(panel)) {

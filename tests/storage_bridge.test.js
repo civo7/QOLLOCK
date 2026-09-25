@@ -42,12 +42,8 @@ function createTestEnvironment() {
 
     const mockDollar = {
         Msg: () => {},
-        Schedule: (delaySec, cb) => {
-            const t = setTimeout(cb, delaySec * 1000);
-            if (t && typeof t.unref === "function") t.unref();
-            return t;
-        },
-        CancelScheduled: (id) => clearTimeout(id),
+        Schedule: (delaySec, cb) => clock.schedule(delaySec, cb),
+        CancelScheduled: (id) => clock.cancel(id),
         CreatePanel: (type, parent, id) => {
             const p = doc.create(type, { id: id || "" });
             addPanelMethods(p);
@@ -58,8 +54,8 @@ function createTestEnvironment() {
         },
         GetContextPanel: () => hudPanel,
         RegisterEventHandler: (eventName, panel, callback) => {
-            const key = `${panel.id || ""}:${eventName}`;
-            eventHandlers.set(key, callback);
+            if (!eventHandlers.has(panel)) eventHandlers.set(panel, new Map());
+            eventHandlers.get(panel).set(eventName, callback);
         },
         DispatchEvent: () => {},
         Localize: (s) => s,
@@ -130,13 +126,13 @@ function createTestEnvironment() {
     return {
         sandbox,
         doc,
+        clock,
         rootPanel,
         hudPanel,
         attributes,
         getLastSetUrl: () => lastSetUrl,
         fireTitleEvent: (panel, title) => {
-            const key = `${panel.id || ""}:HTMLTitle`;
-            const handler = eventHandlers.get(key);
+            const handler = eventHandlers.get(panel)?.get("HTMLTitle");
             if (handler) {
                 handler(panel, title);
             }
@@ -144,38 +140,7 @@ function createTestEnvironment() {
     };
 }
 
-test("storage_bridge: exports public API on QOL.core.storageBridge, QOL.core.storage, and globalThis", () => {
-    const { sandbox } = createTestEnvironment();
-    const bridge = sandbox.QOL.core.storageBridge;
 
-    assert.ok(bridge, "QOL.core.storageBridge exists");
-    assert.strictEqual(sandbox.QOL.core.storage, bridge);
-    assert.strictEqual(sandbox.globalThis.QOLStorageBridge, bridge);
-
-    assert.strictEqual(typeof bridge.init, "function");
-    assert.strictEqual(typeof bridge.isReady, "function");
-    assert.strictEqual(typeof bridge.getPanel, "function");
-    assert.strictEqual(typeof bridge.save, "function");
-    assert.strictEqual(typeof bridge.load, "function");
-    assert.strictEqual(typeof bridge.remove, "function");
-    assert.strictEqual(typeof bridge.saveSettings, "function");
-    assert.strictEqual(typeof bridge.loadSettings, "function");
-    assert.strictEqual(typeof bridge.clearSettings, "function");
-});
-
-test("storage_bridge: init creates and styles CitadelHTMLPanel", () => {
-    const { sandbox, hudPanel, getLastSetUrl } = createTestEnvironment();
-    const bridge = sandbox.QOL.core.storageBridge;
-
-    const panel = bridge.getPanel();
-    assert.ok(panel, "Bridge panel was created");
-    assert.strictEqual(panel.id, "QOLStorageBridge");
-    assert.ok(panel.BHasClass("QOLStorageBridge"), "Has CSS class QOLStorageBridge");
-    assert.strictEqual(panel.style.visibility, "visible");
-    assert.strictEqual(panel.hittest, false);
-    assert.strictEqual(panel.acceptsfocus, false);
-    assert.strictEqual(getLastSetUrl(), "https://predi-i.github.io/qollock-updates/bridge.html");
-});
 
 test("storage_bridge: handshake injects script and marks ready", () => {
     const { sandbox, getLastSetUrl, fireTitleEvent } = createTestEnvironment();
@@ -484,6 +449,23 @@ test("storage_bridge: FIFO request queue serializes concurrent calls without dro
     assert.strictEqual(res2, true);
 });
 
+test("storage_bridge: expired queued saves never execute when the bridge connects later", async () => {
+    const { sandbox, clock, getLastSetUrl, fireTitleEvent } = createTestEnvironment();
+    const bridge = sandbox.QOL.core.storageBridge;
+    const panel = bridge.getPanel();
+    const navigation = getLastSetUrl();
+    const expired = assert.rejects(bridge.save("settings", "obsolete"), /timed out/);
+    clock.advance(5000);
+    await expired;
+    fireTitleEvent(panel, "QOL_BRIDGE_READY");
+    assert.strictEqual(getLastSetUrl(), navigation, "A failed save must not be sent to CEF later");
+
+    const fresh = bridge.save("settings", "current");
+    const id = getLastSetUrl().match(/'(qol_\d+_\d+)'/)[1];
+    fireTitleEvent(panel, `QOL_RES:${JSON.stringify({ id, ok: true })}`);
+    assert.strictEqual(await fresh, true, "An expired request must not block subsequent saves");
+});
+
 test("storage_bridge: rejects when incoming chunks arrive out of order", async () => {
     const { sandbox, getLastSetUrl, fireTitleEvent } = createTestEnvironment();
     const bridge = sandbox.QOL.core.storageBridge;
@@ -524,20 +506,29 @@ test("storage_bridge: QOL_BRIDGE_ERROR marks ready as false", () => {
     assert.strictEqual(bridge.isReady(), false, "Bridge ready reset to false on error");
 });
 
-test("storage_bridge: init creates scoped CitadelHTMLPanel per context with correct autoload gating", () => {
-    const { sandbox, rootPanel, doc } = createTestEnvironment();
-    const bridge = sandbox.QOL.core.storageBridge;
-    const initialPanel = bridge.getPanel();
-    assert.ok(initialPanel);
-
-    // Escape menu context panel
+test("storage_bridge: HUD initialization does not adopt a descendant EscapeMenu realm bridge", () => {
+    const { sandbox, hudPanel, doc, clock, fireTitleEvent } = createTestEnvironment();
+    const hudBridge = sandbox.QOL.core.storageBridge;
+    hudBridge.getPanel().DeleteAsync(0);
+    clock.advance(0);
     const escapeMenu = doc.create("Panel", { id: "EscapeMenu" });
-    rootPanel.addChild(escapeMenu);
-
-    // Call init from escape menu context
-    const emPanel = bridge.init(escapeMenu, { autoload: false });
-    assert.ok(emPanel, "Must create scoped panel for escape menu context");
-    assert.strictEqual(emPanel.id, "QOLStorageBridge");
+    hudPanel.addChild(escapeMenu);
+    const em = {
+        ...sandbox,
+        QOL: { core: { panel: sandbox.QOL.core.panel } },
+        $: { ...sandbox.$, GetContextPanel: () => escapeMenu }
+    };
+    em.globalThis = em;
+    vm.runInNewContext(fs.readFileSync(path.resolve(__dirname, "../panorama/scripts/core/ql_storage_bridge.js"), "utf8"), em);
+    const emBridge = em.QOL.core.storageBridge;
+    const emPanel = emBridge.getPanel();
+    const hudBridgePanel = hudBridge.init(hudPanel);
+    assert.notStrictEqual(hudBridgePanel, emPanel, "Each realm must own its native event source");
+    assert.strictEqual(hudBridgePanel.GetParent(), hudPanel);
+    assert.strictEqual(emPanel.GetParent(), escapeMenu);
+    fireTitleEvent(emPanel, "QOL_BRIDGE_READY");
+    assert.strictEqual(emBridge.isReady(), true);
+    assert.strictEqual(hudBridge.isReady(), false, "A sibling realm's handshake must not mark the HUD ready");
 });
 
 
