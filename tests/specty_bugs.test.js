@@ -71,8 +71,8 @@ test("Bug 1 & 2: ql_ammo enables when slider is customized and neutral scale lea
 
     assert.strictEqual(FR.isEnabled("ql_ammo"), false, "ql_ammo should be disabled when all settings neutral");
     assert.strictEqual(labelCurrent.style.fontSize, null);
-    assert.strictEqual(ap.style.x, null);
-    assert.strictEqual(ap.style.y, null);
+    assert.strictEqual(ap.style.x, "0px");
+    assert.strictEqual(ap.style.y, "80px");
 });
 
 test("Bug 3: setupSettingsWindowDragging attaches drag handles to header without rail toggle button", () => {

@@ -36,10 +36,6 @@
     // Window State
     // =========================================================================
 
-    const SETTINGS_SAVE_LOADER_ENABLED = true;
-    const SETTINGS_SAVE_HOVER_WARNING = "DO NOT USE THIS IN QUEUE OR MATCH";
-    const SETTINGS_SAVE_DISABLED_WARNING = "CURRENTLY IN EARLY ACCESS ON DISCORD DISABLED DUE TO BUGS";
-
     let _window = null;
     let _header = null;
     let _tabBar = null;
@@ -353,27 +349,6 @@
             if (saveBtn.MoveChildBefore && saveIcon && saveLabel) {
                 try { saveBtn.MoveChildBefore(saveIcon, saveLabel); } catch (_) {}
             }
-
-            saveBtn.SetPanelEvent("onmouseover", () => {
-                if (!isAlive(saveBtn)) return;
-                try { Q.tooltip?.hideTextTooltip?.(); } catch (_) {}
-                try { Q.tooltip?.cancelHide?.(); } catch (_) {}
-                const saveWarning = SETTINGS_SAVE_LOADER_ENABLED ? SETTINGS_SAVE_HOVER_WARNING : SETTINGS_SAVE_DISABLED_WARNING;
-                try {
-                    Q.tooltip?.showRowTooltip?.(
-                        saveBtn,
-                        "",
-                        saveWarning,
-                        (typeof PERF_IMPACT_TIER_NONE !== "undefined" ? PERF_IMPACT_TIER_NONE : "none"),
-                        "",
-                        { footerSaveWarning: true }
-                    );
-                } catch (_) {}
-            });
-
-            saveBtn.SetPanelEvent("onmouseout", () => {
-                try { Q.tooltip?.hideTooltipDeferred?.("footer_save_mouseout"); } catch (_) {}
-            });
 
             saveBtn.SetPanelEvent("onactivate", () => {
                 try { Q.tooltip?.hideRowTooltip?.(); } catch (_) {}
@@ -1395,25 +1370,6 @@
                 if (saveFooterLabel) {
                     saveFooterLabel.text = localize("SAVE", true);
                 }
-                saveFooterBtn.SetPanelEvent("onmouseover", () => {
-                    if (!isAlive(saveFooterBtn)) return;
-                    try { Q.tooltip?.hideTextTooltip?.(); } catch (_) {}
-                    try { Q.tooltip?.cancelHide?.(); } catch (_) {}
-                    const saveWarning = SETTINGS_SAVE_LOADER_ENABLED ? SETTINGS_SAVE_HOVER_WARNING : SETTINGS_SAVE_DISABLED_WARNING;
-                    try {
-                        Q.tooltip?.showRowTooltip?.(
-                            saveFooterBtn,
-                            "",
-                            saveWarning,
-                            (typeof PERF_IMPACT_TIER_NONE !== "undefined" ? PERF_IMPACT_TIER_NONE : "none"),
-                            "",
-                            { footerSaveWarning: true }
-                        );
-                    } catch (_) {}
-                });
-                saveFooterBtn.SetPanelEvent("onmouseout", () => {
-                    try { Q.tooltip?.hideTooltipDeferred?.("footer_save_mouseout"); } catch (_) {}
-                });
                 saveFooterBtn.SetPanelEvent("onactivate", () => {
                     try { Q.tooltip?.hideRowTooltip?.(); } catch (_) {}
                     if (typeof ActivateBuildSaveFromUi === "function") {

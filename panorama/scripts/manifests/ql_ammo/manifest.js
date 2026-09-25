@@ -91,7 +91,7 @@
                     if (typeof QOL_UTILS !== "undefined" && QOL_UTILS.ClearStyleSafe) {
                         QOL_UTILS.ClearStyleSafe(label, "color");
                     } else {
-                        try { label.style.color = null; } catch(e) {}
+                        try { label.style.color = ""; } catch(e) {}
                     }
                 }
             }
@@ -149,9 +149,9 @@
                 _lastMainSig = sig;
 
                 _applyChildren(ap, curScale, totScale, textColor);
-                ap.style.x = (ox !== 0) ? (ox + "px") : null;
-                ap.style.y = (oy !== 0) ? ((80 - oy) + "px") : null;
-                ap.style.preTransformScale2d = null;
+                ap.style.x = ox + "px";
+                ap.style.y = (80 - oy) + "px";
+                ap.style.preTransformScale2d = "1.00, 1.00";
                 if (ap.SetHasClass) ap.SetHasClass("qol-hidden", false);
                 try { ap.style.opacity = "1.00"; } catch(e) {}
             }
@@ -164,9 +164,9 @@
                         var root = $.GetContextPanel();
                         var ap = root.FindChildTraverse("ammo_panel");
                         if (ap && ap.style) {
-                            ap.style.x = null;
-                            ap.style.y = null;
-                            ap.style.preTransformScale2d = null;
+                            ap.style.x = "0px";
+                            ap.style.y = "80px";
+                            ap.style.preTransformScale2d = "1.00, 1.00";
                             _applyChildren(ap, 100, 100, "");
                         }
                         var cs = root.FindChildTraverse("clip_status");

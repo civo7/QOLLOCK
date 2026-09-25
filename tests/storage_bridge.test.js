@@ -524,24 +524,20 @@ test("storage_bridge: QOL_BRIDGE_ERROR marks ready as false", () => {
     assert.strictEqual(bridge.isReady(), false, "Bridge ready reset to false on error");
 });
 
-test("storage_bridge: init reuses existing panel from root without creating duplicate", () => {
-    const { sandbox, rootPanel } = createTestEnvironment();
+test("storage_bridge: init creates scoped CitadelHTMLPanel per context with correct autoload gating", () => {
+    const { sandbox, rootPanel, doc } = createTestEnvironment();
     const bridge = sandbox.QOL.core.storageBridge;
     const initialPanel = bridge.getPanel();
     assert.ok(initialPanel);
 
     // Escape menu context panel
-    const escapeMenu = {
-        id: "EscapeMenu",
-        paneltype: "CitadelEscapeMenu",
-        GetParent: () => rootPanel,
-        FindChildTraverse: (id) => (id === "QOLStorageBridge" ? null : null),
-        IsValid: () => true
-    };
+    const escapeMenu = doc.create("Panel", { id: "EscapeMenu" });
+    rootPanel.addChild(escapeMenu);
 
     // Call init from escape menu context
-    const reusedPanel = bridge.init(escapeMenu, { autoload: false });
-    assert.strictEqual(reusedPanel, initialPanel, "Must reuse existing CitadelHTMLPanel from root");
+    const emPanel = bridge.init(escapeMenu, { autoload: false });
+    assert.ok(emPanel, "Must create scoped panel for escape menu context");
+    assert.strictEqual(emPanel.id, "QOLStorageBridge");
 });
 
 

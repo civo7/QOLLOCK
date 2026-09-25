@@ -424,8 +424,13 @@
         _initAttempts++;
         if (_initAttempts < MAX_INIT_ATTEMPTS) {
             if (_isPanelAlive(_bridgePanel) && typeof _bridgePanel.SetURL === "function") {
-                _log(`Watchdog: bridge not ready yet (attempt ${_initAttempts}/${MAX_INIT_ATTEMPTS}), retrying URL navigation...`);
-                _bridgePanel.SetURL(BRIDGE_LOCAL_URL);
+                if (_isPageLoaded) {
+                    _log(`Watchdog: directory loaded but bridge not ready (attempt ${_initAttempts}/${MAX_INIT_ATTEMPTS}), re-injecting script...`);
+                    _injectBridgeScript();
+                } else {
+                    _log(`Watchdog: bridge not ready yet (attempt ${_initAttempts}/${MAX_INIT_ATTEMPTS}), retrying URL navigation...`);
+                    _bridgePanel.SetURL(BRIDGE_LOCAL_URL);
+                }
             }
             if (typeof $.Schedule === "function") {
                 _watchdogTimer = $.Schedule(WATCHDOG_INTERVAL_SEC, _watchdogTick);
@@ -475,8 +480,13 @@
             _pendingRequests[reqId] = req;
             _requestQueue.push(req);
 
+            // Always arm the timeout timer immediately so unstarted requests cannot hang indefinitely
+            _resetPendingTimer(req, reqId);
+
             if (_bridgeReady) {
                 _processQueue();
+            } else {
+                _logWarn(`Bridge not ready yet; request ${reqId} queued (queue depth: ${_requestQueue.length})`);
             }
         });
 
@@ -503,26 +513,18 @@
             return _bridgePanel;
         }
 
-        const root = _findRootPanel();
+        const parent = targetParent || (typeof $.GetContextPanel === "function" ? $.GetContextPanel() : null);
+        if (!parent) {
+            _logWarn("init: no parent panel found to mount storage bridge");
+            return null;
+        }
+
         let panel = null;
-        if (root && root.FindChildTraverse) {
-            panel = root.FindChildTraverse(BRIDGE_PANEL_ID);
+        if (parent.FindChildTraverse) {
+            panel = parent.FindChildTraverse(BRIDGE_PANEL_ID);
         }
+
         if (!_isPanelAlive(panel)) {
-            const fallbackParent = targetParent || (typeof $.GetContextPanel === "function" ? $.GetContextPanel() : null);
-            if (fallbackParent && fallbackParent.FindChildTraverse) {
-                panel = fallbackParent.FindChildTraverse(BRIDGE_PANEL_ID);
-            }
-        }
-
-        const isReused = _isPanelAlive(panel);
-
-        if (!isReused) {
-            const parent = root || targetParent || (typeof $.GetContextPanel === "function" ? $.GetContextPanel() : null);
-            if (!parent) {
-                _logWarn("init: no parent panel found to mount storage bridge");
-                return null;
-            }
             if (typeof $.CreatePanel === "function") {
                 try {
                     panel = $.CreatePanel("CitadelHTMLPanel", parent, BRIDGE_PANEL_ID);
@@ -559,35 +561,23 @@
             }
         }
 
-        const isAlreadyReady = (panel.BHasClass && panel.BHasClass("BridgeReady")) ||
-            (panel.GetAttributeString && panel.GetAttributeString("QOL_BridgeReady", "") === "1");
-
-        if (isAlreadyReady) {
-            _bridgeReady = true;
-            _isPageLoaded = true;
-            if (_autoloadEnabled && !_hasAutoloaded) {
-                _hasAutoloaded = true;
-                storageBridgeApi.loadSettings().catch(() => {});
-            }
-            return _bridgePanel;
-        }
-
         _bridgeReady = false;
         _isPageLoaded = false;
 
-        if (!isReused) {
-            if (typeof panel.SetURL === "function") {
-                try {
-                    panel.SetURL(BRIDGE_LOCAL_URL);
-                    _log(`Mounting bridge URL: ${BRIDGE_LOCAL_URL}`);
-                } catch (e) {
-                    _logWarn(`panel.SetURL failed: ${e?.message || e}`);
-                }
+        if (typeof panel.SetURL === "function") {
+            try {
+                panel.SetURL(BRIDGE_LOCAL_URL);
+                _log(`Mounting bridge URL: ${BRIDGE_LOCAL_URL}`);
+            } catch (e) {
+                _logWarn(`panel.SetURL failed: ${e?.message || e}`);
             }
+        }
 
-            if (typeof $.Schedule === "function") {
-                _watchdogTimer = $.Schedule(WATCHDOG_INTERVAL_SEC, _watchdogTick);
+        if (typeof $.Schedule === "function") {
+            if (_watchdogTimer) {
+                try { $.CancelScheduled(_watchdogTimer); } catch (_) {}
             }
+            _watchdogTimer = $.Schedule(WATCHDOG_INTERVAL_SEC, _watchdogTick);
         }
 
         return _bridgePanel;

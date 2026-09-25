@@ -11,8 +11,8 @@ Replaces legacy hero build hijacking with instant, robust LevelDB storage that r
 - `CitadelHTMLPanel` with ID `QOLStorageBridge` in `hud.xml` / `hud_escape_menu.xml`
 
 ## Mechanism & Architecture
-1. **CEF Instance**: An offscreen `<CitadelHTMLPanel id="QOLStorageBridge" class="QOLStorageBridge" ... />` is embedded in the HUD and Escape Menu with origin `https://predi-i.github.io/qollock-updates/bridge.html`.
-2. **Persistence**: Chrome stores `https://predi-i.github.io` local storage in Steam's shared LevelDB database under `%LOCALAPPDATA%\Steam\htmlcache\Default\Local Storage\leveldb\`. It persists across game sessions, reboots, and updates without consuming API quotas or server compute.
+1. **CEF Instance**: An offscreen `<CitadelHTMLPanel id="QOLStorageBridge" class="QOLStorageBridge" ... />` is embedded in the HUD and Escape Menu with origin `https://predi-i.github.io/qollock-updates/bridge.html`. (Note: local `file://` schemes are blocked by Steam CEF security policies, while HTTPS is permitted).
+2. **Persistence**: Chromium stores `localStorage` per origin in Steam's shared LevelDB database under `%LOCALAPPDATA%\Steam\htmlcache\Default\Local Storage\leveldb\`. It persists across game sessions, reboots, and updates without consuming API quotas or cloud backends.
 3. **IPC Bridge & Sequential Chunking**:
    - Outbound commands are dispatched using `panel.SetURL("javascript:...")`.
    - **URL Fragment & Character Safety**: All keys, values, and chunks passed via `SetURL` are UTF-8 Base64 encoded. This prevents Chromium URL parsing from treating `#` (e.g. hex colors `#00FF00`) as fragment delimiters, which would otherwise truncate scripts.
@@ -21,12 +21,12 @@ Replaces legacy hero build hijacking with instant, robust LevelDB storage that r
    - Panorama catches changes via the native `HTMLTitle` event handler, resolving the corresponding asynchronous request.
    - **Symmetric Chunking**: To bypass the Source 2 C++ engine 4096-character `HTMLTitle` buffer limit and URL length constraints, both reading (`__qolLoad` / `__qolNextChunk`) and writing (`__qolSaveChunk`) operate in sequential 1500-character chunks with acknowledgment handshakes.
 4. **Resilience & Security**:
-   - Dictionaries in `bridge.html` are instantiated with `Object.create(null)` to eliminate in-realm prototype pollution.
    - Request IDs are strictly validated with `/^qol_\d+_\d+$/`.
    - 30-second TTL timers ensure orphaned save and load buffers are garbage collected.
    - Incoming stream chunks enforce strict sequence ordering (`expectedPart`), rejecting out-of-order chunks to prevent data corruption.
    - Top-level `try/catch` wrappers shield the Panorama UI event loop from unhandled exceptions.
-   - **20-Second Navigation Watchdog**: A 20-second interval watchdog retries `SetURL(BRIDGE_LOCAL_URL)` if the page does not become ready on cold startup, never executing inline JavaScript into uncommitted frames. Autoload errors automatically trigger scheduled retry passes.
+   - **Immediate Request Timeout Guard**: Every queued request immediately arms a 5-second timeout timer, preventing unbounded UI hangs (e.g. infinite "SAVING") even if the bridge is not yet connected.
+   - **20-Second Navigation Watchdog**: A 20-second interval watchdog retries `SetURL(BRIDGE_LOCAL_URL)` if the page does not become ready on cold startup. Autoload errors automatically trigger scheduled retry passes.
 
 ## Interface (`QOL.core.storageBridge`)
 - `init(targetParent, options)`: Initializes or binds to the `CitadelHTMLPanel` bridge and attaches the `HTMLTitle` event handler.
@@ -40,11 +40,11 @@ Replaces legacy hero build hijacking with instant, robust LevelDB storage that r
 - `enableAutoload(enable)`: Toggles automatic loading upon bridge readiness (defaults to `true`).
 
 ## Invariants & Architectural Notes
-- No network requests, Cloudflare workers, or API quotas are consumed.
+- No network requests, Cloudflare workers, or API quotas are consumed. Internet connection is not required.
 - Zero hero switching, shop opening, or favorites panel manipulation is required.
 - Saving completes asynchronously within 5–15 milliseconds (down from 20–30 seconds under legacy build storage).
 - Sequential chunking guarantees safe transfer of any payload size without hitting the C++ engine 4KB title buffer limitation.
 - Strict FIFO queue guarantees serialized execution and prevents title race conditions.
-- **Singleton Panel Reuse**: `init()` checks for an existing `QOLStorageBridge` on the root panel across all Panorama script contexts. This prevents duplicate `CitadelHTMLPanel` creation and dual navigations when both `hud.xml` and `hud_escape_menu.xml` are active.
-- **Realm-Aware Autoloading**: Autoloading on startup is restricted to the primary HUD realm (`Q.ROLE === "hud"`). The Escape Menu realm reuses the existing panel for user saves/loads while avoiding duplicate boot loads.
+- **Per-Realm Panel Isolation**: Panorama C++ does not dispatch native panel events across distinct layout contexts. `init()` mounts a `CitadelHTMLPanel` scoped to each context's parent (`hud.xml` and `hud_escape_menu.xml`) so each realm's `HTMLTitle` handler reliably receives events. Both panels share the identical origin local storage LevelDB database on disk.
+- **Realm-Aware Autoloading**: Autoloading on startup is enabled for the primary HUD realm (`autoload: true`). The Escape Menu realm initializes its bridge with `autoload: false` to connect for user saves and loads without redundant boot loads.
 
