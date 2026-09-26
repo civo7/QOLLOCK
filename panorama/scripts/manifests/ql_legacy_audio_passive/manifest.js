@@ -36,6 +36,7 @@
             { key: "ENABLE_ONE_TIME_TIER3", type: "toggle", default: false },
             { key: "ENABLE_INTERVAL", type: "toggle", default: false },
             { key: "ENABLE_MINIMAP_REMINDER", type: "toggle", default: false },
+            { key: "MINIMAP_REMINDER_INTERVAL", type: "slider", min: 5, max: 60, step: 1, default: 15 },
             { key: "ENABLE_BUFF_SOUND_1", type: "toggle", default: true },
             { key: "ENABLE_BUFF_SOUND_2", type: "toggle", default: true },
             { key: "ENABLE_BUFF_SOUND_3", type: "toggle", default: true },
@@ -469,7 +470,9 @@
                     });
                 }
                 if (IsCfgEnabled(cfg, "ENABLE_INTERVAL")) {
-                    var dynamicFirstAlert = INTERNAL_CONFIG.FIRST_ALERT - (cfg.BRIDGE_BUFF_START || 30);
+                    var bridgeLeadSec = Number(cfg.BRIDGE_BUFF_START);
+                    if (cfg.BRIDGE_BUFF_START === undefined || cfg.BRIDGE_BUFF_START === null || !isFinite(bridgeLeadSec)) bridgeLeadSec = 30;
+                    var dynamicFirstAlert = INTERNAL_CONFIG.FIRST_ALERT - bridgeLeadSec;
                     var targetTime = dynamicFirstAlert + (Math.floor((currentTime - dynamicFirstAlert) / INTERNAL_CONFIG.INTERVAL) * INTERNAL_CONFIG.INTERVAL);
                     if (currentTime >= targetTime && currentTime < (targetTime + INTERNAL_CONFIG.ALERT_WINDOW)) {
                         if (State.lastIntervalAlert < targetTime) {
