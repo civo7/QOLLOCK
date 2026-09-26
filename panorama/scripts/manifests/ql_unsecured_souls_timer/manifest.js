@@ -67,9 +67,6 @@
             var _isPanelValid = QOL.utils.IsPanelValid;
             var _clampConfigNumber = QOL.utils.ClampConfigNumber;
             function _parseUnsecuredSoulsValue(valueText) {
-                if (typeof QOL_UTILS !== "undefined" && QOL_UTILS.ParseNumber) {
-                    return Math.max(0, Math.round(QOL_UTILS.ParseNumber(valueText)));
-                }
                 const cleaned = String(valueText || "").replace(/[^0-9.-]/g, "");
                 const n = Number(cleaned);
                 return (!isFinite(n) || n < 0) ? 0 : Math.round(n);

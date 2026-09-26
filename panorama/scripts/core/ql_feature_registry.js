@@ -73,9 +73,10 @@
         const manifest = manifests[id];
         if (!manifest) return;
         enablingInProgress[id] = true;
+        let instance = null;
         try {
             const context = createContext(id);
-            const instance = manifest.create(context);
+            instance = manifest.create(context);
             if (!instance || typeof instance.onEnable !== "function") {
                 delete enablingInProgress[id];
                 return;
@@ -87,6 +88,10 @@
             enabledMap[id] = true;
             errorStreaks[id] = 0;                                       // start tracking errors
         } catch (e) {
+            // A failed onEnable may already own listeners, panels and schedules.
+            // Unwind its partial setup before allowing a later enable retry.
+            try { instance?.onDisable?.(); } catch (_) { /* preserve original failure */ }
+            try { Q.core.Scheduler?.cancelAllForFeature?.(id); } catch (_) { /* best-effort */ }
             if (Logger) Logger.logError("FeatureRegistry", `enable failed for '${id}': ${e?.message || e}`);
             errorStreaks[id] = (errorStreaks[id] || 0) + 1;
         }
@@ -230,9 +235,10 @@
             if (!shouldEnable) continue;
 
             enablingInProgress[id] = true;
+            let instance = null;
             try {
                 const context = createContext(id);
-                const instance = manifest.create(context);
+                instance = manifest.create(context);
                 if (instance && typeof instance.onEnable === "function") {
                     if (!isSettingsIsolate()) {
                         instance.onEnable();
@@ -243,6 +249,8 @@
                 errorStreaks[id] = 0;
                 enabledCount++;
             } catch (e) {
+                try { instance?.onDisable?.(); } catch (_) { /* preserve original failure */ }
+                try { Q.core.Scheduler?.cancelAllForFeature?.(id); } catch (_) { /* best-effort */ }
                 if (Logger) Logger.logError("FeatureRegistry", `boot failed for '${id}': ${e?.message || e}`);
                 errorStreaks[id] = (errorStreaks[id] || 0) + 1;
             }

@@ -44,3 +44,7 @@ Customizes the screen anchoring, offsets, and contextual visibility of the hero 
 - **Hideout Suppression**: In Hideout/Sandbox lobby (`QOL.core.hud.isInHideout`), any applied offsets or classes are reset, restoring native stats layout, and restored upon match reentry.
 - **Signature Optimization**: Guards style writes with `_sig = hidden ? "hidden" : ("show|" + side + "|" + offX + "|" + offY)`.
 - **Clamping**: Coordinate offsets are safely clamped to `[-500, 500]` pixels.
+
+Scoreboard visibility now uses `QOL.core.hud.isScoreboardOpen`, including the native GlobalClassListener fallback. The toggle event is a refresh trigger, not a boolean state payload.
+
+Event-triggered deferred refreshes use `Scheduler.scheduleOnce` with the feature ID, so disabling the feature cancels pending callbacks as well as its recurring loop. Event unsubscription remains explicit.

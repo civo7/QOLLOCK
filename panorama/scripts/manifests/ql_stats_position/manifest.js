@@ -110,7 +110,7 @@
                     return;
                 }
 
-                var scoreboardOpen = !!(root.BHasClass && root.BHasClass("gScoreboardOpen"));
+                var scoreboardOpen = QOL.core.hud.isScoreboardOpen(root);
                 var hidden = scoreboardOpen
                     ? (Number(cfg.STATS_POSITION_HIDE_SCOREBOARD) === 1)
                     : (Number(cfg.STATS_POSITION_HIDE_NORMAL) === 1);
@@ -140,11 +140,7 @@
             var _currentRate = 0;
 
             function _onScoreboardToggle() {
-                if (typeof $ !== "undefined" && typeof $.Schedule === "function") {
-                    $.Schedule(0, _tick);
-                } else {
-                    _tick();
-                }
+                QOL.core.Scheduler.scheduleOnce(_tick, 0, ctx.id);
             }
 
             function _determineOptimalRate() {

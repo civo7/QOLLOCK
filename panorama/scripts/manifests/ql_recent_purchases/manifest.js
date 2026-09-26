@@ -509,7 +509,7 @@
             function _computeQuickPurchasesMarginTopRP(root, cfg, rejuvEnabled, scoreboardEnabled) {
                 var isScoreboardOpen = false;
                 try {
-                    isScoreboardOpen = scoreboardEnabled && root && root.BHasClass && root.BHasClass("gScoreboardOpen");
+                    isScoreboardOpen = scoreboardEnabled && QOL.core.hud.isScoreboardOpen(root);
                 } catch(e) {}
 
                 var marginTop = 90;

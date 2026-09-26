@@ -138,7 +138,7 @@
                 if (!root || _inHideout(root)) return false;
                 if (!_isInMatch(root)) return false;
                 if (_hasClass(root, "gShopOpen")) return true;
-                if (_hasClass(root, "gScoreboardOpen")) return true;
+                if (QOL.core.hud.isScoreboardOpen(root)) return true;
                 if (_hasClass(root, "gAbilityUpgradeMenu")) return true;
                 if (_hasClass(root, "gDetailView")) return true;
                 var esc = root.FindChildTraverse ? root.FindChildTraverse("EscapeMenu") : null;

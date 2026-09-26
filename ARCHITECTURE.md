@@ -164,7 +164,7 @@ are not exported APIs.
 | Direct child / descendant | `QOL.core.panel.findChild(parent, id)` / `findTraverse(root, id)` | Different search scopes; use the narrowest authoritative root |
 | Class descendants | `QOL_UTILS.FindPanelsByClass(root, className)` / `FindFirstPanelByClass(root, className)` | Native class traversal; not a player-identity selector |
 | Ancestor class | `QOL_UTILS.FindAncestorWithClass(panel, className)` / `HasClassInHierarchy(panel, className)` | Includes starting panel; no depth cap, unlike some feature-local searches |
-| Root / HUD | `QOL.core.panel.findRoot()` / `findHud(preferredRoot)` | Root fallback is possible; existence alone is not proof of gameplay |
+| Root / HUD | `QOL.core.panel.findRoot(panel?)` / `findHud(preferredRoot)` | Root fallback is possible; existence alone is not proof of gameplay |
 | Create / delete | `QOL.core.panel.create(type, parent, id, properties)` / `delete(panel)` | Creation can return null; deletion is asynchronous |
 | Read text | `QOL.core.panel.readText(panel)` / `readTextDeep(panel, maxDepth)` | Deep read returns first nonempty text, not necessarily the desired stat |
 | One style, conditional | `QOL_UTILS.SetStyleIfChanged(panel, property, value)` | Use only where native read-back comparison is appropriate |
@@ -175,7 +175,7 @@ are not exported APIs.
 | Class / visibility | `QOL.core.panel.setClass(panel, className, active)` / `setVisible(panel, visible)` | Class setter compares first; visible setter does not |
 | Palette | `QOL.core.panel.normalizePaletteIndex(value)` / `resolvePaletteColor(value)` | Reuse palette indices/options; do not introduce unrelated color encodings |
 | Panel / list cache | `QOL.panelCache.getPanel/setPanel`, `getList/setList` | Typed getters validate; keys share a context-wide namespace |
-| Cached descendant | `QOL.panelCache.resolve(parent, cacheKey, traverseId)` | Does not check cached panel ancestry against a new parent |
+| Cached descendant | `QOL.panelCache.resolve(parent, cacheKey, traverseId)` | Validates parent/ID and live ancestry before reusing the cached panel |
 | Non-panel cache | `QOL.panelCache.getData/setData` | No handle validation; do not store arbitrary data in a panel slot |
 | Config enabled test | `QOL_UTILS.IsCfgEnabled(cfg, key)` | `Number(value) === 1`, not generic JavaScript truthiness |
 | Bounded numeric value | `QOL_UTILS.ClampConfigNumber(value, fallback, min, max, shouldRound)` | Optional rounding before clamp; not schema-step snapping |

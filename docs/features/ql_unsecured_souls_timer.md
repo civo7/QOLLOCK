@@ -32,3 +32,5 @@ The statements above describe source behavior. Native panel identity, binding
 values, rendering and transitions need the maintainer's Panorama Debugger and
 a repacked client scenario; neither a schema nor a read-only manifest hook
 proves the whole feature works. See [verification](../TESTING.md).
+
+Numeric label parsing uses the existing local numeric-character extraction. The unreachable optional `QOL_UTILS.ParseNumber` branch was removed because that helper is not exported; parsing behavior is otherwise unchanged.

@@ -203,7 +203,7 @@
                     var overlay = _ensureOverlay(root); if (!overlay) return;
 
                     // Hide while scoreboard is open
-                    if (_isHudClassActive(root, "gScoreboardOpen")) {
+                    if (QOL.core.hud.isScoreboardOpen(root)) {
                         if (overlay.SetHasClass) { overlay.SetHasClass("qol-hidden", true); try { overlay.style.visibility = "collapse"; } catch(e) {} }
                         else try { overlay.style.visibility = "collapse"; } catch(e) {}
                         st.lastVisibleCount = -1; return;

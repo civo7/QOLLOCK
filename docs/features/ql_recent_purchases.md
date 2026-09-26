@@ -64,3 +64,5 @@ Extends Deadlock's shop and HUD with real-time item purchase tracking. It introd
 - **Signature Optimization**:
   - Uses filter signatures (`_getFilterSigRP`), visibility signatures, and panel style signatures (`_rpPanelStyleSig`, `_quickPanelStyleSig`) to eliminate redundant DOM mutation passes.
   - Items are tracked via composite keys (`heroName + itemName + timeText`) to ensure zero re-processing of already animated cards.
+
+Scoreboard visibility now uses `QOL.core.hud.isScoreboardOpen`, including the native GlobalClassListener fallback. The toggle event is a refresh trigger, not a boolean state payload.

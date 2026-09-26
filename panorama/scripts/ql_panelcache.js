@@ -26,6 +26,7 @@
     var _panels = {};
     var _lists = {};
     var _data = {};
+    var _resolved = {};
 
     // ── PanelCache public API ──
     var PanelCache = {
@@ -37,6 +38,7 @@
             return null;
         },
         setPanel: function(key, panel) {
+            delete _resolved[key];
             _panels[key] = (panel === null || panel === undefined || IsPanelValid(panel)) ? panel : null;
         },
 
@@ -80,6 +82,7 @@
         // ── Clear — reset all typed caches to empty ──
         // Uses delete instead of reassignment so State._panelCache references stay valid.
         clear: function() {
+            for (var k in _resolved) { if (Object.prototype.hasOwnProperty.call(_resolved, k)) delete _resolved[k]; }
             for (var k in _panels) { if (_panels.hasOwnProperty(k)) delete _panels[k]; }
             for (var k in _lists) { if (_lists.hasOwnProperty(k)) delete _lists[k]; }
             for (var k in _data) { if (_data.hasOwnProperty(k)) delete _data[k]; }
@@ -87,16 +90,29 @@
 
         // ── Resolve — get-or-traverse pattern (single Panel only) ──
         resolve: function(parent, cacheKey, traverseId) {
-            var panel = IsPanelValid(_panels[cacheKey]) ? _panels[cacheKey] : null;
-            if (!panel && parent && parent.FindChildTraverse) {
-                panel = parent.FindChildTraverse(traverseId);
-                _panels[cacheKey] = panel || null;
+            if (!IsPanelValid(parent)) { PanelCache._clearKey(cacheKey); return null; }
+            var owner = _resolved[cacheKey];
+            var panel = owner && owner.parent === parent && owner.id === traverseId && IsPanelValid(_panels[cacheKey]) ? _panels[cacheKey] : null;
+            if (panel) {
+                // A still-valid panel can have been reparented by the engine.
+                try {
+                    var ancestor = panel.GetParent();
+                    while (ancestor && ancestor !== parent) ancestor = ancestor.GetParent();
+                    if (ancestor !== parent) panel = null;
+                } catch (_) { panel = null; }
+            }
+            if (!panel) {
+                try { panel = parent.FindChildTraverse(traverseId); } catch (_) { panel = null; }
+                if (!IsPanelValid(panel)) panel = null;
+                _panels[cacheKey] = panel;
+                _resolved[cacheKey] = { parent: parent, id: traverseId };
             }
             return panel;
         },
 
         // ── Reset a single key across all typed caches (used by SetCachedPanel null/undefined) ──
         _clearKey: function(key) {
+            delete _resolved[key];
             delete _panels[key];
             delete _lists[key];
             delete _data[key];

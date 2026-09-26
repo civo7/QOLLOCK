@@ -629,11 +629,7 @@
             }
 
             function _onScoreboardToggle() {
-                if (typeof $ !== "undefined" && typeof $.Schedule === "function") {
-                    $.Schedule(0, _tick);
-                } else {
-                    _tick();
-                }
+                QOL.core.Scheduler.scheduleOnce(_tick, 0, ctx.id);
             }
 
             function _determineOptimalRate(cfg) {
@@ -678,7 +674,7 @@
                 var zoomTabEnabled = (Number(cfg.ENABLE_TAB_ZOOM) === 1);
 
                 var isAlt = zoomAltEnabled && _isHudOrHierarchyClassActive(root, master, "gDetailView");
-                var isTab = zoomTabEnabled && _isHudOrHierarchyClassActive(root, master, "gScoreboardOpen");
+                var isTab = zoomTabEnabled && QOL.core.hud.isScoreboardOpen(root, master);
                 var currentZoomKey = (isAlt ? "A" : "") + (isTab ? "T" : "");
                 var zoomChanged = (currentZoomKey !== _lastZoomState);
 

@@ -169,6 +169,31 @@
         return !!abilities?.BHasClass(className);
     };
 
+    // Read persistent native class state; an engine toggle notification is only
+    // a reason to refresh it. minimap_persp is a GlobalClassListener in hud.xml.
+    const isScoreboardOpen = (root, anchor) => {
+        const hud = findHud(root);
+        if (!isAlive(hud)) return false;
+        const has = panel => QOL_UTILS.HasClassInHierarchy(panel, "gScoreboardOpen");
+        if (has(hud) || (isAlive(anchor) && has(anchor))) return true;
+        const listener = Q.panelCache
+            ? Q.panelCache.resolve(hud, "hud.scoreboardListener", "minimap_persp")
+            : _panelHelpers.findTraverse(hud, "minimap_persp");
+        return has(listener);
+    };
+
+    // HUD presentation evidence, not an entity API or a local-player guarantee.
+    // Ambiguous/missing classes and spectator/replay contexts stay unknown.
+    const readHudLifeState = (root) => {
+        const hud = findHud(root);
+        if (!isAlive(hud) || (hud.id !== "Hud" && hud.paneltype !== "CitadelHud")) return "unknown";
+        const has = cls => QOL_UTILS.HasClassInHierarchy(hud, cls);
+        if (["spec_mode", "replay_playback", "deathReplayActive", "InHideout", "connectedToHideout"].some(has)) return "unknown";
+        const alive = has("alive");
+        const dead = has("dead");
+        return alive === dead ? "unknown" : (alive ? "alive" : "dead");
+    };
+
     const PANEL_ID_GAMEPLAY_HUD = "gameplay_hud";
     const PANEL_ID_TOP_BAR = "TopBar";
     const PANEL_ID_GOLD_AP_CONTAINER = "gold_and_ap_container";
@@ -1254,6 +1279,8 @@
         isInHideout,
         isStreetBrawl,
         isHudClassActive,
+        isScoreboardOpen,
+        readHudLifeState,
         ensureTopBarGated,
         ensurePanelClassCache,
         setPanelClassCached,

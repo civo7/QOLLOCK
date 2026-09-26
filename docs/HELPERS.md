@@ -15,14 +15,14 @@ which numeric label, or which live HUD instance is authoritative.
 | Find a known direct-child ID | `QOL.core.panel.findChild(parent, id)` | Does not search arbitrary descendants. |
 | Find a known descendant ID | `QOL.core.panel.findTraverse(root, id)` | Supply the narrowest authoritative root; duplicate IDs in other subtrees are possible. |
 | Find descendants by class | `QOL_UTILS.FindPanelsByClass(root, className)` / `QOL_UTILS.FindFirstPanelByClass(root, className)` | Native class traversal; the latter filters for valid handles. |
-| Find a parent-chain match | `QOL_UTILS.FindAncestorWithClass(panel, className)` / `QOL_UTILS.HasClassInHierarchy(panel, className)` | Includes starting panel; uncapped parent walk, not a bounded or fully exception-safe replacement. |
-| Resolve context root / HUD | `QOL.core.panel.findRoot()` / `QOL.core.panel.findHud(preferredRoot)` | See [panel API](core/panel_helpers.md); root fallback does not establish gameplay state. |
+| Find a parent-chain match | `QOL_UTILS.FindAncestorWithClass(panel, className)` / `QOL_UTILS.HasClassInHierarchy(panel, className)` | Includes starting panel; catches native class/parent access failures, but the walk is uncapped. |
+| Resolve context root / HUD | `QOL.core.panel.findRoot(panel?)` / `QOL.core.panel.findHud(preferredRoot)` | See [panel API](core/panel_helpers.md); root fallback does not establish gameplay state. |
 | Read first descendant text | `QOL.core.panel.readTextDeep(panel, maxDepth)` | Bounded search, unsuitable when another nonempty label can precede the desired one. |
 | Change one style if different | `QOL_UTILS.SetStyleIfChanged(panel, property, value)` | Only when native read-back semantics suit comparison. |
 | Normalize opacity / clear style | `QOL_UTILS.SetPanelOpacitySafe(panel, value, fallback)` / `QOL.core.panel.clearStyleProperty(panel, property)` | Opacity clamps and formats; clearing uses native ClearPropertyFromCode. |
 | Apply a style map | `QOL.core.panel.syncStyles(panel, styles, lastSig)` | Caller owns signature and invalidation; writes the whole map when signature changes. |
 | Cache a handle / list | `QOL.panelCache.getPanel(key)` / `QOL.panelCache.setPanel(key, panel)` / `QOL.panelCache.getList(key)` / `QOL.panelCache.setList(key, list)` | `ql_panelcache.js`; getters reject invalid handles/lists. |
-| Resolve cached ID | `QOL.panelCache.resolve(parent, cacheKey, traverseId)` | Returns cached live handle or native descendant lookup; does not check that cached handle still belongs to supplied parent. |
+| Resolve cached ID | `QOL.panelCache.resolve(parent, cacheKey, traverseId)` | Keys resolution by parent and ID, validates live ancestry, and re-resolves after reparenting. |
 | Cache non-panel state | `QOL.panelCache.getData(key)` / `QOL.panelCache.setData(key, value)` | No panel validation. Do not mix data and handle categories. |
 
 ## Load order and names
@@ -43,8 +43,8 @@ against the callable references in this decision map.
   explicitly share ownership; never silently replace another feature's entry.
 - Validity says the handle is live, not that it belongs to the current match,
   player, root, or selection. Clear/rebind your entries on relevant transitions.
-- `getPanel` validates handles. `resolve` does not provide a root-aware cache,
-  missing-result backoff, or feature lifecycle cleanup; callers own those rules.
+- `getPanel` validates handles without checking ancestry. `resolve` additionally
+  validates parent/ID ownership; it has no missing-result backoff or feature lifecycle cleanup.
 - Clear only your owned keys with `setPanel(key, null)` / `setList(key, null)`.
   Whole-cache clearing belongs to the subsystem owner, not individual features.
 - Reset style signatures and other panel-derived state when replacing a cached
@@ -76,3 +76,18 @@ retains the legacy delete/null/empty-string fallbacks. Callers restoring default
 geometry or opacity must release the native override, not just mutate a JS
 property. `QOL.core.panel.clearStyleProperty` remains the stricter boolean API
 without legacy fallback writes. Neither helper forces a new default value.
+
+## Shared HUD state and deferred work
+
+- `QOL.core.hud.isScoreboardOpen(root, anchor)` reads `gScoreboardOpen` from
+  HUD/ancestor state, an optional feature anchor, or the native `minimap_persp`
+  GlobalClassListener. Engine toggle events prompt a refresh; they carry no
+  app-provided visibility payload.
+- `QOL.core.hud.readHudLifeState(root)` returns `alive`, `dead`, or `unknown`.
+  This is HUD presentation evidence, not verified local-player entity identity.
+  Spectating, replay, hideout and ambiguous classes return `unknown`.
+- `QOL.core.Scheduler.scheduleOnce(callback, delaySec, featureId)` owns a
+  one-shot callback, cancelled on feature disable. `schedule` remains recurring.
+  Event handlers must still be explicitly unsubscribed.
+
+See [the audit scope and remaining native checks](HELPER_AUDIT.md).

@@ -874,5 +874,15 @@
     "Collect unsecured souls in game; inspect size and offsets.": "Collect unsecured souls in game; inspect size and offsets.",
     "Open chat in game; inspect size and offsets.": "Open chat in game; inspect size and offsets.",
     "Reload in game; inspect size, opacity and offsets.": "Reload in game; inspect size, opacity and offsets.",
+    "Open in a match or sandbox. Compare HUD changes and test gameplay. Stop restores settings without saving the test values.": "Open in a match or sandbox. Compare HUD changes and test gameplay. Stop restores settings without saving the test values.",
+    "HUD state recording": "HUD state recording",
+    "Record for 60 seconds while playing: open and close the scoreboard, die and respawn. Settings are unchanged.": "Record for 60 seconds while playing: open and close the scoreboard, die and respawn. Settings are unchanged.",
+    "Record HUD states": "Record HUD states",
+    "HUD state report": "HUD state report",
+    "After recording, copy the class transitions and scoreboard event observations.": "After recording, copy the class transitions and scoreboard event observations.",
+    "Copy HUD state report": "Copy HUD state report",
+    "No completed HUD state recording yet.": "No completed HUD state recording yet.",
+    "HUD state report copied.": "HUD state report copied.",
+    "Copy failed; see the console log.": "Copy failed; see the console log.",
 };
 })();

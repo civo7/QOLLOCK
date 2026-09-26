@@ -345,6 +345,8 @@
         };
 
         if (QOL?.core?.ManifestTests) {
+            const observation = QOL.core.ManifestTests.getHudStateObservation();
+            if (observation) diag.hudStateObservation = observation;
             const tr = QOL.core.ManifestTests.getResults();
             if (tr) {
                 diag.testResults = tr;
@@ -381,6 +383,10 @@
                 _lastDiagForceToken = forceToken;
                 forceSync = true;
                 if (Logger) Logger.logInfo("App", `diag force-sync requested, token=${String(forceToken).substring(0, 16)}`);
+
+                if (forceToken.startsWith("state_")) {
+                    QOL.core.ManifestTests.observeHudStates(forceToken, () => _writeDiagSnapshot(hudPanel, forceToken));
+                }
 
                 if (forceToken.startsWith("mt_") || forceToken.startsWith("fs_") || forceToken.startsWith("audit_")) {
                     if (QOL?.core?.ManifestTests) {

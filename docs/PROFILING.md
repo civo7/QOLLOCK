@@ -226,3 +226,10 @@ Against the pre-fix baseline, 12-player teamfight, identical tree:
 
 None of it is verified in a running game. Panorama cannot be rendered from a Node
 harness and every change needs a VPK repack before it is visible in game.
+
+## Leaf manual hit counter
+
+`QOL_UTILS.SetProfilerEnabled`, `ProfileHit`, and `DumpProfile` expose a separate,
+opt-in counter. Dumps report the actual time since enabling/previous dump (at
+least 10 seconds), then reset counts. This is not a rolling 60-second window or
+an automatic runtime sampler. It measures instrumented call frequency only.

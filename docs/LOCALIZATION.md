@@ -114,3 +114,5 @@ full language coverage, especially for older Dev/status text.
 The expanded walkthrough adds English/Russian instructions for gameplay/reopen,
 shop and overlay scenarios in the runtime dictionaries. Other languages keep
 the normal English fallback; earlier catalog counts above are historical.
+
+HUD state recording and report-copy actions in the Dev tab use English source keys with English/Russian runtime catalog entries. The visual walkthrough description avoids a hardcoded step count.

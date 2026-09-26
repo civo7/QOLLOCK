@@ -874,5 +874,15 @@
     "Collect unsecured souls in game; inspect size and offsets.": "Соберите необеспеченные души в игре; проверьте размер и сдвиги.",
     "Open chat in game; inspect size and offsets.": "Откройте чат в игре; проверьте размер и сдвиги.",
     "Reload in game; inspect size, opacity and offsets.": "Перезарядитесь в игре; проверьте размер, прозрачность и сдвиги.",
+    "Open in a match or sandbox. Compare HUD changes and test gameplay. Stop restores settings without saving the test values.": "Откройте в матче или песочнице. Сравнивайте изменения HUD и проверяйте их в игре. Остановка восстановит настройки без сохранения тестовых значений.",
+    "HUD state recording": "Запись состояний HUD",
+    "Record for 60 seconds while playing: open and close the scoreboard, die and respawn. Settings are unchanged.": "Запись 60 секунд в игре: откройте и закройте таблицу счёта, умрите и возродитесь. Настройки не меняются.",
+    "Record HUD states": "Записать состояния HUD",
+    "HUD state report": "Отчёт о состояниях HUD",
+    "After recording, copy the class transitions and scoreboard event observations.": "После записи скопируйте переходы классов и события таблицы счёта.",
+    "Copy HUD state report": "Копировать отчёт HUD",
+    "No completed HUD state recording yet.": "Завершённой записи состояний HUD пока нет.",
+    "HUD state report copied.": "Отчёт о состояниях HUD скопирован.",
+    "Copy failed; see the console log.": "Не удалось скопировать; отчёт есть в консоли.",
 };
 })();

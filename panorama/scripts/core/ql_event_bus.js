@@ -50,9 +50,12 @@
         if (typeof event !== "string") return;
         const list = listeners.get(event);
         if (!list || list.length === 0) return;
-        for (let i = 0; i < list.length; i++) {
+        // Listener removal/addition during dispatch must not skip another
+        // listener or execute a newly registered callback in this same emit.
+        const snapshot = list.slice();
+        for (let i = 0; i < snapshot.length; i++) {
             try {
-                list[i](payload);
+                snapshot[i](payload);
             } catch (e) {
                 // One crashing listener won't break others
                 if (typeof $ !== "undefined" && $.Msg) {

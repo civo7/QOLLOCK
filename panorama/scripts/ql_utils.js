@@ -87,8 +87,10 @@
     function FindAncestorWithClass(panel, className) {
         var current = panel;
         while (current) {
-            if (current.BHasClass && current.BHasClass(className)) return current;
-            current = (typeof current.GetParent === "function") ? current.GetParent() : null;
+            try {
+                if (current.BHasClass && current.BHasClass(className)) return current;
+                current = (typeof current.GetParent === "function") ? current.GetParent() : null;
+            } catch (_) { return null; }
         }
         return null;
     }
@@ -98,12 +100,7 @@
      * Check if a panel or any ancestor has the given class.
      */
     function HasClassInHierarchy(panel, className) {
-        var current = panel;
-        while (current) {
-            if (current.BHasClass && current.BHasClass(className)) return true;
-            current = (typeof current.GetParent === "function") ? current.GetParent() : null;
-        }
-        return false;
+        return FindAncestorWithClass(panel, className) !== null;
     }
     exports.HasClassInHierarchy = HasClassInHierarchy;
 
@@ -234,7 +231,7 @@
     exports.NormalizeDegrees360 = NormalizeDegrees360;
 
     /**
-     * Normalize an angle to [-180, 180).
+     * Normalize an angle to (-180, 180]. Exactly opposite directions use +180.
      */
     function NormalizeDegrees180(rawDeg) {
         var out = NormalizeDegrees360(rawDeg);
@@ -262,8 +259,9 @@
      * Set a CSS style property on a panel with null guards and try/catch.
      */
     function SetStyleSafe(panel, prop, value) {
-        if (!panel || !panel.style || !prop) return;
+        if (!panel || !prop) return;
         try {
+            if (!panel.style) return;
             panel.style[prop] = value;
         } catch (e) { /* SetStyleSafe: panel may be deleted mid-frame */ }
     }
@@ -288,8 +286,9 @@
      * Returns true when a write was performed.
      */
     function SetStyleIfChanged(panel, prop, value) {
-        if (!panel || !panel.style || !prop) return false;
+        if (!panel || !prop) return false;
         try {
+            if (!panel.style) return false;
             if (panel.style[prop] === value) return false;
             panel.style[prop] = value;
             return true;
@@ -302,7 +301,7 @@
      * Release a native code style override before trying legacy fallbacks.
      */
     function ClearStyleSafe(panel, prop) {
-        if (!panel || !panel.style || !prop) return;
+        if (!panel || !prop) return;
         try {
             if (typeof panel.ClearPropertyFromCode === "function") {
                 panel.ClearPropertyFromCode(prop);
@@ -320,7 +319,7 @@
      * Returns the opacity text that was applied.
      */
     function SetPanelOpacitySafe(panel, value, fallback) {
-        if (!panel || !panel.style) return "";
+        if (!panel) return "";
         var text = NormalizeOpacityNumber(value, fallback).toFixed(2);
         try {
             if (panel.style.opacity !== text) panel.style.opacity = text;
@@ -335,7 +334,7 @@
      * Returns true if every panel in the list is valid.
      */
     function IsPanelListValid(list) {
-        if (!list || list.length === 0) return false;
+        if (!Array.isArray(list) || list.length === 0) return false;
         for (var i = 0; i < list.length; i++) {
             if (!IsPanelValid(list[i])) return false;
         }
@@ -365,15 +364,17 @@
         var y = 0;
         var p = panel;
         var guard = 0;
-        while (p && p !== ancestor && guard < 64) {
-            var ox = ReadSafePanelLayoutOffset(p.actualxoffset);
-            var oy = ReadSafePanelLayoutOffset(p.actualyoffset);
-            if (ox === null || oy === null) return null;
-            x += ox;
-            y += oy;
-            p = p.GetParent ? p.GetParent() : null;
-            guard++;
-        }
+        try {
+            while (p && p !== ancestor && guard < 64) {
+                var ox = ReadSafePanelLayoutOffset(p.actualxoffset);
+                var oy = ReadSafePanelLayoutOffset(p.actualyoffset);
+                if (ox === null || oy === null) return null;
+                x += ox;
+                y += oy;
+                p = p.GetParent ? p.GetParent() : null;
+                guard++;
+            }
+        } catch (_) { return null; }
         if (p !== ancestor) return null;
         return { x: x, y: y };
     }
@@ -383,7 +384,8 @@
      * Safely check if a panel has a CSS class, with null guard.
      */
     function PanelHasClass(panel, className) {
-        return !!(panel && panel.BHasClass && panel.BHasClass(className));
+        try { return !!(panel && panel.BHasClass && panel.BHasClass(className)); }
+        catch (_) { return false; }
     }
     exports.PanelHasClass = PanelHasClass;
 
@@ -530,16 +532,15 @@
     exports.PushUnique = PushUnique;
 
     /**
-     * Lightweight function call profiler with rolling 60s window.
+     * Lightweight function call profiler with per-dump intervals.
      * Call ProfileHit("functionName") at the top of hot functions.
      * Dumps top callers every 10s (configurable).
      *
      * Off by default — QOL_UTILS.SetProfilerEnabled(true)
      */
     var _profilerEnabled = false;
-    var _profilerHits = {};       // { name: [{timeMs, count}] } — ring of 10s buckets
+    var _profilerHits = Object.create(null); // name -> count since previous dump
     var _profilerLastDumpMs = 0;
-    var _PROFILER_WINDOW_MS = 60000;
     var _PROFILER_DUMP_INTERVAL_MS = 10000;
     var _PROFILER_TOP_N = 15;
 
@@ -550,8 +551,11 @@
     exports.ProfileHit = ProfileHit;
 
     function SetProfilerEnabled(enabled) {
+        if (!!enabled !== _profilerEnabled) {
+            _profilerHits = Object.create(null);
+            _profilerLastDumpMs = PerfNowMs();
+        }
         _profilerEnabled = !!enabled;
-        if (!enabled) _profilerHits = {};
     }
     exports.SetProfilerEnabled = SetProfilerEnabled;
 
@@ -559,29 +563,27 @@
         if (!_profilerEnabled) return;
         var now = PerfNowMs();
         if (now - _profilerLastDumpMs < _PROFILER_DUMP_INTERVAL_MS) return;
+        var elapsedSec = (now - _profilerLastDumpMs) / 1000;
         _profilerLastDumpMs = now;
 
         var entries = [];
         for (var k in _profilerHits) {
-            if (_profilerHits.hasOwnProperty(k)) {
+            if (Object.prototype.hasOwnProperty.call(_profilerHits, k)) {
                 entries.push({ name: k, count: _profilerHits[k] });
             }
         }
         entries.sort(function(a, b) { return b.count - a.count; });
 
-        $.Msg("[QOLLock][PROFILE] === Top " + _PROFILER_TOP_N + " called (rolling " +
-            Math.round(_PROFILER_WINDOW_MS / 1000) + "s, dumping every " +
+        $.Msg("[QOLLock][PROFILE] === Top " + _PROFILER_TOP_N + " called (last " +
+            elapsedSec.toFixed(1) + "s, minimum dump interval " +
             Math.round(_PROFILER_DUMP_INTERVAL_MS / 1000) + "s) ===");
         var limit = Math.min(_PROFILER_TOP_N, entries.length);
         for (var i = 0; i < limit; i++) {
             $.Msg("[QOLLock][PROFILE] " + (i + 1) + ". " + entries[i].name +
                 " — " + entries[i].count + " calls (" +
-                Math.round(entries[i].count / (_PROFILER_WINDOW_MS / 1000)) + "/s)");
+                Math.round(entries[i].count / elapsedSec) + "/s)");
         }
-        // Rolling window: keep counts, just reset every dump so each
-        // 10s slice is additive to whatever the reader sees in the
-        // surrounding 60s. Full reset every 6 dumps (60s).
-        _profilerHits = {};
+        _profilerHits = Object.create(null);
     }
     exports.DumpProfile = DumpProfile;
 

@@ -73,3 +73,5 @@ with native-like style storage, completion/restart, close/deletion cleanup,
 prior pending edits, localization, and gameplay/reopen without persistent saves.
 These are modeled JS checks, not proof of C++ rendering, cursor routing or shop
 interaction. Compile/repack as maintainer before client verification.
+
+For actual scoreboard and life-state transitions, use the separate [HUD state recorder](hud_state_recording.md). It observes gameplay without applying walkthrough settings.
