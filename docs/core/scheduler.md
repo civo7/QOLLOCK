@@ -1,25 +1,40 @@
-# `panorama/scripts/core/ql_scheduler.js`
+# Scheduler and callback timing
 
-## Purpose
-Provides a cooperative polling scheduler and performance timing harness (`QOL.core.Scheduler` / `QOL.core.perf`). Tracks per-feature tick counts, average/maximum execution time in milliseconds, and frame spike detections.
+Source: `panorama/scripts/core/ql_scheduler.js`; exports `QOL.core.Scheduler`
+and `QOL.core.perf`. Uses namespace, leaf timing utilities and optional EventBus;
+performance records live in the existing State.
 
-## Dependencies
-- `panorama/scripts/core/ql_namespace.js` (`QOL.core`)
-- `panorama/scripts/core/ql_logger.js` (`QOL.core.Logger`)
+| API | Contract |
+| --- | --- |
+| `createPollLoop(callback, rateSec, featureId)` | Starts recurring work; returns `{stop(), reschedule(newRateSec)}`. Use the real feature ID so lifecycle cancellation/error attribution works. |
+| `schedule(callback, rateSec, featureId)` | Alias for recurring polling, not a one-shot timeout. |
+| `cancelAllForFeature(id)` / `cancelAll(id)` | Cancel managed loops for that one feature. |
+| `getTimings(featureId?)`, `resetTimings(featureId?)` | Read/reset recorded per-feature callback statistics. |
+| `startBenchmark(durationSec, onComplete)` | Starts callback timing; returns `{stop()}` or null if State is unavailable. Completion receives `(report, stats)`. |
+| `isBenchmarkActive()` | Reports the current benchmark flag. |
+| `formatBenchmarkReport(stats, durationSec, activeCount)` | Formats recorded benchmark data, not rendered frame timings. |
 
-## Interface (`QOL.core.Scheduler`)
-- `createPollLoop(fn, intervalSec, featureId)`: Creates and starts a managed polling loop ticking at `intervalSec`. Returns a controller object `{ stop(), reschedule(newIntervalSec) }`.
-- `schedule(fn, intervalSec, featureId)`: Alias of `createPollLoop`; this is recurring, not one-shot execution.
-- `cancelAllForFeature(featureId)` / `cancelAll(featureId)`: Stops the registered polling loops for a feature.
-- `getTimings(featureId?)`: Returns recorded timings for one feature or all features while profiling is enabled.
-- `resetTimings(featureId?)`: Clears recorded timings.
-- `startBenchmark(durationSec, onComplete)`: Initiates a live in-game benchmark over `durationSec` seconds with periodic progress heartbeats, spike detection alerts (>= 8ms), and structured console reporting upon completion. Returns `{ stop() }`.
+The first tick has jitter up to half the interval. `reschedule` changes the rate
+for subsequent scheduling; it does not cancel and immediately restart a pending
+tick. `stop` is idempotent. Nonpositive/invalid rates fall back to the implementation's
+rate; callers should pass deliberate valid intervals instead of relying on it.
 
-## Performance & Lifecycle Invariants
-- High-frequency polling (< 0.2s / > 5Hz) requires explicit `// rate-exempt: <reason>` documentation enforced by `tests/manifest_poll_rates.test.js`.
-- Features that can be event-driven should use native engine events and reduce their idle polling rate to 1.0s or 0.5s.
-- Poll loops stop when their owning context panel becomes invalid. This protects callbacks from touching destroyed HUD trees.
-- The scheduler does not suppress callbacks based on `.InHideout`. Features need their callbacks to hide stale overlays, restore native UI, or handle lobby controls. The removed blanket gate prevented the custom cursor from clearing `cursor:none` on entry to Hideout.
-- Hideout work reduction belongs inside each feature, after required cleanup. Keep probe backoff and style-signature caching where their behavior is understood.
-- Source checks and offline scenarios cannot establish FPS improvements, compositor costs, or whether the client preserves a HUD across every transition. Measure those in the game after repacking.
+A loop stops when its captured native context reports invalid. It does not
+blanket-skip hideout callbacks. Features own hidden-state work reduction and
+cleanup; a callback may be required to restore native UI on transitions.
 
+Thrown callback errors are logged and emitted as `scheduler:error`; polling
+continues unless stopped/circuit-broken by FeatureRegistry. Success after an
+error emits `scheduler:tick_ok`. Avoid silently swallowing unexpected errors.
+The Scheduler does not own unrelated raw `$.Schedule` handles or subscriptions.
+
+High-frequency manifest loops need the existing `rate-exempt` explanation checked
+by `tests/manifest_poll_rates.test.js`; prefer event-driven or lower-frequency
+work where the native contract permits it.
+
+Timing is recorded only when performance collection/benchmarking is enabled.
+The clock is `QOL_UTILS.PerfNowMs` (currently Date-based), so output decimals do
+not imply sub-millisecond precision. Stats cover synchronous callback/native
+work, not deferred layout, rendering, GPU work or all JS. Benchmark spike counts
+currently use a 4ms threshold; historical 8ms descriptions are obsolete.
+See [PROFILING.md](../PROFILING.md) for valid comparisons and client verification.

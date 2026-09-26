@@ -1,39 +1,34 @@
-# `panorama/scripts/manifests/ql_damage_impact` (Directional Damage Indicator & Screen Flash Customization)
+# ql_damage_impact
 
-## Description
-Adjusts the scale, opacity, and positioning of the native directional damage impact indicator (`#damage_impact`). When taking enemy gunfire or ability damage, Deadlock renders red directional vignettes around the reticle and screen edges; this feature allows players to tone down or rescale these indicators to avoid visual disorientation in heavy teamfights.
+Native directional damage indicator styling.
 
-## Files
-- Manifest: `panorama/scripts/manifests/ql_damage_impact/manifest.js`
-- Styles: Dynamic inline style management on the native `#damage_impact` panel
+Source: [manifest.js](../../panorama/scripts/manifests/ql_damage_impact/manifest.js),
+loaded by the HUD layout. The general [lifecycle contract](../core/feature_registry.md)
+and [architecture](../../ARCHITECTURE.md) explain context and configuration routing.
 
-## Settings & Defaults
-| Config Key | Type | Default | Description |
-| :--- | :--- | :--- | :--- |
-| `ENABLE_DAMAGE_IMPACT` | `toggle` | `false` | Master toggle enabling custom scale, opacity, and offset overrides for damage impact indicators. |
-| `DAMAGE_IMPACT_SCALE` | `slider` | `1.0` | Uniform scale multiplier applied relative to vanilla's native 80% baseline container scale (`80% * scale`, 0.5 to 2.0). |
-| `DAMAGE_IMPACT_OPACITY` | `slider` | `100` | Opacity percentage for directional damage flashes (0% to 100%). |
-| `DAMAGE_IMPACT_X_OFFSET` | `slider` | `0` | Horizontal pixel offset shifting the damage impact indicator. |
-| `DAMAGE_IMPACT_Y_OFFSET` | `slider` | `0` | Vertical pixel offset shifting the damage impact indicator. |
+## Runtime and ownership
 
-## Architecture & Lifecycle
+Applies native directional-indicator styles on enable/settings changes,
+without starting a recurring loop. The runtime owns a style signature and clears
+its native overrides on disable. Scaling/opacity changes here do not create a
+new damage-event feed or control floating damage numbers.
 
-### Activation & Lifecycle Hooks
-- **`onEnable()`**: Resolves `#damage_impact` within the HUD hierarchy, caches baseline properties, and invokes `_apply()`.
-- **`onDisable()`**: Resets `#damage_impact` inline transforms, margins, uiScale, and opacity to null so vanilla styles govern.
-- **`onSettingsChanged()`**: Synchronously runs `_apply()` to update styling (0ms latency). If all settings are at default values (`!_hasNonDefault`), inline styles are cleanly cleared.
-- **`test()`**: Verifies that `#damage_impact` exists in the HUD DOM.
+## Declared settings
 
-### DOM Injection & Target Panels
-- **DOM Creation**: Zero DOM elements created.
-- **Target Panels**:
-  - `Panel#damage_impact`: Native directional damage flash container.
+- `ENABLE_DAMAGE_IMPACT` (toggle)
+- `DAMAGE_IMPACT_SCALE` (slider)
+- `DAMAGE_IMPACT_OPACITY` (slider)
+- `DAMAGE_IMPACT_X_OFFSET` (slider)
+- `DAMAGE_IMPACT_Y_OFFSET` (slider)
 
-### Engine Events & Polling Frequency
-- **Polling Frequency**: Zero polling (0Hz). The feature is purely reactive to configuration dispatches.
-- **Engine Events**: None.
+Defaults/ranges belong to the linked schema, flat `QOL_DEFAULT_CONFIG` and
+versioned codec definitions, not a duplicated table here. They are separate
+representations; a declared field is not automatically a visible control or
+proof of active runtime behavior. See [adding settings](../ADDING_SETTINGS.md).
 
-### Performance Tier & Caveats
-- **Performance Tier**: None (`< 0.02ms` on setting update).
-- **Suppression**: Validates panel vitality before attempting style updates.
-- **Style Optimization**: Guards style updates using composite string signature diffing (`ox|oy|op|sc|enabled`), completely eliminating unnecessary layout reflows.
+## Verification boundary
+
+The statements above describe source behavior. Native panel identity, binding
+values, rendering and transitions need the maintainer's Panorama Debugger and
+a repacked client scenario; neither a schema nor a read-only manifest hook
+proves the whole feature works. See [verification](../TESTING.md).

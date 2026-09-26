@@ -1,37 +1,30 @@
-# `panorama/scripts/manifests/ql_nicknames` (Top Bar Player Nicknames)
+# ql_nicknames
 
-## Description
-Enables always-visible player nicknames on hero portraits across the Deadlock Top Bar. By default, Deadlock conceals player names unless inspecting portraits; this feature activates the native `{s:player_name}` layout binding in `citadel_hud_top_bar_player.xml` via CSS class gating, allowing players to instantly identify teammates and opponents without checking the full scoreboard.
+Persistent top-bar nickname visibility through native binding/CSS gates.
 
-## Files
-- Manifest: `panorama/scripts/manifests/ql_nicknames/manifest.js`
-- Styles: `panorama/styles/citadel_hud_top_bar.css` (rules for `.nicknames_active .AlwaysPlayerName`)
+Source: [manifest.js](../../panorama/scripts/manifests/ql_nicknames/manifest.js),
+loaded by the HUD layout. The general [lifecycle contract](../core/feature_registry.md)
+and [architecture](../../ARCHITECTURE.md) explain context and configuration routing.
 
-## Settings & Defaults
-| Config Key | Type | Default | Description |
-| :--- | :--- | :--- | :--- |
-| `ENABLE_NICKNAMES` | `toggle` | `false` | Master toggle to display persistent player nicknames over Top Bar portraits. |
+## Runtime and ownership
 
-## Architecture & Lifecycle
+Toggles nickname visibility using the native binding/CSS path on enable,
+disable and setting changes. It does not create arbitrary custom player names.
+There is no recurring loop here. Keep player-portrait identity and the native
+name binding separate from styling/visibility.
 
-### Activation & Lifecycle Hooks
-- **`onEnable()`**: Invokes `_apply(true)` to add the `nicknames_active` CSS class to the context root, `#Hud`, and `#TopBar`.
-- **`onDisable()`**: Invokes `_apply(false)` to strip the `nicknames_active` CSS class from the context root, `#Hud`, and `#TopBar`.
-- **`onSettingsChanged()`**: Synchronizes the class presence immediately according to the boolean/numeric evaluation of `ENABLE_NICKNAMES`.
-- **`test()`**: Traverses from the context root to verify the presence of the native `#TopBar` container.
+## Declared settings
 
-### DOM Injection & Target Panels
-- **DOM Creation**: Zero DOM elements created.
-- **Target Panels**:
-  - `$.GetContextPanel()`: Receives class `nicknames_active`.
-  - `#Hud` (resolved via `QOL.ui.PanelHelpers.findHud()`): Receives class `nicknames_active`.
-  - `#TopBar` (child of `#Hud`): Receives class `nicknames_active`.
+- `ENABLE_NICKNAMES` (toggle)
 
-### Engine Events & Polling Frequency
-- **Polling Frequency**: Zero polling (0Hz). The feature relies completely on reactive state gating.
-- **Engine Events**: None required; state is pushed reactively on configuration change.
+Defaults/ranges belong to the linked schema, flat `QOL_DEFAULT_CONFIG` and
+versioned codec definitions, not a duplicated table here. They are separate
+representations; a declared field is not automatically a visible control or
+proof of active runtime behavior. See [adding settings](../ADDING_SETTINGS.md).
 
-### Performance Tier & Caveats
-- **Performance Tier**: None (`0ms` runtime impact). Pure CSS class gating.
-- **Suppression**: None required; classes apply safely across both Hideout and active match contexts without performance overhead.
-- **Style Optimization**: Direct class manipulation (`SetHasClass`) ensures zero continuous layout recalculations.
+## Verification boundary
+
+The statements above describe source behavior. Native panel identity, binding
+values, rendering and transitions need the maintainer's Panorama Debugger and
+a repacked client scenario; neither a schema nor a read-only manifest hook
+proves the whole feature works. See [verification](../TESTING.md).

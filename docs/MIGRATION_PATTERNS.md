@@ -1,5 +1,12 @@
 # QOLLOCK Migration Patterns — Old System → FeatureRegistry
 
+> **Historical migration record, not a current implementation recipe.** The
+> cutover described below is past work. Paths, callback signatures, counts and
+> commands in its examples can be obsolete. For current code use
+> [ARCHITECTURE.md](../ARCHITECTURE.md), [FeatureRegistry](core/feature_registry.md)
+> and [adding settings](ADDING_SETTINGS.md). Do not recreate the old dispatcher
+> or copy the old three-argument settings callback from this record.
+
 ## Why This Document Exists
 
 Every issue discovered during Phase 10 (config bridge dead code, no auto-boot,

@@ -1,73 +1,76 @@
-# QOLLOCK Feature Manifest Catalog
+# Feature ownership catalog
 
-QOLLOCK contains 48 isolated feature manifests located under `panorama/scripts/manifests/<feature_id>/manifest.js`.
-Each manifest registers with `QOL.core.FeatureRegistry` and owns its lifecycle (`onEnable`, `onDisable`, `onSettingsChanged`, `test`).
+Start with the [architecture guide](../../ARCHITECTURE.md#11-feature-ownership-atlas).
+The active HUD layout currently registers 48 manifests. A registration can be
+intentionally inactive, account-gated or active only for particular settings;
+this table is an ownership index, not a list of verified gameplay behavior.
 
----
+Each linked reference points to its implementation. The source's settings and
+enable predicates are authoritative; UI renderers, flat defaults and codecs
+still require separate changes. General lifecycle rules live in
+[FeatureRegistry](../core/feature_registry.md).
 
-## Feature Index by Category
+| Reference | Responsibility / boundary |
+| --- | --- |
+| [ql_cast_failed_hint](ql_cast_failed_hint.md) | Hide the native cast-failed hint; key is ENABLE_HIDE_FAILED_HINT. |
+| [ql_mouse_cursor](ql_mouse_cursor.md) | Custom cursor overlay; no declared user-setting keys; disabled registration default. |
+| [ql_statlocker](ql_statlocker.md) | Statlocker profile link buttons and account-ID resolution; not a stat-locking engine. |
+| [ql_nicknames](ql_nicknames.md) | Persistent top-bar nickname visibility through native binding/CSS gates. |
+| [ql_ult_cooldowns](ql_ult_cooldowns.md) | Mirror top-bar ultimate cooldown text; keep source and visible labels distinct. |
+| [ql_unspent](ql_unspent.md) | Intentionally inactive unspent-souls compatibility manifest; do not reactivate as cleanup. |
+| [ql_ability_icons](ql_ability_icons.md) | Ability simplification, cosmetic borders, suggestions and stack classes. |
+| [ql_damage_report](ql_damage_report.md) | Damage-report visibility/offsets; no DAMAGE_REPORT_SCALE schema field. |
+| [ql_passive_cooldown](ql_passive_cooldown.md) | Passive cooldown mode classes and Basic native-panel layout. |
+| [ql_chat_images](ql_chat_images.md) | Chat image embedding and chat geometry; external image requests are not local-only. |
+| [ql_chat_translate](ql_chat_translate.md) | Account-gated translation experiment; no general ENABLE_CHAT_TRANSLATE setting. |
+| [ql_lane_with_party](ql_lane_with_party.md) | Automatic party lane preference selection; key is ENABLE_LANE_WITH_PARTY. |
+| [ql_ui_controls](ql_ui_controls.md) | Global layout/support classes and UI settings metadata; not the control factory module. |
+| [ql_unsecured_souls_timer](ql_unsecured_souls_timer.md) | Estimated unsecured-souls conversion countdown, separate from the amount overlay. |
+| [ql_urn_timer](ql_urn_timer.md) | Urn/rift state and spawn-window display derived from game clock/minimap signals. |
+| [ql_on_death_arcade](ql_on_death_arcade.md) | HUD death detection and launch bridge; games execute in the settings context. |
+| [ql_minimap_runtime](ql_minimap_runtime.md) | Base/Alt/Tab geometry, opacity, crates, tunnels and minimap presentation. |
+| [ql_recent_purchases](ql_recent_purchases.md) | Shop filters, floating purchase feed and top-bar purchase popups. |
+| [ql_target_shapes](ql_target_shapes.md) | Size/opacity of native target and hint shapes, including default-state cleanup. |
+| [ql_souls](ql_souls.md) | Native gold/AP container geometry and visibility, not a second economy model. |
+| [ql_stat_bonuses](ql_stat_bonuses.md) | Golden-statue/boon stat bonus readout from native stat sources. |
+| [ql_stats_position](ql_stats_position.md) | Native stats placement and separate normal/scoreboard visibility. |
+| [ql_damage_impact](ql_damage_impact.md) | Native directional damage indicator styling. |
+| [ql_sigflash](ql_sigflash.md) | Flash on pressing a signature ability while unavailable; not an ability-ready alert. |
+| [ql_zipboost](ql_zipboost.md) | Zip boost state/countdown; preserve distinction between hint visibility and active boost. |
+| [ql_spm](ql_spm.md) | Intentionally inactive souls-per-minute compatibility manifest. |
+| [ql_combat_status](ql_combat_status.md) | Combat status/timer and combat indicator settings. |
+| [ql_heroshop](ql_heroshop.md) | Shop layout, simplification and quickbuy behavior; quickbuy has a special-context companion. |
+| [ql_keyboard](ql_keyboard.md) | Keyboard/input display; settings use KEYBOARD_OVERLAY_* names. |
+| [ql_damage_numbers](ql_damage_numbers.md) | Native combat indicator presentation; settings use DAMAGE_NUMBER_OPACITY and HUD_INDICATOR_SIZE. |
+| [ql_topbar](ql_topbar.md) | Top-bar geometry/visibility and shared warning/objective settings. |
+| [ql_crosshair_stats](ql_crosshair_stats.md) | Selected stat/buff/debuff readouts near the crosshair. |
+| [ql_better_unsecured_hud](ql_better_unsecured_hud.md) | Unsecured-souls amount/icon overlay; separate from decay estimation. |
+| [ql_color_warnings](ql_color_warnings.md) | Player/ally/enemy health warning classes and colors; shared threshold keys. |
+| [ql_showrank](ql_showrank.md) | Rank badges and cross-context profile-card probing. |
+| [ql_rejuv_hud](ql_rejuv_hud.md) | Rejuvenator/bridge-buff state and HUD; publishes state consumed by minimap timers. |
+| [ql_minimap_timers](ql_minimap_timers.md) | Minimap objective overlays; consumes Rejuvenator state instead of owning another phase engine. |
+| [ql_legacy_audio_passive](ql_legacy_audio_passive.md) | Announcer, DL4D, minimap reminders and shared Basic cooldown layout work. |
+| [ql_ammo](ql_ammo.md) | Ammo digits/ring geometry, visibility and palette; custom-value enable predicate matters. |
+| [ql_bottom_bar](ql_bottom_bar.md) | Signature/AP/bottom HUD layout and wash palette. |
+| [ql_items](ql_items.md) | Native inventory layout, opacity and wash color; late/replaced icons need reapplication. |
+| [ql_stamina](ql_stamina.md) | Stamina charge rotation/wash; distinguish stamina ring from colliding ability IDs. |
+| [ql_compass](ql_compass.md) | Compass tape, speed display, minimap rotation/flip and player-heading discovery. |
+| [ql_reload_cooldown](ql_reload_cooldown.md) | Reload countdown estimated from native radial progress; icon/circle hiding settings. |
+| [ql_item_mirror](ql_item_mirror.md) | Advanced item cooldown matching/mirroring; not a replacement for Basic mode styling. |
+| [ql_healthbar](ql_healthbar.md) | Numeric healthbar-type dispatcher plus shared/variant modules; PLAYER_HEALTHBAR_* settings. |
+| [ql_perf](ql_perf.md) | Scheduler diagnostics/overlay; not a measurement of total engine frame time. |
+| [ql_show_build_id](ql_show_build_id.md) | Read and display selected shop build metadata; unrelated to settings storage. |
 
-### 1. HUD & Top Bar (`category: hud`)
-- `ql_topbar`: Top bar player styling, status, and layout enhancements.
-- `ql_nicknames`: Custom player nicknames displayed over hero portraits.
-- `ql_unspent`: Unspent souls count badges on player portraits.
-- `ql_ult_cooldowns`: Ultimate ability cooldown timers and readiness indicators.
-- `ql_recent_purchases`: Real-time notification feed of ally/enemy item purchases.
-- `ql_bottom_bar`: Bottom ability and item bar layout customizations.
-- `ql_ability_icons`: Ability icon styling, borders, and readability tweaks.
-- `ql_show_build_id`: Active build ID and title overlay in shop/HUD.
-- `ql_showrank`: Rank tier badges on top bar and escape menu.
-- `ql_stats_position`: Custom positioning for hero core stats HUD.
+## Settings-only utility
 
-### 2. Combat & Crosshair (`category: crosshair`, `combat`)
-- `ql_ammo`: Custom ammo counter display, reload indicator, and clip alerts.
-- `ql_stamina`: Custom stamina pip counter and dash cooldown indicator.
-- `ql_crosshair_stats`: Live hero stats (DPS, fire rate, bullet resist) around crosshair.
-- `ql_target_shapes`: Target lock-on shapes, hit confirmation Reticles.
-- `ql_damage_numbers`: Floating damage text formatting, sizing, and color overrides.
-- `ql_damage_impact`: Directional damage taken indicators and vignette flash.
-- `ql_damage_report`: Post-death or post-combat damage breakdown panel.
-- `ql_combat_status`: In-combat / out-of-combat timer indicator.
-- `ql_sigflash`: Signature ability ready screen flash notification.
-- `ql_cast_failed_hint`: Audio/visual hint when ability cast fails (out of mana, silenced).
+[Update checker](ql_update_checker.md) runs from `ql_update_checker.js` in the
+escape-menu context. It is not a 49th HUD manifest. The `ql_ui_controls` manifest
+contains its setting metadata but does not own the network probe.
 
-### 3. Healthbar & Floating UI (`category: healthbar`)
-- `ql_healthbar`: Custom player and enemy floating healthbar styling.
-- `ql_better_unsecured_hud`: Unsecured souls bar with threshold highlights.
-- `ql_color_warnings`: Low health and low stamina screen border color alerts.
+## Editing a feature
 
-### 4. Minimap & Objectives (`category: minimap`)
-- `ql_minimap_runtime`: Minimap scale, hero icon sizing, and neutral camp indicators.
-- `ql_minimap_timers`: Objective respawn timers directly over minimap icons.
-- `ql_urn_timer`: Soul Urn spawn countdown and carrier tracking.
-- `ql_rejuv_hud`: Mid Boss Rejuvenator timer and active buff countdown HUD.
-- `ql_unsecured_souls_timer`: Unsecured souls loss countdown timer.
-- `ql_compass`: Heading compass tape at the top of the screen.
-
-### 5. Economy & Items (`category: items`)
-- `ql_souls`: Total souls, net worth tracking, and soul pickup stats.
-- `ql_spm`: Souls Per Minute (SPM) live calculation and benchmark tracker.
-- `ql_items`: Active item cooldowns, charge counters, and active slot styling.
-- `ql_item_mirror`: Mirrored inventory HUD for quick situational awareness.
-- `ql_stat_bonuses`: Item passive stat bonus breakdown overlay.
-- `ql_statlocker`: Stat locking and quick-compare HUD.
-- `ql_passive_cooldown`: Cooldown timers for passive items (Return Fire, Metal Skin).
-- `ql_reload_cooldown`: Active reload timing bar and bonus indicator.
-- `ql_heroshop`: Quickbuy queue optimizations, price difference alerts.
-
-### 6. Movement & Traversal (`category: movement`)
-- `ql_zipboost`: Zipline speed boost timing window and jump indicator.
-- `ql_keyboard`: On-screen movement key visualizer (WASD display).
-- `ql_mouse_cursor`: Custom hardware/software crosshair cursor override.
-
-### 7. Audio & Announcements (`category: audio`)
-- `ql_legacy_audio_passive`: Announcer voice pack triggers, DL4D audio cues.
-
-### 8. System, Social & Utilities (`category: ui`)
-- `ql_chat_images`: Dynamic chat emoji and image rendering.
-- `ql_chat_translate`: In-game chat translation overlay.
-- `ql_lane_with_party`: Party member lane assignment indicators.
-- `ql_on_death_arcade`: Mini-games (Minesweeper, Flappy, Aim Trainer) on death screen.
-- `ql_ui_controls`: UI control primitives and interactive widgets.
-- `ql_perf`: In-game performance and scheduler FPS overlay.
-- `ql_update_checker`: Release update checker and version notifications.
+- Read actual XML includes before assuming an on-disk module is loaded.
+- Check shared-key owners before changing activation or normalization.
+- Preserve native-source identity, replacement invalidation and owned cleanup.
+- Reuse [helpers](../HELPERS.md), controls and [localization](../LOCALIZATION.md).
+- Report offline evidence separately from client rendering/lifecycle validation.

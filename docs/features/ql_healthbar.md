@@ -1,43 +1,38 @@
-# `panorama/scripts/manifests/ql_healthbar` (Custom Healthbar Styles & Layout Dispatcher)
+# ql_healthbar
 
-## Description
-Provides a comprehensive modular healthbar replacement system for the player's primary HP and shield meters. Acts as a theme dispatcher supporting multiple distinct visual styles: **Minimalist** (clean solid flat bars), **budhud** (TF2-inspired bold competitive typography), **Fighting Game** (arcade-style segmented vitality gauge), and **Minecraft** (retro pixel heart containers).
+Numeric healthbar-type dispatcher plus shared/variant modules; PLAYER_HEALTHBAR_* settings.
 
-## Files
-- Manifest: `panorama/scripts/manifests/ql_healthbar/manifest.js`
-- Styles: `panorama/styles/features/ql_feat_healthbar.css`
+Source: [manifest.js](../../panorama/scripts/manifests/ql_healthbar/manifest.js),
+loaded by the HUD layout. The general [lifecycle contract](../core/feature_registry.md)
+and [architecture](../../ARCHITECTURE.md) explain context and configuration routing.
 
-## Settings & Defaults
-| Config Key | Type | Default | Description |
-| :--- | :--- | :--- | :--- |
-| `ENABLE_HEALTHBAR_OVERLAY` | `toggle` | `false` | Master toggle to enable custom healthbar overlay rendering. |
-| `HEALTHBAR_TYPE` | `dropdown` | `"default"` | Theme preset selector (`default`, `minimalist`, `budhud`, `fg`, `minecraft`). |
-| `HEALTHBAR_SCALE` | `slider` | `1.0` | Global scale multiplier for the custom healthbar container (0.5 to 2.5). |
-| `HEALTHBAR_X_OFFSET` | `slider` | `0` | Horizontal pixel offset shifting the healthbar display. |
-| `HEALTHBAR_Y_OFFSET` | `slider` | `0` | Vertical pixel offset shifting the healthbar display. |
-| `HEALTHBAR_OPACITY` | `slider` | `100` | Opacity percentage for the healthbar container (0% to 100%). |
+## Runtime and ownership
 
-## Architecture & Lifecycle
+`shared.js` and the files in `variants/` load before this dispatcher in
+`hud.xml`. `HEALTHBAR_TYPE` is numeric 0–5; do not introduce string theme names
+into this contract. The dispatcher starts a 0.05-second loop and performs an
+initial update. Variant teardown, common scale/opacity/offsets and accent state
+all matter when switching styles. Profile the selected variant explicitly;
+default-style measurements do not characterize Minecraft.
 
-### Activation & Lifecycle Hooks
-- **`onEnable()`**: Locates `#health_and_abilities_container`, constructs the `QOLHealthbarRoot` overlay panel tree, applies the active theme class to `#Hud`, and registers a rate-exempt polling task running at 20Hz (`0.05s` interval).
-- **`onDisable()`**: Cancels scheduler task, deletes `_panel` via `safeDeletePanel`, strips active theme classes from the HUD, and invalidates cache.
-- **`onSettingsChanged()`**: Synchronously switches theme classes, recalculates scale and position offsets, and triggers an immediate tick.
-- **`test()`**: Verifies that `#health_and_abilities_container` is present in the DOM.
+## Declared settings
 
-### DOM Injection & Target Panels
-- **Parent Container**: Injected under `Panel#health_and_abilities_container` (or root `#Hud`).
-- **Injected Panels**:
-  - `Panel#QOLHealthbarRoot`: Main styled wrapper hosting health and shield bars.
-  - Sub-elements: `Panel#QOLHealthbarFill`, `Panel#QOLShieldFill`, `Label#QOLHealthText`, or segmented heart containers depending on selected `HEALTHBAR_TYPE`.
-- **Root Classes Synchronized**:
-  - `ql_healthbar_minimalist`, `ql_healthbar_budhud`, `ql_healthbar_fg`, `ql_healthbar_minecraft`.
+- `HEALTHBAR_TYPE` (dropdown)
+- `ENABLE_MINECRAFT_HEALTH_NUMBERS` (toggle)
+- `PLAYER_HEALTHBAR_SCALE` (slider)
+- `PLAYER_HEALTHBAR_OPACITY` (slider)
+- `PLAYER_HEALTHBAR_X_OFFSET` (slider)
+- `PLAYER_HEALTHBAR_Y_OFFSET` (slider)
+- `PLAYER_HEALTHBAR_ACCENT_COLOR` (palette)
 
-### Engine Events & Polling Frequency
-- **Polling Frequency**: 20Hz (`0.05s` interval). Rate-exempt to ensure smooth bar interpolation and instant damage reflection during combat.
-- **Engine Events**: None.
+Defaults/ranges belong to the linked schema, flat `QOL_DEFAULT_CONFIG` and
+versioned codec definitions, not a duplicated table here. They are separate
+representations; a declared field is not automatically a visible control or
+proof of active runtime behavior. See [adding settings](../ADDING_SETTINGS.md).
 
-### Performance Tier & Caveats
-- **Performance Tier**: Medium (`~0.10ms` per tick during combat).
-- **Suppression**: Suppressed when in the Hideout/Sandbox lobby.
-- **Interpolation & Diffing**: Fill bar width percentages and numeric labels are diffed against previous frame state; style writes are skipped if health and shield values have not changed.
+## Verification boundary
+
+The statements above describe source behavior. Native panel identity, binding
+values, rendering and transitions need the maintainer's Panorama Debugger and
+a repacked client scenario; neither a schema nor a read-only manifest hook
+proves the whole feature works. See [verification](../TESTING.md).

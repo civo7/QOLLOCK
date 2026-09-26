@@ -127,7 +127,7 @@ These tools count operations and expose JavaScript exceptions under the supplied
 model. They cannot establish which calls the live engine makes or the cost of a
 rendered frame. An id absent from XML/JavaScript can still be created by C++.
 
-`import_tree_dump.js` can use captures from `tools/qol_dump_tree.js`. The Dev
+`scripts/import_tree_dump.js` can use captures from `panorama/scripts/tools/qol_dump_tree.js`. The Dev
 button currently captures aggregate counts, not a complete panel hierarchy.
 Captures improve the inputs but do not reproduce native methods, dynamic
 lifecycle, bindings or rendering. Do not turn a modelled green result into a

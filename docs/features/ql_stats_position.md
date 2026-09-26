@@ -36,7 +36,7 @@ Customizes the screen anchoring, offsets, and contextual visibility of the hero 
 ### Engine Events & Polling Frequency
 - **Polling Frequency**: 1Hz (`1.0s` interval) baseline.
 - **Engine Event Subscription**:
-  - Listens to `engine:scoreboard_toggle` via `ctx.events.on()`. Instantly schedules a 0ms tick (`$.Schedule(0, _tick)`) when Tab is pressed or released to update visibility rules with zero delay.
+  - Listens to `engine:scoreboard_toggle` via `ctx.events.on()` and queues `$.Schedule(0, _tick)` to re-evaluate visibility. Scheduling zero seconds is not a guarantee of zero latency or final native layout state.
 
 ### Performance Tier & Caveats
 - **Performance Tier**: Low (1Hz baseline combined with event reactivity).

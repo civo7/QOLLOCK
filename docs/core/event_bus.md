@@ -1,24 +1,25 @@
-# `panorama/scripts/core/ql_event_bus.js`
+# Internal event bus
 
-## Purpose
-Provides a lightweight, error-isolated internal publish/subscribe message bus for inter-module communication and engine event dispatching.
+Source: `panorama/scripts/core/ql_event_bus.js`; export `QOL.core.EventBus`.
+This is synchronous, context-local pub/sub, not a cross-realm transport.
 
-## Dependencies
-- `panorama/scripts/core/ql_namespace.js` (`QOL.core`)
+- `on(event, callback)` appends a listener. Repeated registration can duplicate it;
+  no unsubscribe handle is returned.
+- `off(event, callback)` removes matching callbacks. Omitting the callback removes
+  the entire event's listener list; individual features should remove only theirs.
+- `emit(event, payload)` calls listeners synchronously and isolates listener
+  exceptions so other listeners can continue. It iterates the live listener list;
+  do not assume snapshot semantics when adding/removing listeners during dispatch.
 
-## Interface (`QOL.core.EventBus`)
-- `on(event, callback)`: Registers a listener callback for an event name string.
-- `off(event, callback)`: Unregisters a callback (or all callbacks if callback is omitted) for an event name string.
-- `emit(event, payload)`: Synchronously dispatches an event to all registered listeners.
+`ctx.events.emit` prefixes the feature ID; `ctx.events.on/off` do not. For example,
+an emitted feature event must be subscribed under its full `ql_name:event` name.
+Feature-owned subscriptions require explicit cleanup in `onDisable`.
 
-## Key Events
-- `engine:scoreboard_toggle`: Fired on Tab press/release via `CitadelScoreboardToggle`.
-- `engine:shop_opened`: Fired when the item shop opens via `CitadelOpenUpgradeShop`.
-- `engine:shop_closed`: Fired when the item shop closes via `CitadelExitUpgradeShop` or `CitadelUserMsg_ForceShopClosed`.
-- `engine:escape_menu_toggled`: Fired on Esc menu open/close via `CitadelToggleEscapeMenu`.
-- `engine:game_state_changed`: Fired on match phase transitions via `CitadelGameStateChanged`.
-- `<featureId>:<event>`: Scoped custom feature events emitted through `ctx.events.emit()`.
+Core events include `config:changed`, `scheduler:error`, `scheduler:tick_ok`, and
+the engine bridges listed in [app.md](app.md). The bus itself does not subscribe
+to native game events. There is no current app-provided `engine:quickbuy_changed`
+bridge. Do not invent one based on an old document.
 
-## Architectural Notes
-- Listener isolation: If a registered listener throws an uncaught error, it is logged, but does not abort execution for remaining listeners or the emitter.
-- Features access the bus via `context.events.on()` and `context.events.off()`.
+The optional shop-close compatibility listener is not a verified native event
+contract; see [VALIDATION.md](../VALIDATION.md). Event names in this bus do not
+prove corresponding engine events or shared-memory visibility from settings.

@@ -1,24 +1,23 @@
-# `panorama/scripts/core/ql_namespace.js`
+# Namespace bootstrap
 
-## Purpose
-Initializes the root `QOL` and `QOL.core` namespace hierarchy, establishes environment role detection (`hud` vs `em` escape menu), and sets up compatibility aliases.
+Source: `panorama/scripts/core/ql_namespace.js`. See [architecture](../../ARCHITECTURE.md)
+for context boundaries and actual XML load order.
 
-## Dependencies
-- Must load 1st among core scripts (defined in `hud.xml` and `hud_escape_menu.xml`).
+This first-loaded script establishes `QOL.core`, `QOL.ui`, `QOL.features` and
+`QOL.adapters`, preserving an existing initialized namespace. It initializes
+`QOL.VERSION` only when absent and sets `QOL.ROLE` to `em` when the context ID is
+exactly `EscapeMenu`, otherwise `hud` (also the fallback on detection failure).
+Role is a bootstrap hint, not proof of gameplay state or API availability.
 
-## Interface (`QOL.core`)
-- `QOL.VERSION`: Current mod semantic version string (e.g. `4.0.0`).
-- `QOL.BUILD`: Build identifier timestamp.
-- `QOL.ROLE`: Active execution context role (`"hud"` in gameplay HUD, `"em"` in Escape Menu settings window).
-- `QOL.core.panel`: Alias for panel helpers.
-- `QOL.core.PanelHelpers`: Backward-compatibility alias.
-- `QOL.core.hud`: Alias for HUD helper subsystem.
-- `QOL.core.time`: Alias for match clock subsystem.
-- `QOL.core.perf` / `QOL.core.Scheduler`: Aliases for scheduler subsystem.
-- `QOL.core.registry` / `QOL.core.FeatureRegistry`: Aliases for feature registry.
-- `QOL.core.logger` / `QOL.core.Logger`: Aliases for logger.
-- `QOL.core.app` / `QOL.core.App`: Aliases for boot coordinator.
+It creates initial aliases for panel/HUD/time/Scheduler/registry/logger/app
+buckets. Later modules publish their real APIs; an empty namespace bucket does
+not mean the subsystem has loaded. There is no `QOL.BUILD` export here.
 
-## Architectural Notes
-- Provides a safe `QOL.import()` polyfill for transitional features during refactoring.
-- Avoids overwriting existing global state if scripts are reloaded dynamically.
+`QOL.import(names)` has a transitional fallback for root exports, utilities,
+state and old cache accessors. `ql_shared_presets.js` subsequently supplies the
+shared bridge/export layer. Reuse the API available in the consumer's real layout;
+do not create another alias layer or rely on a fallback to conceal load-order bugs.
+
+HUD and settings get separate namespace objects. Native panel attributes and
+existing bridges, not JS object identity, connect their state. Reload protection
+is local to the JS context and does not establish native panel lifetime.

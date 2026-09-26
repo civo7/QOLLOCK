@@ -42,7 +42,7 @@ Provides styling, scale adjustments, and mode switching for passive item cooldow
 - **Engine Events**: None required; visual updates are triggered on setting modifications.
 
 ### Performance Tier & Caveats
-- **Performance Tier**: None (`0ms` runtime impact).
+- **Runtime cost**: No recurring loop in this manifest; related Basic layout work also exists in `ql_legacy_audio_passive`. This is not a zero-cost guarantee for the whole cooldown feature.
 - **Panel Caching**: Panel reference to `#hud_passive_items` is cached in `_cachedPassiveHud` and validated with `QOL_UTILS.IsPanelValid`.
 - **Clean Reset**: On disabling or switching to Advanced Mode, inline styles are cleanly set to `null` to restore native engine layout and CSS cascading.
 

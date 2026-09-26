@@ -1,41 +1,35 @@
-# `panorama/scripts/manifests/ql_keyboard` (Visual Keyboard & Keybind Overlay)
+# ql_keyboard
 
-## Description
-Renders an on-screen graphical keyboard and keybind overlay (`QOLKeyboardOverlayRoot`) displaying active movement controls, ability slots, active item triggers, and movement modifiers (jump, dash, slide). Designed for content creators, streamers, and players practicing complex movement tech, this overlay visualizes input timing and keypress states in real time.
+Keyboard/input display; settings use KEYBOARD_OVERLAY_* names.
 
-## Files
-- Manifest: `panorama/scripts/manifests/ql_keyboard/manifest.js`
-- Styles: `panorama/styles/features/ql_feat_keyboard.css`
+Source: [manifest.js](../../panorama/scripts/manifests/ql_keyboard/manifest.js),
+loaded by the HUD layout. The general [lifecycle contract](../core/feature_registry.md)
+and [architecture](../../ARCHITECTURE.md) explain context and configuration routing.
 
-## Settings & Defaults
-| Config Key | Type | Default | Description |
-| :--- | :--- | :--- | :--- |
-| `ENABLE_KEYBOARD_OVERLAY` | `toggle` | `false` | Master toggle to enable the visual keyboard input overlay. |
-| `KEYBOARD_SCALE` | `slider` | `1.0` | Global scale multiplier for the keyboard display (0.5 to 2.0). |
-| `KEYBOARD_X_OFFSET` | `slider` | `0` | Horizontal pixel offset shifting keyboard position. |
-| `KEYBOARD_Y_OFFSET` | `slider` | `0` | Vertical pixel offset shifting keyboard position. |
-| `KEYBOARD_OPACITY` | `slider` | `100` | Opacity percentage for the keyboard overlay (0% to 100%). |
+## Runtime and ownership
 
-## Architecture & Lifecycle
+Starts a 0.2-second managed loop. Configuration uses `KEYBOARD_OVERLAY_*`
+keys and the full-layout toggle, not generic `KEYBOARD_SCALE`/position keys.
+Native input/class observations are not browser keyboard events. Preserve the
+feature's own visibility and teardown behavior when changing the overlay.
 
-### Activation & Lifecycle Hooks
-- **`onEnable()`**: Injects `QOLKeyboardOverlayRoot` under `gameplay_hud`, generates the keycap grid layout, applies configured styling, and registers a cooperative scheduler loop at 5Hz (`0.2s` interval).
-- **`onDisable()`**: Cancels scheduler task, safely destroys `_panel` via `safeDeletePanel`, and clears keycap references.
-- **`onSettingsChanged()`**: Synchronously updates panel scale, offsets, and opacity without rebuilding the DOM.
-- **`test()`**: Verifies that `gameplay_hud` is mounted and valid.
+## Declared settings
 
-### DOM Injection & Target Panels
-- **Parent Container**: Injected under `gameplay_hud` (or root `#Hud`).
-- **Injected Panels**:
-  - `Panel#QOLKeyboardOverlayRoot`: Outer container positioned via transform margins.
-  - `Panel#AllBindingsBox`: Container hosting structured key groups (movement cluster, ability row, item grid).
-  - Child keycap panels: Individual key buttons with active state classes (`.key_pressed`).
+- `ENABLE_KEYBOARD_OVERLAY` (toggle)
+- `ENABLE_FULL_KEYBOARD_LAYOUT` (toggle)
+- `KEYBOARD_OVERLAY_SCALE` (slider)
+- `KEYBOARD_OVERLAY_X_OFFSET` (slider)
+- `KEYBOARD_OVERLAY_Y_OFFSET` (slider)
+- `KEYBOARD_OVERLAY_WASH_COLOR` (palette)
 
-### Engine Events & Polling Frequency
-- **Polling Frequency**: 5Hz (`0.2s` interval) cooperative polling loop via `QOL.core.Scheduler`.
-- **Engine Events**: None.
+Defaults/ranges belong to the linked schema, flat `QOL_DEFAULT_CONFIG` and
+versioned codec definitions, not a duplicated table here. They are separate
+representations; a declared field is not automatically a visible control or
+proof of active runtime behavior. See [adding settings](../ADDING_SETTINGS.md).
 
-### Performance Tier & Caveats
-- **Performance Tier**: Low (`~0.05ms` per tick).
-- **Suppression**: Collapses in Hideout/Sandbox when no active hero is controlled.
-- **Style Optimization**: Keypress classes are diffed against previous frame state; style updates are executed only when a key transitions between pressed and released states.
+## Verification boundary
+
+The statements above describe source behavior. Native panel identity, binding
+values, rendering and transitions need the maintainer's Panorama Debugger and
+a repacked client scenario; neither a schema nor a read-only manifest hook
+proves the whole feature works. See [verification](../TESTING.md).

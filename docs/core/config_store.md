@@ -1,26 +1,30 @@
-# `panorama/scripts/core/ql_config_store.js`
+# Feature configuration store
 
-## Purpose
-Central reactive, schema-validated configuration store for all QOLLOCK features. Validates setting types, enforces min/max/options bounds, and dispatches change events to the event bus.
+Source: `panorama/scripts/core/ql_config_store.js`; export `QOL.core.ConfigStore`.
+Requires namespace and EventBus. This is in-memory feature configuration, not
+settings UI state or disk persistence. See [configuration](config_parsing.md)
+and [adapter](config_adapter.md).
 
-## Dependencies
-- `panorama/scripts/core/ql_namespace.js` (`QOL.core`)
-- `panorama/scripts/core/ql_event_bus.js` (`QOL.core.EventBus`)
+| API | Current behavior |
+| --- | --- |
+| `registerSchema(featureId, schema)` | Validates `schema.settings`, creates defaults and returns success. Re-registering an existing feature returns false; it does not backfill a replacement schema. |
+| `get(featureId, key)` | Reads the stored value, or undefined. |
+| `set(featureId, key, value)` | Validates a registered key, normalizes numeric toggles and slider decimals, writes and emits `config:changed`. Returns false on rejection. Even an equal successful value emits. |
+| `all(featureId)` | Shallow copy of one bucket. |
+| `view(featureId)` | Actual live bucket, read-only by convention; not frozen or proxied. Never mutate it. |
+| `exportAll()` | New outer object with shallow copies of registered buckets; not recursive cloning. |
+| `hasSchema(featureId)` | Whether a schema was registered. |
+| `load(data)` | Merges recognized valid keys for registered buckets, preserves other values, emits for changed values. It is not silent. |
+| `syncFromExternal(data)` | Compares incoming values, calls `set` for differences and returns accepted update count. |
 
-## Interface (`QOL.core.ConfigStore`)
-- `registerSchema(featureId, schema)`: Registers a feature configuration schema. `schema.settings` contains array of setting definitions. Re-registration preserves current in-memory values while backfilling newly defined keys with defaults.
-- `get(featureId, key)`: Retrieves current typed value for a feature setting. Returns `schema.default` if unset, or `undefined` if key is unregistered.
-- `set(featureId, key, value)`: Validates and updates a setting value. If value changes, updates store and emits `config:changed` (`{ featureId, key, value }`) on `EventBus`.
-- `all(featureId)`: Returns a shallow clone of all current settings for a feature bucket.
-- `view(featureId)`: Returns a read-only frozen proxy / snapshot of the feature's configuration.
-- `exportAll()`: Exports all buckets as a deep copy for serialization or IPC.
-- `hasSchema(featureId)`: Checks if a feature schema is registered.
-- `load(data)`: Batch-loads settings into feature buckets from external JSON data, validating against registered schemas.
-- `syncFromExternal(data)`: Selectively updates values that differ from external state and returns the count of updated keys.
+Accepted schema types are `toggle`, `slider`, `dropdown`, `text`, `palette`,
+`action`, `number`, `buttongroup`, and `multitoggle`. Slider schemas require min/max;
+`set` rounds decimals but does not impose the compact codec's step. `load` does
+not perform that same slider-decimal rounding. UI/wire consistency must be checked
+separately. Dropdown options, when provided, are compared by string value.
+Multitoggle options create individual boolean keys in addition to the group key.
 
-## Supported Types
-`toggle`, `slider` (requires `min`, `max`), `dropdown` (requires `options`), `text`, `palette`, `action`, `number`, `buttongroup`, `multitoggle`.
-
-## Invariants & Architectural Notes
-- Dispatches `config:changed` only when values actually differ (`oldVal !== newVal`).
-- Feature manifests consume config reactively through `ctx.config` (backed by `ConfigStore`) and `onSettingsChanged` handlers.
+`config:changed` carries `{featureId, key, value}`. FeatureRegistry augments that
+payload with `changes` for `onSettingsChanged`. Consumers must not bypass this
+path by mutating `view()`. Registration defaults do not automatically extend the
+flat `QOL_DEFAULT_CONFIG` used by settings/storage.

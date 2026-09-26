@@ -45,6 +45,6 @@ Provides granular control over the Deadlock weapon ammo HUD and circular clip ri
 - **Engine Events**: None.
 
 ### Performance Tier & Caveats
-- **Performance Tier**: Low (runs strictly on configuration change, taking `< 0.02ms`).
-- **Suppression**: Checks panel validity via `PanelHelpers.isPanelAlive` prior to mutating styles.
+- **Runtime cost**: Reactive to configuration, with no recurring loop in this manifest. Per-callback cost is not measured here.
+- **Validity**: Native handles must remain valid before style mutation; shared validity APIs are `QOL_UTILS.IsPanelValid` and `QOL.core.panel.isAlive`, not `PanelHelpers.isPanelAlive`.
 - **Style Optimization**: Guards style writes using `_lastMainSig` and `_lastClipSig` string signatures, ensuring layout properties (`preTransformScale2d`, `transform`, `marginLeft`, `marginTop`) are mutated only when values differ.

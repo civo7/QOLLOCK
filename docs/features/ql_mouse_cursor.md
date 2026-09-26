@@ -1,48 +1,32 @@
-# `panorama/scripts/manifests/ql_mouse_cursor` (Custom Gameplay Mouse Cursor)
+# ql_mouse_cursor
 
-## Description
-Renders a custom gameplay mouse cursor overlay on the HUD when menu or interactive UI contexts are active. The feature tracks cursor coordinates and updates a custom cursor image position while hiding the native cursor or overlaying a styled reticle during shop interaction, scoreboard viewing, ability upgrades, hero details view, or the escape menu.
+Custom cursor overlay; no declared user-setting keys; disabled registration default.
 
-## Files
-- Manifest: `panorama/scripts/manifests/ql_mouse_cursor/manifest.js`
-- Styles: `panorama/styles/features/ql_feat_cursor.css`
+Source: [manifest.js](../../panorama/scripts/manifests/ql_mouse_cursor/manifest.js),
+loaded by the HUD layout. The general [lifecycle contract](../core/feature_registry.md)
+and [architecture](../../ARCHITECTURE.md) explain context and configuration routing.
 
-## Settings & Defaults
-| Config Key | Type | Default | Description |
-| :--- | :--- | :--- | :--- |
-| *(Feature Enable)* | `boolean` | `false` | Master toggle for the custom gameplay mouse cursor overlay (`enabledByDefault: false`). |
+## Runtime and ownership
 
-*Note: This feature exposes no sub-keys in its `settings` array; it is controlled entirely via its feature registration toggle.*
+Registers disabled by default and declares no user-setting keys. When
+activated, starts a 0.05-second loop and only shows the cursor in supported
+interactive match contexts. The hide path removes
+`qol_custom_cursor_replace_active`, restoring the native cursor, and resets
+cached coordinates. This is why Scheduler must not globally skip all hideout
+callbacks. Disable also deletes the owned cursor panel and invalidates handles.
 
-## Architecture & Lifecycle
+## Declared settings
 
-### Activation & Lifecycle Hooks
-- **`onEnable()`**: Spawns a dedicated polling loop via `QOL.core.Scheduler.createPollLoop(_tick, 0.05, "ql_mouse_cursor")` running at 20Hz (50ms interval).
-- **`onDisable()`**: Stops and destroys the poll loop, strips the `qol_custom_cursor_replace_active` CSS class from HUD root, calls `DeleteAsync(0)` on `_cursorPanel`, and resets internal position cache.
-- **`onSettingsChanged()`**: Immediately triggers `_tick()` to refresh cursor positioning and visibility state.
-- **`test()`**: Evaluates match context by checking for the `StartupLoader` panel on HUD root.
+No user-setting entries are declared by this manifest.
 
-### DOM Injection & Target Panels
-- **Parent Container**: Injected directly under `$.GetContextPanel()` (HUD root).
-- **Target Panels**:
-  - `Panel#QOLGameplayMouseCursor.QOLGameplayMouseCursor`: Top-level cursor position container. Configured with `hittest = false` and `hittestchildren = false`.
-  - `Image#QOLGameplayMouseCursorImage.QOLGameplayMouseCursorImage`: Child image panel displaying the custom cursor graphic (`s2r://panorama/images/hud/abilities/punkgoat/goat_sigilslam_psd.vtex`).
-- **CSS Classes**:
-  - `qol_custom_cursor_replace_active`: Applied to HUD root when the custom cursor is actively rendered.
-  - `qol-hidden`: Applied to `QOLGameplayMouseCursor` when outside interactive UI contexts.
+Defaults/ranges belong to the linked schema, flat `QOL_DEFAULT_CONFIG` and
+versioned codec definitions, not a duplicated table here. They are separate
+representations; a declared field is not automatically a visible control or
+proof of active runtime behavior. See [adding settings](../ADDING_SETTINGS.md).
 
-### Engine Events & Polling Frequency
-- **Polling Frequency**: 20Hz (`0.05s` / 50ms interval), rate-exempt due to the necessity of smooth mouse tracking.
-- **Engine Events**: Does not subscribe to engine events directly. Instead, inspects HUD root state classes:
-  - `gShopOpen` (Shop menu open)
-  - `gScoreboardOpen` (Scoreboard open)
-  - `gAbilityUpgradeMenu` (Ability upgrade screen open)
-  - `gDetailView` (Hero detail view open)
-  - `EscapeMenu` panel visibility
+## Verification boundary
 
-### Performance Tier & Caveats
-- **Performance Tier**: High impact (measures ~1.34ms/tick during active tracking). Disabled by default.
-- **Suppression**:
-  - Suppressed in the Hideout/Sandbox sandbox lobby via `QOL.core.hud.isInHideout` and class checks (`connectedToHideout`, `InHideout`).
-  - Suppressed while `StartupLoader` is active or when no interactive UI context is present.
-- **Style Optimization**: Integer-rounded coordinate diffing (`_lastX`, `_lastY`) guards writes to `panel.style.x` and `panel.style.y`, preventing redundant layout invalidation when the mouse is stationary.
+The statements above describe source behavior. Native panel identity, binding
+values, rendering and transitions need the maintainer's Panorama Debugger and
+a repacked client scenario; neither a schema nor a read-only manifest hook
+proves the whole feature works. See [verification](../TESTING.md).

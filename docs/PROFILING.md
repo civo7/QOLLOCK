@@ -168,17 +168,16 @@ healthbar setting is not a valid baseline for a run at another.
 
 ## Regression ceilings (removed)
 
-`tests/perf_guards.test.js` locked in the fixes whose entire value is "this
-expensive thing stopped happening" — the output is identical either way, only the
-amount of work differs. It went with the rest of `tests/` on 2026-08-23
-(`docs/TESTING.md` explains why).
+The historical `tests/perf_guards.test.js` ceiling suite was removed. That does
+not mean the current repository has no tests: [TESTING.md](TESTING.md) documents
+the current behavior regressions and npm gate. No current performance-ceiling
+test with that filename should be invoked or cited as passing.
 
-One of its two genuinely load-bearing checks survives without it: the profiler
-itself prints `scheduled-callback errors` (`scripts/simulator/perf/profile.js:317`).
-A feature that throws every tick is invisible in game — the mod's error boundary
-catches it — while the work leading up to the throw repeats forever. That is how
-the `betterUnsecuredHud` ReferenceError was found, and a profiler run still shows
-it.
+The profiler reports scheduled-callback errors. Inspect them alongside operation
+counts: an exception or registry auto-disable can reduce later measured work
+without improving the feature. Scheduler error thresholds and cancellation are
+described in [scheduler.md](core/scheduler.md); repeated work is not guaranteed
+to continue forever after an error.
 
 What is no longer automated is the ceiling itself. Use `--save` / `--compare`
 before and after a perf change instead:

@@ -1,40 +1,34 @@
-# `panorama/scripts/manifests/ql_perf` (Performance Diagnostics & Overlay)
+# ql_perf
 
-## Description
-Tracks real-time execution timing, CPU frame consumption, and scheduler diagnostics across all QOLLOCK subsystems and feature manifests. It provides a visual HUD overlay displaying active feature performance metrics and periodically flushes top CPU consumers to the developer console, helping developers and players identify performance bottlenecks, frame spikes, and slow polling loops.
+Scheduler diagnostics/overlay; not a measurement of total engine frame time.
 
-## Files
-- Manifest: `panorama/scripts/manifests/ql_perf/manifest.js`
-- Supporting Scripts: `panorama/scripts/ql_perf_overlay.js` (loaded in `panorama/layout/hud.xml`)
+Source: [manifest.js](../../panorama/scripts/manifests/ql_perf/manifest.js),
+loaded by the HUD layout. The general [lifecycle contract](../core/feature_registry.md)
+and [architecture](../../ARCHITECTURE.md) explain context and configuration routing.
 
-## Settings & Defaults
-| Config Key | Type | Default | Description |
-| :--- | :--- | :--- | :--- |
-| `ENABLE_PERF_DEBUG` | `toggle` | `false` | Enable periodic console logs showing average execution times of top features. |
-| `ENABLE_PERF_DEBUG_DETAIL` | `toggle` | `false` | Enable detailed console statistics including call count, max execution time, and slow frame count. |
-| `ENABLE_PERF_OVERLAY` | `toggle` | `false` | Display an on-screen HUD overlay showing live performance statistics. |
-| `PERF_OVERLAY_OPACITY` | `slider` | `0.8` | Opacity of the performance HUD overlay (range: 0.1 to 1.0). |
+## Runtime and ownership
 
-*Note: Feature registration uses multi-key activation (`enableKeys: ["ENABLE_PERF_DEBUG", "ENABLE_PERF_DEBUG_DETAIL", "ENABLE_PERF_OVERLAY"]`), automatically turning on if any of these settings are active.*
+Starts a 0.2-second loop and an initial tick to update diagnostics.
+Scheduler statistics cover observed synchronous callback work; they are not
+whole-frame CPU/GPU time or FPS. Date-based milliseconds do not imply
+sub-millisecond precision. Keep the diagnostic overlay's own work separate from
+claims about the feature being measured. See `docs/PROFILING.md`.
 
-## Architecture & Lifecycle
+## Declared settings
 
-### Activation & Lifecycle Hooks
-- **`onEnable()`**: Initiates a cooperative polling loop at 5Hz (`0.2s` interval) via `QOL.core.Scheduler.createPollLoop(_tick, 0.2, "ql_perf")` and triggers an immediate tick.
-- **`onDisable()`**: Terminates the poll loop, resets `perfEnabled` and `perfDetailed` flags in `QOL.state`, and invokes `QOL_PERF_OVERLAY.UpdateOverlay()` with `ENABLE_PERF_OVERLAY: 0` to destroy the overlay panel.
-- **`onSettingsChanged()`**: Synchronously executes `_tick()` to adapt to changes in overlay opacity or diagnostic modes.
-- **`test()`**: Verifies that the global `QOL_PERF_OVERLAY` module is loaded and provides a callable `UpdateOverlay` method.
+- `ENABLE_PERF_DEBUG` (toggle)
+- `ENABLE_PERF_DEBUG_DETAIL` (toggle)
+- `ENABLE_PERF_OVERLAY` (toggle)
+- `PERF_OVERLAY_OPACITY` (slider)
 
-### DOM Injection & Target Panels
-- **DOM Parent**: Injected under `$.GetContextPanel()` via `QOL_PERF_OVERLAY`.
-- **Target Panels**: Managed by `ql_perf_overlay.js`, which renders the container and stat table rows displaying feature IDs, execution counts, averages, and peak milliseconds.
+Defaults/ranges belong to the linked schema, flat `QOL_DEFAULT_CONFIG` and
+versioned codec definitions, not a duplicated table here. They are separate
+representations; a declared field is not automatically a visible control or
+proof of active runtime behavior. See [adding settings](../ADDING_SETTINGS.md).
 
-### Engine Events & Polling Frequency
-- **Polling Frequency**: 5Hz (`0.2s` interval).
-- **Console Flush Frequency**: Throttled to every 5000ms (`PERF_FLUSH_INTERVAL_MS`).
-- **Engine Events**: None directly hooked. Relies on internal performance accumulator tables recorded by `QOL.core.Scheduler` and feature execution wrappers.
+## Verification boundary
 
-### Performance Tier & Caveats
-- **Performance Tier**: Low overhead.
-- **Metric Sorting**: Sorts top 8 (`TOP_COUNT`) CPU-consuming features by average runtime before printing console messages.
-- **Garbage Minimization**: Reuses internal sample dictionaries in `state.perfStats` to prevent allocation churn.
+The statements above describe source behavior. Native panel identity, binding
+values, rendering and transitions need the maintainer's Panorama Debugger and
+a repacked client scenario; neither a schema nor a read-only manifest hook
+proves the whole feature works. See [verification](../TESTING.md).
