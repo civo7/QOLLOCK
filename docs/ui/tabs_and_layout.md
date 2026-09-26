@@ -104,6 +104,11 @@ Because layout is purely declarative:
 
 ## 5. Window Action Controls
 
+- **Visual check cleanup:** Closing settings or handling `CitadelResumePlaying`
+  stops `QOL.ui.visualCheck` before hiding the window. The Dev tab starts the
+  [manual visual check](visual_check.md); its small card temporarily replaces
+  the menu and restores original test settings on exit.
+
 - **Window Close Semantics (`forceCloseModSettings`)**:
   Closing the settings window (via the header close button 'X' or ESC handling) toggles the visibility of the `SettingsWindow` panel without dispatching `CitadelResumePlaying`. This ensures that closing the QOLLOCK settings window preserves Deadlock's native Escape Menu rather than dismissing the pause state.
 

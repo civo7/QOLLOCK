@@ -1109,6 +1109,7 @@
             ? globalThis.gSettingsOpenGuardUntilMs
             : _settingsOpenGuardUntilMs;
         if (!ignoreGuard && now < guardUntil) return;
+        Q.ui.visualCheck?.stop();
 
         const ctx = (typeof $.GetContextPanel === "function") ? $.GetContextPanel() : null;
         const win = (ctx && ctx.FindChildTraverse ? ctx.FindChildTraverse("SettingsWindow") : null) || findShell();
@@ -2235,6 +2236,7 @@
                     ? globalThis.gSettingsOpenGuardUntilMs
                     : _settingsOpenGuardUntilMs;
                 if (now < guardUntil) return;
+                Q.ui.visualCheck?.stop();
                 const ctx = (typeof $.GetContextPanel === "function") ? $.GetContextPanel() : null;
                 const win = (ctx && ctx.FindChildTraverse ? ctx.FindChildTraverse("SettingsWindow") : null) || findShell();
                 if (win) win.RemoveClass("Visible");
