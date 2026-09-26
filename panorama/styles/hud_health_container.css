@@ -218,10 +218,12 @@
 .fg_healthbar_active:not(.minimalist_healthbar_active) #RecentHealContainer
 {
 	flow-children: right;
-	margin-left: 75px;
+	horizontal-align: left;
+	margin-left: 60px;
 	vertical-align: top;
-	margin-top: 50px;
+	margin-top: 119px;
 	margin-bottom: 0px;
+	height: 20px;
 }
 
 .fg_healthbar_active:not(.minimalist_healthbar_active) .healCounterIcon
@@ -232,8 +234,27 @@
 
 .fg_healthbar_active:not(.minimalist_healthbar_active) .recentDamageCounters
 {
-	margin-left: 75px;
-	margin-top: 25px;
+	flow-children: right;
+	horizontal-align: left;
+	vertical-align: top;
+	margin-left: 60px;
+	margin-top: 95px;
+	margin-bottom: 0px;
+	height: 20px;
+}
+
+/* The native counters animate inline position (including fading entries).
+   FG owns two horizontal lanes; do not add those offsets to flow layout. */
+.fg_healthbar_active:not(.minimalist_healthbar_active) #RecentHealContainer .recentHealCounter,
+.fg_healthbar_active:not(.minimalist_healthbar_active) #RecentDamageContainer .recentDamageCounter
+{
+	position: 0px 0px 0px !important;
+	ignore-parent-flow: false !important;
+	vertical-align: center;
+	width: fit-children;
+	height: 20px;
+	margin: 0px 6px 0px 0px;
+	padding: 2px 3px;
 }
 
 .fg_healthbar_active:not(.minimalist_healthbar_active) .damageCounterIcon

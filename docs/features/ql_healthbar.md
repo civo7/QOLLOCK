@@ -61,7 +61,13 @@ subsequent feature ticks. Native hero-image updates after reparenting still
 require a client check, especially hero switching and respawn.
 
 Regen sits above the portrait end of the bar, rotated clockwise by 30 degrees,
-in the same local coordinate space. Current/max health are shifted toward the
+at local `x: 6px; y: -28px`. Recent damage and healing occupy separate horizontal
+lanes above the left end of the bar (damage above healing). Entries participate
+in flow with spacing; FG overrides their native inline position so fading and
+new entries cannot acquire overlapping offsets. Native visibility and opacity
+still control their lifetime. Check simultaneous multi-source damage/healing
+and fading entries in the client; offline tests do not model native positioning.
+Current/max health are shifted toward the
 right end, with the current label shifted down 5 local pixels and the maximum
 shifted left 3 local pixels from its previous placement. All labels use
 `sansMono`; the health numbers remain upright. The shared

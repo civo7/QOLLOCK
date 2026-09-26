@@ -747,8 +747,8 @@
 	vertical-align: center;
 	transform: rotateZ(30deg);
 	margin: 0px;
-	x: 12px;
-	y: -32px;
+	x: 6px;
+	y: -28px;
 }
 
 .fg_healthbar_active:not(.minimalist_healthbar_active) .healthMid .health_bar_line
