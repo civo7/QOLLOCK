@@ -57,11 +57,19 @@ test("FG portrait shares bar ancestry and restores order on switch / missing anc
     q.healthbar.fg.update(env.hud.root, cfg);
     assert.equal(portrait.GetParent(), border);
     assert.equal(portrait.BHasClass("qol_fg_portrait"), true);
-    assert.equal(portrait.style.uiScale, undefined, "no separate runtime scale or offset");
+    assert.equal(portrait.style.uiScale, "100%", "neutral child scale inherits the bar scale");
+    assert.equal(portrait.style.visibility, "visible", "override the source layout's collapsed panel");
+    assert.equal(portrait.style.width, "48px");
+    const hero = portrait.FindChildTraverse("HeroImage");
+    assert.equal(hero.style.uiScale, "100%", "override the source image's half scale");
+    assert.equal(hero.style.width, "100%");
     q.healthbar.fg.update(env.hud.root, { HEALTHBAR_TYPE: 1 });
     assert.equal(portrait.GetParent(), gold);
     assert.equal(gold.GetChild(1), portrait);
     assert.equal(portrait.BHasClass("qol_fg_portrait"), false);
+    assert.equal(portrait.style.visibility, undefined);
+    assert.equal(portrait.style.width, undefined);
+    assert.equal(hero.style.uiScale, undefined);
     q.healthbar.fg.update(env.hud.root, cfg);
     bars.SetParent(gold);
     q.healthbar.fg.update(env.hud.root, cfg);
@@ -74,6 +82,32 @@ test("FG portrait shares bar ancestry and restores order on switch / missing anc
     q.healthbar.fg.update(env.hud.root, cfg);
     assert.equal(portrait.GetParent(), gold);
     assert.equal(gold.GetChild(1), portrait);
+});
+
+test("FG styles a replaced native HeroImage and avoids unchanged style writes", () => {
+    const env = loadSettingsEnvironment();
+    const { portrait, add } = fixture(env);
+    const q = env.hud.sandbox.global.QOL;
+    const cfg = { HEALTHBAR_TYPE: 2 };
+    q.healthbar.fg.update(env.hud.root, cfg);
+    let writes = 0;
+    const previousStyle = portrait.style;
+    portrait.style = new Proxy(previousStyle, {
+        set(target, key, value) { writes++; target[key] = value; return true; }
+    });
+    q.healthbar.fg.update(env.hud.root, cfg);
+    assert.equal(writes, 0);
+    portrait.FindChildTraverse("HeroImage").DeleteAsync(0);
+    env.clock.advance(1);
+    const replacement = add(portrait, "HeroImage");
+    q.healthbar.fg.update(env.hud.root, cfg);
+    assert.equal(replacement.style.visibility, "visible");
+    assert.equal(replacement.style.width, "100%");
+    assert.equal(replacement.style.uiScale, "100%");
+    q.healthbar.fg.update(env.hud.root, { HEALTHBAR_TYPE: 0 });
+    assert.equal(replacement.style.visibility, undefined);
+    assert.equal(replacement.style.width, undefined);
+    assert.equal(replacement.style.uiScale, undefined);
 });
 
 test("both clear helpers pass native CSS property names", () => {

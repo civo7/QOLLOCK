@@ -201,7 +201,7 @@
 	horizontal-align: right;
 	vertical-align: center;
 	margin-top: -5px;
-	margin-right: 75px;
+	margin-right: 47px;
 	z-index: 100;
 	width: 100px;
 	height: 65px;
@@ -289,7 +289,7 @@
 	font-weight: semi-bold;
 	color: keybindBGColor;
 	opacity: 1;
-	margin-top: -8px;
+	margin-top: -17px;
 	horizontal-align: right;
 	margin-right: 5px;
 }

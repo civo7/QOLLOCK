@@ -5,8 +5,34 @@
     var moved = null;
     var originalParent = null;
     var originalIndex = -1;
+    var heroImage = null;
+    var portraitSig = null;
+    var heroSig = null;
+    // Reparented native panels retain their original layout's stylesheet scope.
+    // Apply owned geometry explicitly instead of relying on a HUD CSS selector
+    // to override gold's collapsed #LevelAmount and half-scale #HeroImage.
+    // Hexagon center: (1850 / 2048 - 0.5) * 400 = 161px from frame center.
+    var portraitStyles = {
+        visibility: "visible", opacity: "1", ignoreParentFlow: "true",
+        flowChildren: "none", horizontalAlign: "center", verticalAlign: "center",
+        x: "0px", y: "161px", margin: "0px", width: "48px", height: "48px",
+        uiScale: "100%", transform: "rotateZ(-90deg)", borderRadius: "50%",
+        overflow: "clip", backgroundImage: "none", zIndex: "105"
+    };
+    var heroStyles = {
+        visibility: "visible", opacity: "1", margin: "0px", width: "100%",
+        height: "100%", maxWidth: "100%", maxHeight: "100%",
+        uiScale: "100%", overflow: "clip"
+    };
+
+    function clearOwned(panel, styles) {
+        if (!U.IsPanelValid(panel)) return;
+        Object.keys(styles).forEach(function(key) { U.ClearStyleSafe(panel, key); });
+    }
 
     function restore() {
+        clearOwned(heroImage, heroStyles);
+        clearOwned(moved, portraitStyles);
         if (U.IsPanelValid(moved)) {
             moved.RemoveClass("qol_fg_portrait");
             if (U.IsPanelValid(originalParent)) {
@@ -18,6 +44,9 @@
         moved = null;
         originalParent = null;
         originalIndex = -1;
+        heroImage = null;
+        portraitSig = null;
+        heroSig = null;
         QOL.state.fgHeroImageMoved = false;
     }
 
@@ -44,7 +73,19 @@
             moved = source;
             moved.SetParent(anchor);
             moved.AddClass("qol_fg_portrait");
+            portraitSig = null;
+            heroSig = null;
             QOL.state.fgHeroImageMoved = true;
+        }
+        var nextHero = moved.FindChildTraverse("HeroImage");
+        if (nextHero !== heroImage) {
+            clearOwned(heroImage, heroStyles);
+            heroImage = nextHero;
+            heroSig = null;
+        }
+        portraitSig = QOL.core.panel.syncStyles(moved, portraitStyles, portraitSig).sig;
+        if (U.IsPanelValid(heroImage)) {
+            heroSig = QOL.core.panel.syncStyles(heroImage, heroStyles, heroSig).sig;
         }
     }
 

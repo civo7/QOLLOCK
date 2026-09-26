@@ -41,18 +41,25 @@ proves the whole feature works. See [verification](../TESTING.md).
 
 FG reparents the existing gold `LevelAmount` / `HeroImage` subtree to the
 `health_bar_border` inside `hud_health_bars`. It stays a sibling of the tinted
-frame, so the frame wash does not tint the portrait. A CSS class positions it
+frame, so the frame wash does not tint the portrait. Owned inline styles position it
 at the hexagon center measured from the source frame texture and counter-rotates
 it against the border's 90-degree turn. It inherits healthbar scale, offsets
 and opacity; there is no separate scale-dependent portrait displacement.
+The runtime explicitly overrides the source layout's collapsed `LevelAmount`
+and half-scale `HeroImage`: a reparented native panel must not depend on the
+destination HUD stylesheet overriding its original layout styles. Style
+signatures suppress repeated writes and are reset for replacement images.
+All owned inline properties are cleared when restoring the original parent.
 
 The variant restores the original parent and child order on style switch,
 disable, hideout, or loss/replacement of the anchor. Missing sources retry on
 subsequent feature ticks. Native hero-image updates after reparenting still
 require a client check, especially hero switching and respawn.
 
-Regen uses an unrotated position below the bar in the same local coordinate
-space. Current/max health and regen use upright `sansMono` text. The shared
+Regen sits above the portrait end of the bar, rotated clockwise by 30 degrees,
+in the same local coordinate space. Current/max health are shifted toward the
+right end, with the maximum tucked beneath the current value. All labels use
+`sansMono`; the health numbers remain upright. The shared
 scale reset clears the native `ui-scale` override, restoring the active CSS
 base rather than pinning a replacement value.
 

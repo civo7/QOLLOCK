@@ -745,10 +745,10 @@
 	ignore-parent-flow: true;
 	horizontal-align: left;
 	vertical-align: center;
-	transform: none;
+	transform: rotateZ(30deg);
 	margin: 0px;
-	x: 60px;
-	y: 35px;
+	x: 12px;
+	y: -32px;
 }
 
 .fg_healthbar_active:not(.minimalist_healthbar_active) .healthMid .health_bar_line
@@ -771,7 +771,8 @@
 	font-family: sansMono;
 	font-style: normal;
 	font-size: 12px;
-	color: white;
+	color: QOL_HEALTHBAR_FILL_CREAM;
+	text-shadow: 0px 0px 0px 2.0 QOL_HEALTHBAR_BG_DARK;
 	font-weight: bold;
 	text-overflow: shrink;
 }
