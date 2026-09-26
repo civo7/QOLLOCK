@@ -921,4 +921,44 @@ test("ability icons feature enables with any toggle and cleans up on disable", (
     assert.strictEqual(hud.root.BHasClass("simplify_ability_icons_active"), false);
 });
 
+test("ult cooldowns syncs timers, dynamically picks up late-joining players, and cleans up", () => {
+    const hud = sim.createHud({ inHideout: false });
+    hud.assertLoaded();
+    const { $, QOL: Q } = hud.sandbox.global;
+
+    const topBar = $.CreatePanel("Panel", hud.root, "TopBar");
+    const teams = $.CreatePanel("Panel", topBar, "TeamsContainer");
+    const team = $.CreatePanel("Panel", teams, "Team1");
+    const playerContents = $.CreatePanel("Panel", team, "PlayerContents");
+    const playersContainer = $.CreatePanel("Panel", playerContents, "PlayersContainer");
+
+    const p1 = $.CreatePanel("Panel", playersContainer, "Player1");
+    const hidden1 = $.CreatePanel("Label", p1, "UltimateCooldownTextHidden");
+    hidden1.text = "45";
+    const shown1 = $.CreatePanel("Label", p1, "UltimateCooldownTextShown");
+
+    Q.core.ConfigAdapter.loadFromFlat({ ENABLE_ULT_COOLDOWNS: 1 });
+    hud.clock.advance(300);
+
+    assert.strictEqual(Q.core.FeatureRegistry.isEnabled("ql_ult_cooldowns"), true);
+    assert.strictEqual(topBar.BHasClass("ult_cooldowns_active"), true);
+    assert.strictEqual(shown1.text, "45", "Player 1 cooldown must sync");
+
+    // Add late-joining player
+    const p2 = $.CreatePanel("Panel", playersContainer, "Player2");
+    const hidden2 = $.CreatePanel("Label", p2, "UltimateCooldownTextHidden");
+    hidden2.text = "18";
+    const shown2 = $.CreatePanel("Label", p2, "UltimateCooldownTextShown");
+
+    hud.clock.advance(300);
+    assert.strictEqual(shown2.text, "18", "Late-joining player 2 cooldown must be dynamically picked up and synced");
+
+    // Disable feature
+    Q.core.ConfigAdapter.loadFromFlat({ ENABLE_ULT_COOLDOWNS: 0 });
+    hud.clock.advance(300);
+    assert.strictEqual(Q.core.FeatureRegistry.isEnabled("ql_ult_cooldowns"), false);
+    assert.strictEqual(topBar.BHasClass("ult_cooldowns_active"), false);
+});
+
+
 

@@ -29,7 +29,10 @@
         create: function(ctx) {
             var _loop = null;
             var _topBar = null;
+            var _playerContainersCache = null;
             var _cachedSlots = []; // array of { playerPanel, hidden, shown }
+            var _expectedPlayerCount = 0;
+            var _tickCounter = 0;
             var _running = false;
 
             var _isAlive = QOL.utils.IsPanelValid;
@@ -37,6 +40,7 @@
             function _getTopBar() {
                 if (_isAlive(_topBar)) return _topBar;
                 _topBar = null;
+                _playerContainersCache = null;
                 var hud = (typeof QOL !== "undefined" && QOL.core && QOL.core.panel && QOL.core.panel.findHud)
                     ? QOL.core.panel.findHud()
                     : ((typeof QOL !== "undefined" && QOL.ui && QOL.ui.PanelHelpers && QOL.ui.PanelHelpers.findHud)
@@ -47,36 +51,58 @@
                 return _topBar;
             }
 
+            function _getPlayerContainers(topBar) {
+                if (!_isAlive(topBar)) return [];
+                if (_playerContainersCache) {
+                    var good = _playerContainersCache.length > 0;
+                    for (var c = 0; good && c < _playerContainersCache.length; c++) {
+                        if (!_isAlive(_playerContainersCache[c])) good = false;
+                    }
+                    if (good) return _playerContainersCache;
+                    _playerContainersCache = null;
+                }
+                var out = [];
+                var tc = topBar.FindChildTraverse ? topBar.FindChildTraverse("TeamsContainer") : null;
+                if (_isAlive(tc)) {
+                    var tcc = tc.GetChildCount ? tc.GetChildCount() : 0;
+                    for (var ti = 0; ti < tcc && ti < 4; ti++) {
+                        var team = tc.GetChild(ti);
+                        if (!_isAlive(team)) continue;
+                        var pc = team.FindChildTraverse ? team.FindChildTraverse("PlayerContents") : null;
+                        if (!_isAlive(pc)) continue;
+                        var pl = pc.FindChildTraverse ? pc.FindChildTraverse("PlayersContainer") : null;
+                        if (!_isAlive(pl)) continue;
+                        out.push(pl);
+                    }
+                }
+                if (out.length > 0) _playerContainersCache = out;
+                return out;
+            }
+
             function _resolvePlayerPanels(topBar) {
                 var list = [];
                 if (!_isAlive(topBar)) return list;
 
-                // 1. Try slot IDs 0..12 (covers 0-indexed sandbox & 1-indexed matches)
-                for (var i = 0; i <= 12; i++) {
-                    var p = topBar.FindChildTraverse("TopBarPlayer" + i);
-                    if (_isAlive(p) && list.indexOf(p) === -1) {
-                        list.push(p);
+                var containers = _getPlayerContainers(topBar);
+                for (var ci = 0; ci < containers.length; ci++) {
+                    var pl = containers[ci];
+                    var plc = 0;
+                    try { plc = pl.GetChildCount ? pl.GetChildCount() : 0; } catch(_) { plc = 0; }
+                    for (var pi = 0; pi < plc && pi < 12; pi++) {
+                        var player = null;
+                        try { player = pl.GetChild(pi); } catch(_) { player = null; }
+                        if (_isAlive(player) && list.indexOf(player) === -1) {
+                            list.push(player);
+                        }
                     }
                 }
-                if (list.length > 0) return list;
 
-                // 2. Fallback: TeamsContainer -> Team -> PlayerContents -> PlayersContainer -> children
-                var tc = topBar.FindChildTraverse("TeamsContainer");
-                if (_isAlive(tc) && tc.GetChildCount) {
-                    var numTeams = tc.GetChildCount();
-                    for (var t = 0; t < numTeams; t++) {
-                        var team = tc.GetChild(t);
-                        if (!_isAlive(team)) continue;
-                        var pc = team.FindChildTraverse ? team.FindChildTraverse("PlayerContents") : null;
-                        if (!_isAlive(pc)) continue;
-                        var plc = pc.FindChildTraverse ? pc.FindChildTraverse("PlayersContainer") : null;
-                        if (!_isAlive(plc) || !plc.GetChildCount) continue;
-                        var count = plc.GetChildCount();
-                        for (var c = 0; c < count; c++) {
-                            var child = plc.GetChild(c);
-                            if (_isAlive(child) && list.indexOf(child) === -1) {
-                                list.push(child);
-                            }
+                if (list.length === 0) {
+                    // Sandbox / hero testing fallback
+                    for (var i = 0; i <= 12; i++) {
+                        var p = topBar.FindChildTraverse("TopBarPlayer" + i);
+                        if (_isAlive(p) && list.indexOf(p) === -1) {
+                            list.push(p);
                         }
                     }
                 }
@@ -124,6 +150,7 @@
                 }
 
                 _cachedSlots = validSlots;
+                _expectedPlayerCount = playerPanels.length;
             }
 
             function _tick() {
@@ -133,6 +160,8 @@
                 if (!_isAlive(topBar) || (topBar.BHasClass && topBar.BHasClass("InHideout"))) {
                     return;
                 }
+
+                _tickCounter++;
 
                 // Quick pass if cached slots are all alive
                 var allAlive = _cachedSlots.length > 0;
@@ -144,7 +173,25 @@
                     }
                 }
 
-                if (!allAlive) {
+                var containerCountChanged = false;
+                var containers = _getPlayerContainers(topBar);
+                if (containers.length > 0) {
+                    var totalChildren = 0;
+                    for (var c = 0; c < containers.length; c++) {
+                        var cnt = containers[c];
+                        if (_isAlive(cnt) && cnt.GetChildCount) {
+                            totalChildren += cnt.GetChildCount();
+                        }
+                    }
+                    if (totalChildren !== _expectedPlayerCount || totalChildren !== _cachedSlots.length) {
+                        containerCountChanged = true;
+                    }
+                }
+
+                var needsPeriodicResync = (_tickCounter >= 8) || (_cachedSlots.length < _expectedPlayerCount);
+
+                if (!allAlive || containerCountChanged || needsPeriodicResync) {
+                    _tickCounter = 0;
                     _syncSlots();
                     return;
                 }
@@ -202,7 +249,10 @@
                         }
                     }
                     _topBar = null;
+                    _playerContainersCache = null;
                     _cachedSlots = [];
+                    _expectedPlayerCount = 0;
+                    _tickCounter = 0;
                 } catch(e) {
                     $.Msg("[QOLLock][ERROR][" + FEATURE_ID + "] _stop: " + (e && e.message ? e.message : String(e)));
                 }
