@@ -258,3 +258,20 @@ test("deleting the card during gameplay still restores the original config", () 
     assert.equal(em.BHasClass("QOLVisualCheckActive"), false);
     assert.deepEqual(clock.errors, []);
 });
+
+test("ammo walkthrough changes the current and total scales instead of only their legacy fallback", () => {
+    const { global: g, hud, clock } = setup();
+    const api = g.QOL.ui.visualCheck;
+    assert.equal(api.start(), true);
+    for (let i = 0; i < 9; i++) api.next();
+    clock.advance(1000);
+    const store = hud.sandbox.global.QOL.core.ConfigStore;
+    assert.equal(store.get("ql_ammo", "AMMO_CURRENT_SCALE"), 150);
+    assert.equal(store.get("ql_ammo", "AMMO_TOTAL_SCALE"), 150);
+    assert.equal(store.get("ql_ammo", "AMMO_PANEL_Y_OFFSET"), 80);
+    api.stop();
+    clock.advance(1000);
+    assert.equal(store.get("ql_ammo", "AMMO_CURRENT_SCALE"), g.MOD_CONFIG.AMMO_CURRENT_SCALE);
+    assert.equal(store.get("ql_ammo", "AMMO_TOTAL_SCALE"), g.MOD_CONFIG.AMMO_TOTAL_SCALE);
+    assert.deepEqual(clock.errors, []);
+});

@@ -10,6 +10,9 @@ Each group has a reference and changed state. Back, Next and Compare A/B let
 the operator repeat transitions; Stop restores the original settings. Related
 X/Y changes are published together. Top/bottom/souls/items invert configured Y
 when writing panel positions, so their instructions account for that sign.
+Ammo likewise subtracts its Y offset from its native baseline. Its scenario
+changes both current/total text scales explicitly: the legacy panel-scale key
+alone is only a fallback and does not override those modern settings.
 The card gives exact temporary values and describes the required gameplay
 trigger. This is not exhaustive coverage of every setting, variant or game mode,
 and it never awards an automatic pass.
