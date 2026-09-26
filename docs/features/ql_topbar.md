@@ -40,3 +40,22 @@ The statements above describe source behavior. Native panel identity, binding
 values, rendering and transitions need the maintainer's Panorama Debugger and
 a repacked client scenario; neither a schema nor a read-only manifest hook
 proves the whole feature works. See [verification](../TESTING.md).
+## Geometry and restoration regressions
+
+The manifest tracks the identity of its current TopBar panel as well as the
+style signature. A replacement panel receives the current configuration even
+when no values changed. Scale is applied with uiScale; the preTransformScale2d
+override is released to native CSS rather than pinned to 1. Default values
+release x/y, opacity and scaling overrides through the shared native clear path.
+
+Visibility gating uses the TopBar ancestor chain, not its gameplay_hud sibling.
+Unset inline opacity is not treated as zero. The Dev walkthrough permits changes
+while Escape is open without bypassing hideout or takeover suppression. Outside
+the walkthrough, native menu suppression continues to restore native styles;
+closing the menu reapplies the user's geometry.
+
+`tests/topbar_runtime.test.js` drives real settings/HUD contexts through the
+configuration bridge. Regressions cover Escape-menu walkthrough geometry,
+hidden gameplay siblings, unset versus zero ancestor opacity, panel replacement,
+and restoration of defaults. These tests do not replace a repacked client check
+of scale, opacity, X/Y movement and visibility transitions.

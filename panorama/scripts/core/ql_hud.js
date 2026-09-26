@@ -194,8 +194,13 @@
 
     const readPanelOpacityMaybe = (panel) => {
         if (!panel || !isAlive(panel) || !panel.style) return NaN;
-        const opacity = Number(panel.style.opacity);
-        if (Number.isFinite(opacity)) return opacity;
+        const rawOpacity = panel.style.opacity;
+        // Panorama may expose an unset inline property as "" or null. Neither
+        // is evidence that CSS made this panel transparent (Number("") is 0).
+        if (rawOpacity !== null && rawOpacity !== undefined && String(rawOpacity).trim() !== "") {
+            const opacity = Number(rawOpacity);
+            if (Number.isFinite(opacity)) return opacity;
+        }
         const wash = String(panel.style.washColor || "");
         const m = wash.match(/rgba\([^,]+,[^,]+,[^,]+,\s*([0-9.]+)\s*\)/i);
         if (m) {
@@ -207,9 +212,7 @@
 
     const isPanelSuppressedMaybe = (panel) => {
         if (!panel || !isAlive(panel)) return true;
-        const isVis = (typeof QOL !== "undefined" && QOL.isPanelVisibleMaybe)
-            ? QOL.isPanelVisibleMaybe(panel)
-            : (panel.visible !== false);
+        const isVis = _panelHelpers.isVisible(panel);
         if (!isVis) return true;
         const opacity = readPanelOpacityMaybe(panel);
         if (Number.isFinite(opacity) && opacity <= 0.01) return true;
@@ -244,7 +247,8 @@
         };
 
         const hiddenContextClasses = ["connectedToHideout", "InHideout", "inHideout", "inHideoutIntro", "HideoutIntro"];
-        const hiddenUiClasses = ["ShowEscapeMenu", "HudTakeoverEnabled"];
+        const walkthrough = hasAnyClass(root, ["QOLVisualCheckActive"]) || hasAnyClass(topBar, ["QOLVisualCheckActive"]);
+        const hiddenUiClasses = walkthrough ? ["HudTakeoverEnabled"] : ["ShowEscapeMenu", "HudTakeoverEnabled"];
 
         const hud = (typeof QOL !== "undefined" && QOL.getCachedPanel)
             ? QOL.getCachedPanel("hudPanel")
@@ -256,11 +260,11 @@
         if (hasAnyClass(hud, hiddenContextClasses)) return false;
         if (hasAnyClass(topBar, hiddenContextClasses)) return false;
 
-        const gameplayHud = (typeof QOL !== "undefined" && QOL.getCachedPanel)
-            ? QOL.getCachedPanel("gameplayHud")
-            : (root.FindChildTraverse ? root.FindChildTraverse(PANEL_ID_GAMEPLAY_HUD) : null);
-
-        if (gameplayHud && !isPanelEffectivelyVisibleMaybe(gameplayHud, root)) return false;
+        // gameplay_hud is a sibling of TopBar in hud.xml: its suppression
+        // (for example on death) says nothing about top-bar visibility. Inspect
+        // TopBar's ancestors instead, excluding its own user-configured opacity.
+        const parent = topBar?.GetParent ? topBar.GetParent() : null;
+        if (parent && !isPanelEffectivelyVisibleMaybe(parent, root)) return false;
 
         return true;
     };
