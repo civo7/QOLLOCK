@@ -30,10 +30,9 @@ in-game behavior.
 
 ## 1. Rules that prevent recurring mistakes
 
-- **Follow the maintainer's rules first.** For this checkout they are in
-  `D:\GitHub2\AGENTS.md`. Do not read or adopt nested `AGENTS.md` files without
-  explicit permission for that exact file. This architecture guide does not
-  replace those rules or grant permission to perform operational actions.
+- **Follow applicable contributor instructions and the task's authorization.**
+  This guide describes technical contracts and does not grant permission for
+  operational actions.
 - **Search for a helper before implementing one.** Start with section 4 and
   [HELPERS.md](docs/HELPERS.md), then read the implementation and a real caller.
   Similar names do not imply identical traversal, caching or style semantics.
@@ -171,7 +170,7 @@ are not exported APIs.
 | One style, conditional | `QOL_UTILS.SetStyleIfChanged(panel, property, value)` | Use only where native read-back comparison is appropriate |
 | One style, unconditional | `QOL_UTILS.SetStyleSafe(panel, property, value)` | Preserve deliberate reassertion; do not silently make this conditional |
 | Opacity | `QOL_UTILS.SetPanelOpacitySafe(panel, value, fallback)` | Normalizes to 0–1 and formats; not percentage input |
-| Clear an override | `QOL.core.panel.clearStyleProperty(panel, property)` | Uses native ClearPropertyFromCode; distinct from leaf ClearStyleSafe's fallback writes |
+| Clear an override | `QOL.core.panel.clearStyleProperty(panel, property)` | Uses native ClearPropertyFromCode; also used by leaf ClearStyleSafe before its legacy fallbacks |
 | Style map | `QOL.core.panel.syncStyles(panel, styleMap, lastSig)` | Returns `{changed, sig}`; caller retains and invalidates the signature |
 | Class / visibility | `QOL.core.panel.setClass(panel, className, active)` / `setVisible(panel, visible)` | Class setter compares first; visible setter does not |
 | Palette | `QOL.core.panel.normalizePaletteIndex(value)` / `resolvePaletteColor(value)` | Reuse palette indices/options; do not introduce unrelated color encodings |

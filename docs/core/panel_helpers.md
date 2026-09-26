@@ -48,3 +48,7 @@ feature's intentional reassertion behavior.
 `safeCreatePanel` and `safeDeletePanel` are private implementation names, not
 exports. `setStyleIfChanged` and `setPanelOpacitySafe` are not methods of
 `QOL.core.panel`; use the leaf helpers named above.
+
+The leaf `QOL_UTILS.ClearStyleSafe` used by HUD manifests also tries native
+`ClearPropertyFromCode` first, then legacy assignments only if native clearing
+is unavailable or throws. The core boolean helper above remains strict.

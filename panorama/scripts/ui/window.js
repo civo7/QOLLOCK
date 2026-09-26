@@ -1082,6 +1082,7 @@
             if (_openedInHideout) {
                 startTransitionWatch();
             }
+            Q.ui.visualCheck?.onMenuOpened();
             Q.events?.emit?.("ui:settings_opened");
         } else {
             stopTransitionWatch();
@@ -1109,7 +1110,7 @@
             ? globalThis.gSettingsOpenGuardUntilMs
             : _settingsOpenGuardUntilMs;
         if (!ignoreGuard && now < guardUntil) return;
-        Q.ui.visualCheck?.stop();
+        Q.ui.visualCheck?.onMenuClosed();
 
         const ctx = (typeof $.GetContextPanel === "function") ? $.GetContextPanel() : null;
         const win = (ctx && ctx.FindChildTraverse ? ctx.FindChildTraverse("SettingsWindow") : null) || findShell();
@@ -1142,6 +1143,7 @@
                 const list = getSettingsListPanel();
                 if (list) updateListContent(list, true);
                 try { shell?.SetFocus(); } catch (_) {}
+                Q.ui.visualCheck?.onMenuOpened();
                 Q.events?.emit?.("ui:settings_opened");
             }
         } else {
@@ -2236,7 +2238,7 @@
                     ? globalThis.gSettingsOpenGuardUntilMs
                     : _settingsOpenGuardUntilMs;
                 if (now < guardUntil) return;
-                Q.ui.visualCheck?.stop();
+                Q.ui.visualCheck?.onMenuClosed();
                 const ctx = (typeof $.GetContextPanel === "function") ? $.GetContextPanel() : null;
                 const win = (ctx && ctx.FindChildTraverse ? ctx.FindChildTraverse("SettingsWindow") : null) || findShell();
                 if (win) win.RemoveClass("Visible");

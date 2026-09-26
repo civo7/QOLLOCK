@@ -67,3 +67,12 @@ layouts/dumps and maintainer Panorama Debugger evidence; do not invent a panel
 hierarchy. Add a shared helper only after identifying a repeated contract and
 its failure behavior, then document it here and test the player-visible behavior
 that motivated it.
+
+## Native style restoration
+
+`QOL_UTILS.ClearStyleSafe(panel, property)` in `ql_utils.js` first calls native
+`ClearPropertyFromCode` and returns on success. If unavailable or throwing, it
+retains the legacy delete/null/empty-string fallbacks. Callers restoring default
+geometry or opacity must release the native override, not just mutate a JS
+property. `QOL.core.panel.clearStyleProperty` remains the stricter boolean API
+without legacy fallback writes. Neither helper forces a new default value.

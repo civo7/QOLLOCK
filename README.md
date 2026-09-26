@@ -4,12 +4,13 @@ This repository contains the source for the QOLLOCK HUD/UI mod for Deadlock, bui
 
 ## Context Docs (Read First In New Sessions)
 
-1. `D:\GitHub2\AGENTS.md` — maintainer instructions for work under `D:\GitHub2`.
-   Do not read repository/nested `AGENTS.md` files unless the maintainer explicitly
-   authorizes the exact file in the current conversation.
-2. [Architecture and AI contributor guide](ARCHITECTURE.md) — start here for
-   runtime contexts, file ownership, helper selection, localization, settings,
-   persistence, feature lifecycle, verification limits and task checklists.
+Start with [Architecture and AI contributor guide](ARCHITECTURE.md) for runtime
+contexts, file ownership, configuration, lifecycle and verification limits.
+Before changing runtime code, read [HELPERS.md](docs/HELPERS.md), then the actual
+helper implementation and a caller in the same script context. Read the relevant
+feature/core/UI document for the task; read [LOCALIZATION.md](docs/LOCALIZATION.md)
+when changing visible text and [ADDING_SETTINGS.md](docs/ADDING_SETTINGS.md) when
+changing settings. There is no need to read every document for every task.
 
 The architecture guide is the consolidated entry point. Use these focused
 references for implementation details; historical migration notes are not the
@@ -23,6 +24,7 @@ current runtime contract:
 - [Performance guardrails](docs/PERF_GUARDRAILS.md)
 - [Offline checks and their limits](docs/TESTING.md)
 - [Maintainer release checklist](docs/TEST_CHECKLIST.md)
+- [Open tasks](docs/TASKS.md)
 
 ## Build / Pack / Launch
 

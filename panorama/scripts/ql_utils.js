@@ -299,10 +299,16 @@
     exports.SetStyleIfChanged = SetStyleIfChanged;
 
     /**
-     * Clear a CSS style property on a panel (tries delete, null, then "").
+     * Release a native code style override before trying legacy fallbacks.
      */
     function ClearStyleSafe(panel, prop) {
         if (!panel || !panel.style || !prop) return;
+        try {
+            if (typeof panel.ClearPropertyFromCode === "function") {
+                panel.ClearPropertyFromCode(prop);
+                return;
+            }
+        } catch (e) { /* Older/stale native handles may not support clearing. */ }
         try { delete panel.style[prop]; } catch (e0) { /* delete panel.style[prop] may throw in strict mode */ }
         try { panel.style[prop] = null; } catch (e1) { /* panel.style[prop] = null may throw on frozen objects */ }
         try { panel.style[prop] = ""; } catch (e2) { /* panel.style[prop] = "" may throw on frozen objects */ }

@@ -110,3 +110,7 @@ entry from the current runtime catalog; Italian has no additional translations
 there. No mass import, new language registration, remote push or deployment was
 performed during this fix. A broader UI audit is still needed before claiming
 full language coverage, especially for older Dev/status text.
+
+The expanded walkthrough adds English/Russian instructions for gameplay/reopen,
+shop and overlay scenarios in the runtime dictionaries. Other languages keep
+the normal English fallback; earlier catalog counts above are historical.

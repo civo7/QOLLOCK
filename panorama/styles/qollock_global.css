@@ -1,5 +1,13 @@
 /* Prettified by Source 2 Viewer 17.0.0.0 - https://valveresourceformat.github.io */
 
+/* hud.css hides gameplay while EscapeMenu owns the cursor. The walkthrough
+   keeps that input mode, but must expose the HUD being inspected. */
+.ShowEscapeMenu.QOLVisualCheckActive .HudCore,
+.ShowEscapeMenu .QOLVisualCheckActive .HudCore
+{
+    opacity: 1.0;
+}
+
 /* ═══════════════════════════════════════════════════════════
    QOLLOCK — Global shared CSS (@keyframes, base rules)
 
