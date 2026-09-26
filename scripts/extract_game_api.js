@@ -203,7 +203,7 @@ function scanStringsDumps() {
 function buildRegistry() {
     const { concommands, convars } = parseCvarlist();
     const { xmlFunctions, xmlEvents, xmlPanels } = scanOfficialPanorama();
-    const { clientStrings, panoramaStrings, clientUiStrings: _clientUiStrings, serverStrings } = scanStringsDumps();
+    const { clientStrings, panoramaStrings, clientUiStrings, serverStrings } = scanStringsDumps();
 
     // Extra engine concommands present in DLLs but not in standard cvarlist dump
     const dllEngineCommands = [
@@ -300,6 +300,11 @@ function buildRegistry() {
     ];
 
     const citadelEvents = {};
+
+    // CitadelHTMLPanel title callback lives in panoramauiclient.dll, not panorama.dll.
+    if (clientUiStrings.has("HTMLTitle")) {
+        citadelEvents.HTMLTitle = { name: "HTMLTitle", xmlUsageCount: xmlEvents.HTMLTitle || 0, source: "panoramauiclient.dll" };
+    }
 
     for (const evt of panoramaCoreEvents) {
         if (panoramaStrings.has(evt) || clientStrings.has(evt)) {

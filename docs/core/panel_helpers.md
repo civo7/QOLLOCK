@@ -1,20 +1,50 @@
-# `panorama/scripts/core/ql_panel_helpers.js`
+# Panel helpers
 
-## Purpose
-Provides low-level panel safety primitives, DOM traversal, and zero-waste style manipulation to prevent C++ layout invalidation.
+Source: `panorama/scripts/core/ql_panel_helpers.js`.
+Start with the [helper decision map](../HELPERS.md) when choosing an API.
+Load `ql_utils.js` and the QOL namespace before this module. The same panel API
+object is exposed as `QOL.core.panel`, `QOL.core.PanelHelpers`, and
+`QOL.ui.PanelHelpers`.
 
-## Dependencies
-- `panorama/scripts/core/ql_namespace.js` (`QOL.core.panel`, `QOL.ui.PanelHelpers`)
+## Public interface
 
-## Interface (`QOL.core.panel`)
-- `isPanelAlive(panel)`: Safe panel validity check (`panel && panel.IsValid()`). Guards against accessing destroyed or freed C++ panels.
-- `safeCreatePanel(type, parent, id, properties)`: Exception-safe wrapper around `$.CreatePanel`.
-- `safeDeletePanel(panel)`: Safely destroys a panel via `DeleteAsync(0)` without throwing if already destroyed.
-- `findHud(preferredRoot)`: Traverses the panel hierarchy to locate the root Deadlock `#Hud` or `CitadelHud` panel with internal caching.
-- `findRoot()`: Walks parent nodes up to the topmost window root.
-- `setStyleIfChanged(panel, property, value)`: Writes `panel.style[property] = value` **only** if the property has actually changed, eliminating redundant C++ style cache invalidation and layout recalculations.
-- `setPanelOpacitySafe(panel, opacity, fallback)`: Safely updates panel opacity without redundant writes.
-- `syncStyles(panel, styleMap)`: Batch applies an object of styles to a panel, writing only changed attributes.
+| Export on `QOL.core.panel` | Contract |
+| --- | --- |
+| `isAlive(panel)`, `isPanelAlive(panel)` | Aliases of `QOL_UTILS.IsPanelValid`: false for absent, invalid, or throwing handles. |
+| `create(type, parent, id, properties)`, `createPanel(...)` | Guard parent validity and catch creation errors; return panel or null. |
+| `delete(panel)`, `deletePanel(panel)` | Schedule `DeleteAsync(0)` on a valid panel; catch deletion errors. |
+| `findHud(preferredRoot)` | Search context/ancestors for Hud; no-argument calls cache the result. Can return the context/top root as a fallback, so this alone does not prove active gameplay. |
+| `findRoot()` | Walk ancestors of the current context, not of an arbitrary argument. |
+| `findChild(parent, id)` | Safe native `FindChild` wrapper for direct children. |
+| `findTraverse(root, id)` | Safe native `FindChildTraverse` wrapper. |
+| `setClass(panel, className, active)` | Compare current class membership before changing it; return whether changed. |
+| `setVisible(panel, visible)` | Set the panel's `visible` property; this does not compare before assignment. |
+| `syncStyles(panel, styleMap, lastSig)` | Compare serialized style map with caller-owned signature; if changed, write the whole map. Return `{changed, sig}`. |
+| `clearStyleProperty(panel, property)` | Try native `ClearPropertyFromCode`; return success. |
+| `activate(panel)` | Dispatch native Activated event, returning success/failure. |
+| `isVisible(panel)` | Check validity, local visible flag, and a few local hidden classes; does not compute CSS or ancestor visibility. |
+| `readText(panel)` | Read string text, then text attribute fallback; return empty string on failure. |
+| `readTextDeep(panel, maxDepth = 4)` | First nonempty text from a bounded descendant search; not necessarily the desired numeric/gameplay label. |
+| `readId(panel)` | Safely read an ID string. |
+| `hasClassToken(panel, token)` | Safe local class membership test. |
+| `setWashColor(panel, color)`, `setWashColorFromPalette(panel, value)` | Apply wash color directly or through the palette. |
+| `normalizePaletteIndex(value)`, `resolvePaletteColor(value)` | Normalize an index or resolve its palette color. |
+| `washColorPalette` | Exported palette array (not a function). |
 
-## Architectural Rule
-- Never write `panel.style.prop = val` repeatedly in a high-frequency polling loop without checking if the current value differs. In Source 2, redundant style assignments force layout recalculation across the panel subtree.
+## Styles and ownership
+
+`syncStyles` compares signatures, not each property against its current value.
+Retain its returned signature only for the same panel instance; reset it when the
+panel changes or when another owner may have changed those styles. Passing no
+previous signature rewrites the full map each call.
+
+For a single property with stable read-back, use
+`QOL_UTILS.SetStyleIfChanged(panel, property, value)`. For normalized opacity use
+`QOL_UTILS.SetPanelOpacitySafe(panel, value, fallback)`. The unconditional
+`QOL_UTILS.SetStyleSafe(panel, property, value)` serves cases requiring reassertion.
+Native normalization can make read-back comparison unsuitable; preserve a
+feature's intentional reassertion behavior.
+
+`safeCreatePanel` and `safeDeletePanel` are private implementation names, not
+exports. `setStyleIfChanged` and `setPanelOpacitySafe` are not methods of
+`QOL.core.panel`; use the leaf helpers named above.

@@ -2,6 +2,10 @@
 
 Date: 2026-09-26. Code reviewed: `b715bb2`.
 
+The findings and line references below describe that baseline. See the
+implementation status at the end for subsequent authorized changes; the
+baseline descriptions are retained as evidence, not claims that fixes are absent.
+
 ## Recommendation
 
 Freeze new features. Fix the two restore defects below before publishing, then
@@ -185,4 +189,61 @@ blocker. These were not promoted to confirmed gameplay findings.
 Reproduction scripts were temporary local audit tools. Assertions in the audio
 and storage probes describe current buggy behavior; permanent regression tests
 must assert the corrected behavior instead. No runtime or test-suite files were
-modified by the audit.
+modified during the initial audit. The implementation phase below followed
+explicit authorization to fix the findings.
+
+## Implementation status after authorization
+
+This section describes the source implementation, not a repacked client
+verification. The complete offline gate passed on 2026-09-26: 282 Node tests,
+HUD script smoke, 58 schema versions / 98 config states / 463 schema fuzz cases,
+API validation and ESLint. API validation retains four explicit warnings
+(three dynamic command expressions and one unverified optional listener).
+
+Persistence tests execute the production embedded bridge JavaScript in a second
+VM realm with modeled localStorage. They cover Unicode chunk boundaries, quota
+failure, canonical parser handoff, legacy flat configuration migration, and
+Buff Delay 15 surviving a new JS session. The UI regression additionally checks
+a real typed edit across HUD/settings isolates before the 300ms debounce.
+None of these checks establishes disk durability after a real game restart.
+
+| Finding | Implemented change | Focused coverage / remaining boundary |
+| --- | --- | --- |
+| R1: late restore | Capture config change stamps, including edits before debounced publication; preserve the original startup stamp through retries. Explicit Load establishes a new request boundary but does not overwrite edits made while waiting. | `tests/storage_bridge.test.js`: delayed readiness/reply, dirty edits, retry and explicit-load sequences. Real restart remains a maintainer check. |
+| R2: malformed restore | Parse and normalize stored settings before publishing live attributes/configuration. Reject malformed or wrong-shaped data without clearing valid state; missing storage preserves current settings. | Production-parser restore regressions in `tests/storage_bridge.test.js`; real CEF storage and recovery require separate evidence. |
+| R3: reminder interval | Register the existing interval setting in the audio manifest with its existing 15-second default and 5–60 range. | `tests/audio_runtime.test.js`: 60-second sound timing, default timing, config export/reload and duplicate suppression. |
+| R4: zero lead time | Distinguish zero from absent/invalid Buff Delay values. | Audio runtime checks for 0, 15, 30 and 60 seconds across two cycles and config export/reload. |
+| R5: slider round-trip | Snap accepted values to the existing compact-schema step rather than changing the wire format. | `tests/ui_slider_roundtrip.test.js`: actual controls, configuration sync and codec round-trip. |
+
+The reported **Buff Delay 15 behaving as 30** is not established as a distinct
+fixed root cause. Fifteen already produced 04:45 and 09:45 on the real
+adapter/manifest path before the zero-value patch. The restore race is a
+confirmed independent defect, but linking it to that observation needs client
+evidence. DL4D reminders follow a separate fixed timetable. Follow the
+[release checklist](TEST_CHECKLIST.md) to distinguish persisted values, runtime
+dispatch timing and spoken content.
+
+### Test gates and helper reuse
+
+- API validation now has explicit validation/failure behavior and negative
+  fixtures in `tests/game_api_validator.test.js`; unknown identifiers must not
+  become verified merely because they start with `Citadel`.
+- The vacuous UI walk was replaced with bounded real rendered-control coverage,
+  assertions that interactions actually occurred, and checks of collected event
+  and callback errors. It does not claim to exercise every action in every tab.
+- Config-tab feedback now has assertions. Missing simulator dropdown methods
+  were added for the exercised UI path; this does not turn the model into the
+  native Panorama engine.
+- [HELPERS.md](HELPERS.md) maps actual validity, creation, style, traversal and
+  cache APIs. The panel reference no longer advertises private/nonexistent
+  exports. `tests/helper_api_contract.test.js` resolves documented callable
+  references against production exports and checks validity aliases.
+- No blanket traversal rewrite was performed. Root ownership, depth limits,
+  ordering and panel lifetime remain legitimate reasons for local logic.
+
+The testing guide now matches the `npm test` entry point; the checklist no
+longer names an absent pipeline and reserves compilation/repacking for the
+maintainer. These changes improve evidence quality without claiming live HUD
+rendering, CEF durability, native panel recreation, FPS, or automatic migration
+from historical build-based settings storage. No release publication or push
+is implied by implementation completion.

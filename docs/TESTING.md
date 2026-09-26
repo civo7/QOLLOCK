@@ -1,8 +1,8 @@
 # Testing QOLLOCK
 
 The current offline entry point is `npm test` (see `package.json`). It runs HUD
-script loading, the Node regression suite in `tests/`, build-storage fuzzing,
-compact-schema validation, API checks and ESLint.
+script loading, the Node regression suite in `tests/`, compact-schema validation,
+API checks and ESLint. It does not run a separate build-storage fuzz command.
 
 Some tests use the panel simulator. They can verify JavaScript behavior under
 that model, but cannot prove real client panel structure, rendering or FPS.
@@ -20,6 +20,28 @@ The HUD smoke uses `scripts/simulator/layout.js`, includes `core/ql_app.js`, and
 fails when an included script is missing. It is not a settings-context smoke or
 a runtime behavior test. The schema validator exercises codec round-trips;
 load checks alone cannot catch gameplay or lifecycle bugs.
+
+## Focused release regressions
+
+```text
+node --test tests/storage_bridge.test.js tests/audio_runtime.test.js
+node --test tests/ui_slider_roundtrip.test.js tests/helper_api_contract.test.js
+```
+
+The storage tests exercise the production bridge and parser with controlled
+responses: late startup versus newer edits, debounced edits, retries, malformed
+data, explicit Load, chunking and request failures. They do not establish that
+the real client's CEF localStorage survives a full process restart.
+
+The audio tests observe production sound dispatches after config mapping and
+export/reload. A Buff Delay of 15 seconds already worked on that path before the
+release fixes. The confirmed zero-to-30 fallback was a separate bug; its fix
+does not establish the cause of a player's 15-to-30 report.
+
+Slider tests cover accepted UI values through the actual compact codec. The
+helper contract test resolves API references from [the helper map](HELPERS.md)
+against production exports; it cannot establish native traversal semantics.
+These targeted tests complement the [maintainer checklist](TEST_CHECKLIST.md).
 
 ## Layer 2 — manifest `test()` hooks (run in the client)
 

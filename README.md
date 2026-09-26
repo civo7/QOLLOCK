@@ -4,8 +4,8 @@ This repository contains the source for the QOLLOCK HUD/UI mod for Deadlock, bui
 
 ## Context Docs (Read First In New Sessions)
 
-1. `AGENTS.md`
-- Project scope, priorities, performance rules, and key architecture notes.
+1. `D:\GitHub2\AGENTS.md` (for work under `D:\GitHub2`)
+- Maintainer instructions. Do not read repository/nested `AGENTS.md` files unless the maintainer explicitly authorizes the exact file in the current conversation.
 
 2. `docs/KNOWN_GOTCHAS.md`
 - Common pitfalls (Panorama CSS/runtime behavior, exception matching, bindings).
@@ -21,6 +21,9 @@ This repository contains the source for the QOLLOCK HUD/UI mod for Deadlock, bui
 
 6. `docs/ADDING_SETTINGS.md`
 - Checklist for adding settings safely, including schema/version rules.
+
+7. [Existing helpers and their contracts](docs/HELPERS.md)
+- Choose existing validity, traversal, style, and cache APIs before adding a helper. Read their scope and invalidation rules before substituting them.
 
 ## Build / Pack / Launch
 
