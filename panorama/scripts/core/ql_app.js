@@ -347,12 +347,7 @@
         if (QOL?.core?.ManifestTests) {
             const tr = QOL.core.ManifestTests.getResults();
             if (tr) {
-                diag.testResults = {
-                    summary: tr.summary,
-                    results: tr.results,
-                    timestamp: tr.timestamp,
-                    token: tr.token
-                };
+                diag.testResults = tr;
             }
         }
 
@@ -390,11 +385,12 @@
                 if (forceToken.startsWith("mt_") || forceToken.startsWith("fs_") || forceToken.startsWith("audit_")) {
                     if (QOL?.core?.ManifestTests) {
                         try {
-                            if (forceToken.startsWith("audit_") && typeof QOL.core.ManifestTests.runEngineAudit === "function") {
-                                QOL.core.ManifestTests.runEngineAudit();
-                            }
+                            const engineAudit = forceToken.startsWith("audit_")
+                                ? QOL.core.ManifestTests.runEngineAudit()
+                                : null;
                             QOL.core.ManifestTests.runAll({
                                 token: forceToken,
+                                engineAudit,
                                 onComplete: () => {
                                     _writeDiagSnapshot(hudPanel, forceToken);
                                 }

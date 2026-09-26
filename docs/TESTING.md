@@ -23,15 +23,33 @@ load checks alone cannot catch gameplay or lifecycle bugs.
 
 ## Layer 2 — manifest `test()` hooks (run in the client)
 
-Each FeatureRegistry manifest may declare a `test()` hook. It executes **in the
-game**, against the **real** panel tree, so it is the only automated check that
-can honestly answer "does this panel exist".
+Each FeatureRegistry manifest may declare a read-only `test()` hook. In the
+client it observes the real panel tree; in Node it only observes the supplied
+model. A successful hook confirms its named checks, not the whole feature.
 
 ```
-Settings -> Dev panel -> "Manifest Tests"
-QOL.core.ManifestTests.runAll()      # from the Panorama console
-QOL_DumpDiagnostics()                # includes the last run's results
+Settings -> Dev -> In-Game Engine Audit -> Run Engine Audit
+Settings -> Dev -> Manifest Report -> Copy Manifest Report
 ```
+
+The engine audit collects all registered hooks once, without enabling features
+or changing settings, and copies their individual observations plus a HUD
+snapshot and runtime error counters. `OBSERVED` means the hook's named check
+succeeded; `FAIL` and `ERROR` preserve failures verbatim. `SKIP` means no hook or
+no applicable scenario. `NOT RUN` records a collection deadline or cancellation.
+Every requested manifest stays in the total, including unfinished work.
+
+The HUD bridge carries this same report, its timestamp, abort reason and counts
+to the Dev UI and diagnostic export. A timeout is not success. A copied report
+is not a passed test. Even a run with no failed hooks does not verify rendering,
+gameplay transitions, FPS, or disk persistence. FeatureRegistry error counters
+are current error streaks, reset by successful ticks, not a session error history.
+
+For a bulk client check, the maintainer repacks first, opens a relevant gameplay
+context, and copies the report. Repeat in a different context only where needed
+(e.g. shop, death, hideout). This avoids manually inspecting every panel, but
+features without meaningful hooks still need targeted scenarios and screenshots.
+The collector cannot infer the C++ panel lifecycle or visual correctness.
 
 Rules for a `test()` hook, learned the hard way:
 
@@ -54,20 +72,19 @@ the engine to do, and which feature asked".
 node scripts/profile_hud.js --seconds 20               # per-feature cost report
 node scripts/profile_hud.js --seconds 20 --save before # then make a change
 node scripts/profile_hud.js --seconds 20 --compare before
-node scripts/audit_panel_ids.js                        # lookups that can never hit
-node scripts/import_tree_dump.js <dump>                # feed it a REAL tree
+node scripts/audit_panel_ids.js                        # candidate ids absent from scanned sources
+node scripts/import_tree_dump.js <dump>                # import captured tree data
 ```
 
-This catches a class of bug the other layers cannot: code that produces exactly
-the right output while doing a hundred times more work than it needs to. It also
-surfaces features that throw on a per-tick path, which are invisible in game
-because the mod's error boundary swallows them.
+These tools count operations and expose JavaScript exceptions under the supplied
+model. They cannot establish which calls the live engine makes or the cost of a
+rendered frame. An id absent from XML/JavaScript can still be created by C++.
 
-**Why this layer survived the cull.** It counts operations — `FindChildTraverse`
-calls, style writes — rather than asserting what the client does. And
-`import_tree_dump.js` replaces the modelled tree with a capture from
-`tools/qol_dump_tree.js`, which is the actual 31.4k-panel tree rather than a 3.1k
-guess. Feed it a real tree before quoting any number.
+`import_tree_dump.js` can use captures from `tools/qol_dump_tree.js`. The Dev
+button currently captures aggregate counts, not a complete panel hierarchy.
+Captures improve the inputs but do not reproduce native methods, dynamic
+lifecycle, bindings or rendering. Do not turn a modelled green result into a
+claim about the client.
 
 Read `docs/PROFILING.md` first: it cannot produce milliseconds, and the healthbar
 variants are only partially covered.
@@ -93,8 +110,10 @@ captured that way are cited inline where they are used — e.g.
 `manifests/ql_build_storage/manifest.js` documents each class it waits on
 (`BuildsLoading`, `Selected`, `gEditingBuilds`) with where it was observed.
 
-Note: the debugger is **read-only**. You can search and inspect the tree; you
-cannot type into its JS console.
+The current workflow relies on the maintainer's debugger for tree inspection,
+not on an assumed writable JavaScript console or browser automation endpoint.
+Run bundled probes through the Dev buttons. Panorama HUD rendering is not CEF
+page rendering; browser automation of the storage page would not verify the HUD.
 
 When vanilla Deadlock updates, re-check panel ids against
 `G:\GameTracking-Deadlock` — layout under

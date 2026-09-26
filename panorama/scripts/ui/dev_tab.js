@@ -57,25 +57,10 @@
 
     function formatTestSuiteReport(diag) {
         if (!diag) return "";
-        const lines = ["=== QOLLOCK Test Report ==="];
+        const lines = ["=== QOLLOCK Observation Report ==="];
 
         if (diag.testResults && diag.testResults.summary) {
-            const ts = diag.testResults.summary;
-            lines.push("");
-            lines.push("-- Manifest Tests --");
-            lines.push(`Total: ${ts.total} | Passed: ${ts.passed} | Failed: ${ts.failed} | Errors: ${ts.errors} | Time: ${ts.timeMs}ms`);
-            if (diag.testResults.timestamp) {
-                lines.push(`Ran at: ${new Date(diag.testResults.timestamp).toISOString()}`);
-            }
-            if (ts.failed > 0 || ts.errors > 0) {
-                const trs = diag.testResults.results || [];
-                for (let ri = 0; ri < trs.length; ri++) {
-                    const r = trs[ri];
-                    if (r.passed === false || r.error) {
-                        lines.push(`  FAIL: ${r.id} [${r.name}]${r.message ? `: ${r.message}` : ""}`);
-                    }
-                }
-            }
+            lines.push("", diag.testResults.report || "Observation report unavailable; coverage unknown.");
         }
 
         lines.push("");
@@ -139,6 +124,22 @@
         }
 
         return lines.join("\n");
+    }
+
+    function observationStatus(diag) {
+        const result = diag.testResults;
+        const s = result.summary;
+        const audit = result.engineAudit;
+        let runtimeErrors = 0;
+        for (const id of Object.keys(diag.newErrors || {})) runtimeErrors += diag.newErrors[id] || 0;
+        runtimeErrors = Math.max(runtimeErrors, audit?.runtimeErrors || 0);
+        const errors = s.errors + runtimeErrors + (audit?.readErrors || 0) + (audit?.bridgeErrors || 0);
+        const unchecked = s.skipped + s.notRun;
+        const incomplete = result.aborted || s.total === 0 || (audit && !audit.hudFound) || !result.report;
+        return {
+            text: `Hooks: ${s.passed}/${s.total} OK, ${s.failed} failed, ${errors} errors, ${unchecked} unchecked${incomplete ? " (incomplete)" : ""}`,
+            color: (s.failed > 0 || errors > 0) ? "#cc4444" : (unchecked > 0 || incomplete) ? "#cc8844" : "#aaaaaa"
+        };
     }
 
     // =========================================================================
@@ -400,10 +401,10 @@
                 try {
                     const diag = JSON.parse(rawDiag);
                     if (diag.testResults && diag.testResults.token === forceToken) {
+                        const status = observationStatus(diag);
+                        const statusText = status.text;
                         const ts = diag.testResults.summary;
-                        const statusText = `Passed: ${ts.passed}/${ts.total}, Failed: ${ts.failed}, Skipped: ${ts.skipped} (${ts.timeMs}ms)`;
-                        const statusColor = (ts.failed > 0 || ts.errors > 0) ? "#cc8844" : "#66cc99";
-                        setStatus(statusText, statusColor);
+                        setStatus(statusText, status.color);
                         mtRunning = false;
                         setBtnActive(false);
 
@@ -420,7 +421,7 @@
                         }
                         const setFeedback = Q.ui?.configTab?.setLocalizedConfigFeedbackMessage || globalThis.SetLocalizedConfigFeedbackMessage;
                         if (typeof setFeedback === "function") {
-                            setFeedback(`Tests: ${ts.passed}/${ts.total} passed (${ts.timeMs}ms)`, (ts.failed > 0 ? "warn" : "success"), 5000);
+                            setFeedback(statusText, "info", 5000);
                         }
                         return;
                     }
@@ -527,22 +528,17 @@
         setBtnActive(true);
         setStatus("Auditing...", "#66cc99");
 
-        // 1. Run local audit if function exists
-        try {
-            if (typeof Q.runEngineAudit === "function") {
-                Q.runEngineAudit();
-            } else if (typeof globalThis.QOL_RUN_AUDIT === "function") {
-                globalThis.QOL_RUN_AUDIT();
-            }
-        } catch (auditErr) {
-            $.Msg(`[QOLLock][AUDIT] Local audit error: ${auditErr?.message || auditErr}`);
-        }
-
-        // 2. Trigger HUD-side audit via bridge token
+        // Collect only in the HUD realm. A local settings audit cannot verify it.
         const forceToken = `audit_${token}_${Date.now()}`;
         const hudPanel = findHudPanel();
-        if (hudPanel && hudPanel.SetAttributeString) {
-            try { hudPanel.SetAttributeString("QOL_DiagRequest", forceToken); } catch {}
+        try {
+            if (!hudPanel || !hudPanel.SetAttributeString) throw new Error("HUD panel not found");
+            hudPanel.SetAttributeString("QOL_DiagRequest", forceToken);
+        } catch (e) {
+            setStatus(`Audit not started: ${e.message || e}`, "#cc4444");
+            auditRunning = false;
+            setBtnActive(false);
+            return;
         }
 
         // 3. Poll for result and copy report
@@ -555,7 +551,7 @@
 
             const elapsedMs = Date.now() - pollStartMs;
             if (elapsedMs > 6000) {
-                setStatus("Audit Done (Check ~)", "#66cc99");
+                setStatus("Timeout — no HUD report within 6s", "#cc4444");
                 auditRunning = false;
                 setBtnActive(false);
                 return;
@@ -577,15 +573,13 @@
                         hiddenEntry.maxchars = Math.max(report.length + 100, 1000);
 
                         const tryCopy = Q.ui?.configTab?.tryCopyTextToClipboard || globalThis.TryCopyTextToClipboard;
-                        if (typeof tryCopy === "function") {
-                            tryCopy(report, hiddenEntry);
-                        }
+                        const copied = typeof tryCopy === "function" && tryCopy(report, hiddenEntry);
                         if (isAlive(hiddenEntry)) {
                             try { hiddenEntry.DeleteAsync(0); } catch {}
                         }
 
-                        const ts = diag.testResults.summary;
-                        setStatus(`Audit OK: ${ts.passed}/${ts.total} (Check ~)`, "#66cc99");
+                        const status = observationStatus(diag);
+                        setStatus(`${status.text} (${copied ? "copied" : "copy failed; check ~"})`, (copied || status.color === "#cc4444") ? status.color : "#cc8844");
                         auditRunning = false;
                         setBtnActive(false);
                         return;
@@ -677,25 +671,10 @@
                             try { hiddenEntry.DeleteAsync(0); } catch {}
                         }
 
-                        const ts = diag.testResults.summary;
-                        const setFeedback = Q.ui?.configTab?.setLocalizedConfigFeedbackMessage || globalThis.SetLocalizedConfigFeedbackMessage;
-
-                        if (copied) {
-                            setStatus(`Copied! ${ts.passed}/${ts.total} passed (${ts.timeMs}ms)`, "#66cc99");
-                            if (typeof setFeedback === "function") {
-                                setFeedback("Test report copied to clipboard.", "success", 3000);
-                            }
-                        } else {
-                            setStatus(`${ts.passed}/${ts.total} passed (copy failed)`, "#cc8844");
-                            if (typeof setFeedback === "function") {
-                                setFeedback("Report ready but clipboard copy failed.", "error", 3000);
-                            }
-                        }
+                        const status = observationStatus(diag);
+                        setStatus(`${status.text} (${copied ? "copied" : "copy failed"})`, (copied || status.color === "#cc4444") ? status.color : "#cc8844");
                         fsRunning = false;
                         setBtnActive(false);
-                        $.Schedule(2.0, () => {
-                            if (!fsRunning) setStatus("Idle", "#666");
-                        });
                         return;
                     }
                 } catch {}
@@ -1269,7 +1248,7 @@
             "ManifestTestStatus",
             "s2r://panorama/images/icons/icon_play.vsvg",
             "Manifest Tests",
-            "Run all registered manifest test() hooks. Requires HUD context.",
+            "Read registered manifest checks in the current HUD. Reports skips and failures; does not verify rendering or gameplay.",
             "Run Manifest Tests",
             (statusLbl, btn) => runManifestTests(statusLbl, btn)
         );
@@ -1305,7 +1284,7 @@
             "EngineAuditStatus",
             "s2r://panorama/images/icons/icon_play.vsvg",
             "In-Game Engine Audit",
-            "Run full in-game diagnostic audit. Outputs detailed pass/fail report to console (~) and clipboard.",
+            "Collect HUD observations, named manifest checks and recorded errors once. Copies the report; does not prove all features work.",
             "Run Engine Audit",
             (statusLbl, btn) => runInGameEngineAudit(list, statusLbl, btn)
         );
@@ -1316,9 +1295,9 @@
             "FullSuiteBtn",
             "FullSuiteStatus",
             "s2r://panorama/images/icons/icon_copy.vsvg",
-            "Test Suite",
-            "Run all tests and copy a compact report to clipboard.",
-            "Run Full Suite",
+            "Manifest Report",
+            "Run manifest checks and copy their observations, skips and errors. Rendering and gameplay remain unverified.",
+            "Copy Manifest Report",
             (statusLbl, btn) => runFullTestSuite(list, statusLbl, btn)
         );
 

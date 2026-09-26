@@ -2329,25 +2329,7 @@ var QOL_DumpDiagnostics = function() {
         }
         // P2: Manifest test results (from core/ql_manifest_tests.js)
         if (_diag.testResults && _diag.testResults.summary) {
-            lines.push("");
-            var _ts = _diag.testResults.summary;
-            lines.push("--- Manifest Tests (" + _ts.passed + "/" + _ts.total + " passed, " +
-                _ts.failed + " failed, " + _ts.skipped + " skipped, " +
-                _ts.errors + " errors, " + _ts.timeMs + "ms) ---");
-            if (_diag.testResults.timestamp) {
-                try { lines.push("  Run at: " + new Date(_diag.testResults.timestamp).toISOString()); } catch(_dte) { lines.push("  Run at: " + String(_diag.testResults.timestamp)); }
-            }
-            if (_ts.failed > 0 || _ts.errors > 0) {
-                lines.push("  Failures:");
-                var _trs = _diag.testResults.results || [];
-                for (var _tri = 0; _tri < _trs.length; _tri++) {
-                    var _tr = _trs[_tri];
-                    if (_tr.passed === false || _tr.error) {
-                        var _detail = _tr.message ? ": " + _tr.message : "";
-                        lines.push("    " + _tr.id + " [" + _tr.name + "]" + _detail);
-                    }
-                }
-            }
+            lines.push("", _diag.testResults.report || "Observation report unavailable; coverage unknown.");
         }
         lines.push("");
         // Merge HUD-side logs (from panel attribute) with settings-side logs

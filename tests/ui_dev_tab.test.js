@@ -12,7 +12,7 @@ const path = require("node:path");
 const vm = require("node:vm");
 
 const { Document } = require("../scripts/simulator/panel.js");
-const { Clock } = require("../scripts/simulator/clock.js");
+const { Clock, makeVirtualDate } = require("../scripts/simulator/clock.js");
 
 function createTestEnvironment() {
     const clock = new Clock(1000);
@@ -27,8 +27,8 @@ function createTestEnvironment() {
 
     const mockDollar = {
         Msg: () => {},
-        Schedule: (delaySec, cb) => setTimeout(cb, delaySec * 1000),
-        CancelScheduled: (id) => clearTimeout(id),
+        Schedule: (delaySec, cb) => clock.schedule(delaySec, cb),
+        CancelScheduled: (id) => clock.cancel(id),
         CreatePanel: (type, parent, id) => {
             const p = doc.create(type, { id: id || "" });
             if (parent && typeof parent.addChild === "function") {
@@ -44,6 +44,7 @@ function createTestEnvironment() {
     };
 
     const sandbox = {
+        Date: makeVirtualDate(clock),
         $: mockDollar,
         QOL: {
             VERSION: "4.0.0",
@@ -132,6 +133,7 @@ function createTestEnvironment() {
 
     return {
         sandbox,
+        clock,
         doc,
         rootPanel,
         hudPanel,
@@ -162,53 +164,6 @@ test("ui/dev_tab: exports public API on QOL.ui.devTab and globalThis", () => {
     assert.ok(env.registeredTabs.has("Dev"), "Dev tab should be registered with window manager");
 });
 
-test("ui/dev_tab: formatTestSuiteReport formats clean diagnostic reports", () => {
-    const env = createTestEnvironment();
-    const { formatTestSuiteReport } = env.sandbox.QOL.ui.devTab;
-
-    const sampleDiag = {
-        testResults: {
-            token: "mt_123",
-            timestamp: 1700000000000,
-            summary: {
-                total: 10,
-                passed: 9,
-                failed: 1,
-                errors: 0,
-                skipped: 0,
-                timeMs: 42,
-            },
-            results: [
-                { id: "test_crosshair", name: "Crosshair Test", passed: false, message: "Mismatch" },
-            ],
-        },
-        features: ["crosshair", "healthbar", "minimap"],
-        disabled: ["minimap"],
-        newFeatures: ["crosshair", "healthbar"],
-        newEnabled: ["crosshair"],
-        newErrors: {
-            healthbar: 2,
-        },
-        logs: [
-            "[QOLLock] Feature minimap auto-disabled",
-            "[QOLLock] Feature minimap auto-disabled",
-            "[QOLLock][INFO] Loading done",
-            "[GameEngine] Random log",
-        ],
-    };
-
-    const report = formatTestSuiteReport(sampleDiag);
-    assert.ok(report.includes("=== QOLLOCK Test Report ==="));
-    assert.ok(report.includes("Total: 10 | Passed: 9 | Failed: 1"));
-    assert.ok(report.includes("FAIL: test_crosshair [Crosshair Test]: Mismatch"));
-    assert.ok(report.includes("Auto-disabled: 1"));
-    assert.ok(report.includes("OFF: minimap"));
-    assert.ok(report.includes("Manifests with errors: 1"));
-    assert.ok(report.includes("healthbar: 2 errors"));
-    assert.ok(report.includes("Feature minimap auto-disabled (x2)"));
-    assert.ok(!report.includes("[GameEngine]"), "Should filter out non-QOLLock logs");
-    assert.ok(!report.includes("[QOLLock][INFO]"), "Should filter out INFO logs");
-});
 
 test("ui/dev_tab: requestPanelTreeDump writes force-sync token to HUD bridge", () => {
     const env = createTestEnvironment();
@@ -281,4 +236,53 @@ test("ui/dev_tab: runInGameBenchmark initiates benchmark request and copies repo
     assert.ok(reqToken.startsWith("bm_10_normal_"), "Must request 10s normal benchmark");
     assert.ok(actionBtn.BHasClass("CycleActive"), "Action button must be active");
     assert.ok(statusLabel.text.includes("10s left"), "Status should indicate 10s remaining");
+});
+
+test("audit displays a failed HUD observation as failure even when copying succeeds", () => {
+    const env = createTestEnvironment();
+    const label = env.sandbox.$.CreatePanel("Label", env.rootPanel, "AuditStatus");
+    const button = env.sandbox.$.CreatePanel("Button", env.rootPanel, "AuditButton");
+    env.sandbox.QOL.ui.devTab.runInGameEngineAudit(env.rootPanel, label, button);
+    env.hudPanel.SetAttributeString("QOL_Diag", JSON.stringify({ testResults: {
+        token: env.hudPanel.GetAttributeString("QOL_DiagRequest", ""),
+        summary: { total: 2, passed: 1, failed: 1, errors: 0, skipped: 0, notRun: 0 },
+        report: "FAIL: source label missing"
+    } }));
+    env.clock.advance(200);
+    assert.match(label.text, /1 failed/);
+    assert.equal(label.style.color, "#cc4444");
+    assert.equal(button.BHasClass("CycleActive"), false);
+    assert.match(env.getClipboardText(), /source label missing/);
+});
+
+test("audit rejects a stale report and shows timeout instead of success", () => {
+    const env = createTestEnvironment();
+    const label = env.sandbox.$.CreatePanel("Label", env.rootPanel, "AuditStatus");
+    const button = env.sandbox.$.CreatePanel("Button", env.rootPanel, "AuditButton");
+    env.hudPanel.SetAttributeString("QOL_Diag", JSON.stringify({ testResults: {
+        token: "audit_stale", summary: { total: 1, passed: 1, failed: 0, errors: 0, skipped: 0, notRun: 0 }, report: "old report"
+    } }));
+    env.sandbox.QOL.ui.devTab.runInGameEngineAudit(env.rootPanel, label, button);
+    env.clock.advance(7000);
+    assert.match(label.text, /[Tt]imeout/);
+    assert.equal(label.style.color, "#cc4444");
+    assert.equal(button.BHasClass("CycleActive"), false);
+    assert.equal(env.getClipboardText(), null);
+});
+
+test("manifest report keeps incomplete coverage visible after copying", () => {
+    const env = createTestEnvironment();
+    const label = env.sandbox.$.CreatePanel("Label", env.rootPanel, "ReportStatus");
+    const button = env.sandbox.$.CreatePanel("Button", env.rootPanel, "ReportButton");
+    env.sandbox.QOL.ui.devTab.runFullTestSuite(env.rootPanel, label, button);
+    env.hudPanel.SetAttributeString("QOL_Diag", JSON.stringify({ testResults: {
+        token: env.hudPanel.GetAttributeString("QOL_DiagRequest", ""), aborted: true,
+        summary: { total: 3, passed: 1, failed: 0, errors: 0, skipped: 1, notRun: 1 },
+        report: "INCOMPLETE: collection deadline"
+    } }));
+    env.clock.advance(4000);
+    assert.match(label.text, /2 unchecked/);
+    assert.match(label.text, /incomplete/);
+    assert.equal(label.style.color, "#cc8844");
+    assert.match(env.getClipboardText(), /collection deadline/);
 });

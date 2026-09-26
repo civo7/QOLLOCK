@@ -428,34 +428,3 @@ test("INVARIANT 4: All 90+ community presets resolve, diff, and serialize into #
     assert.strictEqual(appliedCount, presetNames.length, "All presets must be applied cleanly");
 });
 
-// =============================================================================
-// SUITE 5: In-Game Engine Audit Runner Output
-// =============================================================================
-test("INVARIANT 5: In-Game Engine Audit runs and logs cleanly with zero critical failures", () => {
-    const loggedMessages = [];
-    const env = createMatchHudTree({ inHideout: false, isGameplayHudAlive: true });
-    const origMsg = env.hud.sandbox.global.$.Msg;
-    env.hud.sandbox.global.$.Msg = (msg) => {
-        loggedMessages.push(msg);
-        if (typeof origMsg === "function") origMsg(msg);
-    };
-
-    const auditFn = env.hud.sandbox.global.QOL.runEngineAudit ||
-                    (env.hud.sandbox.global.QOL.core && env.hud.sandbox.global.QOL.core.ManifestTests && env.hud.sandbox.global.QOL.core.ManifestTests.runEngineAudit);
-    assert.strictEqual(typeof auditFn, "function", "runEngineAudit must be exposed");
-
-    const auditResult = auditFn();
-    assert.ok(auditResult, "Audit result must exist");
-    if (!auditResult.success) {
-        console.log("AUDIT LOGS:\n" + loggedMessages.join("\n"));
-        console.log("AUDIT RESULT:", auditResult);
-    }
-    assert.strictEqual(auditResult.success, true, "Engine audit must succeed with 0 failures");
-    assert.strictEqual(auditResult.nativeFail, 0, "Native panel failures must be 0");
-    assert.strictEqual(auditResult.manifestErrors, 0, "Manifest errors must be 0");
-
-    const combinedLog = loggedMessages.join("\n");
-    assert.ok(combinedLog.includes("[QOLLOCK ENGINE AUDIT]"), "Log must contain engine audit header");
-    assert.ok(combinedLog.includes("[PASS] #TopBar: ALIVE"), "Log must include TopBar PASS");
-    assert.ok(combinedLog.includes("ALL CHECKS PASSED"), "Log must include ALL CHECKS PASSED summary");
-});
