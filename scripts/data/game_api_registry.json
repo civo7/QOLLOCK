@@ -4,7 +4,7 @@
     "concommandsCount": 702,
     "convarsCount": 1653,
     "citadelFunctionsCount": 2046,
-    "citadelEventsCount": 1798,
+    "citadelEventsCount": 1799,
     "panelTypesCount": 384
   },
   "concommands": {
@@ -40401,6 +40401,12 @@
     }
   },
   "citadelEvents": {
+    "HTMLTitle": {
+      "name": "HTMLTitle",
+      "xmlUsageCount": 0,
+      "source": "panoramauiclient.dll",
+      "evidence": "strings_dump/panoramauiclient.dll.strings.txt:1752, exact HTMLTitle string; added 2026-09-26"
+    },
     "Activated": {
       "name": "Activated",
       "xmlUsageCount": 0,

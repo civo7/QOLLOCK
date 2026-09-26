@@ -175,3 +175,12 @@ test("ui/support: render constructs hero card, CTA buttons, and thanks block", (
     const discordBtn = cta.FindChildTraverse("SupportCtaDiscordBtn");
     assert.ok(discordBtn, "SupportCtaDiscordBtn exists");
 });
+
+test("ui/support: contributors list contains BubbleGumXD with GameBanana profile", () => {
+    const { sandbox } = createTestEnvironment();
+    const entry = sandbox.QOL.ui.support.contributors.find((c) => c.label === "BubbleGumXD");
+    assert.ok(entry, "BubbleGumXD should be in contributors");
+    assert.strictEqual(entry.role, "Contributor");
+    assert.strictEqual(entry.url, "https://gamebanana.com/members/5281881");
+});
+

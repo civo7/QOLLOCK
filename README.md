@@ -4,25 +4,32 @@ This repository contains the source for the QOLLOCK HUD/UI mod for Deadlock, bui
 
 ## Context Docs (Read First In New Sessions)
 
-1. `AGENTS.md`
-- Project scope, priorities, performance rules, and key architecture notes.
+1. `D:\GitHub2\AGENTS.md` — maintainer instructions for work under `D:\GitHub2`.
+   Do not read repository/nested `AGENTS.md` files unless the maintainer explicitly
+   authorizes the exact file in the current conversation.
+2. [Architecture and AI contributor guide](ARCHITECTURE.md) — start here for
+   runtime contexts, file ownership, helper selection, localization, settings,
+   persistence, feature lifecycle, verification limits and task checklists.
 
-2. `docs/KNOWN_GOTCHAS.md`
-- Common pitfalls (Panorama CSS/runtime behavior, exception matching, bindings).
+The architecture guide is the consolidated entry point. Use these focused
+references for implementation details; historical migration notes are not the
+current runtime contract:
 
-3. `docs/PERF_GUARDRAILS.md`
-- Runtime performance constraints and implementation guardrails.
-
-4. `docs/TEST_CHECKLIST.md`
-- Smoke/regression checklist to run after feature changes.
-
-5. `docs/PRESET_BINDINGS.md`
-- Preset/binding tracking notes and maintenance flow.
-
-6. `docs/ADDING_SETTINGS.md`
-- Checklist for adding settings safely, including schema/version rules.
+- [Existing helpers and their contracts](docs/HELPERS.md)
+- [Localization contract and translation workflow](docs/LOCALIZATION.md)
+- [Adding settings](docs/ADDING_SETTINGS.md)
+- [Preset and binding maintenance](docs/PRESET_BINDINGS.md)
+- [Panorama pitfalls](docs/KNOWN_GOTCHAS.md)
+- [Performance guardrails](docs/PERF_GUARDRAILS.md)
+- [Offline checks and their limits](docs/TESTING.md)
+- [Maintainer release checklist](docs/TEST_CHECKLIST.md)
 
 ## Build / Pack / Launch
+
+**Compilation, VPK repacking and game installation are maintainer-only.** Agents
+must not run the build scripts or `resourcecompiler.exe`, modify game `addons`,
+or create/modify VPKs. The commands below document the maintainer's workflow;
+they are not permission for an agent to execute it.
 
 ### First-time setup
 After cloning, run once to install git pre-commit hooks:

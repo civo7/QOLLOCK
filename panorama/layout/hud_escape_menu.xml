@@ -40,6 +40,8 @@
 		<include src="s2r://panorama/scripts/ql_settings_previews.vjs_c" />
 		<include src="s2r://panorama/scripts/ql_settings_tooltips.vjs_c" />
 		<include src="s2r://panorama/scripts/ql_settings_persistence.vjs_c" />
+		<include src="s2r://panorama/scripts/core/ql_persistence.vjs_c" />
+		<include src="s2r://panorama/scripts/core/ql_storage_bridge.vjs_c" />
 		<include src="s2r://panorama/scripts/ql_update_checker.vjs_c" />
 		<include src="s2r://panorama/scripts/ui/ql_settings_metadata.vjs_c" />
 		<include src="s2r://panorama/scripts/ui/ql_settings_tabs.vjs_c" />
@@ -57,6 +59,7 @@
 		<include src="s2r://panorama/scripts/ui/audio.vjs_c" />
 		<include src="s2r://panorama/scripts/ui/console_tab.vjs_c" />
 		<include src="s2r://panorama/scripts/ui/arcade_tab.vjs_c" />
+		<include src="s2r://panorama/scripts/ui/visual_check.vjs_c" />
 		<include src="s2r://panorama/scripts/ui/dev_tab.vjs_c" />
 		<include src="s2r://panorama/scripts/ui/gameplay_tabs.vjs_c" />
 		<include src="s2r://panorama/scripts/ui/theme.vjs_c" />
@@ -176,5 +179,7 @@
 				</TabContents>
 			</Panel>
 		</Panel>
+		<!-- QOLLOCK CUSTOM: Local CEF Storage Bridge -->
+		<CitadelHTMLPanel id="QOLStorageBridge" class="QOLStorageBridge" hittest="false" acceptsfocus="false" />
 	</CitadelHudEscapeMenu>
 </root>

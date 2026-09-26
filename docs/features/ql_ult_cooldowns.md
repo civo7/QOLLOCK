@@ -34,6 +34,7 @@ Enables always-visible numeric ultimate cooldown timers directly on hero portrai
 - **Engine Events**: None hooked; samples the engine-updated hidden label text.
 
 ### Performance Tier & Caveats
-- **Performance Tier**: Low (4Hz tick with cached slot arrays).
-- **Panel Handle Caching**: Retains cached references to `{ playerPanel, hidden, shown }` in `_cachedSlots`. Full-tree player resolution is only executed if panel validity fails (e.g. during player disconnects or hero swaps).
+- **Performance Tier**: Low (4Hz tick with cached slot arrays and O(1) child count checks).
+- **Panel Handle & Container Caching**: Caches `PlayersContainer` panel references in `_playerContainersCache` to avoid traversing the tree every tick. Retains slot references to `{ playerPanel, hidden, shown }` in `_cachedSlots`.
+- **Late-Joining & Reconnect Recovery**: Monitors `GetChildCount()` on container handles and detects discrepancies against `_cachedSlots.length` or `_expectedPlayerCount`. Executes an automatic soft resync every ~2s (8 ticks) to guarantee that late-connecting players, hero changes, or delayed label initializations are promptly captured.
 - **Text Diffing**: Performs `shown.text !== cdStr` comparison prior to assigning string values to prevent unnecessary C++ layout invalidation passes.

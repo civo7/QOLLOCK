@@ -234,10 +234,6 @@
                 globalThis.CreateRow(list, "Preview", "PREVIEWS_ENABLED", "toggle", null, null, null, null, "Realtime Changes");
                 globalThis.CreateRow(list, "Update Checker", "ENABLE_UPDATE_CHECKER", "toggle", null, null, null, null, "Check for new QOLLOCK releases when opening settings.");
                 globalThis.CreateRow(list, "Language", "LANGUAGE", "dropdown", null, null, null, globalThis.SETTINGS_LANGUAGE_OPTIONS);
-                globalThis.CreateRow(list, "Default Hero", "DEFAULT_HERO", "dropdown", null, null, null, globalThis.DEFAULT_HERO_DROPDOWN_OPTIONS);
-                globalThis.CreateRow(list, "Troubleshoot", "TEST_SKYRUNNER", "actionbutton", null, null, null, [
-                    { label: "Swap" },
-                ], "Switch to the Skyrunner storage hero. Your settings are saved in shop builds; if saving breaks, clear these builds and save again.");
                 globalThis.CreateRow(list, "Theme", "SETTINGS_THEME", "buttongroup", null, null, null, globalThis.SETTINGS_THEME_OPTIONS);
 
                 if (typeof globalThis.CreateSeparator === "function") {
@@ -286,10 +282,6 @@
             globalThis.CreateRow(cardGeneral, "Preview Changes", "PREVIEWS_ENABLED", "toggle", null, null, null, null, "Realtime Changes");
             globalThis.CreateRow(cardGeneral, "Update Checker", "ENABLE_UPDATE_CHECKER", "toggle", null, null, null, null, "Check for new QOLLOCK releases when opening settings.");
             globalThis.CreateRow(cardGeneral, "Language", "LANGUAGE", "dropdown", null, null, null, globalThis.SETTINGS_LANGUAGE_OPTIONS);
-            globalThis.CreateRow(cardGeneral, "Default Hero", "DEFAULT_HERO", "dropdown", null, null, null, globalThis.DEFAULT_HERO_DROPDOWN_OPTIONS);
-            globalThis.CreateRow(cardGeneral, "Troubleshoot", "TEST_SKYRUNNER", "actionbutton", null, null, null, [
-                { label: "Swap" },
-            ], "Switch to the Skyrunner storage hero. Your settings are saved in shop builds; if saving breaks, clear these builds and save again.");
             globalThis.CreateRow(cardGeneral, "Theme", "SETTINGS_THEME", "buttongroup", null, null, null, globalThis.SETTINGS_THEME_OPTIONS);
         }
 
@@ -433,10 +425,6 @@
                                 );
                                 if (typeof globalThis.SaveAndSync === "function") {
                                     globalThis.SaveAndSync();
-                                }
-                                const applyHero = globalThis.ApplyDefaultHeroSelection || (Q.ui && Q.ui.controls && Q.ui.controls.applyDefaultHeroSelection);
-                                if (typeof applyHero === "function" && globalThis.MOD_CONFIG && globalThis.MOD_CONFIG.DEFAULT_HERO) {
-                                    applyHero(globalThis.MOD_CONFIG.DEFAULT_HERO);
                                 }
                                 const didRefreshLanguageUi = typeof globalThis.RefreshSettingsLanguageUiAfterConfigChange === "function"
                                     ? globalThis.RefreshSettingsLanguageUiAfterConfigChange(previousLanguage)

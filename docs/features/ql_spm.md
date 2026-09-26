@@ -1,32 +1,30 @@
-# `panorama/scripts/manifests/ql_spm` (Souls Per Minute Display)
+# ql_spm
 
-## Description
-Originally designed to calculate and display live Souls Per Minute (SPM) farming benchmarks on the HUD. This feature has been permanently disabled and converted into a harmless stub to comply with GameBanana community moderation guidelines regarding competitive telemetry advantages.
+Intentionally inactive souls-per-minute compatibility manifest.
 
-## Files
-- Manifest: `panorama/scripts/manifests/ql_spm/manifest.js`
+Source: [manifest.js](../../panorama/scripts/manifests/ql_spm/manifest.js),
+loaded by the HUD layout. The general [lifecycle contract](../core/feature_registry.md)
+and [architecture](../../ARCHITECTURE.md) explain context and configuration routing.
 
-## Settings & Defaults
-| Config Key | Type | Default | Description |
-| :--- | :--- | :--- | :--- |
-| `ENABLE_MIN_SOULS` | `toggle` | `false` | Deprecated setting toggle (inactive stub). |
+## Runtime and ownership
 
-## Architecture & Lifecycle
+Intentionally inactive compatibility manifest: lifecycle hooks are empty
+and there is no live SPM calculation/poller here. `ENABLE_MIN_SOULS` remains in
+the schema, which is not evidence of an active feature. Do not restore old
+behavior or add a replacement loop as documentation cleanup.
 
-### Activation & Lifecycle Hooks
-- **`onEnable()`**: No-op stub.
-- **`onDisable()`**: No-op stub.
-- **`onSettingsChanged()`**: No-op stub.
-- **`test()`**: Verifies that the `#TopBar` panel exists in the context tree.
+## Declared settings
 
-### DOM Injection & Target Panels
-- **DOM Creation**: Zero DOM elements created.
-- **Target Panels**: None.
+- `ENABLE_MIN_SOULS` (toggle)
 
-### Engine Events & Polling Frequency
-- **Polling Frequency**: Zero polling (0Hz).
-- **Engine Events**: None.
+Defaults/ranges belong to the linked schema, flat `QOL_DEFAULT_CONFIG` and
+versioned codec definitions, not a duplicated table here. They are separate
+representations; a declared field is not automatically a visible control or
+proof of active runtime behavior. See [adding settings](../ADDING_SETTINGS.md).
 
-### Performance Tier & Caveats
-- **Performance Tier**: None (`0ms` runtime impact).
-- **Moderator Compliance**: Retained purely for configuration backwards compatibility and schema stability.
+## Verification boundary
+
+The statements above describe source behavior. Native panel identity, binding
+values, rendering and transitions need the maintainer's Panorama Debugger and
+a repacked client scenario; neither a schema nor a read-only manifest hook
+proves the whole feature works. See [verification](../TESTING.md).

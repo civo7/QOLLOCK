@@ -47,8 +47,8 @@ The feature creates an unobtrusive on-screen HUD widget by extracting Golden Sta
 - **Search Backoff**: When stat containers are not yet spawned in the DOM, lookup retries back off from 500ms up to a strict maximum cap of 1500ms (`STAT_BONUSES_SOURCE_SEARCH_MAX_MS`). Candidate container lookups are cached per cycle to prevent repeated tree traversals.
 
 ### Performance Tier & Caveats
-- **Performance Tier**: Low (~0.03ms per tick).
-- **Suppression**: Suppressed when inside the Hideout / Sandbox lobby.
-- **Tree Traversal Optimization**: BFS numeric token extraction is capped to at most 30 visited nodes (`maxNodes`), eliminating multi-millisecond frame spikes during deep panel scans.
+- **Runtime cost**: No per-tick milliseconds or FPS measurement is established by this reference.
+- **Suppression**: Suppressed when inside the Hideout / Sandbox lobby using `QOL.core.hud.isInHideout`. Collapses the overlay panel when entering Hideout and restores visibility upon match reentry.
+- **Tree Traversal Optimization**: BFS numeric token extraction is capped at 30 visited nodes (`maxNodes`), bounding that search's work; it does not guarantee elimination of frame spikes.
 - **Style Optimization**: Transforms and offsets are guarded by `_lastLayoutSig` (`scale|xOffset|yOffset`), ensuring zero style mutation passes when position is static.
 - **Label Text Diffing**: Label text updates check `_lastValues[key]` before assigning `lbl.text`, eliminating redundant Panorama layout reflows.

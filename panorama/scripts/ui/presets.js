@@ -223,10 +223,6 @@
         if (typeof globalThis.SaveAndSync === "function") {
             globalThis.SaveAndSync();
         }
-        const applyHero = globalThis.ApplyDefaultHeroSelection || (Q.ui && Q.ui.controls && Q.ui.controls.applyDefaultHeroSelection);
-        if (typeof applyHero === "function" && globalThis.MOD_CONFIG && globalThis.MOD_CONFIG.DEFAULT_HERO) {
-            applyHero(globalThis.MOD_CONFIG.DEFAULT_HERO);
-        }
         if (typeof globalThis.RefreshSettingsLanguageUiAfterConfigChange === "function") {
             globalThis.RefreshSettingsLanguageUiAfterConfigChange(prevLang);
         }
@@ -250,6 +246,9 @@
         modConfig.ACTIVE_PRESET_NAME = "";
         if (Object.prototype.hasOwnProperty.call(modConfig, "ENABLE_UNSPENT_SOULS")) {
             modConfig.ENABLE_UNSPENT_SOULS = 0;
+        }
+        if (Object.prototype.hasOwnProperty.call(modConfig, "DEFAULT_HERO")) {
+            delete modConfig.DEFAULT_HERO;
         }
     };
 

@@ -278,6 +278,10 @@ class BuildsModel {
         // the save state machine of ticks and trips its 12s budget. The hideout
         // does have a hero panel — it spawns a local server — so this belongs here.
         this.heroPanel = root.addChild(mk("Panel", { id: "HeroPanel" }));
+
+        // --- Crosshair panel & dash indicator (ThirdEye-style hero detection) ---
+        this.crosshairPanel = root.addChild(mk("Panel", { id: "crosshair" }));
+        this.dashPanel = this.crosshairPanel.addChild(mk("Panel", { classes: ["citadel_ability_dash"] }));
     }
 
     /** Install the Citadel* globals and engine event routing into the sandbox. */
@@ -432,9 +436,24 @@ class BuildsModel {
     _renderAll() {
         this._renderShopTabs();
         this._renderSignature();
+        this._renderHeroDash();
         this._renderSelectedBuildHeader();
         this._renderCategories();
         this._renderBuildList();
+    }
+
+    _renderHeroDash() {
+        if (!this.dashPanel) return;
+        const classes = this.dashPanel.classes || [];
+        for (let i = classes.length - 1; i >= 0; i--) {
+            if (classes[i].startsWith("hero_")) {
+                this.dashPanel.RemoveClass(classes[i]);
+            }
+        }
+        if (this.hero) {
+            const cls = this.hero.startsWith("hero_") ? this.hero : `hero_${this.hero}`;
+            this.dashPanel.AddClass(cls);
+        }
     }
 
     /**
@@ -759,9 +778,11 @@ class BuildsModel {
         // what forces the loader's confirm_storage stage to actually wait.
         this.hero = "";
         this._renderSignature();
+        this._renderHeroDash();
         this.clock.schedule(this.latency.heroSwitchMs / 1000, () => {
             this.hero = hero;
             this._renderSignature();
+            this._renderHeroDash();
             this._trace(`switchHero settled -> ${hero}`);
         });
         return true;

@@ -15,7 +15,6 @@
 		<!-- ============================================================= -->
 		<include src="s2r://panorama/styles/showrank.vcss_c" />
 		<include src="s2r://panorama/styles/qollock_global.vcss_c" />
-		<include src="s2r://panorama/styles/core/ql_settings_loader.vcss_c" />
 		<!-- ============================================================= -->
 		<!-- END QOLLOCK CUSTOM                                            -->
 		<!-- ============================================================= -->
@@ -38,6 +37,7 @@
 		<include src="s2r://panorama/scripts/core/ql_manifest_tests.vjs_c" />
 		<include src="s2r://panorama/scripts/core/ql_hero_probe.vjs_c" />
 		<include src="s2r://panorama/scripts/core/ql_persistence.vjs_c" />
+		<include src="s2r://panorama/scripts/core/ql_storage_bridge.vjs_c" />
 		<include src="s2r://panorama/scripts/core/ql_codec.vjs_c" />
 		<!-- ============================================================= -->
 		<!-- Transitional runtime infrastructure                           -->
@@ -53,21 +53,7 @@
 		<!-- Dev tool: dumps the real panel tree to the console log so the headless
 		     profiler can be fed a captured tree instead of a modelled one. -->
 		<include src="s2r://panorama/scripts/tools/qol_dump_tree.vjs_c" />
-		<include src="s2r://panorama/scripts/core/ql_settings_loader.vjs_c" />
-		<include src="s2r://panorama/scripts/features/ql_feat_buildbridge.vjs_c" />
 		<!-- Feature manifests (order-independent; all depend on FeatureRegistry) -->
-		<include src="s2r://panorama/scripts/manifests/ql_build_payload/manifest.vjs_c" />
-		<!-- Description-carrier storage: reads AND writes the config in the storage
-		     build's description instead of its category name. Ships disabled; while
-		     it is off, ql_build_payload + ql_feat_buildsave stay authoritative, so
-		     the feature toggle is the whole rollback. -->
-		<!-- 3.1.9 MIGRATION — DELETE ALONG WITH THE FILE. Read-only reader for the
-		     old category-name carrier. Loaded before the manifest that consults it;
-		     the manifest resolves it lazily off QOL, so order is convention not a
-		     requirement. -->
-		<include src="s2r://panorama/scripts/manifests/ql_build_storage/legacy_3_1_9.vjs_c" />
-		<include src="s2r://panorama/scripts/manifests/ql_build_storage/driver.vjs_c" />
-		<include src="s2r://panorama/scripts/manifests/ql_build_storage/manifest.vjs_c" />
 		<include src="s2r://panorama/scripts/manifests/ql_cast_failed_hint/manifest.vjs_c" />
 		<include src="s2r://panorama/scripts/manifests/ql_mouse_cursor/manifest.vjs_c" />
 		<include src="s2r://panorama/scripts/manifests/ql_statlocker/manifest.vjs_c" />
@@ -457,5 +443,7 @@
 		<CitadelTooltipManager id="TooltipManager" hittest="false" />
 		<HudPerfStatsBasics hittest="false" />
 		<CitadelHudMovementSpeed id="MovementSpeedPanel" />
+		<!-- QOLLOCK CUSTOM: Local CEF Storage Bridge -->
+		<CitadelHTMLPanel id="QOLStorageBridge" class="QOLStorageBridge" hittest="false" acceptsfocus="false" />
 	</CitadelHud>
 </root>

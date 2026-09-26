@@ -1,175 +1,140 @@
 "use strict";
 
-// ============================================================================
-// validate_game_api_usage.js — Deadlock Game API & ConCommand Static Validator
-// ============================================================================
-// Scans QOLLOCK scripts and validates that all ConCommands and engine events
-// actually exist in the game binaries / cvarlist.txt.
-// Prevents "guessing" concommands or calling nonexistent engine APIs.
-// ============================================================================
-
-const fs = require("fs");
-const path = require("path");
-
-const DATA_FILE = path.join(__dirname, "data", "game_api_registry.json");
+const fs = require("node:fs");
+const path = require("node:path");
+const { Linter } = require("eslint");
 const ROOT_DIR = path.resolve(__dirname, "..");
-const SCRIPTS_DIR = path.join(ROOT_DIR, "panorama", "scripts");
+const DEFAULT_REGISTRY = path.join(__dirname, "data", "game_api_registry.json");
+const DEFAULT_SCRIPTS = path.join(ROOT_DIR, "panorama", "scripts");
 
-if (!fs.existsSync(DATA_FILE)) {
-    console.error(`[ValidateGameAPI] Registry not found at ${DATA_FILE}. Run 'node scripts/extract_game_api.js' first.`);
-    process.exit(1);
-}
-
-const registry = JSON.parse(fs.readFileSync(DATA_FILE, "utf8"));
-const concommands = registry.concommands || {};
-const convars = registry.convars || {};
-const citadelFunctions = registry.citadelFunctions || {};
-const citadelEvents = registry.citadelEvents || {};
-
-// Whitelist of valid mod-internal events and commands that are dispatched via CitadelConCommand or events
-const MOD_CUSTOM_EVENTS = new Set([
-    "QOLLock_ToggleSettings",
-    "QOLLock_UpdateSetting",
-    "QOLLock_SyncAll",
-    "QOLLock_Reload",
-    "CitadelConCommand", // Event used to send concommands
-    "CitadelSettings",
-    "CitadelResumePlaying",
-    "CitadelExitUpgradeShop",
-    "CitadelEnterUpgradeShop",
-    "CitadelToggleUpgradeShop",
-    "CitadelOpenUpgradeShop"
-]);
-
-// Known server-side or special engine commands not in standard client cvarlist
-const SPECIAL_ENGINE_COMMANDS = new Set([
-    "unstick",
-    "say",
-    "say_chat_team",
-    "say_team",
-    "kill",
-    "disconnect",
-    "quit"
-]);
-
-function isKnownCommand(cmd) {
-    if (!cmd) return false;
-    const clean = cmd.trim().toLowerCase();
-    if (concommands[clean] || convars[clean]) return true;
-    if (SPECIAL_ENGINE_COMMANDS.has(clean)) return true;
-    // Strip +/- if it's a bind action (+forward, +openherosheet etc)
-    const baseAction = clean.replace(/^[+-]/, "");
-    if (concommands[baseAction] || convars[baseAction]) return true;
-    return false;
-}
-
-function isKnownEvent(evt) {
-    if (!evt) return false;
-    if (MOD_CUSTOM_EVENTS.has(evt)) return true;
-    if (citadelEvents[evt] || citadelFunctions[evt]) return true;
-    if (evt.startsWith("Citadel")) return true; // Most Citadel* events are dynamically registered in C++
-    return false;
-}
-
-console.log("[ValidateGameAPI] Scanning QOLLOCK scripts for engine ConCommands & Events...");
-
-const issues = [];
-let totalFilesChecked = 0;
-let totalConCommandsChecked = 0;
-let totalEventsChecked = 0;
-
-function walk(dir) {
-    for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
-        const full = path.join(dir, entry.name);
-        if (entry.isDirectory()) {
-            if (entry.name === "legacy" || entry.name === "tools" || entry.name === "node_modules") continue;
-            walk(full);
-        } else if (entry.name.endsWith(".js")) {
-            checkFile(full);
+// Use the installed ESLint parser, rather than line regexes that miss multiline
+// calls, optional calls, command arguments, or accidentally inspect comments.
+function scanSource(content, registry, file = "fixture.js") {
+    const issues = [];
+    const counts = { commands: 0, events: 0, dynamic: 0 };
+    const own = (obj, name) => Object.prototype.hasOwnProperty.call(obj || {}, name);
+    const issue = (node, severity, type, token, message) => {
+        issues.push({ severity, type, file, line: node.loc.start.line, token, message });
+    };
+    function staticString(node) {
+        if (!node) return null;
+        if (node.type === "Literal" && typeof node.value === "string") return node.value;
+        if (node.type === "TemplateLiteral" && node.expressions.length === 0) return node.quasis[0].value.cooked;
+        if (node.type === "BinaryExpression" && node.operator === "+") {
+            const left = staticString(node.left);
+            const right = staticString(node.right);
+            if (left !== null && right !== null) return left + right;
+        }
+        return null;
+    }
+    function dynamic(node, kind) {
+        counts.dynamic++;
+        issue(node, "warning", "UNVERIFIED_DYNAMIC_" + kind, "<expression>", "Runtime expression: not verified by this static check.");
+    }
+    function checkCommands(node, argument) {
+        const raw = staticString(argument);
+        if (raw === null) return dynamic(node, "CONCOMMAND");
+        // Console command chains use semicolons/newlines outside quoted arguments.
+        const segments = [];
+        let quoted = false, escaped = false, segment = "";
+        for (const char of raw) {
+            if (char === '"' && !escaped) quoted = !quoted;
+            if (!quoted && /[;\r\n]/.test(char)) { segments.push(segment); segment = ""; }
+            else segment += char;
+            escaped = char === "\\" && !escaped;
+        }
+        segments.push(segment);
+        for (const command of segments) {
+            const token = command.trim().split(/\s+/)[0].toLowerCase();
+            if (!token) continue;
+            counts.commands++;
+            const entry = own(registry.concommands, token) ? registry.concommands[token]
+                : own(registry.convars, token) ? registry.convars[token] : null;
+            if (!entry) issue(node, "error", "UNKNOWN_CONCOMMAND", token, "No evidence for this command in the checked-in registry; verify against game data.");
+            else if (entry.isCheat) issue(node, "warning", "CHEAT_CONCOMMAND", token, "Registry marks this command as requiring sv_cheats; check its gameplay context.");
         }
     }
-}
-
-function checkFile(filePath) {
-    totalFilesChecked++;
-    const relPath = path.relative(ROOT_DIR, filePath);
-    const content = fs.readFileSync(filePath, "utf8");
-    const lines = content.split(/\r?\n/);
-
-    for (let lineNo = 1; lineNo <= lines.length; lineNo++) {
-        const line = lines[lineNo - 1];
-
-        // 1. Check CitadelConCommand / dispatchCitadelConCommand calls with static command string
-        // Match: $.DispatchEvent("CitadelConCommand", "command args")
-        // Match: dispatchCitadelConCommand("command args")
-        // Match: DispatchCitadelConCommand("command args")
-        const cmdMatches = line.matchAll(/(?:DispatchCitadelConCommand|\$\.DispatchEvent\s*\(\s*['"]CitadelConCommand['"]\s*,\s*|dispatchCitadelConCommand)\s*\(\s*['"]([^'"]+)['"]/g);
-        for (const m of cmdMatches) {
-            totalConCommandsChecked++;
-            const rawCmdString = m[1].trim();
-            const firstToken = rawCmdString.split(/\s+/)[0];
-
-            if (!isKnownCommand(firstToken)) {
-                issues.push({
-                    type: "UNKNOWN_CONCOMMAND",
-                    file: relPath,
-                    line: lineNo,
-                    token: firstToken,
-                    fullCall: m[0],
-                    message: `ConCommand '${firstToken}' does NOT exist in Deadlock engine binaries/cvarlist!`
-                });
-            } else {
-                const cmdEntry = concommands[firstToken] || convars[firstToken];
-                if (cmdEntry && cmdEntry.isCheat) {
-                    issues.push({
-                        type: "CHEAT_CONCOMMAND",
-                        file: relPath,
-                        line: lineNo,
-                        token: firstToken,
-                        fullCall: m[0],
-                        message: `ConCommand '${firstToken}' is marked as CHEAT (requires sv_cheats 1)!`
-                    });
+    const rule = {
+        create() {
+            return {
+                CallExpression(node) {
+                    const callee = node.callee;
+                    const property = callee.type === "MemberExpression" ? (callee.computed ? staticString(callee.property) : callee.property.name) : null;
+                    const name = callee.type === "Identifier" ? callee.name : property;
+                    if (name === "DispatchCitadelConCommand" || name === "dispatchCitadelConCommand") {
+                        checkCommands(node, node.arguments[0]);
+                        return;
+                    }
+                    if (callee.type !== "MemberExpression" || callee.object.type !== "Identifier" || callee.object.name !== "$") return;
+                    if (!["DispatchEvent", "RegisterEventHandler", "RegisterForUnhandledEvent"].includes(name)) return;
+                    const event = staticString(node.arguments[0]);
+                    if (event === null) return dynamic(node, "EVENT");
+                    counts.events++;
+                    if (!own(registry.citadelEvents, event) && !own(registry.citadelFunctions, event)) {
+                        // Existing optional compatibility probe only. The dump contains
+                        // CCitadelUserMsg_ForceShopClosed, a protocol type, NOT proof of
+                        // a Panorama event. Never apply this exception to dispatches.
+                        const optionalProbe = file.replace(/\\/g, "/") === "panorama/scripts/core/ql_app.js"
+                            && name === "RegisterForUnhandledEvent" && event === "CitadelUserMsg_ForceShopClosed";
+                        issue(node, optionalProbe ? "warning" : "error", optionalProbe ? "UNVERIFIED_COMPATIBILITY_PROBE" : "UNKNOWN_PANORAMA_EVENT", event,
+                            optionalProbe ? "Existing optional ql_app listener; protocol type found, Panorama event unverified. See docs/VALIDATION.md."
+                                : "No evidence for this event name in the checked-in registry; verify against game data.");
+                    }
+                    if (name === "DispatchEvent" && event === "CitadelConCommand") checkCommands(node, node.arguments[1]);
                 }
-            }
+            };
         }
-
-        // 2. Check $.DispatchEvent calls
-        const evtMatches = line.matchAll(/\$\.DispatchEvent\s*\(\s*['"]([A-Za-z0-9_]+)['"]/g);
-        for (const m of evtMatches) {
-            const evtName = m[1];
-            if (evtName === "CitadelConCommand") continue; // Handled above
-            totalEventsChecked++;
-
-            if (!isKnownEvent(evtName)) {
-                issues.push({
-                    type: "UNKNOWN_PANORAMA_EVENT",
-                    file: relPath,
-                    line: lineNo,
-                    token: evtName,
-                    fullCall: m[0],
-                    message: `Panorama event '${evtName}' is not registered in Deadlock client.dll strings or official XML!`
-                });
-            }
-        }
+    };
+    const messages = new Linter().verify(content, {
+        languageOptions: { ecmaVersion: "latest", sourceType: "script" },
+        plugins: { api: { rules: { inspect: rule } } },
+        rules: { "api/inspect": "error" }
+    });
+    for (const msg of messages) {
+        issues.push({ severity: "error", type: "PARSE_ERROR", file, line: msg.line || 1, token: "", message: msg.message });
     }
+    return { issues, counts };
 }
 
-walk(SCRIPTS_DIR);
-
-console.log(`[ValidateGameAPI] Checked ${totalFilesChecked} files:`);
-console.log(`  - ConCommand calls checked: ${totalConCommandsChecked}`);
-console.log(`  - Panorama Event calls checked: ${totalEventsChecked}`);
-
-if (issues.length === 0) {
-    console.log(`[ValidateGameAPI] ✅ All engine ConCommands and Events are 100% verified against game binaries!`);
-    process.exit(0);
-} else {
-    console.log(`\n[ValidateGameAPI] ⚠️  Found ${issues.length} issue(s):`);
-    for (const issue of issues) {
-        console.log(`  - [${issue.type}] ${issue.file}:${issue.line} -> ${issue.token}`);
-        console.log(`    ${issue.message}`);
+function main(args = process.argv.slice(2)) {
+    let scriptsDir = DEFAULT_SCRIPTS;
+    let registryFile = DEFAULT_REGISTRY;
+    for (let i = 0; i < args.length; i++) {
+        if (args[i] === "--scripts-dir" && args[i + 1]) scriptsDir = path.resolve(args[++i]);
+        else if (args[i] === "--registry" && args[i + 1]) registryFile = path.resolve(args[++i]);
+        else throw new Error(`Unknown or incomplete argument: ${args[i]}`);
     }
-    console.log("");
-    // Return exit code 0 for warnings or let user decide
-    process.exit(0);
+    const registry = JSON.parse(fs.readFileSync(registryFile, "utf8"));
+    for (const key of ["concommands", "convars", "citadelEvents", "citadelFunctions"]) {
+        if (!registry[key] || typeof registry[key] !== "object" || Array.isArray(registry[key])) throw new Error(`Invalid registry section: ${key}`);
+    }
+    const issues = [];
+    const counts = { files: 0, commands: 0, events: 0, dynamic: 0 };
+    function walk(dir) {
+        for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
+            const full = path.join(dir, entry.name);
+            if (entry.isDirectory()) {
+                if (!["legacy", "tools", "node_modules"].includes(entry.name)) walk(full);
+            } else if (entry.name.endsWith(".js")) {
+                const result = scanSource(fs.readFileSync(full, "utf8"), registry, path.relative(ROOT_DIR, full));
+                counts.files++;
+                for (const key of ["commands", "events", "dynamic"]) counts[key] += result.counts[key];
+                issues.push(...result.issues);
+            }
+        }
+    }
+    walk(scriptsDir);
+    if (counts.files === 0) throw new Error("No JavaScript files found to validate.");
+    for (const item of issues) console.log(`[${item.severity.toUpperCase()} ${item.type}] ${item.file}:${item.line} ${item.token}: ${item.message}`);
+    const errors = issues.filter(item => item.severity === "error").length;
+    const warnings = issues.length - errors;
+    console.log(`[ValidateGameAPI] ${counts.files} files; ${counts.commands} static commands; ${counts.events} static event names; ${counts.dynamic} unverified dynamic calls; ${warnings} warnings; ${errors} errors.`);
+    console.log("Registry name matching does not verify native signatures, availability, or in-game behavior.");
+    return errors ? 1 : 0;
+}
+
+module.exports = { scanSource, main };
+if (require.main === module) {
+    try { process.exitCode = main(); }
+    catch (error) { console.error(`[ValidateGameAPI] ${error.message}`); process.exitCode = 1; }
 }

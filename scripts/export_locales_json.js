@@ -29,19 +29,27 @@ function readExistingFlat(file) {
     if (!fs.existsSync(file)) return {};
     try {
         const parsed = JSON.parse(fs.readFileSync(file, "utf8"));
+        if (!parsed || Array.isArray(parsed) || typeof parsed !== "object" ||
+            Object.values(parsed).some(value => typeof value !== "string")) {
+            throw new Error("Expected a flat string dictionary");
+        }
         const out = {};
         for (const k of Object.keys(parsed)) {
             if (typeof parsed[k] === "string") out[k] = parsed[k];
         }
         return out;
     } catch (e) {
-        console.error(`[locales] WARNING: could not parse existing ${file} (${e.message}); treating as empty`);
-        return {};
+        throw new Error(`Cannot merge existing catalog ${file}: ${e.message}`);
     }
 }
 
 function main() {
     const { maps } = loadLocaleMaps();
+    // Validate the complete merge input before writing any output. A broken
+    // community catalog must not be silently replaced with older mod strings.
+    if (!REPLACE) for (const lang of LANGUAGES) {
+        readExistingFlat(path.join(outRoot, lang.wbCode, "translation.json"));
+    }
 
     // Canonical English string set = union of every key across every language map
     const keySet = new Set();
@@ -93,8 +101,8 @@ function main() {
         }
 
         writeFlatJson(file, Object.keys(out).map(k => [k, out[k]]));
-        const count = Object.keys(out).length;
-        const pct = keys.length ? Math.round((count / keys.length) * 100) : 0;
+        const count = keys.filter(k => typeof out[k] === "string" && out[k] !== "").length;
+        const pct = keys.length ? (count / keys.length * 100).toFixed(1) : "0.0";
         const note = REPLACE ? "" : `  (+${added} new, ${kept} already present)`;
         console.log(`[locales] ${l.wbCode.padEnd(6)} ${String(count).padStart(5)} / ${keys.length}  (${pct}%)${note}`);
     }

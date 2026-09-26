@@ -1,36 +1,31 @@
-# `panorama/scripts/manifests/ql_lane_with_party` (Automatic Party Lane Preference Selection)
+# ql_lane_with_party
 
-## Description
-Automatically selects the "Lane with Party" option in the pre-match lobby interface (`LanePreferenceSelector`). When queuing with party members, Deadlock requires players to manually click the party lane preference before the match countdown ends; this feature automatically activates that selection as soon as the dialog appears, ensuring party members are placed together in duo lanes.
+Automatic party lane preference selection; key is ENABLE_LANE_WITH_PARTY.
 
-## Files
-- Manifest: `panorama/scripts/manifests/ql_lane_with_party/manifest.js`
-- Styles: None
+Source: [manifest.js](../../panorama/scripts/manifests/ql_lane_with_party/manifest.js),
+loaded by the HUD layout. The general [lifecycle contract](../core/feature_registry.md)
+and [architecture](../../ARCHITECTURE.md) explain context and configuration routing.
 
-## Settings & Defaults
-| Config Key | Type | Default | Description |
-| :--- | :--- | :--- | :--- |
-| `AUTO_LANE_WITH_PARTY` | `toggle` | `false` | Master toggle to automatically select "Lane with Party" during pre-match setup. |
+## Runtime and ownership
 
-## Architecture & Lifecycle
+Selects the existing native party lane-preference control when appropriate;
+it does not merely display lane-assignment indicators. The setting is
+`ENABLE_LANE_WITH_PARTY`, not `AUTO_LANE_WITH_PARTY`. Starts a 0.5-second loop;
+disable stops work and clears the cached selector. Native control creation and
+actual activation must be checked in the client.
 
-### Activation & Lifecycle Hooks
-- **`onEnable()`**: Initiates an adaptive multi-tier polling task via `QOL.core.Scheduler` to monitor pre-match lobby mounting.
-- **`onDisable()`**: Cancels scheduler loops and resets internal selection flags.
-- **`onSettingsChanged()`**: Synchronously runs an immediate check.
-- **`test()`**: Verifies that the root menu or lobby context panel is accessible.
+## Declared settings
 
-### DOM Injection & Target Panels
-- **DOM Creation**: Zero DOM elements created.
-- **Target Panels**:
-  - `Panel#LanePreferenceSelector`: Native pre-match dialog container.
-  - `RadioButton#lanepreference_1`: The specific radio button corresponding to "Lane with Party".
+- `ENABLE_LANE_WITH_PARTY` (toggle)
 
-### Engine Events & Polling Frequency
-- **Polling Frequency**: 3-tier adaptive polling—runs at `650ms` while actively looking for the selector dialog; backs off to `2630ms` if hidden; relaxes to `4870ms` once successfully selected.
-- **Engine Events**: Observes game state transitions to shut down once match clock starts.
+Defaults/ranges belong to the linked schema, flat `QOL_DEFAULT_CONFIG` and
+versioned codec definitions, not a duplicated table here. They are separate
+representations; a declared field is not automatically a visible control or
+proof of active runtime behavior. See [adding settings](../ADDING_SETTINGS.md).
 
-### Performance Tier & Caveats
-- **Performance Tier**: Low (`< 0.02ms` per tick).
-- **Suppression**: Completely inactive once live gameplay begins or inside the Sandbox/Hideout.
-- **Idempotency**: Flags the selection as confirmed once triggered to prevent spamming click events against the UI.
+## Verification boundary
+
+The statements above describe source behavior. Native panel identity, binding
+values, rendering and transitions need the maintainer's Panorama Debugger and
+a repacked client scenario; neither a schema nor a read-only manifest hook
+proves the whole feature works. See [verification](../TESTING.md).

@@ -1,40 +1,52 @@
-# `panorama/scripts/ql_update_checker` (Release Update Checker)
+# Public release update checker
 
-## Description
-Detects newer public QOLLOCK releases upon opening the Settings Menu. Because Panorama lacks standard browser network APIs (`fetch`, `XMLHttpRequest`), the update checker loads a tiny marker image hosted in GitHub raw content (`qollock-updates/markers/<marker>.png`) and calculates its aspect ratio. A square ratio indicates the release is current, while a wide ratio signals that a newer version is available, rendering a non-intrusive notification popup in the Settings Window.
+Source: [ql_update_checker.js](../../panorama/scripts/ql_update_checker.js), loaded
+by `hud_escape_menu.xml`. Exports `QOL.updateChecker`. This is settings-side code,
+not a FeatureRegistry HUD manifest.
 
-## Files
-- Implementation: `panorama/scripts/ql_update_checker.js`
-- Settings UI: `panorama/scripts/ui/config_tab.js`
-- Include: `panorama/layout/hud_escape_menu.xml`
+## Protocol and lifetime
 
-## Settings & Defaults
-| Config Key | Type | Default | Description |
-| :--- | :--- | :--- | :--- |
-| `ENABLE_UPDATE_CHECKER` | `toggle` | `true` (1) | Check for new QOLLOCK releases when opening settings. |
+`QOL_UPDATE_MARKER` identifies the public release independently of package or
+settings-schema version. The checker loads
+`https://raw.githubusercontent.com/Predi-i/qollock-updates/main/markers/<marker>.png`
+through a Panorama Image panel; it does not use browser `fetch`/XHR.
 
-*Note: Enabled by default. UI-only setting preserved across presets, build loading, and cloud synchronization.*
+`classifyMarker(width, height)` computes larger/smaller dimension ratio:
 
-## Architecture & Lifecycle
+- Non-positive/non-finite dimensions or an intermediate ratio: `invalid`.
+- Ratio at most 1.35: `current`.
+- Ratio at least 4.0: `outdated`.
 
-### Update Marker Protocol
-- **Marker Constant**: `QOL_UPDATE_MARKER = 3` (incremented for each public release independently of the settings schema semver).
-- **Endpoint**: `https://raw.githubusercontent.com/Predi-i/qollock-updates/main/markers/<marker>.png`
-- **Probe Panel**: A zero-hit-test, non-zero opacity Image panel (`QOLUpdateMarkerProbe`) loaded on-demand.
-- **Ratio Thresholds**:
-  - Current: Aspect ratio $\le 1.35$.
-  - Outdated: Aspect ratio $\ge 4.0$.
-  - Invalid: Non-positive or non-finite dimensions.
-- **Cleanup**: Probe panels are safely deleted via `DeleteAsync(0)` immediately upon classification or after an 8.0-second timeout.
+The probe is kept on-screen and nontransparent because native image loading may
+be skipped for hidden panels. It polls dimensions at 0.1-second intervals up to
+8 seconds, then deletes the probe. A failed load, timeout or invalid image does
+not prove that the release is current.
 
-### Activation & Lifecycle Hooks
-- **`onSettingsOpened()`**: Triggered by the Window Manager when the settings panel becomes visible. If `ENABLE_UPDATE_CHECKER` is enabled, it initiates the probe check once per session and displays the popup if an update was found.
-- **`onSettingsChanged()`**: Synchronously updates the popup layer state when the user toggles `ENABLE_UPDATE_CHECKER` in the settings menu:
-  - If disabled: Immediately removes the `.UpdateAvailable` class and hides the popup layer.
-  - If re-enabled while settings are open: Displays the popup if an update was already detected, or kicks off a probe check if none has run yet.
-- **`classifyMarker(width, height)`**: Pure classification function used to determine marker freshness.
-- **`isEnabled()`**: Helper checking if `ENABLE_UPDATE_CHECKER` is active in `MOD_CONFIG` or `QOL.defaultConfig`.
+`onSettingsOpened()` initiates at most one automatic attempt per script-context
+lifetime. `onSettingsChanged()` hides the popup when disabled, or displays a
+previously detected update / starts the not-yet-attempted check when enabled
+with settings open. Context recreation is not the same as one full game session.
 
-### Performance Tier & Impact
-- **Performance Tier**: None (`0ms` runtime impact).
-- **Execution Profile**: Runs at most once per game session when opening the settings menu, using asynchronous image dimensions inspection with scheduled polling (100ms) capped at 8s timeout.
+## Setting and public API
+
+- `ENABLE_UPDATE_CHECKER` is disabled by numeric `0` or boolean `false`.
+  Its flat default belongs to `ql_shared_presets.js`; preset application preserves
+  an existing preference. Do not generalize that to every import/restore path.
+- `QOL.updateChecker.marker`: the compiled-in marker number.
+- `onSettingsOpened()`, `onSettingsChanged()`: shell/config integration.
+- `classifyMarker(width, height)`: pure marker classification.
+- `isEnabled()`: reads the current settings/default config.
+
+Changing a setting label or adding a tooltip must follow
+[localization](../LOCALIZATION.md). A bounded network probe still performs work;
+UI performance-tier metadata is not proof of zero runtime cost.
+
+## Release workflow and verification
+
+Use the [public release procedure](../../README.md#publishing-a-public-release)
+when the maintainer is publishing a release. Do not update the marker, publish
+assets or dispatch a release workflow during an unrelated documentation change.
+
+Classification can be checked offline, but image loading, popup layout and
+behavior in a repacked client require native validation. This reference does
+not claim a current network probe or in-game check was performed.

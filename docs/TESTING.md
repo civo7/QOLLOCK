@@ -1,8 +1,8 @@
 # Testing QOLLOCK
 
 The current offline entry point is `npm test` (see `package.json`). It runs HUD
-script loading, the Node regression suite in `tests/`, build-storage fuzzing,
-compact-schema validation, API checks and ESLint.
+script loading, the Node regression suite in `tests/`, compact-schema validation,
+API checks and ESLint. It does not run a separate build-storage fuzz command.
 
 Some tests use the panel simulator. They can verify JavaScript behavior under
 that model, but cannot prove real client panel structure, rendering or FPS.
@@ -21,17 +21,61 @@ fails when an included script is missing. It is not a settings-context smoke or
 a runtime behavior test. The schema validator exercises codec round-trips;
 load checks alone cannot catch gameplay or lifecycle bugs.
 
+## Focused release regressions
+
+```text
+node --test tests/storage_bridge.test.js tests/audio_runtime.test.js
+node --test tests/ui_slider_roundtrip.test.js tests/helper_api_contract.test.js
+```
+
+The storage tests exercise the production bridge and parser with controlled
+responses: late startup versus newer edits, debounced edits, retries, malformed
+data, explicit Load, chunking and request failures. They do not establish that
+the real client's CEF localStorage survives a full process restart.
+
+The audio tests observe production sound dispatches after config mapping and
+export/reload. A Buff Delay of 15 seconds already worked on that path before the
+release fixes. The confirmed zero-to-30 fallback was a separate bug; its fix
+does not establish the cause of a player's 15-to-30 report.
+
+Slider tests cover accepted UI values through the actual compact codec. The
+helper contract test resolves API references from [the helper map](HELPERS.md)
+against production exports; it cannot establish native traversal semantics.
+These targeted tests complement the [maintainer checklist](TEST_CHECKLIST.md).
+
 ## Layer 2 — manifest `test()` hooks (run in the client)
 
-Each FeatureRegistry manifest may declare a `test()` hook. It executes **in the
-game**, against the **real** panel tree, so it is the only automated check that
-can honestly answer "does this panel exist".
+Each FeatureRegistry manifest may declare a read-only `test()` hook. In the
+client it observes the real panel tree; in Node it only observes the supplied
+model. A successful hook confirms its named checks, not the whole feature.
 
 ```
-Settings -> Dev panel -> "Manifest Tests"
-QOL.core.ManifestTests.runAll()      # from the Panorama console
-QOL_DumpDiagnostics()                # includes the last run's results
+Settings -> Dev -> In-Game Engine Audit -> Run Engine Audit
+Settings -> Dev -> Manifest Report -> Copy Manifest Report
 ```
+
+The engine audit collects all registered hooks once, without enabling features
+or changing settings, and copies their individual observations plus a HUD
+snapshot and runtime error counters. `OBSERVED` means the hook's named check
+succeeded; `FAIL` and `ERROR` preserve failures verbatim. `SKIP` means no hook or
+no applicable scenario. `NOT RUN` records a collection deadline or cancellation.
+Every requested manifest stays in the total, including unfinished work.
+Console output is emitted one line per `$.Msg`, between `BEGIN <token>` and
+`END <token>` markers. The client truncated the previous single-message report.
+If the end marker is absent, treat the console capture as incomplete; use the
+copied report when the console's rolling history has lost earlier lines.
+
+The HUD bridge carries this same report, its timestamp, abort reason and counts
+to the Dev UI and diagnostic export. A timeout is not success. A copied report
+is not a passed test. Even a run with no failed hooks does not verify rendering,
+gameplay transitions, FPS, or disk persistence. FeatureRegistry error counters
+are current error streaks, reset by successful ticks, not a session error history.
+
+For a bulk client check, the maintainer repacks first, opens a relevant gameplay
+context, and copies the report. Repeat in a different context only where needed
+(e.g. shop, death, hideout). This avoids manually inspecting every panel, but
+features without meaningful hooks still need targeted scenarios and screenshots.
+The collector cannot infer the C++ panel lifecycle or visual correctness.
 
 Rules for a `test()` hook, learned the hard way:
 
@@ -50,24 +94,44 @@ is a structural check only — it does not run them.
 A different question: not "did it behave correctly" but "how much work did it ask
 the engine to do, and which feature asked".
 
+### Client callback benchmark
+
+`Dev -> Benchmark (Current Config) -> Run Current (10s)` times callbacks managed
+by `Scheduler.createPollLoop` without changing feature settings. It includes
+synchronous native calls inside those callbacks, but excludes deferred layout,
+rendering, GPU work and code running outside these callbacks. Timing uses
+`Date.now()`; printed decimals are not sub-millisecond measurement precision.
+This is a way to locate expensive polling callbacks, not an FPS benchmark.
+
+The expanded-config stress mode temporarily enables additional toggles and
+restores the configuration. It does not exercise every feature, gameplay event
+or numeric variant and cannot establish worst-case CPU load.
+
+For release performance evidence, compare game frame times with and without the
+mod on the same repeatable scene, settings and warmed-up workload. Repeat each
+condition to distinguish a regression from normal variation. Keep diagnostic
+audits and report printing outside the measured window. Test return-to-menu and
+re-entry separately: one clean startup does not cover lifecycle regressions.
+
+### Offline operation counts
+
 ```
 node scripts/profile_hud.js --seconds 20               # per-feature cost report
 node scripts/profile_hud.js --seconds 20 --save before # then make a change
 node scripts/profile_hud.js --seconds 20 --compare before
-node scripts/audit_panel_ids.js                        # lookups that can never hit
-node scripts/import_tree_dump.js <dump>                # feed it a REAL tree
+node scripts/audit_panel_ids.js                        # candidate ids absent from scanned sources
+node scripts/import_tree_dump.js <dump>                # import captured tree data
 ```
 
-This catches a class of bug the other layers cannot: code that produces exactly
-the right output while doing a hundred times more work than it needs to. It also
-surfaces features that throw on a per-tick path, which are invisible in game
-because the mod's error boundary swallows them.
+These tools count operations and expose JavaScript exceptions under the supplied
+model. They cannot establish which calls the live engine makes or the cost of a
+rendered frame. An id absent from XML/JavaScript can still be created by C++.
 
-**Why this layer survived the cull.** It counts operations — `FindChildTraverse`
-calls, style writes — rather than asserting what the client does. And
-`import_tree_dump.js` replaces the modelled tree with a capture from
-`tools/qol_dump_tree.js`, which is the actual 31.4k-panel tree rather than a 3.1k
-guess. Feed it a real tree before quoting any number.
+`scripts/import_tree_dump.js` can use captures from `panorama/scripts/tools/qol_dump_tree.js`. The Dev
+button currently captures aggregate counts, not a complete panel hierarchy.
+Captures improve the inputs but do not reproduce native methods, dynamic
+lifecycle, bindings or rendering. Do not turn a modelled green result into a
+claim about the client.
 
 Read `docs/PROFILING.md` first: it cannot produce milliseconds, and the healthbar
 variants are only partially covered.
@@ -93,8 +157,10 @@ captured that way are cited inline where they are used — e.g.
 `manifests/ql_build_storage/manifest.js` documents each class it waits on
 (`BuildsLoading`, `Selected`, `gEditingBuilds`) with where it was observed.
 
-Note: the debugger is **read-only**. You can search and inspect the tree; you
-cannot type into its JS console.
+The current workflow relies on the maintainer's debugger for tree inspection,
+not on an assumed writable JavaScript console or browser automation endpoint.
+Run bundled probes through the Dev buttons. Panorama HUD rendering is not CEF
+page rendering; browser automation of the storage page would not verify the HUD.
 
 When vanilla Deadlock updates, re-check panel ids against
 `G:\GameTracking-Deadlock` — layout under

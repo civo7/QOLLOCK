@@ -719,3 +719,246 @@ test("ql_compass standalone speed offset updates without compass offset change",
     instance.onDisable();
 });
 
+function createStaminaRing(hud) {
+    const $ = hud.sandbox.global.$;
+    // Valve ability_hud_elements/element_charges.xml, reduced to three pips.
+    const element = $.CreatePanel("Panel", hud.root, "");
+    element.AddClass("ability_element_charges");
+    const container = $.CreatePanel("Panel", element, "charges_container");
+    const foregrounds = [];
+    for (let i = 1; i <= 3; i++) {
+        const charge = $.CreatePanel("Panel", container, "charge" + i);
+        charge.AddClass("charge");
+        const fg = $.CreatePanel("Panel", charge, "");
+        fg.AddClass("charge_fg");
+        fg.AddClass("finished");
+        foregrounds.push(fg);
+        $.CreatePanel("Panel", charge, "").AddClass("charge_drained");
+    }
+    return { element, container, foregrounds };
+}
+
+test("stamina tint follows charge recovery without changing the selected color", () => {
+    const hud = sim.createHud({ inHideout: false });
+    hud.assertLoaded();
+    const Q = hud.sandbox.global.QOL;
+    const { foregrounds } = createStaminaRing(hud);
+    foregrounds[2].RemoveClass("finished");
+    Q.core.ConfigAdapter.loadFromFlat({ STAMINA_CHARGE_COLOR: 13 });
+    const blue = Q.core.panel.resolvePaletteColor(13);
+    assert.strictEqual(foregrounds[0].style.washColor, blue);
+    assert.strictEqual(foregrounds[1].style.washColor, blue);
+
+    foregrounds[2].AddClass("finished");
+    foregrounds[0].RemoveClass("finished");
+    hud.clock.advance(600);
+    assert.strictEqual(foregrounds[2].style.washColor, blue, "Recovered pip must not remain uncolored");
+    assert.strictEqual(foregrounds[0].style.washColor, "transparent", "Recharging pip must recover its native feedback colors");
+});
+
+test("stamina preset changes restore both native color and default rotation", () => {
+    const hud = sim.createHud({ inHideout: false });
+    hud.assertLoaded();
+    const Q = hud.sandbox.global.QOL;
+    const { container, foregrounds } = createStaminaRing(hud);
+    const apply = cfg => Q.core.ConfigAdapter.loadFromFlat(cfg);
+    apply({ STAMINA_CHARGE_COLOR: 13, STAMINA_CHARGE_ANGLE: 90 });
+    assert.strictEqual(container.style.transform, "rotateZ(90deg)");
+    apply({ STAMINA_CHARGE_COLOR: 4, STAMINA_CHARGE_ANGLE: 120 });
+    for (const fg of foregrounds) assert.strictEqual(fg.style.washColor, Q.core.panel.resolvePaletteColor(4));
+    apply({ STAMINA_CHARGE_COLOR: 0, STAMINA_CHARGE_ANGLE: 45 });
+    for (const fg of foregrounds) assert.strictEqual(fg.style.washColor, "transparent");
+    assert.strictEqual(container.style.transform, "rotateZ(45deg)");
+});
+
+test("stamina reapplies settings to a recreated ring without styling ability icon charges", () => {
+    const hud = sim.createHud({ inHideout: false });
+    hud.assertLoaded();
+    const Q = hud.sandbox.global.QOL;
+    // hud_ability_icon_active.xml has the same id, but no stamina pips.
+    const abilityCharges = hud.sandbox.global.$.CreatePanel("Panel", hud.root, "charges_container");
+    let ring = createStaminaRing(hud);
+    Q.core.ConfigAdapter.loadFromFlat({ STAMINA_CHARGE_COLOR: 13, STAMINA_CHARGE_ANGLE: 90 });
+    assert.strictEqual(ring.container.style.transform, "rotateZ(90deg)");
+    assert.strictEqual(abilityCharges.style.transform || "", "");
+    ring.element.DeleteAsync(0);
+    hud.clock.advance(0);
+    ring = createStaminaRing(hud);
+    hud.clock.advance(600);
+    assert.strictEqual(ring.container.style.transform, "rotateZ(90deg)");
+    for (const fg of ring.foregrounds) assert.strictEqual(fg.style.washColor, Q.core.panel.resolvePaletteColor(13));
+});
+
+function createItemsContainer(hud) {
+    const $ = hud.sandbox.global.$;
+    const stats = hud.root.FindChildTraverse("StatsAndModsContainer") || $.CreatePanel("Panel", hud.root, "StatsAndModsContainer");
+    const container = $.CreatePanel("Panel", stats, "");
+    container.AddClass("ModsContainer");
+    const addIcon = () => {
+        const icon = $.CreatePanel("Panel", container, "");
+        icon.AddClass("mod_icon_single_container");
+        return icon;
+    };
+    return { container, addIcon };
+}
+
+test("item opacity applies to newly mounted icons and resets with the preset", () => {
+    const hud = sim.createHud({ inHideout: false });
+    hud.assertLoaded();
+    const Q = hud.sandbox.global.QOL;
+    const { addIcon } = createItemsContainer(hud);
+    const first = addIcon();
+    Q.core.ConfigAdapter.loadFromFlat({ ITEMS_OPACITY: 0.35 });
+    assert.strictEqual(first.style.opacity, "0.35");
+    const added = addIcon();
+    hud.clock.advance(1100);
+    assert.strictEqual(added.style.opacity, "0.35", "New inventory icon must inherit the configured opacity");
+    Q.core.ConfigAdapter.loadFromFlat({ ITEMS_OPACITY: 1 });
+    assert.ok(!first.style.opacity && !added.style.opacity, "Default preset must restore native opacity for all icons");
+});
+
+test("item layout and tint follow a recreated inventory without another settings change", () => {
+    const hud = sim.createHud({ inHideout: false });
+    hud.assertLoaded();
+    const Q = hud.sandbox.global.QOL;
+    let inventory = createItemsContainer(hud);
+    Q.core.ConfigAdapter.loadFromFlat({ ITEMS_X_OFFSET: 75, ITEMS_WASH_COLOR: 13 });
+    assert.strictEqual(inventory.container.style.x, "75px");
+    inventory.container.DeleteAsync(0);
+    hud.clock.advance(0);
+    inventory = createItemsContainer(hud);
+    hud.clock.advance(1100);
+    assert.strictEqual(inventory.container.style.x, "75px");
+    assert.strictEqual(inventory.container.style.washColor, Q.core.panel.resolvePaletteColor(13));
+});
+
+test("stat bonuses hide in the lobby and return on match reentry", () => {
+    const hud = sim.createHud({ inHideout: false });
+    hud.assertLoaded();
+    const { $, QOL: Q } = hud.sandbox.global;
+    $.CreatePanel("Panel", hud.root, "gameplay_hud");
+    Q.core.ConfigAdapter.loadFromFlat({ ENABLE_STAT_BONUSES: 1 });
+    hud.clock.advance(300);
+    const overlay = hud.root.FindChildTraverse("QOLStatBonusesOverlay");
+    assert.strictEqual(overlay.style.visibility, "visible");
+    hud.root.AddClass("InHideout");
+    hud.clock.advance(300);
+    assert.strictEqual(overlay.BHasClass("qol-hidden"), true);
+    assert.strictEqual(overlay.style.visibility, "collapse");
+    hud.root.RemoveClass("InHideout");
+    hud.clock.advance(300);
+    assert.strictEqual(overlay.BHasClass("qol-hidden"), false);
+    assert.strictEqual(overlay.style.visibility, "visible");
+});
+
+test("recent purchases clear previous match entries on entering the lobby", () => {
+    const hud = sim.createHud({ inHideout: false });
+    hud.assertLoaded();
+    const { $, QOL: Q } = hud.sandbox.global;
+    const container = $.CreatePanel("Panel", hud.root, "RecentPurchasesContainer");
+    Q.core.ConfigAdapter.loadFromFlat({ ENABLE_SHOP_RECENT_PURCHASES: 1, ENABLE_SHOP_ITEM_NOTIFICATIONS: 0 });
+    hud.clock.advance(700);
+    const purchase = $.CreatePanel("Panel", container, "PreviousMatchPurchase");
+    hud.clock.advance(300);
+    assert.strictEqual(purchase.IsValid(), true);
+    hud.root.AddClass("InHideout");
+    hud.clock.advance(300);
+    assert.strictEqual(purchase.IsValid(), false, "Lobby transition must clear the previous match purchase history");
+});
+
+test("disabling recent purchases cancels its delayed native history clear", () => {
+    const hud = sim.createHud({ inHideout: false });
+    hud.assertLoaded();
+    const { $, QOL: Q } = hud.sandbox.global;
+    const container = $.CreatePanel("Panel", hud.root, "RecentPurchasesContainer");
+    Q.core.ConfigAdapter.loadFromFlat({ ENABLE_SHOP_RECENT_PURCHASES: 1, ENABLE_SHOP_ITEM_NOTIFICATIONS: 0 });
+    hud.clock.advance(100);
+    Q.core.ConfigStore.set("ql_recent_purchases", "ENABLE_SHOP_RECENT_PURCHASES", false);
+    const purchase = $.CreatePanel("Panel", container, "NativePurchaseAfterDisable");
+    hud.clock.advance(700);
+    assert.strictEqual(purchase.IsValid(), true, "Disabled feature must not delete subsequent native purchases");
+});
+
+test("stats position resets panel on disable and hides styling in hideout", () => {
+    const hud = sim.createHud({ inHideout: false });
+    hud.assertLoaded();
+    const { $, QOL: Q } = hud.sandbox.global;
+    const panel = $.CreatePanel("Panel", hud.root, "hudPlayerStats");
+    Q.core.ConfigAdapter.loadFromFlat({ ENABLE_STATS_POSITION: 1, STATS_POSITION_X_OFFSET: 120 });
+    hud.clock.advance(300);
+    assert.strictEqual(panel.style.x, "120px");
+    assert.strictEqual(Q.core.FeatureRegistry.isEnabled("ql_stats_position"), true);
+
+    // Transition into hideout restores native state
+    hud.root.AddClass("InHideout");
+    hud.clock.advance(1100);
+    assert.ok(!panel.style.x || panel.style.x === "0px", "Hideout must reset stats offset");
+
+    // Match reentry restores offset
+    hud.root.RemoveClass("InHideout");
+    hud.clock.advance(1100);
+    assert.strictEqual(panel.style.x, "120px", "Match reentry must restore stats offset");
+
+    // Master toggle off disables feature and resets style
+    Q.core.ConfigAdapter.loadFromFlat({ ENABLE_STATS_POSITION: 0 });
+    hud.clock.advance(1100);
+    assert.strictEqual(Q.core.FeatureRegistry.isEnabled("ql_stats_position"), false);
+    assert.ok(!panel.style.x || panel.style.x === "0px", "Disabled toggle must reset stats offset");
+});
+
+test("ability icons feature enables with any toggle and cleans up on disable", () => {
+    const hud = sim.createHud({ inHideout: false });
+    hud.assertLoaded();
+    const { QOL: Q } = hud.sandbox.global;
+
+    assert.strictEqual(Q.core.FeatureRegistry.isEnabled("ql_ability_icons"), false);
+    Q.core.ConfigAdapter.loadFromFlat({ ENABLE_SIMPLIFY_ABILITY_ICONS: 1 });
+    assert.strictEqual(Q.core.FeatureRegistry.isEnabled("ql_ability_icons"), true);
+    assert.strictEqual(hud.root.BHasClass("simplify_ability_icons_active"), true);
+
+    Q.core.ConfigAdapter.loadFromFlat({ ENABLE_SIMPLIFY_ABILITY_ICONS: 0 });
+    assert.strictEqual(Q.core.FeatureRegistry.isEnabled("ql_ability_icons"), false);
+    assert.strictEqual(hud.root.BHasClass("simplify_ability_icons_active"), false);
+});
+
+test("ult cooldowns syncs timers, dynamically picks up late-joining players, and cleans up", () => {
+    const hud = sim.createHud({ inHideout: false });
+    hud.assertLoaded();
+    const { $, QOL: Q } = hud.sandbox.global;
+
+    const topBar = $.CreatePanel("Panel", hud.root, "TopBar");
+    const teams = $.CreatePanel("Panel", topBar, "TeamsContainer");
+    const team = $.CreatePanel("Panel", teams, "Team1");
+    const playerContents = $.CreatePanel("Panel", team, "PlayerContents");
+    const playersContainer = $.CreatePanel("Panel", playerContents, "PlayersContainer");
+
+    const p1 = $.CreatePanel("Panel", playersContainer, "Player1");
+    const hidden1 = $.CreatePanel("Label", p1, "UltimateCooldownTextHidden");
+    hidden1.text = "45";
+    const shown1 = $.CreatePanel("Label", p1, "UltimateCooldownTextShown");
+
+    Q.core.ConfigAdapter.loadFromFlat({ ENABLE_ULT_COOLDOWNS: 1 });
+    hud.clock.advance(300);
+
+    assert.strictEqual(Q.core.FeatureRegistry.isEnabled("ql_ult_cooldowns"), true);
+    assert.strictEqual(topBar.BHasClass("ult_cooldowns_active"), true);
+    assert.strictEqual(shown1.text, "45", "Player 1 cooldown must sync");
+
+    // Add late-joining player
+    const p2 = $.CreatePanel("Panel", playersContainer, "Player2");
+    const hidden2 = $.CreatePanel("Label", p2, "UltimateCooldownTextHidden");
+    hidden2.text = "18";
+    const shown2 = $.CreatePanel("Label", p2, "UltimateCooldownTextShown");
+
+    hud.clock.advance(300);
+    assert.strictEqual(shown2.text, "18", "Late-joining player 2 cooldown must be dynamically picked up and synced");
+
+    // Disable feature
+    Q.core.ConfigAdapter.loadFromFlat({ ENABLE_ULT_COOLDOWNS: 0 });
+    hud.clock.advance(300);
+    assert.strictEqual(Q.core.FeatureRegistry.isEnabled("ql_ult_cooldowns"), false);
+    assert.strictEqual(topBar.BHasClass("ult_cooldowns_active"), false);
+});
+
+
+

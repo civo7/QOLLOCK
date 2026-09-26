@@ -28,6 +28,7 @@
     const RUNTIME_ROW_KEY_ATTR = "QOL_RUNTIME_ROW_KEY";
     const HERO_HINT_ATTR = "QOL_HERO_HINT";
     const PERF_IMPACT_TIER_NONE = "none";
+    const SLIDER_WIRE_FIELDS = Q.persistence?.buildSchemaFieldMap?.() || {};
 
     const RUNTIME_BUTTON_GROUP_DEFAULT_INDEX = {
         HITMARKERS_RUNTIME: 1,
@@ -1568,6 +1569,19 @@
             const isFloat = (max <= 5.0 && (configId.indexOf("OPACITY") !== -1 || configId.indexOf("SCALE") !== -1));
             const isOpacitySlider = (isFloat && configId.indexOf("OPACITY") !== -1);
             const isSecondsSlider = (configId === "BRIDGE_BUFF_START" || configId === "MINIMAP_REMINDER_INTERVAL" || configId === "RECENT_PURCHASES_QUICK_DISPLAY_SEC");
+            // Commit only values representable by the existing export schema.
+            // The UI shape can have a different range/step from the wire field.
+            const wireField = SLIDER_WIRE_FIELDS[configId];
+            const valueField = wireField || { min, max, step };
+            const commitValue = (rawValue) => {
+                const lower = Math.max(min, valueField.min);
+                const upper = Math.min(max, valueField.max);
+                const firstIndex = Math.ceil((lower - valueField.min) / valueField.step - 1e-9);
+                const lastIndex = Math.floor((upper - valueField.min) / valueField.step + 1e-9);
+                const index = Math.max(firstIndex, Math.min(lastIndex,
+                    Math.round((rawValue - valueField.min) / valueField.step)));
+                return Number((valueField.min + index * valueField.step).toFixed(8));
+            };
 
             const formatSliderInputValue = (value) => {
                 if (value === undefined || value === null || !isFinite(Number(value))) value = 0;
@@ -1604,23 +1618,14 @@
             forceCenterSliderValueInput(input);
 
             slider.SetPanelEvent("onvaluechanged", () => {
-                let val;
-                if (isFloat) {
-                    val = parseFloat((Math.round(slider.value) / 100).toFixed(2));
-                    if (val !== modCfg[configId]) {
-                        input.text = formatSliderInputValue(val);
-                        modCfg[configId] = val;
-                        markConfigDirty();
-                        refreshRowChangedState();
-                    }
-                } else {
-                    val = Math.round(slider.value / step) * step;
-                    if (val !== modCfg[configId]) {
-                        input.text = formatSliderInputValue(val);
-                        modCfg[configId] = val;
-                        markConfigDirty();
-                        refreshRowChangedState();
-                    }
+                const rawValue = Number(slider.value) / (isFloat ? 100 : 1);
+                if (!isFinite(rawValue)) return;
+                const val = commitValue(rawValue);
+                if (val !== modCfg[configId]) {
+                    input.text = formatSliderInputValue(val);
+                    modCfg[configId] = val;
+                    markConfigDirty();
+                    refreshRowChangedState();
                 }
                 getPreview().showForConfigId(configId);
             });
@@ -1631,16 +1636,9 @@
                     input.text = formatSliderInputValue(modCfg[configId]);
                     return;
                 }
-                const clampedVal = Math.max(min, Math.min(max, rawVal));
-                if (isFloat) {
-                    modCfg[configId] = parseFloat(clampedVal.toFixed(2));
-                    slider.value = clampedVal * 100;
-                    input.text = formatSliderInputValue(modCfg[configId]);
-                } else {
-                    modCfg[configId] = Math.round(clampedVal);
-                    slider.value = modCfg[configId];
-                    input.text = formatSliderInputValue(modCfg[configId]);
-                }
+                modCfg[configId] = commitValue(rawVal);
+                slider.value = modCfg[configId] * (isFloat ? 100 : 1);
+                input.text = formatSliderInputValue(modCfg[configId]);
                 input.RemoveClass("ValueSavedFlash");
                 input.AddClass("ValueSavedFlash");
                 markConfigDirty();
@@ -2242,7 +2240,6 @@
         } else if (type === "dropdown" && Array.isArray(options)) {
             const dropdownId = String(configId || "dropdown") + "_dropdown";
             let dropdownParent = row;
-            let defaultHeroIconPanel = null;
             let languageIconPanel = null;
             if (configId === "VOICE_TYPE") {
                 const voiceControlGroup = $.CreatePanel("Panel", row, "VoiceDropdownControlGroup");
@@ -2256,13 +2253,6 @@
                 languageIconPanel = $.CreatePanel("Image", languageControlGroup, "LanguageDropdownIcon");
                 languageIconPanel.AddClass("LanguageDropdownIcon");
                 dropdownParent = languageControlGroup;
-            } else if (configId === "DEFAULT_HERO") {
-                const defaultHeroControlGroup = $.CreatePanel("Panel", row, "DefaultHeroDropdownControlGroup");
-                defaultHeroControlGroup.AddClass("SettingControlRoot");
-                defaultHeroControlGroup.AddClass("DefaultHeroDropdownControlGroup");
-                defaultHeroIconPanel = $.CreatePanel("Image", defaultHeroControlGroup, "DefaultHeroDropdownHeroIcon");
-                defaultHeroIconPanel.AddClass("DefaultHeroDropdownHeroIcon");
-                dropdownParent = defaultHeroControlGroup;
             }
             const dropdown = $.CreatePanel("DropDown", dropdownParent, dropdownId);
             dropdown.AddClass("SettingsDropDown");
@@ -2270,20 +2260,12 @@
             dropdown.AddClass("SettingControlRoot");
             if (configId === "VOICE_TYPE") {
                 dropdown.AddClass("VoicePrimaryDropDown");
-            } else if (configId === "DEFAULT_HERO") {
-                dropdown.AddClass("DefaultHeroDropDown");
             }
             if (dropdown && dropdown.style) {
                 dropdown.style.width = (configId === "VOICE_TYPE")
                     ? "150px"
                     : ((configId === "LANGUAGE") ? "130px" : "150px");
             }
-            const syncDefaultHeroIcon = (heroValue) => {
-                if (!defaultHeroIconPanel || !defaultHeroIconPanel.IsValid || !defaultHeroIconPanel.IsValid()) return;
-                try { defaultHeroIconPanel.SetImage(getDefaultHeroIconPath(heroValue)); } catch (eHeroIcon) {
-                    warnLog("settings", "op failed: " + (eHeroIcon && eHeroIcon.message ? eHeroIcon.message : String(eHeroIcon || "")));
-                }
-            };
             const syncLanguageIcon = (languageValue) => {
                 if (!languageIconPanel || !languageIconPanel.IsValid || !languageIconPanel.IsValid()) return;
                 try { languageIconPanel.SetImage(getLanguageIconPath(languageValue)); } catch (eLanguageIcon) {
@@ -2309,21 +2291,7 @@
                 const optionPanel = $.CreatePanel("Label", dropdown, optionId);
                 optionPanel.AddClass("QOLSettingsDropDownItem");
                 optionPanel.AddClass("DropDownChild");
-                if (configId === "DEFAULT_HERO") {
-                    optionPanel.AddClass("DefaultHeroDropDownItem");
-                    try { optionPanel.style.backgroundImage = 'url("' + getDefaultHeroIconPath(optionValueKey) + '")'; } catch (eBgImg) {
-                        warnLog("settings", "op failed: " + (eBgImg && eBgImg.message ? eBgImg.message : String(eBgImg || "")));
-                    }
-                    try { optionPanel.style.backgroundRepeat = "no-repeat"; } catch (eBgRepeat) {
-                        warnLog("settings", "op failed: " + (eBgRepeat && eBgRepeat.message ? eBgRepeat.message : String(eBgRepeat || "")));
-                    }
-                    try { optionPanel.style.backgroundPosition = "10px 50%"; } catch (eBgPos) {
-                        warnLog("settings", "op failed: " + (eBgPos && eBgPos.message ? eBgPos.message : String(eBgPos || "")));
-                    }
-                    try { optionPanel.style.backgroundSize = "18px 18px"; } catch (eBgSize) {
-                        warnLog("settings", "op failed: " + (eBgSize && eBgSize.message ? eBgSize.message : String(eBgSize || "")));
-                    }
-                } else if (configId === "LANGUAGE") {
+                if (configId === "LANGUAGE") {
                     optionPanel.AddClass("LanguageDropDownItem");
                     try { optionPanel.style.backgroundImage = 'url("' + getLanguageIconPath(optionValueKey) + '")'; } catch (eLangBgImg) {
                         warnLog("settings", "op failed: " + (eLangBgImg && eLangBgImg.message ? eLangBgImg.message : String(eLangBgImg || "")));
@@ -2348,7 +2316,7 @@
                     })(optionId, optionValue);
                 }
 
-                const localizeOptionLabel = (configId !== "DEFAULT_HERO" && configId !== "VOICE_TYPE" && configId !== "LANGUAGE");
+                const localizeOptionLabel = (configId !== "VOICE_TYPE" && configId !== "LANGUAGE");
                 const optionLabelText = String(opt.label !== undefined && opt.label !== null ? opt.label : optionValueKey);
                 optionPanel.text = localizeOptionLabel ? localize(optionLabelText, true) : optionLabelText;
                 if (optionPanel.SetAttributeString) {
@@ -2404,9 +2372,7 @@
                     modCfg[configId] = valueByOptionId[selectedOptionId];
                 }
             }
-            if (configId === "DEFAULT_HERO") {
-                syncDefaultHeroIcon(modCfg[configId]);
-            } else if (configId === "LANGUAGE") {
+            if (configId === "LANGUAGE") {
                 syncLanguageIcon(modCfg[configId]);
             }
 
@@ -2454,9 +2420,7 @@
 
                 let selectionChanged = String(currentValue === undefined || currentValue === null ? "" : currentValue) !==
                     String(selectedValue === undefined || selectedValue === null ? "" : selectedValue);
-                if (configId === "DEFAULT_HERO") {
-                    applyDefaultHeroSelection(String(selectedValue || ""));
-                } else if (configId === "HEALTHBAR_TYPE") {
+                if (configId === "HEALTHBAR_TYPE") {
                     const previousTypeValue = currentValue;
                     applyHealthbarTypeSelection(selectedValue);
                     selectedValue = modCfg.HEALTHBAR_TYPE;
@@ -2467,9 +2431,7 @@
                     modCfg[configId] = selectedValue;
                     saveAndSync();
                     refreshRowChangedState();
-                    if (configId === "DEFAULT_HERO") {
-                        syncDefaultHeroIcon(selectedValue);
-                    } else if (configId === "LANGUAGE") {
+                    if (configId === "LANGUAGE") {
                         syncLanguageIcon(selectedValue);
                     }
                     if (configId === "LANGUAGE") {
@@ -2484,8 +2446,6 @@
                             requestSettingsListRefresh(0, false);
                         }
                     }
-                } else if (configId === "DEFAULT_HERO") {
-                    syncDefaultHeroIcon(selectedValue);
                 }
             };
 
@@ -2549,9 +2509,7 @@
                     }
                     dropdownSyncMute = false;
                 }
-                if (configId === "DEFAULT_HERO") {
-                    syncDefaultHeroIcon(modCfg[configId]);
-                } else if (configId === "LANGUAGE") {
+                if (configId === "LANGUAGE") {
                     syncLanguageIcon(modCfg[configId]);
                 }
                 refreshRowChangedState();
@@ -2607,8 +2565,6 @@
             }
             if (isArcadePlayAction) {
                 actionBtn.AddClass("ArcadePlayActionBtn");
-            } else if (configId === "TEST_SKYRUNNER") {
-                actionBtn.AddClass("TestSkyrunnerActionBtn");
             }
             const actionInner = $.CreatePanel("Panel", actionBtn, "");
             actionInner.AddClass("SettingActionBtnInner");
@@ -2704,17 +2660,6 @@
                 } else if (configId === "OPEN_BLACKJACK") {
                     getArcade().openBlackjack();
                     handled = true;
-                } else if (configId === "TEST_SKYRUNNER") {
-                    handled = applyDefaultHeroSelection("hero_skyrunner");
-                    if (handled) {
-                        setLocalizedConfigFeedbackMessage("Skyrunner switch sent.", "success", 1400);
-                    } else {
-                        setLocalizedConfigFeedbackMessage("Failed to switch hero.", "error", 1800);
-                        actionBtn.AddClass("FailureState");
-                        $.Schedule(0.35, () => {
-                            if (actionBtn && actionBtn.IsValid && actionBtn.IsValid()) actionBtn.RemoveClass("FailureState");
-                        });
-                    }
                 } else if (configId === "OPEN_OLD_ITEM_FILTERS_DOWNLOAD") {
                     $.DispatchEvent("ExternalBrowserGoToURL", "https://gamebanana.com/mods/601444");
                     handled = true;

@@ -1,5 +1,11 @@
 # Phase 0: Canonical Type Mapping
 
+> **Historical design snapshot.** Counts and removal candidates below describe
+> that analysis, not the current key inventory or authorization to delete state.
+> Re-establish live ownership from source before acting. Current contracts are
+> in [ARCHITECTURE.md](../../ARCHITECTURE.md) and
+> [ConfigStore](../core/config_store.md).
+
 ## Summary
 - 334 config keys mapped to typed equivalents
 - 95 dead State keys identified for removal

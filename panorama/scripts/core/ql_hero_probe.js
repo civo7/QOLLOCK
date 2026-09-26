@@ -303,6 +303,45 @@
         return "";
     };
 
+    const ReadHeroFromCrosshair = (root) => {
+        let crosshair = null;
+        if (root && isAlive(root)) {
+            try {
+                if (root.FindChildTraverse) crosshair = root.FindChildTraverse("crosshair");
+            } catch {}
+        }
+        if (!crosshair || !isAlive(crosshair)) {
+            const hud = (Q.core && Q.core.panel && Q.core.panel.findHud) ? Q.core.panel.findHud(root) : null;
+            if (hud && isAlive(hud) && hud.FindChildTraverse) {
+                try { crosshair = hud.FindChildTraverse("crosshair"); } catch {}
+            }
+        }
+        if (!crosshair || !isAlive(crosshair)) {
+            try {
+                crosshair = (typeof $ !== "undefined" && $.FindChildInContext) ? $.FindChildInContext("crosshair") : null;
+            } catch {}
+        }
+        if (!crosshair || !isAlive(crosshair)) return "";
+
+        let dash = null;
+        try {
+            if (crosshair.FindChildrenWithClassTraverse) {
+                const arr = crosshair.FindChildrenWithClassTraverse("citadel_ability_dash");
+                dash = (arr && arr.length > 0) ? arr[0] : null;
+            }
+        } catch { dash = null; }
+
+        if (dash && isAlive(dash)) {
+            const hero = TryReadHeroFromPanelBHasClass(dash);
+            if (hero) return normalizeHero(hero);
+        }
+
+        const crosshairHero = TryReadHeroFromPanelBHasClass(crosshair);
+        if (crosshairHero) return normalizeHero(crosshairHero);
+
+        return "";
+    };
+
     const PanelLooksSelected = (panel) => {
         if (!panel) return false;
         const classText = ReadPanelClassTextMaybe(panel).toLowerCase();
@@ -783,12 +822,14 @@
         readPanelIdTextMaybe: ReadPanelIdTextMaybe,
         readPanelClassTextMaybe: ReadPanelClassTextMaybe,
         readPanelTypeTextMaybe: ReadPanelTypeTextMaybe,
-        getLoaderBaseDefaultHeroId: GetLoaderBaseDefaultHeroId
+        getLoaderBaseDefaultHeroId: GetLoaderBaseDefaultHeroId,
+        readHeroFromCrosshair: ReadHeroFromCrosshair
     };
 
     Q.core.heroProbe = api;
 
     // Backwards-compatible delegates directly on QOL namespace
+    Q.readHeroFromCrosshair = ReadHeroFromCrosshair;
     Q.confirmStorageHeroSignatureAbilities = ConfirmStorageHeroSignatureAbilities;
     Q.readStorageHeroSignatureSlots = ReadStorageHeroSignatureSlots;
     Q.resolveBuildSaveStorageHeroSignal = ResolveBuildSaveStorageHeroSignal;

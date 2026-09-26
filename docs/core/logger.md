@@ -1,19 +1,23 @@
-# `panorama/scripts/core/ql_logger.js`
+# Diagnostic logger
 
-## Purpose
-Provides leveled, throttled diagnostic logging with error streak tracking and console spam suppression.
+Source: `panorama/scripts/core/ql_logger.js`; exports the same API as
+`QOL.core.Logger` and `QOL.core.logger`. Uses `QOL_UTILS.PerfNowMs`.
 
-## Dependencies
-- `panorama/scripts/core/ql_namespace.js` (`QOL.core`)
+- `logError(tag, message)` / `error(...)` and `logWarn` / `warn` require strings
+  and throttle separately by tag and level (currently two seconds). Different
+  messages under the same tag can therefore be suppressed.
+- `logInfo` / `info` emit immediately; `logDebug` / `debug` emit only after
+  `setDebug(true)`. Debug logging starts off.
+- `clearThrottle(tag)` resets warning/error throttling for a tag.
+- `getReport()` joins the retained log buffer; `getErrors(n = 20)` returns recent
+  error/warning entries, newest first; `getCount()` reports retained count.
+- `clear()` clears the buffer, not the throttle map. The buffer retains up to
+  500 messages; it is not a durable or complete session audit log.
 
-## Interface (`QOL.core.Logger`)
-- `logDebug(tag, message)`: Emits debug log if debug logging is enabled.
-- `logInfo(tag, message)`: Emits informational log with `[QOLLock][INFO][<tag>]` prefix.
-- `logWarn(tag, message)`: Emits warning log, throttled to prevent console flooding.
-- `logError(tag, message)`: Emits error log with streak counting. Disables runaway features if error streak exceeds threshold.
-- `getStreak(featureId)`: Returns current consecutive error count for a feature.
-- `resetStreak(featureId)`: Resets consecutive error count to zero.
+Logger does not track feature error streaks or disable features. There are no
+`getStreak`/`resetStreak` methods; FeatureRegistry owns that behavior. Nor are
+all logging operations wrapped in a native I/O exception boundary.
 
-## Architectural Notes
-- Load order: 2nd (after `ql_namespace.js`).
-- Never throws exceptions from logging methods; all I/O is wrapped in error boundaries.
+Guard expensive debug argument construction before calling the logger. Do not
+use unthrottled per-tick messages for expected absent-panel conditions. See
+[performance guardrails](../PERF_GUARDRAILS.md).

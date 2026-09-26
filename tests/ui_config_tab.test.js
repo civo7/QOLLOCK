@@ -235,13 +235,19 @@ test("ui/config_tab: setConfigFeedbackMessage updates tone classes", () => {
     const { sandbox, doc } = createTestEnvironment();
     const configTab = sandbox.QOL.ui.configTab;
 
-    const label = doc.create("Label", { id: "TestFeedback" });
-    // Simulate label registration inside render
-    configTab.render(doc.create("Panel", { id: "List" }));
+    const list = doc.create("Panel", { id: "List" });
+    configTab.render(list);
+    const label = list.FindChildTraverse("ConfigFeedbackLabel");
 
     // Set success feedback
-    configTab.setConfigFeedbackMessage("Saved successfully", "success", 1000);
-    // Since render created ConfigFeedbackLabel, let's verify via get
+    configTab.setConfigFeedbackMessage("Saved successfully", "success", 0);
+    assert.strictEqual(label.text, "Saved successfully");
+    assert.strictEqual(label.BHasClass("FeedbackSuccess"), true);
+    assert.strictEqual(label.BHasClass("FeedbackError"), false);
+    configTab.setConfigFeedbackMessage("Save failed", "error", 0);
+    assert.strictEqual(label.text, "Save failed");
+    assert.strictEqual(label.BHasClass("FeedbackSuccess"), false);
+    assert.strictEqual(label.BHasClass("FeedbackError"), true);
 });
 
 test("ui/config_tab: renderConfigTab creates cards for General, Export, and Import", () => {

@@ -38,9 +38,6 @@ var STORAGE_KEY = (typeof STORAGE_KEY !== "undefined") ? STORAGE_KEY : ((typeof 
 var USER_EDIT_REV_ATTR = (typeof USER_EDIT_REV_ATTR !== "undefined") ? USER_EDIT_REV_ATTR : ((typeof QOL_USER_EDIT_REV_ATTR !== "undefined") ? QOL_USER_EDIT_REV_ATTR : "QOL_USER_EDIT_REV");
 var LATEST_COMPACT_SEMVER = QOL_LATEST_COMPACT_SEMVER;
 var DEFAULT_CONFIG = QOL_DEFAULT_CONFIG;
-const SETTINGS_SAVE_LOADER_ENABLED = true;
-const SETTINGS_SAVE_HOVER_WARNING = "DO NOT USE THIS IN QUEUE OR MATCH";
-const SETTINGS_SAVE_DISABLED_WARNING = "CURRENTLY IN EARLY ACCESS ON DISCORD DISABLED DUE TO BUGS";
 const MOD_DISPLAY_VERSION = QOL_SCHEMA_SEMVER;
 var currentTab = "Support";
 var gCurrentSettingsSectionTitle = "";
@@ -158,11 +155,6 @@ function SyncConfigFromStorage() {
     gLastSavedConfigRaw = WrapConfigForStorage(MOD_CONFIG);
     // $.persistentStorage confirmed absent — statlocker state persists via panel attrs only.
     if (QOL.arcade) QOL.arcade.updateBridgePollerState();
-
-    var applyHero = globalThis.ApplyDefaultHeroSelection || (QOL.ui && QOL.ui.controls && QOL.ui.controls.applyDefaultHeroSelection);
-    if (typeof applyHero === "function" && MOD_CONFIG && MOD_CONFIG.DEFAULT_HERO) {
-        applyHero(MOD_CONFIG.DEFAULT_HERO);
-    }
 }
 
 // PersistStatlockerProfileState — config persistence is via Skyrunner builds.
@@ -252,6 +244,9 @@ var gSaveDebounceToken = 0;
 var SAVE_DEBOUNCE_SEC = 0.3;
 
 function MarkConfigDirty() {
+    if (QOL.core && QOL.core.persistence) {
+        QOL.core.persistence.markConfigEdited(FindRootPanel());
+    }
     var token = ++gSaveDebounceToken;
     $.Schedule(SAVE_DEBOUNCE_SEC, function() {
         if (gSaveDebounceToken === token) {

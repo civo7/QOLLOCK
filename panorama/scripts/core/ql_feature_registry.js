@@ -119,6 +119,12 @@
         const cfg = configSlice || (ConfigStore && ConfigStore.hasSchema(id) ? ConfigStore.all(id) : null);
         if (!cfg) return manifest.enabledByDefault === true;
 
+        if (typeof manifest.isEnabled === "function") {
+            try {
+                return !!manifest.isEnabled(cfg);
+            } catch (_) {}
+        }
+
         if (manifest.enableKey && Object.prototype.hasOwnProperty.call(cfg, manifest.enableKey)) {
             const v = cfg[manifest.enableKey];
             return (v === true || v === 1 || String(v) === "true");
@@ -149,7 +155,8 @@
         const manifest = manifests[payload.featureId];
         const hasEnableKey = manifest && manifest.enableKey && payload.key === manifest.enableKey;
         const hasEnableKeys = manifest && Array.isArray(manifest.enableKeys) && manifest.enableKeys.includes(payload.key);
-        const isEnableKey = payload.key === "enabled" || hasEnableKey || hasEnableKeys;
+        const hasCustomEnabled = manifest && typeof manifest.isEnabled === "function";
+        const isEnableKey = payload.key === "enabled" || hasEnableKey || hasEnableKeys || hasCustomEnabled;
         if (isEnableKey) {
             const shouldEnable = isFeatureSupposedToBeEnabled(payload.featureId);
             const isCurrentlyEnabled = Object.prototype.hasOwnProperty.call(instances, payload.featureId);

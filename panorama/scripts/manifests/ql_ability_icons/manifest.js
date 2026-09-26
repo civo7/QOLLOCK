@@ -16,6 +16,12 @@
     FR.register({
         id: "ql_ability_icons",
         enabledByDefault: false,
+        enableKeys: [
+            "ENABLE_SIMPLIFY_ABILITY_ICONS",
+            "ENABLE_HIDE_COSMETIC_ABILITY",
+            "ENABLE_HIDE_ABILITY_SUGGESTION",
+            "ENABLE_CLEAN_STACKS"
+        ],
         settings: [
             { key: "ENABLE_SIMPLIFY_ABILITY_ICONS", type: "toggle", default: false },
             { key: "ENABLE_HIDE_COSMETIC_ABILITY", type: "toggle", default: false },

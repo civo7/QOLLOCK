@@ -1,132 +1,84 @@
-# Adding A New Setting in QOLLOCK
+# Adding a setting
 
-This document is the standard checklist for adding a new configuration setting to QOLLOCK.
+Start with [architecture, section 6](../ARCHITECTURE.md#6-configuration-and-adding-settings).
+A manifest schema, flat defaults, a visible control and a serialized field are
+separate contracts. None automatically creates the others.
 
----
+## Change path
 
-## The 6-Step Checklist
+1. **Confirm the default with the maintainer.** Agree on units, range, precision,
+   dependencies, UI location and whether the value belongs in shared presets.
+   Do not select a default from an example or another feature.
+2. **Add flat defaults** in `panorama/scripts/ql_shared_presets.js`
+   (`QOL_DEFAULT_CONFIG`). Add matching schema entries to every owning
+   `panorama/scripts/manifests/<id>/manifest.js`. Settings-only preferences need
+   not have a gameplay manifest. Shared keys can have multiple feature owners.
+3. **Edit the real tab renderer.** Most tabs register a renderer through
+   `QOL.ui.window.registerTabRenderer` and build rows with `QOL.ui.controls`.
+   Read an adjacent row in `ui/gameplay_tabs.js`, `config_tab.js`, `audio.js` or
+   the relevant module. `ui/layout.js` declares navigation/fallback layout;
+   editing it alone does not add a control to a tab with a custom renderer.
+4. **Localize the entire interaction.** Reuse English source keys and add missing
+   English/Russian catalog entries under `panorama/scripts/ql_settings_loc/`.
+   Labels, descriptions, options, tooltips, previews and feedback all count.
+   Settings localization uses `LocalizeSettingsText`, not invented `#QOL_*`
+   tokens. Use [LOCALIZATION.md](LOCALIZATION.md) for the exact contract.
+5. **Reuse control behavior.** Preserve dirty marking, save debounce, search
+   collection, reset-key tracking, changed-state comparison, dependent rows,
+   row synchronization and preview dispatch. Read current settings through
+   `QOL.getSettingsConfig()` rather than capturing an object across replacement.
+   Add names/descriptions/section overrides/performance metadata in
+   `ui/ql_settings_metadata.js` where the existing path needs it.
+6. **Implement runtime reaction.** Use the manifest's `onSettingsChanged` and
+   current `ctx.config`. Keep enable predicates, disable cleanup and other owners
+   consistent. Numeric modes are not necessarily boolean toggles. Do not add a
+   second poller just to observe a setting already delivered through the hook.
+7. **Preserve storage compatibility.** For a shareable field, extend the current
+   compact schema with its real range/step using the existing schema utilities.
+   Preserve historical schema field order, bounds, steps and defaults. Update
+   relevant normalization/migration/import/export paths. Package version,
+   schema version and public update marker are separate concepts.
+8. **Check the complete round-trip.** Verify control -> dirty intent -> published
+   config -> HUD consumer -> export -> import, plus reset/preset application and
+   disable/re-enable. Include range boundaries and malformed typed input.
 
-1. **Declare in Feature Manifest (`panorama/scripts/manifests/<feature_id>/manifest.js`)**
-2. **Add Declarative Control in `panorama/scripts/ui/layout.js`**
-3. **Add Localization Strings in `panorama/scripts/ql_settings_loc/`**
-4. **Implement Reactive Handling in `manifest.js` (`onSettingsChanged`)**
-5. **Register Performance Tier in `panorama/scripts/ui/ql_settings_metadata.js`**
-6. **Verify with Full Test Suite (`npm test`)**
+## Runtime hook contract
 
----
-
-## Step 1: Declare in Manifest
-
-Every setting belongs to an isolated feature manifest.
-In `panorama/scripts/manifests/<feature_id>/manifest.js`:
+The hook receives one payload, not `(key, value, allSettings)`:
 
 ```javascript
-settings: [
-    { key: "MY_SETTING_ENABLED", type: "toggle", default: true },
-    { key: "MY_SETTING_SCALE",   type: "slider", min: 50, max: 150, step: 5, default: 100 },
-    { key: "MY_SETTING_MODE",    type: "dropdown", default: "default", options: [
-        { label: "#QOL_ModeDefault", value: "default" },
-        { label: "#QOL_ModeCompact", value: "compact" }
-    ]}
-]
-```
-
-- Choose a safe default value that will not disrupt existing user setups.
-- Settings declared in this array are automatically registered with `QOL.core.ConfigStore`.
-
----
-
-## Step 2: Add to UI Layout (`panorama/scripts/ui/layout.js`)
-
-QOLLOCK uses declarative layout definitions in `panorama/scripts/ui/layout.js`.
-Locate the relevant tab (e.g. `hud`, `minimap`, `crosshair`, `items`, `gameplay`) and section:
-
-### Standard Toggle:
-```javascript
-{
-    key: "MY_SETTING_ENABLED",
-    type: "toggle",
-    label: "#QOL_MySetting",
-    desc: "#QOL_MySetting_desc"
+onSettingsChanged: function(change) {
+    // change: {featureId, key, value, changes: {[key]: value}}
+    // Read current normalized values with ctx.config.get(key) or view().
 }
 ```
 
-### Slider:
-```javascript
-{
-    key: "MY_SETTING_SCALE",
-    type: "slider",
-    label: "#QOL_MySettingScale",
-    desc: "#QOL_MySettingScale_desc",
-    min: 50,
-    max: 150,
-    step: 5,
-    unit: "%"
-}
-```
+This signature illustration is not a feature implementation. Follow the owning
+manifest's existing reaction path. `ctx.config.view()` is live and read-only by
+convention; `all()` allocates a shallow copy. The HUD receives settings through
+cross-context publication and polling, so hooks do not guarantee zero latency.
 
-### Dropdown (Enum):
-```javascript
-{
-    key: "MY_SETTING_MODE",
-    type: "dropdown",
-    label: "#QOL_MySettingMode",
-    desc: "#QOL_MySettingMode_desc",
-    options: [
-        { value: "default", label: "#QOL_ModeDefault" },
-        { value: "compact", label: "#QOL_ModeCompact" }
-    ]
-}
-```
+## Numeric and enable-state boundaries
 
----
+- Flat persisted toggles are generally 0/1; ConfigStore feature toggles become
+  booleans. Do not apply generic JavaScript truthiness to flat values.
+- A manifest `enableKey` is not a complete activation rule if it also declares
+  `isEnabled`. Inspect the predicate and shared-key routing.
+- Procedural sliders commit on the compact schema step grid where a field exists,
+  within intersected UI/schema bounds. Invalid typed input preserves the prior
+  value. A finer UI step cannot make the wire format preserve more precision.
+- ConfigStore slider rounding is not compact-codec step snapping. Verify the
+  renderer and actual consumer rather than assuming every numeric path matches.
+- Performance tiers are UI metadata, not measured frame-time guarantees. Do not
+  assign an unsupported milliseconds-per-tick claim to a new control.
 
-## Step 3: Add Localization (`panorama/scripts/ql_settings_loc/`)
+## Verification
 
-Add readable English and Russian strings in `panorama/scripts/ql_settings_loc/ql_settings_loc_en.js` and `panorama/scripts/ql_settings_loc/ql_settings_loc_ru.js` (and any other supported languages as needed):
+Use affected existing regressions and the offline gate in [TESTING.md](TESTING.md).
+Localization tools find only the cases they scan; green dictionary loading is
+not proof that all visible text is translated. Offline checks cannot establish
+native panel identity, rendering or persistence across a full client restart.
 
-```javascript
-"#QOL_MySetting": "Enable My Setting",
-"#QOL_MySetting_desc": "Displays custom information overlay on screen.",
-```
-
-Descriptions and tooltips are displayed automatically when hovering rows in the Settings Window. Run `npm test` to verify dictionary integrity across all 15 supported locales. See `docs/LOCALIZATION.md` for translation tooling details.
-
----
-
-## Step 4: Handle Setting Changes Reactively (`onSettingsChanged`)
-
-Do **NOT** poll `ctx.config.get()` on every scheduler tick.
-Instead, update visual state instantly inside `onSettingsChanged`:
-
-```javascript
-onSettingsChanged: (key, value, allSettings) => {
-    if (key === "MY_SETTING_ENABLED") {
-        _panel?.SetHasClass("Hidden", !value);
-    } else if (key === "MY_SETTING_SCALE") {
-        _updateScale(value);
-    }
-}
-```
-
-This guarantees 0ms response latency with zero CPU overhead while idle.
-
----
-
-## Step 5: Register Performance Tier (`panorama/scripts/ui/ql_settings_metadata.js`)
-
-Register the setting's runtime performance impact in `SETTING_PERF_IMPACT_TIERS`:
-- `"none"` — Static layout offsets, sliders, colors, opacities, pure CSS class gates, zero recurring poll overhead. Displays as `FPS Impact: None` in row tooltips.
-- `"low"` — Periodic polling <= 0.20ms/tick (e.g. 1–2Hz idle loops, event-driven HUD updates).
-- `"medium"` — High-frequency tracking (e.g. 20Hz camera compass, active crosshair buffs, continuous topbar RGB wash calculations).
-- `"high"` — Reserved for unusually heavy workloads (> 1.0ms/tick).
-
----
-
-## Step 6: Verification
-
-Run the test suite to ensure schema migration invariants, unit tests, and API contracts remain intact:
-
-```bash
-npm test
-```
+The maintainer alone compiles/repackages the VPK and performs the relevant client
+checks in [TEST_CHECKLIST.md](TEST_CHECKLIST.md). Agents must not run build scripts,
+`resourcecompiler.exe`, modify game `addons`, or create/modify VPKs.

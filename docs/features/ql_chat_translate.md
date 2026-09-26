@@ -1,35 +1,31 @@
-# `panorama/scripts/manifests/ql_chat_translate` (Real-Time In-Game Chat Translation)
+# ql_chat_translate
 
-## Description
-Provides real-time machine translation for incoming multilingual text chat messages. Intended for cross-region communication (e.g. Cyrillic to English), this feature inspects new chat strings and queries a localized translation helper service (`http://127.0.0.1:8765/`), injecting translated subtitles directly below foreign-language chat entries.
+Account-gated translation experiment; no general ENABLE_CHAT_TRANSLATE setting.
 
-## Files
-- Manifest: `panorama/scripts/manifests/ql_chat_translate/manifest.js`
-- Styles: Dynamic inline styling on injected translation labels
+Source: [manifest.js](../../panorama/scripts/manifests/ql_chat_translate/manifest.js),
+loaded by the HUD layout. The general [lifecycle contract](../core/feature_registry.md)
+and [architecture](../../ARCHITECTURE.md) explain context and configuration routing.
 
-## Settings & Defaults
-| Config Key | Type | Default | Description |
-| :--- | :--- | :--- | :--- |
-| `ENABLE_CHAT_TRANSLATE` | `toggle` | `false` | Master toggle to enable real-time chat message translation. |
+## Runtime and ownership
 
-## Architecture & Lifecycle
+This manifest registers enabled by default but gates useful work by account
+inside its runtime. It declares no settings array entries: there is no public
+`ENABLE_CHAT_TRANSLATE` contract here. Its loop starts at 0.2 seconds, not five
+seconds. See `tools/local_chat_translation/README.md` for the separate optional
+service. Do not remove the gate or claim general availability during a refactor.
 
-### Activation & Lifecycle Hooks
-- **`onEnable()`**: Initiates a cooperative polling loop in `QOL.core.Scheduler` running at `0.2Hz` (`5.0s` interval).
-- **`onDisable()`**: Cancels scheduler task, purges translation memory caches, and safely destroys any injected translation labels.
-- **`onSettingsChanged()`**: Synchronously refreshes the feature lifecycle and polls immediately if activated.
-- **`test()`**: Verifies that the native chat container `#Chat` is accessible in the HUD DOM.
+## Declared settings
 
-### DOM Injection & Target Panels
-- **Target Message Streams**: Traverses child elements within `#Messages` and `#ChatMessages`.
-- **Injected Panels**:
-  - `Label#QOLChatTranslatedLabel`: Injected directly beneath detected foreign-language messages, formatted with dim secondary styling and language indicator tags.
+No user-setting entries are declared by this manifest.
 
-### Engine Events & Polling Frequency
-- **Polling Frequency**: Low-frequency polling at 0.2Hz (`5.0s`).
-- **Engine Events**: None.
+Defaults/ranges belong to the linked schema, flat `QOL_DEFAULT_CONFIG` and
+versioned codec definitions, not a duplicated table here. They are separate
+representations; a declared field is not automatically a visible control or
+proof of active runtime behavior. See [adding settings](../ADDING_SETTINGS.md).
 
-### Performance Tier & Caveats
-- **Performance Tier**: Low (`< 0.05ms` per scan).
-- **Local Daemon Requirement**: Relies on a local lightweight translation daemon listening on port `8765`. If the daemon is unreachable, requests fail gracefully without freezing or degrading game frame rates.
-- **Account Safeguard**: Manifest contains an account ID check (`841196165`) to prevent unintended network requests for general users when the daemon is not running.
+## Verification boundary
+
+The statements above describe source behavior. Native panel identity, binding
+values, rendering and transitions need the maintainer's Panorama Debugger and
+a repacked client scenario; neither a schema nor a read-only manifest hook
+proves the whole feature works. See [verification](../TESTING.md).

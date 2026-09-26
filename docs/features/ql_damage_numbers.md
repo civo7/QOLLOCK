@@ -1,41 +1,37 @@
-# `panorama/scripts/manifests/ql_damage_numbers` (Floating Damage Numbers Customization)
+# ql_damage_numbers
 
-## Description
-Provides aesthetic and clarity controls for floating in-game damage numbers rendered during combat (`HudIndicatorText` inside `HudEventIndicatorsPanel`). Allows players to adjust font size, transparency, filter out negligible chip damage numbers, and enable clean typography to reduce visual clutter during rapid-firing attacks.
+Native combat indicator presentation; settings use DAMAGE_NUMBER_OPACITY and HUD_INDICATOR_SIZE.
 
-## Files
-- Manifest: `panorama/scripts/manifests/ql_damage_numbers/manifest.js`
-- Styles: Dynamic styling applied across indicator text elements
+Source: [manifest.js](../../panorama/scripts/manifests/ql_damage_numbers/manifest.js),
+loaded by the HUD layout. The general [lifecycle contract](../core/feature_registry.md)
+and [architecture](../../ARCHITECTURE.md) explain context and configuration routing.
 
-## Settings & Defaults
-| Config Key | Type | Default | Description |
-| :--- | :--- | :--- | :--- |
-| `ENABLE_DAMAGE_NUMBERS` | `toggle` | `false` | Master toggle to enable damage number customization. |
-| `DAMAGE_NUMBERS_OPACITY` | `slider` | `100` | Opacity percentage for floating combat numbers (0% to 100%). |
-| `DAMAGE_NUMBERS_FONT_SIZE` | `slider` | `18` | Font size in pixels for damage numbers (10px to 36px). |
-| `ENABLE_CLEAN_DAMAGE_NUMBERS` | `toggle` | `false` | Removes heavy text shadows and stroke outlines for a minimalist appearance. |
-| `ENABLE_HIDE_SMALL_DAMAGE` | `toggle` | `false` | Filters out low-value damage ticks (e.g. burn damage, minion pings). |
-| `SMALL_DAMAGE_THRESHOLD` | `slider` | `15` | Minimum damage threshold required for a number to be rendered. |
+## Runtime and ownership
 
-## Architecture & Lifecycle
+Starts a 0.5-second loop to maintain native combat-indicator presentation.
+The actual keys are `DAMAGE_NUMBER_OPACITY` and `HUD_INDICATOR_SIZE`, alongside
+the declared visibility/format flags. This is distinct from directional damage
+impact and the damage-report panel. Preserve indicator-cache invalidation on
+disable and native panel replacement.
 
-### Activation & Lifecycle Hooks
-- **`onEnable()`**: Locates `#HudEventIndicatorsPanel` and registers a cooperative polling task in `QOL.core.Scheduler` running at 2Hz (`0.5s` interval).
-- **`onDisable()`**: Cancels scheduler task, removes custom styling from active indicator labels, and clears panel references.
-- **`onSettingsChanged()`**: Synchronously runs an immediate update tick.
-- **`test()`**: Verifies that `#HudEventIndicatorsPanel` is mounted in the HUD tree.
+## Declared settings
 
-### DOM Injection & Target Panels
-- **DOM Creation**: Zero DOM elements created.
-- **Target Panels**:
-  - `Panel#HudEventIndicatorsPanel`: Native container hosting floating world-space combat text.
-  - `Label.HudIndicatorText`: Dynamic child labels spawned by C++ for damage ticks.
+- `DAMAGE_NUMBER_OPACITY` (slider)
+- `HUD_INDICATOR_SIZE` (slider)
+- `ENABLE_CLEAN_DAMAGE_INDICATORS` (toggle)
+- `ENABLE_HIDE_SMALL_NUMBERS` (toggle)
+- `ENABLE_HIDE_TROOPER_DAMAGE` (toggle)
+- `ENABLE_DAMAGE_FOUNTAIN` (toggle)
+- `ENABLE_CUMULATIVE_DMG` (toggle)
 
-### Engine Events & Polling Frequency
-- **Polling Frequency**: 2Hz (`0.5s` interval).
-- **Engine Events**: None.
+Defaults/ranges belong to the linked schema, flat `QOL_DEFAULT_CONFIG` and
+versioned codec definitions, not a duplicated table here. They are separate
+representations; a declared field is not automatically a visible control or
+proof of active runtime behavior. See [adding settings](../ADDING_SETTINGS.md).
 
-### Performance Tier & Caveats
-- **Performance Tier**: Low (`~0.04ms` per tick).
-- **Suppression**: Inactive when no combat indicator elements are present in the viewport.
-- **Dynamic Elements**: Because damage text labels are continuously spawned and destroyed by engine C++ code, styling is batch-applied during traversal without retaining stale pointers.
+## Verification boundary
+
+The statements above describe source behavior. Native panel identity, binding
+values, rendering and transitions need the maintainer's Panorama Debugger and
+a repacked client scenario; neither a schema nor a read-only manifest hook
+proves the whole feature works. See [verification](../TESTING.md).

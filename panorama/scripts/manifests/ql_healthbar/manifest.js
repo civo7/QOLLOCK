@@ -98,6 +98,7 @@
             function _update() {
                 var root = $.GetContextPanel();
                 if (!root) return;
+                if (root.BHasClass && root.BHasClass("InHideout")) return;
                 var cfg = (ctx && ctx.config && ctx.config.all) ? ctx.config.all() : ((typeof State !== "undefined" && State.lastConfig) ? State.lastConfig : {});
                 var nowMs = Date.now ? Date.now() : (new Date()).getTime();
                 var healthbarType = Number(cfg.HEALTHBAR_TYPE) || 0;

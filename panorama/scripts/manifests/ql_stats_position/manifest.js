@@ -41,6 +41,9 @@
     }
 
     function hasStatsPositionWork(cfg) {
+        if (!cfg) return false;
+        var enabled = (cfg.ENABLE_STATS_POSITION === undefined || cfg.ENABLE_STATS_POSITION === true || Number(cfg.ENABLE_STATS_POSITION) === 1);
+        if (!enabled) return false;
         var side = (Math.round(Number(cfg.STATS_POSITION_SIDE)) === 1) ? 1 : 0;
         var offX = Number(cfg.STATS_POSITION_X_OFFSET) || 0;
         var offY = Number(cfg.STATS_POSITION_Y_OFFSET) || 0;
@@ -52,6 +55,7 @@
     FR.register({
         id: "ql_stats_position",
         enabledByDefault: true,
+        enableKey: "ENABLE_STATS_POSITION",
         settings: [
             { key: "ENABLE_STATS_POSITION", type: "toggle", default: true },
             { key: "STATS_POSITION_SIDE", type: "buttongroup", default: 0 },
@@ -75,6 +79,18 @@
             function _tick() {
                 var root = $.GetContextPanel();
                 if (!root) return;
+
+                var hud = (typeof QOL !== "undefined" && QOL.core && (QOL.core.hud || QOL.core.Hud)) || null;
+                var inHideout = hud && hud.isInHideout ? hud.isInHideout(root) : (root.BHasClass && (root.BHasClass("InHideout") || root.BHasClass("connectedToHideout")));
+                if (inHideout) {
+                    if (_applied) {
+                        var p = _getStatsPanel(root);
+                        if (p) resetStatsPanel(p);
+                        _sig = "";
+                        _applied = false;
+                    }
+                    return;
+                }
 
                 var cfg = ctx.config.view();
                 var panel = _getStatsPanel(root);

@@ -347,12 +347,7 @@
         if (QOL?.core?.ManifestTests) {
             const tr = QOL.core.ManifestTests.getResults();
             if (tr) {
-                diag.testResults = {
-                    summary: tr.summary,
-                    results: tr.results,
-                    timestamp: tr.timestamp,
-                    token: tr.token
-                };
+                diag.testResults = tr;
             }
         }
 
@@ -390,11 +385,12 @@
                 if (forceToken.startsWith("mt_") || forceToken.startsWith("fs_") || forceToken.startsWith("audit_")) {
                     if (QOL?.core?.ManifestTests) {
                         try {
-                            if (forceToken.startsWith("audit_") && typeof QOL.core.ManifestTests.runEngineAudit === "function") {
-                                QOL.core.ManifestTests.runEngineAudit();
-                            }
+                            const engineAudit = forceToken.startsWith("audit_")
+                                ? QOL.core.ManifestTests.runEngineAudit()
+                                : null;
                             QOL.core.ManifestTests.runAll({
                                 token: forceToken,
+                                engineAudit,
                                 onComplete: () => {
                                     _writeDiagSnapshot(hudPanel, forceToken);
                                 }
@@ -518,53 +514,6 @@
         _writeDiagSnapshot(hudPanel, "");
     };
 
-    const _syncLoaderOverlays = (hudPanel, nowMs) => {
-        const globalState = (typeof State !== "undefined" && State) ? State :
-                          ((typeof globalThis !== "undefined" && globalThis.State) ? globalThis.State : null);
-        if (!globalState) return;
-        const settingsShowing = Boolean(globalState.settingsLoaderSessionActive || globalState.settingsLoaderSessionCompleted);
-        const saveShowing = Boolean(globalState.saveSettingsLoaderSessionActive || globalState.saveSettingsLoaderSessionCompleted);
-
-        if (settingsShowing || saveShowing) {
-            if (settingsShowing && QOL && typeof QOL.updateSettingsLoaderOverlay === "function") {
-                try { QOL.updateSettingsLoaderOverlay(hudPanel, nowMs); } catch (_) {}
-            }
-            if (!settingsShowing && saveShowing && QOL && typeof QOL.updateSaveSettingsLoaderOverlay === "function") {
-                try { QOL.updateSaveSettingsLoaderOverlay(hudPanel, nowMs); } catch (_) {}
-            }
-        }
-    };
-
-    const _syncPendingHeroRestore = (nowMs) => {
-        const globalState = (typeof State !== "undefined" && State) ? State :
-                          ((typeof globalThis !== "undefined" && globalThis.State) ? globalThis.State : null);
-        if (!globalState?.heroRestorePendingTarget) return;
-        const targetHero = (QOL && QOL.normalizeHeroId) ? QOL.normalizeHeroId(globalState.heroRestorePendingTarget) : globalState.heroRestorePendingTarget;
-        if (!targetHero) {
-            globalState.heroRestorePendingTarget = "";
-            return;
-        }
-        const now = Number(nowMs) || _nowMs();
-        if (now < (globalState.heroRestorePendingNextMs || 0)) return;
-        const elapsed = now - (Number(globalState.heroRestorePendingStartedMs) || now);
-        if (elapsed >= 1200 || elapsed > 3000) {
-            if (QOL && typeof QOL.queueShopPulseAfterHeroRestore === "function") {
-                QOL.queueShopPulseAfterHeroRestore(now);
-            }
-            globalState.heroRestorePendingTarget = "";
-            return;
-        }
-        if ((Number(globalState.heroRestorePendingRetries) || 0) < 3) {
-            if (QOL && typeof QOL.selectHeroForBuildSave === "function") {
-                QOL.selectHeroForBuildSave(targetHero, "restore_retry");
-            }
-            globalState.heroRestorePendingRetries = (Number(globalState.heroRestorePendingRetries) || 0) + 1;
-            globalState.heroRestorePendingNextMs = now + 450;
-            return;
-        }
-        globalState.heroRestorePendingNextMs = now + 450;
-    };
-
     const _startConfigPolling = (hud) => {
         if (_configPollTimer) return;
 
@@ -572,8 +521,12 @@
 
         const poll = () => {
             if (!_booted) return;
+            const hudPanel = _hudPanel || _findHud();
+            if (hudPanel && typeof hudPanel.IsValid === "function" && !hudPanel.IsValid()) {
+                shutdown();
+                return;
+            }
             const nowMs = _nowMs();
-            const hudPanel = _findHud();
             const best = _readBestConfig(hudPanel);
             const { raw, rev } = best;
 
@@ -602,8 +555,6 @@
             }
 
             _syncDiagnosticState(hudPanel, nowMs);
-            _syncLoaderOverlays(hudPanel, nowMs);
-            _syncPendingHeroRestore(nowMs);
 
             _configPollTimer = $.Schedule(0.25, poll);
         };
@@ -619,6 +570,15 @@
         try {
             $.RegisterForUnhandledEvent("CitadelGameStateChanged", () => {
                 const hud = _hudPanel || _findHud();
+                if (hud && typeof hud.IsValid === "function" && !hud.IsValid()) {
+                    shutdown();
+                    return;
+                }
+                try {
+                    if (typeof ClearPanelCache === "function") ClearPanelCache();
+                    if (typeof PanelCache !== "undefined" && typeof PanelCache.clear === "function") PanelCache.clear();
+                    if (QOL?.panelCache && typeof QOL.panelCache.clear === "function") QOL.panelCache.clear();
+                } catch (_) {}
                 if (hud) _syncRootClasses(hud);
                 if (QOL?.core?.EventBus) {
                     try { QOL.core.EventBus.emit("engine:game_state_changed"); } catch (_) {}
@@ -682,8 +642,13 @@
     // -- Public API --
     const boot = () => {
         if (_booted) {
-            $.Msg("[QOLLock] App: already booted — skipping.");
-            return true;
+            if (_hudPanel && typeof _hudPanel.IsValid === "function" && !_hudPanel.IsValid()) {
+                $.Msg("[QOLLock] App: previous HUD panel invalid — shutting down before reboot.");
+                shutdown();
+            } else {
+                $.Msg("[QOLLock] App: already booted — skipping.");
+                return true;
+            }
         }
 
         _registerEngineEvents();

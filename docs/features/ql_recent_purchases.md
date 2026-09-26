@@ -32,8 +32,9 @@ Extends Deadlock's shop and HUD with real-time item purchase tracking. It introd
 ## Architecture & Lifecycle
 
 ### Activation & Lifecycle Hooks
+- **Enable Keys**: Registered with `enableKeys: ["ENABLE_SHOP_RECENT_PURCHASES", "ENABLE_SHOP_ITEM_NOTIFICATIONS", "ENABLE_HERO_PURCHASE_POPUPS"]`.
 - **`onEnable()`**: Initiates a 5Hz (`0.2s` interval) polling loop via `QOL.core.Scheduler.createPollLoop(_tick, 0.2, "ql_recent_purchases")`.
-- **`onDisable()`**: Stops the polling loop, clears scheduled tasks, deletes `_quickPurchasesPanel` via `DeleteAsync(0)`, executes `_resetHeroPopupState()`, and nullifies all cached panel references.
+- **`onDisable()`**: Stops the polling loop, cancels any pending delayed hideout clear timer (`_hideoutClearTimer`), clears scheduled tasks, deletes `_quickPurchasesPanel` via `DeleteAsync(0)`, executes `_resetHeroPopupState()`, and nullifies all cached panel references.
 - **`onSettingsChanged()`**: Clears style and filter signatures (`_lastVisibilitySig = null`, `_lastFilterSig = null`) and invokes `_tick()` immediately.
 - **`test()`**: Verifies that the native `CitadelShop` panel exists in the HUD context tree.
 

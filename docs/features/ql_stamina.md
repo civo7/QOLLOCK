@@ -25,7 +25,7 @@ Customizes the rotation angle and wash tint color of the reticle stamina charge 
 ### DOM Injection & Target Panels
 - **DOM Creation**: Zero DOM panels created.
 - **Target Panel**:
-  - `Panel#charges_container`: Root reticle stamina ring. Receives `style.transform = "rotateZ(" + angle + "deg)"`.
+  - `.ability_element_charges #charges_container` containing `.charge_drained` pips: stamina ring from Valve's `element_charges.xml`. Ability icons and `element_roll.xml` share ids/classes but are not stamina tint targets. Receives `style.transform = "rotateZ(" + angle + "deg)"`.
 - **Target Charge Pips**:
   - `charge_fg.finished`: Active/ready stamina charge pips.
   - `charge_drained`: Spent stamina pips.
@@ -37,6 +37,7 @@ Customizes the rotation angle and wash tint color of the reticle stamina charge 
 
 ### Performance Tier & Caveats
 - **Performance Tier**: Low.
-- **Default State Bypass**: Early-exits without modifying DOM properties if settings remain at defaults (angle = 45°, color index = 0).
-- **Signature Optimization**: Guards transform writes using `_lastAngleSig` and color updates using `_lastColorSig`.
+- **Default State Bypass**: Skips work at defaults only after restoring any previous color/rotation overrides. Switching presets back to defaults must remove the previous preset's appearance.
+- **Signature Optimization**: Transform caching includes panel identity. Each active color tick recollects eligible pips, restores native wash on pips leaving the set, and colors newly ready/recreated pips even when the palette index is unchanged. Unchanged pips are not rewritten.
 - **Palette Resolution**: Resolves colors via `QOL.core.panel.resolvePaletteColor` or fallback `QOL.washColorPalette`.
+- **Verification**: Offline regressions cover recovery of a third pip, preset reset, and ring recreation with a colliding ability-icon id. They do not verify in-game rendering.

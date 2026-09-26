@@ -1,72 +1,87 @@
-# QOLLOCK Performance Guardrails
+# QOLLOCK performance guardrails
 
-Performance is a first-class constraint for this Panorama Source 2 mod.
+Start with [the architecture guide](../ARCHITECTURE.md) for runtime ownership and
+[PROFILING.md](PROFILING.md) for measurement methods. These are implementation
+constraints, not claims that every existing feature already satisfies them.
 
-## Principles
-- Feature OFF should mean zero or near-zero runtime work.
-- Prefer cached references and bounded refresh intervals.
-- Avoid full-tree scans in frequent loops unless strictly necessary.
-- Debug logging in hot paths must default OFF.
+## Runtime work and lifecycle
 
-## Loop / Polling Guidance
-- Use low-frequency polling for non-critical UI state.
-- Increase frequency only while feature is active and visible.
-- Degrade back to idle polling when hidden/disabled.
-- Avoid duplicated watchers for same state.
+- A disabled feature should do zero or near-zero work. Use the existing
+  FeatureRegistry lifecycle and feature-owned Scheduler loops; do not add a
+  second watcher for state already provided by core services.
+- Prefer `onSettingsChanged` for settings reaction. Use bounded, feature-specific
+  polling for native state that has no verified event source.
+- Reduce work when hidden or idle, but preserve cleanup. Do not globally skip
+  callbacks in hideout: callbacks can remove overlays or restore the native cursor.
+- Stop owned loops and remove owned UI/classes/styles on disable. Cancel other
+  callbacks/subscriptions that the Scheduler does not own.
+- A valid context can outlive its native source panels. Handle source replacement,
+  shop closure, respawn and match changes without retaining stale derived state.
 
-## Panel Access Patterns
-- Cache panel handles and validate before reuse.
-- Re-query only on invalidation windows.
-- Avoid repeated `FindChildTraverse` per-frame for stable panels.
+## Panel lookup and caching
 
-## Class / Style Sync
-- Avoid syncing large class sets every tick if signature unchanged.
-- Gate expensive style writes with signature comparison.
-- Batch style updates where possible.
+- Reuse the APIs in [HELPERS.md](HELPERS.md). Validate cached native handles before
+  use and invalidate them when the relevant root/player/selection changes.
+- Use the narrowest authoritative subtree. A matching ID elsewhere in the tree
+  can belong to a different player or an obsolete panel instance.
+- Cache stable references rather than repeating `FindChildTraverse` every tick.
+  A miss can walk the entire subtree; it is not a cheap no-op.
+- Back off unsuccessful discovery where the source is legitimately absent. Check
+  recovery after it appears or is recreated; a permanent negative cache is wrong.
+- `QOL.panelCache.resolve` validates liveness, not ownership by its new parent.
+  Clear/rebind owned entries explicitly. Do not clear another feature's cache.
+- Keep bounded/local traversal where ordering, identity or depth is part of the
+  feature contract. A generic helper is not automatically a cheaper equivalent.
 
-## Item Cooldown / Mirror Rules
-- Maintain deterministic matching and stable assignment.
-- Keep exception logic explicit and minimal.
-- Avoid repeated ambiguity churn; use sticky panel assignment.
+## Style and class updates
 
-## Debug Rules
-- Temporary debug constants can be enabled during diagnosis.
-- Must be disabled before normal release/testing.
-- Avoid high-volume logs in core render/update loops.
+- Avoid repeating unchanged writes. Use the existing property-appropriate style
+  helper or a caller-owned signature; account for native read-back normalization.
+- Reset signatures when a panel reference changes, otherwise a new panel may
+  never receive its initial styles.
+- Preserve the distinction between clearing a code override and assigning a
+  replacement value. Restore only the styles/classes this feature owns.
+- Model counters can identify identical writes. They do not establish the native
+  setter's exact layout cost; client frame-time measurements are separate evidence.
 
-## Release Performance Checks
-- Run a 3-5 minute active play test.
-- Confirm no persistent error spam.
-- Confirm no runaway update intervals or repeated heavy scans.
+## Cooldown mirrors and shared observations
 
-## Measuring instead of assuming
+- Keep matching deterministic and assignments stable. Do not repeatedly reassign
+  ambiguous sources or accidentally combine cooldown instances.
+- Preserve explicit exceptions and runtime mode differences; consult
+  [item mirror](features/ql_item_mirror.md) and
+  [passive cooldown](features/ql_passive_cooldown.md) before changing the pipeline.
+- Reuse current-player/HUD/shared-state observations when their identity and
+  lifetime contract fits. Do not infer that every similar panel is authoritative.
 
-Every rule above is now checkable offline. See `docs/PROFILING.md`.
+## Logging and allocations
 
-- `node scripts/profile_hud.js` — runs the real mod against a realistic HUD tree
-  and reports per-feature engine work: tree nodes walked, redundant style writes,
-  attribute bytes, panel churn. `--compare` diffs two runs, which is how you show
-  an optimisation actually worked.
-- `node scripts/audit_panel_ids.js` — finds `FindChildTraverse` ids that nothing
-  can ever create. Each one is a guaranteed full-tree walk that can only return
-  null. Directly enforces the "avoid full-tree scans in frequent loops" rule.
-- `node --test tests/perf_guards.test.js` — **removed 2026-08-23** with the rest of
-  `tests/` (see `docs/TESTING.md`). Its per-tick-throw check survives inside the
-  profiler, which prints `scheduled-callback errors`; its ceilings do not — use
-  `profile_hud.js --save` / `--compare` around a change instead.
+- Disable temporary diagnostic logging before normal use. Do not emit a message
+  every polling tick or on every expected missing-panel path.
+- Guard expensive log argument construction before calling a disabled logger;
+  arguments are evaluated even when the logger discards them.
+- Avoid needless arrays, object copies, serialization and repeated configuration
+  reads in hot loops. Do not optimize away required revision/invalidation checks.
 
-Two findings worth internalising, because they are the reason several of these
-rules exist and were nonetheless being broken:
+## Evidence for a performance change
 
-- **A `FindChildTraverse` miss is not cheap.** It walks the entire subtree before
-  returning null. "The panel usually isn't there so the lookup is free" is exactly
-  backwards — it is most expensive when it fails, and the tree is largest during a
-  teamfight.
-- **Panorama does not compare before acting on a style write.** Assigning the value
-  a panel already holds still dirties layout. "Only write when changed" is not a
-  micro-optimisation here; it is the difference between zero engine work and a
-  re-layout.
+```text
+node scripts/profile_hud.js --seconds 20 --save before
+node scripts/profile_hud.js --seconds 20 --compare before
+node scripts/audit_panel_ids.js
+```
 
-And one about debug code: arguments are evaluated before the call, so a disabled
-logger still pays for everything you pass it. `if (DEBUG_FLAG) { ... }` around the
-whole block, not just a guard inside the logger.
+Compare the same tree, player count, feature configuration and warm-up. Retain raw
+operation counts and collected callback errors; weighted cost is an estimate, not
+milliseconds or FPS. Audit-panel-ID misses are investigation candidates: C++ and
+dynamic IDs can create panels absent from scanned XML/JS sources.
+
+There is no current `tests/perf_guards.test.js` gate. Use the current commands in
+[TESTING.md](TESTING.md), focused behavior regressions and comparable profiling
+runs. Do not revive historical test counts or removed build-storage fuzz commands.
+
+The maintainer compiles/repacks and checks the actual client. For a frame-time
+claim, repeat comparable scenes with/without the change and keep diagnostic
+reporting outside the measured window. Also check menu return and re-entry,
+feature disable/re-enable, and several minutes of representative gameplay. Report
+unverified rendering, panel lifecycle or FPS explicitly.

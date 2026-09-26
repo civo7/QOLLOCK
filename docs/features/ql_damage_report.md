@@ -1,39 +1,32 @@
-# `panorama/scripts/manifests/ql_damage_report` (Post-Death Damage Report Customization)
+# ql_damage_report
 
-## Description
-Customizes or completely disables the native post-death damage breakdown report panel (`CitadelHudDamageReport`). Allows players to shift or rescale the recap card, or suppress it entirely to maintain an unobstructed view of the battlefield while spectating teammates after death.
+Damage-report visibility/offsets; no DAMAGE_REPORT_SCALE schema field.
 
-## Files
-- Manifest: `panorama/scripts/manifests/ql_damage_report/manifest.js`
-- Styles: `panorama/styles/features/ql_feat_damage_report.css`
+Source: [manifest.js](../../panorama/scripts/manifests/ql_damage_report/manifest.js),
+loaded by the HUD layout. The general [lifecycle contract](../core/feature_registry.md)
+and [architecture](../../ARCHITECTURE.md) explain context and configuration routing.
 
-## Settings & Defaults
-| Config Key | Type | Default | Description |
-| :--- | :--- | :--- | :--- |
-| `DISABLE_DAMAGE_REPORT` | `toggle` | `false` | Completely hides and disables the post-death damage report panel. |
-| `DAMAGE_REPORT_SCALE` | `slider` | `1.0` | Uniform scale multiplier applied to the damage report card (0.5 to 2.0). |
-| `DAMAGE_REPORT_X_OFFSET` | `slider` | `0` | Horizontal pixel offset shifting the damage report card position. |
-| `DAMAGE_REPORT_Y_OFFSET` | `slider` | `0` | Vertical pixel offset shifting the damage report card position. |
+## Runtime and ownership
 
-## Architecture & Lifecycle
+Applies the hide class and X/Y offsets on enable and settings changes;
+there is no recurring loop in this manifest. `DISABLE_DAMAGE_REPORT` is the
+registered enable key, so inspect activation as well as offset handling when
+changing behavior. There is no `DAMAGE_REPORT_SCALE` field in its schema.
 
-### Activation & Lifecycle Hooks
-- **`onEnable()`**: Locates `CitadelHudDamageReport`, attaches the `disable_damage_report_active` root class if configured, and applies scale and margin offsets via `_apply()`.
-- **`onDisable()`**: Removes root modifier classes and restores native damage report dimensions and positioning.
-- **`onSettingsChanged()`**: Synchronously runs `_apply()` on configuration updates (0ms latency).
-- **`test()`**: Verifies that `#Hud` is mounted in the current window.
+## Declared settings
 
-### DOM Injection & Target Panels
-- **DOM Creation**: Zero DOM elements created.
-- **Target Panels**:
-  - `#Hud` (resolved via `QOL.core.hud.findHud()`): Receives the root class `disable_damage_report_active`.
-  - `Panel#CitadelHudDamageReport`: Native post-death recap container adjusted via transforms.
+- `DISABLE_DAMAGE_REPORT` (toggle)
+- `DAMAGE_REPORT_X_OFFSET` (slider)
+- `DAMAGE_REPORT_Y_OFFSET` (slider)
 
-### Engine Events & Polling Frequency
-- **Polling Frequency**: Zero polling (0Hz). The feature is purely reactive to configuration dispatches.
-- **Engine Events**: None.
+Defaults/ranges belong to the linked schema, flat `QOL_DEFAULT_CONFIG` and
+versioned codec definitions, not a duplicated table here. They are separate
+representations; a declared field is not automatically a visible control or
+proof of active runtime behavior. See [adding settings](../ADDING_SETTINGS.md).
 
-### Performance Tier & Caveats
-- **Performance Tier**: None (`< 0.02ms` on setting update).
-- **Suppression**: None required; pure CSS class and style gating.
-- **Style Optimization**: Style signatures ensure transforms are only pushed when layout offsets change.
+## Verification boundary
+
+The statements above describe source behavior. Native panel identity, binding
+values, rendering and transitions need the maintainer's Panorama Debugger and
+a repacked client scenario; neither a schema nor a read-only manifest hook
+proves the whole feature works. See [verification](../TESTING.md).

@@ -352,7 +352,30 @@ class Panel {
     }
 
     SetSelected(selected) {
+        this._assertValid("SetSelected");
+        if (this.type === "DropDown") {
+            const options = this._dropdownOptions || [];
+            this._dropdownSelected = options.find((option) => option.IsValid() && option.id === selected) || null;
+            return;
+        }
         this.SetHasClass("Selected", !!selected);
+    }
+
+    // Only option registration and selection are modelled, not the engine's
+    // popup layout, input routing, or automatic submit events.
+    AddOption(option) {
+        this._assertValid("AddOption");
+        if (this.type !== "DropDown") throw new Error("AddOption requires DropDown");
+        option._assertValid("AddOption");
+        this._dropdownOptions = this._dropdownOptions || [];
+        if (!this._dropdownOptions.includes(option)) this._dropdownOptions.push(option);
+        this.addChild(option);
+    }
+
+    GetSelected() {
+        this._assertValid("GetSelected");
+        if (this.type !== "DropDown") throw new Error("GetSelected requires DropDown");
+        return this._dropdownSelected?.IsValid() ? this._dropdownSelected : null;
     }
 
     SetImage() { /* no-op: no asset pipeline in the simulator */ }

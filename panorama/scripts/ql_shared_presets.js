@@ -814,6 +814,20 @@ if (typeof QOL_SCHEMA_UTILS.MigrateSplitZoomKeys !== "function") {
     };
 }
 
+if (typeof QOL_SCHEMA_UTILS.NormalizeDefaultHeroConfig !== "function") {
+    QOL_SCHEMA_UTILS.NormalizeDefaultHeroConfig = function(configTarget, sourceConfig) {
+        if (!configTarget) return;
+        if (Object.prototype.hasOwnProperty.call(configTarget, "DEFAULT_HERO")) {
+            delete configTarget.DEFAULT_HERO;
+        }
+        if (sourceConfig && Object.prototype.hasOwnProperty.call(sourceConfig, "DEFAULT_HERO")) {
+            delete sourceConfig.DEFAULT_HERO;
+        }
+    };
+}
+
+var NormalizeDefaultHeroConfig = QOL_SCHEMA_UTILS.NormalizeDefaultHeroConfig;
+
 // ==========================================================================
 // QOL_COMPACT_SCHEMA — shared compact schema definitions
 // ==========================================================================
@@ -2315,25 +2329,7 @@ var QOL_DumpDiagnostics = function() {
         }
         // P2: Manifest test results (from core/ql_manifest_tests.js)
         if (_diag.testResults && _diag.testResults.summary) {
-            lines.push("");
-            var _ts = _diag.testResults.summary;
-            lines.push("--- Manifest Tests (" + _ts.passed + "/" + _ts.total + " passed, " +
-                _ts.failed + " failed, " + _ts.skipped + " skipped, " +
-                _ts.errors + " errors, " + _ts.timeMs + "ms) ---");
-            if (_diag.testResults.timestamp) {
-                try { lines.push("  Run at: " + new Date(_diag.testResults.timestamp).toISOString()); } catch(_dte) { lines.push("  Run at: " + String(_diag.testResults.timestamp)); }
-            }
-            if (_ts.failed > 0 || _ts.errors > 0) {
-                lines.push("  Failures:");
-                var _trs = _diag.testResults.results || [];
-                for (var _tri = 0; _tri < _trs.length; _tri++) {
-                    var _tr = _trs[_tri];
-                    if (_tr.passed === false || _tr.error) {
-                        var _detail = _tr.message ? ": " + _tr.message : "";
-                        lines.push("    " + _tr.id + " [" + _tr.name + "]" + _detail);
-                    }
-                }
-            }
+            lines.push("", _diag.testResults.report || "Observation report unavailable; coverage unknown.");
         }
         lines.push("");
         // Merge HUD-side logs (from panel attribute) with settings-side logs
@@ -3052,30 +3048,40 @@ var QOL_PRESETS = {
     },
     "BSQTT": {
         DAMAGE_NUMBER_OPACITY: 0.75,
-        DEFAULT_HERO: "hero_vampirebat",
+        DEFAULT_HERO: "hero_inferno",
+        DISABLE_SHOP_BLUE: 1,
+        ENABLE_BETTER_UNSECURED: 1,
         ENABLE_BUFF_HUD: 1,
         ENABLE_CLEAN_STACKS: 1,
+        ENABLE_ENHANCED_QUICKBUY: 1,
         ENABLE_HIDE_FAILED_HINT: 1,
         ENABLE_LANE_WITH_PARTY: 1,
-        ENABLE_MIN_SOULS: 0,
+        ENABLE_MINIMAP_BUFF_TIMER: 1,
+        ENABLE_MINIMAP_REJUV_TIMER: 1,
+        ENABLE_MIN_SOULS: 1,
         ENABLE_MISSING_HERO: 1,
+        ENABLE_NICKNAMES: 1,
         ENABLE_OBJ_DMG: 1,
         ENABLE_OBJ_MAP: 1,
         ENABLE_REJUV_HUD: 1,
+        ENABLE_SHOP_CLICK_TO_NOTIFY: 1,
+        ENABLE_SHOP_ITEM_NOTIFICATIONS: 1,
         ENABLE_SHOP_RECENT_PURCHASES: 1,
         ENABLE_SIMPLIFY_ITEMS: 1,
         ENABLE_ULT_COOLDOWNS: 1,
-        ENABLE_UNSPENT_SOULS: 0,
         ENABLE_URN_DIFF: 1,
+        ENABLE_URN_TIMER: 1,
         ENABLE_ZIP_BOOST: 1,
         HUD_INDICATOR_SIZE: 29,
         MINIMAL_MINIMAP: 1,
         MINIMAP_BASE_OPACITY: 0.8,
         MINIMAP_SMALL_SIZE: 570,
-        MINIMAP_X_OFFSET: -45,
+        MINIMAP_X_OFFSET: -120,
+        MINIMAP_Y_OFFSET: 115,
+        RECENT_PURCHASES_QUICK_REJUV: 0,
         RELOAD_COOLDOWN_OPACITY: 0.25,
         RELOAD_COOLDOWN_SIZE: 18,
-        SETTINGS_THEME: 3,
+        SETTINGS_THEME: 6,
         SHOP_OFFSET_X: 90,
         UNIT_TARGET_SIZE: 100,
         VOICE_TYPE: 0
@@ -3775,17 +3781,16 @@ var QOL_PRESETS = {
     },
     "Chumba": {
         DEFAULT_HERO: "hero_doorman",
-        ENABLE_DAMAGE_FOUNTAIN: 1,
-        ENABLE_MINIMAP_ALWAYS_ON_MID_BOSS: 1,
+        ENABLE_ENHANCED_QUICKBUY: 1,
         ENABLE_MINIMAP_BUFF_TIMER: 1,
-        ENABLE_MINIMAP_BUFF_TIMER_ON_BRIDGE: 1,
         ENABLE_MINIMAP_REJUV_TIMER: 1,
         ENABLE_PASSIVE_COOLDOWN: 1,
         MINIMAL_MINIMAP: 1,
         MINIMAP_SMALL_SIZE: 450,
         OLD_ITEM_COOLDOWNS_SCALE: 83,
         PASSIVE_COOLDOWN_OPACITY: 0.25,
-        PASSIVE_COOLDOWN_SIZE: 30
+        PASSIVE_COOLDOWN_SIZE: 30,
+        SHOW_RANK_TOPBAR: 0
     },
     "FakeThread": {
         DEFAULT_HERO: "hero_familiar",
@@ -5408,28 +5413,54 @@ QOL_PRESETS["7eventy7"] = {
     BOTTOM_BAR_SCALE: 0.9,
     BOTTOM_BAR_WASH_COLOR: 2,
     BOTTOM_BAR_Y_OFFSET: 10,
-    DEFAULT_HERO: "hero_familiar",
-    ENABLE_BETTER_UNSECURED: 1,
+    CROSSHAIR_STATS_SHOW_BULLETEVASION: 0,
+    CROSSHAIR_STATS_SHOW_CLIPSIZE: 0,
+    CROSSHAIR_STATS_SHOW_DURATION: 0,
+    CROSSHAIR_STATS_SHOW_RANGE: 0,
+    CROSSHAIR_STATS_X_OFFSET: 500,
+    DAMAGE_IMPACT_OPACITY: 0.75,
+    DAMAGE_IMPACT_SCALE: 0.8,
+    DEFAULT_HERO: "hero_atlas",
+    ENABLE_ALT_ZOOM: 1,
     ENABLE_BETTER_UNSECURED_SHOW_ICON: 1,
+    ENABLE_CLEAN_DAMAGE_INDICATORS: 1,
     ENABLE_CLEAN_STACKS: 1,
+    ENABLE_HERO_PURCHASE_POPUPS: 1,
+    ENABLE_HERO_SCENE_PANEL: 0,
     ENABLE_HIDE_RELOAD_ICON: 1,
     ENABLE_HIDE_TESTING_TOOLS: 1,
     ENABLE_LANE_WITH_PARTY: 1,
+    ENABLE_MINIMAP_BUFF_TIMER: 1,
+    ENABLE_MINIMAP_REJUV_TIMER: 1,
     ENABLE_OBJ_MAP: 1,
     ENABLE_RELOAD_COOLDOWN: 1,
+    ENABLE_SHOP_CLICK_TO_NOTIFY: 1,
+    ENABLE_SHOP_ITEM_NOTIFICATIONS: 1,
+    ENABLE_SHOP_STATS: 1,
     ENABLE_SIMPLIFY_ITEMS: 1,
-    ENABLE_TAB_ZOOM: 1,
+    ENABLE_SIMPLIFY_SHOP_STATS: 1,
     ENABLE_UNSECURED_SOUL_TIMER: 1,
+    ENABLE_ZIP_BOOST: 1,
+    HUD_INDICATOR_SIZE: 25,
     MINIMAL_MINIMAP: 1,
     MINIMAP_LARGE_SIZE_TAB: 500,
     MINIMAP_REMINDER_INTERVAL: 30,
     PLAYER_HEALTHBAR_ACCENT_COLOR: 29,
     PLAYER_HEALTHBAR_SCALE: 95,
+    PLAYER_HEALTHBAR_Y_OFFSET: -30,
+    RECENT_PURCHASES_QUICK_DISPLAY_SEC: 5,
+    RECENT_PURCHASES_QUICK_Y_OFFSET: -55,
+    SHOW_RANK: 1,
+    SHOW_RANK_TOPBAR: 0,
     STAMINA_CHARGE_COLOR: 2,
     TAB_ZOOM_OPACITY: 1,
     TOP_BAR_SCALE: 0.9,
-    TOP_BAR_Y_OFFSET: 55,
+    UNSECURED_SOULS_HUD_X_OFFSET: -1000,
+    UNSECURED_SOULS_HUD_Y_OFFSET: 800,
     UNSECURED_SOUL_TIMER_SCALE: 90,
+    UNSECURED_SOUL_TIMER_X_OFFSET: -900,
+    ZIP_BOOST_X_OFFSET: 1790,
+    ZOOM_X_OFFSET_ALT: 1035,
     ZOOM_X_OFFSET_TAB: 1355,
     ZOOM_Y_OFFSET_TAB: -480
 };
@@ -5976,10 +6007,10 @@ QOL_PRESETS["qlt"] = {
 QOL_PRESETS["munchkinman"] = {
     BOTTOM_BAR_WASH_COLOR: 17,
     BRIDGE_BUFF_START: 10,
-    DEFAULT_HERO: "hero_gigawatt",
+    DEFAULT_HERO: "hero_frank",
     DISABLE_SHOP_BLUE: 1,
     DL4D_VOLUME: 0,
-    ENABLE_AMMO_STATUS: 0,
+    ENABLE_AMMO_STATUS: 1,
     ENABLE_BETTER_UNSECURED: 1,
     ENABLE_BETTER_UNSECURED_SHOW_ICON: 1,
     ENABLE_BUFF_HUD: 1,
@@ -6009,7 +6040,7 @@ QOL_PRESETS["munchkinman"] = {
     ENABLE_MINIMAP_ELEVATION_MARKERS: 1,
     ENABLE_MINIMAP_REJUV_TIMER: 1,
     ENABLE_MINIMAP_REM_TUNNELS: 1,
-    ENABLE_MIN_SOULS: 0,
+    ENABLE_MIN_SOULS: 1,
     ENABLE_MISSING_HERO: 1,
     ENABLE_OBJ_DMG: 1,
     ENABLE_OBJ_MAP: 1,
@@ -6037,7 +6068,7 @@ QOL_PRESETS["munchkinman"] = {
     ENABLE_TOPBAR_ENEMY_HP_WARNING_65: 1,
     ENABLE_TOPBAR_ENEMY_HP_WARNING_75: 1,
     ENABLE_ULT_COOLDOWNS: 1,
-    ENABLE_UNSPENT_SOULS: 0,
+    ENABLE_UNSPENT_SOULS: 1,
     ENABLE_URN_DIFF: 1,
     ENABLE_ZIP_BOOST: 1,
     MINIMAL_MINIMAP: 1,
@@ -6372,7 +6403,7 @@ QOL_PRESETS["nkonin.me"] = {
     ENABLE_LANE_WITH_PARTY: 1,
     ENABLE_MINIMAP_BUFF_TIMER: 1,
     ENABLE_MINIMAP_REJUV_TIMER: 1,
-    ENABLE_MIN_SOULS: 0,
+    ENABLE_MIN_SOULS: 1,
     ENABLE_MISSING_HERO: 1,
     ENABLE_NICKNAMES: 1,
     ENABLE_OBJ_DMG: 1,
@@ -6381,9 +6412,10 @@ QOL_PRESETS["nkonin.me"] = {
     ENABLE_REJUV_HUD: 1,
     ENABLE_SHOP_CLICK_TO_NOTIFY: 1,
     ENABLE_SHOP_ITEM_NOTIFICATIONS: 1,
-    ENABLE_UNSPENT_SOULS: 0,
+    ENABLE_ULT_COOLDOWNS: 1,
+    ENABLE_UNSPENT_SOULS: 1,
     ENABLE_URN_DIFF: 1,
-        ENABLE_URN_TIMER: 1,
+    ENABLE_URN_TIMER: 1,
     ENABLE_ZIP_BOOST: 1,
     MINIMAL_MINIMAP: 1,
     MINIMAP_SMALL_SIZE: 600,
@@ -6517,12 +6549,13 @@ QOL_PRESETS["Specty"] = {
     ZIP_BOOST_Y_OFFSET: 210
 };
 QOL_PRESETS["loony"] = {
+    DEFAULT_HERO: "hero_hornet",
     DISABLE_QUICK_BUY: 1,
     ENABLE_BUFF_HUD: 1,
     ENABLE_CLEAN_STACKS: 1,
     ENABLE_HERO_SCENE_PANEL: 0,
     ENABLE_INTERVAL: 1,
-    ENABLE_MIN_SOULS: 0,
+    ENABLE_MIN_SOULS: 1,
     ENABLE_MISSING_HERO: 1,
     ENABLE_OBJ_DMG: 1,
     ENABLE_OBJ_MAP: 1,
@@ -6533,8 +6566,8 @@ QOL_PRESETS["loony"] = {
     ENABLE_PASSIVE_COOLDOWN: 1,
     ENABLE_REJUV_HUD: 1,
     ENABLE_SHOP_STATS: 1,
-    ENABLE_UNSPENT_SOULS: 0,
     ENABLE_URN_DIFF: 1,
+    ENABLE_URN_TIMER: 1,
     ENABLE_ZIP_BOOST: 1,
     HUD_INDICATOR_SIZE: 16,
     MINIMAL_MINIMAP: 1,
@@ -6582,13 +6615,6 @@ QOL_PRESETS["leah"] = {
     ULT_COOLDOWN_X_OFFSET: 0,
     ULT_COOLDOWN_Y_OFFSET: 0
 };
-
-(function() {
-    for (var presetName in QOL_PRESETS) {
-        if (!QOL_PRESETS.hasOwnProperty(presetName) || presetName === "BreadRollius") continue;
-        QOL_PRESETS[presetName].ENABLE_UNSPENT_SOULS = 0;
-    }
-})();
 
 var QOL_ACCOUNT_PRESET_BINDINGS = {};
 
@@ -6654,6 +6680,16 @@ QOL_PRESETS["Thorkizzle"] = {
     TAB_ZOOM_DRAW_OVER_UI: 1,
     TAB_ZOOM_OPACITY: 0.9
 };
+
+(function() {
+    for (var presetName in QOL_PRESETS) {
+        if (!QOL_PRESETS.hasOwnProperty(presetName)) continue;
+        if (presetName !== "BreadRollius") {
+            QOL_PRESETS[presetName].ENABLE_UNSPENT_SOULS = 0;
+        }
+        delete QOL_PRESETS[presetName].DEFAULT_HERO;
+    }
+})();
 
 if (typeof QOL_PRESETS === "object" && QOL_PRESETS) {
     if (typeof QOL === "object" && QOL) QOL.presets = QOL_PRESETS;

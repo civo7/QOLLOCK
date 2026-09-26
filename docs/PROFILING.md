@@ -16,34 +16,28 @@ tree sometimes" can differ by a factor of forty.
 
 ### `node scripts/audit_panel_ids.js`
 
-Cross-references every literal `FindChildTraverse("...")` id in the mod against
-vanilla layouts, the mod's own layouts, and `$.CreatePanel` calls. Reports the
-ids nothing can ever create.
+Cross-references literal `FindChildTraverse("...")` ids against vanilla layouts,
+the mod's layouts and `$.CreatePanel` calls. Missing ids are investigation
+candidates, not proof that a panel cannot exist: C++ can create panels and ids
+can be generated dynamically.
 
-This matters because a `FindChildTraverse` miss is not a cheap null — it is a
-depth-first walk of the entire subtree that returns null only after visiting
-every descendant. An id that exists nowhere is a guaranteed full-tree walk, and
-in a poll loop that is a full-tree walk several times a second for the whole
-match.
+A repeated lookup miss can be expensive. Check the live debugger and the search
+scope before removing a lookup on the strength of this static inventory.
 
-It found 58 unreachable ids across 86 call sites. Not all are hot, but the hot
-ones are pure waste.
-
-Independent of the simulator, so its answers do not depend on tree fidelity.
-Needs the extracted game files; set `QOLLOCK_VANILLA` if they are not at the
-default path. It says so loudly rather than reporting false positives if they are
-missing.
+The inventory needs extracted game files; set `QOLLOCK_VANILLA` if they are not
+at the default path. It reports missing inputs rather than treating them as an
+empty inventory.
 
 ```
-node scripts/audit_panel_ids.js            # unreachable ids
+node scripts/audit_panel_ids.js            # ids absent from scanned sources
 node scripts/audit_panel_ids.js --all      # also list the reachable ones
 node scripts/audit_panel_ids.js --json
 ```
 
 ### `node scripts/profile_hud.js`
 
-Runs the real mod against an instrumented HUD tree and reports which feature
-asked the engine to do how much work per second.
+Runs mod JavaScript against an instrumented model and counts the operations it
+requests there. It does not measure engine or rendering cost.
 
 ```
 node scripts/profile_hud.js                      # profile and print
@@ -75,10 +69,9 @@ The headline metric is **tree nodes visited**, not lookups. A call count hides
 the thing that actually hurts, because a miss costs the whole subtree while a hit
 can stop early.
 
-Style and class writes are split into **changed** and **identical**. Panorama does
-not compare before acting on a style assignment: writing the value a panel already
-holds still marks it dirty and queues a re-layout. So a rewritten-identical value
-costs about the same as a real change, and the "identical" column is pure waste.
+Style and class writes are split into **changed** and **identical** in the model.
+Repeated identical assignments are optimization candidates; these counters do
+not establish whether a particular native setter dirties layout or its cost.
 
 Attribute reads and writes are tracked with **bytes**, which is how the 9.2 KB
 config being re-marshalled twice per tick became visible at all.
@@ -90,17 +83,17 @@ It has no engine timings and cannot produce milliseconds. Do not quote it as suc
 - Counts are **exact** for the simulated tree.
 - The **tree** is assembled from real layout XML (the mod's patched copies plus the
   vanilla files it does not override, 12 top-bar players, ~3100 panels) but it is
-  calibrated, not captured from a live match. In-engine, C++ decides composition
-  and creates much of the content dynamically. Use `--tree` (below) to remove this
-  caveat entirely.
+  calibrated, not captured from a live match. C++ decides composition and creates
+  much of the content dynamically. `--tree` improves the input from a capture;
+  it does not reproduce the engine or remove lifecycle and rendering caveats.
 - The single `cost` column combines ops using **estimated weights**, documented in
   `scripts/simulator/perf/counters.js`. Raw counters are always reported alongside.
   Any conclusion that flips when you nudge a weight is one to draw from the raw
   counters instead.
 
-So: "feature A does 40x the tree walks of feature B" is a fact. "This change cut
-total cost 46%" is a fact about the same tree. "This saves 3ms a frame" is not
-something this tool can tell you — verify wins in-game with the perf overlay.
+So: "feature A does 40x the tree walks of feature B" describes this run under
+this model and configuration. Neither that ratio nor a weighted cost reduction
+establishes an FPS improvement. Verify performance changes in the client.
 
 ## How wrong the modelled tree can be
 
@@ -117,8 +110,8 @@ class write re-applied to a real top-bar player subtree (hero badge, ability ico
 item bars, purchased mods) costs far more than the same write in a model with a
 fraction of the panels.
 
-A model built from our assumptions cannot falsify those assumptions. Which is what
-`--tree` is for.
+A model built from our assumptions cannot falsify those assumptions. Captures
+help constrain its inputs; they do not make it an independent game oracle.
 
 ## Capturing the real tree (`--tree`)
 
@@ -145,9 +138,9 @@ panel:
 - panel count per type
 - panel count per id (capped, most frequent first)
 
-That is what decides lookup cost — a `FindChildTraverse` hit stops at its target
-while a miss visits every node, so what matters is the tree's size and whether an id
-exists at all, not the identity of each panel. And it fits in a log.
+These counts constrain the size and contents of a captured tree. They do not
+preserve complete ancestry, traversal order or native bindings, so lookup cost
+and behavior in the reconstructed model remain estimates.
 
 `QOL.dumpTree` still exists for a full per-panel dump of a single subtree, which is
 small enough to survive. It is not wired to a button.
@@ -175,17 +168,16 @@ healthbar setting is not a valid baseline for a run at another.
 
 ## Regression ceilings (removed)
 
-`tests/perf_guards.test.js` locked in the fixes whose entire value is "this
-expensive thing stopped happening" — the output is identical either way, only the
-amount of work differs. It went with the rest of `tests/` on 2026-08-23
-(`docs/TESTING.md` explains why).
+The historical `tests/perf_guards.test.js` ceiling suite was removed. That does
+not mean the current repository has no tests: [TESTING.md](TESTING.md) documents
+the current behavior regressions and npm gate. No current performance-ceiling
+test with that filename should be invoked or cited as passing.
 
-One of its two genuinely load-bearing checks survives without it: the profiler
-itself prints `scheduled-callback errors` (`scripts/simulator/perf/profile.js:317`).
-A feature that throws every tick is invisible in game — the mod's error boundary
-catches it — while the work leading up to the throw repeats forever. That is how
-the `betterUnsecuredHud` ReferenceError was found, and a profiler run still shows
-it.
+The profiler reports scheduled-callback errors. Inspect them alongside operation
+counts: an exception or registry auto-disable can reduce later measured work
+without improving the feature. Scheduler error thresholds and cancellation are
+described in [scheduler.md](core/scheduler.md); repeated work is not guaranteed
+to continue forever after an error.
 
 What is no longer automated is the ceiling itself. Use `--save` / `--compare`
 before and after a perf change instead:
@@ -217,9 +209,9 @@ feat:statBonuses            30.3k  18.4%     30.3k     4.1       0       0
 - `new` — panels created. The most expensive op per unit; should be ~0 in steady
   state.
 
-The **WASTED TREE WALKS** section lists misses by panel id. Cross-reference against
-`audit_panel_ids.js`: if an id appears in both, the lookup can never succeed and
-the whole walk is dead work.
+The **WASTED TREE WALKS** section lists misses by panel id in the supplied model.
+Cross-reference with `audit_panel_ids.js` to prioritize debugger inspection;
+absence from both inputs still does not exclude native C++ panel creation.
 
 ## Results on this branch
 

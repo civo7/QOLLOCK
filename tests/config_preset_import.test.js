@@ -290,4 +290,43 @@ test("enabling ENABLE_PERF_DEBUG_DETAIL alone activates ql_perf manifest and ena
     assert.strictEqual(State.perfDetailed, true, "State.perfDetailed should be true");
 });
 
+test("legacy configs with DEFAULT_HERO strip DEFAULT_HERO on merge, adapter load, and token decode", () => {
+    const hud = sim.createHud();
+    hud.assertLoaded();
+    const QOL = hud.sandbox.global.QOL;
+    const defaultCfg = hud.sandbox.global.QOL_DEFAULT_CONFIG;
+
+    // 1. MergeConfig strips DEFAULT_HERO
+    const legacyCfg = Object.assign({}, defaultCfg, { DEFAULT_HERO: "hero_hornet" });
+    const merged = hud.sandbox.global.MergeConfig(legacyCfg);
+    assert.strictEqual(Object.prototype.hasOwnProperty.call(merged, "DEFAULT_HERO"), false, "merged config must not have DEFAULT_HERO");
+    assert.strictEqual(merged.DEFAULT_HERO, undefined);
+
+    // 2. ConfigAdapter strips DEFAULT_HERO from flat and legacy bucket
+    const flatCfg = { DEFAULT_HERO: "hero_frank", ENABLE_AMMO_STATUS: 1 };
+    QOL.core.ConfigAdapter.loadFromFlat(flatCfg);
+    assert.strictEqual(flatCfg.DEFAULT_HERO, undefined);
+
+    // 3. User compact export tokens decode and strip DEFAULT_HERO
+    const tokens = [
+        "[QOL-3-2-0]:AjU0SxQjZMhMbk8lk6kBZCADh4clKBTxR0MGkEGhYGRkZIxYQjZiCRlkAKBQwBgggwyAjCAcWFoyAicDycHjAUsswRJLQh5kzhwAAAAyyJAhIUMmQ8kHBowMSzIBAFCWyChLZGT0U5bIKEtkwKOU8ryKIkMGAAAAoAWgIyNbkZEpkP8fpQKQpJWQQSYAk5HJ0MjI-P8DrQ",
+        "[QOL-4-0-0]:Aig0SxQjZMhMbmUlk6kBZCADh4clKBT4T-dzEZKi6GRkZIxYQjZiCZl2AKBQwBgggwyAjCAcWVoyAiejF8DjAUsswRJLXR5kzh4-AEAyyJAhIUMmQ8kHBowMSzJZ_lOWyChLZGT0U5bIKEtk_qiU8ryKIkM2oCPQoEWgAwBYIfcoAoY-pRqQpJWQQQYAk5HJ0MjI-P8Dqg",
+        "[QOL-4-0-0]:AjI0SxQjZMhMDk8gk5UhZCADh4clKBQAQkEGAIKiAWRkZIxYQjZiCRlkAKBQwBgggwyAjCAcWFoyAicDycHjAUsswRJL3xBkzgAwAAAyyJAhIUMmQ8kHBowMSzIBAFCWyChLZGT0U5bIKEtkxKOU8ryKIkMGAAAAoAWgIyNbkZEpkP8fpQKQpBWQQQYAk5HJ0MjI-P8Dsw"
+    ];
+
+    for (const t of tokens) {
+        const m = t.match(/\[QOL-([0-9]+-[0-9]+-[0-9]+)\]:?([A-Za-z0-9_-]+)/i);
+        assert.ok(m, `Token ${t} must match export pattern`);
+        const semver = m[1].replace(/-/g, ".");
+        const codec = QOL.core.codec;
+        const binary = codec.fromBase64Url(m[2]);
+        const parsed = codec.deserializeBuildPayloadCompact(binary, semver);
+        assert.ok(parsed, "Parsed config must exist");
+        const tokenMerged = hud.sandbox.global.MergeConfig(parsed);
+        assert.strictEqual(Object.prototype.hasOwnProperty.call(tokenMerged, "DEFAULT_HERO"), false);
+        assert.strictEqual(tokenMerged.DEFAULT_HERO, undefined);
+    }
+});
+
+
 

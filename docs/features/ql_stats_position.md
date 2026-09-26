@@ -20,6 +20,7 @@ Customizes the screen anchoring, offsets, and contextual visibility of the hero 
 ## Architecture & Lifecycle
 
 ### Activation & Lifecycle Hooks
+- **Enable Key**: Registered with `enableKey: "ENABLE_STATS_POSITION"`.
 - **`onEnable()`**: Subscribes to the native `engine:scoreboard_toggle` event bus channel, boots a 1Hz (`1.0s` interval) baseline polling task via `QOL.core.Scheduler.createPollLoop()`, and applies initial coordinates.
 - **`onDisable()`**: Detaches from `engine:scoreboard_toggle`, halts the scheduler loop, and invokes `resetStatsPanel()` to strip `.QolStatsRight` and clear inline `x`, `y`, and `opacity` overrides.
 - **`onSettingsChanged()`**: Clears internal style signatures (`_sig = ""`) and synchronizes loop state and coordinates immediately.
@@ -35,10 +36,11 @@ Customizes the screen anchoring, offsets, and contextual visibility of the hero 
 ### Engine Events & Polling Frequency
 - **Polling Frequency**: 1Hz (`1.0s` interval) baseline.
 - **Engine Event Subscription**:
-  - Listens to `engine:scoreboard_toggle` via `ctx.events.on()`. Instantly schedules a 0ms tick (`$.Schedule(0, _tick)`) when Tab is pressed or released to update visibility rules with zero delay.
+  - Listens to `engine:scoreboard_toggle` via `ctx.events.on()` and queues `$.Schedule(0, _tick)` to re-evaluate visibility. Scheduling zero seconds is not a guarantee of zero latency or final native layout state.
 
 ### Performance Tier & Caveats
 - **Performance Tier**: Low (1Hz baseline combined with event reactivity).
-- **Default Value Guard**: `hasStatsPositionWork(cfg)` checks whether any setting differs from defaults. If all settings are at factory defaults, the panel is reset and style mutation is bypassed entirely.
+- **Default Value Guard**: `hasStatsPositionWork(cfg)` checks whether any setting differs from defaults and whether `ENABLE_STATS_POSITION` is enabled. If the feature is disabled or all settings are at factory defaults, the panel is reset and style mutation is bypassed entirely.
+- **Hideout Suppression**: In Hideout/Sandbox lobby (`QOL.core.hud.isInHideout`), any applied offsets or classes are reset, restoring native stats layout, and restored upon match reentry.
 - **Signature Optimization**: Guards style writes with `_sig = hidden ? "hidden" : ("show|" + side + "|" + offX + "|" + offY)`.
 - **Clamping**: Coordinate offsets are safely clamped to `[-500, 500]` pixels.

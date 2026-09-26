@@ -1,48 +1,61 @@
-# `panorama/scripts/manifests/ql_minimap_runtime` (Minimap Dynamic Scaling, Zoom & Overlays)
+# ql_minimap_runtime
 
-## Description
-Serves as the central runtime controller for the Deadlock tactical minimap (`hud_minimap` and `minimap_persp`). Provides granular dimension controls (small baseline size, dynamic Alt-key zoom, Tab-key scoreboard zoom), margin positioning, opacity adjustment, and integration for subterranean tunnel route overlays. Uses vector-level `uiScale` transformations to ensure icon coordinates and hero markers scale seamlessly without visual artifacting.
+Base/Alt/Tab geometry, opacity, crates, tunnels and minimap presentation.
 
-## Files
-- Manifest: `panorama/scripts/manifests/ql_minimap_runtime/manifest.js`
-- Styles: `panorama/styles/features/ql_feat_minimap.css`
+Source: [manifest.js](../../panorama/scripts/manifests/ql_minimap_runtime/manifest.js),
+loaded by the HUD layout. The general [lifecycle contract](../core/feature_registry.md)
+and [architecture](../../ARCHITECTURE.md) explain context and configuration routing.
 
-## Settings & Defaults
-| Config Key | Type | Default | Description |
-| :--- | :--- | :--- | :--- |
-| `MINIMAP_SMALL_SIZE` | `slider` | `400` | Baseline minimap dimensions in pixels (200px to 1000px). |
-| `MINIMAP_LARGE_SIZE` | `slider` | `750` | Fallback enlarged minimap size in pixels (400px to 1200px). |
-| `MINIMAP_LARGE_SIZE_ALT` | `slider` | `750` | Minimap dimensions when holding the Alt key (Detail View). |
-| `MINIMAP_LARGE_SIZE_TAB` | `slider` | `750` | Minimap dimensions when opening the Tab key (Scoreboard). |
-| `ENABLE_TAB_ZOOM` | `toggle` | `false` | Automatically enlarges minimap while holding the Tab key. |
-| `ENABLE_ALT_ZOOM` | `toggle` | `false` | Automatically enlarges minimap while holding the Alt key. |
-| `MINIMAP_OPACITY` | `slider` | `100` | Opacity percentage for the minimap container (0% to 100%). |
-| `MINIMAP_X_OFFSET` | `slider` | `0` | Horizontal pixel offset shifting the minimap container. |
-| `MINIMAP_Y_OFFSET` | `slider` | `0` | Vertical pixel offset shifting the minimap container. |
-| `ENABLE_TUNNEL_OVERLAY` | `toggle` | `false` | Renders a high-contrast graphic overlay depicting underground tunnel networks. |
+## Runtime and ownership
 
-## Architecture & Lifecycle
+Owns base/Alt/Tab geometry and presentation, not the objective state
+machine. `engine:scoreboard_toggle` schedules an immediate follow-up tick.
+`_determineOptimalRate` returns 0.05 seconds when Alt zoom is enabled or the
+base minimap size is customized; otherwise it returns 0.5 seconds. Do not copy
+the nearby stale 10Hz comment instead of this function. Preserve original-parent
+tracking for draw-over-UI behavior and shared rotation/flip ownership with
+`ql_compass`. Crate positions come from `ql_minimap_crate_data.js`.
 
-### Activation & Lifecycle Hooks
-- **`onEnable()`**: Injects `minimap_overlay_root`, hooks `engine:scoreboard_toggle` for instant Tab-key zoom detection, and registers an adaptive scheduler task running at 20Hz (`0.05s`) during active zoom, throttling down to 2Hz (`0.5s`) when stable.
-- **`onDisable()`**: Cancels scheduler loops, restores native panel scales and positioning, removes tunnel overlays, and resets transform signatures.
-- **`onSettingsChanged()`**: Synchronously runs `_apply()` to re-evaluate dimensions, offsets, and overlay visibility.
-- **`test()`**: Verifies that `#hud_minimap` and `#minimap_persp` are present and valid in the HUD tree.
+## Declared settings
 
-### DOM Injection & Target Panels
-- **Target Containers**:
-  - `Panel#hud_minimap`: Outer minimap wrapper.
-  - `Panel#minimap_persp`: Vector-scaled projection panel receiving `uiScale` transformations.
-  - `Panel#minimap_container`: Layout anchor for minimap widgets.
-- **Injected Panels**:
-  - `Panel#minimap_overlay_root`: Container for custom HUD overlays.
-  - `Image#tunnel_overlay`: Underground tunnel network graphic overlay.
+- `ENABLE_ALT_ZOOM` (toggle)
+- `ENABLE_TAB_ZOOM` (toggle)
+- `MINIMAP_BASE_OPACITY` (slider)
+- `MINIMAL_MINIMAP` (toggle)
+- `MINIMAL_MINIMAP_OPACITY` (slider)
+- `MINIMAP_SMALL_SIZE` (number)
+- `MINIMAP_X_OFFSET` (number)
+- `MINIMAP_Y_OFFSET` (number)
+- `MINIMAP_LARGE_SIZE_ALT` (number)
+- `MINIMAP_LARGE_SIZE_TAB` (number)
+- `ZOOM_X_OFFSET_ALT` (number)
+- `ZOOM_Y_OFFSET_ALT` (number)
+- `ZOOM_X_OFFSET_TAB` (number)
+- `ZOOM_Y_OFFSET_TAB` (number)
+- `ALT_ZOOM_OPACITY` (slider)
+- `TAB_ZOOM_OPACITY` (slider)
+- `ALT_ZOOM_DRAW_OVER_UI` (toggle)
+- `TAB_ZOOM_DRAW_OVER_UI` (toggle)
+- `ENABLE_MINIMAP_CRATE_OVERLAY` (toggle)
+- `ENABLE_MINIMAP_REM_TUNNELS` (toggle)
+- `MINIMAP_REM_TUNNELS_OPACITY` (slider)
+- `ENABLE_ALT_ZOOM_REM_TUNNELS` (toggle)
+- `ALT_ZOOM_REM_TUNNELS_OPACITY` (slider)
+- `ENABLE_TAB_ZOOM_REM_TUNNELS` (toggle)
+- `TAB_ZOOM_REM_TUNNELS_OPACITY` (slider)
+- `MINIMAP_ICON_COLOR` (palette)
+- `MINIMAP_FLIP` (toggle)
+- `MINIMAP_ROTATE_WITH_PLAYER` (toggle)
+- `ENABLE_MINIMAP_ELEVATION_MARKERS` (toggle)
 
-### Engine Events & Polling Frequency
-- **Engine Events**: Hooked to `engine:scoreboard_toggle` via `ctx.events` to instantly toggle Tab zoom state without polling latency.
-- **Polling Frequency**: Adaptive—runs at 20Hz (`0.05s` interval) while Alt or Tab zoom transitions occur; throttles to 2Hz (`0.5s`) once dimensions stabilize.
+Defaults/ranges belong to the linked schema, flat `QOL_DEFAULT_CONFIG` and
+versioned codec definitions, not a duplicated table here. They are separate
+representations; a declared field is not automatically a visible control or
+proof of active runtime behavior. See [adding settings](../ADDING_SETTINGS.md).
 
-### Performance Tier & Caveats
-- **Performance Tier**: Low to Medium (`~0.07ms` per tick during zoom transitions).
-- **Suppression**: Collapses custom overlays in the Hideout/Sandbox lobby.
-- **Vector Scaling**: Rather than modifying CSS `width`/`height` (which causes expensive C++ layout invalidations across the entire minimap subtree), this feature manipulates `uiScale` on `minimap_persp`, allowing GPU-accelerated scaling.
+## Verification boundary
+
+The statements above describe source behavior. Native panel identity, binding
+values, rendering and transitions need the maintainer's Panorama Debugger and
+a repacked client scenario; neither a schema nor a read-only manifest hook
+proves the whole feature works. See [verification](../TESTING.md).

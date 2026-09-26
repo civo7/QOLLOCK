@@ -154,6 +154,11 @@
     FR.register({
         id: "ql_recent_purchases",
         enabledByDefault: false,
+        enableKeys: [
+            "ENABLE_SHOP_RECENT_PURCHASES",
+            "ENABLE_SHOP_ITEM_NOTIFICATIONS",
+            "ENABLE_HERO_PURCHASE_POPUPS"
+        ],
         settings: [
             { key: "ENABLE_SHOP_RECENT_PURCHASES", type: "toggle", default: false },
             { key: "ENABLE_SHOP_ITEM_NOTIFICATIONS", type: "toggle", default: false },
@@ -180,6 +185,7 @@
             var _lastFilterSig = null;
             var _lastFirstChild = null;
             var _wasInHideout = null;
+            var _hideoutClearTimer = null;
             var _quickSeenKeys = {};
             var _quickInitialized = false;
             var _quickActiveEntries = [];
@@ -900,11 +906,18 @@
             }
 
             function _handleHideoutRP(root) {
-                var hud = QOL.core && QOL.core.Hud;
+                var hud = (typeof QOL !== "undefined" && QOL.core && (QOL.core.hud || QOL.core.Hud)) || null;
                 var isInHideout = hud && hud.isInHideout ? hud.isInHideout(root) : (root && root.BHasClass && root.BHasClass("hideout_active"));
                 if (_wasInHideout === null || isInHideout !== _wasInHideout) {
                     _clearContainerRP(root);
-                    $.Schedule(0.5, function() { _clearContainerRP(root); });
+                    if (_hideoutClearTimer !== null) {
+                        try { $.CancelScheduled(_hideoutClearTimer); } catch(e) {}
+                        _hideoutClearTimer = null;
+                    }
+                    _hideoutClearTimer = $.Schedule(0.5, function() {
+                        _hideoutClearTimer = null;
+                        _clearContainerRP(root);
+                    });
                 }
                 _wasInHideout = isInHideout;
             }
@@ -1037,6 +1050,11 @@
                     _quickPurchasesHostPanel = null;
                     _cachedRejuvTimer = null;
                     _topBarPanel = null;
+                    if (_hideoutClearTimer !== null) {
+                        try { $.CancelScheduled(_hideoutClearTimer); } catch(e) {}
+                        _hideoutClearTimer = null;
+                    }
+                    _wasInHideout = null;
                 },
                 onSettingsChanged: function() {
                     _lastVisibilitySig = null;

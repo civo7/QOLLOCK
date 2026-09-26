@@ -1,90 +1,111 @@
-# QOLLOCK Known Gotchas & Engine Edge Cases
+# QOLLOCK Panorama pitfalls
 
-Critical runtime constraints and architectural traps discovered across Deadlock Source 2 Panorama development.
+Use [ARCHITECTURE.md](../ARCHITECTURE.md) for the consolidated current contract.
+This page records recurring traps; it does not replace source inspection or
+in-game evidence.
 
----
+## Native panels are not an XML-only tree
 
-## 1. Dynamic C++ Panel Generation (The 95% Rule)
+Most Deadlock panels are created dynamically by C++ game code. Layout XML often
+contains only the surrounding containers. A missing XML declaration or a miss in
+`scripts/audit_panel_ids.js` does not prove that a panel cannot exist.
 
-- Over 95% of panels in Deadlock are constructed dynamically at runtime by C++ game code, not declared in XML files.
-- XML files in `pak01_dir/panorama/` show only the outermost scaffolding containers.
-- **Trap:** Searching XML files for panel IDs or class names often leads to false conclusions that an element does not exist.
-- **Rule:** Never guess panel hierarchies. Use the maintainer's Panorama Debugger to inspect live DOM trees and find real panel IDs and classes.
+Use the extracted game files and maintainer's Panorama Debugger. Request the
+specific scenario, parent chain, child IDs/classes and label values you need.
+Do not assume that the first descendant with a matching ID belongs to the current
+player or live instance; duplicate IDs are normal in repeated UI subtrees.
 
----
+## Context isolation and initialization
 
-## 2. Scrolled Containers (`overflow: squish scroll;`) & Layout Offsets
+`hud.xml` and `hud_escape_menu.xml` load different scripts into different JS
+contexts. The HUD loads gameplay manifests and `core/ql_app.js`; the settings
+context loads shared low-level services, locale dictionaries and UI modules,
+**not FeatureRegistry or gameplay manifests**.
 
-- In Source 2 Panorama, `panel.actualyoffset` and `panel.actualxoffset` represent **static layout offsets** relative to the parent layout flow.
-- When an `overflow: squish scroll;` container (such as `SettingsList`) scrolls, `actualyoffset` **does not decrease**.
-- **Trap:** Checking `actualyoffset >= viewportHeight` to determine visibility will falsely mark scrolled visible elements as "off-screen" and drop hover events or tooltips.
-- **Solution:**
-  - When handling mouse hover, rely on `GameUI.GetCursorPosition()` — if the user hovered over the element, it is definitively rendered under the cursor.
-  - When calculating visual Y programmatically, subtract the list's scroll offset (derived from `ScrollThumb.actualyoffset` ratio).
+Settings must use their existing metadata/registered tab renderers, not query the
+HUD's FeatureRegistry as if it were shared memory. Check script includes before
+calling a helper in profile, profile-card, hero-testing or quickbuy code as well.
+Panel attributes and the existing bridge APIs carry cross-context state.
 
----
+## Panorama is not a browser
 
-## 3. Style Churn & Layout Invalidation
+Do not assume DOM `window`/`document`, `fetch`, `XMLHttpRequest`, WebSockets,
+`setTimeout` or `setInterval` in Panorama. Use native panels, engine events and
+`$.Schedule`/`$.CancelScheduled` through the appropriate existing infrastructure.
+Feature polling belongs in `QOL.core.Scheduler`, not another timer implementation.
 
-- Assigning `panel.style.property = val` repeatedly every tick forces Source 2 C++ to invalidate the style cache and recalculate layout across the panel subtree.
-- In high-refresh rate monitors (144Hz–240Hz), redundant style assignments cause microstutter and frame time spikes.
-- **Rule:** Always guard style mutations using `QOL.core.panel.setStyleIfChanged(panel, prop, val)` or string signature diffing (`_lastStyleSig`).
+The embedded HTML storage page is a separate browser environment. Browser APIs
+used inside that page are not evidence that HUD scripts can call them.
 
----
+Shipped JS uses the syntax accepted by `eslint.config.js` and the engine build
+pipeline. Keep continuation operators at the end of the preceding line, as
+required by the project's Valve minifier/ASI rule.
 
-## 4. V8 JavaScript Environment (No Web APIs)
+## Scroll geometry and UI scale
 
-- Deadlock runs modern V8 (ES6+ features like `const`, `let`, arrow functions, template literals, destructuring, `Map`, `Set` work).
-- **Trap:** There are **NO DOM or Web APIs**:
-  - No `window` or `document`
-  - No `fetch`, `XMLHttpRequest`, or WebSockets
-  - No `setTimeout` or `setInterval`
-- **Solution:** Use Panorama primitives:
-  - `$.Schedule(delaySec, callback)`
-  - `$.CancelScheduled(timerId)`
-  - `$.Msg(string)`
-  - `$.CreatePanel(type, parent, id)`
-  - `$.RegisterForUnhandledEvent(eventName, callback)`
+`actualxoffset`/`actualyoffset` describe layout offsets; they are not sufficient
+to decide whether a child of `overflow: squish scroll` is currently visible.
+A child's static offset can remain unchanged while the container scrolls.
+Preserve the existing tooltip and search/drag scroll handling instead of
+replacing it with `actualyoffset >= viewportHeight` checks.
 
----
+Likewise, cursor/layout measurements and inline CSS design coordinates can use
+different scales. The current positioning code accounts for `actualuiscale_x`
+and `actualuiscale_y`; copying physical pixel coordinates straight into CSS can
+double-scale overlays on 1440p/4K displays. Reuse the relevant tooltip, preview
+or drag path and verify actual positioning in Panorama.
 
-## 5. VPK Repack Requirement
+## Helper semantics and style ownership
 
-- Editing `.js`, `.css`, or `.xml` source files does NOT affect the running game until compiled into `.vjs_c` / `.vcss_c` and repacked into `pak47.vpk`.
-- The compilation and repacking pipeline is managed directly by the maintainer.
-- Never assume an in-game behavior is changed without a fresh VPK repack.
+[HELPERS.md](HELPERS.md) distinguishes direct-child search, descendant traversal,
+class search, ancestor walks and deep text reads. They are not interchangeable.
+A generic first-text helper cannot identify the authoritative numeric label.
 
----
+Avoid unchanged style writes, but do not assume native read-back equals your
+assigned string for every property. Use property-appropriate helpers/signatures.
+Clearing a code override with `ClearPropertyFromCode` is not equivalent to
+assigning an empty string or an arbitrary default.
 
-## 6. Polling Rates & Frame Budgets
+A style signature belongs to a particular panel. Reset it when replacing that
+panel, otherwise the new instance can skip its initial style application.
+A live cached handle does not prove current root/player ownership; callers own
+rebinding and invalidation. Delete asynchronously and prevent delayed callbacks
+from recreating disabled feature UI.
 
-- Deadlock's frame budget at 60fps is 16.6ms, but at 144fps it is only 6.9ms.
-- Features should **never** poll at 60Hz (0.016s).
-- Standard polling frequencies:
-  - **Idle / Event-Driven:** 0.5s – 1.0s (1–2Hz).
-  - **Active Tracking / Combat:** 0.05s – 0.1s (10–20Hz).
-- Use `onSettingsChanged` for instant 0ms response to settings adjustments instead of polling configuration stores.
+## Hideout and match transitions
 
----
+Game CSS applies hideout/shop-specific visibility and scaling, but does not prove
+that a HUD root is never destroyed or that a particular JS change fixes jitter.
+Those claims require live evidence.
 
-## 7. Multi-Realm Panorama Architecture (`hud.xml` vs `hud_escape_menu.xml`)
+Do not skip every Scheduler callback in hideout. Features can need their callback
+to remove overlays or restore native cursor classes. Stop work when its owning
+context is invalid; otherwise let each feature apply its own idle/visibility and
+cleanup policy. Back off missing-source scans and verify later recovery.
 
-- In Source 2 Panorama, panels loaded from different XML root files execute in completely isolated V8 JavaScript realms.
-- `hud.xml` is the in-match HUD realm. It loads `core/`, `FeatureRegistry`, and all 50 gameplay feature manifests (`manifests/*/manifest.js`).
-- `hud_escape_menu.xml` is the settings menu realm. It loads UI scripts (`window.js`, `gameplay_tabs.js`, `renderer.js`, `presets.js`, `theme.js`, etc.), but **does NOT load feature manifests**.
-- **Trap:** Attempting to render settings controls dynamically via `Q.core.FeatureRegistry.getManifest(featureId)` inside the escape menu realm will encounter `manifest === undefined`, resulting in empty section containers with no controls underneath.
-- **Rule:**
-  - Gameplay settings tabs in the Escape Menu are rendered by their registered tab renderers (`_tabRenderers`, e.g. `QOL.ui.gameplayTabs` in `ui/gameplay_tabs.js`).
-  - `window.js` MUST call registered custom renderers first before any layout fallback.
-  - Manifests belong strictly in `hud.xml` for match-time runtime logic.
+`CitadelGameStateChanged` invalidates shared panel caches. It does not establish
+that all native classes and children have already reached their final state.
 
----
+## Configuration and localization traps
 
-## 8. Physical vs Virtual Coordinate Spaces (High DPI / 1440p / 4K Misalignment)
+- A supported numeric zero is not missing input. `value || fallback` can silently
+  replace zero-valued settings such as Buff Delay. Use the canonical normalizer.
+- Feature config values have canonical types. Do not guess toggles from key
+  prefixes or assume every value called `ENABLE_*` is a literal numeric `1`.
+- A setting absent from the feature's declared ownership may never reach its
+  config slice, even though the control displays the expected value.
+- Settings text uses English exact-key dictionaries. `LocalizeSettingsText`'s
+  second argument is a force flag, not a locale code; it does not resolve native
+  Valve `#tokens`. Dev/status text must also be localized.
+- English literals used as catalog keys are valid; direct untranslated dynamic
+  captions and inline bilingual branches are not. See [LOCALIZATION.md](LOCALIZATION.md).
 
-- Source 2 Panorama CSS inline styles (`panel.style.x`, `panel.style.y`, `panel.style.marginRight`, etc.) evaluate values in **virtual design coordinates** (based on standard 1080p canvas proportions, scaled automatically by the engine root scale).
-- In contrast, layout geometry properties (`panel.actuallayoutwidth`, `panel.actuallayoutheight`, `panel.actualxoffset`, `GameUI.GetCursorPosition()`, `GetPositionWithinAncestor`) return **physical device pixels**.
-- **Trap:** Directly writing physical pixel values into inline styles (`panel.style.x = x + "px"`) causes double-scaling on non-1080p monitors. On 1440p (`1.333x`) and 4K (`2.0x`), coordinates are scaled twice by the engine, pushing tooltips, popups, and preview overlays far off the right or bottom edges of the screen.
-- **Solution:** Always normalize physical coordinates to virtual units before assigning inline styles by dividing by `host.actualuiscale_x` and `host.actualuiscale_y` (or `actuallayoutwidth / desiredlayoutwidth`).
+## Source edits are not installed game changes
 
+After JS/XML/CSS edits, the maintainer must compile and repack before testing the
+change in game. Agents must not execute build scripts or resourcecompiler, modify
+game addons, or create/modify VPKs. Offline load/tests do not render Panorama or
+establish client persistence, panel lifecycle or FPS.
 
+Follow [TESTING.md](TESTING.md), [PROFILING.md](PROFILING.md) and the
+[maintainer checklist](TEST_CHECKLIST.md); report exactly what was exercised.
