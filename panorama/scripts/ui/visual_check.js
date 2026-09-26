@@ -4,26 +4,27 @@
     const Q = globalThis.QOL;
     const P = Q.core.panel;
     const persistence = Q.core.persistence;
+    const localize = text => Q.ui.theme.LocalizeSettingsText(text, true);
     let session = null;
 
     // Explicit scenarios use existing setting keys. X/Y are one operation.
     const groups = [
-        ["Top bar / Верхняя панель", { HUD_TOP_BAR_ENABLED: 1, TOP_BAR_OPACITY: 1, TOP_BAR_SCALE: 1, TOP_BAR_X_OFFSET: 0, TOP_BAR_Y_OFFSET: 0 },
-            { TOP_BAR_X_OFFSET: 100, TOP_BAR_Y_OFFSET: 80, TOP_BAR_SCALE: 0.8 }, "Right + down, smaller / Вправо + вниз, меньше"],
-        ["Bottom bar / Нижняя панель", { HUD_BOTTOM_BAR_ENABLED: 1, BOTTOM_BAR_OPACITY: 1, BOTTOM_BAR_SCALE: 1, BOTTOM_BAR_X_OFFSET: 0, BOTTOM_BAR_Y_OFFSET: 0 },
-            { BOTTOM_BAR_X_OFFSET: 100, BOTTOM_BAR_Y_OFFSET: -80, BOTTOM_BAR_SCALE: 0.8 }, "Right + up, smaller / Вправо + вверх, меньше"],
-        ["Souls / Души", { HUD_SOULS_ENABLED: 1, SOULS_OPACITY: 1, SOULS_X_OFFSET: 0, SOULS_Y_OFFSET: 0 },
-            { SOULS_X_OFFSET: 100, SOULS_Y_OFFSET: -80, SOULS_OPACITY: 0.5 }, "Right + up, faded / Вправо + вверх, прозрачнее"],
-        ["Items / Предметы", { HUD_ITEMS_ENABLED: 1, ITEMS_OPACITY: 1, ITEMS_X_OFFSET: 0, ITEMS_Y_OFFSET: 0 },
-            { ITEMS_X_OFFSET: 100, ITEMS_Y_OFFSET: -80, ITEMS_OPACITY: 0.5 }, "Right + up, faded; equip items / Вправо + вверх, прозрачнее; нужны предметы"],
-        ["Ammo / Патроны", { ENABLE_AMMO_STATUS: 1, ENABLE_HIDE_AMMO_ALL: 0, ENABLE_HIDE_MAGAZINE: 0, AMMO_PANEL_SCALE: 100, AMMO_PANEL_X_OFFSET: 0, AMMO_PANEL_Y_OFFSET: 0 },
-            { AMMO_PANEL_X_OFFSET: 80, AMMO_PANEL_Y_OFFSET: -80, AMMO_PANEL_SCALE: 150 }, "Right + up, larger / Вправо + вверх, больше"],
-        ["Minimap / Миникарта", { MINIMAP_BASE_OPACITY: 1, MINIMAP_SMALL_SIZE: 400, MINIMAP_X_OFFSET: 0, MINIMAP_Y_OFFSET: 0, ENABLE_ALT_ZOOM: 0, ENABLE_TAB_ZOOM: 0 },
-            { MINIMAP_SMALL_SIZE: 300, MINIMAP_BASE_OPACITY: 0.5 }, "Smaller, faded / Меньше, прозрачнее"],
+        ["Top Bar", { HUD_TOP_BAR_ENABLED: 1, TOP_BAR_OPACITY: 1, TOP_BAR_SCALE: 1, TOP_BAR_X_OFFSET: 0, TOP_BAR_Y_OFFSET: 0 },
+            { TOP_BAR_X_OFFSET: 100, TOP_BAR_Y_OFFSET: 80, TOP_BAR_SCALE: 0.8 }, "Right and down, smaller"],
+        ["Bottom Bar", { HUD_BOTTOM_BAR_ENABLED: 1, BOTTOM_BAR_OPACITY: 1, BOTTOM_BAR_SCALE: 1, BOTTOM_BAR_X_OFFSET: 0, BOTTOM_BAR_Y_OFFSET: 0 },
+            { BOTTOM_BAR_X_OFFSET: 100, BOTTOM_BAR_Y_OFFSET: -80, BOTTOM_BAR_SCALE: 0.8 }, "Right and up, smaller"],
+        ["Souls", { HUD_SOULS_ENABLED: 1, SOULS_OPACITY: 1, SOULS_X_OFFSET: 0, SOULS_Y_OFFSET: 0 },
+            { SOULS_X_OFFSET: 100, SOULS_Y_OFFSET: -80, SOULS_OPACITY: 0.5 }, "Right and up, more transparent"],
+        ["Items", { HUD_ITEMS_ENABLED: 1, ITEMS_OPACITY: 1, ITEMS_X_OFFSET: 0, ITEMS_Y_OFFSET: 0 },
+            { ITEMS_X_OFFSET: 100, ITEMS_Y_OFFSET: -80, ITEMS_OPACITY: 0.5 }, "Right and up, more transparent; equip items first"],
+        ["Ammo", { ENABLE_AMMO_STATUS: 1, ENABLE_HIDE_AMMO_ALL: 0, ENABLE_HIDE_MAGAZINE: 0, AMMO_PANEL_SCALE: 100, AMMO_PANEL_X_OFFSET: 0, AMMO_PANEL_Y_OFFSET: 0 },
+            { AMMO_PANEL_X_OFFSET: 80, AMMO_PANEL_Y_OFFSET: -80, AMMO_PANEL_SCALE: 150 }, "Right and up, larger"],
+        ["Minimap", { MINIMAP_BASE_OPACITY: 1, MINIMAP_SMALL_SIZE: 400, MINIMAP_X_OFFSET: 0, MINIMAP_Y_OFFSET: 0, ENABLE_ALT_ZOOM: 0, ENABLE_TAB_ZOOM: 0 },
+            { MINIMAP_SMALL_SIZE: 300, MINIMAP_BASE_OPACITY: 0.5 }, "Smaller, more transparent"],
     ];
     const steps = [];
     for (const [name, normal, changed, expected] of groups) {
-        steps.push({ name, values: normal, expected: "Reference position and size / Исходное положение и размер" });
+        steps.push({ name, values: normal, expected: "Reference position and size" });
         steps.push({ name, values: Object.assign({}, normal, changed), expected });
     }
 
@@ -62,8 +63,8 @@
         // Restore the previous group before applying the next; unrelated settings
         // stay as they are. Use the normal HUD revision bridge, not direct styles.
         publish(Object.assign({}, session.original, step.values));
-        session.label.text = `${session.index + 1}/${steps.length} — ${step.name}\n${step.expected}\n` +
-            "Observe the HUD; this is not an automatic pass. / Проверь глазами.\n" +
+        session.label.text = `${session.index + 1}/${steps.length} — ${localize(step.name)}\n${localize(step.expected)}\n` +
+            localize("Observe the HUD; this is not an automatic pass.") + "\n" +
             Object.entries(step.values).map(([key, value]) => `${key} = ${value}`).join("  |  ");
     }
 
@@ -108,14 +109,14 @@
                 const panel = P.create("Button", buttons, id);
                 Object.assign(panel.style, { backgroundColor: "#304658", padding: "10px", marginRight: "8px", marginTop: "12px" });
                 const caption = P.create("Label", panel, "");
-                caption.text = text;
+                caption.text = localize(text);
                 caption.style.color = "#ffffff";
                 panel.SetPanelEvent("onactivate", () => { if (session === owner) action(); });
             }
-            button("QOLVisualCheckBack", "Back / Назад", () => applyStep(session.index - 1));
-            button("QOLVisualCheckRepeat", "A/B / Повтор", () => applyStep(session.index % 2 ? session.index - 1 : session.index + 1));
-            button("QOLVisualCheckNext", "Next / Далее", () => applyStep(session.index + 1));
-            button("QOLVisualCheckStop", "Stop / Стоп", stop);
+            button("QOLVisualCheckBack", "Back", () => applyStep(session.index - 1));
+            button("QOLVisualCheckRepeat", "Compare A/B", () => applyStep(session.index % 2 ? session.index - 1 : session.index + 1));
+            button("QOLVisualCheckNext", "Next", () => applyStep(session.index + 1));
+            button("QOLVisualCheckStop", "Stop", stop);
             // Only direct menu children: do not traverse native HUD subtrees.
             // The CEF bridge remains visible so pending real saves can complete.
             for (const child of context.Children()) {

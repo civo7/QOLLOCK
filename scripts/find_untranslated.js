@@ -14,7 +14,7 @@ const { loadLocaleMaps, LANGUAGES } = require("./locales_helper.js");
 
 function main() {
     const clock = new Clock();
-    const doc = new Document();
+    const doc = new Document(clock);
     const root = doc.root;
     const escapeMenu = doc.create("Panel", { id: "EscapeMenu" });
     root.addChild(escapeMenu);
@@ -22,10 +22,12 @@ function main() {
     const sandbox = new Sandbox({ clock, doc, name: "settings" });
     sandbox.global.$.GetContextPanel = () => escapeMenu;
 
-    const { scripts } = settingsScripts();
+    const { scripts, missing: missingIncludes } = settingsScripts();
+    if (missingIncludes.length) throw new Error("Missing settings includes: " + missingIncludes.join(", "));
     for (const s of scripts) {
         sandbox.load(s.absPath);
     }
+    if (sandbox.loadErrors.length) throw new Error("Settings script loading failed; localization scan is incomplete");
 
     const seen = new Set();
 
@@ -59,7 +61,7 @@ function main() {
                 sandbox.global.currentTab = tab;
                 sandbox.global.RenderCurrentTabContent(stub);
             }
-        } catch (_) {}
+        } catch (error) { throw new Error(`Cannot render localization tab ${tab}: ${error.message}`); }
 
         try {
             if (typeof sandbox.global.GetSettingsTabDisplayName === "function") {

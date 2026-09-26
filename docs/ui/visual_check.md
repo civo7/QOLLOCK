@@ -1,6 +1,6 @@
 # Manual visual settings check
 
-Dev -> Visual Settings Check starts a click-driven HUD inspection in a match
+Dev -> HUD settings walkthrough starts a click-driven HUD inspection in a match
 or sandbox. This tool does not award a pass: the maintainer observes the actual
 screen after each change. It covers six groups in twelve steps: top bar, bottom
 bar, souls, items, ammo and minimap. Each group has a reference state and a
@@ -29,6 +29,12 @@ for applying the changes; the tool never directly styles native HUD elements.
 Temporary settings do not call SaveAndSync, profile persistence or CEF save.
 Unrelated live settings are preserved. This is a runtime visual check, not a
 disk-save or slider-input test.
+
+All captions, group names, instructions and status messages use the existing
+English-source-key localization pipeline. English/Russian entries live in
+`ql_settings_loc_en.js` and `ql_settings_loc_ru.js`; incomplete languages use
+the existing English fallback. There are no inline bilingual labels. See the
+[localization contract](../LOCALIZATION.md) before adding a scenario.
 
 Completion, Stop, settings close and resume restore original owned values.
 A 0.5-second session-only watchdog also handles a deleted card/HUD/window.

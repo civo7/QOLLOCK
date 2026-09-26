@@ -1232,14 +1232,14 @@
         createDevActionRow(
             list, "DevVisualCheckRow", "VisualCheckBtn", "VisualCheckStatus",
             "s2r://panorama/images/icons/icon_play.vsvg",
-            "Visual Settings Check / Визуальная проверка",
-            "Open in a match or sandbox. Click through 12 HUD changes; X/Y change together. Stop restores settings. No disk save. / 12 шагов, возврат настроек при остановке.",
-            "Start / Начать",
+            globalThis.LocalizeSettingsText("HUD settings walkthrough", true),
+            globalThis.LocalizeSettingsText("Open in a match or sandbox. Step through 12 HUD changes. Stop restores settings without saving the test values.", true),
+            globalThis.LocalizeSettingsText("Start", true),
             (statusLbl) => {
                 const started = Q.ui.visualCheck?.start(() => {
-                    if (isAlive(statusLbl)) statusLbl.text = "Restored / Восстановлено";
+                    if (isAlive(statusLbl)) statusLbl.text = globalThis.LocalizeSettingsText("Settings restored", true);
                 });
-                if (isAlive(statusLbl)) statusLbl.text = started ? "Running" : "Open settings with a live HUD";
+                if (isAlive(statusLbl)) statusLbl.text = globalThis.LocalizeSettingsText(started ? "Running" : "Open settings with a live HUD", true);
             }
         );
 

@@ -23,6 +23,7 @@ This repository contains the source for the QOLLOCK HUD/UI mod for Deadlock, bui
 - Checklist for adding settings safely, including schema/version rules.
 
 7. [Existing helpers and their contracts](docs/HELPERS.md)
+8. [Localization contract and translation workflow](docs/LOCALIZATION.md) — read before adding UI text, including Dev tools. Use locale dictionaries and the runtime localizer; never inline bilingual captions.
 - Choose existing validity, traversal, style, and cache APIs before adding a helper. Read their scope and invalidation rules before substituting them.
 
 ## Build / Pack / Launch

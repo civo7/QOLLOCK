@@ -2,6 +2,7 @@
 const test = require("node:test");
 const assert = require("node:assert/strict");
 const load = require("./load_settings_environment");
+const { loadLocaleMaps } = require("../scripts/locales_helper");
 
 function setup() {
     const env = load();
@@ -9,6 +10,48 @@ function setup() {
     env.clock.advance(500);
     return env;
 }
+
+test("walkthrough localizes every caption and step through English/Russian catalogs", () => {
+    const { global: g, em, clock, list } = setup();
+    const { maps } = loadLocaleMaps();
+    const seen = new Set();
+    const localize = (text) => {
+        assert.ok(Object.hasOwn(maps.en, text), `Missing English source: ${text}`);
+        assert.ok(Object.hasOwn(maps.ru, text), `Missing Russian translation: ${text}`);
+        seen.add(text);
+        return `translated:${text}`;
+    };
+    // Dynamic captions use the same catalog path as the Dev launch row.
+    g.QOL.ui.theme.LocalizeSettingsText = localize;
+    assert.equal(g.QOL.ui.visualCheck.start(), true);
+    const texts = [];
+    function collect(panel) {
+        if (panel.paneltype === "Label") texts.push(panel.text);
+        for (const child of panel.Children()) collect(child);
+    }
+    for (let i = 0; i < 12; i++) {
+        const text = em.FindChildTraverse("QOLVisualCheckText").text;
+        assert.ok(text.includes("translated:"));
+        assert.equal(/[А-Яа-яЁё]/.test(text), false, "no inline Russian bypass");
+        if (i === 0) collect(em.FindChildTraverse("QOLVisualCheck"));
+        g.QOL.ui.visualCheck.next();
+    }
+    for (const caption of texts.slice(1)) assert.ok(caption.startsWith("translated:"), caption);
+    assert.ok(seen.has("Right and up, larger"));
+    assert.ok(seen.has("Compare A/B"));
+    clock.advance(600);
+    // The real resolver follows the selected language, not a bilingual literal.
+    g.MOD_CONFIG.LANGUAGE = 1;
+    assert.equal(g.LocalizeSettingsText("HUD settings walkthrough", true), "Пошаговая проверка HUD");
+    g.QOL.ui.devTab.render(list);
+    const row = em.FindChildTraverse("DevVisualCheckRow");
+    const labels = [];
+    function labelsIn(panel) { if (panel.paneltype === "Label") labels.push(panel.text); for (const child of panel.Children()) labelsIn(child); }
+    labelsIn(row);
+    assert.ok(labels.includes("Пошаговая проверка HUD"));
+    g.MOD_CONFIG.LANGUAGE = 0;
+    assert.equal(g.LocalizeSettingsText("HUD settings walkthrough", true), "HUD settings walkthrough");
+});
 
 test("visual check drives HUD config, groups X/Y and restores without persistent saves", () => {
     const { global: g, hud, clock, doc, em } = setup();
