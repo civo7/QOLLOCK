@@ -146,7 +146,7 @@
     const clearStyleProperty = (panel, prop) => {
         if (!isPanelAlive(panel) || typeof prop !== "string") return false;
         try {
-            panel.ClearPropertyFromCode(prop);
+            panel.ClearPropertyFromCode(prop.replace(/[A-Z]/g, c => "-" + c.toLowerCase()));
             return true;
         } catch (_) {
             return false;

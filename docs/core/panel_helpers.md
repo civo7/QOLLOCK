@@ -54,3 +54,9 @@ The leaf `QOL_UTILS.ClearStyleSafe` used by HUD manifests also tries native
 is unavailable or throws. The core boolean helper above remains strict.
 
 A partial native style-write failure returns `sig: null` from `syncStyles`, so a later call retries the map. `readTextDeep` returns empty text when native child enumeration fails. Panel validity (`isAlive`) is unrelated to player life state.
+
+Both clear helpers translate JavaScript-style property names (for example
+`uiScale`, `preTransformScale2d`, `washColor`) to native CSS names (`ui-scale`,
+`pre-transform-scale2d`, `wash-color`) before `ClearPropertyFromCode`. Already
+hyphenated names are accepted unchanged. This is shared by HUD features, so a
+scale reset must release the override for every caller, not only healthbars.

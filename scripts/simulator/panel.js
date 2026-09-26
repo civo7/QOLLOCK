@@ -317,7 +317,10 @@ class Panel {
     ClearPropertyFromCode(prop) {
         this._assertValid("ClearPropertyFromCode");
         if (this.style && typeof prop === "string") {
-            delete this.style[prop];
+            // Native API takes CSS names; style writes expose camelCase aliases.
+            if (/[A-Z]/.test(prop)) return false;
+            const jsProp = prop.replace(/-([a-z])/g, (_, c) => c.toUpperCase());
+            delete this.style[jsProp];
             return true;
         }
         return false;

@@ -91,3 +91,8 @@ without legacy fallback writes. Neither helper forces a new default value.
   Event handlers must still be explicitly unsubscribed.
 
 See [the audit scope and remaining native checks](HELPER_AUDIT.md).
+
+Native clears normalize camelCase style aliases to CSS names before calling
+`ClearPropertyFromCode`: `uiScale` becomes `ui-scale`, for example. The simulator
+models this boundary separately from JS style writes; accepting camelCase in
+both places would conceal a failed return to CSS defaults.

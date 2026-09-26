@@ -36,3 +36,29 @@ The statements above describe source behavior. Native panel identity, binding
 values, rendering and transitions need the maintainer's Panorama Debugger and
 a repacked client scenario; neither a schema nor a read-only manifest hook
 proves the whole feature works. See [verification](../TESTING.md).
+
+## Fighting Game geometry and lifecycle
+
+FG reparents the existing gold `LevelAmount` / `HeroImage` subtree to the
+`health_bar_border` inside `hud_health_bars`. It stays a sibling of the tinted
+frame, so the frame wash does not tint the portrait. A CSS class positions it
+at the hexagon center measured from the source frame texture and counter-rotates
+it against the border's 90-degree turn. It inherits healthbar scale, offsets
+and opacity; there is no separate scale-dependent portrait displacement.
+
+The variant restores the original parent and child order on style switch,
+disable, hideout, or loss/replacement of the anchor. Missing sources retry on
+subsequent feature ticks. Native hero-image updates after reparenting still
+require a client check, especially hero switching and respawn.
+
+Regen uses an unrotated position below the bar in the same local coordinate
+space. Current/max health and regen use upright `sansMono` text. The shared
+scale reset clears the native `ui-scale` override, restoring the active CSS
+base rather than pinning a replacement value.
+
+`tests/healthbar_fg_reset.test.js` drives real settings row resets at 156/200
+through all six healthbar modes and checks portrait ownership/restoration.
+It also checks top/bottom bar resets and native CSS property-name conversion.
+These are offline lifecycle/propagation checks. After compile/repack, verify
+100/156/200 scales, both offsets, opacity, reset, hero switching, death/respawn,
+style switching, and hideout return; inspect portrait binding and text geometry.

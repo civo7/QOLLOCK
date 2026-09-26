@@ -304,7 +304,7 @@
         if (!panel || !prop) return;
         try {
             if (typeof panel.ClearPropertyFromCode === "function") {
-                panel.ClearPropertyFromCode(prop);
+                panel.ClearPropertyFromCode(String(prop).replace(/[A-Z]/g, function(c) { return "-" + c.toLowerCase(); }));
                 return;
             }
         } catch (e) { /* Older/stale native handles may not support clearing. */ }
