@@ -1,45 +1,51 @@
-# `panorama/scripts/manifests/ql_item_mirror` (HUD Item Cooldown Mirror Overlay)
+# Item cooldown mirror (`ql_item_mirror`)
 
-## Description
-Renders a customizable secondary item bar (`QOLItemMirrorRoot`) positioned directly near the crosshair or healthbar. Mirrors purchased active items (and optionally cooldown-tracked passives) with real-time radial cooldown sweeps, ready flash animations, ability stack counters, and keybind badges. This enables players to monitor item readiness without averting their vision to the bottom-right corner of the screen during fights.
+The Advanced Item Cooldowns mode mirrors purchased items into `QOLItemMirrorRoot`
+under the HUD. It reads native item classes and cooldown masks and estimates seconds
+from radial movement when no numeric cooldown label is available.
 
-## Files
-- Manifest: `panorama/scripts/manifests/ql_item_mirror/manifest.js`
-- Styles: `panorama/styles/features/ql_feat_item_mirror.css`
+## Configuration
 
-## Settings & Defaults
-| Config Key | Type | Default | Description |
-| :--- | :--- | :--- | :--- |
-| `ENABLE_ITEM_MIRROR` | `toggle` | `false` | Master toggle to enable the mirrored active item HUD overlay. |
-| `ITEM_MIRROR_SCALE` | `slider` | `1.0` | Global scale multiplier for the mirrored item bar (0.5 to 2.0). |
-| `ITEM_MIRROR_X_OFFSET` | `slider` | `0` | Horizontal pixel offset shifting mirror position. |
-| `ITEM_MIRROR_Y_OFFSET` | `slider` | `0` | Vertical pixel offset shifting mirror position. |
-| `ITEM_MIRROR_OPACITY` | `slider` | `100` | Opacity percentage for the mirrored item bar (0% to 100%). |
-| `ITEM_MIRROR_SHOW_PASSIVES` | `toggle` | `false` | Also displays passive items that have internal cooldowns or stack mechanics. |
-| `ITEM_MIRROR_HORIZONTAL` | `toggle` | `true` | Toggles between horizontal and vertical bar layouts. |
+The feature uses `ENABLE_PASSIVE_COOLDOWN` (default `false`) and runs in Advanced
+mode when `ENABLE_OLD_ITEM_COOLDOWNS` is `false` (default). The four category filters
+are `ITEM_FILTER_DEF_PASSIVE` and `ITEM_FILTER_OFF_PASSIVE` (default `true`), and
+`ITEM_FILTER_DEF_ACTIVE` and `ITEM_FILTER_OFF_ACTIVE` (default `false`).
 
-## Architecture & Lifecycle
+Layout settings are `PASSIVE_COOLDOWN_SIZE` (default `40`, range 30–60),
+`PASSIVE_COOLDOWN_X` and `PASSIVE_COOLDOWN_Y` (default `0`, range -50–50), and
+`PASSIVE_COOLDOWN_OPACITY` (default `0.5`, range 0–1).
 
-### Activation & Lifecycle Hooks
-- **`onEnable()`**: Locates `#Hud`, constructs the `QOLItemMirrorRoot` hierarchy, applies configured orientation and scales, and registers a cooperative scheduler task running at 20Hz (`0.05s`) during active cooldown tracking.
-- **`onDisable()`**: Cancels scheduler task, safely destroys `_panel` via `safeDeletePanel`, and clears cooldown tracking caches.
-- **`onSettingsChanged()`**: Synchronously updates bar orientation, offsets, and visibility flags (0ms latency).
-- **`test()`**: Verifies that `#Hud` and native `#ModsContainer` are resolvable.
+## Lifecycle and performance
 
-### DOM Injection & Target Panels
-- **Parent Container**: Injected under `#Hud`.
-- **Injected Panels**:
-  - `Panel#QOLItemMirrorRoot`: Main outer positioned wrapper.
-  - `Panel#QOLItemMirrorRow`: Flex container enforcing horizontal or vertical item flow.
-  - `Panel#QOLItemMirrorSlot_N`: Individual item slots containing item icons, cooldown sweep masks, ready glows, and keybind badges.
-- **Native Read Targets**:
-  - Scans and mirrors ability slots inside `Panel#ModsContainer`.
+- The scheduler renders at 50 ms during cooldowns and 120 ms when idle. Settings
+  changes request a source rescan and update immediately. Disable destroys the
+  overlay and clears its tracking state.
+- Sources are discovered beneath native `ModsContainer` panels. Stable inventories
+  are rescanned after 5270 ms; changed inventories after 1630 ms; empty results
+  after 1500 ms. Matching also considers tier, category, images and exception
+  groups: a single class-to-item map cannot replace those rules.
+- The native `abilitiesContainer` reference is cached, revalidated each update,
+  and replaced when the HUD changes. Opening the shop collapses the overlay and
+  uses the idle cadence; closing it requests a source rescan. Hideout suppresses
+  the overlay.
+- Numeric text probes return immediately after finding a usable named class/ID.
+  Otherwise they retain the existing filtered breadth-first fallback. Missing
+  text is retried after 1000 ms instead of every 80 ms; successful probes retain
+  the 80 ms interval. A new cooldown or replacement source panel resets this
+  delay. This allows C++ to insert labels dynamically without permanently caching
+  their absence. A newly inserted label may take up to one second plus one render
+  tick to be detected; radial estimation continues during that time.
+- Inline style fallback uses precompiled, property-bounded expressions. Normal
+  style reads remain preferred. Disabled cooldown debugging does not format its
+  per-item diagnostic strings.
+- Active render cadence and source matching rules are unchanged. Runtime cost
+  depends on inventory and native panel structure; no in-game timing reduction
+  has been measured for these changes.
 
-### Engine Events & Polling Frequency
-- **Polling Frequency**: Adaptive—runs at 20Hz (`0.05s` / 50ms) when any item is on cooldown for fluid radial sweep animation; throttles to `0.12s` (~8Hz) when all items are ready.
-- **Engine Events**: None.
+## Validation limits
 
-### Performance Tier & Caveats
-- **Performance Tier**: Medium (`~0.09ms` per tick during active cooldown animation).
-- **Suppression**: Collapses automatically in the Hideout/Sandbox lobby.
-- **Cooldown Sweeps**: Cooldown degree angles and clip-path sweeps are diffed to avoid touching style properties when cooldown percentages do not change.
+Node tests exercise probe retry, dynamic text discovery, source replacement and
+style parsing using mocked panels. Native death/respawn behavior and C++ dialog
+variable updates require the maintainer's Panorama Debugger and a fresh VPK
+repack. This feature does not assume that death removes a particular cooldown
+class or always freezes a native mask.

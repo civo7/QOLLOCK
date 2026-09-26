@@ -27,6 +27,12 @@
     var ITEM_MIRROR_RENDER_INTERVAL_MS_ACTIVE = 50;
     var ITEM_MIRROR_RENDER_INTERVAL_MS_IDLE = 120;
     var ITEM_MIRROR_TEXT_PROBE_INTERVAL_MS = 80;
+    var ITEM_MIRROR_EMPTY_TEXT_PROBE_INTERVAL_MS = 1000;
+    var INLINE_STYLE_PATTERNS = {
+        clip: /(?:^|;)\s*clip\s*:\s*([^;]+)/i,
+        opacity: /(?:^|;)\s*opacity\s*:\s*([^;]+)/i,
+        visibility: /(?:^|;)\s*visibility\s*:\s*([^;]+)/i
+    };
     var ITEM_MIRROR_PROBE_SCAN_MS = 1630;
     var ITEM_MIRROR_RAPID_RETRIGGER_WINDOW_MS = 1300;
     var ITEM_MIRROR_RAPID_RETRIGGER_SUPPRESS_MS = 900;
@@ -272,6 +278,7 @@
         create: function(ctx) {
             var _loop = null, _overlay = null, _row = null;
             var _slots = [];
+            var _abilities = null, _abilitiesHud = null;
             var _mirror = { sources: [], slotStates: {}, classCache: {}, runtimePanelIds: [], exceptionGroupAssignments: {} };
             var _nextScanMs = 0, _lastSignature = '', _lastLayoutSig = '', _lastShopOpen = false;
             var ITEM_MIRROR_FLASH_DEBUG = false, ITEM_MIRROR_COOLDOWN_DEBUG = false;
@@ -293,7 +300,8 @@
                     if (!panel || !panel.GetAttributeString || !propName) return "";
                     var styleText = panel.GetAttributeString("style", "");
                     if (!styleText || styleText.length === 0) return "";
-                    var match = new RegExp(propName + "\\s*:\\s*([^;]+)", "i").exec(styleText);
+                    var pattern = INLINE_STYLE_PATTERNS[propName];
+                    var match = pattern ? pattern.exec(styleText) : null;
                     return match && match[1] ? match[1].trim() : "";
                 }
             
@@ -340,8 +348,8 @@
                     if (!panel || !panel.Children) return "";
                     var queue = [panel];
                     var best = "";
-                    while (queue.length > 0) {
-                        var current = queue.shift();
+                    for (var cursor = 0; cursor < queue.length; cursor++) {
+                        var current = queue[cursor];
                         if (!current) continue;
             
                         if (_isItemMirrorCooldownProbeExcludedPanel(current)) continue;
@@ -383,6 +391,7 @@
                         if (!chosen && normByClass) {
                             chosen = normByClass;
                             chosenSource = "class:" + cls;
+                            return { chosen: chosen, chosenSource: chosenSource };
                         }
                     }
             
@@ -394,6 +403,7 @@
                         if (!chosen && normById) {
                             chosen = normById;
                             chosenSource = "id:" + id;
+                            return { chosen: chosen, chosenSource: chosenSource };
                         }
                     }
             
@@ -1312,6 +1322,12 @@
                         };
                         _mirror.slotStates[source.key] = slotState;
                     }
+                    // A semantic source key can survive replacement of the native panel.
+                    if (slotState.probeSourceIcon !== sourceIcon) {
+                        slotState.probeSourceIcon = sourceIcon;
+                        slotState.nextCooldownTextProbeMs = 0;
+                        slotState.lastProbeCooldownText = "";
+                    }
                     var wasOnCooldownBefore = !!slotState.wasOnCooldown;
             
                     var sourceMod = _isAlive(sourceModContainer) ? sourceModContainer : (sourceIcon.FindChildTraverse ? sourceIcon.FindChildTraverse("modIconContainer") : null);
@@ -1416,6 +1432,8 @@
             
                     var startedCooldownCycle = (!wasOnCooldownBefore && !!isOnCooldown);
                     if (startedCooldownCycle) {
+                        slotState.nextCooldownTextProbeMs = 0;
+                        slotState.lastProbeCooldownText = "";
                         var sinceEndMs = (slotState.lastCooldownEndMs > 0) ? (nowMs - slotState.lastCooldownEndMs) : 999999;
                         if (sinceEndMs <= ITEM_MIRROR_RAPID_RETRIGGER_WINDOW_MS) {
                             slotState.rapidRetriggerSuppressUntilMs = nowMs + ITEM_MIRROR_RAPID_RETRIGGER_SUPPRESS_MS;
@@ -1498,7 +1516,9 @@
                             if (nowMs >= slotState.nextCooldownTextProbeMs) {
                                 var cooldownProbe = _probeCooldownTextFromSourceIcon(sourceIcon);
                                 slotState.lastProbeCooldownText = cooldownProbe.chosen || "";
-                                slotState.nextCooldownTextProbeMs = nowMs + ITEM_MIRROR_TEXT_PROBE_INTERVAL_MS;
+                                // Retry missing text: C++ may add a label after the initial scan.
+                                slotState.nextCooldownTextProbeMs = nowMs + (cooldownProbe.chosen
+                                    ? ITEM_MIRROR_TEXT_PROBE_INTERVAL_MS : ITEM_MIRROR_EMPTY_TEXT_PROBE_INTERVAL_MS);
                             }
                             cooldownText = slotState.lastProbeCooldownText || "";
                             if (cooldownText && cooldownText.length > 0) {
@@ -1598,7 +1618,7 @@
                         isCooldownTextVisible = false;
                     }
             
-                    if (isOnCooldown) {
+                    if (ITEM_MIRROR_COOLDOWN_DEBUG && isOnCooldown) {
                         var probeShort = slotState.lastProbeCooldownText || "-";
                         var clipShort = maskClip || slotState.lastClip || "";
                         var currentDegText = (currentDeg === null || currentDeg === undefined || !isFinite(currentDeg)) ? "-" : currentDeg.toFixed(2);
@@ -1918,6 +1938,8 @@
                 _lastSignature = "";
                 _lastLayoutSig = "";
                 _lastShopOpen = false;
+                _abilities = null;
+                _abilitiesHud = null;
             }
             function _update(hud, cfg) {
                 var enabled = Number(cfg.ENABLE_PASSIVE_COOLDOWN) === 1 && Number(cfg.ENABLE_OLD_ITEM_COOLDOWNS) !== 1;
@@ -1935,12 +1957,16 @@
                     return;
                 }
                 var nowMs = _nowMs();
-                var abilities = hud.FindChildTraverse('abilitiesContainer');
-                var shopOpen = !!(abilities && abilities.BHasClass('gShopOpen'));
+                if (_abilitiesHud !== hud || !_isAlive(_abilities)) {
+                    _abilitiesHud = hud;
+                    _abilities = hud.FindChildTraverse('abilitiesContainer');
+                }
+                var shopOpen = !!(_abilities && _abilities.BHasClass('gShopOpen'));
                 var shopJustClosed = _lastShopOpen && !shopOpen;
                 _lastShopOpen = shopOpen;
                 if (shopOpen) {
-                    if (_isAlive(_overlay)) _overlay.style.visibility = 'collapse';
+                    if (_isAlive(_overlay) && _overlay.style.visibility !== 'collapse') _overlay.style.visibility = 'collapse';
+                    if (_loop) _loop.reschedule(ITEM_MIRROR_RENDER_INTERVAL_MS_IDLE / 1000);
                     return;
                 }
                 var sources = _mirror.sources;

@@ -45,3 +45,11 @@ Provides styling, scale adjustments, and mode switching for passive item cooldow
 - **Performance Tier**: None (`0ms` runtime impact).
 - **Panel Caching**: Panel reference to `#hud_passive_items` is cached in `_cachedPassiveHud` and validated with `QOL_UTILS.IsPanelValid`.
 - **Clean Reset**: On disabling or switching to Advanced Mode, inline styles are cleanly set to `null` to restore native engine layout and CSS cascading.
+
+## Basic timer visibility
+
+`panorama/styles/hud_ability_icon_passive.css` explicitly collapses Basic Mode
+cooldown labels unless their native item ancestor has `cooling_down`. This
+prevents retained dialog text from being shown after that class is removed.
+Death/respawn class transitions are controlled by the engine and have not been
+verified in-game; the CSS fix does not assume when those transitions occur.

@@ -79,6 +79,11 @@
 
 .passive_cooldown_basic_active #hud_passive_items .cooldown_timer
 {
+	visibility: collapse;
+}
+
+.passive_cooldown_basic_active #hud_passive_items .cooling_down .cooldown_timer
+{
 	visibility: visible;
 }
 
