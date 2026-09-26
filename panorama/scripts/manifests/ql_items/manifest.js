@@ -30,6 +30,7 @@
         create: function(ctx) {
             var _lastSig = "";
             var _lastWashColor = "";
+            var _lastPanels = [];
             var _loop = null;
 
             function _hasNonDefault(cfg) {
@@ -101,13 +102,22 @@
                     : ((typeof QOL !== "undefined" && QOL.washColorPalette && wcIdx > 0 && wcIdx < QOL.washColorPalette.length) ? QOL.washColorPalette[wcIdx] : "");
 
                 var sig = ox + "|" + oy + "|" + op + "|" + wcIdx + "|" + (enabled ? "1" : "0");
-                if (_lastSig === sig) return;
+                var barGraph = mc.FindChildTraverse ? mc.FindChildTraverse("BarGraphContainer") : null;
+                var modSections = mc.FindChildrenWithClassTraverse("ModSection") || [];
+                var iconContainers = mc.FindChildrenWithClassTraverse("mod_icon_single_container") || [];
+                var panels = [mc, barGraph].concat(modSections, iconContainers);
+                var samePanels = panels.length === _lastPanels.length && panels.every(function(panel, index) {
+                    return panel === _lastPanels[index];
+                });
+                if (_lastSig === sig && samePanels) return;
+                var containerChanged = mc !== _lastPanels[0];
+                _lastPanels = panels;
                 _lastSig = sig;
 
                 mc.style.x = ox + "px";
                 mc.style.y = (-oy) + "px";
                 if (mc.SetHasClass) mc.SetHasClass("qol-hidden", !enabled);
-                if (wc !== _lastWashColor) {
+                if (containerChanged || wc !== _lastWashColor) {
                     if (typeof QOL !== "undefined" && QOL.core && QOL.core.panel && QOL.core.panel.setWashColor) {
                         QOL.core.panel.setWashColor(mc, wc);
                     } else {
@@ -117,13 +127,10 @@
                 }
                 _clearOpacity(mc);
 
-                var barGraph = mc.FindChildTraverse ? mc.FindChildTraverse("BarGraphContainer") : null;
                 if (barGraph) { op === "1.00" ? _clearOpacity(barGraph) : _setOpacity(barGraph, op); }
 
                 try {
-                    var modSections = mc.FindChildrenWithClassTraverse ? (mc.FindChildrenWithClassTraverse("ModSection") || []) : [];
                     for (var s = 0; s < modSections.length; s++) { if (modSections[s]) _clearOpacity(modSections[s]); }
-                    var iconContainers = mc.FindChildrenWithClassTraverse ? (mc.FindChildrenWithClassTraverse("mod_icon_single_container") || []) : [];
                     for (var ic = 0; ic < iconContainers.length; ic++) {
                         if (!iconContainers[ic]) continue;
                         op === "1.00" ? _clearOpacity(iconContainers[ic]) : _setOpacity(iconContainers[ic], op);
@@ -153,6 +160,7 @@
                     var S = QOL.core.Scheduler;
                     if (S) S.cancelAllForFeature("ql_items");
                     _lastSig = ""; _lastWashColor = "";
+                    _lastPanels = [];
                     try {
                         var root = $.GetContextPanel();
                         var mc = _resolveModsContainer(root);

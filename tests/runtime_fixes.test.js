@@ -789,3 +789,46 @@ test("stamina reapplies settings to a recreated ring without styling ability ico
     for (const fg of ring.foregrounds) assert.strictEqual(fg.style.washColor, Q.core.panel.resolvePaletteColor(13));
 });
 
+function createItemsContainer(hud) {
+    const $ = hud.sandbox.global.$;
+    const stats = hud.root.FindChildTraverse("StatsAndModsContainer") || $.CreatePanel("Panel", hud.root, "StatsAndModsContainer");
+    const container = $.CreatePanel("Panel", stats, "");
+    container.AddClass("ModsContainer");
+    const addIcon = () => {
+        const icon = $.CreatePanel("Panel", container, "");
+        icon.AddClass("mod_icon_single_container");
+        return icon;
+    };
+    return { container, addIcon };
+}
+
+test("item opacity applies to newly mounted icons and resets with the preset", () => {
+    const hud = sim.createHud({ inHideout: false });
+    hud.assertLoaded();
+    const Q = hud.sandbox.global.QOL;
+    const { addIcon } = createItemsContainer(hud);
+    const first = addIcon();
+    Q.core.ConfigAdapter.loadFromFlat({ ITEMS_OPACITY: 0.35 });
+    assert.strictEqual(first.style.opacity, "0.35");
+    const added = addIcon();
+    hud.clock.advance(1100);
+    assert.strictEqual(added.style.opacity, "0.35", "New inventory icon must inherit the configured opacity");
+    Q.core.ConfigAdapter.loadFromFlat({ ITEMS_OPACITY: 1 });
+    assert.ok(!first.style.opacity && !added.style.opacity, "Default preset must restore native opacity for all icons");
+});
+
+test("item layout and tint follow a recreated inventory without another settings change", () => {
+    const hud = sim.createHud({ inHideout: false });
+    hud.assertLoaded();
+    const Q = hud.sandbox.global.QOL;
+    let inventory = createItemsContainer(hud);
+    Q.core.ConfigAdapter.loadFromFlat({ ITEMS_X_OFFSET: 75, ITEMS_WASH_COLOR: 13 });
+    assert.strictEqual(inventory.container.style.x, "75px");
+    inventory.container.DeleteAsync(0);
+    hud.clock.advance(0);
+    inventory = createItemsContainer(hud);
+    hud.clock.advance(1100);
+    assert.strictEqual(inventory.container.style.x, "75px");
+    assert.strictEqual(inventory.container.style.washColor, Q.core.panel.resolvePaletteColor(13));
+});
+
