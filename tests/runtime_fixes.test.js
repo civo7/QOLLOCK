@@ -879,3 +879,46 @@ test("disabling recent purchases cancels its delayed native history clear", () =
     assert.strictEqual(purchase.IsValid(), true, "Disabled feature must not delete subsequent native purchases");
 });
 
+test("stats position resets panel on disable and hides styling in hideout", () => {
+    const hud = sim.createHud({ inHideout: false });
+    hud.assertLoaded();
+    const { $, QOL: Q } = hud.sandbox.global;
+    const panel = $.CreatePanel("Panel", hud.root, "hudPlayerStats");
+    Q.core.ConfigAdapter.loadFromFlat({ ENABLE_STATS_POSITION: 1, STATS_POSITION_X_OFFSET: 120 });
+    hud.clock.advance(300);
+    assert.strictEqual(panel.style.x, "120px");
+    assert.strictEqual(Q.core.FeatureRegistry.isEnabled("ql_stats_position"), true);
+
+    // Transition into hideout restores native state
+    hud.root.AddClass("InHideout");
+    hud.clock.advance(1100);
+    assert.ok(!panel.style.x || panel.style.x === "0px", "Hideout must reset stats offset");
+
+    // Match reentry restores offset
+    hud.root.RemoveClass("InHideout");
+    hud.clock.advance(1100);
+    assert.strictEqual(panel.style.x, "120px", "Match reentry must restore stats offset");
+
+    // Master toggle off disables feature and resets style
+    Q.core.ConfigAdapter.loadFromFlat({ ENABLE_STATS_POSITION: 0 });
+    hud.clock.advance(1100);
+    assert.strictEqual(Q.core.FeatureRegistry.isEnabled("ql_stats_position"), false);
+    assert.ok(!panel.style.x || panel.style.x === "0px", "Disabled toggle must reset stats offset");
+});
+
+test("ability icons feature enables with any toggle and cleans up on disable", () => {
+    const hud = sim.createHud({ inHideout: false });
+    hud.assertLoaded();
+    const { QOL: Q } = hud.sandbox.global;
+
+    assert.strictEqual(Q.core.FeatureRegistry.isEnabled("ql_ability_icons"), false);
+    Q.core.ConfigAdapter.loadFromFlat({ ENABLE_SIMPLIFY_ABILITY_ICONS: 1 });
+    assert.strictEqual(Q.core.FeatureRegistry.isEnabled("ql_ability_icons"), true);
+    assert.strictEqual(hud.root.BHasClass("simplify_ability_icons_active"), true);
+
+    Q.core.ConfigAdapter.loadFromFlat({ ENABLE_SIMPLIFY_ABILITY_ICONS: 0 });
+    assert.strictEqual(Q.core.FeatureRegistry.isEnabled("ql_ability_icons"), false);
+    assert.strictEqual(hud.root.BHasClass("simplify_ability_icons_active"), false);
+});
+
+
