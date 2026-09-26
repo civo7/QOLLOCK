@@ -70,37 +70,14 @@ function createTestEnvironment() {
                     create: (type, parent, id) => mockDollar.CreatePanel(type, parent, id),
                     findRoot: () => rootPanel,
                 },
-                persistence: {
-                    writeStorageConfigRawToUi: (root, raw) => {
-                        root.SetAttributeString("Deadlock_Mod_Settings_v1", raw);
-                    },
-                    readStorageConfigRawFromUi: (root) => {
-                        return root.GetAttributeString("Deadlock_Mod_Settings_v1", "");
-                    },
-                },
+
             },
         },
         globalThis: {},
-        WrapConfigForStorage: (cfg) => JSON.stringify({ schema: "4.0.0", data: cfg }),
-        UnwrapConfigFromStorage: (raw) => {
-            try {
-                const parsed = JSON.parse(raw);
-                if (parsed && parsed.data) return { config: parsed.data, schema: parsed.schema };
-            } catch (_) {}
-            return null;
-        },
-        SafeParseConfig: (raw) => {
-            try {
-                const parsed = JSON.parse(raw);
-                return parsed.data || parsed;
-            } catch (_) {
-                return null;
-            }
-        },
         MOD_CONFIG: {
             LANGUAGE: "english",
             PREVIEWS_ENABLED: 1,
-            MINIMAP_SCALE: 1.0,
+            TOP_BAR_SCALE: 1.0,
         },
         State: {
             lastConfig: null,
@@ -109,10 +86,11 @@ function createTestEnvironment() {
         clearTimeout,
     };
 
-    sandbox.globalThis.QOL = sandbox.QOL;
-    sandbox.globalThis.$ = mockDollar;
-    sandbox.globalThis.MOD_CONFIG = sandbox.MOD_CONFIG;
-    sandbox.globalThis.State = sandbox.State;
+    sandbox.globalThis = sandbox;
+    for (const name of ["ql_utils.js", "ql_shared_presets.js", "ql_config.js", "core/ql_persistence.js"]) {
+        const filename = path.resolve(__dirname, "../panorama/scripts", name);
+        vm.runInNewContext(fs.readFileSync(filename, "utf8"), sandbox, { filename });
+    }
 
     const bridgeCode = fs.readFileSync(
         path.resolve(__dirname, "../panorama/scripts/core/ql_storage_bridge.js"),
@@ -139,6 +117,118 @@ function createTestEnvironment() {
         },
     };
 }
+
+// Execute the production fallback page in a second JS realm. Only the browser
+// boundary (title events and localStorage) is modeled, not the bridge protocol.
+function connectEmbeddedPage(env, storage = new Map()) {
+    const panel = env.sandbox.QOL.core.storageBridge.getPanel();
+    env.fireTitleEvent(panel, "Index of C:/");
+    const injection = env.getLastSetUrl();
+    const browser = {
+        localStorage: {
+            getItem: key => storage.has(key) ? storage.get(key) : null,
+            setItem: (key, value) => storage.set(key, String(value)),
+            removeItem: key => storage.delete(key),
+        },
+        atob: value => Buffer.from(value, "base64").toString("binary"),
+        setTimeout: (fn, ms) => env.clock.schedule(ms / 1000, fn),
+        document: {},
+    };
+    browser.window = browser;
+    Object.defineProperty(browser.document, "title", {
+        set: title => env.clock.schedule(0, () => env.fireTitleEvent(panel, title)),
+    });
+    vm.createContext(browser);
+    panel.SetURL = url => {
+        assert.ok(url.startsWith("javascript:"));
+        vm.runInContext(url.slice("javascript:".length), browser);
+    };
+    panel.SetURL(injection);
+    env.clock.advance(0);
+    assert.equal(env.sandbox.QOL.core.storageBridge.isReady(), true);
+    assert.deepEqual(env.clock.errors, []);
+    return browser;
+}
+
+test("storage_bridge: actual embedded page preserves Unicode across chunk boundaries", async () => {
+    const env = createTestEnvironment();
+    const storage = new Map();
+    connectEmbeddedPage(env, storage);
+    const bridge = env.sandbox.QOL.core.storageBridge;
+    const value = "a".repeat(1499) + "😀" + "я#%".repeat(1500);
+    const saving = bridge.save("unicode", value);
+    env.clock.advance(0);
+    await saving;
+    assert.equal(storage.get("unicode"), value);
+    const loading = bridge.load("unicode");
+    env.clock.advance(0);
+    assert.equal(await loading, value);
+    assert.deepEqual(env.clock.errors, []);
+});
+
+test("storage_bridge: saved buff lead 15 survives a new JS session and startup restore", async () => {
+    const storage = new Map();
+    const first = createTestEnvironment();
+    connectEmbeddedPage(first, storage);
+    const saving = first.sandbox.QOL.core.storageBridge.saveSettings({ BRIDGE_BUFF_START: 15 });
+    first.clock.advance(0);
+    assert.equal((await saving).ok, true);
+    assert.equal(JSON.parse(storage.get("qollock_settings")).data.BRIDGE_BUFF_START, 15);
+    const next = createTestEnvironment();
+    next.sandbox.QOL.core.storageBridge.enableAutoload(true);
+    connectEmbeddedPage(next, storage);
+    await Promise.resolve();
+    await Promise.resolve();
+    assert.equal(next.sandbox.MOD_CONFIG.BRIDGE_BUFF_START, 15);
+    const raw = next.hudPanel.GetAttributeString("Deadlock_Mod_Settings_v1", "");
+    assert.equal(next.sandbox.QOL.safeParseConfig(raw).BRIDGE_BUFF_START, 15);
+    assert.deepEqual(next.clock.errors, []);
+});
+
+test("storage_bridge: quota failure reaches callback and Promise without replacing stored data", async () => {
+    const env = createTestEnvironment();
+    const storage = new Map([["qollock_settings", "previous"]]);
+    const browser = connectEmbeddedPage(env, storage);
+    browser.localStorage.setItem = () => { throw new Error("QuotaExceededError"); };
+    let callbackCount = 0;
+    const saving = env.sandbox.QOL.core.storageBridge.saveSettings({ BRIDGE_BUFF_START: 15 }, err => {
+        callbackCount++;
+        assert.match(err.message, /QuotaExceededError/);
+    });
+    env.clock.advance(0);
+    await assert.rejects(saving, /QuotaExceededError/);
+    assert.equal(callbackCount, 1);
+    assert.equal(storage.get("qollock_settings"), "previous");
+    assert.deepEqual(env.clock.errors, []);
+});
+
+test("storage_bridge: validated config is canonicalized before the HUD parser receives it", async () => {
+    const env = createTestEnvironment();
+    const storage = new Map([["qollock_settings", '{"schema":"4.0.0","data":{"BRIDGE_BUFF_START":15,"hasOwnProperty":0}}']]);
+    connectEmbeddedPage(env, storage);
+    const loading = env.sandbox.QOL.core.storageBridge.loadSettings();
+    env.clock.advance(0);
+    const result = await loading;
+    assert.equal(result.config.BRIDGE_BUFF_START, 15);
+    const raw = env.hudPanel.GetAttributeString("Deadlock_Mod_Settings_v1", "");
+    assert.equal(result.raw, raw);
+    assert.equal(env.sandbox.QOL.safeParseConfig(raw).BRIDGE_BUFF_START, 15);
+    assert.equal(Object.hasOwn(JSON.parse(raw).data, "hasOwnProperty"), false);
+});
+
+test("storage_bridge: legacy flat settings retain existing zoom and shop migrations", async () => {
+    const env = createTestEnvironment();
+    const legacy = { MINIMAP_LARGE_SIZE: 850, ZOOM_X_OFFSET: 125, ENABLE_SHOP_CLICK_TO_NOTIFY: 1, BRIDGE_BUFF_START: 15 };
+    connectEmbeddedPage(env, new Map([["qollock_settings", JSON.stringify(legacy)]]));
+    const loading = env.sandbox.QOL.core.storageBridge.loadSettings();
+    env.clock.advance(0);
+    const { config } = await loading;
+    assert.equal(config.MINIMAP_LARGE_SIZE_ALT, 850);
+    assert.equal(config.MINIMAP_LARGE_SIZE_TAB, 850);
+    assert.equal(config.ZOOM_X_OFFSET_ALT, 125);
+    assert.equal(config.ENABLE_SHOP_ITEM_NOTIFICATIONS, 1);
+    assert.equal(config.BRIDGE_BUFF_START, 15);
+});
 
 
 
@@ -240,7 +330,7 @@ test("storage_bridge: loadSettings unwraps and updates MOD_CONFIG", async () => 
 
     const savedPayload = JSON.stringify({
         schema: "4.0.0",
-        data: { LANGUAGE: "german", PREVIEWS_ENABLED: 1, MINIMAP_SCALE: 1.5 }
+        data: { LANGUAGE: "german", PREVIEWS_ENABLED: 1, TOP_BAR_SCALE: 1.5 }
     });
 
     fireTitleEvent(panel, `QOL_RES:{"id":"${reqMatch[1]}","ok":true,"data":${JSON.stringify(savedPayload)}}`);
@@ -248,7 +338,7 @@ test("storage_bridge: loadSettings unwraps and updates MOD_CONFIG", async () => 
     const res = await loadPromise;
     assert.strictEqual(res.ok, true);
     assert.strictEqual(sandbox.MOD_CONFIG.LANGUAGE, "german");
-    assert.strictEqual(sandbox.MOD_CONFIG.MINIMAP_SCALE, 1.5);
+    assert.strictEqual(sandbox.MOD_CONFIG.TOP_BAR_SCALE, 1.5);
     assert.strictEqual(sandbox.State.lastConfig.LANGUAGE, "german");
 });
 
@@ -324,7 +414,7 @@ test("storage_bridge: loadSettings correctly applies large >9KB chunked configur
     const largeCfg = {
         LANGUAGE: "korean",
         PREVIEWS_ENABLED: 1,
-        MINIMAP_SCALE: 2.0,
+        TOP_BAR_SCALE: 1.25,
     };
     for (let i = 0; i < 300; i++) {
         largeCfg[`FEATURE_KEY_${i}`] = i * 2;
@@ -358,8 +448,8 @@ test("storage_bridge: loadSettings correctly applies large >9KB chunked configur
     const res = await loadSettingsPromise;
     assert.strictEqual(res.ok, true);
     assert.strictEqual(sandbox.MOD_CONFIG.LANGUAGE, "korean");
-    assert.strictEqual(sandbox.MOD_CONFIG.MINIMAP_SCALE, 2.0);
-    assert.strictEqual(sandbox.MOD_CONFIG.FEATURE_KEY_299, 598);
+    assert.strictEqual(sandbox.MOD_CONFIG.TOP_BAR_SCALE, 1.25);
+    assert.strictEqual(sandbox.MOD_CONFIG.FEATURE_KEY_299, undefined, "Unknown settings are not applied to the runtime");
 });
 
 test("storage_bridge: special characters (# and %) are Base64 encoded and never contain '#' in SetURL", async () => {
@@ -532,3 +622,100 @@ test("storage_bridge: HUD initialization does not adopt a descendant EscapeMenu 
 });
 
 
+
+function replyToCurrentRequest(env, data, error) {
+    const match = env.getLastSetUrl().match(/'(qol_\d+_\d+)'/);
+    assert.ok(match, "A real bridge request must have been sent");
+    env.fireTitleEvent(env.sandbox.QOL.core.storageBridge.getPanel(), "QOL_RES:" + JSON.stringify({
+        id: match[1], ok: !error, data, error
+    }));
+}
+
+function publishEdit(env, value = 15) {
+    const raw = env.sandbox.WrapConfigForStorage({ BRIDGE_BUFF_START: value, LANGUAGE: 1 });
+    env.sandbox.QOL.core.persistence.writeStorageConfigRawToUi(env.rootPanel, raw);
+    return raw;
+}
+
+test("storage_bridge: startup restore preserves edits made before readiness and during a pending load", async () => {
+    for (const editBeforeReady of [true, false]) {
+        const env = createTestEnvironment();
+        const bridge = env.sandbox.QOL.core.storageBridge;
+        bridge.enableAutoload(true);
+        let fresh;
+        if (editBeforeReady) fresh = publishEdit(env);
+        env.fireTitleEvent(bridge.getPanel(), "QOL_BRIDGE_READY");
+        if (!editBeforeReady) fresh = publishEdit(env);
+        if (env.getLastSetUrl().includes("__qolLoad")) {
+            replyToCurrentRequest(env, env.sandbox.WrapConfigForStorage({ BRIDGE_BUFF_START: 30, LANGUAGE: 0 }));
+        }
+        await Promise.resolve();
+        assert.equal(env.rootPanel.GetAttributeString("Deadlock_Mod_Settings_v1", ""), fresh);
+        assert.equal(env.hudPanel.GetAttributeString("Deadlock_Mod_Settings_v1", ""), fresh);
+        assert.equal(env.rootPanel.GetAttributeString("QOL_USER_EDIT_REV", ""), "1");
+    }
+});
+
+test("storage_bridge: startup retry cannot reacquire permission to overwrite a user edit", async () => {
+    const env = createTestEnvironment();
+    const bridge = env.sandbox.QOL.core.storageBridge;
+    bridge.enableAutoload(true);
+    env.fireTitleEvent(bridge.getPanel(), "QOL_BRIDGE_READY");
+    replyToCurrentRequest(env, null, "temporary read error");
+    await Promise.resolve();
+    await Promise.resolve();
+    const fresh = publishEdit(env);
+    const failedUrl = env.getLastSetUrl();
+    env.clock.advance(6000);
+    assert.equal(env.getLastSetUrl(), failedUrl, "Do not start a retry after user edits");
+    assert.equal(env.rootPanel.GetAttributeString("Deadlock_Mod_Settings_v1", ""), fresh);
+    assert.equal(env.clock.errors.length, 0);
+});
+
+test("storage_bridge: an unflushed dirty edit invalidates a pending restore", async () => {
+    const env = createTestEnvironment();
+    const bridge = env.sandbox.QOL.core.storageBridge;
+    env.fireTitleEvent(bridge.getPanel(), "QOL_BRIDGE_READY");
+    const fresh = publishEdit(env);
+    const pending = bridge.loadSettings();
+    env.sandbox.QOL.core.persistence.markConfigEdited(env.rootPanel);
+    replyToCurrentRequest(env, env.sandbox.WrapConfigForStorage({ BRIDGE_BUFF_START: 30 }));
+    const result = await pending;
+    assert.equal(result.applied, false);
+    assert.equal(result.skipped, "newer-edits");
+    assert.equal(env.rootPanel.GetAttributeString("Deadlock_Mod_Settings_v1", ""), fresh);
+});
+
+test("storage_bridge: invalid restores reject without changing live raw, revision, config or state", async () => {
+    for (const raw of ['{"broken', '[]', '5', '"wrong"', '{"schema":"4.0.0","data":null}', '{"schema":"4.0.0","data":[]}', '{"unrelated":1}', '{"LANGUAGE":{}}']) {
+        const env = createTestEnvironment();
+        const bridge = env.sandbox.QOL.core.storageBridge;
+        env.fireTitleEvent(bridge.getPanel(), "QOL_BRIDGE_READY");
+        const fresh = publishEdit(env);
+        const beforeConfig = JSON.stringify(env.sandbox.MOD_CONFIG);
+        const revision = env.rootPanel.GetAttributeString("QOL_USER_EDIT_REV", "");
+        const pending = bridge.loadSettings();
+        replyToCurrentRequest(env, raw);
+        await assert.rejects(pending, /stored|Stored|settings|setting/);
+        assert.equal(env.rootPanel.GetAttributeString("Deadlock_Mod_Settings_v1", ""), fresh, raw);
+        assert.equal(env.rootPanel.GetAttributeString("QOL_USER_EDIT_REV", ""), revision, raw);
+        assert.equal(JSON.stringify(env.sandbox.MOD_CONFIG), beforeConfig, raw);
+        assert.equal(env.sandbox.State.lastConfig, null, raw);
+    }
+});
+
+test("storage_bridge: explicit load replaces preceding edits, but missing storage keeps them", async () => {
+    const env = createTestEnvironment();
+    const bridge = env.sandbox.QOL.core.storageBridge;
+    env.fireTitleEvent(bridge.getPanel(), "QOL_BRIDGE_READY");
+    publishEdit(env, 30);
+    const load = bridge.loadSettings();
+    replyToCurrentRequest(env, env.sandbox.WrapConfigForStorage({ BRIDGE_BUFF_START: 15 }));
+    assert.equal((await load).applied, true);
+    assert.equal(env.sandbox.MOD_CONFIG.BRIDGE_BUFF_START, 15);
+    const fresh = publishEdit(env, 20);
+    const missing = bridge.loadSettings();
+    replyToCurrentRequest(env, null);
+    assert.equal((await missing).notFound, true);
+    assert.equal(env.rootPanel.GetAttributeString("Deadlock_Mod_Settings_v1", ""), fresh);
+});

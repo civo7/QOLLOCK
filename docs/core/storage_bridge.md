@@ -1,50 +1,43 @@
-# `panorama/scripts/core/ql_storage_bridge.js`
+# Storage bridge
 
-## Purpose
-Settings persistence through a Chromium Embedded Framework (CEF) `CitadelHTMLPanel` and origin-scoped `localStorage`.
-The bridge page is loaded from GitHub Pages over HTTPS. Save/load commands then use the loaded page's local storage; they do not use hero switching or shop builds.
+`panorama/scripts/core/ql_storage_bridge.js` persists settings through a CEF `CitadelHTMLPanel` and origin-scoped `localStorage`. The panel loads `https://predi-i.github.io/qollock-updates/bridge.html`; subsequent save/load commands operate on that page's local storage.
 
-## Dependencies
-- `panorama/scripts/core/ql_namespace.js` (`QOL.core`)
-- `panorama/scripts/ql_config.js` (`QOL_STORAGE_KEY`, `QOL_DEFAULT_CONFIG`, `BuildDefaultConfig`)
-- `panorama/scripts/ql_bridge.js` (`STORAGE_KEY`)
-- `CitadelHTMLPanel` with ID `QOLStorageBridge` in `hud.xml` / `hud_escape_menu.xml`
+## Dependencies and ownership
 
-## Mechanism & Architecture
-1. **CEF Instance**: `init()` creates or reuses a direct child `CitadelHTMLPanel` named `QOLStorageBridge` in its HUD or Escape Menu context, then loads `https://predi-i.github.io/qollock-updates/bridge.html`.
-2. **Persistence**: The page uses Chromium `localStorage`, scoped to its origin. The exact Steam profile path, persistence across client updates, and behavior without network access require client verification.
-3. **IPC Bridge & Sequential Chunking**:
-   - Outbound commands are dispatched using `panel.SetURL("javascript:...")`.
-   - **URL Fragment & Character Safety**: All keys, values, and chunks passed via `SetURL` are UTF-8 Base64 encoded. This prevents Chromium URL parsing from treating `#` (e.g. hex colors `#00FF00`) as fragment delimiters, which would otherwise truncate scripts.
-   - **FIFO Request Serialization**: Requests and multi-part chunk streams are serialized through an asynchronous FIFO queue (`_requestQueue`), preventing title event coalescing and race conditions during rapid saves or overlapping loads.
-   - Inbound results are passed through `document.title = "QOL_RES:" + JSON.stringify(...)`.
-   - Panorama catches changes via the native `HTMLTitle` event handler, resolving the corresponding asynchronous request.
-   - **Symmetric Chunking**: To bypass the Source 2 C++ engine 4096-character `HTMLTitle` buffer limit and URL length constraints, both reading (`__qolLoad` / `__qolNextChunk`) and writing (`__qolSaveChunk`) operate in sequential 1500-character chunks with acknowledgment handshakes.
-4. **Resilience & Security**:
-   - Request IDs are strictly validated with `/^qol_\d+_\d+$/`.
-   - 30-second TTL timers ensure orphaned save and load buffers are garbage collected.
-   - Incoming stream chunks enforce strict sequence ordering (`expectedPart`), rejecting out-of-order chunks to prevent data corruption.
-   - Top-level `try/catch` wrappers shield the Panorama UI event loop from unhandled exceptions.
-   - **Request Timeout Guard**: Queued requests arm a 5-second timeout, reset on dispatch and chunk progress. A request that expires before dispatch is removed from the queue, so it cannot perform a delayed save or block later requests. Timing out an already-dispatched command does not undo a write CEF may have performed.
-   - **20-Second Navigation Watchdog**: A 20-second interval watchdog retries `SetURL(BRIDGE_LOCAL_URL)` if the page does not become ready on cold startup. Autoload errors automatically trigger scheduled retry passes.
+The HUD and Escape Menu load `ql_namespace.js`, `ql_utils.js`, panel helpers, and `core/ql_persistence.js` before the bridge. Shared envelope helpers and `QOL.parseStoredConfig` must be available when settings operations run. In the HUD, these parser definitions load later in the same script block, before asynchronous restore completes.
 
-## Interface (`QOL.core.storageBridge`)
-- `init(targetParent, options)`: Initializes or binds to the `CitadelHTMLPanel` bridge and attaches the `HTMLTitle` event handler.
-- `isReady()`: Returns `true` if the CEF bridge is initialized and ready for IPC.
-- `save(key, val, callback)`: Saves a raw string key-value pair into CEF `localStorage`. Automatically handles Base64 encoding and chunked saving for large payloads. Returns a Promise.
-- `load(key, callback)`: Loads a string value by key from CEF `localStorage`. Handles multi-frame chunked reassembly automatically. Returns a Promise resolving to string or `null`.
-- `remove(key, callback)`: Removes a key from CEF `localStorage`. Returns a Promise.
-- `saveSettings(configOrRaw, callback)`: Saves the configuration under the CEF key `qollock_settings` and updates the UI attribute `Deadlock_Mod_Settings_v1`. Returns a Promise.
-- `loadSettings(callback)`: Loads and validates the QOLLOCK config from CEF `localStorage`. Applies valid settings into active UI panel attributes. Returns a Promise.
-- `clearSettings(callback)`: Clears QOLLOCK settings from CEF `localStorage`. Returns a Promise.
-- `enableAutoload(enable)`: Controls automatic loading upon readiness. Startup enables it for HUD and disables it for EscapeMenu.
+Each realm owns a direct child `CitadelHTMLPanel` named `QOLStorageBridge` and its title handler. HUD startup enables autoload; Escape Menu startup disables it. Direct-child lookup avoids adopting the other realm's nested bridge. The Escape Menu explicitly includes `core/ql_persistence.js` so both realms use the same revision and edit-generation protocol.
 
-## Invariants & Architectural Notes
-- Loading the bridge page can require network access. Once loaded, save/load IPC uses local storage rather than a settings-upload API.
-- Zero hero switching, shop opening, or favorites panel manipulation is required.
-- Save latency has not been measured here; no 5–15ms completion guarantee.
-- Sequential chunking limits individual transfers; it does not remove storage quotas, timeout limits, or all encoded-size limits.
-- Strict FIFO queue guarantees serialized execution and prevents title race conditions.
-- **Per-Realm Panel Isolation**: Each realm must own its bridge panel and title handler. Recursive lookup from HUD could adopt the nested EscapeMenu bridge; direct-child lookup prevents this. Offline tests cover ownership and event routing, not native CEF dispatch semantics or shared disk-profile behavior.
-- **Realm-Aware Autoloading**: Autoloading on startup is enabled for the primary HUD realm (`autoload: true`). The Escape Menu realm initializes its bridge with `autoload: false` to connect for user saves and loads without redundant boot loads.
+## Transport
 
+Commands are serialized through a FIFO queue and sent with `SetURL("javascript:...")`. Responses arrive through `HTMLTitle` as `QOL_RES:` JSON. Keys and outbound values use UTF-8 Base64, including characters such as `#` that otherwise affect URL parsing.
+
+Large transfers use sequential chunks and acknowledgment handshakes. Outbound chunks are at most 1500 UTF-16 code units; boundaries move back one unit when necessary to preserve a surrogate pair. Incoming load chunks enforce the expected part order. CEF-side buffers expire after 30 seconds.
+
+Requests have a five-second timeout, reset on dispatch and chunk progress. A queued request that expires is removed and cannot execute after a later connection. Timing out a command already sent does not undo a write CEF may have performed. A 20-second startup watchdog retries navigation up to the configured five-attempt limit.
+
+## Restore and save behavior
+
+Startup captures the root panel and its configuration change stamp when autoload is enabled, before CEF readiness. The stamp includes published revisions and dirty-edit generations from the root and HUD. Startup restore proceeds only while that original state still matches. Its single scheduled retry retains the original baseline; a retry cannot regain permission to overwrite subsequent edits.
+
+An explicit `loadSettings()` captures a new baseline after marking the request as user intent. It can replace edits that preceded the request, but skips application if another edit, save, clear, or explicit load occurs while waiting. A skipped restore returns `applied: false` and `skipped: "newer-edits"`; it does not claim that disk settings were applied. Missing storage preserves the current session and returns `notFound: true`.
+
+Settings are structurally validated and normalized through the side-effect-free parser before publication. Malformed input rejects without invoking the legacy parser's reset path. Accepted settings are serialized to a canonical envelope for publication, so the later HUD parser receives the same normalized configuration. The HUD revision poll owns ConfigAdapter and feature lifecycle updates.
+
+`saveSettings()` validates and normalizes a snapshot, publishes its canonical envelope to panel attributes, and sends it to CEF. Success requires a CEF acknowledgment; updating live attributes alone is not disk-save success. A failed disk save may leave the chosen settings active for the current session. Clearing disk settings also invalidates older pending restores, but does not itself reset live settings.
+
+## Interface
+
+The API is available as `QOL.core.storageBridge`, `QOL.core.storage`, and `QOLStorageBridge`.
+
+- `init(parent, options)`, `isReady()`, `getPanel()`, `enableAutoload(flag)` manage connection and startup restore.
+- `save(key, value, callback)`, `load(key, callback)`, `remove(key, callback)` are low-level key/value transport operations returning Promises.
+- `saveSettings(configOrRaw, callback)` writes the validated configuration under `qollock_settings`.
+- `loadSettings(callback)` restores settings subject to the captured change stamp.
+- `clearSettings(callback)` removes `qollock_settings` from CEF storage.
+
+High-level callbacks use `(error, result)`. Supplying a callback attaches a Promise rejection handler, so callback-only callers do not need to catch an otherwise unused returned Promise. Promise callers can still await the returned operation and receive its rejection. Callback exceptions are logged and do not leave the operation pending.
+
+## Verification limits
+
+Offline tests can verify queue ordering, parser boundaries, stale-response rejection, callback settlement, and execution of embedded bridge JavaScript against a storage model. They do not prove native CEF title delivery, the browser profile's persistence across game updates, or recovery after closing the client. Loading the bridge page may require network access. No latency, quota, or offline-availability guarantee follows from a passing simulation. A freshly repacked in-game restart/save/restore check remains necessary.

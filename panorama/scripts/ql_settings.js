@@ -244,6 +244,9 @@ var gSaveDebounceToken = 0;
 var SAVE_DEBOUNCE_SEC = 0.3;
 
 function MarkConfigDirty() {
+    if (QOL.core && QOL.core.persistence) {
+        QOL.core.persistence.markConfigEdited(FindRootPanel());
+    }
     var token = ++gSaveDebounceToken;
     $.Schedule(SAVE_DEBOUNCE_SEC, function() {
         if (gSaveDebounceToken === token) {

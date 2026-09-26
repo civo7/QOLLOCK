@@ -72,6 +72,7 @@
     };
 
     const parseRevisionNumber = QOL_UTILS.ParseRevisionNumber;
+    const EDIT_REV_ATTR = "QOL_CONFIG_EDIT_REV";
 
     /**
      * Finds and caches the absolute UI root panel by walking the parent chain.
@@ -169,6 +170,25 @@
         return result;
     };
 
+    // Dirty edits have their own generation: changing a slider must invalidate
+    // an in-flight restore even before its debounced data write is published.
+    const markConfigEdited = (root) => {
+        if (!isAlive(root)) return;
+        const hud = resolveHudPanel(root);
+        const readEdit = (panel) => parseRevisionNumber(QOL_UTILS.SafeGetAttribute(panel, EDIT_REV_ATTR, "0"));
+        const revision = Math.max(readEdit(root), readEdit(hud)) + 1;
+        QOL_UTILS.SafeSetAttribute(root, EDIT_REV_ATTR, revision);
+        if (hud !== root) QOL_UTILS.SafeSetAttribute(hud, EDIT_REV_ATTR, revision);
+    };
+
+    const getConfigChangeStamp = (root) => {
+        if (!isAlive(root)) return null;
+        const hud = resolveHudPanel(root);
+        const revisionAttr = getUserEditRevAttr();
+        const read = (panel, attr) => parseRevisionNumber(QOL_UTILS.SafeGetAttribute(panel, attr, "0"));
+        return [read(root, revisionAttr), read(hud, revisionAttr), read(root, EDIT_REV_ATTR), read(hud, EDIT_REV_ATTR)].join("|");
+    };
+
     /**
      * Revision-gated cached config read.
      */
@@ -251,6 +271,8 @@
         readStorageConfigRawFromUi,
         readStorageConfigRawUncached,
         writeStorageConfigRawToUi,
+        markConfigEdited,
+        getConfigChangeStamp,
         parseRevisionNumber
     };
 

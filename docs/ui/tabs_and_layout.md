@@ -107,3 +107,9 @@ Because layout is purely declarative:
 - **Window Close Semantics (`forceCloseModSettings`)**:
   Closing the settings window (via the header close button 'X' or ESC handling) toggles the visibility of the `SettingsWindow` panel without dispatching `CitadelResumePlaying`. This ensures that closing the QOLLOCK settings window preserves Deadlock's native Escape Menu rather than dismissing the pause state.
 
+
+## 6. Dirty edits and asynchronous restore
+
+`MarkConfigDirty()` in `panorama/scripts/ql_settings.js` records a persistence edit generation immediately, before its 0.3-second debounced `SaveAndSync()`. A pending CEF restore can therefore detect a slider change even while the updated configuration has not been published to panel attributes. Immediate `SaveAndSync()` writes continue to advance the normal configuration revision.
+
+`hud_escape_menu.xml` loads `core/ql_persistence.js` before `core/ql_storage_bridge.js`. The settings realm shares the root/HUD revision protocol without loading the HUD feature registry. See `docs/core/persistence.md` and `docs/core/storage_bridge.md` for the restore guards and disk-save acknowledgment contract.

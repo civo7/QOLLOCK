@@ -185,6 +185,37 @@ function NormalizeLanguageSchemaMigration(configTarget, sourceConfig, schemaVers
 
 // ── SafeParseConfig — config load entry point ──
 
+// Side-effect-free validation for asynchronous restore/save operations. Unlike
+// SafeParseConfig's legacy recovery path, rejection must not clear live state.
+function ParseStoredConfig(raw) {
+    var unwrapped = UnwrapConfigFromStorage(raw);
+    var config = unwrapped && unwrapped.config;
+    if (!config || typeof config !== "object" || Array.isArray(config)) {
+        throw new Error("Stored settings must contain a configuration object");
+    }
+    if (!unwrapped.isEnveloped &&
+        (Object.prototype.hasOwnProperty.call(config, "schema") || Object.prototype.hasOwnProperty.call(config, "data"))) {
+        throw new Error("Stored settings have an invalid envelope");
+    }
+    var safeConfig = {};
+    var known = BuildDefaultConfig();
+    var keys = Object.keys(config);
+    var recognized = 0;
+    for (var i = 0; i < keys.length; i++) {
+        var key = keys[i];
+        if (!Object.prototype.hasOwnProperty.call(known, key)) continue;
+        if (config[key] === null || typeof config[key] === "object") {
+            throw new Error("Invalid stored setting: " + key);
+        }
+        safeConfig[key] = config[key];
+        recognized++;
+    }
+    if (keys.length > 0 && recognized === 0) {
+        throw new Error("Stored settings contain no recognized configuration keys");
+    }
+    return MergeConfig(safeConfig);
+}
+
 function SafeParseConfig(raw) {
     if (!raw || raw === "") return null;
     try {
@@ -222,6 +253,7 @@ if (typeof QOL !== "undefined") {
     QOL.buildDefaultConfig = BuildDefaultConfig;
     QOL.mergeConfig = MergeConfig;
     QOL.safeParseConfig = SafeParseConfig;
+    QOL.parseStoredConfig = ParseStoredConfig;
     QOL.getSharedSchemaUtils = GetSharedSchemaUtils;
     QOL.normalizeAmmoScaleConfig = NormalizeAmmoScaleConfig;
     QOL.migrateSplitZoomKeys = MigrateSplitZoomKeys;

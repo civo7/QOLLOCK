@@ -40,6 +40,7 @@
 		<include src="s2r://panorama/scripts/ql_settings_previews.vjs_c" />
 		<include src="s2r://panorama/scripts/ql_settings_tooltips.vjs_c" />
 		<include src="s2r://panorama/scripts/ql_settings_persistence.vjs_c" />
+		<include src="s2r://panorama/scripts/core/ql_persistence.vjs_c" />
 		<include src="s2r://panorama/scripts/core/ql_storage_bridge.vjs_c" />
 		<include src="s2r://panorama/scripts/ql_update_checker.vjs_c" />
 		<include src="s2r://panorama/scripts/ui/ql_settings_metadata.vjs_c" />

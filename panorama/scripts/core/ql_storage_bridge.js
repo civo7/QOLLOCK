@@ -38,6 +38,7 @@
     let _initAttempts = 0;
     let _hasAutoloaded = false;
     let _autoloadEnabled = false;
+    let _autoloadState = null;
 
     const _b64Chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/=";
 
@@ -87,27 +88,59 @@
         }
     };
 
-    const _isPanelAlive = (p) => {
-        if (!p) return false;
-        if (Q.core?.panel?.isAlive) return Q.core.panel.isAlive(p);
-        return typeof p.IsValid === "function" && p.IsValid();
+    const _isPanelAlive = Q.core.panel.isAlive;
+    const _findRootPanel = () => Q.core.persistence
+        ? Q.core.persistence.getUIRoot() : Q.core.panel.findRoot();
+
+    const _captureRestoreState = () => {
+        const root = _findRootPanel();
+        return { root, stamp: Q.core.persistence?.getConfigChangeStamp(root) };
     };
 
-    const _findRootPanel = () => {
-        if (Q.core?.panel?.findRoot) {
-            const root = Q.core.panel.findRoot();
-            if (_isPanelAlive(root)) return root;
+    const _isRestoreStateCurrent = (state) => {
+        const current = _captureRestoreState();
+        return !!state && _isPanelAlive(state.root) && state.root === current.root &&
+            state.stamp !== null && state.stamp !== undefined && state.stamp === current.stamp;
+    };
+
+    const _setAutoloadEnabled = (flag) => {
+        if (flag && !_autoloadEnabled) _autoloadState = _captureRestoreState();
+        _autoloadEnabled = !!flag;
+    };
+
+    // Callback consumers do not have to catch a second, unused Promise. Promise
+    // consumers still receive the original rejection, and callback errors cannot
+    // leave an otherwise completed operation pending forever.
+    const _withCallback = (promise, callback) => {
+        if (typeof callback === "function") {
+            const notify = (err, result) => {
+                try { callback(err, result); }
+                catch (e) { _logWarn(`Storage callback failed: ${e?.message || e}`); }
+            };
+            promise.then(result => notify(null, result), err => notify(err, null));
         }
-        if (typeof $.GetContextPanel === "function") {
-            let p = $.GetContextPanel();
-            let guard = 0;
-            while (p && p.GetParent && _isPanelAlive(p.GetParent()) && guard < 64) {
-                p = p.GetParent();
-                guard++;
+        return promise;
+    };
+
+    const _runAutoload = (retry = false) => {
+        if (!_autoloadEnabled || _hasAutoloaded || !_bridgeReady) return;
+        _hasAutoloaded = true;
+        if (!_isRestoreStateCurrent(_autoloadState)) {
+            _log("Startup restore skipped: settings changed since initialization.");
+            return;
+        }
+        _loadSettings(_autoloadState).then(result => {
+            if (result.skipped) _log("Startup restore skipped: newer user edits exist.");
+            else if (result.notFound) _log("No saved settings found; keeping current settings.");
+            else _log("Saved settings restored from CEF storage.");
+        }, err => {
+            _logWarn(`Startup restore${retry ? " retry" : ""} failed: ${err.message || err}`);
+            if (!retry && typeof $.Schedule === "function") {
+                _hasAutoloaded = false;
+                // Retain the original startup stamp across retries.
+                $.Schedule(5.0, () => _runAutoload(true));
             }
-            return p || null;
-        }
-        return null;
+        });
     };
 
     /**
@@ -375,33 +408,7 @@
                 _watchdogTimer = null;
             }
 
-            if (_autoloadEnabled && !_hasAutoloaded) {
-                _hasAutoloaded = true;
-                storageBridgeApi.loadSettings((err, res) => {
-                    if (err) {
-                        _logWarn(`Startup autoload failed: ${err.message || err}`);
-                        _hasAutoloaded = false;
-                        if (typeof $.Schedule === "function") {
-                            $.Schedule(5.0, () => {
-                                if (!_hasAutoloaded && _bridgeReady) {
-                                    _hasAutoloaded = true;
-                                    storageBridgeApi.loadSettings((rErr, rRes) => {
-                                        if (rErr) {
-                                            _logWarn(`Startup autoload retry failed: ${rErr.message || rErr}`);
-                                        } else if (rRes && rRes.ok) {
-                                            _log("Saved settings restored successfully on retry from CEF storage.");
-                                        }
-                                    }).catch(() => {});
-                                }
-                            });
-                        }
-                    } else if (res && res.notFound) {
-                        _log("No saved settings found in CEF storage; using defaults.");
-                    } else if (res && res.ok) {
-                        _log("Saved settings restored successfully from CEF storage.");
-                    }
-                }).catch(() => {});
-            }
+            _runAutoload();
             return;
         }
 
@@ -510,14 +517,11 @@
      */
     const init = (targetParent, options) => {
         if (options && typeof options.autoload === "boolean") {
-            _autoloadEnabled = options.autoload;
+            _setAutoloadEnabled(options.autoload);
         }
 
         if (_isPanelAlive(_bridgePanel)) {
-            if (_bridgeReady && _autoloadEnabled && !_hasAutoloaded) {
-                _hasAutoloaded = true;
-                storageBridgeApi.loadSettings().catch(() => {});
-            }
+            _runAutoload();
             return _bridgePanel;
         }
 
@@ -607,8 +611,13 @@
 
         // Multi-part save for large configs (SEC-02)
         const chunks = [];
-        for (let i = 0; i < valStr.length; i += CHUNK_SIZE) {
-            chunks.push(_utf8ToBase64(valStr.slice(i, i + CHUNK_SIZE)));
+        for (let i = 0; i < valStr.length;) {
+            let end = Math.min(i + CHUNK_SIZE, valStr.length);
+            const last = valStr.charCodeAt(end - 1);
+            const next = valStr.charCodeAt(end);
+            if (last >= 0xD800 && last <= 0xDBFF && next >= 0xDC00 && next <= 0xDFFF) end--;
+            chunks.push(_utf8ToBase64(valStr.slice(i, end)));
+            i = end;
         }
 
         return _sendRequest((id) => {
@@ -637,200 +646,81 @@
         }, callback);
     };
 
-    /**
-     * High-level: saves QOLLOCK configuration to CEF local storage and updates UI attributes.
-     */
+    const _parseStoredSettings = (raw) => {
+        if (typeof Q.parseStoredConfig !== "function") throw new Error("Settings parser unavailable");
+        return Q.parseStoredConfig(raw);
+    };
+
+    /** Save a validated snapshot. Acknowledgment confirms CEF, not just UI sync. */
     const saveSettings = (configOrRaw, callback) => {
-        let rawToSave = "";
-        let configObj = null;
-
-        if (typeof configOrRaw === "string") {
-            rawToSave = configOrRaw;
-            try {
-                const unwrapped = typeof UnwrapConfigFromStorage === "function"
-                    ? UnwrapConfigFromStorage(rawToSave) : null;
-                configObj = unwrapped ? unwrapped.config : JSON.parse(rawToSave);
-            } catch (_) {
-                configObj = null;
-            }
-        } else if (configOrRaw && typeof configOrRaw === "object") {
-            configObj = configOrRaw;
-            if (typeof WrapConfigForStorage === "function") {
-                rawToSave = WrapConfigForStorage(configObj);
-            } else {
-                rawToSave = JSON.stringify(configObj);
-            }
-        } else {
-            const modCfg = (typeof MOD_CONFIG !== "undefined" && MOD_CONFIG)
-                ? MOD_CONFIG
-                : ((typeof globalThis !== "undefined" && globalThis.MOD_CONFIG) ? globalThis.MOD_CONFIG : null);
-            configObj = modCfg || {};
-            if (typeof WrapConfigForStorage === "function") {
-                rawToSave = WrapConfigForStorage(configObj);
-            } else {
-                rawToSave = JSON.stringify(configObj);
-            }
+        let rawToSave;
+        try {
+            const config = configOrRaw === undefined
+                ? ((typeof MOD_CONFIG !== "undefined" && MOD_CONFIG) || globalThis.MOD_CONFIG || {})
+                : configOrRaw;
+            rawToSave = typeof config === "string" ? config : WrapConfigForStorage(config);
+            rawToSave = WrapConfigForStorage(_parseStoredSettings(rawToSave));
+            const root = _findRootPanel();
+            if (_isPanelAlive(root)) Q.core.persistence.writeStorageConfigRawToUi(root, rawToSave);
+        } catch (err) {
+            return _withCallback(Promise.reject(err), callback);
         }
-
-        const root = _findRootPanel();
-        if (root && Q.core?.persistence?.writeStorageConfigRawToUi) {
-            try {
-                Q.core.persistence.writeStorageConfigRawToUi(root, rawToSave);
-            } catch (e) {
-                _logWarn(`writeStorageConfigRawToUi failed: ${e?.message || e}`);
-            }
-        }
-
-        return new Promise((resolve, reject) => {
-            save(SETTINGS_STORAGE_KEY, rawToSave, (err) => {
-                if (err) {
-                    _logWarn(`saveSettings failed: ${err.message || err}`);
-                    if (typeof callback === "function") callback(err, null);
-                    return reject(err);
-                }
-                _log(`saveSettings succeeded (${rawToSave.length} bytes).`);
-                const result = { ok: true, timestamp: Date.now ? Date.now() : (new Date()).getTime() };
-                if (typeof callback === "function") {
-                    callback(null, result);
-                }
-                resolve(result);
-            });
+        const promise = save(SETTINGS_STORAGE_KEY, rawToSave).then(() => {
+            _log(`saveSettings succeeded (${rawToSave.length} characters).`);
+            return { ok: true, timestamp: Date.now() };
         });
+        return _withCallback(promise, callback);
     };
 
-    /**
-     * High-level: loads QOLLOCK configuration from CEF local storage and applies it.
-     */
+    // Validation and normalization happen before publishing any attributes or
+    // changing MOD_CONFIG/State. Parsing failures cannot reset a live session.
+    const _loadSettings = (state) => load(SETTINGS_STORAGE_KEY).then(data => {
+        if (!_isRestoreStateCurrent(state)) {
+            return { ok: true, applied: false, skipped: "newer-edits" };
+        }
+        if (data === null || data === undefined || data === "") {
+            return { ok: true, applied: false, raw: "", config: null, notFound: true };
+        }
+        if (typeof data !== "string") throw new Error("Stored settings response must be a string");
+        const parsed = _parseStoredSettings(data);
+        const normalizedRaw = WrapConfigForStorage(parsed);
+        Q.core.persistence.writeStorageConfigRawToUi(state.root, normalizedRaw);
+
+        const modCfg = (typeof MOD_CONFIG !== "undefined" && MOD_CONFIG) || globalThis.MOD_CONFIG;
+        if (modCfg) {
+            for (const key of Object.keys(parsed)) modCfg[key] = parsed[key];
+        }
+        const runtimeState = (typeof State !== "undefined" && State) || globalThis.State;
+        if (runtimeState) runtimeState.lastConfig = parsed;
+        const syncFn = globalThis.SyncConfigFromStorage;
+        if (typeof syncFn === "function") syncFn();
+        // The HUD's revision poll owns ConfigAdapter and feature lifecycle
+        // updates. Avoid separately applying a partially synchronized config.
+        if (Q.core?.eventBus && typeof Q.core.eventBus.emit === "function") {
+            Q.core.eventBus.emit("config:loaded", { config: parsed, raw: normalizedRaw });
+        }
+        _log(`loadSettings completed (${data.length} characters).`);
+        return { ok: true, applied: true, raw: normalizedRaw, config: parsed };
+    });
+
+    /** Explicit load may replace preceding edits, never edits made while waiting. */
     const loadSettings = (callback) => {
-        return new Promise((resolve, reject) => {
-            load(SETTINGS_STORAGE_KEY, (err, data) => {
-                if (err) {
-                    _logWarn(`loadSettings error: ${err.message || err}`);
-                    if (typeof callback === "function") callback(err, null);
-                    return reject(err);
-                }
-
-                if (!data || data === "" || data === "null") {
-                    const notFoundResult = { ok: true, raw: "", config: null, notFound: true };
-                    if (typeof callback === "function") {
-                        callback(null, notFoundResult);
-                    }
-                    return resolve(notFoundResult);
-                }
-
-                const rawText = String(data);
-                let parsed = null;
-
-                if (typeof SafeParseConfig === "function") {
-                    parsed = SafeParseConfig(rawText);
-                }
-                if (!parsed && typeof UnwrapConfigFromStorage === "function") {
-                    const unwrap = UnwrapConfigFromStorage(rawText);
-                    if (unwrap && unwrap.config) {
-                        parsed = unwrap.config;
-                    }
-                }
-                if (!parsed) {
-                    try { parsed = JSON.parse(rawText); } catch (_) { parsed = null; }
-                }
-
-                const root = _findRootPanel();
-                if (root && Q.core?.persistence?.writeStorageConfigRawToUi) {
-                    try {
-                        Q.core.persistence.writeStorageConfigRawToUi(root, rawText);
-                    } catch (e) {
-                        _logWarn(`loadSettings: writeStorageConfigRawToUi failed: ${e?.message || e}`);
-                    }
-                }
-
-                if (parsed && typeof parsed === "object") {
-                    delete parsed.__proto__;
-                    delete parsed.constructor;
-                    delete parsed.prototype;
-                    const modCfg = (typeof MOD_CONFIG !== "undefined" && MOD_CONFIG)
-                        ? MOD_CONFIG
-                        : ((typeof globalThis !== "undefined" && globalThis.MOD_CONFIG) ? globalThis.MOD_CONFIG : null);
-                    if (modCfg) {
-                        if (typeof MergeConfig === "function") {
-                            const merged = MergeConfig(parsed);
-                            for (const k in merged) {
-                                if (Object.prototype.hasOwnProperty.call(merged, k)) {
-                                    modCfg[k] = merged[k];
-                                }
-                            }
-                        } else {
-                            for (const k in parsed) {
-                                if (Object.prototype.hasOwnProperty.call(parsed, k)) {
-                                    modCfg[k] = parsed[k];
-                                }
-                            }
-                        }
-                    }
-
-                    const state = (typeof State !== "undefined" && State)
-                        ? State
-                        : ((typeof globalThis !== "undefined" && globalThis.State) ? globalThis.State : null);
-                    if (state) {
-                        state.lastConfig = parsed;
-                    }
-
-                    if (Q.core?.configAdapter && typeof Q.core.configAdapter.loadFromFlat === "function") {
-                        try {
-                            const enableKeyMap = (typeof Q.core.app?._getEnableKeyMap === "function")
-                                ? Q.core.app._getEnableKeyMap() : null;
-                            Q.core.configAdapter.loadFromFlat(parsed, enableKeyMap);
-                        } catch (eAdapter) {
-                            _logWarn(`loadSettings: ConfigAdapter.loadFromFlat failed: ${eAdapter?.message || eAdapter}`);
-                        }
-                    }
-
-                    const syncFn = (typeof globalThis !== "undefined" && globalThis.SyncConfigFromStorage)
-                        ? globalThis.SyncConfigFromStorage : null;
-                    if (typeof syncFn === "function") {
-                        try { syncFn(); } catch (_) {}
-                    }
-
-                    if (Q.core?.eventBus && typeof Q.core.eventBus.emit === "function") {
-                        try { Q.core.eventBus.emit("config:loaded", { config: parsed, raw: rawText }); } catch (_) {}
-                    }
-                }
-
-                _log(`loadSettings completed (${rawText.length} bytes).`);
-                const result = { ok: true, raw: rawText, config: parsed };
-                if (typeof callback === "function") {
-                    callback(null, result);
-                }
-                resolve(result);
-            });
-        });
+        const root = _findRootPanel();
+        Q.core.persistence?.markConfigEdited(root);
+        return _withCallback(_loadSettings(_captureRestoreState()), callback);
     };
 
-    /**
-     * High-level: clears QOLLOCK configuration from CEF local storage.
-     */
     const clearSettings = (callback) => {
-        return new Promise((resolve, reject) => {
-            remove(SETTINGS_STORAGE_KEY, (err) => {
-                if (err) {
-                    _logWarn(`clearSettings failed: ${err.message || err}`);
-                    if (typeof callback === "function") callback(err, null);
-                    return reject(err);
-                }
-                _log("clearSettings succeeded.");
-                const result = { ok: true };
-                if (typeof callback === "function") {
-                    callback(null, result);
-                }
-                resolve(result);
-            });
-        });
+        // Clearing storage is also user intent: an older restore must not undo it.
+        Q.core.persistence?.markConfigEdited(_findRootPanel());
+        return _withCallback(remove(SETTINGS_STORAGE_KEY).then(() => ({ ok: true })), callback);
     };
 
     const storageBridgeApi = {
         init,
         isReady: () => _bridgeReady,
         getPanel: () => _bridgePanel,
-        enableAutoload: (flag) => { _autoloadEnabled = !!flag; },
+        enableAutoload: _setAutoloadEnabled,
         save,
         load,
         remove,
