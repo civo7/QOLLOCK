@@ -21,22 +21,12 @@ function escapeRe(s) { return s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"); }
 
 // form: "assign" -> QOL_PRESETS["KEY"] = { ... };   "member" -> indented  "KEY": { ... },
 const TARGETS = [
-    { key: "BreadRollius", form: "member" },
-    { key: "Jaundice", form: "assign" },
-    { key: "Valerie", form: "assign" },
-    { key: "Deethirty", form: "member" },
-    { key: "mituu", form: "assign" },
-    { key: "Seyer", form: "assign" },
-    { key: "Boredom", form: "member" },
-    { key: "Anguish", form: "assign" },
-    { key: "Nairshark", form: "member" },
-    { key: "Jared", form: "member" },
-    { key: "Profitable", form: "member" },
-    { key: "Blank2762", form: "assign" },
-    { key: "Keta", form: "assign" },
-    { key: "loony", form: "assign" },
-    { key: "Starjadian", form: "assign" },
-    { key: "Thorkizzle", form: "assign" }
+    { key: "BSQTT", form: "member" },
+    { key: "Chumba", form: "member" },
+    { key: "7eventy7", form: "assign" },
+    { key: "munchkinman", form: "assign" },
+    { key: "nkonin.me", form: "assign" },
+    { key: "loony", form: "assign" }
 ];
 
 TARGETS.forEach(function(t) {
