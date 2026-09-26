@@ -14,6 +14,15 @@ Provides Deadlock-specific HUD element discovery, match mode detection (Hideout,
 - `isClassActive(className)`: Checks if a given class token is active on the HUD root.
 - `applyRootClasses(root, config, timestamp, force)`: Synchronizes feature CSS classes onto the root container based on active configuration settings.
 
+Use `QOL.core.hud.isInHideout(root)` for the shared two-class predicate.
+Compass, cursor, zipboost, urn timer, Rejuvenator, minimap timers, legacy passive
+audio, item mirror, stat bonuses, stats position and recent purchases call this
+helper directly or through a local function reference. HUD discovery is cached;
+the helper reads current classes on each call rather than caching mode state.
+Do not duplicate the predicate through two `isClassActive` calls or legacy
+fallbacks. Feature-specific intro/visibility rules remain separate, and the
+unsecured-souls timer intentionally has no hideout suppression.
+
 ## Engine Reality Note
 - Many in-game panels are created dynamically at runtime by C++ code. The HUD root undergoes structural changes during match phase transitions (draft, spawn, hideout, game active). Always use `findHud()` or cache panel references with `isPanelAlive()` validation.
 ## Top-bar visibility contract

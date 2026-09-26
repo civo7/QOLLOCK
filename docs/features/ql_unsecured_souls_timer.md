@@ -14,6 +14,12 @@ This is distinct from `ql_better_unsecured_hud`, which renders amount/icon state
 Preserve source-loss and reset handling; a stale sample must not masquerade as
 a current countdown.
 
+The enabled timer is available in matches, hideout and hero testing without
+mode-specific suppression. Hero testing no longer needs an exception to a
+hideout gate. Native source availability determines the display: a missing
+source shows `--`, zero souls clears the countdown, and a positive amount
+produces an estimated countdown. Native parent visibility still applies.
+
 ## Declared settings
 
 - `ENABLE_UNSECURED_SOUL_TIMER` (toggle)

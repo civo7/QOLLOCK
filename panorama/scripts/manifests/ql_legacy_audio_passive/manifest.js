@@ -117,7 +117,7 @@
             var NormalizeVoiceVolumeValue = function(v) { return QOL.normalizeVoiceVolumeValue ? QOL.normalizeVoiceVolumeValue(v) : v; };
             var GetSharedSchemaUtils = function() { return QOL.getSharedSchemaUtils ? QOL.getSharedSchemaUtils() : null; };
             var SetPanelClassCached = QOL.setPanelClassCached || function(p, c, cls, val) { if (p && p.SetHasClass) p.SetHasClass(cls, !!val); };
-            var isConnectedToHideout = function(r) { return (QOL.core && QOL.core.hud && QOL.core.hud.isClassActive) ? (QOL.core.hud.isClassActive('connectedToHideout') || QOL.core.hud.isClassActive('InHideout')) : (QOL.isConnectedToHideout ? QOL.isConnectedToHideout(r) : false); };
+            var isConnectedToHideout = QOL.core.hud.isInHideout;
 
             var _loop = null;
             var _root = null;

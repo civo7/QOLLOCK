@@ -80,8 +80,7 @@
                 var root = $.GetContextPanel();
                 if (!root) return;
 
-                var hud = (typeof QOL !== "undefined" && QOL.core && (QOL.core.hud || QOL.core.Hud)) || null;
-                var inHideout = hud && hud.isInHideout ? hud.isInHideout(root) : (root.BHasClass && (root.BHasClass("InHideout") || root.BHasClass("connectedToHideout")));
+                var inHideout = QOL.core.hud.isInHideout(root);
                 if (inHideout) {
                     if (_applied) {
                         var p = _getStatsPanel(root);

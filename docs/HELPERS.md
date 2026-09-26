@@ -79,6 +79,9 @@ without legacy fallback writes. Neither helper forces a new default value.
 
 ## Shared HUD state and deferred work
 
+- `QOL.core.hud.isInHideout(root)` checks `connectedToHideout` / `InHideout`
+  on the cached HUD and supplied root. Use it for that shared predicate;
+  feature-specific intro handling or visibility policy remains with the caller.
 - `QOL.core.hud.isScoreboardOpen(root, anchor)` reads `gScoreboardOpen` from
   HUD/ancestor state, an optional feature anchor, or the native `minimap_persp`
   GlobalClassListener. Engine toggle events prompt a refresh; they carry no
