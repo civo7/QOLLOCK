@@ -16,6 +16,17 @@
     var FR = QOL.core.FeatureRegistry;
     if (!FR) { $.Msg("[QOLLock] stamina: FeatureRegistry not found — aborting"); return; }
 
+    function findChargesContainer(root) {
+        // Scope the shared id to Valve's stamina element, not ability icons.
+        var elements = root.FindChildrenWithClassTraverse("ability_element_charges") || [];
+        for (var i = 0; i < elements.length; i++) {
+            var cc = elements[i].FindChildTraverse("charges_container");
+            // element_roll.xml shares the wrapper class, but has no drained pips.
+            if (cc && cc.FindChildrenWithClassTraverse("charge_drained").length) return cc;
+        }
+        return null;
+    }
+
     FR.register({
         id: "ql_stamina",
         enabledByDefault: true,
@@ -27,21 +38,9 @@
             var _lastAngleSig = "";
             var _lastColorSig = "";
             var _colorPanels = [];
+            var _anglePanel = null;
             var _loop = null;
 
-            function _hasNonDefaultConfig(cfg) {
-                if (!cfg) return false;
-                var angle = Math.round(Number(cfg.STAMINA_CHARGE_ANGLE));
-                if (!isFinite(angle)) angle = 45;
-                return angle !== 45 || _hasNonDefaultColor(cfg);
-            }
-
-            function _hasNonDefaultColor(cfg) {
-                if (!cfg) return false;
-                var idx = Math.round(Number(cfg.STAMINA_CHARGE_COLOR));
-                if (!isFinite(idx)) idx = 0;
-                return idx !== 0;
-            }
 
             function _normalizeAngle(cfg) {
                 var angle = Math.round(Number(cfg.STAMINA_CHARGE_ANGLE));
@@ -67,13 +66,10 @@
                 return idx;
             }
 
-            function _refreshColorPanels(root) {
+            function _refreshColorPanels(cc) {
                 _colorPanels = [];
-                var cc = root.FindChildTraverse("charges_container");
-                if (!cc || !cc.FindChildrenWithClassTraverse) return;
                 try {
-                    // Only include charge_fg panels that BHasClass("finished"),
-                    // matching the old feature's filter (ql_feat_stamina.js:54).
+                    // Leave native recharge/drain feedback untinted.
                     var allFg = cc.FindChildrenWithClassTraverse("charge_fg") || [];
                     for (var i = 0; i < allFg.length; i++) {
                         var fg = allFg[i];
@@ -89,37 +85,41 @@
             }
 
             function _apply(cfg) {
-                var root = $.GetContextPanel();
-                var cc = root.FindChildTraverse("charges_container");
-                if (!cc) return;
-
-                // Early-exit at defaults (matching old feature ql_feat_stamina.js:101-106):
-                // don't mutate the HUD when the user has never touched the settings.
-                if (!_hasNonDefaultConfig(cfg)) return;
-
                 var angle = _normalizeAngle(cfg);
-                var angleSig = String(angle);
                 var colorIdx = _normalizeColorIndex(cfg);
-                var colorSig = String(colorIdx);
+                // Defaults are a no-op only after previous overrides are restored.
+                if (angle === 45 && colorIdx === 0 && !_anglePanel && !_colorPanels.length) return;
 
-                if (_lastAngleSig !== angleSig) {
+                var cc = findChargesContainer($.GetContextPanel());
+                if (!cc) return;
+                var angleSig = String(angle);
+                if (_anglePanel !== cc || _lastAngleSig !== angleSig) {
+                    cc.style.transform = "rotateZ(" + angle + "deg)";
                     _lastAngleSig = angleSig;
-                    // Use style.transform (not preTransformRotateZ) — old feature
-                    // overwrites the full transform string (ql_feat_stamina.js:112).
-                    try { cc.style.transform = "rotateZ(" + angle + "deg)"; } catch(e) {}
+                    _anglePanel = cc;
                 }
 
-                if (_lastColorSig !== colorSig) {
-                    _lastColorSig = colorSig;
-                    _refreshColorPanels(root);
-                    var pal = (typeof QOL !== "undefined" && QOL.washColorPalette) ? QOL.washColorPalette : [];
-                    // Old feature clears to "transparent" (alpha=0 disables wash), not "".
-                    var wc = (typeof QOL !== "undefined" && QOL.core && QOL.core.panel && QOL.core.panel.resolvePaletteColor && colorIdx > 0)
-                        ? QOL.core.panel.resolvePaletteColor(colorIdx)
-                        : ((colorIdx > 0 && colorIdx < pal.length) ? pal[colorIdx] : "transparent");
-                    for (var i = 0; i < _colorPanels.length; i++) {
-                        try { _colorPanels[i].style.washColor = wc; } catch(e) {}
-                    }
+                var previous = _colorPanels;
+                if (colorIdx > 0) _refreshColorPanels(cc);
+                else _colorPanels = [];
+                for (var p = 0; p < previous.length; p++) {
+                    if (_colorPanels.indexOf(previous[p]) !== -1) continue;
+                    try { previous[p].style.washColor = "transparent"; } catch(e) {}
+                }
+
+                var colorSig = String(colorIdx);
+                var pal = QOL.washColorPalette || [];
+                var wc = QOL.core.panel && QOL.core.panel.resolvePaletteColor
+                    ? QOL.core.panel.resolvePaletteColor(colorIdx)
+                    : pal[colorIdx];
+                for (var i = 0; i < _colorPanels.length; i++) {
+                    if (_lastColorSig === colorSig && previous.indexOf(_colorPanels[i]) !== -1) continue;
+                    _colorPanels[i].style.washColor = wc;
+                }
+                _lastColorSig = colorSig;
+                if (angle === 45 && colorIdx === 0) {
+                    _anglePanel = null;
+                    _lastAngleSig = "";
                 }
             }
 
@@ -144,12 +144,11 @@
                     var S = QOL.core.Scheduler;
                     if (S) S.cancelAllForFeature("ql_stamina");
                     _lastAngleSig = ""; _lastColorSig = "";
-                    // Restore the ring to the neutral 45° (matching the default).
+                    // Restore only the stamina ring that this instance changed.
                     try {
-                        var root = $.GetContextPanel();
-                        var cc = root.FindChildTraverse("charges_container");
-                        if (cc && cc.style) { cc.style.transform = "rotateZ(45deg)"; }
+                        if (_anglePanel) _anglePanel.style.transform = "rotateZ(45deg)";
                     } catch(e) {}
+                    _anglePanel = null;
                     // Clear wash from all cached panels.
                     for (var i = 0; i < _colorPanels.length; i++) {
                         try { _colorPanels[i].style.washColor = "transparent"; } catch(e) {}
@@ -162,7 +161,7 @@
         test: function(ctx) {
             try {
                 var root = $.GetContextPanel();
-                var panel = root ? root.FindChildTraverse("charges_container") : null;
+                var panel = root ? findChargesContainer(root) : null;
                 if (!panel) return null;
                 return { passed: true, name: "Stamina charges panel exists", message: "", assertions: [{ passed: true, name: "charges_container panel exists" }] };
             } catch(e) { return { passed: false, name: "Stamina panel check", message: (e && e.message ? e.message : String(e)) }; }
