@@ -478,7 +478,7 @@
                     return;
                 }
 
-                var hud = QOL.core && QOL.core.Hud;
+                var hud = (typeof QOL !== "undefined" && QOL.core && (QOL.core.hud || QOL.core.Hud)) || null;
                 var inHideout = hud && hud.isInHideout ? hud.isInHideout(root) : false;
                 if (inHideout) {
                     if (_overlay && _overlayVisible) {

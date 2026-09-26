@@ -48,6 +48,7 @@
     Q.ui.PanelHelpers = Q.core.panel;
     Q.core.PanelHelpers = Q.core.panel;
     Q.core.hud = Q.core.hud || {};
+    Q.core.Hud = Q.core.hud;
     Q.core.time = Q.core.time || {};
     Q.core.perf = Q.core.perf || {};
     Q.core.Scheduler = Q.core.perf;

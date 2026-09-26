@@ -832,3 +832,50 @@ test("item layout and tint follow a recreated inventory without another settings
     assert.strictEqual(inventory.container.style.washColor, Q.core.panel.resolvePaletteColor(13));
 });
 
+test("stat bonuses hide in the lobby and return on match reentry", () => {
+    const hud = sim.createHud({ inHideout: false });
+    hud.assertLoaded();
+    const { $, QOL: Q } = hud.sandbox.global;
+    $.CreatePanel("Panel", hud.root, "gameplay_hud");
+    Q.core.ConfigAdapter.loadFromFlat({ ENABLE_STAT_BONUSES: 1 });
+    hud.clock.advance(300);
+    const overlay = hud.root.FindChildTraverse("QOLStatBonusesOverlay");
+    assert.strictEqual(overlay.style.visibility, "visible");
+    hud.root.AddClass("InHideout");
+    hud.clock.advance(300);
+    assert.strictEqual(overlay.BHasClass("qol-hidden"), true);
+    assert.strictEqual(overlay.style.visibility, "collapse");
+    hud.root.RemoveClass("InHideout");
+    hud.clock.advance(300);
+    assert.strictEqual(overlay.BHasClass("qol-hidden"), false);
+    assert.strictEqual(overlay.style.visibility, "visible");
+});
+
+test("recent purchases clear previous match entries on entering the lobby", () => {
+    const hud = sim.createHud({ inHideout: false });
+    hud.assertLoaded();
+    const { $, QOL: Q } = hud.sandbox.global;
+    const container = $.CreatePanel("Panel", hud.root, "RecentPurchasesContainer");
+    Q.core.ConfigAdapter.loadFromFlat({ ENABLE_SHOP_RECENT_PURCHASES: 1, ENABLE_SHOP_ITEM_NOTIFICATIONS: 0 });
+    hud.clock.advance(700);
+    const purchase = $.CreatePanel("Panel", container, "PreviousMatchPurchase");
+    hud.clock.advance(300);
+    assert.strictEqual(purchase.IsValid(), true);
+    hud.root.AddClass("InHideout");
+    hud.clock.advance(300);
+    assert.strictEqual(purchase.IsValid(), false, "Lobby transition must clear the previous match purchase history");
+});
+
+test("disabling recent purchases cancels its delayed native history clear", () => {
+    const hud = sim.createHud({ inHideout: false });
+    hud.assertLoaded();
+    const { $, QOL: Q } = hud.sandbox.global;
+    const container = $.CreatePanel("Panel", hud.root, "RecentPurchasesContainer");
+    Q.core.ConfigAdapter.loadFromFlat({ ENABLE_SHOP_RECENT_PURCHASES: 1, ENABLE_SHOP_ITEM_NOTIFICATIONS: 0 });
+    hud.clock.advance(100);
+    Q.core.ConfigStore.set("ql_recent_purchases", "ENABLE_SHOP_RECENT_PURCHASES", false);
+    const purchase = $.CreatePanel("Panel", container, "NativePurchaseAfterDisable");
+    hud.clock.advance(700);
+    assert.strictEqual(purchase.IsValid(), true, "Disabled feature must not delete subsequent native purchases");
+});
+

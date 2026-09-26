@@ -1292,6 +1292,7 @@
         PANEL_ID_TOP_BAR,
         PANEL_ID_GOLD_AP_CONTAINER
     };
+    Q.core.Hud = Q.core.hud;
 
     // Backward compat: alias on PanelHelpers if not already present
     if (Q.ui && Q.ui.PanelHelpers) {
