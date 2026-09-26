@@ -38,6 +38,10 @@ snapshot and runtime error counters. `OBSERVED` means the hook's named check
 succeeded; `FAIL` and `ERROR` preserve failures verbatim. `SKIP` means no hook or
 no applicable scenario. `NOT RUN` records a collection deadline or cancellation.
 Every requested manifest stays in the total, including unfinished work.
+Console output is emitted one line per `$.Msg`, between `BEGIN <token>` and
+`END <token>` markers. The client truncated the previous single-message report.
+If the end marker is absent, treat the console capture as incomplete; use the
+copied report when the console's rolling history has lost earlier lines.
 
 The HUD bridge carries this same report, its timestamp, abort reason and counts
 to the Dev UI and diagnostic export. A timeout is not success. A copied report
@@ -67,6 +71,27 @@ is a structural check only — it does not run them.
 
 A different question: not "did it behave correctly" but "how much work did it ask
 the engine to do, and which feature asked".
+
+### Client callback benchmark
+
+`Dev -> Benchmark (Current Config) -> Run Current (10s)` times callbacks managed
+by `Scheduler.createPollLoop` without changing feature settings. It includes
+synchronous native calls inside those callbacks, but excludes deferred layout,
+rendering, GPU work and code running outside these callbacks. Timing uses
+`Date.now()`; printed decimals are not sub-millisecond measurement precision.
+This is a way to locate expensive polling callbacks, not an FPS benchmark.
+
+The expanded-config stress mode temporarily enables additional toggles and
+restores the configuration. It does not exercise every feature, gameplay event
+or numeric variant and cannot establish worst-case CPU load.
+
+For release performance evidence, compare game frame times with and without the
+mod on the same repeatable scene, settings and warmed-up workload. Repeat each
+condition to distinguish a regression from normal variation. Keep diagnostic
+audits and report printing outside the measured window. Test return-to-menu and
+re-entry separately: one clean startup does not cover lifecycle regressions.
+
+### Offline operation counts
 
 ```
 node scripts/profile_hud.js --seconds 20               # per-feature cost report

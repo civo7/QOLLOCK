@@ -7,7 +7,7 @@ const path = require("node:path");
 const vm = require("node:vm");
 
 // Tests the collector's accounting, not Panorama or any feature's behavior.
-function collector(manifests, errors = {}) {
+function collector(manifests, errors = {}, emit = () => {}) {
     let time = 0;
     const queue = [];
     const registry = {
@@ -22,7 +22,7 @@ function collector(manifests, errors = {}) {
     vm.runInNewContext(fs.readFileSync(path.join(__dirname, "../panorama/scripts/core/ql_manifest_tests.js"), "utf8"), {
         QOL,
         QOL_UTILS: { PerfNowMs: () => time },
-        $: { Msg() {}, Schedule: (_delay, cb) => queue.push(cb), GetContextPanel: () => null }
+        $: { Msg: emit, Schedule: (_delay, cb) => queue.push(cb), GetContextPanel: () => null }
     });
     return {
         api: QOL.core.ManifestTests,
@@ -99,4 +99,19 @@ test("empty registry replaces a previous report rather than leaving stale covera
     env.drain();
     assert.equal(env.api.getResults().token, "empty");
     assert.equal(env.api.getResults().summary.total, 0);
+});
+
+test("a bounded log sink retains the complete multi-feature observation report", () => {
+    const manifests = {};
+    for (let i = 0; i < 48; i++) {
+        manifests[`feature_${i}`] = { test: () => ({ passed: true, name: `observation_${i}` }) };
+    }
+    const output = [];
+    // A transport constraint, not a claim about the engine's exact byte limit.
+    const env = collector(manifests, {}, message => output.push(String(message).slice(0, 1024)));
+    env.api.runAll({ token: "bounded_log" });
+    env.drain();
+    const report = env.api.getResults().report;
+    assert.ok(output.join("\n").includes(report), "The console must retain every observation, including the final feature");
+    assert.match(output.at(-1), /END bounded_log/);
 });

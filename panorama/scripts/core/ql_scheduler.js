@@ -31,7 +31,7 @@
     // Optional EventBus for error reporting (loaded before us by ql_event_bus.js)
     const EventBus = Q.core.EventBus || null;
 
-    // Date.now() for per-tick elapsed measurement (sub-frame precision).
+    // Measure callback elapsed time with the available PerfNowMs clock.
     const nowMs = QOL_UTILS.PerfNowMs;
 
     const getState = () => {
@@ -266,12 +266,16 @@
             eq,
             `Active Features:  ${activeCount}`,
             `Total Poll Ticks: ${totalTicks} (${ticksPerSec} ticks/s)`,
-            `Total V8 JS Time: ${totalJs} ms (${budgetPct}% of 60fps frame budget)`,
-            `Avg JS Per Tick:  ${avgPerTick} ms`,
+            `Timed Callbacks: ${totalJs} ms (${budgetPct}% of sample elapsed time)`,
+            `Avg Per Tick:    ${avgPerTick} ms`,
             `Max Single Spike: ${maxSpike}`,
             `Spikes (>= 4ms):  ${spikes}`,
+            "Scope: Scheduler poll callbacks only, including synchronous native calls.",
+            "Clock: Date.now() milliseconds; decimal formatting does not imply sub-millisecond accuracy.",
+            "Not measured: FPS, frame-time percentiles, deferred layout/rendering, GPU, or work outside these callbacks.",
+            "A zero-cost or inactive feature may simply not have exercised its gameplay path.",
             "",
-            "TOP FEATURES BY JS EXECUTION TIME:",
+            "TOP FEATURES BY TIMED POLL CALLBACKS:",
             "  #   Feature                    Total(ms)   Avg(ms)   Max(ms)   Ticks  Spikes",
             sep
         ];

@@ -779,15 +779,15 @@
                         const totalJs = (typeof stats.totalJsMs === "number") ? stats.totalJsMs.toFixed(1) : "?";
                         const setFeedback = Q.ui?.configTab?.setLocalizedConfigFeedbackMessage || globalThis.SetLocalizedConfigFeedbackMessage;
 
-                        $.Msg(`[QOLLock][DevTab] Benchmark finished: ${totalJs}ms JS execution time over ${durSec}s. Report ${copied ? "copied to clipboard" : "printed to console"}.`);
+                        $.Msg(`[QOLLock][DevTab] Benchmark finished: ${totalJs}ms in timed poll callbacks over ${durSec}s. Report ${copied ? "copied to clipboard" : "printed to console"}.`);
 
                         if (copied) {
-                            setStatus(`Copied! ${totalJs}ms JS (Check ~)`, "#66cc99");
+                            setStatus(`Copied! ${totalJs}ms callbacks (Check ~)`, "#66cc99");
                             if (typeof setFeedback === "function") {
                                 setFeedback("Benchmark report copied to clipboard!", "success", 4000);
                             }
                         } else {
-                            setStatus(`Done: ${totalJs}ms JS (Check ~)`, "#e6b800");
+                            setStatus(`Done: ${totalJs}ms callbacks (Check ~)`, "#e6b800");
                             if (typeof setFeedback === "function") {
                                 setFeedback("Benchmark finished! Check console (~).", "info", 4000);
                             }
@@ -1206,8 +1206,8 @@
             "BenchmarkStressBtn",
             "BenchmarkStressStatus",
             "s2r://panorama/images/icons/icon_play.vsvg",
-            "Benchmark (All Features ON)",
-            "1-Click Full Benchmark: Temporarily enables ALL 50 features on screen for 10s, benchmarks max CPU load, restores your config, and copies report to clipboard.",
+            "Benchmark (Expanded Config)",
+            "Temporarily enables additional toggles for 10s, measures Scheduler poll callbacks, then restores config. Does not exercise every feature or measure FPS.",
             "Run Stress Test (10s)",
             (statusLbl, btn) => runInGameBenchmark(list, statusLbl, btn, true)
         );
@@ -1219,7 +1219,7 @@
             "BenchmarkNormalStatus",
             "s2r://panorama/images/icons/icon_play.vsvg",
             "Benchmark (Current Config)",
-            "Run 10s benchmark on your current settings without changing anything, and copy report to clipboard.",
+            "Measure Scheduler poll callbacks for 10s with current settings and copy the report. Does not measure FPS or rendering cost.",
             "Run Current (10s)",
             (statusLbl, btn) => runInGameBenchmark(list, statusLbl, btn, false)
         );

@@ -101,7 +101,14 @@
             testResults = results;
             testInProgress = false;
             cancelRun = null;
-            $.Msg(`[QOLLock][ManifestTests]\n${results.report}`);
+            // Use the same linewise output as the benchmark: one large Msg is
+            // truncated by the client's console transport.
+            $.Msg(`[QOLLock][ManifestTests] BEGIN ${results.token}`);
+            const reportLines = results.report.split("\n");
+            for (let i = 0; i < reportLines.length; i++) {
+                $.Msg(reportLines[i]);
+            }
+            $.Msg(`[QOLLock][ManifestTests] END ${results.token}`);
             if (opts.onComplete) opts.onComplete(results);
         };
 
