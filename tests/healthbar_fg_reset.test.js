@@ -147,3 +147,36 @@ for (const [key, id, expected] of [["TOP_BAR_SCALE", "TopBar", "150%"], ["BOTTOM
         assert.deepEqual(clock.errors, []);
     });
 }
+
+test("FG keeps one portrait when gold contains two native LevelAmount subtrees", () => {
+    const env = loadSettingsEnvironment();
+    const { portrait, gold, border, add } = fixture(env);
+    // citadel_hud_player_level.xml contains another ScalingStatImage/LevelAmount
+    // with its own HeroImage, in addition to the mod's gold layout copy.
+    const playerLevel = add(gold, "PlayerLevel");
+    const duplicate = add(playerLevel, "LevelAmount", "ScalingStatImage");
+    add(duplicate, "HeroImage");
+    const q = env.hud.sandbox.global.QOL;
+    const cfg = { HEALTHBAR_TYPE: 2 };
+    let reparents = 0;
+    for (const panel of [portrait, duplicate]) {
+        const setParent = panel.SetParent.bind(panel);
+        panel.SetParent = parent => { reparents++; setParent(parent); };
+    }
+    q.healthbar.fg.update(env.hud.root, cfg);
+    assert.equal(reparents, 1);
+    for (let i = 0; i < 100; i++) {
+        cfg.PLAYER_HEALTHBAR_SCALE = i % 2 ? 156 : 100;
+        q.healthbar.fg.update(env.hud.root, cfg);
+        assert.equal(reparents, 1, "a second source must not cause a new attachment");
+        assert.equal(portrait.GetParent(), border);
+        assert.equal(duplicate.GetParent(), playerLevel);
+        assert.equal(portrait.BHasClass("qol_fg_portrait"), true);
+    }
+    assert.equal(reparents, 1, "no restore/attach oscillation on later ticks");
+    q.healthbar.fg.update(env.hud.root, { HEALTHBAR_TYPE: 0 });
+    assert.equal(reparents, 2, "restore exactly once on disable");
+    assert.equal(portrait.GetParent(), gold);
+    assert.equal(gold.GetChild(1), portrait);
+    assert.equal(duplicate.style.visibility, undefined);
+});

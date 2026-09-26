@@ -59,14 +59,17 @@
         var health = root.FindChildTraverse("health_and_abilities_container");
         var bars = health && health.FindChildTraverse("hud_health_bars");
         var anchor = U.FindFirstPanelByClass(bars, "health_bar_border");
-        var gold = root.FindChildTraverse("gold_and_ap_container");
-        var source = gold && gold.FindChildTraverse("LevelAmount");
         if (U.IsPanelValid(moved) && (!U.IsPanelValid(anchor) ||
-            moved.GetParent() !== anchor || (U.IsPanelValid(source) && source !== moved))) {
+            moved.GetParent() !== anchor)) {
             restore();
         }
         if (!U.IsPanelValid(anchor)) return;
         if (!U.IsPanelValid(moved)) {
+            // Gold and its native PlayerLevel both contain LevelAmount/HeroImage.
+            // Resolve only when unattached; a second source is not a replacement
+            // for the live portrait we already own (that caused 20Hz swapping).
+            var gold = root.FindChildTraverse("gold_and_ap_container");
+            var source = gold && gold.FindChildTraverse("LevelAmount");
             if (!U.IsPanelValid(source)) return;
             originalParent = source.GetParent();
             originalIndex = originalParent.Children().indexOf(source);

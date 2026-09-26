@@ -50,6 +50,10 @@ and half-scale `HeroImage`: a reparented native panel must not depend on the
 destination HUD stylesheet overriding its original layout styles. Style
 signatures suppress repeated writes and are reset for replacement images.
 All owned inline properties are cleared when restoring the original parent.
+Gold and the native `CitadelPlayerLevel` layout can both contain a
+`LevelAmount` / `HeroImage` subtree. Source lookup happens only when no live
+portrait is attached: discovering the other copy must not trigger restore and
+reattach on every tick. Anchor loss or portrait destruction still permits recovery.
 
 The variant restores the original parent and child order on style switch,
 disable, hideout, or loss/replacement of the anchor. Missing sources retry on
@@ -58,7 +62,8 @@ require a client check, especially hero switching and respawn.
 
 Regen sits above the portrait end of the bar, rotated clockwise by 30 degrees,
 in the same local coordinate space. Current/max health are shifted toward the
-right end, with the maximum tucked beneath the current value. All labels use
+right end, with the current label shifted down 5 local pixels and the maximum
+shifted left 3 local pixels from its previous placement. All labels use
 `sansMono`; the health numbers remain upright. The shared
 scale reset clears the native `ui-scale` override, restoring the active CSS
 base rather than pinning a replacement value.
