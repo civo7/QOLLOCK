@@ -4,8 +4,8 @@
 // =============================================================================
 // Validates:
 // 1. Native Valve Panel Safety across all game states and all manifests.
-// 2. Full UI Tab traversal, control binding validation against DEFAULT_CONFIG,
-//    and zero-exception control interaction.
+// 2. Production settings tab rendering and key binding checks, with three
+//    bounded configuration interactions (not exhaustive engine/UI coverage).
 // 3. Complete 90+ community presets resolution and diff application.
 // 4. In-game engine audit output verification.
 // =============================================================================
@@ -176,146 +176,61 @@ test("INVARIANT 2: Explicit feature disable restores vanilla layout cleanly, ena
 });
 
 // =============================================================================
-// SUITE 3: Full UI Walk, Control Key Bindings & Exception Fuzzing
+// SUITE 3: Settings Tab Rendering, Key Bindings & Selected Interactions
 // =============================================================================
-test("INVARIANT 3: Full UI layout walk - all controls bind to valid DEFAULT_CONFIG keys with zero exceptions", () => {
-    const clock = new Clock(1000);
-    const doc = new Document(clock);
-    const hudPanel = doc.root;
-    hudPanel.id = "Hud";
-    hudPanel.paneltype = "CitadelHud";
-
-    const emRoot = doc.create("CitadelHudEscapeMenu", { id: "EscapeMenu" });
-    hudPanel.addChild(emRoot);
-    const bg = doc.create("Panel", { id: "EscapeBackground" });
-    emRoot.addChild(bg);
-
-    const win = doc.create("Panel", { id: "SettingsWindow" });
-    const header = doc.create("Panel", { id: "SettingsHeader" });
-    const title = doc.create("Label", { id: "SettingsTitle", text: "QOL LOCK" });
-    const closeBtn = doc.create("Button", { id: "CloseBtn" });
-    header.addChild(title);
-    header.addChild(closeBtn);
-    win.addChild(header);
-
-    const body = doc.create("Panel", { id: "SettingsBody" });
-    const contentHost = doc.create("Panel", { id: "SettingsContentHost" });
-    const list = doc.create("Panel", { id: "SettingsList" });
-    contentHost.addChild(list);
-    body.addChild(contentHost);
-    win.addChild(body);
-    emRoot.addChild(win);
-
-    const mockDollar = {
-        Msg: () => {},
-        Schedule: (delaySec, cb) => setTimeout(cb, Math.max(1, delaySec * 1000)),
-        CancelScheduled: (id) => clearTimeout(id),
-        CreatePanel: (type, parent, id, props) => {
-            const p = doc.create(type, { id: id || "" });
-            if (parent && typeof parent.addChild === "function") parent.addChild(p);
-            if (type === "DropDown") {
-                p._options = [];
-                p._selectedId = null;
-                p.AddOption = (optPanel) => {
-                    p._options.push(optPanel);
-                    p.addChild(optPanel);
-                };
-                p.SetSelected = (optId) => {
-                    p._selectedId = optId;
-                };
-                p.GetSelected = () => {
-                    return p._options.find((opt) => opt.id === p._selectedId) || null;
-                };
+test("INVARIANT 3: production settings tabs render, bind known keys, and selected controls change config", () => {
+    const { global: g, list, doc, clock, hud } = require("./load_settings_environment")();
+    const tabs = ["Support", "Config", "Presets", "Crosshair", "Healthbar", "HUD", "Overlay", "Minimap", "Audio", "Arcade", "Console", "Dev"];
+    let rendered = 0;
+    let boundRows = 0;
+    let interactions = 0;
+    for (const tab of tabs) {
+        g.currentTab = tab;
+        g.QOL.ui.window.renderTab(tab, list);
+        assert.ok(list.GetChildCount() >= 2, `${tab} renders real content, not a fallback placeholder`);
+        rendered++;
+        for (const row of list.FindChildrenWithClassTraverse("SettingRow")) {
+            const keys = row.GetAttributeString("QOL_ROW_RESET_KEYS", "").split(",").filter(Boolean);
+            for (const key of keys) {
+                assert.ok(Object.hasOwn(g.QOL_DEFAULT_CONFIG, key), `${tab} binds unknown setting ${key}`);
             }
-            return p;
-        },
-        GetContextPanel: () => emRoot,
-        DispatchEvent: () => {},
-        Localize: (s) => s,
-        RegisterForUnhandledEvent: () => {},
-    };
-
-    const sandbox = {
-        $: mockDollar,
-        QOL: {
-            VERSION: "4.0.0",
-            core: {
-                panel: {
-                    isAlive: (p) => !!(p && p.IsValid && p.IsValid()),
-                    create: (type, parent, id, props) => mockDollar.CreatePanel(type, parent, id, props),
-                    findRoot: () => emRoot,
-                    findHud: () => hudPanel,
-                },
-            },
-            ui: {},
-            events: { emit: () => {} },
-        },
-        globalThis: null,
-        setTimeout,
-        clearTimeout,
-    };
-    sandbox.globalThis = sandbox;
-
-    const scriptsToLoad = [
-        "panorama/scripts/core/ql_namespace.js",
-        "panorama/scripts/ql_utils.js",
-        "panorama/scripts/core/ql_panel_helpers.js",
-        "panorama/scripts/ql_shared_presets.js",
-        "panorama/scripts/ql_bridge.js",
-        "panorama/scripts/ql_config.js",
-        "panorama/scripts/ui/ql_settings_metadata.js",
-        "panorama/scripts/ui/ql_settings_tabs.js",
-        "panorama/scripts/ui/renderer.js",
-        "panorama/scripts/ui/layout.js",
-        "panorama/scripts/ui/breadcrumb.js",
-        "panorama/scripts/ui/search.js",
-        "panorama/scripts/ui/drag.js",
-        "panorama/scripts/ui/window.js",
-        "panorama/scripts/ui/presets.js",
-        "panorama/scripts/ui/modal.js",
-        "panorama/scripts/ui/theme.js",
-        "panorama/scripts/ui/controls.js",
-        "panorama/scripts/ui/dev_tab.js",
-        "panorama/scripts/ui/gameplay_tabs.js",
-        "panorama/scripts/ql_settings.js"
-    ];
-
-    for (const rel of scriptsToLoad) {
-        const abs = path.resolve(__dirname, "..", rel);
-        const code = fs.readFileSync(abs, "utf8");
-        vm.runInNewContext(code, sandbox);
-    }
-
-    assert.strictEqual(typeof sandbox.globalThis.BuildUI, "function");
-    sandbox.globalThis.BuildUI();
-
-    const windowApi = sandbox.QOL.ui.window;
-    assert.ok(windowApi, "window API must exist");
-
-    const defaultConfig = sandbox.globalThis.QOL_DEFAULT_CONFIG;
-    assert.ok(defaultConfig, "QOL_DEFAULT_CONFIG must exist");
-
-    // All known tabs
-    const tabsToTest = [
-        "General", "Crosshair", "HUD", "Healthbar", "Minimap", "Shop",
-        "UI", "Overlay", "Audio", "Presets", "Support", "Console", "Dev", "Arcade"
-    ];
-
-    for (const tabName of tabsToTest) {
-        assert.doesNotThrow(() => {
-            windowApi.setActiveTab(tabName);
-        }, `Switching to tab '${tabName}' must not throw`);
-
-        // Find buttons in the tab and simulate activation
-        const buttons = list.FindChildrenWithClassTraverse("Button");
-        for (const btn of buttons.slice(0, 10)) {
-            assert.doesNotThrow(() => {
-                btn.activate();
-            }, `Button click in tab '${tabName}' must not throw`);
+            if (keys.length) boundRows++;
         }
+        // Only known local configuration controls: no save/clear, links,
+        // console commands, preset application, or arcade actions.
+        if (tab === "Config") {
+            const row = list.FindChildrenWithClassTraverse("SettingRow_SUPPORT_16_10")[0];
+            assert.ok(row, "aspect-ratio setting is rendered");
+            const button = row.FindChildrenWithClassTraverse("SwitchButton")[0];
+            assert.ok(button, "real toggle button exists");
+            const before = g.MOD_CONFIG.SUPPORT_16_10;
+            assert.equal(button._fire("onactivate"), true);
+            assert.equal(g.MOD_CONFIG.SUPPORT_16_10, before === 1 ? 0 : 1);
+            interactions++;
+        }
+        if (tab === "Crosshair" || tab === "HUD") {
+            const key = tab === "HUD" ? "TOP_BAR_SCALE" : "AMMO_CURRENT_SCALE";
+            const row = list.FindChildrenWithClassTraverse(`SettingRow_${key}`)[0];
+            assert.ok(row, `${tab} renders ${key}`);
+            const slider = row.FindChildrenWithClassTraverse("HorizontalSlider")[0];
+            assert.ok(slider, `${key} has a real slider`);
+            slider.value = tab === "HUD" ? 123 : 150;
+            assert.equal(slider._fire("onvaluechanged"), true);
+            assert.equal(g.MOD_CONFIG[key], tab === "HUD" ? 1.25 : 150);
+            interactions++;
+        }
+        clock.advance(400);
+        assert.deepStrictEqual(doc.eventErrors, [], `${tab} event handlers must not silently fail`);
+        assert.deepStrictEqual(clock.errors, [], `${tab} scheduled callbacks must not silently fail`);
     }
+    assert.equal(rendered, 12);
+    assert.ok(boundRows >= 100, `expected substantial control coverage; got ${boundRows} bound rows`);
+    assert.equal(interactions, 3, "all three bounded interactions must actually execute");
+    clock.advance(1000);
+    assert.equal(hud.sandbox.global.QOL.core.ConfigStore.get("ql_topbar", "TOP_BAR_SCALE"), 1.25);
+    assert.deepStrictEqual(doc.eventErrors, []);
+    assert.deepStrictEqual(clock.errors, []);
 });
-
 // =============================================================================
 // SUITE 4: Exhaustive 90+ Presets Matrix Resolution & Application
 // =============================================================================

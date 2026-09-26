@@ -28,6 +28,7 @@
     const RUNTIME_ROW_KEY_ATTR = "QOL_RUNTIME_ROW_KEY";
     const HERO_HINT_ATTR = "QOL_HERO_HINT";
     const PERF_IMPACT_TIER_NONE = "none";
+    const SLIDER_WIRE_FIELDS = Q.persistence?.buildSchemaFieldMap?.() || {};
 
     const RUNTIME_BUTTON_GROUP_DEFAULT_INDEX = {
         HITMARKERS_RUNTIME: 1,
@@ -1568,6 +1569,19 @@
             const isFloat = (max <= 5.0 && (configId.indexOf("OPACITY") !== -1 || configId.indexOf("SCALE") !== -1));
             const isOpacitySlider = (isFloat && configId.indexOf("OPACITY") !== -1);
             const isSecondsSlider = (configId === "BRIDGE_BUFF_START" || configId === "MINIMAP_REMINDER_INTERVAL" || configId === "RECENT_PURCHASES_QUICK_DISPLAY_SEC");
+            // Commit only values representable by the existing export schema.
+            // The UI shape can have a different range/step from the wire field.
+            const wireField = SLIDER_WIRE_FIELDS[configId];
+            const valueField = wireField || { min, max, step };
+            const commitValue = (rawValue) => {
+                const lower = Math.max(min, valueField.min);
+                const upper = Math.min(max, valueField.max);
+                const firstIndex = Math.ceil((lower - valueField.min) / valueField.step - 1e-9);
+                const lastIndex = Math.floor((upper - valueField.min) / valueField.step + 1e-9);
+                const index = Math.max(firstIndex, Math.min(lastIndex,
+                    Math.round((rawValue - valueField.min) / valueField.step)));
+                return Number((valueField.min + index * valueField.step).toFixed(8));
+            };
 
             const formatSliderInputValue = (value) => {
                 if (value === undefined || value === null || !isFinite(Number(value))) value = 0;
@@ -1604,23 +1618,14 @@
             forceCenterSliderValueInput(input);
 
             slider.SetPanelEvent("onvaluechanged", () => {
-                let val;
-                if (isFloat) {
-                    val = parseFloat((Math.round(slider.value) / 100).toFixed(2));
-                    if (val !== modCfg[configId]) {
-                        input.text = formatSliderInputValue(val);
-                        modCfg[configId] = val;
-                        markConfigDirty();
-                        refreshRowChangedState();
-                    }
-                } else {
-                    val = Math.round(slider.value / step) * step;
-                    if (val !== modCfg[configId]) {
-                        input.text = formatSliderInputValue(val);
-                        modCfg[configId] = val;
-                        markConfigDirty();
-                        refreshRowChangedState();
-                    }
+                const rawValue = Number(slider.value) / (isFloat ? 100 : 1);
+                if (!isFinite(rawValue)) return;
+                const val = commitValue(rawValue);
+                if (val !== modCfg[configId]) {
+                    input.text = formatSliderInputValue(val);
+                    modCfg[configId] = val;
+                    markConfigDirty();
+                    refreshRowChangedState();
                 }
                 getPreview().showForConfigId(configId);
             });
@@ -1631,16 +1636,9 @@
                     input.text = formatSliderInputValue(modCfg[configId]);
                     return;
                 }
-                const clampedVal = Math.max(min, Math.min(max, rawVal));
-                if (isFloat) {
-                    modCfg[configId] = parseFloat(clampedVal.toFixed(2));
-                    slider.value = clampedVal * 100;
-                    input.text = formatSliderInputValue(modCfg[configId]);
-                } else {
-                    modCfg[configId] = Math.round(clampedVal);
-                    slider.value = modCfg[configId];
-                    input.text = formatSliderInputValue(modCfg[configId]);
-                }
+                modCfg[configId] = commitValue(rawVal);
+                slider.value = modCfg[configId] * (isFloat ? 100 : 1);
+                input.text = formatSliderInputValue(modCfg[configId]);
                 input.RemoveClass("ValueSavedFlash");
                 input.AddClass("ValueSavedFlash");
                 markConfigDirty();
