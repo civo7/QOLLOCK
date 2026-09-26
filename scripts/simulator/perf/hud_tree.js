@@ -117,7 +117,7 @@ const COMPOSITION = [
     { file: "hud_quickbuy_entry.xml", mod: true, mount: "CitadelHudQuickbuy", count: 8 },
 
     // Modifier/buff icons — one per active buff, and a teamfight has many.
-    { file: "hud_modifiers_entry_center.xml", mod: true, mount: "gameplay_hud", count: 16 },
+    { file: "hud_modifiers_entry_center.xml", mount: "gameplay_hud", count: 16 },
 ];
 
 /**
