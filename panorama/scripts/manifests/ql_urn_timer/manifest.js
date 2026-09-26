@@ -7,10 +7,10 @@
 // DOES NOT OWN: Minimap panels (Valve), TopBar (Valve)
 // DEPENDS ON:  QOL.core.FeatureRegistry, QOL.core.Scheduler,
 //              QOL delegates: state, utils, getCachedPanel, setCachedPanel,
-//              getGameSecondsForUrn, isConnectedToHideout, panelIdTopBar
+//              getGameSecondsForUrn, panelIdTopBar; QOL.core.hud.isInHideout
 // CONFIG KEYS: ENABLE_URN_TIMER
 // CSS:         none
-// PATTERN:     Polling (0.5Hz). Self-scheduling via Scheduler.
+// PATTERN:     Polling (0.5s / 2Hz). Self-scheduling via Scheduler.
 //              CVar-driven constants — GAME_VERSION_DEPENDENT.
 //              Minimap scan with class-priority state machine.
 // STATE KEYS:  riftTimerDisplayMode, riftTimerLastText, riftTimerRiftAccumulator,
@@ -46,10 +46,7 @@
                 try { if (typeof QOL !== "undefined" && QOL.getGameSecondsForUrn) return QOL.getGameSecondsForUrn(root); } catch(e) {}
                 return 0;
             }
-            function _isConnectedToHideout(root) {
-                try { if (typeof QOL !== "undefined" && QOL.isConnectedToHideout) return QOL.isConnectedToHideout(root); } catch(e) {}
-                return false;
-            }
+            var _isConnectedToHideout = QOL.core.hud.isInHideout;
             function _getPanelIdTopBar() {
                 try { if (typeof QOL !== "undefined" && QOL.panelIdTopBar) return QOL.panelIdTopBar; } catch(e) {}
                 return "TopBar";
@@ -68,6 +65,7 @@
             var RIFT_EARLY_WARNING_SEC = 20;                 // koth_warning → spawn
             var RIFT_SPAWN_JITTER_SEC = 60;
             var RIFT_MINIMAP_POLL_INTERVAL_MS = 500;
+            var RIFT_MISSING_PANEL_RETRY_MS = 2000;
             var RIFT_DEBUG = false;
             var _debugLogIntervalMs = 2000;
 
@@ -109,10 +107,16 @@
             }
 
             var _cachedMinimap = null;
+            var _nextMinimapSearchMs = 0;
+            var _ownedTimerPanel = null;
+            var _nextPanelSearchMs = 0;
 
-            function _scanMinimapForRift(root) {
+            function _scanMinimapForRift(root, nowMs) {
                 var minimapPanel = _cachedMinimap;
                 if (!_isPanelValid(minimapPanel)) {
+                    if (nowMs < _nextMinimapSearchMs) {
+                        return { hasCapturePoint: false, hasKothWarning: false, isActive: false };
+                    }
                     var minimapIDs = ["hud_minimap", "minimap_persp", "minimap_container",
                         "minimap_frame", "HudMinimapContainer"];
                     minimapPanel = null;
@@ -121,6 +125,7 @@
                         if (p) { minimapPanel = p; break; }
                     }
                     _cachedMinimap = minimapPanel;
+                    _nextMinimapSearchMs = minimapPanel ? 0 : nowMs + RIFT_MISSING_PANEL_RETRY_MS;
                 }
                 if (!minimapPanel || !minimapPanel.FindChildrenWithClassTraverse) {
                     return { hasCapturePoint: false, hasKothWarning: false, isActive: false };
@@ -174,8 +179,13 @@
             function _ensureRiftTimerPanel(root) {
                 var panel = _getCachedPanel("riftTimerPanel");
                 var label = _getCachedPanel("riftTimerLabel");
-                if (panel && label && label.GetParent && label.GetParent() === panel)
+                if (panel && label && label.GetParent && label.GetParent() === panel) {
+                    _ownedTimerPanel = panel;
                     return panel;
+                }
+                var nowMs = Date.now();
+                if (nowMs < _nextPanelSearchMs) return null;
+                _nextPanelSearchMs = nowMs + RIFT_MISSING_PANEL_RETRY_MS;
                 panel = root ? root.FindChildTraverse("RiftTimer") : null;
                 if (!panel) {
                     var PANEL_ID_TOP_BAR = _getPanelIdTopBar();
@@ -205,16 +215,17 @@
                 }
                 _setCachedPanel("riftTimerPanel", panel);
                 _setCachedPanel("riftTimerLabel", label);
+                _ownedTimerPanel = panel;
+                _nextPanelSearchMs = 0;
+                var State = _getState();
+                if (State) State.riftTimerLastText = "";
                 return panel;
             }
 
-            function _hideRiftTimerPanel(root) {
-                var panel = _getCachedPanel("riftTimerPanel");
-                if (!panel && root && root.FindChildTraverse) {
-                    panel = root.FindChildTraverse("RiftTimer");
-                    if (_isPanelValid(panel)) _setCachedPanel("riftTimerPanel", panel);
-                }
-                if (_isPanelValid(panel)) panel.visible = false;
+            function _hideRiftTimerPanel() {
+                // Absence is normal before the first match; never scan the HUD to hide it.
+                var panel = _isPanelValid(_ownedTimerPanel) ? _ownedTimerPanel : _getCachedPanel("riftTimerPanel");
+                if (_isPanelValid(panel) && panel.visible !== false) panel.visible = false;
             }
 
             function _resolveRiftMode(root, gameSec, nowMs) {
@@ -266,7 +277,10 @@
                     var inHideout = _isConnectedToHideout(root);
 
                     if (!enabled || inHideout) {
-                        _hideRiftTimerPanel(root);
+                        _hideRiftTimerPanel();
+                        _cachedMinimap = null;
+                        _nextMinimapSearchMs = 0;
+                        _nextPanelSearchMs = 0;
                         var State = _getState();
                         if (State) {
                             State.riftTimerDisplayMode = inHideout ? "hideout" : "disabled";
@@ -310,6 +324,10 @@
                         displayText = _formatRangeDisplay(range.min, range.max);
                     }
 
+                    var panel = _ensureRiftTimerPanel(root);
+                    var label = _getCachedPanel("riftTimerLabel");
+                    if (!panel || !label) return;
+
                     if (State.riftTimerLastText === displayText && State.riftTimerLastMode === mode)
                         return;
 
@@ -318,10 +336,6 @@
 
                     State.riftTimerLastText = displayText;
                     State.riftTimerLastMode = mode;
-
-                    var panel = _ensureRiftTimerPanel(root);
-                    var label = _getCachedPanel("riftTimerLabel");
-                    if (!panel || !label) return;
 
                     label.text = displayText;
                     panel.visible = true;
@@ -349,8 +363,7 @@
                     if (S) S.cancelAllForFeature("ql_urn_timer");
                     logger.clearThrottle("ql_urn_timer");
                     // Clean up panel and state
-                    var root = $.GetContextPanel();
-                    _hideRiftTimerPanel(root);
+                    _hideRiftTimerPanel();
                     var State = _getState();
                     if (State) {
                         State.riftTimerDisplayMode = "disabled";
@@ -365,6 +378,8 @@
                         State.riftTimerLastMode = "";
                     }
                     _cachedMinimap = null;
+                    _nextMinimapSearchMs = 0;
+                    _nextPanelSearchMs = 0;
                 },
                 onSettingsChanged: function() {
                     var State = _getState();

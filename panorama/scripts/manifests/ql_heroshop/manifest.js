@@ -218,11 +218,7 @@
             }
 
             function _onShopTransition() {
-                if (typeof $ !== "undefined" && typeof $.Schedule === "function") {
-                    $.Schedule(0, _tick);
-                } else {
-                    _tick();
-                }
+                QOL.core.Scheduler.scheduleOnce(_tick, 0, ctx.id);
             }
 
             return {

@@ -11,13 +11,13 @@
 //              getGameSecondsForUrn, getGameplayHudPanel,
 //              getUnsecuredSoulsDangerLevel, isCustomHudContextActive,
 //              parseUnsecuredSoulsValue, resetUnsecuredSoulsTracking,
-//              state, utils, isConnectedToHideout
+//              state, utils
 // CONFIG KEYS: ENABLE_UNSECURED_SOUL_TIMER, UNSECURED_SOUL_TIMER_X_OFFSET,
 //              UNSECURED_SOUL_TIMER_Y_OFFSET, UNSECURED_SOUL_TIMER_SCALE
 // CSS:         none
-// PATTERN:     Polling (0.2Hz). EMA rate tracking for soul decay estimation.
+// PATTERN:     Polling (0.2s / 5Hz). EMA rate tracking for soul decay estimation.
 //              Danger level classification with CSS class toggling.
-//              Hideout-aware state machine (disabled/hideout/active/context_off).
+//              HUD state machine (disabled/active/context_off), including hideout and hero testing.
 // STATE:       Private timer state.  It is deliberately separate from
 //              Better Unsecured HUD so toggling either feature cannot reset the other.
 // =============================================================================
@@ -49,17 +49,6 @@
                 try { if (typeof QOL !== "undefined" && QOL.getGameplayHudPanel) return QOL.getGameplayHudPanel(root); } catch(e) {}
                 return root;
             }
-            function _isConnectedToHideout(root) {
-                try { if (typeof QOL !== "undefined" && QOL.isConnectedToHideout) return QOL.isConnectedToHideout(root); } catch(e) {}
-                return false;
-            }
-            function _isHeroTesting(root) {
-                if (root && root.BHasClass && root.BHasClass("connectedToHeroTesting")) return true;
-                var hud = (typeof QOL !== "undefined" && QOL.core && QOL.core.panel && QOL.core.panel.findHud)
-                    ? QOL.core.panel.findHud(root)
-                    : (root && root.FindChildTraverse ? root.FindChildTraverse("Hud") : null);
-                return !!(hud && hud.BHasClass && hud.BHasClass("connectedToHeroTesting"));
-            }
             function _isCustomHudContextActive(root) {
                 try { if (typeof QOL !== "undefined" && QOL.isCustomHudContextActive) return QOL.isCustomHudContextActive(root); } catch(e) {}
                 return true;
@@ -67,9 +56,6 @@
             var _isPanelValid = QOL.utils.IsPanelValid;
             var _clampConfigNumber = QOL.utils.ClampConfigNumber;
             function _parseUnsecuredSoulsValue(valueText) {
-                if (typeof QOL_UTILS !== "undefined" && QOL_UTILS.ParseNumber) {
-                    return Math.max(0, Math.round(QOL_UTILS.ParseNumber(valueText)));
-                }
                 const cleaned = String(valueText || "").replace(/[^0-9.-]/g, "");
                 const n = Number(cleaned);
                 return (!isFinite(n) || n < 0) ? 0 : Math.round(n);
@@ -228,25 +214,6 @@
 
                     var overlay = _ensureOverlay(root);
                     if (!overlay) return;
-
-                    var hideout = _isConnectedToHideout(root) && !_isHeroTesting(root);
-                    if (hideout) {
-                        if (_timer.displayMode !== "hideout") {
-                            if (overlay.SetHasClass) overlay.SetHasClass("qol-hidden", true);
-                            else overlay.style.visibility = "collapse";
-                            overlay.SetHasClass("danger_1", false);
-                            overlay.SetHasClass("danger_2", false);
-                            overlay.SetHasClass("danger_3", false);
-                            overlay.SetHasClass("danger_4", false);
-                            overlay.SetHasClass("has_souls", false);
-                            overlay.SetHasClass("is_safe", true);
-                            overlay.SetHasClass("is_syncing", false);
-                            _timer.lastClassSig = "";
-                        }
-                        _timer.displayMode = "hideout";
-                        _resetTimerTracking();
-                        return;
-                    }
 
                     if (_timer.displayMode !== "active" || (overlay.BHasClass && overlay.BHasClass("qol-hidden"))) {
                         if (overlay.SetHasClass) overlay.SetHasClass("qol-hidden", false);

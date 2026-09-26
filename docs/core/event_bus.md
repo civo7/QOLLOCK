@@ -8,8 +8,9 @@ This is synchronous, context-local pub/sub, not a cross-realm transport.
 - `off(event, callback)` removes matching callbacks. Omitting the callback removes
   the entire event's listener list; individual features should remove only theirs.
 - `emit(event, payload)` calls listeners synchronously and isolates listener
-  exceptions so other listeners can continue. It iterates the live listener list;
-  do not assume snapshot semantics when adding/removing listeners during dispatch.
+  exceptions so other listeners can continue. It snapshots listeners at dispatch start. Self-removal cannot skip the next
+  listener; additions wait for the next emit. A removed listener already in the
+  snapshot still receives the current emission.
 
 `ctx.events.emit` prefixes the feature ID; `ctx.events.on/off` do not. For example,
 an emitted feature event must be subscribed under its full `ql_name:event` name.

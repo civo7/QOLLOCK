@@ -36,13 +36,7 @@
 
             var _isAlive = QOL.utils.IsPanelValid;
 
-            function _isInHideout(root) {
-                try {
-                    if (typeof QOL !== "undefined" && QOL.isConnectedToHideout) return QOL.isConnectedToHideout(root);
-                    if (root && root.BHasClass) return root.BHasClass("InHideout");
-                } catch(e) {}
-                return false;
-            }
+            var _isInHideout = QOL.core.hud.isInHideout;
 
             function _isCustomHudActive(root) {
                 try {

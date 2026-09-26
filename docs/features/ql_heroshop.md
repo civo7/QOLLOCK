@@ -43,3 +43,5 @@ The statements above describe source behavior. Native panel identity, binding
 values, rendering and transitions need the maintainer's Panorama Debugger and
 a repacked client scenario; neither a schema nor a read-only manifest hook
 proves the whole feature works. See [verification](../TESTING.md).
+
+Event-triggered deferred refreshes use `Scheduler.scheduleOnce` with the feature ID, so disabling the feature cancels pending callbacks as well as its recurring loop. Event unsubscription remains explicit.

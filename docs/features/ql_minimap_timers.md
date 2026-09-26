@@ -39,3 +39,5 @@ The statements above describe source behavior. Native panel identity, binding
 values, rendering and transitions need the maintainer's Panorama Debugger and
 a repacked client scenario; neither a schema nor a read-only manifest hook
 proves the whole feature works. See [verification](../TESTING.md).
+
+Scoreboard visibility now uses `QOL.core.hud.isScoreboardOpen`, including the native GlobalClassListener fallback. The toggle event is a refresh trigger, not a boolean state payload.

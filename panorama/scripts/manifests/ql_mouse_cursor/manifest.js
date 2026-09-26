@@ -59,18 +59,7 @@
                 } catch(e) { return true; }
             }
 
-            function _inHideout(root) {
-                if (typeof QOL !== "undefined" && QOL.core?.hud?.isInHideout) {
-                    return QOL.core.hud.isInHideout(root);
-                }
-                if (!root || !root.BHasClass) return false;
-                try {
-                    var _hud = (QOL.core?.panel?.findHud) ? QOL.core.panel.findHud(root) : (root.FindChildTraverse ? root.FindChildTraverse("Hud") : null);
-                    if (_hud && _hud.BHasClass && (_hud.BHasClass("connectedToHideout") || _hud.BHasClass("InHideout"))) return true;
-                    if (root.BHasClass && (root.BHasClass("connectedToHideout") || root.BHasClass("InHideout"))) return true;
-                } catch(e) { return false; }
-                return false;
-            }
+            var _inHideout = QOL.core.hud.isInHideout;
 
             function _getCursorPos() {
                 try {
@@ -138,7 +127,7 @@
                 if (!root || _inHideout(root)) return false;
                 if (!_isInMatch(root)) return false;
                 if (_hasClass(root, "gShopOpen")) return true;
-                if (_hasClass(root, "gScoreboardOpen")) return true;
+                if (QOL.core.hud.isScoreboardOpen(root)) return true;
                 if (_hasClass(root, "gAbilityUpgradeMenu")) return true;
                 if (_hasClass(root, "gDetailView")) return true;
                 var esc = root.FindChildTraverse ? root.FindChildTraverse("EscapeMenu") : null;

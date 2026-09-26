@@ -179,6 +179,11 @@ without improving the feature. Scheduler error thresholds and cancellation are
 described in [scheduler.md](core/scheduler.md); repeated work is not guaranteed
 to continue forever after an error.
 
+The modifier/buff entry layout (`hud_modifiers_entry_center.xml`) is loaded from
+the vanilla resource directory. QOLLOCK does not ship an override identical to
+the game layout. Keep composition entries pointing to vanilla when removing
+redundant layout copies, so the modeled subtree is still included.
+
 What is no longer automated is the ceiling itself. Use `--save` / `--compare`
 before and after a perf change instead:
 
@@ -226,3 +231,10 @@ Against the pre-fix baseline, 12-player teamfight, identical tree:
 
 None of it is verified in a running game. Panorama cannot be rendered from a Node
 harness and every change needs a VPK repack before it is visible in game.
+
+## Leaf manual hit counter
+
+`QOL_UTILS.SetProfilerEnabled`, `ProfileHit`, and `DumpProfile` expose a separate,
+opt-in counter. Dumps report the actual time since enabling/previous dump (at
+least 10 seconds), then reset counts. This is not a rolling 60-second window or
+an automatic runtime sampler. It measures instrumented call frequency only.

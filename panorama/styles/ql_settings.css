@@ -1,5 +1,17 @@
 /* Prettified by Source 2 Viewer 17.0.0.0 - https://valveresourceformat.github.io */
 
+/* Reversible walkthrough presentation. Never write native menu visibility inline. */
+.QOLVisualCheckActive .QOLVisualCheckHidden,
+.QOLVisualCheckActive #SettingsWindow.Visible.QOLVisualCheckHidden
+{
+    visibility: collapse;
+}
+
+CitadelHudEscapeMenu.QOLVisualCheckActive
+{
+    background-color: #0000;
+}
+
 /* Active Stats showcase (Crosshair tab): reuse the REAL crosshair-overlay styling so the preview
    rows are a 1:1 copy of the in-game overlay — same pill, accent border, property icon + value.
    This pulls in .QOLCrosshairStatRow/.QOLCrosshairStatIcon/.QOLCrosshairStatValue and the property

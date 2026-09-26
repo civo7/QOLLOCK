@@ -1,0 +1,130 @@
+"use strict";
+
+const test = require("node:test");
+const assert = require("node:assert/strict");
+const sim = require("../scripts/simulator");
+
+function fixture(id, config, inHideout = false) {
+    const hud = sim.createHud({ inHideout });
+    hud.assertLoaded();
+    const Q = hud.sandbox.global.QOL;
+    const $ = hud.sandbox.global.$;
+    let tick;
+    const schedule = Q.core.Scheduler.createPollLoop;
+    Q.core.Scheduler.createPollLoop = cb => { tick = cb; return { stop() {} }; };
+    const instance = Q.core.FeatureRegistry.getManifest(id).create({ config: { view: () => config } });
+    instance.onEnable();
+    Q.core.Scheduler.createPollLoop = schedule;
+    return { hud, Q, $, instance, tick: () => tick() };
+}
+
+test("urn hideout cleanup never searches for an absent owned panel", () => {
+    const { hud, tick, instance } = fixture("ql_urn_timer", { ENABLE_URN_TIMER: 1 }, true);
+    const find = hud.root.FindChildTraverse.bind(hud.root);
+    const searches = [];
+    hud.root.FindChildTraverse = id => { searches.push(id); return find(id); };
+    for (let i = 0; i < 20; i++) tick();
+    instance.onDisable();
+    assert.equal(searches.includes("RiftTimer"), false);
+    assert.equal(searches.includes("hud_minimap"), false);
+    assert.equal(hud.clock.errors.length, 0);
+});
+
+test("urn retries missing minimap and restores replaced timer and hideout transitions", () => {
+    const { hud, Q, $, tick, instance } = fixture("ql_urn_timer", { ENABLE_URN_TIMER: 1 });
+    const top = $.CreatePanel("Panel", hud.root, "TopBar");
+    $.CreatePanel("Label", top, "GameTime").text = "12:00";
+    const find = hud.root.FindChildTraverse.bind(hud.root);
+    let searches = 0;
+    hud.root.FindChildTraverse = id => { if (id === "hud_minimap") searches++; return find(id); };
+    tick();
+    assert.equal(searches, 1);
+    const first = find("RiftTimer");
+    const text = find("RiftTimerLabel").text;
+    tick();
+    assert.equal(searches, 1, "missing source must not be rescanned on every callback");
+    const map = $.CreatePanel("Panel", hud.root, "hud_minimap");
+    const cp = $.CreatePanel("Panel", map, "test_capture_point");
+    cp.AddClass("map_button");
+    cp.AddClass("capture_point");
+    cp.AddClass("koth_warning");
+    hud.clock.advance(2100);
+    searches = 0;
+    tick();
+    assert.equal(Q.state.riftTimerDisplayMode, "warning");
+    assert.equal(searches, 1);
+    cp.RemoveClass("koth_warning");
+    hud.clock.advance(500);
+    tick();
+    const beforeReplacement = find("RiftTimerLabel").text;
+    first.DeleteAsync(0);
+    hud.clock.advance(1);
+    tick();
+    assert.notEqual(find("RiftTimer"), first);
+    assert.equal(find("RiftTimerLabel").text, beforeReplacement);
+    hud.root.AddClass("connectedToHideout");
+    tick();
+    assert.equal(find("RiftTimer").visible, false);
+    Q.clearPanelCache();
+    tick();
+    hud.root.RemoveClass("connectedToHideout");
+    tick();
+    assert.equal(find("RiftTimer").visible, true);
+    assert.equal(find("RiftTimerLabel").text, text);
+    instance.onDisable();
+    assert.equal(find("RiftTimer").visible, false);
+    instance.onEnable();
+    instance.onSettingsChanged();
+    assert.equal(find("RiftTimer").visible, true);
+    assert.equal(hud.clock.errors.length, 0);
+});
+
+test("urn retries a missing timer parent without requiring a clock text change", () => {
+    const { hud, $, tick } = fixture("ql_urn_timer", { ENABLE_URN_TIMER: 1 });
+    $.CreatePanel("Label", hud.root, "GameTime").text = "12:00";
+    const find = hud.root.FindChildTraverse.bind(hud.root);
+    let searches = 0;
+    hud.root.FindChildTraverse = id => { if (id === "RiftTimer") searches++; return find(id); };
+    tick();
+    tick();
+    assert.equal(searches, 1);
+    assert.equal(find("RiftTimer"), null);
+    $.CreatePanel("Panel", hud.root, "TopBar");
+    hud.clock.advance(2100);
+    tick();
+    assert.ok(find("RiftTimer"));
+    assert.equal(find("RiftTimerLabel").text, "0:00 - 1:20");
+    assert.equal(hud.clock.errors.length, 0);
+});
+
+test("unsecured timer stays active in hideout and hero testing and follows source loss", () => {
+    const { hud, $, tick, instance } = fixture("ql_unsecured_souls_timer", { ENABLE_UNSECURED_SOUL_TIMER: 1 }, true);
+    $.CreatePanel("Panel", hud.root, "gameplay_hud");
+    const source = $.CreatePanel("Label", hud.root, "HudUnsecuredLabel");
+    source.text = "500";
+    tick();
+    const overlay = hud.root.FindChildTraverse("QOLUnsecuredSoulsOverlay");
+    const label = overlay.FindChildTraverse("QOLUnsecuredSoulsState");
+    assert.equal(overlay.BHasClass("qol-hidden"), false);
+    assert.match(label.text, /^\d+s$/);
+    hud.root.AddClass("connectedToHeroTesting");
+    tick();
+    assert.equal(overlay.BHasClass("qol-hidden"), false);
+    hud.root.RemoveClass("connectedToHeroTesting");
+    hud.root.RemoveClass("connectedToHideout");
+    tick();
+    assert.match(label.text, /^\d+s$/);
+    source.DeleteAsync(0);
+    hud.clock.advance(1);
+    tick();
+    assert.equal(label.text, "--");
+    const replacement = $.CreatePanel("Label", hud.root, "HudUnsecuredLabel");
+    replacement.text = "0";
+    hud.clock.advance(1100);
+    tick();
+    assert.equal(label.text, "");
+    instance.onDisable();
+    hud.clock.advance(1);
+    assert.equal(hud.root.FindChildTraverse("QOLUnsecuredSoulsOverlay"), null);
+    assert.equal(hud.clock.errors.length, 0);
+});

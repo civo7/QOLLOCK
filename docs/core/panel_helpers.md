@@ -13,8 +13,8 @@ object is exposed as `QOL.core.panel`, `QOL.core.PanelHelpers`, and
 | `isAlive(panel)`, `isPanelAlive(panel)` | Aliases of `QOL_UTILS.IsPanelValid`: false for absent, invalid, or throwing handles. |
 | `create(type, parent, id, properties)`, `createPanel(...)` | Guard parent validity and catch creation errors; return panel or null. |
 | `delete(panel)`, `deletePanel(panel)` | Schedule `DeleteAsync(0)` on a valid panel; catch deletion errors. |
-| `findHud(preferredRoot)` | Search context/ancestors for Hud; no-argument calls cache the result. Can return the context/top root as a fallback, so this alone does not prove active gameplay. |
-| `findRoot()` | Walk ancestors of the current context, not of an arbitrary argument. |
+| `findHud(preferredRoot)` | Search context/ancestors for Hud; no-argument calls cache real HUD matches per context, never loading-root fallbacks. Can return the context/top root as a fallback, so this alone does not prove active gameplay. |
+| `findRoot(panel?)` | Walk ancestors of the supplied panel, defaulting to the current context; return null on native traversal failure. |
 | `findChild(parent, id)` | Safe native `FindChild` wrapper for direct children. |
 | `findTraverse(root, id)` | Safe native `FindChildTraverse` wrapper. |
 | `setClass(panel, className, active)` | Compare current class membership before changing it; return whether changed. |
@@ -48,3 +48,15 @@ feature's intentional reassertion behavior.
 `safeCreatePanel` and `safeDeletePanel` are private implementation names, not
 exports. `setStyleIfChanged` and `setPanelOpacitySafe` are not methods of
 `QOL.core.panel`; use the leaf helpers named above.
+
+The leaf `QOL_UTILS.ClearStyleSafe` used by HUD manifests also tries native
+`ClearPropertyFromCode` first, then legacy assignments only if native clearing
+is unavailable or throws. The core boolean helper above remains strict.
+
+A partial native style-write failure returns `sig: null` from `syncStyles`, so a later call retries the map. `readTextDeep` returns empty text when native child enumeration fails. Panel validity (`isAlive`) is unrelated to player life state.
+
+Both clear helpers translate JavaScript-style property names (for example
+`uiScale`, `preTransformScale2d`, `washColor`) to native CSS names (`ui-scale`,
+`pre-transform-scale2d`, `wash-color`) before `ClearPropertyFromCode`. Already
+hyphenated names are accepted unchanged. This is shared by HUD features, so a
+scale reset must release the override for every caller, not only healthbars.

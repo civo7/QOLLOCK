@@ -72,7 +72,7 @@
             };
             var GetGameSecondsForUrn = function() { return QOL.getGameSecondsForUrn ? QOL.getGameSecondsForUrn() : 0; };
             var IsStreetBrawlModeActive = function(r) { return QOL.isStreetBrawlModeActive ? QOL.isStreetBrawlModeActive(r) : false; };
-            var isConnectedToHideout = function(r) { return (QOL.core && QOL.core.hud && QOL.core.hud.isClassActive) ? (QOL.core.hud.isClassActive("connectedToHideout") || QOL.core.hud.isClassActive("InHideout")) : (QOL.isConnectedToHideout ? QOL.isConnectedToHideout(r) : false); };
+            var isConnectedToHideout = QOL.core.hud.isInHideout;
             var BRIDGE_DURATION_SEC = 300;
 
             var POWERUP_BUFF_CLASSES = [
@@ -254,7 +254,7 @@
 
             function GetMinimapConfigNumber(cfg, newKey, legacyKey, fb) { var v = cfg ? cfg[newKey] : undefined; if (v === undefined || v === null || !isFinite(Number(v))) v = cfg ? cfg[legacyKey] : undefined; if (v === undefined || v === null || !isFinite(Number(v))) v = fb; return Number(v); }
 
-            function ResolveActiveMinimapObjectiveSize(root, cfg) { var ss = Number(cfg && cfg.MINIMAP_SMALL_SIZE); if (!isFinite(ss)) ss = 400; var mp = ResolveCachedPanel(root, "minimapPersp", "minimap_persp"); var isAlt = IsHudClassActive(root,"gDetailView") || hasClassInHierarchy(mp,"gDetailView"); var isTab = IsHudClassActive(root,"gScoreboardOpen") || hasClassInHierarchy(mp,"gScoreboardOpen"); if (isTab && cfg && IsCfgEnabled(cfg,"ENABLE_TAB_ZOOM")) return GetMinimapConfigNumber(cfg,"MINIMAP_LARGE_SIZE_TAB","MINIMAP_LARGE_SIZE",ss); if (isAlt && cfg && IsCfgEnabled(cfg,"ENABLE_ALT_ZOOM")) return GetMinimapConfigNumber(cfg,"MINIMAP_LARGE_SIZE_ALT","MINIMAP_LARGE_SIZE",ss); return ss; }
+            function ResolveActiveMinimapObjectiveSize(root, cfg) { var ss = Number(cfg && cfg.MINIMAP_SMALL_SIZE); if (!isFinite(ss)) ss = 400; var mp = ResolveCachedPanel(root, "minimapPersp", "minimap_persp"); var isAlt = IsHudClassActive(root,"gDetailView") || hasClassInHierarchy(mp,"gDetailView"); var isTab = QOL.core.hud.isScoreboardOpen(root, mp); if (isTab && cfg && IsCfgEnabled(cfg,"ENABLE_TAB_ZOOM")) return GetMinimapConfigNumber(cfg,"MINIMAP_LARGE_SIZE_TAB","MINIMAP_LARGE_SIZE",ss); if (isAlt && cfg && IsCfgEnabled(cfg,"ENABLE_ALT_ZOOM")) return GetMinimapConfigNumber(cfg,"MINIMAP_LARGE_SIZE_ALT","MINIMAP_LARGE_SIZE",ss); return ss; }
 
             function ApplyMinimapObjectiveTimersStandardMode(panels, overlay, dims, flags, icons, bridgeText, rejuvText) {
                 var tw = dims.timerWidth, th = dims.timerHeight, tg = dims.timerGap, tpx = dims.timerPaddingX, tr = dims.timerRadius, tf = dims.timerFont, ti = dims.timerIcon, bo = dims.bottomOffset;

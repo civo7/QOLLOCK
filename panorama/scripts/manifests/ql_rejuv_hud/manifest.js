@@ -54,7 +54,7 @@
             var GetGameSecondsForUrn = function() { return QOL.getGameSecondsForUrn ? QOL.getGameSecondsForUrn() : 0; };
             var PANEL_ID_TOP_BAR = QOL.panelIdTopBar || "TopBar";
             var GetHighestRejuvChargeTokenOnPanel = function(p) { return QOL.getHighestRejuvChargeTokenOnPanel ? QOL.getHighestRejuvChargeTokenOnPanel(p) : 0; };
-            var isConnectedToHideout = function(r) { return (QOL.core && QOL.core.hud && QOL.core.hud.isClassActive) ? (QOL.core.hud.isClassActive("connectedToHideout") || QOL.core.hud.isClassActive("InHideout")) : (QOL.isConnectedToHideout ? QOL.isConnectedToHideout(r) : false); };
+            var isConnectedToHideout = QOL.core.hud.isInHideout;
             var PanelHasClassToken = Panel.hasClassToken || QOL.panelHasClassToken || function(p, c) { return !!(p && p.BHasClass && p.BHasClass(c)); };
 
             // ── Constants ──

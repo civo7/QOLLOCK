@@ -509,7 +509,7 @@
             function _computeQuickPurchasesMarginTopRP(root, cfg, rejuvEnabled, scoreboardEnabled) {
                 var isScoreboardOpen = false;
                 try {
-                    isScoreboardOpen = scoreboardEnabled && root && root.BHasClass && root.BHasClass("gScoreboardOpen");
+                    isScoreboardOpen = scoreboardEnabled && QOL.core.hud.isScoreboardOpen(root);
                 } catch(e) {}
 
                 var marginTop = 90;
@@ -906,8 +906,7 @@
             }
 
             function _handleHideoutRP(root) {
-                var hud = (typeof QOL !== "undefined" && QOL.core && (QOL.core.hud || QOL.core.Hud)) || null;
-                var isInHideout = hud && hud.isInHideout ? hud.isInHideout(root) : (root && root.BHasClass && root.BHasClass("hideout_active"));
+                var isInHideout = QOL.core.hud.isInHideout(root);
                 if (_wasInHideout === null || isInHideout !== _wasInHideout) {
                     _clearContainerRP(root);
                     if (_hideoutClearTimer !== null) {

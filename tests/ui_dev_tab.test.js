@@ -143,6 +143,24 @@ function createTestEnvironment() {
     };
 }
 
+test("HUD recording requests gameplay and only copies a completed report on demand", () => {
+    const env = createTestEnvironment();
+    let open = true;
+    env.sandbox.QOL.ui.window.setOpen = value => { open = value; };
+    const label = env.doc.create("Label", { id: "RecordingStatus" });
+    const api = env.sandbox.QOL.ui.devTab;
+    api.requestHudStateObservation(label);
+    assert.match(env.hudPanel.GetAttributeString("QOL_DiagRequest", ""), /^state_/);
+    assert.equal(open, false);
+    assert.ok(env.dispatchedEvents.some(e => e.eventName === "CitadelResumePlaying"));
+    assert.equal(env.getClipboardText(), null);
+    api.copyHudStateObservation(env.rootPanel, label);
+    assert.equal(env.getClipboardText(), null);
+    env.hudPanel.SetAttributeString("QOL_Diag", JSON.stringify({hudStateObservation:{report:"recorded transitions"}}));
+    api.copyHudStateObservation(env.rootPanel, label);
+    assert.equal(env.getClipboardText(), "recorded transitions");
+});
+
 test("ui/dev_tab: exports public API on QOL.ui.devTab and globalThis", () => {
     const env = createTestEnvironment();
     const devApi = env.sandbox.QOL.ui.devTab;

@@ -201,7 +201,7 @@
 	horizontal-align: right;
 	vertical-align: center;
 	margin-top: -5px;
-	margin-right: 75px;
+	margin-right: 47px;
 	z-index: 100;
 	width: 100px;
 	height: 65px;
@@ -218,10 +218,12 @@
 .fg_healthbar_active:not(.minimalist_healthbar_active) #RecentHealContainer
 {
 	flow-children: right;
-	margin-left: 75px;
+	horizontal-align: left;
+	margin-left: 60px;
 	vertical-align: top;
-	margin-top: 50px;
+	margin-top: 119px;
 	margin-bottom: 0px;
+	height: 20px;
 }
 
 .fg_healthbar_active:not(.minimalist_healthbar_active) .healCounterIcon
@@ -232,8 +234,27 @@
 
 .fg_healthbar_active:not(.minimalist_healthbar_active) .recentDamageCounters
 {
-	margin-left: 75px;
-	margin-top: 25px;
+	flow-children: right;
+	horizontal-align: left;
+	vertical-align: top;
+	margin-left: 60px;
+	margin-top: 95px;
+	margin-bottom: 0px;
+	height: 20px;
+}
+
+/* The native counters animate inline position (including fading entries).
+   FG owns two horizontal lanes; do not add those offsets to flow layout. */
+.fg_healthbar_active:not(.minimalist_healthbar_active) #RecentHealContainer .recentHealCounter,
+.fg_healthbar_active:not(.minimalist_healthbar_active) #RecentDamageContainer .recentDamageCounter
+{
+	position: 0px 0px 0px !important;
+	ignore-parent-flow: false !important;
+	vertical-align: center;
+	width: fit-children;
+	height: 20px;
+	margin: 0px 6px 0px 0px;
+	padding: 2px 3px;
 }
 
 .fg_healthbar_active:not(.minimalist_healthbar_active) .damageCounterIcon
@@ -258,7 +279,9 @@
 .fg_healthbar_active:not(.minimalist_healthbar_active) .currentHealthLabel
 {
 	color: gradient(linear, 0% 0%, 100% 0%, from( QOL_HEALTHBAR_FILL_CREAM ), to ( QOL_HEALTHBAR_FILL_CREAM ));
-	font-family: sans;
+	font-family: sansMono;
+	font-style: normal;
+	transform: translateY(5px);
 	font-size: 36px;
 	padding: 2px;
 	text-shadow: 0px 0px 0px 5.0 QOL_HEALTHBAR_BG_DARK;
@@ -281,13 +304,15 @@
 .fg_healthbar_active:not(.minimalist_healthbar_active) .totalHealthLabel
 {
 	font-size: 12px;
-	font-family: numericSans;
+	font-family: sansMono;
+	font-style: normal;
+	transform: none;
 	font-weight: semi-bold;
 	color: keybindBGColor;
 	opacity: 1;
-	margin-top: -8px;
+	margin-top: -17px;
 	horizontal-align: right;
-	margin-right: 5px;
+	margin-right: 8px;
 }
 
 .fg_healthbar_active:not(.minimalist_healthbar_active) .shieldNumbersContainer

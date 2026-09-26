@@ -191,3 +191,16 @@ tautology wearing a green checkmark.
 So: verify logic that is genuinely self-contained (the codec — 450 fuzz cases),
 verify panels in the client (`test()` hooks), count operations against a captured
 tree (the profiler), and check rendering by repacking the VPK and looking.
+
+## Helper contracts and HUD evidence
+
+`node scripts/audit_helper_calls.js` checks statically resolvable helper calls,
+including lexical aliases, against loaded HUD exports. It runs through the
+helper safety regression in `npm test`. Dynamic names and availability in other
+isolates are outside this check. `helper_safety.test.js` covers cache ownership,
+partial native failures, listener mutation and Scheduler/lifecycle cleanup;
+`hud_state_observation.test.js` covers state ambiguity, transitions and recorder
+bounds/cancellation. These tests simulate native behavior.
+
+Use [HUD state recording](ui/hud_state_recording.md) after a fresh client repack
+for actual scoreboard/life transitions. See [audit scope](HELPER_AUDIT.md).

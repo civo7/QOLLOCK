@@ -265,12 +265,7 @@
                 return hud.FindChildTraverse ? (hud.FindChildTraverse("gameplay_hud") || hud) : hud;
             }
 
-            function _isInHideout(hud) {
-                if (QOL.core && QOL.core.hud && QOL.core.hud.isInHideout) {
-                    return QOL.core.hud.isInHideout(hud);
-                }
-                return !!(hud && (hud.BHasClass("connectedToHideout") || hud.BHasClass("InHideout")));
-            }
+            var _isInHideout = QOL.core.hud.isInHideout;
 
             function _ensureCompassOverlay(hud) {
                 if (!_isAlive(_compassRoot)) {

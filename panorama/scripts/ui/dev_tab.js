@@ -470,6 +470,37 @@
         return true;
     }
 
+    function requestHudStateObservation(statusLabel) {
+        const localize = text => globalThis.LocalizeSettingsText(text, true);
+        const hud = findHudPanel();
+        if (!isAlive(hud)) {
+            if (isAlive(statusLabel)) statusLabel.text = localize("Open settings with a live HUD");
+            return;
+        }
+        hud.SetAttributeString("QOL_DiagRequest", `state_${Date.now()}`);
+        if (isAlive(statusLabel)) statusLabel.text = localize("Running");
+        Q.ui.window.setOpen(false);
+        $.DispatchEvent("CitadelResumePlaying", $.GetContextPanel());
+    }
+
+    function copyHudStateObservation(container, statusLabel) {
+        const localize = text => globalThis.LocalizeSettingsText(text, true);
+        let observation = null;
+        try { observation = JSON.parse(findHudPanel()?.GetAttributeString("QOL_Diag", "") || "{}").hudStateObservation; } catch (_) {}
+        if (!observation?.report) {
+            if (isAlive(statusLabel)) statusLabel.text = localize("No completed HUD state recording yet.");
+            return;
+        }
+        const entry = Q.core.panel.create("TextEntry", container, "HudStateCopyEntry");
+        if (!entry) return;
+        entry.maxchars = observation.report.length + 100;
+        entry.multiline = true;
+        entry.text = observation.report;
+        const copied = Q.ui.configTab.tryCopyTextToClipboard(observation.report, entry);
+        Q.core.panel.delete(entry);
+        if (isAlive(statusLabel)) statusLabel.text = localize(copied ? "HUD state report copied." : "Copy failed; see the console log.");
+    }
+
     function requestBuildStorageDryRun(statusLabel) {
         const hudPanel = findHudPanel();
         if (!hudPanel || !hudPanel.SetAttributeString) {
@@ -1233,7 +1264,7 @@
             list, "DevVisualCheckRow", "VisualCheckBtn", "VisualCheckStatus",
             "s2r://panorama/images/icons/icon_play.vsvg",
             globalThis.LocalizeSettingsText("HUD settings walkthrough", true),
-            globalThis.LocalizeSettingsText("Open in a match or sandbox. Step through 12 HUD changes. Stop restores settings without saving the test values.", true),
+            globalThis.LocalizeSettingsText("Open in a match or sandbox. Compare HUD changes and test gameplay. Stop restores settings without saving the test values.", true),
             globalThis.LocalizeSettingsText("Start", true),
             (statusLbl) => {
                 const started = Q.ui.visualCheck?.start(() => {
@@ -1242,6 +1273,19 @@
                 if (isAlive(statusLbl)) statusLbl.text = globalThis.LocalizeSettingsText(started ? "Running" : "Open settings with a live HUD", true);
             }
         );
+
+        createDevActionRow(list, "DevHudStateRow", "HudStateStartBtn", "HudStateStartStatus",
+            "s2r://panorama/images/icons/icon_play.vsvg",
+            globalThis.LocalizeSettingsText("HUD state recording", true),
+            globalThis.LocalizeSettingsText("Record for 60 seconds while playing: open and close the scoreboard, die and respawn. Settings are unchanged.", true),
+            globalThis.LocalizeSettingsText("Record HUD states", true),
+            status => requestHudStateObservation(status));
+        createDevActionRow(list, "DevHudStateCopyRow", "HudStateCopyBtn", "HudStateCopyStatus",
+            "s2r://panorama/images/icons/icon_copy.vsvg",
+            globalThis.LocalizeSettingsText("HUD state report", true),
+            globalThis.LocalizeSettingsText("After recording, copy the class transitions and scoreboard event observations.", true),
+            globalThis.LocalizeSettingsText("Copy HUD state report", true),
+            status => copyHudStateObservation(list, status));
 
         createDevActionRow(
             list,
@@ -1356,6 +1400,8 @@
         runManifestTests,
         runInGameEngineAudit,
         requestPanelTreeDump,
+        requestHudStateObservation,
+        copyHudStateObservation,
         requestBuildStorageDryRun,
         runFullTestSuite,
         runPresetCycle,

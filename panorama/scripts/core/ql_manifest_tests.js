@@ -30,6 +30,8 @@
     let testInProgress = false;
     let testToken = 0;
     let cancelRun = null;
+    let hudStateObservation = null;
+    let stopHudStateObservation = null;
 
     const MAX_TASK_MS = 50;
     const MAX_TOTAL_MS = 2000;
@@ -171,6 +173,7 @@
     const getResults = () => testResults;
 
     const cancel = () => {
+        if (stopHudStateObservation) stopHudStateObservation("cancelled");
         if (cancelRun) cancelRun();
     };
 
@@ -268,11 +271,22 @@
                 while (root && root.GetParent && root.GetParent()) root = root.GetParent();
                 hud = root?.id === "Hud" ? root : root?.FindChildTraverse?.("Hud");
             }
-            audit.hudFound = Boolean(hud && (typeof hud.IsValid !== "function" || hud.IsValid()));
+            audit.hudFound = Boolean(hud && (hud.id === "Hud" || hud.paneltype === "CitadelHud") && (typeof hud.IsValid !== "function" || hud.IsValid()));
             if (!audit.hudFound) hud = null;
             lines.push(`HUD: ${hud ? hud.id : "not found; context unavailable"}`);
             if (hud && Q.core.hud) {
                 lines.push(`Hideout: ${Q.core.hud.isInHideout(hud)} | StreetBrawl: ${Q.core.hud.isStreetBrawl(hud)}`);
+                audit.hudState = {
+                    scoreboardOpen: Q.core.hud.isScoreboardOpen(hud),
+                    lifeState: Q.core.hud.readHudLifeState(hud),
+                    classes: {}
+                };
+                for (const cls of ["gScoreboardOpen", "alive", "dead", "spec_mode", "replay_playback", "deathReplayActive", "ShowEscapeMenu"]) {
+                    audit.hudState.classes[cls] = QOL_UTILS.HasClassInHierarchy(hud, cls);
+                }
+                lines.push(`HUD state: ${JSON.stringify(audit.hudState)} (class observations; local-player identity unverified)`);
+                const listener = Q.core.panel.findTraverse(hud, "minimap_persp");
+                lines.push(`Scoreboard listener #minimap_persp: ${listener ? listener.BHasClass("gScoreboardOpen") : "not found"}`);
             }
         } catch (e) {
             audit.readErrors++;
@@ -330,9 +344,58 @@
         return audit;
     };
 
+    // Deliberately opt-in: no watcher exists until the Dev action requests it.
+    const observeHudStates = (token, onComplete) => {
+        if (stopHudStateObservation) stopHudStateObservation("replaced");
+        const scheduler = Q.core.Scheduler;
+        const bus = Q.core.EventBus;
+        const hud = Q.core.hud.findHud();
+        const start = Date.now();
+        const result = { token, status: "running", samples: [], dropped: 0, report: "" };
+        hudStateObservation = result;
+        let lastState = "";
+        let stopped = false;
+        const sample = source => {
+            if (!Q.core.panel.isAlive(hud)) { finish("HUD destroyed"); return; }
+            const classes = {};
+            for (const cls of ["gScoreboardOpen", "alive", "dead", "spec_mode", "replay_playback", "deathReplayActive", "ShowEscapeMenu", "InHideout", "connectedToHideout"]) {
+                classes[cls] = QOL_UTILS.HasClassInHierarchy(hud, cls);
+            }
+            const state = { scoreboard: Q.core.hud.isScoreboardOpen(hud), life: Q.core.hud.readHudLifeState(hud), classes };
+            const signature = JSON.stringify(state);
+            if (source !== "poll" || signature !== lastState) {
+                if (result.samples.length < 128) result.samples.push({ ms: Date.now() - start, source, ...state });
+                else result.dropped++;
+                lastState = signature;
+            }
+        };
+        const event = () => sample("engine:scoreboard_toggle");
+        const finish = status => {
+            if (stopped) return;
+            stopped = true;
+            scheduler.cancelAllForFeature("hud_state_observation");
+            bus.off("engine:scoreboard_toggle", event);
+            stopHudStateObservation = null;
+            result.status = status;
+            result.report = ["=== QOLLOCK HUD state observation ===", `Token: ${token} | Status: ${status} | Dropped: ${result.dropped}`,
+                "Class evidence only; local-player identity and rendering remain unverified.",
+                ...result.samples.map(row => JSON.stringify(row)), "=== END HUD state observation ==="].join("\n");
+            for (const line of result.report.split("\n")) $.Msg(line);
+            if (onComplete) onComplete(result);
+        };
+        stopHudStateObservation = finish;
+        sample("start");
+        if (stopped) return;
+        bus.on("engine:scoreboard_toggle", event);
+        scheduler.createPollLoop(() => sample("poll"), 0.25, "hud_state_observation");
+        scheduler.scheduleOnce(() => { sample("end"); finish("complete"); }, 60, "hud_state_observation");
+    };
+
     Q.core.ManifestTests = {
         runAll: runAllTests,
         runEngineAudit,
+        observeHudStates,
+        getHudStateObservation: () => hudStateObservation,
         getResults,
         cancel,
         isRunning,

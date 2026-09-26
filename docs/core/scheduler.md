@@ -38,3 +38,12 @@ not imply sub-millisecond precision. Stats cover synchronous callback/native
 work, not deferred layout, rendering, GPU work or all JS. Benchmark spike counts
 currently use a 4ms threshold; historical 8ms descriptions are obsolete.
 See [PROFILING.md](../PROFILING.md) for valid comparisons and client verification.
+
+## Managed one-shot callbacks
+
+`scheduleOnce(callback, delaySec, featureId)` returns an idempotent `{stop()}`.
+It removes itself before invoking the callback; feature cancellation and native
+owner invalidation suppress pending work. Zero delay is valid; negative/nonfinite
+delays normalize to zero. Errors are logged and emitted as `scheduler:error`.
+One-shots do not record polling timings or emit `scheduler:tick_ok`.
+Owner validity exceptions also stop recurring loops safely.

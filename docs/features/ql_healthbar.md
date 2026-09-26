@@ -36,3 +36,47 @@ The statements above describe source behavior. Native panel identity, binding
 values, rendering and transitions need the maintainer's Panorama Debugger and
 a repacked client scenario; neither a schema nor a read-only manifest hook
 proves the whole feature works. See [verification](../TESTING.md).
+
+## Fighting Game geometry and lifecycle
+
+FG reparents the existing gold `LevelAmount` / `HeroImage` subtree to the
+`health_bar_border` inside `hud_health_bars`. It stays a sibling of the tinted
+frame, so the frame wash does not tint the portrait. Owned inline styles position it
+at the hexagon center measured from the source frame texture and counter-rotates
+it against the border's 90-degree turn. It inherits healthbar scale, offsets
+and opacity; there is no separate scale-dependent portrait displacement.
+The runtime explicitly overrides the source layout's collapsed `LevelAmount`
+and half-scale `HeroImage`: a reparented native panel must not depend on the
+destination HUD stylesheet overriding its original layout styles. Style
+signatures suppress repeated writes and are reset for replacement images.
+All owned inline properties are cleared when restoring the original parent.
+Gold and the native `CitadelPlayerLevel` layout can both contain a
+`LevelAmount` / `HeroImage` subtree. Source lookup happens only when no live
+portrait is attached: discovering the other copy must not trigger restore and
+reattach on every tick. Anchor loss or portrait destruction still permits recovery.
+
+The variant restores the original parent and child order on style switch,
+disable, hideout, or loss/replacement of the anchor. Missing sources retry on
+subsequent feature ticks. Native hero-image updates after reparenting still
+require a client check, especially hero switching and respawn.
+
+Regen sits above the portrait end of the bar, rotated clockwise by 30 degrees,
+at local `x: 6px; y: -28px`. Recent damage and healing occupy separate horizontal
+lanes above the left end of the bar (damage above healing). Entries participate
+in flow with spacing; FG overrides their native inline position so fading and
+new entries cannot acquire overlapping offsets. Native visibility and opacity
+still control their lifetime. Check simultaneous multi-source damage/healing
+and fading entries in the client; offline tests do not model native positioning.
+Current/max health are shifted toward the
+right end, with the current label shifted down 5 local pixels and the maximum
+shifted left 3 local pixels from its previous placement. All labels use
+`sansMono`; the health numbers remain upright. The shared
+scale reset clears the native `ui-scale` override, restoring the active CSS
+base rather than pinning a replacement value.
+
+`tests/healthbar_fg_reset.test.js` drives real settings row resets at 156/200
+through all six healthbar modes and checks portrait ownership/restoration.
+It also checks top/bottom bar resets and native CSS property-name conversion.
+These are offline lifecycle/propagation checks. After compile/repack, verify
+100/156/200 scales, both offsets, opacity, reset, hero switching, death/respawn,
+style switching, and hideout return; inspect portrait binding and text geometry.

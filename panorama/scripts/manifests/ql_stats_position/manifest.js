@@ -80,8 +80,7 @@
                 var root = $.GetContextPanel();
                 if (!root) return;
 
-                var hud = (typeof QOL !== "undefined" && QOL.core && (QOL.core.hud || QOL.core.Hud)) || null;
-                var inHideout = hud && hud.isInHideout ? hud.isInHideout(root) : (root.BHasClass && (root.BHasClass("InHideout") || root.BHasClass("connectedToHideout")));
+                var inHideout = QOL.core.hud.isInHideout(root);
                 if (inHideout) {
                     if (_applied) {
                         var p = _getStatsPanel(root);
@@ -110,7 +109,7 @@
                     return;
                 }
 
-                var scoreboardOpen = !!(root.BHasClass && root.BHasClass("gScoreboardOpen"));
+                var scoreboardOpen = QOL.core.hud.isScoreboardOpen(root);
                 var hidden = scoreboardOpen
                     ? (Number(cfg.STATS_POSITION_HIDE_SCOREBOARD) === 1)
                     : (Number(cfg.STATS_POSITION_HIDE_NORMAL) === 1);
@@ -140,11 +139,7 @@
             var _currentRate = 0;
 
             function _onScoreboardToggle() {
-                if (typeof $ !== "undefined" && typeof $.Schedule === "function") {
-                    $.Schedule(0, _tick);
-                } else {
-                    _tick();
-                }
+                QOL.core.Scheduler.scheduleOnce(_tick, 0, ctx.id);
             }
 
             function _determineOptimalRate() {

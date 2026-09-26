@@ -57,6 +57,7 @@
         ],
         create: function(ctx) {
             var _lastSig = "";
+            var _lastPanel = null;
             var _loop = null;
 
             function _clamp(v, lo, hi) {
@@ -83,6 +84,10 @@
                 var root = $.GetContextPanel();
                 var topBar = root.FindChildTraverse("TopBar");
                 if (!topBar) return;
+                if (topBar !== _lastPanel) {
+                    _lastPanel = topBar;
+                    _lastSig = "";
+                }
 
                 // Visibility gate: if the top bar is hidden in spectator/replay mode, don't apply styles.
                 var hudVisible = true;
@@ -117,7 +122,7 @@
                     if (oy !== 0) topBar.style.y = (-oy) + "px";
                     else _clearStyle(topBar, "y");
 
-                    topBar.style.preTransformScale2d = "1.00, 1.00";
+                    _clearStyle(topBar, "preTransformScale2d");
                     if (Math.abs(scNum - 1.0) > 0.0001) topBar.style.uiScale = Math.round(scNum * 100) + "%";
                     else _clearStyle(topBar, "uiScale");
 
@@ -155,6 +160,7 @@
                     var S = QOL.core.Scheduler;
                     if (S) S.cancelAllForFeature("ql_topbar");
                     _lastSig = "";
+                    _lastPanel = null;
                     var root = $.GetContextPanel ? $.GetContextPanel() : null;
                     var topBar = root ? root.FindChildTraverse("TopBar") : null;
                     if (topBar) {

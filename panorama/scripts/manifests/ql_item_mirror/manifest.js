@@ -1948,9 +1948,7 @@
                     if (_loop) _loop.reschedule(ITEM_MIRROR_RENDER_INTERVAL_MS_IDLE / 1000);
                     return;
                 }
-                var inHideout = (QOL?.core?.hud?.isInHideout)
-                    ? QOL.core.hud.isInHideout(hud)
-                    : !!(hud && hud.BHasClass && (hud.BHasClass("InHideout") || hud.BHasClass("connectedToHideout")));
+                var inHideout = QOL.core.hud.isInHideout(hud);
                 if (inHideout) {
                     if (_overlay) _hideOverlay();
                     if (_loop) _loop.reschedule(ITEM_MIRROR_RENDER_INTERVAL_MS_IDLE / 1000);

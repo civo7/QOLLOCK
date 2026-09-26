@@ -56,3 +56,8 @@ every feature in a silent catch.
 Read-only `test()` observations are collected by `core/ql_manifest_tests.js`.
 They are not run by the HUD load smoke, and do not prove full visual correctness.
 See [testing](../TESTING.md).
+
+Failed `onEnable` calls, both during `boot` and explicit `enable`, invoke the
+partially created instance's `onDisable` and cancel managed schedules for that ID.
+Cleanup failures do not replace the original error. A factory that throws before
+returning an instance must clean up its own non-Scheduler side effects.

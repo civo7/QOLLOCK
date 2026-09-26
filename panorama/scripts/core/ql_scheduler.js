@@ -10,8 +10,8 @@
 // DEPENDS ON:  core/ql_namespace.js (QOL.core)
 // USED BY:     Feature manifests (via QOL.core.Scheduler)
 // GOTCHAS:     $.Schedule returns a number handle. $.CancelScheduled is safe with
-//              already-fired handles (no-throw). Raw $.Schedule() is BANNED
-//              in feature code — use createPollLoop().
+//              already-fired handles (no-throw). Use scheduleOnce for owned
+//              deferred work and createPollLoop for recurring observations.
 // LOAD ORDER:  4th — after ql_event_bus.js
 //
 // Boundary validation: Checks QOL.core exists. Aborts with message if not.
@@ -118,7 +118,7 @@
 
         const tick = () => {
             if (stopped) return;
-            if (owner && typeof owner.IsValid === "function" && !owner.IsValid()) {
+            if (owner && !QOL_UTILS.IsPanelValid(owner)) {
                 loop.stop();
                 return;
             }
@@ -193,6 +193,39 @@
         for (let i = 0; i < list.length; i++) {
             try { list[i].stop(); } catch (_) { /* best-effort */ }
         }
+    };
+
+    // Native one-shot scheduling with the same feature ownership as poll loops.
+    const scheduleOnce = (callback, delaySec, featureId) => {
+        let handle = null;
+        let stopped = false;
+        const owner = $.GetContextPanel();
+        const task = { stop: () => {
+            if (stopped) return;
+            stopped = true;
+            if (handle !== null) { $.CancelScheduled(handle); handle = null; }
+            removeRegisteredLoop(featureId, task);
+        } };
+        if (typeof callback !== "function") return task;
+        if (typeof featureId === "string" && featureId) {
+            if (!loops.has(featureId)) loops.set(featureId, []);
+            loops.get(featureId).push(task);
+        }
+        const delay = Number.isFinite(delaySec) && delaySec >= 0 ? delaySec : 0;
+        handle = $.Schedule(delay, () => {
+            handle = null;
+            if (stopped) return;
+            stopped = true;
+            removeRegisteredLoop(featureId, task);
+            if (owner && !QOL_UTILS.IsPanelValid(owner)) return;
+            try { callback(); }
+            catch (e) {
+                const message = e?.message || String(e);
+                if (EventBus && featureId) EventBus.emit("scheduler:error", { featureId, message, timestamp: nowMs() });
+                $.Msg(`[QOLLock][ERROR][Scheduler] deferred callback threw — ${message}`);
+            }
+        });
+        return task;
     };
 
     const getTimings = (featureId) => {
@@ -419,6 +452,7 @@
     const perfApi = {
         schedule: createPollLoop,
         createPollLoop,
+        scheduleOnce,
         cancelAll: cancelAllForFeature,
         cancelAllForFeature,
         getTimings,

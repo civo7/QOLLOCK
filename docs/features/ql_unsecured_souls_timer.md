@@ -14,6 +14,12 @@ This is distinct from `ql_better_unsecured_hud`, which renders amount/icon state
 Preserve source-loss and reset handling; a stale sample must not masquerade as
 a current countdown.
 
+The enabled timer is available in matches, hideout and hero testing without
+mode-specific suppression. Hero testing no longer needs an exception to a
+hideout gate. Native source availability determines the display: a missing
+source shows `--`, zero souls clears the countdown, and a positive amount
+produces an estimated countdown. Native parent visibility still applies.
+
 ## Declared settings
 
 - `ENABLE_UNSECURED_SOUL_TIMER` (toggle)
@@ -32,3 +38,5 @@ The statements above describe source behavior. Native panel identity, binding
 values, rendering and transitions need the maintainer's Panorama Debugger and
 a repacked client scenario; neither a schema nor a read-only manifest hook
 proves the whole feature works. See [verification](../TESTING.md).
+
+Numeric label parsing uses the existing local numeric-character extraction. The unreachable optional `QOL_UTILS.ParseNumber` branch was removed because that helper is not exported; parsing behavior is otherwise unchanged.

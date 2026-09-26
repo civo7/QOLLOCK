@@ -51,14 +51,15 @@
 
     // -- Hud resolution --
     let _cachedHud = null;
+    let _cachedHudContext = null;
 
     const findHud = (preferredRoot) => {
-        if (!preferredRoot && isPanelAlive(_cachedHud)) return _cachedHud;
-
         const MAX_DEPTH = 64;
         try {
             const ctx = preferredRoot || $.GetContextPanel();
             if (!isPanelAlive(ctx)) return null;
+            if (!preferredRoot && ctx === _cachedHudContext && isPanelAlive(_cachedHud)) return _cachedHud;
+            if (!preferredRoot) { _cachedHud = null; _cachedHudContext = ctx; }
             if (ctx.id === "Hud" || ctx.paneltype === "CitadelHud") {
                 if (!preferredRoot) _cachedHud = ctx;
                 return ctx;
@@ -86,13 +87,9 @@
                 return hud;
             }
             if (ctx.id === "Hud" || ctx.paneltype === "CitadelHud" || (ctx.BHasClass && ctx.BHasClass("WindowRoot"))) {
-                if (!preferredRoot) _cachedHud = ctx;
                 return ctx;
             }
-            if (!preferredRoot) {
-                _cachedHud = absRoot || ctx;
-                return _cachedHud;
-            }
+            // A temporary menu/loading root must not mask a HUD created later.
             return absRoot || ctx;
         } catch (_) {
             return null;
@@ -136,32 +133,37 @@
         }
         const sig = parts.join(";");
         if (sig === lastSig) return { changed: false, sig };
+        let succeeded = true;
         for (const prop of Object.keys(styles)) {
             try {
                 panel.style[prop] = styles[prop];
-            } catch (_) {}
+            } catch (_) { succeeded = false; }
         }
-        return { changed: true, sig };
+        // Never cache a partial write as applied: the next call must retry.
+        return { changed: true, sig: succeeded ? sig : null };
     };
 
     const clearStyleProperty = (panel, prop) => {
         if (!isPanelAlive(panel) || typeof prop !== "string") return false;
         try {
-            panel.ClearPropertyFromCode(prop);
+            panel.ClearPropertyFromCode(prop.replace(/[A-Z]/g, c => "-" + c.toLowerCase()));
             return true;
         } catch (_) {
             return false;
         }
     };
 
-    const findRoot = () => {
-        const ctx = $.GetContextPanel();
-        if (!isPanelAlive(ctx)) return null;
-        let curr = ctx;
-        while (curr.GetParent && isPanelAlive(curr.GetParent())) {
-            curr = curr.GetParent();
-        }
-        return curr;
+    const findRoot = (panel) => {
+        try {
+            let curr = panel || $.GetContextPanel();
+            if (!isPanelAlive(curr)) return null;
+            while (curr.GetParent) {
+                const parent = curr.GetParent();
+                if (!isPanelAlive(parent)) break;
+                curr = parent;
+            }
+            return curr;
+        } catch (_) { return null; }
     };
 
     const activate = (panel) => {
@@ -207,7 +209,8 @@
         const direct = readText(panel);
         if (direct) return direct;
         if (maxDepth <= 0 || !panel.Children) return "";
-        const kids = panel.Children();
+        let kids;
+        try { kids = panel.Children(); } catch (_) { return ""; }
         for (let i = 0; i < kids.length; i++) {
             const t = readTextDeep(kids[i], maxDepth - 1);
             if (t) return t;

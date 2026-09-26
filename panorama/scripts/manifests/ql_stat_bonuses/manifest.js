@@ -478,8 +478,7 @@
                     return;
                 }
 
-                var hud = (typeof QOL !== "undefined" && QOL.core && (QOL.core.hud || QOL.core.Hud)) || null;
-                var inHideout = hud && hud.isInHideout ? hud.isInHideout(root) : false;
+                var inHideout = QOL.core.hud.isInHideout(root);
                 if (inHideout) {
                     if (_overlay && _overlayVisible) {
                         if (_overlay.SetHasClass) _overlay.SetHasClass("qol-hidden", true);
