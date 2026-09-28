@@ -254,51 +254,10 @@
         }
     };
 
-    const QOL_WASH_COLOR_PALETTE = [
-        "",
-        "#f7f4e8",
-        "#bfc7cf",
-        "#33363f",
-        "#ff3b47",
-        "#ff6f61",
-        "#ff8a2a",
-        "#ffb52e",
-        "#ffe45c",
-        "#a8f04f",
-        "#45d66b",
-        "#63f0b5",
-        "#24c6a8",
-        "#44e3ff",
-        "#64bfff",
-        "#3f78ff",
-        "#6157ff",
-        "#9b5cff",
-        "#c15cff",
-        "#ff4de3",
-        "#ff78bd",
-        "#ff5d89",
-        "#9a6743",
-        "#d9a441",
-        "#8cff4f",
-        "#7c4dff",
-        "#b8142f",
-        "#b9f4ff",
-        "#d7b2ff",
-        "#05070a"
-    ];
-
-    const normalizePaletteIndex = (value) => {
-        let numeric = Math.round(Number(value));
-        if (!Number.isFinite(numeric) || numeric < 0 || numeric >= QOL_WASH_COLOR_PALETTE.length) {
-            numeric = 0;
-        }
-        return numeric;
-    };
-
-    const resolvePaletteColor = (value) => {
-        const index = normalizePaletteIndex(value);
-        return String(QOL_WASH_COLOR_PALETTE[index] || "");
-    };
+    // ql_utils.js is loaded first in every context that includes panel helpers.
+    const QOL_WASH_COLOR_PALETTE = QOL_UTILS.QOL_WASH_COLOR_PALETTE;
+    const normalizePaletteIndex = QOL_UTILS.NormalizePaletteColorIndex;
+    const resolvePaletteColor = QOL_UTILS.ResolveWashColorFromPalette;
 
     const setWashColor = (panel, color) => {
         if (!isPanelAlive(panel)) return false;

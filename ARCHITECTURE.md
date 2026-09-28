@@ -147,57 +147,20 @@ are compatibility guards, not evidence that browser APIs are available in HUD.
 | `build_mod/` | Maintainer-owned compilation/packaging data and scripts; not agent-run tooling |
 
 In rows with a second abbreviated filename, it is in the same directory as the
-first. The feature atlas in section 11 identifies individual gameplay owners.
+first. The [feature catalog](docs/features/README.md) identifies individual
+gameplay owners.
 
 ## 4. Reuse these helpers
 
-Read [HELPERS.md](docs/HELPERS.md) and the implementation before copying a utility.
-`QOL_UTILS` is the leaf utility object; `QOL.utils` exposes the same object through
-the shared bridge. Names and capitalization matter. Private implementation names
-are not exported APIs.
+Use [HELPERS.md](docs/HELPERS.md) as the single API decision map. Read the
+implementation and a real caller in the same script context before reusing a
+helper. The active XML includes determine which helpers are loaded; HUD, settings,
+profile and quickbuy contexts do not share all globals.
 
-| Need | Existing API | Important boundary |
-| --- | --- | --- |
-| Live panel check | `QOL_UTILS.IsPanelValid(panel)`; `QOL.core.panel.isAlive(panel)` | Rejects missing, stale and throwing handles; does not establish ownership/visibility |
-| Live panel list | `QOL_UTILS.IsPanelListValid(list)` | An empty list is false, not a cached successful lookup |
-| Safe attributes | `QOL_UTILS.SafeGetAttribute(panel, key, fallback)` / `SafeSetAttribute(panel, key, value)` | Generic string access, not revision-aware config publication |
-| Direct child / descendant | `QOL.core.panel.findChild(parent, id)` / `findTraverse(root, id)` | Different search scopes; use the narrowest authoritative root |
-| Class descendants | `QOL_UTILS.FindPanelsByClass(root, className)` / `FindFirstPanelByClass(root, className)` | Native class traversal; not a player-identity selector |
-| Ancestor class | `QOL_UTILS.FindAncestorWithClass(panel, className)` / `HasClassInHierarchy(panel, className)` | Includes starting panel; no depth cap, unlike some feature-local searches |
-| Root / HUD | `QOL.core.panel.findRoot(panel?)` / `findHud(preferredRoot)` | Root fallback is possible; existence alone is not proof of gameplay |
-| Create / delete | `QOL.core.panel.create(type, parent, id, properties)` / `delete(panel)` | Creation can return null; deletion is asynchronous |
-| Read text | `QOL.core.panel.readText(panel)` / `readTextDeep(panel, maxDepth)` | Deep read returns first nonempty text, not necessarily the desired stat |
-| One style, conditional | `QOL_UTILS.SetStyleIfChanged(panel, property, value)` | Use only where native read-back comparison is appropriate |
-| One style, unconditional | `QOL_UTILS.SetStyleSafe(panel, property, value)` | Preserve deliberate reassertion; do not silently make this conditional |
-| Opacity | `QOL_UTILS.SetPanelOpacitySafe(panel, value, fallback)` | Normalizes to 0–1 and formats; not percentage input |
-| Clear an override | `QOL.core.panel.clearStyleProperty(panel, property)` | Uses native ClearPropertyFromCode; also used by leaf ClearStyleSafe before its legacy fallbacks |
-| Style map | `QOL.core.panel.syncStyles(panel, styleMap, lastSig)` | Returns `{changed, sig}`; caller retains and invalidates the signature |
-| Class / visibility | `QOL.core.panel.setClass(panel, className, active)` / `setVisible(panel, visible)` | Class setter compares first; visible setter does not |
-| Palette | `QOL.core.panel.normalizePaletteIndex(value)` / `resolvePaletteColor(value)` | Reuse palette indices/options; do not introduce unrelated color encodings |
-| Panel / list cache | `QOL.panelCache.getPanel/setPanel`, `getList/setList` | Typed getters validate; keys share a context-wide namespace |
-| Cached descendant | `QOL.panelCache.resolve(parent, cacheKey, traverseId)` | Validates parent/ID and live ancestry before reusing the cached panel |
-| Non-panel cache | `QOL.panelCache.getData/setData` | No handle validation; do not store arbitrary data in a panel slot |
-| Config enabled test | `QOL_UTILS.IsCfgEnabled(cfg, key)` | `Number(value) === 1`, not generic JavaScript truthiness |
-| Bounded numeric value | `QOL_UTILS.ClampConfigNumber(value, fallback, min, max, shouldRound)` | Optional rounding before clamp; not schema-step snapping |
-| Offset / pixel string | `QOL_UTILS.NormalizeHudOffsetNumber(value, fallback)` / `FormatHudPx(value, fallback)` | Integer pixel offsets, not percentages |
-| Opacity / HUD scale | `QOL_UTILS.NormalizeOpacityNumber(value, fallback)` / `NormalizeHudScaleNumber(value, fallback)` | Scale helper clamps to 0.5–1.5; unsuitable for every feature's range |
-| Angle math | `QOL_UTILS.NormalizeDegrees360`, `NormalizeDegrees180`, `ShortestDegreesDelta` | Reuse existing wrap/delta semantics; validate non-finite inputs separately |
-| Geometry | `QOL_UTILS.ReadSafePanelLayoutOffset(value)` / `GetPanelPositionRelativeToAncestor(panel, ancestor)` | Rejects unusable offsets; ancestor walk is bounded; not a universal DPI conversion |
-| Match clock | `QOL.core.time.readGameTime(topBar)` / `parseClockSeconds(text)` / `formatSeconds(seconds)` | Missing/unparseable clock returns 0, indistinguishable from match start |
-| Current time | `QOL_UTILS.PerfNowMs()` | Date-based milliseconds, not a high-resolution performance clock |
-| Account ID text | `QOL_UTILS.ParseAccountId(value)` | Reuse parser; preserve the caller's authoritative identity source |
-| Runtime errors | `QOL.core.Logger.logError(featureId, message)` / `logWarn`, `logInfo`, `logDebug` | Throttled logger has a bounded report buffer; format expensive debug text only when enabled |
-
-For mode/class detection use [core HUD helpers](docs/core/hud.md), not another
-handwritten collection of guessed hideout classes. For hero evidence use
-[heroProbe](docs/core/hero_probe.md). A hero probe can return no result while
-panels are loading; it is not a direct game-state API.
-
-**Cache invariants:** live does not mean current player/match/root. Clear only
-owned keys on transitions. Reset signatures when replacing a panel, or the same
-settings can suppress the first write to its replacement. Missing-result backoff
-must eventually retry. Generic `resolve` supplies neither backoff nor lifecycle
-cleanup. Keep bounded, ordered, identity-sensitive searches local where needed.
+A live handle is not proof of the current player, match or HUD instance. Keep
+identity-sensitive selection and feature-owned cleanup with the caller. The helper
+map documents cache invalidation, native style restoration and verification
+limits.
 
 ## 5. Feature lifecycle and scheduling
 

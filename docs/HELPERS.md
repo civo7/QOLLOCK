@@ -18,12 +18,24 @@ which numeric label, or which live HUD instance is authoritative.
 | Find a parent-chain match | `QOL_UTILS.FindAncestorWithClass(panel, className)` / `QOL_UTILS.HasClassInHierarchy(panel, className)` | Includes starting panel; catches native class/parent access failures, but the walk is uncapped. |
 | Resolve context root / HUD | `QOL.core.panel.findRoot(panel?)` / `QOL.core.panel.findHud(preferredRoot)` | See [panel API](core/panel_helpers.md); root fallback does not establish gameplay state. |
 | Read first descendant text | `QOL.core.panel.readTextDeep(panel, maxDepth)` | Bounded search, unsuitable when another nonempty label can precede the desired one. |
+| Read / write a panel attribute | `QOL_UTILS.SafeGetAttribute(panel, key, fallback)` / `QOL_UTILS.SafeSetAttribute(panel, key, value)` | Generic string access, not revision-aware config publication. |
 | Change one style if different | `QOL_UTILS.SetStyleIfChanged(panel, property, value)` | Only when native read-back semantics suit comparison. |
+| Reassert one style | `QOL_UTILS.SetStyleSafe(panel, property, value)` | Use when a native owner may overwrite the value; do not make deliberate reassertion conditional. |
 | Normalize opacity / clear style | `QOL_UTILS.SetPanelOpacitySafe(panel, value, fallback)` / `QOL.core.panel.clearStyleProperty(panel, property)` | Opacity clamps and formats; clearing uses native ClearPropertyFromCode. |
 | Apply a style map | `QOL.core.panel.syncStyles(panel, styles, lastSig)` | Caller owns signature and invalidation; writes the whole map when signature changes. |
+| Set a class / visibility | `QOL.core.panel.setClass(panel, className, active)` / `QOL.core.panel.setVisible(panel, visible)` | Class setter compares before writing; visible setter does not. |
+| Resolve a palette color | `QOL.core.panel.normalizePaletteIndex(value)` / `QOL.core.panel.resolvePaletteColor(value)` | Both delegate to `QOL_UTILS`; read the palette from the leaf utility. |
 | Cache a handle / list | `QOL.panelCache.getPanel(key)` / `QOL.panelCache.setPanel(key, panel)` / `QOL.panelCache.getList(key)` / `QOL.panelCache.setList(key, list)` | `ql_panelcache.js`; getters reject invalid handles/lists. |
 | Resolve cached ID | `QOL.panelCache.resolve(parent, cacheKey, traverseId)` | Keys resolution by parent and ID, validates live ancestry, and re-resolves after reparenting. |
 | Cache non-panel state | `QOL.panelCache.getData(key)` / `QOL.panelCache.setData(key, value)` | No panel validation. Do not mix data and handle categories. |
+| Check an enabled config key | `QOL_UTILS.IsCfgEnabled(cfg, key)` | Uses numeric `1`, not general JavaScript truthiness. |
+| Clamp a config number | `QOL_UTILS.ClampConfigNumber(value, fallback, min, max, shouldRound)` | Optional rounding before clamp, not schema-step snapping. |
+| Format an offset / scale | `QOL_UTILS.FormatHudPx(value, fallback)` / `QOL_UTILS.NormalizeHudScaleNumber(value, fallback)` | Pixel offsets are integers; the scale helper has its own bounds. |
+| Angle / layout math | `QOL_UTILS.ShortestDegreesDelta(fromDeg, toDeg)` / `QOL_UTILS.GetPanelPositionRelativeToAncestor(panel, ancestor)` | Validate input and ancestor identity; this is not universal DPI conversion. |
+| Read / format match time | `QOL.core.time.readGameTime(topBar)` / `QOL.core.time.formatSeconds(seconds)` | Missing or unreadable clock can return zero. |
+| Parse an account ID | `QOL_UTILS.ParseAccountId(value)` | Parsing does not establish which player owns the source. |
+| Read the current clock | `QOL_UTILS.PerfNowMs()` | Date-based milliseconds, not a high-resolution frame clock. |
+| Log runtime errors | `QOL.core.Logger.logError(featureId, message)` | Throttled and bounded; format expensive debug data only when enabled. |
 
 ## Load order and names
 
@@ -36,6 +48,10 @@ not be loaded in an isolated profile/card context.
 Use [the panel API reference](core/panel_helpers.md) for exact exported names.
 The production export contract is checked by `tests/helper_api_contract.test.js`
 against the callable references in this decision map.
+
+For HUD mode/class detection use [core HUD state](core/hud.md); for hero evidence
+use [heroProbe](core/hero_probe.md). Both report observations, not authoritative
+local-player identity.
 
 ## Cache and lifecycle contract
 
