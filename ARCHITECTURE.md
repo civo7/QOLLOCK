@@ -23,7 +23,7 @@ in-game behavior.
 8. [Persistence and cross-context communication](#8-persistence-and-cross-context-communication)
 9. [Settings UI controls and previews](#9-settings-ui-controls-and-previews)
 10. [Panorama styles assets and native evidence](#10-panorama-styles-assets-and-native-evidence)
-11. [Feature ownership atlas](#11-feature-ownership-atlas)
+11. [Feature ownership and boundaries](#11-feature-ownership-and-boundaries)
 12. [Verification and tooling](#12-verification-and-tooling)
 13. [Task completion checklists](#13-task-completion-checklists)
 14. [Documentation map and historical traps](#14-documentation-map-and-historical-traps)
@@ -551,64 +551,12 @@ specific debugger capture: scenario, target panel, parent chain, relevant child
 IDs/classes and values. Do not assume the maintainer has a writable JS console
 or that a browser automation endpoint exists.
 
-## 11. Feature ownership atlas
+## 11. Feature ownership and boundaries
 
-This is a source ownership index, not a claim that every feature was tested in
-game. Active `hud.xml` includes currently register 48 manifests. Per-feature
-settings/enable predicates live in the linked source; shared keys intentionally
-have multiple owners. A documentation page or directory alone does not establish
-that a script is loaded.
-
-| Manifest | Responsibility / important distinction |
-| --- | --- |
-| [ql_cast_failed_hint](panorama/scripts/manifests/ql_cast_failed_hint/manifest.js) | Hide the native cast-failed hint; key is ENABLE_HIDE_FAILED_HINT. |
-| [ql_mouse_cursor](panorama/scripts/manifests/ql_mouse_cursor/manifest.js) | Custom cursor overlay; no declared user-setting keys; disabled registration default. |
-| [ql_statlocker](panorama/scripts/manifests/ql_statlocker/manifest.js) | Statlocker profile link buttons and account-ID resolution; not a stat-locking engine. |
-| [ql_nicknames](panorama/scripts/manifests/ql_nicknames/manifest.js) | Persistent top-bar nickname visibility through native binding/CSS gates. |
-| [ql_ult_cooldowns](panorama/scripts/manifests/ql_ult_cooldowns/manifest.js) | Mirror top-bar ultimate cooldown text; keep source and visible labels distinct. |
-| [ql_unspent](panorama/scripts/manifests/ql_unspent/manifest.js) | Intentionally inactive unspent-souls compatibility manifest; do not reactivate as cleanup. |
-| [ql_ability_icons](panorama/scripts/manifests/ql_ability_icons/manifest.js) | Ability simplification, cosmetic borders, suggestions and stack classes. |
-| [ql_damage_report](panorama/scripts/manifests/ql_damage_report/manifest.js) | Damage-report visibility/offsets; no DAMAGE_REPORT_SCALE schema field. |
-| [ql_passive_cooldown](panorama/scripts/manifests/ql_passive_cooldown/manifest.js) | Passive cooldown mode classes and Basic native-panel layout. |
-| [ql_chat_images](panorama/scripts/manifests/ql_chat_images/manifest.js) | Chat image embedding and chat geometry; external image requests are not local-only. |
-| [ql_chat_translate](panorama/scripts/manifests/ql_chat_translate/manifest.js) | Account-gated translation experiment; no general ENABLE_CHAT_TRANSLATE setting. |
-| [ql_lane_with_party](panorama/scripts/manifests/ql_lane_with_party/manifest.js) | Automatic party lane preference selection; key is ENABLE_LANE_WITH_PARTY. |
-| [ql_ui_controls](panorama/scripts/manifests/ql_ui_controls/manifest.js) | Global layout/support classes and UI settings metadata; not the control factory module. |
-| [ql_unsecured_souls_timer](panorama/scripts/manifests/ql_unsecured_souls_timer/manifest.js) | Estimated unsecured-souls conversion countdown, separate from the amount overlay. |
-| [ql_urn_timer](panorama/scripts/manifests/ql_urn_timer/manifest.js) | Urn/rift state and spawn-window display derived from game clock/minimap signals. |
-| [ql_on_death_arcade](panorama/scripts/manifests/ql_on_death_arcade/manifest.js) | HUD death detection and launch bridge; games execute in the settings context. |
-| [ql_minimap_runtime](panorama/scripts/manifests/ql_minimap_runtime/manifest.js) | Base/Alt/Tab geometry, opacity, crates, tunnels and minimap presentation. |
-| [ql_recent_purchases](panorama/scripts/manifests/ql_recent_purchases/manifest.js) | Shop filters, floating purchase feed and top-bar purchase popups. |
-| [ql_target_shapes](panorama/scripts/manifests/ql_target_shapes/manifest.js) | Size/opacity of native target and hint shapes, including default-state cleanup. |
-| [ql_souls](panorama/scripts/manifests/ql_souls/manifest.js) | Native gold/AP container geometry and visibility, not a second economy model. |
-| [ql_stat_bonuses](panorama/scripts/manifests/ql_stat_bonuses/manifest.js) | Golden-statue/boon stat bonus readout from native stat sources. |
-| [ql_stats_position](panorama/scripts/manifests/ql_stats_position/manifest.js) | Native stats placement and separate normal/scoreboard visibility. |
-| [ql_damage_impact](panorama/scripts/manifests/ql_damage_impact/manifest.js) | Native directional damage indicator styling. |
-| [ql_sigflash](panorama/scripts/manifests/ql_sigflash/manifest.js) | Flash on pressing a signature ability while unavailable; not an ability-ready alert. |
-| [ql_zipboost](panorama/scripts/manifests/ql_zipboost/manifest.js) | Zip boost state/countdown; preserve distinction between hint visibility and active boost. |
-| [ql_spm](panorama/scripts/manifests/ql_spm/manifest.js) | Intentionally inactive souls-per-minute compatibility manifest. |
-| [ql_combat_status](panorama/scripts/manifests/ql_combat_status/manifest.js) | Combat status/timer and combat indicator settings. |
-| [ql_heroshop](panorama/scripts/manifests/ql_heroshop/manifest.js) | Shop layout, simplification and quickbuy behavior; quickbuy has a special-context companion. |
-| [ql_keyboard](panorama/scripts/manifests/ql_keyboard/manifest.js) | Keyboard/input display; settings use KEYBOARD_OVERLAY_* names. |
-| [ql_damage_numbers](panorama/scripts/manifests/ql_damage_numbers/manifest.js) | Native combat indicator presentation; settings use DAMAGE_NUMBER_OPACITY and HUD_INDICATOR_SIZE. |
-| [ql_topbar](panorama/scripts/manifests/ql_topbar/manifest.js) | Top-bar geometry/visibility and shared warning/objective settings. |
-| [ql_crosshair_stats](panorama/scripts/manifests/ql_crosshair_stats/manifest.js) | Selected stat/buff/debuff readouts near the crosshair. |
-| [ql_better_unsecured_hud](panorama/scripts/manifests/ql_better_unsecured_hud/manifest.js) | Unsecured-souls amount/icon overlay; separate from decay estimation. |
-| [ql_color_warnings](panorama/scripts/manifests/ql_color_warnings/manifest.js) | Player/ally/enemy health warning classes and colors; shared threshold keys. |
-| [ql_showrank](panorama/scripts/manifests/ql_showrank/manifest.js) | Rank badges and cross-context profile-card probing. |
-| [ql_rejuv_hud](panorama/scripts/manifests/ql_rejuv_hud/manifest.js) | Rejuvenator/bridge-buff state and HUD; publishes state consumed by minimap timers. |
-| [ql_minimap_timers](panorama/scripts/manifests/ql_minimap_timers/manifest.js) | Minimap objective overlays; consumes Rejuvenator state instead of owning another phase engine. |
-| [ql_legacy_audio_passive](panorama/scripts/manifests/ql_legacy_audio_passive/manifest.js) | Announcer, DL4D, minimap reminders and shared Basic cooldown layout work. |
-| [ql_ammo](panorama/scripts/manifests/ql_ammo/manifest.js) | Ammo digits/ring geometry, visibility and palette; custom-value enable predicate matters. |
-| [ql_bottom_bar](panorama/scripts/manifests/ql_bottom_bar/manifest.js) | Signature/AP/bottom HUD layout and wash palette. |
-| [ql_items](panorama/scripts/manifests/ql_items/manifest.js) | Native inventory layout, opacity and wash color; late/replaced icons need reapplication. |
-| [ql_stamina](panorama/scripts/manifests/ql_stamina/manifest.js) | Stamina charge rotation/wash; distinguish stamina ring from colliding ability IDs. |
-| [ql_compass](panorama/scripts/manifests/ql_compass/manifest.js) | Compass tape, speed display, minimap rotation/flip and player-heading discovery. |
-| [ql_reload_cooldown](panorama/scripts/manifests/ql_reload_cooldown/manifest.js) | Reload countdown estimated from native radial progress; icon/circle hiding settings. |
-| [ql_item_mirror](panorama/scripts/manifests/ql_item_mirror/manifest.js) | Advanced item cooldown matching/mirroring; not a replacement for Basic mode styling. |
-| [ql_healthbar](panorama/scripts/manifests/ql_healthbar/manifest.js) | Numeric healthbar-type dispatcher plus shared/variant modules; PLAYER_HEALTHBAR_* settings. |
-| [ql_perf](panorama/scripts/manifests/ql_perf/manifest.js) | Scheduler diagnostics/overlay; not a measurement of total engine frame time. |
-| [ql_show_build_id](panorama/scripts/manifests/ql_show_build_id/manifest.js) | Read and display selected shop build metadata; unrelated to settings storage. |
+The [feature catalog](docs/features/README.md) links active implementations and
+selected notes on stable cross-file contracts. Use the active XML includes and
+source to confirm loading, current settings and enable predicates; a catalog entry
+is navigation, not evidence of tested gameplay behavior.
 
 ### Cross-feature boundaries worth checking first
 
@@ -637,9 +585,8 @@ that a script is loaded.
   versions. Follow the release procedure in [README.md](README.md); ordinary
   code or documentation work does not authorize publishing a marker.
 
-The [feature catalog](docs/features/README.md) links focused references. Treat
-source-declared settings as schema metadata; flat defaults and wire ranges still
-need their own checks when changing a setting.
+Treat source-declared settings as schema metadata; flat defaults and wire ranges
+still need their own checks when changing a setting.
 
 ## 12. Verification and tooling
 
@@ -766,8 +713,9 @@ Record untested cases honestly. See [TEST_CHECKLIST.md](docs/TEST_CHECKLIST.md).
    infrastructure; update the relevant catalogs/metadata, not just the caption.
 6. Exercise the affected path and existing regressions. For performance changes,
    compare the same scenario and report raw counters separately from game timing.
-7. Update affected documentation, remove temporary probes and report exactly
-   which client checks still require the maintainer's repacked build.
+7. Update documentation if the change invalidates a documented contract.
+   Remove temporary probes and report exactly which client checks still require
+   the maintainer's repacked build.
 
 ### New helper or shared extraction
 
@@ -813,7 +761,7 @@ canonical source rather than copying them into many documents.
 | [PRESET_BINDINGS.md](docs/PRESET_BINDINGS.md) | Preset source ownership and current binding status |
 | [core/](docs/core/) | Individual service exports, errors, state ownership and protocol details |
 | [ui/](docs/ui/) | Registered renderers, controls, previews and manual walkthrough |
-| [features/](docs/features/) | Focused feature references; source remains authoritative |
+| [features/](docs/features/) | Ownership index and selected cross-file contracts; source remains authoritative |
 | [KNOWN_GOTCHAS.md](docs/KNOWN_GOTCHAS.md) | Native panel, CSS, scrolling, matching and lifecycle pitfalls |
 | [PERF_GUARDRAILS.md](docs/PERF_GUARDRAILS.md) | Polling, cache, style and debug cost constraints |
 | [PROFILING.md](docs/PROFILING.md) | Operation profiling, captured trees and measurement limits |
