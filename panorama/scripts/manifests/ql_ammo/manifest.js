@@ -9,7 +9,7 @@
 //              AMMO_PANEL_SCALE, AMMO_CURRENT_SCALE, AMMO_TOTAL_SCALE,
 //              AMMO_PANEL_X_OFFSET, AMMO_PANEL_Y_OFFSET, AMMO_CLIP_ANGLE,
 //              AMMO_TEXT_COLOR
-// PATTERN:     Event-driven. Multi-child style apply with signature diffing.
+// PATTERN:     Settings-driven with a slow poll for replaced native panels.
 //              Clip ring rotation via transform on children (not container).
 // =============================================================================
 
@@ -50,7 +50,27 @@
         create: function(ctx) {
             var _lastMainSig = "";
             var _lastClipSig = "";
-            var _lastColorSig = "";
+            var _lastMainPanel = null;
+            var _lastClipPanel = null;
+            var _lastRings = [];
+            var _lastTextTargets = [];
+            var _loop = null;
+
+            function _samePanels(a, b) {
+                if (a.length !== b.length) return false;
+                for (var i = 0; i < a.length; i++) if (a[i] !== b[i]) return false;
+                return true;
+            }
+
+            function _textTargets(ap) {
+                var targets = [];
+                var classes = ["weapon_ammo", "weapon_ammo_max", "weapon_ammo_infinite"];
+                for (var i = 0; i < classes.length; i++) {
+                    var found = ap.FindChildrenWithClassTraverse(classes[i]) || [];
+                    for (var j = 0; j < found.length; j++) targets.push(found[j]);
+                }
+                return targets;
+            }
 
             function _clamp(v, lo, hi) {
                 if (typeof QOL_UTILS !== "undefined" && QOL_UTILS.ClampConfigNumber) {
@@ -63,15 +83,17 @@
 
             function _applyClipAngle(root, angle) {
                 var cs = root.FindChildTraverse("clip_status");
-                if (!cs) { _lastClipSig = ""; return; }
-                // Clear any orphaned transform on the container (previous builds)
-                try { cs.style.transform = ""; } catch(e) {}
+                if (!cs) { _lastClipSig = ""; _lastClipPanel = null; _lastRings = []; return; }
                 var rings = [];
                 try { if (cs.Children) rings = cs.Children(); } catch(e) {}
                 if (!rings || !rings.length) return;
                 var sig = angle + "|" + rings.length;
-                if (_lastClipSig === sig) return;
+                if (_lastClipSig === sig && _lastClipPanel === cs && _samePanels(_lastRings, rings)) return;
+                // Clear any orphaned transform on the container (previous builds).
+                try { cs.style.transform = ""; } catch(e) {}
                 _lastClipSig = sig;
+                _lastClipPanel = cs;
+                _lastRings = rings.slice();
                 for (var i = 0; i < rings.length; i++) {
                     try {
                         if (angle === 0) rings[i].style.transform = "";
@@ -131,7 +153,12 @@
                 var root = $.GetContextPanel();
                 var ap = root.FindChildTraverse("ammo_panel");
                 _applyClipAngle(root, _clamp(cfg.AMMO_CLIP_ANGLE, 0, 360));
-                if (!ap) { _lastMainSig = ""; return; }
+                if (ap !== _lastMainPanel) {
+                    _lastMainPanel = ap;
+                    _lastMainSig = "";
+                    _lastTextTargets = [];
+                }
+                if (!ap) return;
 
                 var hideMagazine = Number(cfg.ENABLE_HIDE_MAGAZINE) === 1;
                 var hideAll = Number(cfg.ENABLE_HIDE_AMMO_ALL) === 1;
@@ -145,8 +172,10 @@
                     : ((typeof QOL !== "undefined" && QOL.washColorPalette && colorIdx > 0 && colorIdx < QOL.washColorPalette.length) ? QOL.washColorPalette[colorIdx] : "");
 
                 var sig = curScale + "|" + totScale + "|" + ox + "|" + oy + "|" + hideMagazine + "|" + hideAll + "|" + colorIdx;
-                if (_lastMainSig === sig) return;
+                var targets = _textTargets(ap);
+                if (_lastMainSig === sig && _samePanels(_lastTextTargets, targets)) return;
                 _lastMainSig = sig;
+                _lastTextTargets = targets;
 
                 _applyChildren(ap, curScale, totScale, textColor);
                 ap.style.x = ox + "px";
@@ -157,9 +186,17 @@
             }
 
             return {
-                onEnable: function() { _apply(ctx.config.all()); },
+                onEnable: function() {
+                    _apply(ctx.config.all());
+                    var S = QOL.core.Scheduler;
+                    _loop = S && S.createPollLoop ? S.createPollLoop(function() { _apply(ctx.config.all()); }, 0.5, ctx.id) : null;
+                },
                 onDisable: function() {
+                    if (_loop) { _loop.stop(); _loop = null; }
+                    var S = QOL.core.Scheduler;
+                    if (S) S.cancelAllForFeature(ctx.id);
                     _lastMainSig = ""; _lastClipSig = "";
+                    _lastMainPanel = null; _lastClipPanel = null; _lastRings = []; _lastTextTargets = [];
                     try {
                         var root = $.GetContextPanel();
                         var ap = root.FindChildTraverse("ammo_panel");

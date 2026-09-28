@@ -142,6 +142,8 @@
                     if (!_cooldownLabel) {
                         _cooldownLabel = $.CreatePanel("Label", _reticleStatus, "QOLReloadCooldownText");
                     }
+                    _styleSig = "";
+                    _labelVisible = false;
                     if (_cooldownLabel) {
                         _cooldownLabel.hittest = false;
                         _cooldownLabel.hittestchildren = false;

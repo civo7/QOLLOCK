@@ -48,6 +48,11 @@
 
             function _ensureOverlay(root) {
                 if (_isAlive(_overlay)) return _overlay;
+                _displayMode = "";
+                _lastLayoutSig = "";
+                _lastClassSig = "";
+                _lastStateText = "";
+                _lastTimerText = "";
                 _overlay = root.FindChildTraverse ? root.FindChildTraverse("QOLCombatStatusOverlay") : null;
                 if (!_overlay) {
                     var gp = root.FindChildTraverse ? (root.FindChildTraverse("gameplay_hud") || root) : root;

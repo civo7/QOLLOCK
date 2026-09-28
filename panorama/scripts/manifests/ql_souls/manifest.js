@@ -7,7 +7,7 @@
 // DEPENDS ON:  QOL.core.FeatureRegistry
 // CONFIG KEYS: HUD_SOULS_ENABLED, SOULS_OPACITY, SOULS_X_OFFSET, SOULS_Y_OFFSET
 // PANEL ID:    gold_and_ap_container
-// PATTERN:     Event-driven. Style apply with signature diffing.
+// PATTERN:     Settings-driven with a slow poll for replaced native panels.
 // =============================================================================
 
 (function() {
@@ -35,10 +35,18 @@
             var _isAlive = (QOL.core && QOL.core.panel && QOL.core.panel.isAlive) ? QOL.core.panel.isAlive : QOL.utils.IsPanelValid;
 
             function _getPanel() {
-                if (_isAlive(_cachedPanel)) return _cachedPanel;
                 var root = (QOL.core && QOL.core.hud && QOL.core.hud.findHud) ? QOL.core.hud.findHud() : $.GetContextPanel();
-                if (!root || !root.FindChildTraverse) return null;
-                _cachedPanel = root.FindChildTraverse(PANEL_ID);
+                var current = (root && root.FindChildTraverse) ? root.FindChildTraverse(PANEL_ID) : null;
+                if (current !== _cachedPanel) {
+                    if (_isAlive(_cachedPanel)) {
+                        _clearStyle(_cachedPanel, "x");
+                        _clearStyle(_cachedPanel, "y");
+                        _clearStyle(_cachedPanel, "opacity");
+                        if (_cachedPanel.SetHasClass) _cachedPanel.SetHasClass("qol-hidden", false);
+                    }
+                    _cachedPanel = current;
+                    _lastSig = "";
+                }
                 return _cachedPanel;
             }
 
@@ -82,11 +90,8 @@
 
             function _tick() {
                 try {
-                    var applied = _apply(ctx.config.all());
-                    if (applied && _loop) {
-                        _loop.stop();
-                        _loop = null;
-                    }
+                    var panel = _getPanel();
+                    if (panel && !_lastSig) _apply(ctx.config.all());
                 } catch(e) {
                     if (typeof QOL !== "undefined" && QOL.core && QOL.core.Logger) {
                         QOL.core.Logger.logError("ql_souls", "_tick: " + (e.message || e));
@@ -96,11 +101,9 @@
 
             return {
                 onEnable: function() {
-                    var applied = _apply(ctx.config.all());
-                    if (!applied) {
-                        var S = QOL.core.Scheduler;
-                        _loop = S && S.createPollLoop ? S.createPollLoop(_tick, 1.0, "ql_souls") : null;
-                    }
+                    _apply(ctx.config.all());
+                    var S = QOL.core.Scheduler;
+                    _loop = S && S.createPollLoop ? S.createPollLoop(_tick, 1.0, ctx.id) : null;
                 },
                 onDisable: function() {
                     if (_loop) { _loop.stop(); _loop = null; }
@@ -120,11 +123,7 @@
                     _cachedPanel = null;
                 },
                 onSettingsChanged: function() {
-                    var applied = _apply(ctx.config.all());
-                    if (!applied && !_loop) {
-                        var S = QOL.core.Scheduler;
-                        _loop = S && S.createPollLoop ? S.createPollLoop(_tick, 1.0, "ql_souls") : null;
-                    }
+                    _apply(ctx.config.all());
                 }
             };
         },

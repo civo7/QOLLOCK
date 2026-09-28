@@ -106,13 +106,16 @@
                     }
 
                     // ── Panel discovery ──
-                    if (needsFeatures && !_isAlive(_shopPanel) && now >= _nextSearchMs) {
-                        _shopPanel = root.FindChildTraverse ? root.FindChildTraverse(PANEL_ID) : null;
-                        _mainPanel = _isAlive(_shopPanel) && _shopPanel.FindChildTraverse ? _shopPanel.FindChildTraverse("MainPanel") : null;
-                        _nextSearchMs = _isAlive(_shopPanel) ? 0 : (now + PANEL_SEARCH_MS);
-                        _nextMainPanelSearchMs = _isAlive(_mainPanel) ? 0 : (now + PANEL_SEARCH_MS);
-                        _classCache = {};
-                        _styleSig = "";
+                    if (needsFeatures && now >= _nextSearchMs) {
+                        var currentShop = root.FindChildTraverse ? root.FindChildTraverse(PANEL_ID) : null;
+                        if (currentShop !== _shopPanel) {
+                            _shopPanel = currentShop;
+                            _mainPanel = null;
+                            _nextMainPanelSearchMs = 0;
+                            _classCache = {};
+                            _styleSig = "";
+                        }
+                        _nextSearchMs = now + PANEL_SEARCH_MS;
                     }
 
                     // ── Apply ──
@@ -124,9 +127,13 @@
                         _setClass(_shopPanel, "shop_recent_purchases_active", recentPurchases);
 
                         // Refresh main panel cache if needed
-                        if (!_isAlive(_mainPanel) && _shopPanel.FindChildTraverse && now >= _nextMainPanelSearchMs) {
-                            _mainPanel = _shopPanel.FindChildTraverse("MainPanel");
-                            if (!_isAlive(_mainPanel)) _nextMainPanelSearchMs = now + PANEL_SEARCH_MS;
+                        if (now >= _nextMainPanelSearchMs && _shopPanel.FindChildTraverse) {
+                            var currentMain = _shopPanel.FindChildTraverse("MainPanel");
+                            if (currentMain !== _mainPanel) {
+                                _mainPanel = currentMain;
+                                _styleSig = "";
+                            }
+                            _nextMainPanelSearchMs = now + PANEL_SEARCH_MS;
                         }
                         if (_isAlive(_mainPanel)) {
                             var marginLeftText = shopOffsetX + "px";

@@ -8,7 +8,7 @@
 // CONFIG KEYS: ENABLE_DAMAGE_IMPACT, DAMAGE_IMPACT_SCALE, DAMAGE_IMPACT_OPACITY,
 //              DAMAGE_IMPACT_X_OFFSET, DAMAGE_IMPACT_Y_OFFSET
 // STATE:       State.damageImpactRuntimeStyleSig, State.cachedPanels.damageImpactPanel
-// PATTERN:     Event-driven (no polling). Style apply with signature diffing.
+// PATTERN:     Settings-driven with a slow poll for replaced native panels.
 // =============================================================================
 
 (function() {
@@ -30,6 +30,20 @@
         ],
         create: function(ctx) {
             var _lastSig = "";
+            var _lastPanel = null;
+            var _loop = null;
+            var _clearStyle = QOL.utils.ClearStyleSafe;
+            var _isAlive = QOL.core.panel.isAlive;
+
+            function _reset(panel) {
+                if (!_isAlive(panel)) return;
+                _clearStyle(panel, "x");
+                _clearStyle(panel, "y");
+                _clearStyle(panel, "opacity");
+                _clearStyle(panel, "preTransformScale2d");
+                _clearStyle(panel, "uiScale");
+                if (panel.SetHasClass) panel.SetHasClass("qol-hidden", false);
+            }
 
             function _hasNonDefault(cfg) {
                 if (!cfg) return false;
@@ -42,14 +56,12 @@
 
             function _apply(cfg) {
                 var root = $.GetContextPanel();
-                // Resolve panel (with caching fallback — QOL.resolveCachedPanel pattern)
-                var panel = null;
-                try {
-                    if (typeof QOL.resolveCachedPanel === "function") {
-                        panel = QOL.resolveCachedPanel(root, "damageImpactPanel", "damage_impact");
-                    }
-                } catch(e) { /* panel resolution failed, skip this tick */ }
-                if (!panel) { panel = root.FindChildTraverse("damage_impact"); }
+                var panel = root && root.FindChildTraverse ? root.FindChildTraverse("damage_impact") : null;
+                if (panel !== _lastPanel) {
+                    _reset(_lastPanel);
+                    _lastPanel = panel;
+                    _lastSig = "";
+                }
                 if (!panel) return;
 
                 var active = _hasNonDefault(cfg);
@@ -64,12 +76,7 @@
                 _lastSig = sig;
 
                 if (!active) {
-                    if (panel.style.x) panel.style.x = null;
-                    if (panel.style.y) panel.style.y = null;
-                    if (panel.style.opacity) panel.style.opacity = null;
-                    if (panel.style.preTransformScale2d) panel.style.preTransformScale2d = null;
-                    if (panel.style.uiScale) panel.style.uiScale = null;
-                    if (panel.SetHasClass) panel.SetHasClass("qol-hidden", false);
+                    _reset(panel);
                     return;
                 }
 
@@ -84,25 +91,22 @@
             }
 
             return {
-                onEnable: function() { _apply(ctx.config.all()); },
+                onEnable: function() {
+                    _apply(ctx.config.all());
+                    var S = QOL.core.Scheduler;
+                    _loop = S && S.createPollLoop ? S.createPollLoop(function() {
+                        var root = $.GetContextPanel();
+                        var current = root && root.FindChildTraverse ? root.FindChildTraverse("damage_impact") : null;
+                        if (current !== _lastPanel) _apply(ctx.config.all());
+                    }, 0.5, ctx.id) : null;
+                },
                 onDisable: function() {
+                    if (_loop) { _loop.stop(); _loop = null; }
+                    var S = QOL.core.Scheduler;
+                    if (S) S.cancelAllForFeature(ctx.id);
                     _lastSig = "";
-                    var root = $.GetContextPanel();
-                    var panel = null;
-                    try {
-                        if (typeof QOL.resolveCachedPanel === "function") {
-                            panel = QOL.resolveCachedPanel(root, "damageImpactPanel", "damage_impact");
-                        }
-                    } catch(e) {}
-                    if (!panel) { panel = (root && root.FindChildTraverse) ? root.FindChildTraverse("damage_impact") : null; }
-                    if (panel && panel.style) {
-                        if (panel.style.x) panel.style.x = null;
-                        if (panel.style.y) panel.style.y = null;
-                        if (panel.style.opacity) panel.style.opacity = null;
-                        if (panel.style.preTransformScale2d) panel.style.preTransformScale2d = null;
-                        if (panel.style.uiScale) panel.style.uiScale = null;
-                        if (panel.SetHasClass) panel.SetHasClass("qol-hidden", false);
-                    }
+                    _reset(_lastPanel);
+                    _lastPanel = null;
                 },
                 onSettingsChanged: function() { _apply(ctx.config.all()); }
             };

@@ -156,6 +156,7 @@
         create(ctx) {
             let _loop = null;
             let _washSig = "";
+            let _washPanel = null;
             let _boxCaches = null;
 
             const getPanel = QOL.getCachedPanel;
@@ -309,6 +310,7 @@
                 setPanel("keyboardOverlayRoot", null);
                 setPanel("keyboardOverlayBox", null);
                 _washSig = "";
+                _washPanel = null;
                 _boxCaches = null;
                 resetKeyboardOverlayCaches();
                 const state = QOL.state || globalThis.State;
@@ -336,9 +338,10 @@
                         const washIdx = readWashIdx(cfg);
                         const washColor = resolveWash(washIdx);
                         const washStr = washColor || "";
-                        if (isAlive(overlayRoot) && _washSig !== washStr) {
+                        if (isAlive(overlayRoot) && (_washSig !== washStr || _washPanel !== overlayRoot)) {
                             setWashSafe(overlayRoot, washColor);
                             _washSig = washStr;
+                            _washPanel = overlayRoot;
                             if (state) state.keyboardOverlayWashSig = washStr;
                         }
 

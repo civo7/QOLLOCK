@@ -83,6 +83,8 @@
                             _buildPanel = null;
                         }
                     }
+                    _lastSig = "";
+                    _isVisible = false;
                 }
                 if (!_isAlive(_buildPanel)) return null;
 
@@ -95,6 +97,7 @@
                             _buildLabel = null;
                         }
                     }
+                    _lastSig = "";
                 }
                 return _buildLabel ? { panel: _buildPanel, label: _buildLabel } : null;
             };
