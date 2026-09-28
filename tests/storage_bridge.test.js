@@ -306,7 +306,7 @@ test("storage_bridge: saveSettings wraps config and writes to UI attributes and 
 
     // Check UI panel attribute was also updated immediately
     const uiAttr = rootPanel.GetAttributeString("Deadlock_Mod_Settings_v1", "");
-    assert.ok(uiAttr.includes('"schema":"4.0.0"'));
+    assert.strictEqual(JSON.parse(uiAttr).schema, sandbox.QOL_SCHEMA_SEMVER);
     assert.ok(uiAttr.includes('"LANGUAGE":"russian"'));
 
     const reqMatch = setUrl.match(/'(qol_\d+_\d+)'/);

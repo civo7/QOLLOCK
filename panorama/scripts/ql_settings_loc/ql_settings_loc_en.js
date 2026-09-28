@@ -5,6 +5,8 @@
     var _root = (typeof globalThis !== "undefined") ? globalThis : (typeof window !== "undefined") ? window : {};
     if (!_root.SETTINGS_LOCALE_TEXT) _root.SETTINGS_LOCALE_TEXT = {};
     _root.SETTINGS_LOCALE_TEXT["en"] = {
+    "Fixed Icon Size": "Fixed Icon Size",
+    "Resizes the minimap using width and height instead of scaling the whole HUD. Applies to Base, Alt and Tab views.": "Resizes the minimap using width and height instead of scaling the whole HUD. Applies to Base, Alt and Tab views.",
     "<font color=\"#66cc99\">Free</font> updates for new features, <font color=\"#66cc99\">$5</font> for arbitrary changes": "<font color=\"#66cc99\">Free</font> updates for new features, <font color=\"#66cc99\">$5</font> for arbitrary changes",
     "16:10 Support": "16:10 Support",
     "1st": "1st",

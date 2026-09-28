@@ -120,6 +120,7 @@
             { key: "MINIMAL_MINIMAP", type: "toggle", default: false },
             { key: "MINIMAL_MINIMAP_OPACITY", type: "slider", min: 0, max: 1, step: 0.05, default: 0.9 },
             { key: "MINIMAP_SMALL_SIZE", type: "number", default: 400 },
+            { key: "MINIMAP_FIXED_ICON_SIZE", type: "toggle", default: false },
             { key: "MINIMAP_X_OFFSET", type: "number", default: 0 },
             { key: "MINIMAP_Y_OFFSET", type: "number", default: 0 },
             { key: "MINIMAP_LARGE_SIZE_ALT", type: "number", default: 800 },
@@ -575,6 +576,7 @@
                     Number(cfg.ENABLE_TAB_ZOOM) === 1 ? "1" : "0",
                     Number(cfg.MINIMAL_MINIMAP) === 1 ? "1" : "0",
                     String(Math.round(Number(cfg.MINIMAP_SMALL_SIZE) || 400)),
+                    Number(cfg.MINIMAP_FIXED_ICON_SIZE) === 1 ? "1" : "0",
                     String(isFinite(Number(cfg.MINIMAP_BASE_OPACITY)) ? Number(cfg.MINIMAP_BASE_OPACITY) : 1),
                     String(Math.round(Number(cfg.MINIMAP_X_OFFSET) || 0)),
                     String(Math.round(Number(cfg.MINIMAP_Y_OFFSET) || 0)),
@@ -728,6 +730,9 @@
 
                     var minimapScale = activeTargetSize / 400.0;
                     var minimapScaleText = Math.round(minimapScale * 100) + "%";
+                    var fixedIconSize = Number(cfg.MINIMAP_FIXED_ICON_SIZE) === 1;
+                    var mapUiScale = fixedIconSize ? "100%" : minimapScaleText;
+                    var mapDimensions = fixedIconSize ? minimapSizeText : "400px";
 
                     var op = 1.0;
                     if (zoomAlt) {
@@ -745,11 +750,11 @@
                     for (var pi = 0; pi < minimapPanels.length; pi++) {
                         var p = minimapPanels[pi];
                         if (p.id === "minimap_persp") {
-                            if (p.style.uiScale !== minimapScaleText) {
-                                p.style.uiScale = minimapScaleText;
+                            if (p.style.uiScale !== mapUiScale) {
+                                p.style.uiScale = mapUiScale;
                             }
-                            if (p.style.width !== "400px") p.style.width = "400px";
-                            if (p.style.height !== "400px") p.style.height = "400px";
+                            if (p.style.width !== mapDimensions) p.style.width = mapDimensions;
+                            if (p.style.height !== mapDimensions) p.style.height = mapDimensions;
                             if (p.style.preTransformScale2d !== "1.00, 1.00") {
                                 p.style.preTransformScale2d = "1.00, 1.00";
                             }
@@ -776,8 +781,14 @@
                             }
                             setPanelOpacitySafe(p, op, 1.0);
                         } else {
-                            if (p.style.width) p.style.width = null;
-                            if (p.style.height) p.style.height = null;
+                            // The inner container/frame have fixed 400px CSS dimensions.
+                            if (fixedIconSize) {
+                                if (p.style.width !== minimapSizeText) p.style.width = minimapSizeText;
+                                if (p.style.height !== minimapSizeText) p.style.height = minimapSizeText;
+                            } else {
+                                QOL.utils.ClearStyleSafe(p, "width");
+                                QOL.utils.ClearStyleSafe(p, "height");
+                            }
                             if (p.style.uiScale) p.style.uiScale = null;
                             if (p.style.opacity) p.style.opacity = null;
                         }
@@ -855,8 +866,8 @@
                             var dp = _cachedPanels[dpi];
                             if (isPanelValid(dp)) {
                                 try { dp.style.uiScale = null; } catch(e) {}
-                                try { dp.style.width = null; } catch(e) {}
-                                try { dp.style.height = null; } catch(e) {}
+                                QOL.utils.ClearStyleSafe(dp, "width");
+                                QOL.utils.ClearStyleSafe(dp, "height");
                                 try { dp.style.margin = null; } catch(e) {}
                                 try { dp.style.marginTop = null; } catch(e) {}
                                 try { dp.style.marginRight = null; } catch(e) {}

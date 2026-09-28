@@ -672,7 +672,10 @@
             createRow(list, "Spinny Mode", "MINIMAP_ROTATE_WITH_PLAYER", "toggle", null, null, null, null, "");
         }
         if (createSliderRow) {
-            createSliderRow(list, "Size", "MINIMAP_SMALL_SIZE", "size_200_1000_s5", "Default 400");
+            createSliderRow(list, "Size", "MINIMAP_SMALL_SIZE", "size_200_1000_s5", "Default 400", false, {
+                key: "MINIMAP_FIXED_ICON_SIZE", label: "Fixed Icon Size",
+                description: "Resizes the minimap using width and height instead of scaling the whole HUD. Applies to Base, Alt and Tab views."
+            });
             createSliderRow(list, "Opacity", "MINIMAP_BASE_OPACITY", "opacity");
         }
         if (createRow) {

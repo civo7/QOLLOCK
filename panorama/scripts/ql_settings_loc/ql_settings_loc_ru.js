@@ -5,6 +5,8 @@
     var _root = (typeof globalThis !== "undefined") ? globalThis : (typeof window !== "undefined") ? window : {};
     if (!_root.SETTINGS_LOCALE_TEXT) _root.SETTINGS_LOCALE_TEXT = {};
     _root.SETTINGS_LOCALE_TEXT["ru"] = {
+    "Fixed Icon Size": "Фиксированный размер иконок",
+    "Resizes the minimap using width and height instead of scaling the whole HUD. Applies to Base, Alt and Tab views.": "Изменяет ширину и высоту миникарты вместо масштабирования всего HUD. Применяется в обычном режиме, с Alt и Tab.",
     "<font color=\"#66cc99\">Free</font> updates for new features, <font color=\"#66cc99\">$5</font> for arbitrary changes": "<font color=\"#66cc99\">Бесплатные</font> изменения для новых функций, <font color=\"#66cc99\">$5</font> за произвольные правки",
     "16:10 Support": "Поддержка 16:10",
     "1st": "1-й",

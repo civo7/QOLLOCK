@@ -13,6 +13,12 @@ backups without changing the schema or defaults. For example, a scale input of
 when its step is 5. Invalid text preserves the previous value. The existing
 debounced save and preview flow remains in use.
 
+`createSliderRow` accepts an optional seventh argument, `inlineCheckbox`, with
+`key`, `label` and `description`. It reuses the title-checkbox control after the
+slider value input. Both keys participate in row reset/changed-state tracking;
+checkbox visuals resync on reset and external config updates. Search collection
+also registers the checkbox setting. Minimap Size uses this for Fixed Icon Size.
+
 ## Automated checks and their limits
 
 `tests/ui_slider_roundtrip.test.js` loads the production HUD and settings XML
