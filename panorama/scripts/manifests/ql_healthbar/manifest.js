@@ -98,10 +98,16 @@
             function _update() {
                 var root = $.GetContextPanel();
                 if (!root) return;
-                if (root.BHasClass && root.BHasClass("InHideout")) {
+                if (QOL.core.hud.isInHideout(root)) {
+                    // The HUD can survive a match exit. Stop variant-owned raw
+                    // schedules before idling; Scheduler only owns this poll.
+                    QOL.healthbar.mc.update(root, {}, 0, false);
+                    QOL.healthbar.budhud.update(root, {}, 0, 0);
                     QOL.healthbar.fg.update(root, {});
+                    if (_loop) _loop.reschedule(0.5);
                     return;
                 }
+                if (_loop) _loop.reschedule(0.05);
                 var cfg = (ctx && ctx.config && ctx.config.all) ? ctx.config.all() : ((typeof State !== "undefined" && State.lastConfig) ? State.lastConfig : {});
                 var nowMs = Date.now ? Date.now() : (new Date()).getTime();
                 var healthbarType = Number(cfg.HEALTHBAR_TYPE) || 0;

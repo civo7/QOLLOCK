@@ -205,6 +205,8 @@
         ],
         create: function (ctx) {
             var _loop = null;
+            var _inHideout = false;
+            var _overlayHidden = true;
 
             // Cached DOM references
             var _compassRoot = null;
@@ -733,9 +735,42 @@
             }
 
             function _hideCompassOverlay() {
-                if (_isAlive(_compassRoot)) _compassRoot.style.visibility = "collapse";
-                if (_isAlive(_speedRoot)) _speedRoot.style.visibility = "collapse";
-                _resetCompassRuntimeState();
+                if (_isAlive(_compassRoot)) _setStyleIfChanged(_compassRoot, "visibility", "collapse");
+                if (_isAlive(_speedRoot)) _setStyleIfChanged(_speedRoot, "visibility", "collapse");
+                if (!_overlayHidden) _resetCompassRuntimeState();
+                _overlayHidden = true;
+            }
+
+            function _releaseMinimapRuntime() {
+                // Cleanup must not discover panels: on match exit the minimap
+                // can be absent while the HUD root remains alive.
+                if (_isAlive(_minimapRotateTarget) && _minimapRotateLastDeg !== null) {
+                    _clearStyle(_minimapRotateTarget, "preTransformRotate2d");
+                }
+                [_minimapFlipClassTarget, _minimapContainer].forEach(function(panel) {
+                    if (_isAlive(panel) && panel.BHasClass("qol_minimap_flip_active")) {
+                        panel.SetHasClass("qol_minimap_flip_active", false);
+                    }
+                });
+                _minimapRotateTarget = null;
+                _minimapFlipClassTarget = null;
+                _minimapContainer = null;
+                _minimapLocalPlayerPanel = null;
+                _minimapLocalMainImage = null;
+                _minimapRotateLastDeg = null;
+                _minimapRotateSmoothedDeg = null;
+                _minimapRotateLastUpdateMs = 0;
+                _minimapRotateLastHeadingDeg = null;
+                _minimapRotateLastHeadingMs = 0;
+                _minimapRotateHeadingVelDegPerSec = 0;
+                _minimapRotateLastValidHeadingDeg = null;
+                _minimapRotateLastValidHeadingMs = 0;
+                _headingSnapshotMs = 0;
+                _headingSnapshotHeading = null;
+                _localMainImageNextScanMs = 0;
+                _localMainImageScanBackoffMs = 0;
+                _localPlayerPanelNextScanMs = 0;
+                _localPlayerPanelScanBackoffMs = 0;
             }
 
             function _updateCompass(hud, cfg, nowMs) {
@@ -747,13 +782,9 @@
                     return;
                 }
 
-                if (_isInHideout(hud)) {
-                    _hideCompassOverlay();
-                    return;
-                }
-
                 var root = _ensureCompassOverlay(hud);
                 if (!root) return;
+                _overlayHidden = false;
 
                 var vis = showCompass ? "visible" : "collapse";
                 if (root.style.visibility !== vis) root.style.visibility = vis;
@@ -944,6 +975,15 @@
                 var hud = _getHud();
                 if (!hud) return;
 
+                if (_isInHideout(hud)) {
+                    _hideCompassOverlay();
+                    if (!_inHideout) _releaseMinimapRuntime();
+                    _inHideout = true;
+                    if (_loop) _loop.reschedule(COMPASS_INTERVAL_IDLE_SEC);
+                    return;
+                }
+                _inHideout = false;
+
                 var cfg = ctx.config.view ? ctx.config.view() : ctx.config.all();
                 var hasWork = !!(cfg.ENABLE_COMPASS || cfg.ENABLE_COMPASS_SPEED || cfg.MINIMAP_ROTATE_WITH_PLAYER || cfg.MINIMAP_FLIP);
 
@@ -975,18 +1015,8 @@
                 onDisable: function () {
                     if (_loop) { _loop.stop(); _loop = null; }
                     _hideCompassOverlay();
-                    var hud = _getHud();
-                    if (hud) {
-                        var flipTarget = _findMinimapFlipClassTarget(hud);
-                        if (_isAlive(flipTarget)) flipTarget.SetHasClass("qol_minimap_flip_active", false);
-                        var container = _findMinimapContainer(hud);
-                        if (_isAlive(container)) container.SetHasClass("qol_minimap_flip_active", false);
-                        _applyStaticMinimapRotation(hud, _nowMs(), 0);
-                        var target = _findMinimapRotateTarget(hud);
-                        if (_isAlive(target)) _clearStyle(target, "preTransformRotate2d");
-                        _minimapRotateLastDeg = null;
-                    }
-                    _minimapContainer = null;
+                    _releaseMinimapRuntime();
+                    _inHideout = false;
                 },
                 onSettingsChanged: function () {
                     _tick();

@@ -279,7 +279,7 @@
             var _loop = null, _overlay = null, _row = null;
             var _slots = [];
             var _abilities = null, _abilitiesHud = null;
-            var _mirror = { sources: [], slotStates: {}, classCache: {}, runtimePanelIds: [], exceptionGroupAssignments: {} };
+            var _mirror = { sources: [], slotStates: {}, classCache: {}, runtimePanelIds: [], exceptionGroupAssignments: {}, nextSourceId: 0, nextAcquireOrder: 0 };
             var _nextScanMs = 0, _lastSignature = '', _lastLayoutSig = '', _lastShopOpen = false;
             var ITEM_MIRROR_FLASH_DEBUG = false, ITEM_MIRROR_COOLDOWN_DEBUG = false;
             var ITEM_MIRROR_EXPRESS_DEBUG = false, ITEM_MIRROR_EXCEPTION_DEBUG = false;
@@ -1933,7 +1933,7 @@
                 _overlay = null;
                 _row = null;
                 _slots = [];
-                _mirror = { sources: [], slotStates: {}, classCache: {}, runtimePanelIds: [], exceptionGroupAssignments: {} };
+                _mirror = { sources: [], slotStates: {}, classCache: {}, runtimePanelIds: [], exceptionGroupAssignments: {}, nextSourceId: 0, nextAcquireOrder: 0 };
                 _nextScanMs = 0;
                 _lastSignature = "";
                 _lastLayoutSig = "";

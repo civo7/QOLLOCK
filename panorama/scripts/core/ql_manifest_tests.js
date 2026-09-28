@@ -351,10 +351,20 @@
         const bus = Q.core.EventBus;
         const hud = Q.core.hud.findHud();
         const start = Date.now();
-        const result = { token, status: "running", samples: [], dropped: 0, report: "" };
+        const work = scheduler.startWorkObservation();
+        const result = { token, status: "running", samples: [], dropped: 0, report: "",
+            workSamples: [], workDropped: 0, workFeatures: [], enabledStart: FR.getEnabledIds() };
         hudStateObservation = result;
         let lastState = "";
+        let lastWorkAt = start;
         let stopped = false;
+        const sampleWork = () => {
+            const now = Date.now();
+            const row = { ms: now - start, windowMs: now - lastWorkAt, ...work.sample() };
+            lastWorkAt = now;
+            if (result.workSamples.length < 64) result.workSamples.push(row);
+            else result.workDropped++;
+        };
         const sample = source => {
             if (!Q.core.panel.isAlive(hud)) { finish("HUD destroyed"); return; }
             const classes = {};
@@ -368,6 +378,7 @@
                 else result.dropped++;
                 lastState = signature;
             }
+            if (Date.now() - lastWorkAt >= 1000) sampleWork();
         };
         const event = () => sample("engine:scoreboard_toggle");
         const finish = status => {
@@ -375,11 +386,25 @@
             stopped = true;
             scheduler.cancelAllForFeature("hud_state_observation");
             bus.off("engine:scoreboard_toggle", event);
+            sampleWork();
+            result.workFeatures = work.stop();
+            result.enabledEnd = FR.getEnabledIds();
             stopHudStateObservation = null;
             result.status = status;
             result.report = ["=== QOLLOCK HUD state observation ===", `Token: ${token} | Status: ${status} | Dropped: ${result.dropped}`,
                 "Class evidence only; local-player identity and rendering remain unverified.",
-                ...result.samples.map(row => JSON.stringify(row)), "=== END HUD state observation ==="].join("\n");
+                ...result.samples.map(row => JSON.stringify(row)),
+                "Managed work only: Scheduler polls and one-shots in this HUD context. Date.now() milliseconds.",
+                "Delay is callback delivery lateness, not callback cost or frame time. Loading, focus and engine stalls can all delay delivery.",
+                "Not covered: raw schedules/events, quickbuy/settings/profile contexts, deferred layout/rendering, GPU or FPS. Quiet counters do not clear the mod.",
+                "Active counts are sampled; short-lived peaks between samples can be missed. Recorder work is included.",
+                `Enabled start: ${result.enabledStart.join(",")}`,
+                `Enabled end: ${result.enabledEnd.join(",")}`,
+                `Work windows (actual elapsed time; dropped=${result.workDropped}):`,
+                ...result.workSamples.map(row => JSON.stringify(row)),
+                "Work by owner (polls/once are completed callbacks; start/peak/end are sampled outstanding tasks):",
+                ...result.workFeatures.map(row => JSON.stringify(row)),
+                "=== END HUD state observation ==="].join("\n");
             for (const line of result.report.split("\n")) $.Msg(line);
             if (onComplete) onComplete(result);
         };

@@ -29,7 +29,6 @@
     }
 
     var RECENT_PURCHASE_QUICK_FADE_SEC = 0.4;
-    var RECENT_PURCHASE_MAX_ITEMS = 50;
     var RECENT_PURCHASE_QUICK_MAX_DEFAULT = 3;
     var RECENT_PURCHASE_QUICK_DISPLAY_SEC_DEFAULT = 5;
     var PANEL_ID_TOP_BAR = "TopBar";
@@ -178,14 +177,18 @@
         ],
         create: function(ctx) {
             var _loop = null;
+            var _pendingTasks = [];
+            var _runtimeGeneration = 0;
+            var _heroMapGeneration = 0;
+            var _notificationMode = 0;
 
             // Runtime state
             var _filtersCreated = false;
+            var _filterControls = [];
             var _lastVisibilitySig = null;
             var _lastFilterSig = null;
             var _lastFirstChild = null;
             var _wasInHideout = null;
-            var _hideoutClearTimer = null;
             var _quickSeenKeys = {};
             var _quickInitialized = false;
             var _quickActiveEntries = [];
@@ -212,6 +215,17 @@
                 ultCooldownsEnabled: false,
                 style: null
             };
+
+            function _scheduleRP(delay, callback) {
+                var generation = _runtimeGeneration;
+                var task = QOL.core.Scheduler.scheduleOnce(function() {
+                    var index = _pendingTasks.indexOf(task);
+                    if (index >= 0) _pendingTasks.splice(index, 1);
+                    if (generation !== _runtimeGeneration || QOL.core.hud.isInHideout($.GetContextPanel())) return;
+                    callback();
+                }, delay, "ql_recent_purchases");
+                _pendingTasks.push(task);
+            }
 
             function _buildContextRP(container) {
                 var c = { isSpectator: false, localTeam: 0 };
@@ -267,6 +281,7 @@
                 collapseLabel.text = "Show Filters";
 
                 var filtersPanel = $.CreatePanel("Panel", panel, "PurchaseFiltersContainer");
+                _filterControls = [collapseToggle, filtersPanel];
                 var filtersVisible = true;
                 $.RegisterEventHandler("Activated", collapseToggle, function() {
                     filtersVisible = !filtersVisible;
@@ -304,6 +319,14 @@
                 _filtersCreated = true;
             }
 
+            function _removeFilterControlsRP() {
+                for (var i = 0; i < _filterControls.length; i++) {
+                    if (isPanelValid(_filterControls[i])) _filterControls[i].DeleteAsync(0);
+                }
+                _filterControls = [];
+                _filtersCreated = false;
+            }
+
             function _updateFilterVisibilityRP(root, c) {
                 var visSig = c.isSpectator ? "1" : "0";
                 if (visSig === _lastVisibilitySig) return;
@@ -315,15 +338,6 @@
                     if (!toggle) continue;
                     if (filter.ShouldShowToggle(c)) toggle.RemoveClass("filterButtonHidden");
                     else toggle.AddClass("filterButtonHidden");
-                }
-            }
-
-            function _capContainerRP(container) {
-                if (!container || !isPanelValid(container)) return;
-                var count = container.GetChildCount();
-                while (count > RECENT_PURCHASE_MAX_ITEMS) {
-                    container.GetChild(count - 1).DeleteAsync(0);
-                    count--;
                 }
             }
 
@@ -354,7 +368,7 @@
                 _quickActiveEntries = _quickActiveEntries.filter(function(e) { return e !== entry; });
                 if (!isPanelValid(entry)) return;
                 entry.AddClass("quickFading");
-                $.Schedule(RECENT_PURCHASE_QUICK_FADE_SEC, function() {
+                _scheduleRP(RECENT_PURCHASE_QUICK_FADE_SEC, function() {
                     if (isPanelValid(entry)) entry.DeleteAsync(0);
                 });
             }
@@ -364,13 +378,26 @@
                 if (isPanelValid(entry)) entry.DeleteAsync(0);
             }
 
-            function _capRecentPurchaseSeenKeys() {
-                var count = 0;
-                for (var k in _quickSeenKeys) {
-                    if (Object.prototype.hasOwnProperty.call(_quickSeenKeys, k)) count++;
+            function _collectNewPurchasesRP(purchases) {
+                var seen = {};
+                var fresh = [];
+                for (var i = 0; i < purchases.length; i++) {
+                    var purchase = purchases[i];
+                    if (!isPanelValid(purchase)) continue;
+                    var name = getRecentPurchaseName(purchase);
+                    var time = getRecentPurchaseTimeText(purchase);
+                    if (!name || !time) continue;
+                    var key = name + "|" + time;
+                    if (_quickInitialized && !_quickSeenKeys[key] && !seen[key] && !purchase.BHasClass("filterHidden")) {
+                        fresh.push({ panel: purchase, name: name });
+                    }
+                    seen[key] = true;
                 }
-                if (count <= 300) return;
-                _quickSeenKeys = {};
+                // Follow the native list's lifetime. Clearing all keys at 300
+                // would replay retained history after removing native trimming.
+                _quickSeenKeys = seen;
+                _quickInitialized = true;
+                return fresh;
             }
 
             function _addQuickEntryRP(sourcePurchase, quickPanel, nameText, quickMax, quickDisplaySec) {
@@ -399,10 +426,10 @@
                             p.style.backgroundImage = url;
                             p.style.backgroundSize = "100% 100%";
                         } else if (attempts > 0) {
-                            $.Schedule(0.05, function() { trySet(attempts - 1); });
+                            _scheduleRP(0.05, function() { trySet(attempts - 1); });
                         }
                     }
-                    $.Schedule(0, function() { trySet(10); });
+                    _scheduleRP(0, function() { trySet(10); });
                 })(heroIcon, sourcePurchase);
 
                 var itemInfo = $.CreatePanel("Panel", entry, "");
@@ -418,7 +445,7 @@
                     icon.AddClass("mod_icon");
                     var capturedIcon = icon;
                     var capturedIconUrl = iconUrl;
-                    $.Schedule(0, function() {
+                    _scheduleRP(0, function() {
                         if (isPanelValid(capturedIcon)) {
                             capturedIcon.style.backgroundImage = capturedIconUrl;
                             capturedIcon.style.backgroundSize = "100% 100%";
@@ -432,7 +459,7 @@
 
                 _quickActiveEntries.push(entry);
 
-                $.Schedule(quickDisplaySec, function() {
+                _scheduleRP(quickDisplaySec, function() {
                     if (isPanelValid(entry)) _quickRemoveEntryRP(entry);
                 });
             }
@@ -454,28 +481,9 @@
 
                 if (!purchases) purchases = container.FindChildrenWithClassTraverse(CLASS_RECENT_PURCHASE);
 
-                if (!_quickInitialized) {
-                    for (var i = 0; i < purchases.length; i++) {
-                        var n = getRecentPurchaseName(purchases[i]);
-                        var t = getRecentPurchaseTimeText(purchases[i]);
-                        if (n && t) _quickSeenKeys[n + "|" + t] = true;
-                    }
-                    _quickInitialized = true;
-                    return;
-                }
-
-                for (var i = 0; i < purchases.length; i++) {
-                    var name = getRecentPurchaseName(purchases[i]);
-                    var time = getRecentPurchaseTimeText(purchases[i]);
-                    if (!name || !time) continue;
-                    var key = name + "|" + time;
-                    if (!_quickSeenKeys[key]) {
-                        _quickSeenKeys[key] = true;
-                        _capRecentPurchaseSeenKeys();
-                        if (!purchases[i].BHasClass("filterHidden")) {
-                            _addQuickEntryRP(purchases[i], quickPanel, name, quickMax, quickDisplaySec);
-                        }
-                    }
+                var fresh = _collectNewPurchasesRP(purchases);
+                for (var i = 0; i < fresh.length; i++) {
+                    _addQuickEntryRP(fresh[i].panel, quickPanel, fresh[i].name, quickMax, quickDisplaySec);
                 }
             }
 
@@ -536,14 +544,19 @@
                 return marginTop;
             }
 
-            function _clearContainerRP(root) {
-                var container = isPanelValid(_rpContainer)
-                    ? _rpContainer
-                    : (root ? root.FindChildTraverse("RecentPurchasesContainer") : null);
-                if (container && isPanelValid(container)) {
-                    var count = container.GetChildCount();
-                    for (var i = 0; i < count; i++) container.GetChild(i).DeleteAsync(0);
-                }
+            function _resetNotificationsRP() {
+                _runtimeGeneration++;
+                for (var i = 0; i < _pendingTasks.length; i++) _pendingTasks[i].stop();
+                _pendingTasks = [];
+                // The native shop owns RecentPurchasesContainer and its rows.
+                // Only delete overlays created by this feature.
+                if (isPanelValid(_quickPurchasesPanel)) _quickPurchasesPanel.DeleteAsync(0);
+                _quickPurchasesPanel = null;
+                _quickPurchasesHostPanel = null;
+                _quickActiveEntries = [];
+                _quickPanelStyleSig = "";
+                _cachedRejuvTimer = null;
+                _topBarPanel = null;
                 _quickSeenKeys = {};
                 _quickInitialized = false;
                 _resetHeroPopupState();
@@ -554,7 +567,7 @@
             function _buildHeroPlayerCardMap(root) {
                 if (_heroPopup.mapState === HERO_MAP_BUILDING) return;
                 _heroPopup.mapState = HERO_MAP_BUILDING;
-                _heroPopup.buildGen++;
+                _heroPopup.buildGen = ++_heroMapGeneration;
                 var myGen = _heroPopup.buildGen;
                 var labels = root.FindChildrenWithClassTraverse("HeroNameHidden");
                 if (!labels || labels.length === 0) {
@@ -583,7 +596,7 @@
                         var heroId = badge.heroid;
                         if (typeof heroId !== "number" || heroId <= 0) { onDone(); return; }
                         playerPanel.SetDialogVariableInt("hero_id", heroId);
-                        $.Schedule(0.3, function() {
+                        _scheduleRP(0.3, function() {
                             if (_heroPopup.buildGen !== myGen) return;
                             if (isPanelValid(label)) {
                                 var name = label.text.trim().toUpperCase();
@@ -690,7 +703,7 @@
             function _scheduleResolveHeroPopupOverlaps(delay) {
                 if (_heroPopup.overlapPending) return;
                 _heroPopup.overlapPending = true;
-                $.Schedule(delay || 0, function() {
+                _scheduleRP(delay || 0, function() {
                     try {
                         _resolveHeroPopupOverlaps();
                     } finally {
@@ -774,7 +787,7 @@
                 }
                 if (!isPanelValid(entry)) return;
                 entry.AddClass("quickFading");
-                $.Schedule(RECENT_PURCHASE_QUICK_FADE_SEC, function() {
+                _scheduleRP(RECENT_PURCHASE_QUICK_FADE_SEC, function() {
                     if (isPanelValid(entry)) entry.DeleteAsync(0);
                     _scheduleResolveHeroPopupOverlaps(0);
                 });
@@ -825,7 +838,7 @@
                     var icon = $.CreatePanel("Panel", itemInfo, "");
                     icon.AddClass("mod_icon");
                     (function(p, url) {
-                        $.Schedule(0, function() {
+                        _scheduleRP(0, function() {
                             if (isPanelValid(p)) {
                                 p.style.backgroundImage = url;
                                 p.style.backgroundSize = "100% 100%";
@@ -842,7 +855,7 @@
 
                 _scheduleResolveHeroPopupOverlaps(0.1);
 
-                $.Schedule(quickDisplaySec, function() {
+                _scheduleRP(quickDisplaySec, function() {
                     if (isPanelValid(entry)) _removeHeroPurchaseEntry(entry, heroNameUpper);
                 });
             }
@@ -862,7 +875,7 @@
                     playerCardCache: {},
                     overlapPending: false,
                     mapState: HERO_MAP_IDLE,
-                    buildGen: 0,
+                    buildGen: ++_heroMapGeneration,
                     ultCooldownsEnabled: ultSetting,
                     style: styleSetting
                 };
@@ -878,52 +891,23 @@
 
                 if (!purchases) purchases = container.FindChildrenWithClassTraverse(CLASS_RECENT_PURCHASE);
 
-                if (!_quickInitialized) {
-                    for (var i = 0; i < purchases.length; i++) {
-                        var n = getRecentPurchaseName(purchases[i]);
-                        var t = getRecentPurchaseTimeText(purchases[i]);
-                        if (n && t) _quickSeenKeys[n + "|" + t] = true;
-                    }
-                    _quickInitialized = true;
-                    return;
+                var fresh = _collectNewPurchasesRP(purchases);
+                for (var i = 0; i < fresh.length; i++) {
+                    _addHeroPurchaseEntry(fresh[i].panel, fresh[i].name, quickMax, quickDisplaySec);
                 }
-
-                for (var i = 0; i < purchases.length; i++) {
-                    var purchase = purchases[i];
-                    if (!purchase || !isPanelValid(purchase)) continue;
-                    var name = getRecentPurchaseName(purchase);
-                    var time = getRecentPurchaseTimeText(purchase);
-                    if (!name || !time) continue;
-                    var key = name + "|" + time;
-                    if (!_quickSeenKeys[key]) {
-                        _quickSeenKeys[key] = true;
-                        _capRecentPurchaseSeenKeys();
-                        if (!purchase.BHasClass("filterHidden")) {
-                            _addHeroPurchaseEntry(purchase, name, quickMax, quickDisplaySec);
-                        }
-                    }
-                }
-            }
-
-            function _handleHideoutRP(root) {
-                var isInHideout = QOL.core.hud.isInHideout(root);
-                if (_wasInHideout === null || isInHideout !== _wasInHideout) {
-                    _clearContainerRP(root);
-                    if (_hideoutClearTimer !== null) {
-                        try { $.CancelScheduled(_hideoutClearTimer); } catch(e) {}
-                        _hideoutClearTimer = null;
-                    }
-                    _hideoutClearTimer = $.Schedule(0.5, function() {
-                        _hideoutClearTimer = null;
-                        _clearContainerRP(root);
-                    });
-                }
-                _wasInHideout = isInHideout;
             }
 
             function _tick() {
                 var root = $.GetContextPanel();
-                if (!root) return;
+                if (!isPanelValid(root)) return;
+
+                var inHideout = QOL.core.hud.isInHideout(root);
+                if (_wasInHideout === null || inHideout !== _wasInHideout) {
+                    _resetNotificationsRP();
+                    _lastFilterSig = null;
+                    _lastFirstChild = null;
+                    _wasInHideout = inHideout;
+                }
 
                 var cfg = ctx.config.view();
                 var shopEnabled   = Number(cfg.ENABLE_SHOP_RECENT_PURCHASES) === 1;
@@ -932,15 +916,26 @@
                 // Sync root classes
                 var heroPopupsEnabled = Number(cfg.ENABLE_HERO_PURCHASE_POPUPS) === 1;
                 if (root.SetHasClass) {
-                    root.SetHasClass("shop_recent_purchases_active", shopEnabled);
-                    root.SetHasClass("shop_recent_purchases_redux", heroPopupsEnabled);
-                    root.SetHasClass("shop_item_notifications_active", notifyEnabled);
+                    root.SetHasClass("shop_recent_purchases_active", shopEnabled && !inHideout);
+                    root.SetHasClass("shop_recent_purchases_redux", heroPopupsEnabled && !inHideout);
+                    root.SetHasClass("shop_item_notifications_active", notifyEnabled && !inHideout);
+                }
+
+                if (_loop) _loop.reschedule(inHideout ? 0.5 : 0.2);
+                if (inHideout) return;
+
+                var notificationMode = notifyEnabled ? (heroPopupsEnabled ? 2 : 1) : 0;
+                if (notificationMode !== _notificationMode) {
+                    _resetNotificationsRP();
+                    _notificationMode = notificationMode;
                 }
 
                 if (!shopEnabled && !notifyEnabled) return;
 
                 if (!isPanelValid(_rpPanel)) {
+                    _removeFilterControlsRP();
                     _rpPanel = root.FindChildTraverse("RecentPurchasesPanel");
+                    _rpPanelStyleSig = "";
                 }
                 if (_rpPanel) {
                     var panelOffsetX = normalizeHudOffsetNumber(cfg.RECENT_PURCHASES_PANEL_X_OFFSET, 0);
@@ -964,13 +959,11 @@
                 if (quickDisplaySec < 3 || quickDisplaySec > 15) quickDisplaySec = RECENT_PURCHASE_QUICK_DISPLAY_SEC_DEFAULT;
 
                 if (!isPanelValid(_rpContainer)) {
+                    if (_rpContainer) _resetNotificationsRP();
                     _rpContainer = root.FindChildTraverse("RecentPurchasesContainer");
                 }
                 var container = _rpContainer;
                 if (!container) return;
-
-                _handleHideoutRP(root);
-                _capContainerRP(container);
 
                 var purchases = null;
                 if (shopEnabled || notifyEnabled) {
@@ -1032,12 +1025,8 @@
                     }
                     var S = QOL.core.Scheduler;
                     if (S) S.cancelAllForFeature("ql_recent_purchases");
-                    if (isPanelValid(_quickPurchasesPanel)) {
-                        try { _quickPurchasesPanel.DeleteAsync(0); } catch(e) {}
-                        _quickPurchasesPanel = null;
-                    }
-                    _resetHeroPopupState();
-                    _filtersCreated = false;
+                    _resetNotificationsRP();
+                    _removeFilterControlsRP();
                     _lastVisibilitySig = null;
                     _lastFilterSig = null;
                     _lastFirstChild = null;
@@ -1049,11 +1038,15 @@
                     _quickPurchasesHostPanel = null;
                     _cachedRejuvTimer = null;
                     _topBarPanel = null;
-                    if (_hideoutClearTimer !== null) {
-                        try { $.CancelScheduled(_hideoutClearTimer); } catch(e) {}
-                        _hideoutClearTimer = null;
-                    }
                     _wasInHideout = null;
+                    _notificationMode = 0;
+                    _rpPanelStyleSig = "";
+                    var root = $.GetContextPanel();
+                    if (isPanelValid(root)) {
+                        root.SetHasClass("shop_recent_purchases_active", false);
+                        root.SetHasClass("shop_recent_purchases_redux", false);
+                        root.SetHasClass("shop_item_notifications_active", false);
+                    }
                 },
                 onSettingsChanged: function() {
                     _lastVisibilitySig = null;

@@ -1277,13 +1277,13 @@
         createDevActionRow(list, "DevHudStateRow", "HudStateStartBtn", "HudStateStartStatus",
             "s2r://panorama/images/icons/icon_play.vsvg",
             globalThis.LocalizeSettingsText("HUD state recording", true),
-            globalThis.LocalizeSettingsText("Record for 60 seconds while playing: open and close the scoreboard, die and respawn. Settings are unchanged.", true),
+            globalThis.LocalizeSettingsText("Record HUD states and managed callback activity for 60 seconds. Reproduce the stutter or return to hideout. Settings are unchanged.", true),
             globalThis.LocalizeSettingsText("Record HUD states", true),
             status => requestHudStateObservation(status));
         createDevActionRow(list, "DevHudStateCopyRow", "HudStateCopyBtn", "HudStateCopyStatus",
             "s2r://panorama/images/icons/icon_copy.vsvg",
             globalThis.LocalizeSettingsText("HUD state report", true),
-            globalThis.LocalizeSettingsText("After recording, copy the class transitions and scoreboard event observations.", true),
+            globalThis.LocalizeSettingsText("After recording, copy HUD transitions, callback timings, delivery delays and active task counts. This is not an FPS measurement.", true),
             globalThis.LocalizeSettingsText("Copy HUD state report", true),
             status => copyHudStateObservation(list, status));
 

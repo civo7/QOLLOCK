@@ -91,6 +91,12 @@ is a structural check only — it does not run them.
 
 ## Layer 3 — frame-cost profiling
 
+`node scripts/audit_runtime_lifecycle.js --cycles 3` exercises repeated events
+and retained/destroyed quickbuy contexts, plus HUD hideout/scoreboard transitions.
+It reports raw schedule accounting and modeled operation counts. The included
+fault-injection regression must detect a reintroduced scheduling leak. See
+[lifecycle profiling](PROFILING.md) for scope and the historical negative control.
+
 A different question: not "did it behave correctly" but "how much work did it ask
 the engine to do, and which feature asked".
 
@@ -204,3 +210,9 @@ bounds/cancellation. These tests simulate native behavior.
 
 Use [HUD state recording](ui/hud_state_recording.md) after a fresh client repack
 for actual scoreboard/life transitions. See [audit scope](HELPER_AUDIT.md).
+
+That recorder also captures bounded managed-work windows and outstanding task
+counts for stutter comparisons. `tests/scheduler_observation.test.js` verifies
+delivery-delay versus callback-time accounting, owner bounds, cancellation and
+observer replacement; the HUD recorder tests cover report publication and cleanup.
+See [Scheduler observation scope](core/scheduler.md#transition-work-observation).

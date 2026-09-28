@@ -15,6 +15,23 @@ initial update. Variant teardown, common scale/opacity/offsets and accent state
 all matter when switching styles. Profile the selected variant explicitly;
 default-style measurements do not characterize Minecraft.
 
+Hideout handling uses the shared `connectedToHideout` / `InHideout` predicate.
+Before switching to a 0.5-second idle poll, the dispatcher stops Minecraft's
+raw animation schedules, resets Budhud state, and restores the FG portrait.
+The previous early return restored only FG, leaving Minecraft's low-health or
+healing animation running after a match. Normal 0.05-second updates resume on
+match entry.
+
+Minecraft callbacks independently stop when their source root is destroyed or
+hideout is detected, including before the dispatcher gets another tick. Reset
+releases the variant's cached panels, heart arrays and capacity/signature state
+so a replacement grid of the same size is rebuilt. It does not clear other
+features' caches. `tests/hideout_runtime.test.js` exercises both animations,
+both hideout classes, source destruction, and next-match recovery. These are
+offline lifetime checks, not native frame-time measurements. The built-in
+`7eventy7` preset selects healthbar type 0, so the Minecraft defect alone does
+not explain that preset's reported stutter.
+
 ## Declared settings
 
 - `HEALTHBAR_TYPE` (dropdown)

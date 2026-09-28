@@ -627,6 +627,8 @@ function SyncQuickbuyPreviewModIcon(previewModIcon,sourceModIcon,itemName){
 
 	if(sourceModIconImage&&sourceModIconImage.GetAttributeString)sourceImagePath=sourceModIconImage.GetAttributeString('src','');
 	if(!sourceImagePath)sourceImagePath=BuildQuickbuyPreviewIconPath(itemName,sourceModIcon);
+	// The Image belongs to a native CitadelModIcon. Reassert its final path;
+	// C++ may update the same instance, so a JS-only signature is insufficient.
 	if(targetModIconImage&&targetModIconImage.SetImage)targetModIconImage.SetImage(sourceImagePath||'');
 
 	var targetTierLabel=previewModIcon.FindChildTraverse('mod_tier_label');
@@ -678,23 +680,15 @@ function UpdateQuickbuyUpcomingPreviewSlots(quickbuyQueueEntries){
 		var previewSoulsLabel=contextPanel.FindChildTraverse(previewSlot.soulsLabelId);
 		if(!previewRoot)continue;
 
-		previewRoot.SetHasClass('HasPreviewItem',false);
-		previewRoot.SetHasClass('CanAffordUpcoming',false);
-		if(previewSoulsLabel)previewSoulsLabel.text='0';
-		SyncQuickbuyPreviewModIcon(previewModIcon,null,'');
-
-		if(previewSlotIndex>=maxUpcomingPreviewSlots)continue;
-		if(previewSlot.queueIndex>=quickbuyQueueEntries.length)continue;
-
-		var previewQueueEntry=quickbuyQueueEntries[previewSlot.queueIndex];
-		if(!previewQueueEntry||!previewQueueEntry.itemPanel)continue;
-
-		var sourceModIcon=previewQueueEntry.itemPanel.FindChildTraverse('ModIcon');
-		if(previewSoulsLabel)previewSoulsLabel.text=String(previewQueueEntry.remainingSoulsCost);
-		SyncQuickbuyPreviewModIcon(previewModIcon,sourceModIcon,previewQueueEntry.itemName);
-
-		previewRoot.SetHasClass('HasPreviewItem',true);
-		previewRoot.SetHasClass('CanAffordUpcoming',previewQueueEntry.remainingSoulsCost<=0);
+		var previewQueueEntry=previewSlotIndex<maxUpcomingPreviewSlots?quickbuyQueueEntries[previewSlot.queueIndex]:null;
+		var hasPreview=!!(previewQueueEntry&&previewQueueEntry.itemPanel);
+		var sourceModIcon=hasPreview?previewQueueEntry.itemPanel.FindChildTraverse('ModIcon'):null;
+		// Apply the final state directly. Clearing a filled slot before restoring
+		// it causes real text/class/image changes on every unchanged polling tick.
+		previewRoot.SetHasClass('HasPreviewItem',hasPreview);
+		previewRoot.SetHasClass('CanAffordUpcoming',hasPreview&&previewQueueEntry.remainingSoulsCost<=0);
+		if(previewSoulsLabel)previewSoulsLabel.text=hasPreview?String(previewQueueEntry.remainingSoulsCost):'0';
+		SyncQuickbuyPreviewModIcon(previewModIcon,sourceModIcon,hasPreview?previewQueueEntry.itemName:'');
 	}
 }
 
@@ -743,21 +737,30 @@ function ResetQuickbuyQueuePanels(contextPanel){
 	}
 }
 
-function _scheduleQuickbuyUpdate(delaySec) {
+function _cancelQuickbuyUpdate() {
 	if (_quickbuyScheduleHandle !== null) {
 		try { $.CancelScheduled(_quickbuyScheduleHandle); } catch(e) {}
 		_quickbuyScheduleHandle = null;
 	}
-	_quickbuyScheduleHandle = $.Schedule(delaySec, UpdateQuickbuyQueueCostPanels);
+}
+
+function _scheduleQuickbuyUpdate(delaySec) {
+	_cancelQuickbuyUpdate();
+	_quickbuyScheduleHandle = $.Schedule(delaySec, function() {
+		_quickbuyScheduleHandle = null;
+		UpdateQuickbuyQueueCostPanels();
+	});
 }
 
 function UpdateQuickbuyQueueCostPanels(){
-	_quickbuyScheduleHandle = null;
-	var contextPanel=$.GetContextPanel();
-	if(!contextPanel){
-		_scheduleQuickbuyUpdate(QUICKBUY_TOTAL_UPDATE_INTERVAL_IDLE_SECONDS);
-		return;
-	}
+	// Engine events also call this function while a polling callback is pending.
+	// Cancel that callback before replacing it; forgetting its handle leaks a loop.
+	_cancelQuickbuyUpdate();
+	var contextPanel;
+	try {
+		contextPanel=$.GetContextPanel();
+		if(!contextPanel||typeof contextPanel.IsValid!=='function'||!contextPanel.IsValid())return;
+	} catch(e) { return; }
 
 	if(!IsQuickbuyCostFeatureActive(contextPanel)){
 		ResetQuickbuyQueuePanels(contextPanel);

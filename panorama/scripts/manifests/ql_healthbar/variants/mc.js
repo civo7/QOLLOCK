@@ -9,6 +9,7 @@
     var GetCachedPanel = QOL.getCachedPanel;
     var SetCachedPanel = QOL.setCachedPanel;
     var IsPanelValid = QOL.utils.IsPanelValid;
+    var runtimeRoot = null;
 
     // ── Minecraft healthbar constants ──
     var MC_CHARGE_MAX_ANGLES = { 1: 90, 2: 42, 3: 26, 4: 20, 5: 15.5, 6: 13, 7: 10.86 };
@@ -77,6 +78,28 @@
         State.mcLastBarrierLastSlotIsHalf = null;
         State.mcLastBarrierHeartsNeeded = -1;
         State.mcWasEnabled = false;
+        runtimeRoot = null;
+        State.mcNextUpdateMs = 0;
+        State.mcHeartSlots = [];
+        State.mcHeartContainerImages = [];
+        State.mcHeartHealingImages = [];
+        State.mcHeartDeferredImages = [];
+        State.mcHeartFillImages = [];
+        State.mcHeartsCapacity = 0;
+        State.mcHeartsRowCount = 0;
+        State.mcLastVisibleHeartsCount = 0;
+        State.mcBarrierHeartsPanels = [];
+        State.mcBarrierHeartContainerImages = [];
+        State.mcBarrierHeartFillImages = [];
+        State.mcBarrierHeartsCapacity = 0;
+        // Array capacities/signatures belong to the source tree, not the next
+        // match's equally sized heart grid. Clear only this variant's caches.
+        ["mcHudRoot", "mcHeartsContainer", "mcHudHealthBars", "mcTotemContainer",
+            "mcBarriersContainer", "mcBarrierHearts", "mcBarrierHeartsContainer",
+            "mcBulletBarrierNumbers", "mcBulletBarrierCurrentLabel", "mcBulletBarrierMaxLabel",
+            "mcGoldApContainer", "mcSoulsFill", "mcXpBarFill", "mcPlayerLevelLabel",
+            "mcXpLevelLabel", "mcPendingDamageMiddle", "mcPendingHealMiddle"
+        ].forEach(function(key) { SetCachedPanel(key, null); });
         SetCachedPanel("mcHealthPercentLabel", null);
         SetCachedPanel("mcCurrentHealthLabel", null);
         SetCachedPanel("mcTotalHealthLabel", null);
@@ -90,6 +113,12 @@
         State.mcLoggedHealthContainerMiss = false;
     }
 
+    function McCanAnimate() {
+        if (IsPanelValid(runtimeRoot) && !QOL.core.hud.isInHideout(runtimeRoot)) return true;
+        McResetRuntime();
+        return false;
+    }
+
     function McStartHeartsBlink() {
         if (State.mcHeartsBlinkTimer !== null) {
             $.CancelScheduled(State.mcHeartsBlinkTimer);
@@ -100,6 +129,7 @@
         function scheduleNextPhase() {
             State.mcHeartsBlinkTimer = $.Schedule(MC_BLINK_INTERVAL_S, function () {
                 if (!State.mcHeartsBlinking) { State.mcHeartsBlinkTimer = null; return; }
+                if (!McCanAnimate()) return;
                 State.mcHeartsBlinkPhase += 1;
                 if (State.mcHeartsBlinkPhase >= MC_BLINK_PHASE_COUNT) {
                     State.mcHeartsBlinking = false;
@@ -144,6 +174,7 @@
             function scheduleNext() {
                 State.mcLowHealthJiggleTimer = $.Schedule(MC_JIGGLE_INTERVAL_S, function () {
                     if (!State.mcLowHealthJiggleActive) { State.mcLowHealthJiggleTimer = null; return; }
+                    if (!McCanAnimate()) return;
                     McLowHealthJiggleTick();
                     scheduleNext();
                 });
@@ -161,6 +192,7 @@
     }
 
     function McHealingWaveTick() {
+        if (!McCanAnimate()) return;
         try {
             var hearts = State.mcHeartSlots;
             if (!hearts || hearts.length === 0) return;
@@ -910,14 +942,16 @@
 
     function UpdateMinecraftHealthbar(root, cfg, nowMs, enabled) {
         if (!enabled) {
-            if (State.mcWasEnabled) McResetRuntime();
+            if (runtimeRoot || State.mcWasEnabled) McResetRuntime();
             return;
         }
+        if (runtimeRoot && !IsPanelValid(runtimeRoot)) McResetRuntime();
         var nowMsNum = Number(nowMs) || 0;
         if (nowMsNum < (Number(State.mcNextUpdateMs) || 0)) return;
 
         var hudRoot = McResolveHudRoot(root);
         if (!hudRoot) { State.mcNextUpdateMs = nowMsNum + 400; return; }
+        runtimeRoot = hudRoot;
 
         State.mcNextUpdateMs = nowMsNum + MC_TICK_INTERVAL_MS;
 

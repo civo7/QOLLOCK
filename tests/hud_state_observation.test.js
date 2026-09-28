@@ -34,6 +34,9 @@ test('state recorder distinguishes event-time classes from later state and publi
  root.SetHasClass('gScoreboardOpen',true);clock.advance(500);
  assert.ok(result.samples.some(row=>row.source==='poll'&&row.scoreboard));
  clock.advance(60500);assert.equal(result.status,'complete');
+ assert.ok(result.workSamples.length > 1 && result.workSamples.length <= 64);
+ assert.ok(result.workFeatures.length > 0 && result.workFeatures.length <= 128);
+ assert.ok(result.report.includes('Quiet counters do not clear the mod'));
  const snapshot=JSON.parse(root.GetAttributeString('QOL_Diag',''));
  assert.equal(snapshot.hudStateObservation.token,'state_audit');assert.ok(snapshot.hudStateObservation.report.includes('END HUD'));
  const count=result.samples.length;Q.core.EventBus.emit('engine:scoreboard_toggle');clock.advance(500);
@@ -47,6 +50,8 @@ test('state recorder bounds samples and replacement/cancellation remove subscrip
  assert.equal(first.samples.length,128);assert.ok(first.dropped>0);
  api.observeHudStates('second');assert.equal(first.status,'replaced');const second=api.getHudStateObservation();
  api.cancel();assert.equal(second.status,'cancelled');const count=second.samples.length;
+ const work=JSON.stringify(second.workFeatures);
  Q.core.EventBus.emit('engine:scoreboard_toggle');clock.advance(61000);assert.equal(second.samples.length,count);
+ assert.equal(JSON.stringify(second.workFeatures),work);
  assert.equal(first.status,'replaced');
 });

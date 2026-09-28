@@ -34,7 +34,7 @@ Extends Deadlock's shop and HUD with real-time item purchase tracking. It introd
 ### Activation & Lifecycle Hooks
 - **Enable Keys**: Registered with `enableKeys: ["ENABLE_SHOP_RECENT_PURCHASES", "ENABLE_SHOP_ITEM_NOTIFICATIONS", "ENABLE_HERO_PURCHASE_POPUPS"]`.
 - **`onEnable()`**: Initiates a 5Hz (`0.2s` interval) polling loop via `QOL.core.Scheduler.createPollLoop(_tick, 0.2, "ql_recent_purchases")`.
-- **`onDisable()`**: Stops the polling loop, cancels any pending delayed hideout clear timer (`_hideoutClearTimer`), clears scheduled tasks, deletes `_quickPurchasesPanel` via `DeleteAsync(0)`, executes `_resetHeroPopupState()`, and nullifies all cached panel references.
+- **`onDisable()`**: Stops the polling loop, cancels owned scheduled tasks, deletes owned notification panels and filter controls, resets hero popup state, and clears cached panel references. Native purchase rows are preserved.
 - **`onSettingsChanged()`**: Clears style and filter signatures (`_lastVisibilitySig = null`, `_lastFilterSig = null`) and invokes `_tick()` immediately.
 - **`test()`**: Verifies that the native `CitadelShop` panel exists in the HUD context tree.
 
@@ -53,16 +53,23 @@ Extends Deadlock's shop and HUD with real-time item purchase tracking. It introd
   - Dynamically resolved and attached to top bar player cards under `#TopBar`. Coordinates vertical offsets with `ql_ult_cooldowns` to prevent visual collision.
 
 ### Engine Events & Polling Frequency
-- **Polling Frequency**: 5Hz (`0.2s` interval).
+- **Polling Frequency**: 5Hz (`0.2s` interval) during gameplay; a `0.5s` state check in the hideout returns before history or hero-card discovery.
 - **Engine State & Class Sync**:
   - Synchronizes `shop_recent_purchases_active` and `shop_item_notifications_active` CSS classes on `#Hud`.
   - Tracks shop open/closed state and top-bar hero card bindings.
 
 ### Performance Tier & Caveats
 - **Performance Tier**: Medium overhead due to list inspection and string signature matching.
-- **Suppression**: Suppressed when in the Hideout/Sandbox lobby.
+- **Suppression**: Uses the shared hideout predicate (`connectedToHideout` / `InHideout`). Transitions clear owned notifications and invalidate delayed work; returning to gameplay seeds the current history without replaying old purchases.
 - **Signature Optimization**:
   - Uses filter signatures (`_getFilterSigRP`), visibility signatures, and panel style signatures (`_rpPanelStyleSig`, `_quickPanelStyleSig`) to eliminate redundant DOM mutation passes.
-  - Items are tracked via composite keys (`heroName + itemName + timeText`) to ensure zero re-processing of already animated cards.
+  - Items are tracked via composite keys (`itemName + "|" + timeText`). Each scan retains keys for the current native rows, avoiding a wholesale deduplication reset when history exceeds 300 entries.
+
+### Native Ownership and Delayed Work
+`RecentPurchasesContainer` and its purchase rows belong to the engine. QOL reads and styles them but must not delete or cap them on activation, hideout transitions, or disable. Only QOL-created notification panels and filter controls are deleted.
+
+Notification expiry and deferred hero mapping use feature-owned `Scheduler.scheduleOnce` tasks. Runtime generations invalidate stale callbacks across mode changes, transitions, and disable/re-enable; hero mapping generations remain monotonic across resets. Filter controls are removed on disable so re-enabling does not duplicate them.
+
+`tests/recent_purchases_lifecycle.test.js` covers both hideout classes, central and hero notifications, native history preservation, pending callback cancellation, long-history deduplication, and filter control reactivation. These are offline lifecycle checks; they do not establish native rendering or resolve the reported Linux stutter without client verification.
 
 Scoreboard visibility now uses `QOL.core.hud.isScoreboardOpen`, including the native GlobalClassListener fallback. The toggle event is a refresh trigger, not a boolean state payload.

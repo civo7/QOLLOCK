@@ -876,6 +876,8 @@
     "Reload in game; inspect size, opacity and offsets.": "Reload in game; inspect size, opacity and offsets.",
     "Open in a match or sandbox. Compare HUD changes and test gameplay. Stop restores settings without saving the test values.": "Open in a match or sandbox. Compare HUD changes and test gameplay. Stop restores settings without saving the test values.",
     "HUD state recording": "HUD state recording",
+    "Record HUD states and managed callback activity for 60 seconds. Reproduce the stutter or return to hideout. Settings are unchanged.": "Record HUD states and managed callback activity for 60 seconds. Reproduce the stutter or return to hideout. Settings are unchanged.",
+    "After recording, copy HUD transitions, callback timings, delivery delays and active task counts. This is not an FPS measurement.": "After recording, copy HUD transitions, callback timings, delivery delays and active task counts. This is not an FPS measurement.",
     "Record for 60 seconds while playing: open and close the scoreboard, die and respawn. Settings are unchanged.": "Record for 60 seconds while playing: open and close the scoreboard, die and respawn. Settings are unchanged.",
     "Record HUD states": "Record HUD states",
     "HUD state report": "HUD state report",
