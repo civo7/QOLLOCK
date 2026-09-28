@@ -172,6 +172,13 @@ When vanilla Deadlock updates, re-check panel ids against
 `G:\GameTracking-Deadlock` — layout under
 `game/citadel/pak01_dir/panorama/layout/`, styles under `.../styles/`.
 
+Before updating that extract, preserve a source snapshot with
+`node scripts/audit_game_update.js snapshot --vanilla <panorama-dir>`.
+Afterward, use `check` with the same path to map changed ID/class evidence to
+JavaScript call sites and identify changed overridden XML. See
+[game update audit](GAME_UPDATE_AUDIT.md) for commands, report meanings and
+coverage limits. Source removal is a review candidate, not proof of native absence.
+
 ## Historical warning: the removed behavioural suite
 
 The suite removed in August 2026 ran the real mod against a **modelled** panel tree. The model cannot know
