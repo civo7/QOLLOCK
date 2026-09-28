@@ -323,23 +323,54 @@
         }
         if (!crosshair || !isAlive(crosshair)) return "";
 
-        let dash = null;
+        // All matching classes must agree. During a pawn transition the native
+        // tree can temporarily contain old and new indicators; never select the
+        // first hero in alias-map/tree order in that state.
+        let candidates = [crosshair];
         try {
             if (crosshair.FindChildrenWithClassTraverse) {
-                const arr = crosshair.FindChildrenWithClassTraverse("citadel_ability_dash");
-                dash = (arr && arr.length > 0) ? arr[0] : null;
+                candidates = candidates.concat(crosshair.FindChildrenWithClassTraverse("citadel_ability_dash") || []);
             }
-        } catch { dash = null; }
-
-        if (dash && isAlive(dash)) {
-            const hero = TryReadHeroFromPanelBHasClass(dash);
-            if (hero) return normalizeHero(hero);
+            let found = "";
+            for (const panel of candidates) {
+                if (!isAlive(panel)) continue;
+                for (const alias in HERO_DETECT_ALIAS_MAP) {
+                    if (!panel.BHasClass(`hero_${alias}`) && !panel.BHasClass(alias)) continue;
+                    const hero = normalizeHero(`hero_${alias}`);
+                    if (found && found !== hero) return "";
+                    found = hero;
+                }
+            }
+            return found;
+        } catch {
+            return "";
         }
+    };
 
-        const crosshairHero = TryReadHeroFromPanelBHasClass(crosshair);
-        if (crosshairHero) return normalizeHero(crosshairHero);
-
-        return "";
+    const ReadHeroFromPregame = (root) => {
+        const hud = (Q.core && Q.core.panel && Q.core.panel.findHud)
+            ? Q.core.panel.findHud(root) : root;
+        if (!isAlive(hud) || !hud.FindChildTraverse) return "";
+        // The native pregame reveal owns this panel and sets ShowingHero plus
+        // hero_<alias> before the gameplay crosshair exists. Do not use a
+        // hidden, previously loaded reveal during normal gameplay.
+        const pregameAllowed = hud.BHasClass("GameStatePreGame") ||
+            hud.BHasClass("GameStatePreGameWait") ||
+            hud.BHasClass("connectedToHeroTesting");
+        if (!pregameAllowed) return "";
+        const pregame = hud.FindChildTraverse("Pregame");
+        const abilities = pregame && pregame.FindChildTraverse("HeroAbilities");
+        if (!isAlive(abilities) || !abilities.BHasClass("ShowingHero")) return "";
+        let found = "";
+        try {
+            for (const alias in HERO_DETECT_ALIAS_MAP) {
+                if (!abilities.BHasClass(`hero_${alias}`)) continue;
+                const candidate = normalizeHero(`hero_${alias}`);
+                if (found && found !== candidate) return "";
+                found = candidate;
+            }
+        } catch { return ""; }
+        return found;
     };
 
     const PanelLooksSelected = (panel) => {
@@ -823,7 +854,8 @@
         readPanelClassTextMaybe: ReadPanelClassTextMaybe,
         readPanelTypeTextMaybe: ReadPanelTypeTextMaybe,
         getLoaderBaseDefaultHeroId: GetLoaderBaseDefaultHeroId,
-        readHeroFromCrosshair: ReadHeroFromCrosshair
+        readHeroFromCrosshair: ReadHeroFromCrosshair,
+        readHeroFromPregame: ReadHeroFromPregame
     };
 
     Q.core.heroProbe = api;

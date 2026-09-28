@@ -37,8 +37,10 @@
 
 .fg_healthbar_active:not(.minimalist_healthbar_active) #HealthBarContent CitadelStatusEffect
 {
-	margin-top: 105px;
-	margin-left: 60px;
+	margin-top: 99px;
+	margin-left: 36px;
+	margin-right: 0px;
+	vertical-align: top;
 }
 
 .fg_healthbar_active:not(.minimalist_healthbar_active) #HealthBarContent #StatusEffectContainer

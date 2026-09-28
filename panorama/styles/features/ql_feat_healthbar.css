@@ -417,7 +417,7 @@
     margin-left: 0px;
 }
 
-.fg_healthbar_active .localPlayerMidHealth #LevelAmount.qol_fg_portrait
+.fg_healthbar_active .localPlayerMidHealth #QOLFGPortrait.qol_fg_portrait
 {
     animation-name: healthMid;
     animation-duration: 0.8s;
@@ -425,7 +425,7 @@
     animation-timing-function: ease-in;
 }
 
-.fg_healthbar_active .localPlayerLowHealth #LevelAmount.qol_fg_portrait
+.fg_healthbar_active .localPlayerLowHealth #QOLFGPortrait.qol_fg_portrait
 {
     animation-name: healthLow;
     animation-duration: 0.8s;

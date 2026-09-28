@@ -21,7 +21,19 @@ function fixture(env) {
     const portrait = add(gold, "LevelAmount");
     add(portrait, "HeroImage");
     add(gold, "After");
-    return { health, bars, border, gold, portrait, add };
+    const crosshair = hud.root.FindChildTraverse("crosshair");
+    const dash = crosshair.FindChildrenWithClassTraverse("citadel_ability_dash")[0];
+    dash.RemoveClass("hero_werewolf");
+    dash.AddClass("hero_atlas");
+    const imageCalls = [];
+    const api = hud.sandbox.global.$;
+    const createPanel = api.CreatePanel;
+    api.CreatePanel = (...args) => {
+        const panel = createPanel(...args);
+        if (args[2] === "QOLFGPortrait") panel.SetImage = src => imageCalls.push({ panel, src });
+        return panel;
+    };
+    return { health, bars, border, gold, portrait, add, crosshair, dash, imageCalls };
 }
 
 for (const type of [0, 1, 2, 3, 4, 5]) {
@@ -49,65 +61,141 @@ for (const type of [0, 1, 2, 3, 4, 5]) {
     });
 }
 
-test("FG portrait shares bar ancestry and restores order on switch / missing anchor / hideout", () => {
+test("FG refreshes Abrams to Sinclair on the same HUD without moving native portraits", () => {
     const env = loadSettingsEnvironment();
-    const { health, bars, border, gold, portrait, add } = fixture(env);
-    const q = env.hud.sandbox.global.QOL;
-    const cfg = { HEALTHBAR_TYPE: 2, PLAYER_HEALTHBAR_SCALE: 156, PLAYER_HEALTHBAR_X_OFFSET: 100 };
-    q.healthbar.fg.update(env.hud.root, cfg);
-    assert.equal(portrait.GetParent(), border);
-    assert.equal(portrait.BHasClass("qol_fg_portrait"), true);
-    assert.equal(portrait.style.uiScale, "100%", "neutral child scale inherits the bar scale");
-    assert.equal(portrait.style.visibility, "visible", "override the source layout's collapsed panel");
-    assert.equal(portrait.style.width, "48px");
-    const hero = portrait.FindChildTraverse("HeroImage");
-    assert.equal(hero.style.uiScale, "100%", "override the source image's half scale");
-    assert.equal(hero.style.width, "100%");
-    q.healthbar.fg.update(env.hud.root, { HEALTHBAR_TYPE: 1 });
-    assert.equal(portrait.GetParent(), gold);
-    assert.equal(gold.GetChild(1), portrait);
-    assert.equal(portrait.BHasClass("qol_fg_portrait"), false);
-    assert.equal(portrait.style.visibility, undefined);
-    assert.equal(portrait.style.width, undefined);
-    assert.equal(hero.style.uiScale, undefined);
-    q.healthbar.fg.update(env.hud.root, cfg);
-    bars.SetParent(gold);
-    q.healthbar.fg.update(env.hud.root, cfg);
-    assert.equal(portrait.GetParent(), gold);
-    const replacement = add(health, "hud_health_bars");
-    const nextBorder = add(replacement, "", "health_bar_border");
-    q.healthbar.fg.update(env.hud.root, cfg);
-    assert.equal(portrait.GetParent(), nextBorder);
-    env.hud.root.AddClass("InHideout");
-    q.healthbar.fg.update(env.hud.root, cfg);
-    assert.equal(portrait.GetParent(), gold);
-    assert.equal(gold.GetChild(1), portrait);
-});
-
-test("FG styles a replaced native HeroImage and avoids unchanged style writes", () => {
-    const env = loadSettingsEnvironment();
-    const { portrait, add } = fixture(env);
+    const { border, gold, portrait, dash, imageCalls, add } = fixture(env);
+    const playerLevel = add(gold, "PlayerLevel");
+    const duplicate = add(playerLevel, "LevelAmount");
+    add(duplicate, "HeroImage");
     const q = env.hud.sandbox.global.QOL;
     const cfg = { HEALTHBAR_TYPE: 2 };
     q.healthbar.fg.update(env.hud.root, cfg);
+    const owned = border.FindChildTraverse("QOLFGPortrait");
+    assert.ok(owned);
+    assert.equal(owned.style.uiScale, "100%");
+    assert.equal(imageCalls.at(-1).src, "s2r://panorama/images/heroes/bull_sm_psd.vtex");
+    dash.RemoveClass("hero_atlas");
+    dash.AddClass("hero_magician");
+    q.healthbar.fg.update(env.hud.root, cfg);
+    assert.equal(imageCalls.at(-1).src, "s2r://panorama/images/heroes/magician_sm_psd.vtex");
     let writes = 0;
-    const previousStyle = portrait.style;
-    portrait.style = new Proxy(previousStyle, {
+    owned.style = new Proxy(owned.style, {
         set(target, key, value) { writes++; target[key] = value; return true; }
     });
-    q.healthbar.fg.update(env.hud.root, cfg);
+    for (let i = 0; i < 100; i++) q.healthbar.fg.update(env.hud.root, cfg);
     assert.equal(writes, 0);
-    portrait.FindChildTraverse("HeroImage").DeleteAsync(0);
+    assert.equal(imageCalls.length, 2, "unchanged hero does not reload the image");
+    assert.equal(portrait.GetParent(), gold);
+    assert.equal(gold.GetChild(1), portrait);
+    assert.equal(duplicate.GetParent(), playerLevel);
+    assert.equal(portrait.style.visibility, undefined);
+    assert.equal(owned.visible, true);
+});
+
+test("FG hides missing/ambiguous hero signals and recovers with verified image extensions", () => {
+    const env = loadSettingsEnvironment();
+    const { border, crosshair, dash, imageCalls, add } = fixture(env);
+    const q = env.hud.sandbox.global.QOL;
+    const update = () => q.healthbar.fg.update(env.hud.root, { HEALTHBAR_TYPE: 2 });
+    update();
+    const owned = border.FindChildTraverse("QOLFGPortrait");
+    dash.AddClass("hero_magician");
+    update();
+    assert.equal(owned.visible, false, "two hero classes must not choose the first alias");
+    dash.RemoveClass("hero_atlas");
+    update();
+    assert.equal(owned.visible, true);
+    const staleDash = add(crosshair, "", "citadel_ability_dash");
+    staleDash.AddClass("hero_atlas");
+    update();
+    assert.equal(owned.visible, false, "conflicting dash panels are ambiguous");
+    staleDash.DeleteAsync(0);
     env.clock.advance(1);
-    const replacement = add(portrait, "HeroImage");
-    q.healthbar.fg.update(env.hud.root, cfg);
-    assert.equal(replacement.style.visibility, "visible");
-    assert.equal(replacement.style.width, "100%");
-    assert.equal(replacement.style.uiScale, "100%");
+    dash.RemoveClass("hero_magician");
+    update();
+    assert.equal(owned.visible, false);
+    dash.AddClass("hero_hornet");
+    update();
+    assert.equal(imageCalls.at(-1).src, "s2r://panorama/images/heroes/hornet_sm_png.vtex");
+    assert.equal(owned.visible, true);
+    dash.RemoveClass("hero_hornet");
+    dash.AddClass("hero_airheart");
+    update();
+    assert.equal(owned.visible, false, "no guessed asset for an unmapped hero");
+    dash.DeleteAsync(0);
+    env.clock.advance(1);
+    const replacement = add(crosshair, "", "citadel_ability_dash");
+    replacement.AddClass("hero_magician");
+    update();
+    assert.equal(owned.visible, true);
+    assert.equal(imageCalls.at(-1).src, "s2r://panorama/images/heroes/magician_sm_psd.vtex");
+});
+
+test("FG uses the native pregame hero before crosshair creation and in hero testing", () => {
+    const env = loadSettingsEnvironment();
+    const { border, crosshair, add, imageCalls } = fixture(env);
+    const hud = env.hud.root;
+    const pregame = add(hud, "Pregame");
+    const reveal = add(pregame, "", "HeroLoaded");
+    const abilities = add(reveal, "HeroAbilities", "ShowingHero");
+    abilities.AddClass("hero_frank");
+    const update = () => env.hud.sandbox.global.QOL.healthbar.fg.update(hud, { HEALTHBAR_TYPE: 2 });
+
+    hud.AddClass("GameStatePreGame");
+    crosshair.DeleteAsync(0);
+    env.clock.advance(1);
+    update();
+    const owned = border.FindChildTraverse("QOLFGPortrait");
+    assert.equal(owned.visible, true);
+    assert.equal(imageCalls.at(-1).src, "s2r://panorama/images/heroes/frank_sm_psd.vtex");
+
+    hud.RemoveClass("GameStatePreGame");
+    hud.AddClass("connectedToHideout");
+    hud.AddClass("connectedToHeroTesting");
+    abilities.RemoveClass("hero_frank");
+    abilities.AddClass("hero_magician");
+    update();
+    assert.equal(owned.visible, true);
+    assert.equal(imageCalls.at(-1).src, "s2r://panorama/images/heroes/magician_sm_psd.vtex");
+
+    hud.RemoveClass("connectedToHideout");
+    hud.RemoveClass("connectedToHeroTesting");
+    update();
+    assert.equal(owned.visible, false, "stale reveal must not identify the live pawn");
+    assert.deepEqual(env.clock.errors, []);
+});
+
+test("FG cleans up on anchor loss, replacement and disable", () => {
+    const env = loadSettingsEnvironment();
+    const { health, bars, border, gold, portrait, add, imageCalls } = fixture(env);
+    const q = env.hud.sandbox.global.QOL;
+    const update = () => q.healthbar.fg.update(env.hud.root, { HEALTHBAR_TYPE: 2 });
+    update();
+    let owned = border.FindChildTraverse("QOLFGPortrait");
+    bars.SetParent(gold);
+    update();
+    assert.equal(owned.visible, false, "hide synchronously before deferred deletion");
+    env.clock.advance(1);
+    assert.equal(owned.IsValid(), false);
+    const nextBars = add(health, "hud_health_bars");
+    const nextBorder = add(nextBars, "", "health_bar_border");
+    update();
+    owned = nextBorder.FindChildTraverse("QOLFGPortrait");
+    assert.equal(owned.style.width, "48px");
+    assert.equal(imageCalls.at(-1).panel, owned, "replacement receives its image even for the same hero");
+    owned.DeleteAsync(0);
+    env.clock.advance(1);
+    update();
+    assert.notEqual(nextBorder.FindChildTraverse("QOLFGPortrait"), owned);
+    owned = nextBorder.FindChildTraverse("QOLFGPortrait");
     q.healthbar.fg.update(env.hud.root, { HEALTHBAR_TYPE: 0 });
-    assert.equal(replacement.style.visibility, undefined);
-    assert.equal(replacement.style.width, undefined);
-    assert.equal(replacement.style.uiScale, undefined);
+    assert.equal(owned.visible, false);
+    env.clock.advance(1);
+    assert.equal(owned.IsValid(), false);
+    assert.equal(q.healthbar.fg.isActive(), false);
+    assert.equal(portrait.GetParent(), gold);
+    assert.equal(gold.GetChild(1), portrait);
+    assert.deepEqual(env.clock.errors, []);
 });
 
 test("both clear helpers pass native CSS property names", () => {
@@ -147,36 +235,3 @@ for (const [key, id, expected] of [["TOP_BAR_SCALE", "TopBar", "150%"], ["BOTTOM
         assert.deepEqual(clock.errors, []);
     });
 }
-
-test("FG keeps one portrait when gold contains two native LevelAmount subtrees", () => {
-    const env = loadSettingsEnvironment();
-    const { portrait, gold, border, add } = fixture(env);
-    // citadel_hud_player_level.xml contains another ScalingStatImage/LevelAmount
-    // with its own HeroImage, in addition to the mod's gold layout copy.
-    const playerLevel = add(gold, "PlayerLevel");
-    const duplicate = add(playerLevel, "LevelAmount", "ScalingStatImage");
-    add(duplicate, "HeroImage");
-    const q = env.hud.sandbox.global.QOL;
-    const cfg = { HEALTHBAR_TYPE: 2 };
-    let reparents = 0;
-    for (const panel of [portrait, duplicate]) {
-        const setParent = panel.SetParent.bind(panel);
-        panel.SetParent = parent => { reparents++; setParent(parent); };
-    }
-    q.healthbar.fg.update(env.hud.root, cfg);
-    assert.equal(reparents, 1);
-    for (let i = 0; i < 100; i++) {
-        cfg.PLAYER_HEALTHBAR_SCALE = i % 2 ? 156 : 100;
-        q.healthbar.fg.update(env.hud.root, cfg);
-        assert.equal(reparents, 1, "a second source must not cause a new attachment");
-        assert.equal(portrait.GetParent(), border);
-        assert.equal(duplicate.GetParent(), playerLevel);
-        assert.equal(portrait.BHasClass("qol_fg_portrait"), true);
-    }
-    assert.equal(reparents, 1, "no restore/attach oscillation on later ticks");
-    q.healthbar.fg.update(env.hud.root, { HEALTHBAR_TYPE: 0 });
-    assert.equal(reparents, 2, "restore exactly once on disable");
-    assert.equal(portrait.GetParent(), gold);
-    assert.equal(gold.GetChild(1), portrait);
-    assert.equal(duplicate.style.visibility, undefined);
-});

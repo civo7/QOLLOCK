@@ -1,96 +1,129 @@
-// FG portrait shares the native bar's scale/offset ancestry.
+// FG owns its portrait; native gold/level panels keep their original bindings.
 (function() {
     'use strict';
     var U = QOL.utils;
-    var moved = null;
-    var originalParent = null;
-    var originalIndex = -1;
-    var heroImage = null;
-    var portraitSig = null;
-    var heroSig = null;
-    // Reparented native panels retain their original layout's stylesheet scope.
-    // Apply owned geometry explicitly instead of relying on a HUD CSS selector
-    // to override gold's collapsed #LevelAmount and half-scale #HeroImage.
+    var P = QOL.core.panel;
+    var portrait = null;
+    var hero = '';
+    // Explicit m_strIconImageSmall resources from extracted scripts/heroes.vdata.
+    // Keep extensions: e.g. Vindicta uses PNG, Sinclair uses PSD. Unknown heroes
+    // stay hidden rather than guessing a resource or displaying Abrams.
+    var heroIcons = {
+        hero_inferno: 'inferno_sm_psd',
+        hero_gigawatt: 'gigawatt_sm_psd',
+        hero_hornet: 'hornet_sm_png',
+        hero_ghost: 'spectre_sm_psd',
+        hero_atlas: 'bull_sm_psd',
+        hero_wraith: 'wraith_sm_psd',
+        hero_forge: 'engineer_sm_psd',
+        hero_chrono: 'chrono_sm_psd',
+        hero_dynamo: 'sumo_sm_psd',
+        hero_kelvin: 'kelvin_sm_psd',
+        hero_haze: 'haze_sm_psd',
+        hero_astro: 'astro_sm_psd',
+        hero_bebop: 'bebop_sm_psd',
+        hero_nano: 'nano_sm_psd',
+        hero_orion: 'archer_sm_psd',
+        hero_krill: 'digger_sm_psd',
+        hero_shiv: 'shiv_sm_psd',
+        hero_tengu: 'tengu_sm_psd',
+        hero_kali: 'kali_sm_psd',
+        hero_warden: 'warden_sm_psd',
+        hero_yamato: 'yamato_sm_psd',
+        hero_lash: 'lash_sm_psd',
+        hero_viscous: 'viscous_sm_psd',
+        hero_gunslinger: 'gunslinger_sm_psd',
+        hero_yakuza: 'yakuza_sm_psd',
+        hero_genericperson: 'genericperson_sm_psd',
+        hero_tokamak: 'tokamak_sm_psd',
+        hero_wrecker: 'wrecker_sm_psd',
+        hero_rutger: 'rutger_sm_psd',
+        hero_synth: 'synth_sm_psd',
+        hero_thumper: 'thumper_sm_psd',
+        hero_mirage: 'mirage_sm_psd',
+        hero_slork: 'slork_sm_psd',
+        hero_cadence: 'cadence_sm_psd',
+        hero_targetdummy: 'targetdummy_sm_psd',
+        hero_viper: 'kali_sm_psd',
+        hero_vandal: 'vandal_sm_psd',
+        hero_magician: 'magician_sm_psd',
+        hero_trapper: 'trapper_sm_psd',
+        hero_operative: 'operative_sm_psd',
+        hero_vampirebat: 'vampirebat_sm_psd',
+        hero_drifter: 'drifter_sm_psd',
+        hero_priest: 'priest_sm_psd',
+        hero_frank: 'frank_sm_psd',
+        hero_bookworm: 'bookworm_sm_psd',
+        hero_boho: 'hornet_sm_png',
+        hero_doorman: 'doorman_sm_psd',
+        hero_skyrunner: 'skyrunner_sm_psd',
+        hero_swan: 'swan_sm_psd',
+        hero_punkgoat: 'punkgoat_sm_psd',
+        hero_graf: 'graf_sm_psd',
+        hero_fortuna: 'fortuna_sm_psd',
+        hero_necro: 'necro_sm_psd',
+        hero_fencer: 'fencer_sm_psd',
+        hero_familiar: 'familiar_sm_psd',
+        hero_werewolf: 'werewolf_sm_psd',
+        hero_unicorn: 'unicorn_sm_psd'
+    };
     // Hexagon center: (1850 / 2048 - 0.5) * 400 = 161px from frame center.
     var portraitStyles = {
-        visibility: "visible", opacity: "1", ignoreParentFlow: "true",
-        flowChildren: "none", horizontalAlign: "center", verticalAlign: "center",
-        x: "0px", y: "161px", margin: "0px", width: "48px", height: "48px",
-        uiScale: "100%", transform: "rotateZ(-90deg)", borderRadius: "50%",
-        overflow: "clip", backgroundImage: "none", zIndex: "105"
+        visibility: 'visible', opacity: '1', ignoreParentFlow: 'true',
+        horizontalAlign: 'center', verticalAlign: 'center',
+        x: '0px', y: '161px', margin: '0px', width: '48px', height: '48px',
+        uiScale: '100%', transform: 'rotateZ(-90deg)', borderRadius: '50%',
+        overflow: 'clip', zIndex: '105'
     };
-    var heroStyles = {
-        visibility: "visible", opacity: "1", margin: "0px", width: "100%",
-        height: "100%", maxWidth: "100%", maxHeight: "100%",
-        uiScale: "100%", overflow: "clip"
-    };
+    var styleSig = null;
 
-    function clearOwned(panel, styles) {
-        if (!U.IsPanelValid(panel)) return;
-        Object.keys(styles).forEach(function(key) { U.ClearStyleSafe(panel, key); });
-    }
-
-    function restore() {
-        clearOwned(heroImage, heroStyles);
-        clearOwned(moved, portraitStyles);
-        if (U.IsPanelValid(moved)) {
-            moved.RemoveClass("qol_fg_portrait");
-            if (U.IsPanelValid(originalParent)) {
-                moved.SetParent(originalParent);
-                var sibling = originalParent.GetChild(originalIndex);
-                if (sibling && sibling !== moved) originalParent.MoveChildBefore(moved, sibling);
-            }
-        }
-        moved = null;
-        originalParent = null;
-        originalIndex = -1;
-        heroImage = null;
-        portraitSig = null;
-        heroSig = null;
-        QOL.state.fgHeroImageMoved = false;
+    function reset() {
+        if (U.IsPanelValid(portrait)) portrait.visible = false;
+        P.delete(portrait);
+        portrait = null;
+        hero = '';
+        styleSig = null;
     }
 
     function update(root, cfg) {
-        var enabled = Number(cfg && cfg.HEALTHBAR_TYPE) === 2;
-        if (!enabled || !U.IsPanelValid(root) || root.BHasClass("InHideout")) {
-            restore();
+        if (Number(cfg && cfg.HEALTHBAR_TYPE) !== 2 || !U.IsPanelValid(root)) {
+            reset();
             return;
         }
-        var health = root.FindChildTraverse("health_and_abilities_container");
-        var bars = health && health.FindChildTraverse("hud_health_bars");
-        var anchor = U.FindFirstPanelByClass(bars, "health_bar_border");
-        if (U.IsPanelValid(moved) && (!U.IsPanelValid(anchor) ||
-            moved.GetParent() !== anchor)) {
-            restore();
-        }
+        var health = root.FindChildTraverse('health_and_abilities_container');
+        var bars = health && health.FindChildTraverse('hud_health_bars');
+        var anchor = U.FindFirstPanelByClass(bars, 'health_bar_border');
+        if (U.IsPanelValid(portrait) && portrait.GetParent() !== anchor) reset();
         if (!U.IsPanelValid(anchor)) return;
-        if (!U.IsPanelValid(moved)) {
-            // Gold and its native PlayerLevel both contain LevelAmount/HeroImage.
-            // Resolve only when unattached; a second source is not a replacement
-            // for the live portrait we already own (that caused 20Hz swapping).
-            var gold = root.FindChildTraverse("gold_and_ap_container");
-            var source = gold && gold.FindChildTraverse("LevelAmount");
-            if (!U.IsPanelValid(source)) return;
-            originalParent = source.GetParent();
-            originalIndex = originalParent.Children().indexOf(source);
-            moved = source;
-            moved.SetParent(anchor);
-            moved.AddClass("qol_fg_portrait");
-            portraitSig = null;
-            heroSig = null;
-            QOL.state.fgHeroImageMoved = true;
+        if (!U.IsPanelValid(portrait)) {
+            portrait = P.create('Image', anchor, 'QOLFGPortrait');
+            hero = '';
+            styleSig = null;
+            if (!portrait) return;
+            portrait.AddClass('qol_fg_portrait');
+            portrait.hittest = false;
+            portrait.visible = false;
         }
-        var nextHero = moved.FindChildTraverse("HeroImage");
-        if (nextHero !== heroImage) {
-            clearOwned(heroImage, heroStyles);
-            heroImage = nextHero;
-            heroSig = null;
+        styleSig = P.syncStyles(portrait, portraitStyles, styleSig).sig;
+        // The pregame reveal identifies the hero before the crosshair appears.
+        // In hero testing it also wins over a crosshair left from the last pawn.
+        var probe = QOL.core.heroProbe;
+        var pregameHero = probe.readHeroFromPregame(root);
+        var nextHero = pregameHero || probe.readHeroFromCrosshair(root);
+        if (!nextHero || !Object.prototype.hasOwnProperty.call(heroIcons, nextHero)) {
+            if (portrait.visible) portrait.visible = false;
+            hero = '';
+            return;
         }
-        portraitSig = QOL.core.panel.syncStyles(moved, portraitStyles, portraitSig).sig;
-        if (U.IsPanelValid(heroImage)) {
-            heroSig = QOL.core.panel.syncStyles(heroImage, heroStyles, heroSig).sig;
+        if (nextHero !== hero) {
+            portrait.SetImage('s2r://panorama/images/heroes/' + heroIcons[nextHero] + '.vtex');
+            hero = nextHero;
         }
+        if (!portrait.visible) portrait.visible = true;
     }
 
-    QOL.healthbar.fg = { update: update };
+    QOL.healthbar.fg = {
+        update: update,
+        isActive: function() { return U.IsPanelValid(portrait); }
+    };
 })();

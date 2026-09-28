@@ -103,7 +103,8 @@
                     // schedules before idling; Scheduler only owns this poll.
                     QOL.healthbar.mc.update(root, {}, 0, false);
                     QOL.healthbar.budhud.update(root, {}, 0, 0);
-                    QOL.healthbar.fg.update(root, {});
+                    var hideoutCfg = (ctx && ctx.config && ctx.config.all) ? ctx.config.all() : {};
+                    QOL.healthbar.fg.update(root, hideoutCfg);
                     if (_loop) _loop.reschedule(0.5);
                     return;
                 }
@@ -129,7 +130,7 @@
                     QOL.healthbar.budhud.update(root, cfg, healthbarType, nowMs);
                 }
 
-                var shouldRunFgRuntime = fgHealthbarEnabled || State.fgHeroImageMoved;
+                var shouldRunFgRuntime = fgHealthbarEnabled || QOL.healthbar.fg.isActive();
                 if (shouldRunFgRuntime && QOL.healthbar && QOL.healthbar.fg && QOL.healthbar.fg.update) {
                     QOL.healthbar.fg.update(root, cfg);
                 }

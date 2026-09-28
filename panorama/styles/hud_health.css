@@ -683,14 +683,19 @@
 	height: 100%;
 }
 
+/* Frame alpha opening spans texture y=560..1704 at height 2048.
+ * At 400px: y=-90.625..132.8125 relative to the frame center.
+ * Enclose BOTH slanted ends with [-91,133], not the center-line slit.
+ * Explicit y + zero margins avoids inherited margins changing center alignment. */
 .fg_healthbar_active:not(.minimalist_healthbar_active) #health_bar
 {
 	background-color: #363636dd;
 	width: 25px;
-	height: 292px;
+	height: 224px;
 	horizontal-align: center;
 	vertical-align: center;
-	margin-top: 20px;
+	margin: 0px;
+	y: 21px;
 	opacity-mask: none;
 	opacity-mask-threshold: 0% 100%;
 }
@@ -830,10 +835,11 @@
 .fg_healthbar_active:not(.minimalist_healthbar_active) #pending_incoming_heal
 {
 	width: 25px;
-	height: 292px;
+	height: 224px;
 	horizontal-align: center;
 	vertical-align: center;
-	margin-top: 20px;
+	margin: 0px;
+	y: 21px;
 	opacity-mask: none;
 	opacity-mask-threshold: 0% 100%;
 }
@@ -841,10 +847,11 @@
 .fg_healthbar_active:not(.minimalist_healthbar_active) #pending_incoming_damage
 {
 	width: 25px;
-	height: 292px;
+	height: 224px;
 	horizontal-align: center;
 	vertical-align: center;
-	margin-top: 20px;
+	margin: 0px;
+	y: 21px;
 	opacity-mask: none;
 	opacity-mask-threshold: 0% 100%;
 }
@@ -875,10 +882,10 @@
 	horizontal-align: center;
 	vertical-align: center;
 	background-size: cover;
+	background-position: center;
 	background-repeat: no-repeat;
 	background-image: url("s2r://panorama/images/qollock/qol_fg_healthbar_border_png.vtex");
 }
-
 .fg_healthbar_active:not(.minimalist_healthbar_active) .healthLow #health_bar_frame
 {
 	wash-color: QOL_HEALTHBAR_BG_DARK;
