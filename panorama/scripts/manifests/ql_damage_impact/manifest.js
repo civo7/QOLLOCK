@@ -19,8 +19,9 @@
 
     FR.register({
         id: "ql_damage_impact",
-        enabledByDefault: false,
-        enableKey: "ENABLE_DAMAGE_IMPACT",
+        // Keep the visibility controller alive when the indicator is hidden so
+        // it can hide native panels created after the setting changes.
+        enabledByDefault: true,
         settings: [
             { key: "ENABLE_DAMAGE_IMPACT", type: "toggle", default: true },
             { key: "DAMAGE_IMPACT_SCALE", type: "slider", min: 0.5, max: 2.0, step: 0.05, default: 1.0 },

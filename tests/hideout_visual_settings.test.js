@@ -118,6 +118,25 @@ test("damage impact styles follow a replacement panel and release on default", (
     assert.deepEqual(hud.clock.errors, []);
 });
 
+test("damage impact visibility toggle hides current and newly created panels", () => {
+    const hud = createHud({ inHideout: true });
+    hud.assertLoaded();
+    const { $, QOL: Q } = hud.sandbox.global;
+    const first = $.CreatePanel("Panel", hud.root, "damage_impact");
+    Q.core.ConfigStore.set("ql_damage_impact", "ENABLE_DAMAGE_IMPACT", false);
+    assert.equal(first.BHasClass("qol-hidden"), true);
+
+    first.DeleteAsync(0);
+    hud.clock.advance(1);
+    const replacement = $.CreatePanel("Panel", hud.root, "damage_impact");
+    hud.clock.advance(600);
+    assert.equal(replacement.BHasClass("qol-hidden"), true);
+
+    Q.core.ConfigStore.set("ql_damage_impact", "ENABLE_DAMAGE_IMPACT", true);
+    assert.equal(replacement.BHasClass("qol-hidden"), false);
+    assert.deepEqual(hud.clock.errors, []);
+});
+
 test("shop layout follows replacement MainPanel with unchanged settings", () => {
     const hud = createHud({ inHideout: true });
     hud.assertLoaded();
