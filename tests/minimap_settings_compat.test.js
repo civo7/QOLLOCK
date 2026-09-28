@@ -4,7 +4,7 @@ const test = require("node:test");
 const assert = require("node:assert/strict");
 const loadSettingsEnvironment = require("./load_settings_environment");
 
-test("removed icon scale has no UI or runtime owner while 4.0.1 presets remain readable", () => {
+test("removed icon scale has no UI, schema or runtime owner in 4.0.1", () => {
     const { global: g, hud, list } = loadSettingsEnvironment();
     const key = "MINIMAP_ICON_SCALE";
     assert.equal(Object.hasOwn(g.MOD_CONFIG, key), false);

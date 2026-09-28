@@ -57,7 +57,7 @@ proof of active runtime behavior. See [adding settings](../ADDING_SETTINGS.md).
 ## Verification boundary
 
 The experimental Icon Scale control and its per-icon runtime styling have been
-removed. Compact 4.0.1 presets remain readable, but new exports omit that field.
+removed. The field was removed before 4.0.1 release.
 The existing Size sliders control Base/Alt/Tab minimap geometry; native icon
 rendering still requires client verification.
 
@@ -73,7 +73,7 @@ and the checkbox.
 This removes whole-HUD magnification; it does not guarantee a fixed pixel size
 for icons whose native dimensions depend on the map size. No individual icon
 styles or new minimap CSS rules are applied. Switching modes is reactive and
-uses the same offsets and zoom selection. Compact 4.0.2 stores the toggle.
+uses the same offsets and zoom selection. Compact 4.0.1 stores the toggle.
 Client checks must include camp/Sinner markers, range circles, icon positions,
 click targets, Alt/Tab zoom and switching back to the default mode.
 
