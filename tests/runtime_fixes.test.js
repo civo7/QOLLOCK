@@ -851,7 +851,7 @@ test("stat bonuses hide in the lobby and return on match reentry", () => {
     assert.strictEqual(overlay.style.visibility, "visible");
 });
 
-test("recent purchases clear previous match entries on entering the lobby", () => {
+test("recent purchases preserve engine-owned history on entering the lobby", () => {
     const hud = sim.createHud({ inHideout: false });
     hud.assertLoaded();
     const { $, QOL: Q } = hud.sandbox.global;
@@ -863,10 +863,10 @@ test("recent purchases clear previous match entries on entering the lobby", () =
     assert.strictEqual(purchase.IsValid(), true);
     hud.root.AddClass("InHideout");
     hud.clock.advance(300);
-    assert.strictEqual(purchase.IsValid(), false, "Lobby transition must clear the previous match purchase history");
+    assert.strictEqual(purchase.IsValid(), true, "Lobby transition must not destroy native shop purchase rows");
 });
 
-test("disabling recent purchases cancels its delayed native history clear", () => {
+test("disabling recent purchases preserves subsequent native purchases", () => {
     const hud = sim.createHud({ inHideout: false });
     hud.assertLoaded();
     const { $, QOL: Q } = hud.sandbox.global;

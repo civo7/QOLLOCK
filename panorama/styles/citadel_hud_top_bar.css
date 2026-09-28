@@ -166,7 +166,7 @@ CitadelHudTopBarPlayer.ult_cooldowns_active.UltimateCooldownReady #UltimateCoold
 
 .spec_mode .AlwaysPlayerName
 {
-	margin-top: -15px;
+	margin-top: 2px;
 }
 
 .QOLAlwaysPlayerNameFallback

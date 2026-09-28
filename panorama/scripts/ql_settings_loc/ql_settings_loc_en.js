@@ -5,6 +5,8 @@
     var _root = (typeof globalThis !== "undefined") ? globalThis : (typeof window !== "undefined") ? window : {};
     if (!_root.SETTINGS_LOCALE_TEXT) _root.SETTINGS_LOCALE_TEXT = {};
     _root.SETTINGS_LOCALE_TEXT["en"] = {
+    "Fixed Icon Size": "Fixed Icon Size",
+    "Resizes the minimap using width and height instead of scaling the whole HUD. Applies to Base, Alt and Tab views.": "Resizes the minimap using width and height instead of scaling the whole HUD. Applies to Base, Alt and Tab views.",
     "<font color=\"#66cc99\">Free</font> updates for new features, <font color=\"#66cc99\">$5</font> for arbitrary changes": "<font color=\"#66cc99\">Free</font> updates for new features, <font color=\"#66cc99\">$5</font> for arbitrary changes",
     "16:10 Support": "16:10 Support",
     "1st": "1st",
@@ -876,6 +878,8 @@
     "Reload in game; inspect size, opacity and offsets.": "Reload in game; inspect size, opacity and offsets.",
     "Open in a match or sandbox. Compare HUD changes and test gameplay. Stop restores settings without saving the test values.": "Open in a match or sandbox. Compare HUD changes and test gameplay. Stop restores settings without saving the test values.",
     "HUD state recording": "HUD state recording",
+    "Record HUD states and managed callback activity for 60 seconds. Reproduce the stutter or return to hideout. Settings are unchanged.": "Record HUD states and managed callback activity for 60 seconds. Reproduce the stutter or return to hideout. Settings are unchanged.",
+    "After recording, copy HUD transitions, callback timings, delivery delays and active task counts. This is not an FPS measurement.": "After recording, copy HUD transitions, callback timings, delivery delays and active task counts. This is not an FPS measurement.",
     "Record for 60 seconds while playing: open and close the scoreboard, die and respawn. Settings are unchanged.": "Record for 60 seconds while playing: open and close the scoreboard, die and respawn. Settings are unchanged.",
     "Record HUD states": "Record HUD states",
     "HUD state report": "HUD state report",

@@ -283,7 +283,7 @@
 
             function UpdateDl4dReminderRuntime(root, cfg, currentTime, suppressAudio) {
                 if (!IsDl4dReminderRuntimeActive(cfg) || suppressAudio) {
-                    if (State.dl4dCaptionVisible || GetCachedPanel("dl4dCaptionPanel")) HideDl4dCaption();
+                    if (State.dl4dCaptionVisible) HideDl4dCaption();
                     if (!IsDl4dReminderRuntimeActive(cfg)) {
                         State.dl4dLastTime = -1;
                         State.dl4dTriggeredTimes = {};
@@ -380,9 +380,8 @@
                 var reminderTypesEnabled = IsAnyAnnouncerReminderTypeEnabled(cfg);
                 var dl4dReminderEnabled = IsDl4dReminderRuntimeActive(cfg);
 
-                var hasReminderCleanup = !!(
-                    State.dl4dCaptionVisible || GetCachedPanel("dl4dCaptionPanel")
-                );
+                // A hidden reusable label does not require more cleanup work.
+                var hasReminderCleanup = !!State.dl4dCaptionVisible;
                 if (!needsPassiveRuntime && !reminderTypesEnabled && !dl4dReminderEnabled && !hasReminderCleanup) {
                     // Stay below the two-second announcer alert window so a
                     // newly enabled reminder cannot miss its first boundary.
@@ -411,6 +410,9 @@
                 if (hideoutConnected || !dl4dReminderEnabled) {
                     UpdateDl4dReminderRuntime(root, cfg, 0, true);
                 }
+                // Cleanup must not fall through and restart reminders from a
+                // still-valid game clock retained across the hideout transition.
+                if (hideoutConnected || (!reminderTypesEnabled && !dl4dReminderEnabled)) return;
 
                 var clock = EnsureGameTimePanelCache(root);
                 if (!(clock && clock.text && clock.text.indexOf(":") > -1)) return;

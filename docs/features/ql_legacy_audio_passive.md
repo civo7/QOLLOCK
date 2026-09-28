@@ -39,8 +39,9 @@ work backs off to one second. The runtime reads the existing `HudGameTime` or
 two-second alert window and tracks fired boundaries to prevent duplicates.
 `onSettingsChanged()` refreshes fallback config; the live feature view is read
 on the next tick. `onDisable()` stops feature tasks and resets trigger/caption
-state. Street Brawl suppresses reminder audio; hideout context prevents ordinary
-reminder work unless pending caption cleanup is needed.
+state. Street Brawl suppresses reminder audio. Hideout cleans a visible caption
+once and exits before clock discovery/reading or reminder dispatch. A cached
+hidden caption does not count as pending cleanup and can be reused next match.
 
 DL4D captions create/reuse `QOLDL4DCaption` and use a token-guarded scheduled hide.
 The manifest diagnostic checks for the game clock panel, not audio playback.
@@ -54,3 +55,12 @@ default, duplicate suppression, and bridge lead times of 0, 15, 30, and 60 secon
 across two cycles. It does not prove native sound asset playback or persistence
 through the game's storage boundary. In-game checks require the maintainer's
 fresh VPK build.
+
+Transition regressions retain a valid clock across both known hideout classes,
+after first displaying a DL4D caption. They verify no further clock reads,
+caption writes or audio in hideout and normal caption reuse after re-entry.
+Disabling reminders also returns to idle even with a cached hidden caption.
+Before the fix, caption cleanup could fall through in the same tick and show a
+new reminder from the retained clock. This is a reproduced JS logic defect;
+whether a particular client retains that clock, or whether this caused its
+stutters, still requires native evidence.

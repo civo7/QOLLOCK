@@ -495,6 +495,11 @@
         if (!configId || typeof configId !== "string") return keys;
         if (!Object.prototype.hasOwnProperty.call(modCfg, configId) || !Object.prototype.hasOwnProperty.call(defCfg, configId)) return keys;
         keys.push(configId);
+        const checkbox = options && options.inlineCheckbox;
+        if ((type === "slider" || type === "angle_slider") && checkbox &&
+            Object.prototype.hasOwnProperty.call(modCfg, checkbox.key) && Object.prototype.hasOwnProperty.call(defCfg, checkbox.key)) {
+            keys.push(checkbox.key);
+        }
         return keys;
     }
 
@@ -937,14 +942,18 @@
         inputPanel.SetPanelEvent("onblur", applyNow);
     }
 
-    function createSliderRow(parent, label, configId, shapeKey, description, isAngle) {
+    function createSliderRow(parent, label, configId, shapeKey, description, isAngle, inlineCheckbox) {
         const shape = SLIDER_SHAPES[shapeKey];
         if (!shape) {
             $.Msg("[QOLLock] ERROR: missing slider shape '" + shapeKey + "' for " + configId);
             return createRow(parent, label, configId, "slider", 0, 1, 0.05, null, description || null);
         }
         const type = isAngle ? "angle_slider" : "slider";
-        return createRow(parent, label, configId, type, shape.min, shape.max, shape.step, null, description || null);
+        if (inlineCheckbox && getSearchCollectMode()) {
+            createRow(parent, inlineCheckbox.label, inlineCheckbox.key, "toggle", null, null, null, null, inlineCheckbox.description);
+        }
+        return createRow(parent, label, configId, type, shape.min, shape.max, shape.step,
+            inlineCheckbox ? { inlineCheckbox } : null, description || null);
     }
 
     function getDefaultHeroIconPath(heroId) {
@@ -1110,6 +1119,7 @@
             update();
             saveAndSync();
             if (refreshListOnChange) requestSettingsListRefresh(0, true);
+            if (toggleOptions && typeof toggleOptions.onChanged === "function") toggleOptions.onChanged();
             getPreview().showForConfigId(configId);
         });
 
@@ -1558,6 +1568,7 @@
         const modCfg = getConfig();
 
         if (type === "slider" || type === "angle_slider") {
+            const checkboxOptions = options && options.inlineCheckbox;
             const sliderValueGroup = $.CreatePanel("Panel", row, "");
             sliderValueGroup.AddClass("SliderValueGroup");
             sliderValueGroup.AddClass("SettingControlRoot");
@@ -1646,6 +1657,16 @@
                 getPreview().showForConfigId(configId);
             });
 
+            const checkbox = checkboxOptions ? createSectionTitleCheckboxToggle(sliderValueGroup,
+                checkboxOptions.label, checkboxOptions.key, {
+                    description: checkboxOptions.description,
+                    onChanged: refreshRowChangedState
+                }) : null;
+            if (checkbox) {
+                checkbox.style.maxWidth = "220px";
+                sliderValueGroup.style.width = "fit-children";
+                sliderContainer.style.width = "140px";
+            }
             syncRowVisualState = () => {
                 if (!row || !row.IsValid || !row.IsValid()) return false;
                 let nextVal = Number(modCfg[configId]);
@@ -1659,6 +1680,7 @@
                     slider.value = nextVal;
                 }
                 input.text = formatSliderInputValue(nextVal);
+                if (checkbox) checkbox.qolRefreshTitleCheckbox();
                 refreshRowChangedState();
                 return true;
             };

@@ -13,6 +13,8 @@ performance records live in the existing State.
 | `startBenchmark(durationSec, onComplete)` | Starts callback timing; returns `{stop()}` or null if State is unavailable. Completion receives `(report, stats)`. |
 | `isBenchmarkActive()` | Reports the current benchmark flag. |
 | `formatBenchmarkReport(stats, durationSec, activeCount)` | Formats recorded benchmark data, not rendered frame timings. |
+| `getWorkSnapshot()` | Read-only array of `{id, polls, once}` outstanding managed tasks, without panel handles. |
+| `startWorkObservation()` | Opt-in bounded observation; returns `{sample(), stop()}`. Replaces the previous observer without changing scheduled production work. |
 
 The first tick has jitter up to half the interval. `reschedule` changes the rate
 for subsequent scheduling; it does not cancel and immediately restart a pending
@@ -47,3 +49,29 @@ owner invalidation suppress pending work. Zero delay is valid; negative/nonfinit
 delays normalize to zero. Errors are logged and emitted as `scheduler:error`.
 One-shots do not record polling timings or emit `scheduler:tick_ok`.
 Owner validity exceptions also stop recurring loops safely.
+
+## Transition work observation
+
+The HUD state recorder uses `startWorkObservation()` independently of the
+benchmark. `sample()` drains interval counters (completed callbacks, summed and
+maximum elapsed milliseconds, slowest owner, maximum delivery delay and errors)
+and counts outstanding managed polls/one-shots. `stop()` detaches observation
+and returns per-owner totals plus sampled start/peak/end outstanding counts.
+Repeated stop calls return stable copies; an old stop cannot stop a newer observer.
+There are at most 128 owner rows; overflow is aggregated under `<other>`.
+
+Observation creates no timers and performs no panel traversal or logging. The
+caller owns sampling and cancellation. Timing and per-callback aggregation only
+run while observation is active. The census sees feature-owned managed work;
+unowned tasks have callback timing but no registered outstanding-task count.
+Peaks between samples can be missed. A poll finishing after a capture is stopped
+is not added to that capture (including its final recorder callback).
+
+Delivery delay is `callback start - scheduled due time`, clamped to zero. The
+first pending delivery scheduled before observation has no due-time measurement.
+It can reflect loading, focus throttling, other engine work or clock adjustments;
+it does not identify a guilty callback. Elapsed callback time uses Date-based
+milliseconds and includes synchronous native work/error handling, not deferred
+layout or rendering. Raw schedules, event handlers, separate quickbuy/settings/
+profile contexts, GPU and FPS remain outside coverage. Zero values do not
+exonerate those paths. See [HUD recording](../ui/hud_state_recording.md).

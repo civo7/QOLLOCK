@@ -24,6 +24,11 @@ Layout settings are `PASSIVE_COOLDOWN_SIZE` (default `40`, range 30–60),
   are rescanned after 5270 ms; changed inventories after 1630 ms; empty results
   after 1500 ms. Matching also considers tier, category, images and exception
   groups: a single class-to-item map cannot replace those rules.
+- Source IDs and acquisition-order counters start at zero on creation and every
+  overlay reset. Each item owns a distinct cooldown history and style cache;
+  rescans preserve its key and acquisition order. Uninitialized counters produced
+  the shared key `item_src_NaN`, allowing a ready item to trigger repeated false
+  completion flashes while a different item was cooling down.
 - The native `abilitiesContainer` reference is cached, revalidated each update,
   and replaced when the HUD changes. Opening the shop collapses the overlay and
   uses the idle cadence; closing it requests a source rescan. Hideout suppresses
@@ -44,8 +49,11 @@ Layout settings are `PASSIVE_COOLDOWN_SIZE` (default `40`, range 30–60),
 
 ## Validation limits
 
-Node tests exercise probe retry, dynamic text discovery, source replacement and
-style parsing using mocked panels. Native death/respawn behavior and C++ dialog
-variable updates require the maintainer's Panorama Debugger and a fresh VPK
-repack. This feature does not assume that death removes a particular cooldown
-class or always freezes a native mask.
+Node tests exercise probe retry, dynamic text discovery, source replacement,
+style parsing, and independent cooldown histories across multiple items, rescans
+and overlay resets using mocked panels. After repacking, check Advanced mode with
+all four category filters and several active/passive items: triggering an
+ability-linked item must not flash an unrelated ready item. Native death/respawn
+behavior and C++ dialog variable updates require the maintainer's Panorama
+Debugger and a fresh VPK repack. This feature does not assume that death removes
+a particular cooldown class or always freezes a native mask.

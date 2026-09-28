@@ -4,6 +4,10 @@ Users report FPS drops and bad 1% lows in large teamfights. This is the tooling
 for finding out which part of the mod is responsible, and for proving a fix
 worked.
 
+For stutters that appear after a match/purchase and persist in hideout, start
+with the [transition investigation plan](STUTTER_INVESTIGATION.md). It separates
+reproduced source defects from client hypotheses and defines before/after runs.
+
 ## Why not just read the code
 
 Because the answers are counter-intuitive. Of the things that looked most
@@ -13,6 +17,51 @@ shop is open. Static reading also cannot rank: two functions that each "walk the
 tree sometimes" can differ by a factor of forty.
 
 ## The tools
+
+### `node scripts/audit_runtime_lifecycle.js`
+
+Runs repeated event/transition scenarios against production scripts, counting
+raw `$.Schedule` chains as well as modeled traversal/style/class/text operations.
+Unlike the managed client benchmark, it loads the separate quickbuy context.
+
+```
+node scripts/audit_runtime_lifecycle.js --cycles 3
+node scripts/audit_runtime_lifecycle.js --cycles 10 --json
+node scripts/audit_runtime_lifecycle.js --quickbuy-ref 607b1ef^ --cycles 3
+```
+
+The last command is a negative control: it reads only the historical quickbuy
+script through `git show`, without changing the checkout. Other scripts/layouts
+remain from the working tree. It is not a historical full-build comparison.
+The command is expected to fail: the old script accumulates 21/41/61 pending
+callbacks after three batches of 20 queue-change events; the fixed script keeps
+one. Failure includes callback errors rather than interpreting crashed work as
+an optimization. `--cycles` accepts 1 through 10. JSON includes scheduling
+origins and top lookup misses. Origins are stack-derived initial allocation
+sites (or inherited chain origins), not a native allocation profiler.
+
+Quickbuy scenarios use a reduced fixture with two queue entries, one populated
+preview, active/disabled modes, repeated verified queue events, a retained valid
+context in hideout, and finally a destroyed context. Preview `SetImage` calls
+and requested path changes are counted separately; no asset pipeline is modeled.
+The HUD scenario uses the existing profiler tree and default configuration,
+repeated match/hideout class changes and the actual scoreboard event bridge.
+It does not exercise all settings, perform actual purchases, prove native
+panel retention, or simulate native match teardown. HUD growth is reported for
+investigation; quickbuy's known single-poll invariant and collected errors fail
+the command. A green run says nothing about unexercised branches or frame times.
+
+`installScheduleProbe(sandbox)` in `scripts/simulator/perf/schedules.js` can be
+installed before loading any other sandbox context for focused regressions.
+Its window reset preserves pending tasks. The profiler's optional `beforeLoad`
+hook permits instrumentation before boot; no wrappers are shipped to the game.
+Scheduling outside that sandbox's `$.Schedule` API is not counted by the probe.
+`tests/runtime_lifecycle_audit.test.js` includes a fault injection that recreates
+the quickbuy leak, so a broken observer cannot pass by always reporting zero.
+
+For actual client evidence use [HUD recording](ui/hud_state_recording.md), then
+compare frame-time captures separately. Stable task counts can coexist with
+expensive work in each callback; inspect operation changes as well as counts.
 
 ### `node scripts/audit_panel_ids.js`
 

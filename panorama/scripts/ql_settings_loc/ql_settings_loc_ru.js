@@ -5,6 +5,8 @@
     var _root = (typeof globalThis !== "undefined") ? globalThis : (typeof window !== "undefined") ? window : {};
     if (!_root.SETTINGS_LOCALE_TEXT) _root.SETTINGS_LOCALE_TEXT = {};
     _root.SETTINGS_LOCALE_TEXT["ru"] = {
+    "Fixed Icon Size": "Фиксированный размер иконок",
+    "Resizes the minimap using width and height instead of scaling the whole HUD. Applies to Base, Alt and Tab views.": "Изменяет ширину и высоту миникарты вместо масштабирования всего HUD. Применяется в обычном режиме, с Alt и Tab.",
     "<font color=\"#66cc99\">Free</font> updates for new features, <font color=\"#66cc99\">$5</font> for arbitrary changes": "<font color=\"#66cc99\">Бесплатные</font> изменения для новых функций, <font color=\"#66cc99\">$5</font> за произвольные правки",
     "16:10 Support": "Поддержка 16:10",
     "1st": "1-й",
@@ -876,6 +878,8 @@
     "Reload in game; inspect size, opacity and offsets.": "Перезарядитесь в игре; проверьте размер, прозрачность и сдвиги.",
     "Open in a match or sandbox. Compare HUD changes and test gameplay. Stop restores settings without saving the test values.": "Откройте в матче или песочнице. Сравнивайте изменения HUD и проверяйте их в игре. Остановка восстановит настройки без сохранения тестовых значений.",
     "HUD state recording": "Запись состояний HUD",
+    "Record HUD states and managed callback activity for 60 seconds. Reproduce the stutter or return to hideout. Settings are unchanged.": "Запись состояний HUD и работы управляемых колбэков в течение 60 секунд. Воспроизведите статтеры или вернитесь в убежище. Настройки не меняются.",
+    "After recording, copy HUD transitions, callback timings, delivery delays and active task counts. This is not an FPS measurement.": "После записи скопируйте переходы HUD, время выполнения колбэков, задержки их запуска и число активных задач. Это не измерение FPS.",
     "Record for 60 seconds while playing: open and close the scoreboard, die and respawn. Settings are unchanged.": "Запись 60 секунд в игре: откройте и закройте таблицу счёта, умрите и возродитесь. Настройки не меняются.",
     "Record HUD states": "Записать состояния HUD",
     "HUD state report": "Отчёт о состояниях HUD",

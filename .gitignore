@@ -33,3 +33,6 @@ build_mod/*.vpk
 #   node scripts/profile_hud.js --seconds 20 --save before
 # See docs/PROFILING.md.
 scripts/simulator/perf/runs/
+
+# Local pre-update source snapshots. Keep these across game updates.
+scripts/game_update_runs/

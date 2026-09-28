@@ -197,10 +197,12 @@ function createProfiledHud({
     configOverrides = {},
     warmupMs = 8000,
     capturedTree = null,
+    beforeLoad = null,
 } = {}) {
     const clock = new Clock(1000);
     const doc = new Document(clock);
     const sandbox = new Sandbox({ clock, doc, name: "hud" });
+    if (beforeLoad) beforeLoad(sandbox);
 
     // Attribution hooks the wrappers call from inside the VM.
     sandbox.global.__profEnter = (label) => counters.enter(label);

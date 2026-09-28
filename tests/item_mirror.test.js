@@ -13,8 +13,10 @@ function fixture() {
     // Expose private operations only in this VM, while executing the real manifest.
     const instrumented = code.replace("onEnable: function() {", `
         sync: _syncMirrorItemFromSourceMulti,
+        reconcile: _reconcileItemMirrorSourcesMulti,
         style: _getInlineStyleProperty,
         onEnable: function() {`);
+    const scheduled = [];
     const sandbox = {
         Date: { now: () => now },
         QOL: {
@@ -22,7 +24,7 @@ function fixture() {
             utils: { PerfNowMs: () => now, IsPanelValid: p => !!p && p.valid !== false }
         },
         QOL_UTILS: { SetPanelOpacitySafe: (p, value) => { p.style.opacity = value; } },
-        $: { Schedule: () => {} }
+        $: { Schedule: (delay, callback) => { scheduled.push({ delay, callback }); } }
     };
     vm.runInNewContext(instrumented, sandbox);
     const api = manifest.create({});
@@ -39,9 +41,10 @@ function fixture() {
     });
     const source = { key: "test", ownerIcon: owner(), iconContainer: panel(), sourceImage: panel(), cooldownMask: panel() };
     source.cooldownMask.style.clip = "radial(50% 50%, 0deg, 180deg)";
-    const slot = { icon: panel(), modContainer: panel(), cooldownMask: panel(), cooldownText: panel() };
+    const makeSlot = () => ({ icon: panel(), modContainer: panel(), cooldownMask: panel(), cooldownText: panel(), readyOverlay: panel() });
+    const slot = makeSlot();
     return {
-        api, source, slot, owner,
+        api, source, slot, owner, makeSlot, scheduled,
         tick: ms => { now += ms; api.sync(slot, source); },
         searches: () => searches,
         setText: value => { text = value; },
@@ -63,6 +66,39 @@ test("item mirror backs off empty text probes and discovers a late native label"
     f.setText("11s");
     f.tick(100);
     assert.equal(f.slot.cooldownText.text, "11", "successful probes retain the fast cadence");
+});
+
+test("multiple item mirrors keep independent cooldown histories after discovery and reset", () => {
+    const f = fixture();
+    const coolingItem = { ...f.source, itemClassName: "fireRatePlus" };
+    const readyItem = { ...f.source, ownerIcon: f.owner(), itemClassName: "magicBurst" };
+    readyItem.ownerIcon.BHasClass = () => false;
+
+    for (let cycle = 0; cycle < 2; cycle++) {
+        f.setCooling(true);
+        f.setText("12s");
+        const sources = f.api.reconcile([coolingItem, readyItem]);
+        const slots = [f.makeSlot(), f.makeSlot()];
+        const before = f.scheduled.length;
+        for (let tick = 0; tick < 5; tick++) {
+            for (let i = 0; i < sources.length; i++) f.api.sync(slots[i], sources[i]);
+        }
+        assert.equal(f.scheduled.length, before, "a ready neighbor must not trigger completion flashes");
+        assert.equal(slots[0].cooldownText.text, "12");
+        assert.equal(slots[1].cooldownText.style.visibility, "collapse");
+        assert.notEqual(sources[0].key, sources[1].key);
+        assert.ok(sources.every(s => Number.isFinite(s.acquisitionOrder)));
+        assert.ok(sources[0].acquisitionOrder < sources[1].acquisitionOrder);
+
+        const rescanned = f.api.reconcile([readyItem, coolingItem]);
+        assert.deepEqual(Array.from(rescanned, s => s.key), Array.from(sources, s => s.key), "rescan preserves acquisition order and identities");
+        f.setCooling(false);
+        for (let i = 0; i < sources.length; i++) f.api.sync(slots[i], sources[i]);
+        assert.equal(f.scheduled.length, before + 1, "only the item that finished cooling down flashes once");
+        for (let i = 0; i < sources.length; i++) f.api.sync(slots[i], sources[i]);
+        assert.equal(f.scheduled.length, before + 1);
+        f.api.onDisable();
+    }
 });
 
 test("item mirror retries immediately on source replacement or a new cooldown", () => {

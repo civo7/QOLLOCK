@@ -27,6 +27,87 @@
     }
 
     const loops = new Map();
+    let workObservation = null;
+
+    // Opt-in, bounded counters. No timer, panel traversal or console output.
+    const getWorkSnapshot = () => {
+        const rows = [];
+        for (const [id, tasks] of loops) {
+            let polls = 0;
+            let once = 0;
+            for (const task of tasks) {
+                if (task.kind === "once") once++;
+                else polls++;
+            }
+            rows.push({ id, polls, once });
+        }
+        return rows;
+    };
+
+    const startWorkObservation = () => {
+        if (workObservation) workObservation.stop();
+        const rows = new Map();
+        const emptyWindow = () => ({ callbacks: 0, callbackMs: 0, maxCallbackMs: 0,
+            slowestFeature: "", maxDelayMs: 0, errors: 0 });
+        let window = emptyWindow();
+        let stopped = false;
+        const entry = id => {
+            const key = rows.has(id) || rows.size < 127 ? (id || "<anonymous>") : "<other>";
+            if (!rows.has(key)) rows.set(key, { id: key, polls: 0, once: 0, callbackMs: 0,
+                maxCallbackMs: 0, maxDelayMs: 0, errors: 0, startPolls: 0, peakPolls: 0,
+                endPolls: 0, startOnce: 0, peakOnce: 0, endOnce: 0 });
+            return rows.get(key);
+        };
+        const census = initial => {
+            let activePolls = 0;
+            let pendingOnce = 0;
+            for (const row of rows.values()) { row.endPolls = 0; row.endOnce = 0; }
+            for (const task of getWorkSnapshot()) {
+                const row = entry(task.id);
+                row.endPolls += task.polls;
+                row.endOnce += task.once;
+                if (initial) { row.startPolls += task.polls; row.startOnce += task.once; }
+                row.peakPolls = Math.max(row.peakPolls, row.endPolls);
+                row.peakOnce = Math.max(row.peakOnce, row.endOnce);
+                activePolls += task.polls;
+                pendingOnce += task.once;
+            }
+            return { activePolls, pendingOnce };
+        };
+        const session = {
+            record: (id, kind, elapsed, delay, threw) => {
+                if (stopped) return;
+                const row = entry(id);
+                row[kind]++;
+                row.callbackMs += elapsed;
+                row.maxCallbackMs = Math.max(row.maxCallbackMs, elapsed);
+                row.maxDelayMs = Math.max(row.maxDelayMs, delay);
+                row.errors += threw ? 1 : 0;
+                window.callbacks++;
+                window.callbackMs += elapsed;
+                if (elapsed > window.maxCallbackMs) {
+                    window.maxCallbackMs = elapsed;
+                    window.slowestFeature = id || "<anonymous>";
+                }
+                window.maxDelayMs = Math.max(window.maxDelayMs, delay);
+                window.errors += threw ? 1 : 0;
+            },
+            sample: () => {
+                const sample = { ...window, ...census(false) };
+                window = emptyWindow();
+                return sample;
+            },
+            stop: () => {
+                if (!stopped) census(false);
+                stopped = true;
+                if (workObservation === session) workObservation = null;
+                return Array.from(rows.values(), row => ({ ...row }));
+            }
+        };
+        census(true);
+        workObservation = session;
+        return session;
+    };
 
     // Optional EventBus for error reporting (loaded before us by ql_event_bus.js)
     const EventBus = Q.core.EventBus || null;
@@ -115,6 +196,11 @@
         let hadError = false;
         const owner = (typeof $ !== "undefined" && typeof $.GetContextPanel === "function") ? $.GetContextPanel() : null;
         let loop = null;
+        let dueMs = null;
+        const scheduleTick = delay => {
+            dueMs = workObservation ? nowMs() + delay * 1000 : null;
+            return $.Schedule(delay, tick);
+        };
 
         const tick = () => {
             if (stopped) return;
@@ -129,7 +215,9 @@
                 const s = getState();
                 perfActive = !!(s && (s.perfEnabled || s.benchmarkActive));
             } catch (_) {}
-            const t0 = perfActive ? nowMs() : 0;
+            const observation = workObservation;
+            const t0 = (perfActive || observation) ? nowMs() : 0;
+            const delayMs = observation && dueMs !== null ? Math.max(0, t0 - dueMs) : 0;
             let threw = false;
             try {
                 callback();
@@ -150,16 +238,18 @@
                 const elapsed = nowMs() - t0;
                 recordTiming(featureId, elapsed);
             }
+            if (observation) observation.record(featureId, "polls", Math.max(0, nowMs() - t0), delayMs, threw);
             if (!stopped) {
-                handle = $.Schedule(rate, tick);
+                handle = scheduleTick(rate);
             }
         };
 
         // Jitter first tick (0-50% of rate) to prevent frame-aligned spikes
         const jitter = (typeof Math !== "undefined" && Math.random) ? Math.random() * rate * 0.5 : 0;
-        handle = $.Schedule(jitter, tick);
+        handle = scheduleTick(jitter);
 
         loop = {
+            kind: "poll",
             stop: () => {
                 if (stopped) return;
                 stopped = true;
@@ -200,7 +290,7 @@
         let handle = null;
         let stopped = false;
         const owner = $.GetContextPanel();
-        const task = { stop: () => {
+        const task = { kind: "once", stop: () => {
             if (stopped) return;
             stopped = true;
             if (handle !== null) { $.CancelScheduled(handle); handle = null; }
@@ -212,17 +302,26 @@
             loops.get(featureId).push(task);
         }
         const delay = Number.isFinite(delaySec) && delaySec >= 0 ? delaySec : 0;
+        const dueMs = workObservation ? nowMs() + delay * 1000 : null;
         handle = $.Schedule(delay, () => {
             handle = null;
             if (stopped) return;
             stopped = true;
             removeRegisteredLoop(featureId, task);
             if (owner && !QOL_UTILS.IsPanelValid(owner)) return;
+            const observation = workObservation;
+            const t0 = observation ? nowMs() : 0;
+            let threw = false;
             try { callback(); }
             catch (e) {
+                threw = true;
                 const message = e?.message || String(e);
                 if (EventBus && featureId) EventBus.emit("scheduler:error", { featureId, message, timestamp: nowMs() });
                 $.Msg(`[QOLLock][ERROR][Scheduler] deferred callback threw — ${message}`);
+            }
+            finally {
+                if (observation) observation.record(featureId, "once", Math.max(0, nowMs() - t0),
+                    dueMs === null ? 0 : Math.max(0, t0 - dueMs), threw);
             }
         });
         return task;
@@ -450,6 +549,8 @@
     };
 
     const perfApi = {
+        getWorkSnapshot,
+        startWorkObservation,
         schedule: createPollLoop,
         createPollLoop,
         scheduleOnce,
