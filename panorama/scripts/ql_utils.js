@@ -405,13 +405,17 @@
         // Class-based state is Panorama's recommended pattern (per knowledge base).
         if (!panel) return;
         var shouldHide = !visible;
-        if (panel.SetHasClass) {
-            panel.SetHasClass("qol-hidden", shouldHide);
-        } else if (panel.style) {
-            // Fallback for panels without SetHasClass (rare edge case)
-            var value = visible ? "visible" : "collapse";
-            if (panel.style.visibility !== value) panel.style.visibility = value;
-        }
+        try {
+            if (typeof panel.SetHasClass === "function") {
+                if (typeof panel.BHasClass === "function" &&
+                    !!panel.BHasClass("qol-hidden") === shouldHide) return;
+                panel.SetHasClass("qol-hidden", shouldHide);
+            } else if (panel.style) {
+                // Fallback for panels without SetHasClass (rare edge case)
+                var value = visible ? "visible" : "collapse";
+                if (panel.style.visibility !== value) panel.style.visibility = value;
+            }
+        } catch (_) { /* Panel may disappear while checking or changing visibility. */ }
     }
     exports.SetPanelVisibility = SetPanelVisibility;
 

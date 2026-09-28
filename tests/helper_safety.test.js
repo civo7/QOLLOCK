@@ -84,6 +84,23 @@ test("safe style and position helpers contain native getter races",()=>{
  assert.equal(U.GetPanelPositionRelativeToAncestor(panel,{}),null);
 });
 
+test("visibility helper skips redundant native class writes and tolerates stale handles",()=>{
+ const {U}=setup();let hidden=false,writes=0;
+ const panel={BHasClass:()=>hidden,SetHasClass(name,value){assert.equal(name,'qol-hidden');hidden=value;writes++;}};
+ U.SetPanelVisibility(panel,false);U.SetPanelVisibility(panel,false);
+ assert.equal(writes,1);assert.equal(hidden,true);
+ U.SetPanelVisibility(panel,true);U.SetPanelVisibility(panel,true);
+ assert.equal(writes,2);assert.equal(hidden,false);
+ assert.doesNotThrow(()=>U.SetPanelVisibility({BHasClass(){throw Error('freed panel');},SetHasClass(){}},false));
+});
+
+test("panel helpers share the leaf palette and its normalization",()=>{
+ const {Q,U}=setup();
+ assert.equal(Q.core.panel.washColorPalette,U.QOL_WASH_COLOR_PALETTE);
+ assert.equal(Q.core.panel.normalizePaletteIndex,U.NormalizePaletteColorIndex);
+ assert.equal(Q.core.panel.resolvePaletteColor,U.ResolveWashColorFromPalette);
+});
+
 test("manual call profiler reports the actual interval and resets across disable",()=>{
  const {U,clock,sandbox}=setup();U.SetProfilerEnabled(true);
  for(let i=0;i<100;i++)U.ProfileHit('audit_hit');

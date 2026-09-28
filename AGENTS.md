@@ -6,14 +6,14 @@ Do not copy API examples from historical migration notes into runtime code.
 
 ## Reading order
 
-1. Read [ARCHITECTURE.md](ARCHITECTURE.md) before changing runtime code, settings
-   or visible text. Identify the owning files and script context first.
-2. Before changing runtime code, read [docs/HELPERS.md](docs/HELPERS.md), the
-   relevant helper implementation, and a real caller in the same context.
-3. Read only the focused references needed for the task: `docs/core/`,
+1. Use [ARCHITECTURE.md](ARCHITECTURE.md) as a map. Before changing runtime code,
+   settings or visible text, read the relevant sections and identify the owning
+   files and script context. Do not read the entire guide by default.
+2. Read focused references only when the task touches their contract: `docs/core/`,
    `docs/features/`, `docs/ui/`, [settings](docs/ADDING_SETTINGS.md),
    [localization](docs/LOCALIZATION.md), or [testing](docs/TESTING.md).
-   There is no requirement to read every document on every task.
+3. When selecting or changing a shared helper, read [docs/HELPERS.md](docs/HELPERS.md),
+   its implementation, and a real caller in the same context.
 
 ## Development rules
 
@@ -21,8 +21,12 @@ Do not copy API examples from historical migration notes into runtime code.
   verify `npm test` before every commit. The command includes smoke tests,
   Node regressions, compact-schema validation, API checks and lint.
 - Never push without an explicit user request. Never create pull requests.
-- Update the corresponding documentation in `docs/` in the same commit as
-  JavaScript changes. Write project documentation in English.
+- Review relevant documentation when changing source. Update it in the same
+  commit only if the change invalidates documented behavior, settings, data
+  format, cross-module contract, ownership boundary or verification procedure.
+  Do not edit documentation solely because JavaScript changed. Keep current
+  defaults, ranges, key lists and CSS values in source instead of duplicating
+  them in prose. Write project documentation in English.
 - Use current source exports and active XML includes as the technical authority.
   HUD and settings use separate JavaScript contexts; do not assume shared globals.
 - Reuse helpers with matching semantics. Keep settings changes reactive, guard
