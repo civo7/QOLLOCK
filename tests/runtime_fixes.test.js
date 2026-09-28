@@ -879,7 +879,7 @@ test("disabling recent purchases preserves subsequent native purchases", () => {
     assert.strictEqual(purchase.IsValid(), true, "Disabled feature must not delete subsequent native purchases");
 });
 
-test("stats position resets panel on disable and hides styling in hideout", () => {
+test("stats position and hide option apply in hideout and reset on disable", () => {
     const hud = sim.createHud({ inHideout: false });
     hud.assertLoaded();
     const { $, QOL: Q } = hud.sandbox.global;
@@ -889,21 +889,33 @@ test("stats position resets panel on disable and hides styling in hideout", () =
     assert.strictEqual(panel.style.x, "120px");
     assert.strictEqual(Q.core.FeatureRegistry.isEnabled("ql_stats_position"), true);
 
-    // Transition into hideout restores native state
+    // The same native stats panel remains configurable in the hideout.
     hud.root.AddClass("InHideout");
     hud.clock.advance(1100);
-    assert.ok(!panel.style.x || panel.style.x === "0px", "Hideout must reset stats offset");
+    assert.strictEqual(panel.style.x, "120px", "Hideout must keep stats offset");
+    Q.core.ConfigStore.set("ql_stats_position", "STATS_POSITION_HIDE_NORMAL", true);
+    hud.clock.advance(100);
+    assert.strictEqual(panel.style.opacity, "0", "Hideout must honor hide Player Stats");
+    Q.core.ConfigStore.set("ql_stats_position", "STATS_POSITION_HIDE_NORMAL", false);
+    hud.clock.advance(100);
+    assert.strictEqual(panel.style.opacity, "1");
+
+    panel.DeleteAsync(0);
+    hud.clock.advance(1);
+    const replacement = $.CreatePanel("Panel", hud.root, "hudPlayerStats");
+    hud.clock.advance(1100);
+    assert.strictEqual(replacement.style.x, "120px", "Replaced stats panel must receive unchanged offset");
 
     // Match reentry restores offset
     hud.root.RemoveClass("InHideout");
     hud.clock.advance(1100);
-    assert.strictEqual(panel.style.x, "120px", "Match reentry must restore stats offset");
+    assert.strictEqual(replacement.style.x, "120px", "Match reentry must retain stats offset");
 
     // Master toggle off disables feature and resets style
     Q.core.ConfigAdapter.loadFromFlat({ ENABLE_STATS_POSITION: 0 });
     hud.clock.advance(1100);
     assert.strictEqual(Q.core.FeatureRegistry.isEnabled("ql_stats_position"), false);
-    assert.ok(!panel.style.x || panel.style.x === "0px", "Disabled toggle must reset stats offset");
+    assert.ok(!replacement.style.x || replacement.style.x === "0px", "Disabled toggle must reset stats offset");
 });
 
 test("ability icons feature enables with any toggle and cleans up on disable", () => {

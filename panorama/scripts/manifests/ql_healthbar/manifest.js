@@ -98,18 +98,24 @@
             function _update() {
                 var root = $.GetContextPanel();
                 if (!root) return;
+                var cfg = (ctx && ctx.config && ctx.config.all) ? ctx.config.all() : ((typeof State !== "undefined" && State.lastConfig) ? State.lastConfig : {});
                 if (QOL.core.hud.isInHideout(root)) {
                     // The HUD can survive a match exit. Stop variant-owned raw
                     // schedules before idling; Scheduler only owns this poll.
                     QOL.healthbar.mc.update(root, {}, 0, false);
                     QOL.healthbar.budhud.update(root, {}, 0, 0);
-                    var hideoutCfg = (ctx && ctx.config && ctx.config.all) ? ctx.config.all() : {};
-                    QOL.healthbar.fg.update(root, hideoutCfg);
+                    var hideoutType = Number(cfg.HEALTHBAR_TYPE) || 0;
+                    var runNativeStyle = hideoutType === 1 || _hasNonDefaultPlayerHealthbar(cfg) ||
+                        !!State.playerHealthbarAccentColorSig || State.minimalistHealthbarOffsetApplied ||
+                        State.playerHealthbarScaleOpacityRuntimeApplied;
+                    if (runNativeStyle && QOL.healthbar.minimalist && QOL.healthbar.minimalist.update) {
+                        QOL.healthbar.minimalist.update(root, cfg, hideoutType === 1);
+                    }
+                    QOL.healthbar.fg.update(root, cfg);
                     if (_loop) _loop.reschedule(0.5);
                     return;
                 }
                 if (_loop) _loop.reschedule(0.05);
-                var cfg = (ctx && ctx.config && ctx.config.all) ? ctx.config.all() : ((typeof State !== "undefined" && State.lastConfig) ? State.lastConfig : {});
                 var nowMs = Date.now ? Date.now() : (new Date()).getTime();
                 var healthbarType = Number(cfg.HEALTHBAR_TYPE) || 0;
                 var minimalistHealthbarEnabled = (healthbarType === 1);

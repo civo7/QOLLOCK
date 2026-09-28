@@ -79,15 +79,30 @@ test("topbar: replacement panel receives unchanged settings and defaults release
     assert.deepEqual(env.clock.errors, []);
 });
 
-test("topbar: the walkthrough does not override hideout or takeover suppression", () => {
+test("topbar: hideout settings and Default preset update the live bar", () => {
     const env = setup();
-    env.root.AddClass("QOLVisualCheckActive");
-    for (const cls of ["InHideout", "HudTakeoverEnabled"]) {
-        env.root.AddClass(cls);
-        publish(env, changed);
-        assert.equal(env.top.style.uiScale, undefined);
-        env.root.RemoveClass(cls);
-    }
+    env.root.AddClass("InHideout");
+    env.root.AddClass("ShowEscapeMenu");
+    publish(env, changed);
+    expectChanged(env.top);
+    assert.equal(env.global.QOL.ui.presets.applyPresetByName("Default"), true);
+    env.clock.advance(1500);
+    for (const key of ["x", "y", "uiScale", "opacity"]) assert.equal(env.top.style[key], undefined);
+    env.root.RemoveClass("InHideout");
+    env.root.RemoveClass("ShowEscapeMenu");
+    env.clock.advance(1000);
+    for (const key of ["x", "y", "uiScale", "opacity"]) assert.equal(env.top.style[key], undefined);
+    assert.deepEqual(env.clock.errors, []);
+});
+
+test("topbar: takeover still releases styles and restores them when visible", () => {
+    const env = setup();
+    publish(env, changed);
+    expectChanged(env.top);
+    env.root.AddClass("HudTakeoverEnabled");
+    env.clock.advance(1000);
+    assert.equal(env.top.style.uiScale, undefined);
+    env.root.RemoveClass("HudTakeoverEnabled");
     env.clock.advance(1000);
     expectChanged(env.top);
 });

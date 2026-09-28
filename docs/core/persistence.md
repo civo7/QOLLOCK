@@ -14,6 +14,11 @@
 
 `getConfigChangeStamp(root)` combines root/HUD published revisions and edit generations. It returns `null` for an invalid root. The storage bridge captures both panel identity and this stamp, then compares them before applying an asynchronous restore. This detects both already-published settings and a slider change that has not reached its debounced write yet.
 
+Settings `SaveAndSync()` may skip an unchanged payload only when the settings
+panel, root and resolved HUD already carry that payload. A preset can restore
+the last saved values while a newer live configuration remains on the HUD;
+the restored values still need a new bridge publication.
+
 Explicit load and clear operations also mark user intent so an older startup restore cannot override them. Revisions are session coordination values, not a durable transaction log or a substitute for a disk acknowledgment.
 
 Both `hud.xml` and `hud_escape_menu.xml` load this module before the storage bridge. The Escape Menu can use it through panel helpers without loading the HUD's FeatureRegistry or core HUD subsystem.

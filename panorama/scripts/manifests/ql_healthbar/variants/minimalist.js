@@ -57,6 +57,7 @@
             State.minimalistHealthbarOffsetPanel === healthContainer &&
             State.minimalistHealthbarOffsetSig === styleSig
         ) {
+            ApplyPlayerHealthbarAccentColor(root, cfg, healthContainer);
             return;
         }
 

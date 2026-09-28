@@ -297,7 +297,18 @@ function SaveAndSync() {
         globalThis.RefreshActivePresetConfigMarkerBeforeSave();
     }
     var data = WrapConfigForStorage(MOD_CONFIG);
-    if (data === gLastSavedConfigRaw) {
+    var alreadyPublished = data === gLastSavedConfigRaw;
+    if (alreadyPublished) {
+        var panels = [panel, root, hud];
+        for (var i = 0; i < panels.length; i++) {
+            var target = panels[i];
+            if (target && target.GetAttributeString && target.GetAttributeString(STORAGE_KEY, "") !== data) {
+                alreadyPublished = false;
+                break;
+            }
+        }
+    }
+    if (alreadyPublished) {
         PublishPaletteColorBridges();
         return;
     }

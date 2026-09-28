@@ -271,9 +271,9 @@
             return false;
         };
 
-        const hiddenContextClasses = ["connectedToHideout", "InHideout", "inHideout", "inHideoutIntro", "HideoutIntro"];
         const walkthrough = hasAnyClass(root, ["QOLVisualCheckActive"]) || hasAnyClass(topBar, ["QOLVisualCheckActive"]);
-        const hiddenUiClasses = walkthrough ? ["HudTakeoverEnabled"] : ["ShowEscapeMenu", "HudTakeoverEnabled"];
+        const inHideout = isInHideout(root);
+        const hiddenUiClasses = (walkthrough || inHideout) ? ["HudTakeoverEnabled"] : ["ShowEscapeMenu", "HudTakeoverEnabled"];
 
         const hud = (typeof QOL !== "undefined" && QOL.getCachedPanel)
             ? QOL.getCachedPanel("hudPanel")
@@ -281,10 +281,6 @@
 
         if (hasAnyClass(root, hiddenUiClasses)) return false;
         if (hasAnyClass(hud, hiddenUiClasses)) return false;
-        if (hasAnyClass(root, hiddenContextClasses)) return false;
-        if (hasAnyClass(hud, hiddenContextClasses)) return false;
-        if (hasAnyClass(topBar, hiddenContextClasses)) return false;
-
         // gameplay_hud is a sibling of TopBar in hud.xml: its suppression
         // (for example on death) says nothing about top-bar visibility. Inspect
         // TopBar's ancestors instead, excluding its own user-configured opacity.

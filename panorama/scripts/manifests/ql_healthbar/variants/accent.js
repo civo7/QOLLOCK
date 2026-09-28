@@ -94,7 +94,11 @@
             return;
         }
 
-        if (State.playerHealthbarAccentColorSig === styleSig) {
+        var samePanels = oldPanels.length === panels.length;
+        for (var panelIndex = 0; samePanels && panelIndex < panels.length; panelIndex++) {
+            if (oldPanels[panelIndex] !== panels[panelIndex]) samePanels = false;
+        }
+        if (State.playerHealthbarAccentColorSig === styleSig && samePanels) {
             return;
         }
         State.playerHealthbarAccentColorToken = (Number(State.playerHealthbarAccentColorToken) || 0) + 1;

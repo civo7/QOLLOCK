@@ -71,25 +71,19 @@
             var _applied = false;
 
             function _getStatsPanel(root) {
-                if (isPanelValid(_panel)) return _panel;
-                _panel = (root && root.FindChildTraverse) ? root.FindChildTraverse("hudPlayerStats") : null;
+                var current = (root && root.FindChildTraverse) ? root.FindChildTraverse("hudPlayerStats") : null;
+                if (current !== _panel) {
+                    if (isPanelValid(_panel)) resetStatsPanel(_panel);
+                    _panel = current;
+                    _sig = "";
+                    _applied = false;
+                }
                 return _panel;
             }
 
             function _tick() {
                 var root = $.GetContextPanel();
                 if (!root) return;
-
-                var inHideout = QOL.core.hud.isInHideout(root);
-                if (inHideout) {
-                    if (_applied) {
-                        var p = _getStatsPanel(root);
-                        if (p) resetStatsPanel(p);
-                        _sig = "";
-                        _applied = false;
-                    }
-                    return;
-                }
 
                 var cfg = ctx.config.view();
                 var panel = _getStatsPanel(root);

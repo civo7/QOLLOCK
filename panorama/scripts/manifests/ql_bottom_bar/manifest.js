@@ -8,7 +8,7 @@
 // CONFIG KEYS: HUD_BOTTOM_BAR_ENABLED, BOTTOM_BAR_OPACITY, BOTTOM_BAR_SCALE,
 //              BOTTOM_BAR_X_OFFSET, BOTTOM_BAR_Y_OFFSET, BOTTOM_BAR_WASH_COLOR
 // PANEL ID:    hud_signature (cache key was "bottomBarPanel" in old feature)
-// PATTERN:     Event-driven (no polling). Signature diffing preserved.
+// PATTERN:     Settings-driven with a slow poll for replaced native panels.
 // =============================================================================
 
 (function() {
@@ -30,6 +30,8 @@
         ],
         create: function(ctx) {
             var _lastSig = "";
+            var _lastPanel = null;
+            var _loop = null;
 
             function _hasNonDefault(cfg) {
                 if (!cfg) return false;
@@ -92,6 +94,10 @@
                 _applyCurrencyColor(root, wc);
 
                 var bp = root.FindChildTraverse("hud_signature");
+                if (bp !== _lastPanel) {
+                    _lastPanel = bp;
+                    _lastSig = "";
+                }
                 if (!bp) return;
 
                 var enabled = (cfg.HUD_BOTTOM_BAR_ENABLED === undefined || cfg.HUD_BOTTOM_BAR_ENABLED === true || Number(cfg.HUD_BOTTOM_BAR_ENABLED) === 1);
@@ -137,9 +143,21 @@
             }
 
             return {
-                onEnable: function() { _apply(ctx.config.all()); },
+                onEnable: function() {
+                    _apply(ctx.config.all());
+                    var S = QOL.core.Scheduler;
+                    _loop = S && S.createPollLoop ? S.createPollLoop(function() {
+                        var root = $.GetContextPanel();
+                        var panel = root && root.FindChildTraverse ? root.FindChildTraverse("hud_signature") : null;
+                        if (panel !== _lastPanel) _apply(ctx.config.all());
+                    }, 0.5, ctx.id) : null;
+                },
                 onDisable: function() {
+                    if (_loop) { _loop.stop(); _loop = null; }
+                    var S = QOL.core.Scheduler;
+                    if (S) S.cancelAllForFeature(ctx.id);
                     _lastSig = "";
+                    _lastPanel = null;
                     try {
                         var root = $.GetContextPanel();
                         _applyCurrencyColor(root, "");
