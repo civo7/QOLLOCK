@@ -11,7 +11,9 @@ and [architecture](../../ARCHITECTURE.md) explain context and configuration rout
 Toggles nickname visibility using the native binding/CSS path on enable,
 disable and setting changes. It does not create arbitrary custom player names.
 There is no recurring loop here. Keep player-portrait identity and the native
-name binding separate from styling/visibility.
+name binding separate from styling/visibility. In spectator mode (`.spec_mode`),
+nicknames receive an adjusted margin (`margin-top: 2px`) to accommodate the
+spectator top bar overlay.
 
 ## Declared settings
 
