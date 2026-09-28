@@ -19,7 +19,6 @@
     FR.register({
         id: "ql_bottom_bar",
         enabledByDefault: true,
-        enableKey: "HUD_BOTTOM_BAR_ENABLED",
         settings: [
             { key: "HUD_BOTTOM_BAR_ENABLED", type: "toggle", default: true },
             { key: "BOTTOM_BAR_OPACITY", type: "slider", min: 0, max: 1, step: 0.05, default: 1.0 },
@@ -84,7 +83,8 @@
             function _apply(cfg) {
                 var root = $.GetContextPanel();
                 var active = _hasNonDefault(cfg);
-                var wcIdx = active ? (Math.round(Number(cfg.BOTTOM_BAR_WASH_COLOR)) || 0) : 0;
+                var enabled = (cfg.HUD_BOTTOM_BAR_ENABLED === undefined || cfg.HUD_BOTTOM_BAR_ENABLED === true || Number(cfg.HUD_BOTTOM_BAR_ENABLED) === 1);
+                var wcIdx = active && enabled ? (Math.round(Number(cfg.BOTTOM_BAR_WASH_COLOR)) || 0) : 0;
                 var wc = (typeof QOL !== "undefined" && QOL.core && QOL.core.panel && QOL.core.panel.resolvePaletteColor)
                     ? QOL.core.panel.resolvePaletteColor(wcIdx)
                     : ((typeof QOL !== "undefined" && QOL.washColorPalette && wcIdx > 0 && wcIdx < QOL.washColorPalette.length) ? QOL.washColorPalette[wcIdx] : "");
@@ -100,7 +100,6 @@
                 }
                 if (!bp) return;
 
-                var enabled = (cfg.HUD_BOTTOM_BAR_ENABLED === undefined || cfg.HUD_BOTTOM_BAR_ENABLED === true || Number(cfg.HUD_BOTTOM_BAR_ENABLED) === 1);
                 var ox = Math.round(Number(active ? cfg.BOTTOM_BAR_X_OFFSET : 0)) || 0;
                 var oy = Math.round(Number(active ? cfg.BOTTOM_BAR_Y_OFFSET : 0)) || 0;
                 var opNum = active ? Number(cfg.BOTTOM_BAR_OPACITY !== undefined ? cfg.BOTTOM_BAR_OPACITY : 1.0) : 1.0;
@@ -114,6 +113,17 @@
                 var sig = ox + "|" + oy + "|" + op + "|" + scText + "|" + wcIdx + "|" + (enabled ? "1" : "0");
                 if (_lastSig === sig) return;
                 _lastSig = sig;
+
+                if (!enabled) {
+                    _clearStyle(bp, "x");
+                    _clearStyle(bp, "y");
+                    _clearStyle(bp, "preTransformScale2d");
+                    _clearStyle(bp, "uiScale");
+                    _clearStyle(bp, "opacity");
+                    _clearStyle(bp, "washColor");
+                    if (bp.SetHasClass) bp.SetHasClass("qol-hidden", true);
+                    return;
+                }
 
                 if (ox !== 0) bp.style.x = ox + "px";
                 else _clearStyle(bp, "x");

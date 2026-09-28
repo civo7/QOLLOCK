@@ -20,7 +20,6 @@
     FR.register({
         id: "ql_topbar",
         enabledByDefault: true,
-        enableKey: "HUD_TOP_BAR_ENABLED",
         settings: [
             { key: "HUD_TOP_BAR_ENABLED", type: "toggle", default: true },
             { key: "ENABLE_OBJ_MAP", type: "toggle", default: false, label: "Objective Map", description: "Show a visual indicator in the top bar of the current Guardians, Walkers, and Base." },

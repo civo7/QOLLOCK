@@ -137,6 +137,45 @@ test("damage impact visibility toggle hides current and newly created panels", (
     assert.deepEqual(hud.clock.errors, []);
 });
 
+for (const scenario of [
+    { feature: "ql_topbar", key: "HUD_TOP_BAR_ENABLED", id: "TopBar", offsetKey: "TOP_BAR_X_OFFSET" },
+    { feature: "ql_bottom_bar", key: "HUD_BOTTOM_BAR_ENABLED", id: "hud_signature", offsetKey: "BOTTOM_BAR_X_OFFSET" },
+    { feature: "ql_souls", key: "HUD_SOULS_ENABLED", id: "gold_and_ap_container", offsetKey: "SOULS_X_OFFSET" },
+    { feature: "ql_items", key: "HUD_ITEMS_ENABLED", id: "ModsContainer", parentId: "StatsAndModsContainer", panelClass: "ModsContainer", offsetKey: "ITEMS_X_OFFSET" },
+    { feature: "ql_heroshop", key: "HUD_SHOP_ENABLED", id: "MainPanel", shop: true }
+]) {
+    test(`${scenario.feature} hides native panels created after its toggle is off`, () => {
+        const hud = createHud({ inHideout: true });
+        hud.assertLoaded();
+        const { $, QOL: Q } = hud.sandbox.global;
+        const parent = scenario.shop ? hud.game.shopPanel :
+            scenario.parentId ? $.CreatePanel("Panel", hud.root, scenario.parentId) : hud.root;
+        const first = $.CreatePanel("Panel", parent, scenario.id);
+        if (scenario.panelClass) first.AddClass(scenario.panelClass);
+        if (scenario.offsetKey) Q.core.ConfigStore.set(scenario.feature, scenario.offsetKey, 100);
+        hud.clock.advance(2200);
+        if (scenario.offsetKey) assert.equal(first.style.x, "100px", "configured offset");
+
+        Q.core.ConfigStore.set(scenario.feature, scenario.key, false);
+        hud.clock.advance(2200);
+        assert.equal(first.BHasClass("qol-hidden"), true, "existing panel");
+        if (scenario.offsetKey) assert.ok(!first.style.x || first.style.x === "0px", "hidden panel resets offset");
+
+        first.DeleteAsync(0);
+        hud.clock.advance(1);
+        const replacement = $.CreatePanel("Panel", parent, scenario.id);
+        if (scenario.panelClass) replacement.AddClass(scenario.panelClass);
+        hud.clock.advance(2200);
+        assert.equal(replacement.BHasClass("qol-hidden"), true, "replacement panel");
+
+        Q.core.ConfigStore.set(scenario.feature, scenario.key, true);
+        hud.clock.advance(2200);
+        assert.equal(replacement.BHasClass("qol-hidden"), false, "re-enabled panel");
+        if (scenario.offsetKey) assert.equal(replacement.style.x, "100px", "re-enabled offset");
+        assert.deepEqual(hud.clock.errors, []);
+    });
+}
+
 test("shop layout follows replacement MainPanel with unchanged settings", () => {
     const hud = createHud({ inHideout: true });
     hud.assertLoaded();

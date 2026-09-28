@@ -20,7 +20,6 @@
     FR.register({
         id: "ql_heroshop",
         enabledByDefault: true,
-        enableKey: "HUD_SHOP_ENABLED",
         settings: [
             { key: "HUD_SHOP_ENABLED", type: "toggle", default: true },
             { key: "ENABLE_HERO_SCENE_PANEL", type: "toggle", default: true, label: "Hero", description: "Shows your character in the shop menu." },

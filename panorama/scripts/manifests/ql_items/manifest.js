@@ -19,7 +19,6 @@
     FR.register({
         id: "ql_items",
         enabledByDefault: true,
-        enableKey: "HUD_ITEMS_ENABLED",
         settings: [
             { key: "HUD_ITEMS_ENABLED", type: "toggle", default: true },
             { key: "ITEMS_OPACITY", type: "slider", min: 0, max: 1, step: 0.05, default: 1.0 },
@@ -113,6 +112,17 @@
                 var containerChanged = mc !== _lastPanels[0];
                 _lastPanels = panels;
                 _lastSig = sig;
+
+                if (!enabled) {
+                    mc.style.x = "0px";
+                    mc.style.y = "0px";
+                    mc.style.washColor = "";
+                    if (mc.SetHasClass) mc.SetHasClass("qol-hidden", true);
+                    _clearOpacity(mc);
+                    _resetAllChildren(mc);
+                    _lastWashColor = "";
+                    return;
+                }
 
                 mc.style.x = ox + "px";
                 mc.style.y = (-oy) + "px";

@@ -75,14 +75,15 @@ test("applying a preset updates ConfigStore values, State.lastConfig, and fires 
     assert.strictEqual(soulsChangedCalled, true, "ql_souls.onSettingsChanged should have fired");
 });
 
-test("applying a preset toggles feature enabled states for all manifests with enable toggles", () => {
+test("applying a preset updates native visibility and feature enablement", () => {
     const hud = sim.createHud();
     hud.assertLoaded();
     const QOL = hud.sandbox.global.QOL;
     const FR = QOL.core.FeatureRegistry;
     const defaultCfg = hud.sandbox.global.QOL_DEFAULT_CONFIG;
 
-    // ql_bottom_bar defaults to enabled: true
+    const bottomBar = hud.sandbox.global.$.CreatePanel("Panel", hud.root, "hud_signature");
+    // The bottom-bar visibility controller remains active while the bar is hidden.
     assert.strictEqual(FR.isEnabled("ql_bottom_bar"), true, "ql_bottom_bar should initially be enabled");
     // ql_ammo defaults to enabled: false
     assert.strictEqual(FR.isEnabled("ql_ammo"), false, "ql_ammo should initially be disabled");
@@ -99,7 +100,8 @@ test("applying a preset toggles feature enabled states for all manifests with en
     // Advance clock so poll() ticks
     hud.clock.advance(1000);
 
-    assert.strictEqual(FR.isEnabled("ql_bottom_bar"), false, "ql_bottom_bar should be disabled after preset turns it off");
+    assert.strictEqual(FR.isEnabled("ql_bottom_bar"), true, "bottom-bar visibility controller should remain active");
+    assert.strictEqual(bottomBar.BHasClass("qol-hidden"), true, "preset should hide the bottom bar");
     assert.strictEqual(FR.isEnabled("ql_ammo"), true, "ql_ammo should be enabled after preset turns it on");
 });
 
