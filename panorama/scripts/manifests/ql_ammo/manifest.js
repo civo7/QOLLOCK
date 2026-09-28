@@ -10,7 +10,7 @@
 //              AMMO_PANEL_X_OFFSET, AMMO_PANEL_Y_OFFSET, AMMO_CLIP_ANGLE,
 //              AMMO_TEXT_COLOR
 // PATTERN:     Settings-driven with a slow poll for replaced native panels.
-//              Clip ring rotation via transform on children (not container).
+//              Dual-half heat rings rotate as a pair at their native base angles.
 // =============================================================================
 
 (function() {
@@ -52,9 +52,13 @@
             var _lastClipSig = "";
             var _lastMainPanel = null;
             var _lastClipPanel = null;
+            var _lastMirroredClipPanel = null;
             var _lastRings = [];
+            var _lastMirroredRings = [];
             var _lastTextTargets = [];
             var _loop = null;
+            var _clearStyle = QOL.utils.ClearStyleSafe;
+            var _isAlive = QOL.utils.IsPanelValid;
 
             function _samePanels(a, b) {
                 if (a.length !== b.length) return false;
@@ -81,24 +85,63 @@
                 return n < lo ? lo : n > hi ? hi : n;
             }
 
+            function _clipChildren(panel) {
+                try { return panel && panel.Children ? (panel.Children() || []) : []; } catch(e) { return []; }
+            }
+
+            function _mirroredClipSibling(panel) {
+                var parent = panel && panel.GetParent ? panel.GetParent() : null;
+                return parent && parent.FindChildTraverse ? parent.FindChildTraverse("clip_status_mirrored") : null;
+            }
+
+            function _releaseClipStyles(panel, rings) {
+                if (_isAlive(panel)) _clearStyle(panel, "transform");
+                for (var i = 0; i < rings.length; i++) {
+                    if (_isAlive(rings[i])) _clearStyle(rings[i], "transform");
+                }
+            }
+
             function _applyClipAngle(root, angle) {
                 var cs = root.FindChildTraverse("clip_status");
-                if (!cs) { _lastClipSig = ""; _lastClipPanel = null; _lastRings = []; return; }
-                var rings = [];
-                try { if (cs.Children) rings = cs.Children(); } catch(e) {}
-                if (!rings || !rings.length) return;
-                var sig = angle + "|" + rings.length;
-                if (_lastClipSig === sig && _lastClipPanel === cs && _samePanels(_lastRings, rings)) return;
-                // Clear any orphaned transform on the container (previous builds).
-                try { cs.style.transform = ""; } catch(e) {}
+                var mirrored = _mirroredClipSibling(cs);
+                var rings = _clipChildren(cs);
+                var mirroredRings = _clipChildren(mirrored);
+                var sig = angle + "|" + (mirrored ? "dual" : "single");
+                if (_lastClipSig === sig && _lastClipPanel === cs &&
+                    _lastMirroredClipPanel === mirrored && _samePanels(_lastRings, rings) &&
+                    _samePanels(_lastMirroredRings, mirroredRings)) return;
+
+                if (_lastClipPanel !== cs || _lastMirroredClipPanel !== mirrored) {
+                    _releaseClipStyles(_lastClipPanel, _lastRings);
+                    _releaseClipStyles(_lastMirroredClipPanel, _lastMirroredRings);
+                }
                 _lastClipSig = sig;
                 _lastClipPanel = cs;
+                _lastMirroredClipPanel = mirrored;
                 _lastRings = rings.slice();
-                for (var i = 0; i < rings.length; i++) {
-                    try {
-                        if (angle === 0) rings[i].style.transform = "";
-                        else rings[i].style.transform = "rotateZ(-" + angle + "deg)";
-                    } catch(e) {}
+                _lastMirroredRings = mirroredRings.slice();
+                if (!cs) return;
+
+                if (mirrored) {
+                    // The extracted Tokamak layout starts its two centered heat
+                    // halves at 90 and 180 degrees. Rotate both around that center.
+                    for (var i = 0; i < rings.length; i++) _clearStyle(rings[i], "transform");
+                    for (var j = 0; j < mirroredRings.length; j++) _clearStyle(mirroredRings[j], "transform");
+                    if (angle === 0) {
+                        _clearStyle(cs, "transform");
+                        _clearStyle(mirrored, "transform");
+                    } else {
+                        cs.style.transform = "rotateZ(" + (90 - angle) + "deg)";
+                        mirrored.style.transform = "rotateZ(" + (180 - angle) + "deg)";
+                    }
+                    return;
+                }
+
+                // Standard gun layout has one clip_status with three ring children.
+                _clearStyle(cs, "transform");
+                for (var k = 0; k < rings.length; k++) {
+                    if (angle === 0) _clearStyle(rings[k], "transform");
+                    else rings[k].style.transform = "rotateZ(-" + angle + "deg)";
                 }
             }
 
@@ -196,7 +239,7 @@
                     var S = QOL.core.Scheduler;
                     if (S) S.cancelAllForFeature(ctx.id);
                     _lastMainSig = ""; _lastClipSig = "";
-                    _lastMainPanel = null; _lastClipPanel = null; _lastRings = []; _lastTextTargets = [];
+                    _lastMainPanel = null; _lastTextTargets = [];
                     try {
                         var root = $.GetContextPanel();
                         var ap = root.FindChildTraverse("ammo_panel");
@@ -207,13 +250,14 @@
                             _applyChildren(ap, 100, 100, "");
                         }
                         var cs = root.FindChildTraverse("clip_status");
-                        if (cs) {
-                            try { cs.style.transform = ""; } catch(e) {}
-                            var rings = cs.Children ? cs.Children() : [];
-                            for (var i = 0; i < rings.length; i++)
-                                try { rings[i].style.transform = ""; } catch(e) {}
-                        }
+                        var mirrored = _mirroredClipSibling(cs);
+                        _releaseClipStyles(cs, _clipChildren(cs));
+                        _releaseClipStyles(mirrored, _clipChildren(mirrored));
                     } catch(e) {}
+                    _releaseClipStyles(_lastClipPanel, _lastRings);
+                    _releaseClipStyles(_lastMirroredClipPanel, _lastMirroredRings);
+                    _lastClipPanel = null; _lastMirroredClipPanel = null;
+                    _lastRings = []; _lastMirroredRings = [];
                 },
                 onSettingsChanged: function() { _apply(ctx.config.all()); }
             };

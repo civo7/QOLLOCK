@@ -27,7 +27,8 @@
     var FAST_INTERVAL_SEC = 0.05;
     var IDLE_INTERVAL_SEC = 0.50;
 
-    var _RE_RADIAL_CLIP_START = /radial\s*\(\s*([+\-]?\d+(?:\.\d+)?)\s*deg/i;
+    // Native clips can include a center ("50% 50%,") before the first angle.
+    var _RE_RADIAL_CLIP_START = /radial\s*\([^)]*?([+\-]?\d+(?:\.\d+)?)\s*deg/i;
     var _RE_RADIAL_CLIP_END = /,\s*([+\-]?\d+(?:\.\d+)?)\s*deg\s*\)/i;
 
     var _nowMs = QOL.utils.PerfNowMs;
@@ -260,17 +261,14 @@
                     var remainingSec = remainingDeg / _slopeEma;
 
                     if (isFinite(remainingSec) && remainingSec >= 0) {
+                        if (_displayLock !== null && isFinite(_displayLock)) {
+                            remainingSec = Math.min(remainingSec, _displayLock);
+                        }
                         if (remainingSec >= 1) {
                             var intVal = Math.ceil(remainingSec);
-                            if (_displayLock !== null && isFinite(_displayLock)) {
-                                intVal = Math.min(intVal, _displayLock);
-                            }
                             _displayLock = intVal;
                             cooldownText = String(intVal);
                         } else {
-                            if (_displayLock !== null && isFinite(_displayLock)) {
-                                remainingSec = Math.min(remainingSec, _displayLock);
-                            }
                             _displayLock = remainingSec;
                             cooldownText = (Math.round(remainingSec * 10) / 10).toFixed(1);
                         }
