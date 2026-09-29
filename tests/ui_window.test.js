@@ -289,6 +289,13 @@ test("Escape closes QOLLOCK settings once, then resumes the native pause menu", 
     assert.equal(resumes, 3, "background click should resume when QOLLOCK settings are closed");
 });
 
+test("the native MenuBack binding remains the only EscapeButton", () => {
+    const xml = fs.readFileSync(path.resolve(__dirname, "../panorama/layout/hud_escape_menu.xml"), "utf8");
+    const buttons = xml.match(/\bid="EscapeButton"/g) || [];
+    assert.equal(buttons.length, 1, "duplicate EscapeButton ids can intercept the native MenuBack action");
+    assert.match(xml, /<CitadelBindingButton\s+id="EscapeButton"\s+action="MenuBack"\s+onactivate="CitadelResumePlaying\(\)"/);
+});
+
 test("window: ensureDiscordTextureLogo and ensureDiscordFooterTextureLogo attach logo image", () => {
     const { windowApi, mockDollar, win } = createTestEnvironment();
     const btn = mockDollar.CreatePanel("Button", win, "TestDiscordBtn");
