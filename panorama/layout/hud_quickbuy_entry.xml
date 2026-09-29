@@ -6,14 +6,26 @@
 	<CitadelHudQuickbuyEntry class="QuickbuyItem">
 		<Panel id="ItemContentPanel" hittest="false">
 			<CitadelModIcon id="ModIcon" />
+			<!-- ========================================================= -->
+			<!-- QOLLOCK CUSTOM: Allow pointer input on name panel children -->
+			<!-- ========================================================= -->
 			<Panel class="NamePanel" hittest="false" hittestchildren="true">
+				<!-- ========================================================= -->
+				<!-- END QOLLOCK CUSTOM                                      -->
+				<!-- ========================================================= -->
 				<Panel class="QuickbuyStatus LeftRightFlow">
 					<Label id="QuickbuyLabel" class="QuickbuyLabel" text="#Citadel_Hud_Quickbuy" />
 					<Label class="QuickbuyLabelQueueSize" text="#Citadel_Hud_Quickbuy_QueueSize" />
 				</Panel>
 				<Label id="ModName" text="#Citadel_Hud_Quickbuy_ModName" />
 				<Panel class="CostPanel">
+					<!-- ========================================================= -->
+					<!-- QOLLOCK CUSTOM: Addressable gold icon for queue display  -->
+					<!-- ========================================================= -->
 					<Image id="goldIcon" class="goldIcon" />
+					<!-- ========================================================= -->
+					<!-- END QOLLOCK CUSTOM                                      -->
+					<!-- ========================================================= -->
 					<Label id="ModCost" text="#Citadel_Hud_Quickbuy_ModCost" />
 					<!-- ============================================================= -->
 					<!-- QOLLOCK CUSTOM: Queue Remaining Souls Info -->

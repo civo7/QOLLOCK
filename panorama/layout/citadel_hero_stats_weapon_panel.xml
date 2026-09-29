@@ -19,8 +19,13 @@
 		</snippet>
 	</snippets>
 	<CitadelHeroStatsWeapon>
-		<!-- QOLLOCK CUSTOM: Added gShopOpen to classes listener for shop-open visibility -->
+		<!-- ============================================================= -->
+		<!-- QOLLOCK CUSTOM: Add gShopOpen to the native class listener  -->
+		<!-- ============================================================= -->
 		<GlobalClassListener classes="gDetailView gShopOpen" />
+		<!-- ============================================================= -->
+		<!-- END QOLLOCK CUSTOM                                        -->
+		<!-- ============================================================= -->
 		<Panel id="BackgroundContainer" />
 		<Panel id="WeaponInfoContainer">
 			<Image id="GunImage" defaultsrc="s2r://panorama/images/heroes/guns/generic_gun_psd.vtex" scaling="cover" />

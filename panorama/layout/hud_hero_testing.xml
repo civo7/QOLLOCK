@@ -14,6 +14,9 @@
 	<!-- ============================================================= -->
 	<CitadelHudHeroTesting class="hud_hero_testing_root">
 		<GlobalClassListener classes="gScoreboardOpen gShopOpen" />
+		<!-- ============================================================= -->
+		<!-- QOLLOCK CUSTOM: Sandbox++ testing tools layout             -->
+		<!-- ============================================================= -->
 		<Panel id="hero_testing_stub" onactivate="">
 			<Panel id="hero_testing_stub_header_row">
 				<Label id="hero_testing_stub_title" text="#HeroTesting_TestTools" />
@@ -1450,5 +1453,8 @@
 				</Panel>
 			</Panel>
 		</Panel>
+		<!-- ============================================================= -->
+		<!-- END QOLLOCK CUSTOM                                        -->
+		<!-- ============================================================= -->
 	</CitadelHudHeroTesting>
 </root>

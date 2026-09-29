@@ -29,6 +29,9 @@ Do not copy API examples from historical migration notes into runtime code.
   them in prose. Write project documentation in English.
 - Use current source exports and active XML includes as the technical authority.
   HUD and settings use separate JavaScript contexts; do not assume shared globals.
+- In overrides of native Panorama XML, surround QOLLOCK additions and changed
+  native elements with `<!-- ==== -->` separator comments that name the change.
+  Keep unchanged native markup outside those marked blocks.
 - Reuse helpers with matching semantics. Keep settings changes reactive, guard
   redundant style writes, and clean up owned styles, panels, events and schedules.
 - Handle destroyed/replaced panels and invalidate panel-dependent signatures.

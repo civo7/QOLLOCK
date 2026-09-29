@@ -19,6 +19,9 @@
 		<!-- END QOLLOCK CUSTOM                                            -->
 		<!-- ============================================================= -->
 	</styles>
+	<!-- ============================================================= -->
+	<!-- QOLLOCK CUSTOM: HUD runtime scripts                         -->
+	<!-- ============================================================= -->
 	<scripts>
 		<!-- ============================================================= -->
 		<!-- Core infrastructure (peer/thirdeye architecture)              -->
@@ -114,6 +117,9 @@
 		<!-- App: loads LAST, after all feature manifests -->
 		<include src="s2r://panorama/scripts/core/ql_app.vjs_c" />
 	</scripts>
+	<!-- ============================================================= -->
+	<!-- END QOLLOCK CUSTOM                                        -->
+	<!-- ============================================================= -->
 	<snippets>
 		<snippet name="OffscreenEnemySnippet">
 			<Panel class="damage_offscreen">
@@ -158,9 +164,13 @@
 		</snippet>
 	</snippets>
 	<CitadelHud class="WindowRoot" hittest="false" disallowedstyleflags="hover,descendantfocus">
-		<!-- QOLLOCK: mirror the gShopOpen global class onto the HUD root so CSS can let the
-		     hero shop punch through the match-start / pregame takeover splash. -->
+		<!-- ============================================================= -->
+		<!-- QOLLOCK CUSTOM: Mirror gShopOpen for hero shop visibility  -->
+		<!-- ============================================================= -->
 		<GlobalClassListener classes="gShopOpen" />
+		<!-- ============================================================= -->
+		<!-- END QOLLOCK CUSTOM                                        -->
+		<!-- ============================================================= -->
 		<Panel class="HudCore" hittest="false" disallowedstyleflags="hover,descendantfocus">
 			<CitadelPingIndicator id="PingIndicator" hittest="false" />
 			<CitadelHudEventIndicatorsPanel id="HudEventIndicatorsPanel" />
@@ -292,9 +302,15 @@
 								<HudMinimap id="hud_minimap" acceptsinput="false" acceptsfocus="false" />
 							</Panel>
 							<Panel id="minimap_frame" hittest="false" />
+							<!-- ========================================================= -->
+							<!-- QOLLOCK CUSTOM: Minimap overlay anchor and markers         -->
+							<!-- ========================================================= -->
 							<Panel id="minimap_overlay_root" hittest="false" hittestchildren="false">
 								<Panel id="minimap_markers" hittest="false" hittestchildren="false" />
 							</Panel>
+							<!-- ========================================================= -->
+							<!-- END QOLLOCK CUSTOM                                      -->
+							<!-- ========================================================= -->
 						</Panel>
 					</GlobalClassListener>
 					<CitadelHudModifiers id="hud_aura_modifiers" display_location="left" />
@@ -443,7 +459,12 @@
 		<CitadelTooltipManager id="TooltipManager" hittest="false" />
 		<HudPerfStatsBasics hittest="false" />
 		<CitadelHudMovementSpeed id="MovementSpeedPanel" />
-		<!-- QOLLOCK CUSTOM: Local CEF Storage Bridge -->
+		<!-- ============================================================= -->
+		<!-- QOLLOCK CUSTOM: Local CEF Storage Bridge                 -->
+		<!-- ============================================================= -->
 		<CitadelHTMLPanel id="QOLStorageBridge" class="QOLStorageBridge" hittest="false" acceptsfocus="false" />
+		<!-- ============================================================= -->
+		<!-- END QOLLOCK CUSTOM                                        -->
+		<!-- ============================================================= -->
 	</CitadelHud>
 </root>

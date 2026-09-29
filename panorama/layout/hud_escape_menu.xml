@@ -68,8 +68,14 @@
 		<include src="s2r://panorama/scripts/ql_settings.vjs_c" />
 	</scripts>
 	<!-- ============================================================= -->
+	<!-- ============================================================= -->
+	<!-- QOLLOCK CUSTOM: Close settings before resuming from MenuBack  -->
+	<!-- ============================================================= -->
 	<CitadelHudEscapeMenu oncancel="if (!$.HandleModSettingsCancel || !$.HandleModSettingsCancel()) { CitadelResumePlaying(); }">
 		<Panel id="EscapeBackground" onactivate="if ($.IsModSettingsOpen &amp;&amp; $.IsModSettingsOpen()) { $.ForceCloseModSettings(true); } else { CitadelResumePlaying(); }" />
+		<!-- ============================================================= -->
+		<!-- END QOLLOCK CUSTOM: MenuBack handling                      -->
+		<!-- ============================================================= -->
 		<!-- ============================================================= -->
 		<!-- QOLLOCK CUSTOM: Settings Modal Window -->
 		<!-- ============================================================= -->
@@ -177,7 +183,12 @@
 				</TabContents>
 			</Panel>
 		</Panel>
-		<!-- QOLLOCK CUSTOM: Local CEF Storage Bridge -->
+		<!-- ============================================================= -->
+		<!-- QOLLOCK CUSTOM: Local CEF Storage Bridge                 -->
+		<!-- ============================================================= -->
 		<CitadelHTMLPanel id="QOLStorageBridge" class="QOLStorageBridge" hittest="false" acceptsfocus="false" />
+		<!-- ============================================================= -->
+		<!-- END QOLLOCK CUSTOM                                        -->
+		<!-- ============================================================= -->
 	</CitadelHudEscapeMenu>
 </root>

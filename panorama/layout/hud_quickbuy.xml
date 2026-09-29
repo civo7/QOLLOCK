@@ -11,8 +11,14 @@
 		<include src="s2r://panorama/scripts/hud_quickbuy_total_summary.vjs_c" />
 	</scripts>
 	<!-- ============================================================= -->
+	<!-- ============================================================= -->
+	<!-- QOLLOCK CUSTOM: Quickbuy hit testing on the root and contents -->
+	<!-- ============================================================= -->
 	<Panel class="HudQuickbuy" acceptsfocus="false" hittest="false" hittestchildren="true">
 		<Panel class="EmptyContents HudQuickbuyElement" hittest="false" hittestchildren="true">
+			<!-- ========================================================= -->
+			<!-- END QOLLOCK CUSTOM                                      -->
+			<!-- ========================================================= -->
 			<Panel class="PurchaseDisabledContainer">
 				<Panel class="purchasingDisabledX disabledX1" />
 				<Panel class="purchasingDisabledX disabledX2" />
@@ -20,7 +26,13 @@
 			<Label class="QuickbuyLabel" text="#Citadel_Hud_Quickbuy" html="true" />
 			<Panel class="rightClick" />
 		</Panel>
+		<!-- ============================================================= -->
+		<!-- QOLLOCK CUSTOM: Keep quickbuy preview children interactive -->
+		<!-- ============================================================= -->
 		<Panel id="HudMini" class="HudQuickbuyElement" hittest="false" hittestchildren="true">
+			<!-- ========================================================= -->
+			<!-- END QOLLOCK CUSTOM                                      -->
+			<!-- ========================================================= -->
 			<Panel class="PurchaseDisabledContainer">
 				<Panel class="purchasingDisabledX disabledX1" />
 				<Panel class="purchasingDisabledX disabledX2" />
@@ -80,12 +92,21 @@
 			</Panel>
 		</Panel>
 		<!-- ============================================================= -->
+		<!-- ============================================================= -->
+		<!-- QOLLOCK CUSTOM: Ignore pointer input on keyboard hints      -->
+		<!-- ============================================================= -->
 		<Panel id="KeyboardHints" hittest="false" hittestchildren="false">
+			<!-- ========================================================= -->
+			<!-- END QOLLOCK CUSTOM                                      -->
+			<!-- ========================================================= -->
 			<Label class="hudHint itemName" text="{s:quickbuy_item_name}" />
 			<Label class="hudHint combatText" text="#Citadel_Hud_Autobuy_HudHint_CantPurchase" />
 			<Label class="hudHint buyKey" text="#Citadel_Hud_Autobuy_HudHint_BuyKey" html="true" />
 			<Label class="hudHint shopKey" text="#Citadel_Hud_Autobuy_HudHint_ShopKey" html="true" />
 		</Panel>
+		<!-- ============================================================= -->
+		<!-- QOLLOCK CUSTOM: Queue hit testing and pointer routing       -->
+		<!-- ============================================================= -->
 		<Panel id="QuickBuyQueueContainer" hittest="false" hittestchildren="true">
 			<Panel class="QuickbuyQueueOuter" hittest="false" hittestchildren="true">
 				<Label class="BuildOrderLabel" text="#Citadel_Shop_SelectedBuildHeader" hittest="false" />
@@ -107,6 +128,9 @@
 				<Label class="emptyQueueLabel" html="true" text="#Citadel_Hud_Quickbuy_Empty" hittest="false" />
 			</Panel>
 		</Panel>
+		<!-- ============================================================= -->
+		<!-- END QOLLOCK CUSTOM                                        -->
+		<!-- ============================================================= -->
 		<!-- ============================================================= -->
 		<!-- QOLLOCK CUSTOM: Shop Total Summary -->
 		<!-- ============================================================= -->

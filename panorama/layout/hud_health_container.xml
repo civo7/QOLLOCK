@@ -20,11 +20,23 @@
 		<snippet name="RecentDamageCounter">
 			<Panel class="recentDamageCounter">
 				<Image class="damageCounterIcon" id="damageCounterIcon" />
+				<!-- ========================================================= -->
+				<!-- QOLLOCK CUSTOM: Show damage as a negative value             -->
+				<!-- ========================================================= -->
 				<Label class="recentDamageCounterLabel" text="-{i:damageCounterTotal}" />
+				<!-- ========================================================= -->
+				<!-- END QOLLOCK CUSTOM                                      -->
+				<!-- ========================================================= -->
 			</Panel>
 		</snippet>
 	</snippets>
+	<!-- ============================================================= -->
+	<!-- QOLLOCK CUSTOM: Health container root styling hook          -->
+	<!-- ============================================================= -->
 	<Panel class="HealthContainerRoot" hittest="false">
+		<!-- ============================================================= -->
+		<!-- END QOLLOCK CUSTOM                                        -->
+		<!-- ============================================================= -->
 		<GlobalClassListener id="healthbar_container" hittest="false" classes="gAbilityUpgradeMenu" />
 		<!-- ============================================================= -->
 		<!-- QOLLOCK CUSTOM: Minecraft Hearts & Hotbar HUD -->
@@ -77,6 +89,9 @@
 			<CitadelHudHealth id="hud_health_bars" />
 			<CitadelHudHealthStacked id="hud_health_bars_stacked" />
 		</Panel>
+		<!-- ============================================================= -->
+		<!-- QOLLOCK CUSTOM: Move regen and total outside HealthBarContent -->
+		<!-- ============================================================= -->
 		<Panel id="HealthRegenAndTotal">
 			<Panel id="RecentHealContainer" class="recentHealCounters" />
 			<Panel id="RecentDamageContainer" class="recentDamageCounters" />
@@ -100,5 +115,8 @@
 				<Label class="totalHealthLabel" text="/ {i:r:total_health}" />
 			</Panel>
 		</Panel>
+		<!-- ============================================================= -->
+		<!-- END QOLLOCK CUSTOM                                        -->
+		<!-- ============================================================= -->
 	</Panel>
 </root>

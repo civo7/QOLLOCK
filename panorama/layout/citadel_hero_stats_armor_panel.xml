@@ -14,8 +14,13 @@
 		</snippet>
 	</snippets>
 	<CitadelHeroStatsArmor>
-		<!-- QOLLOCK CUSTOM: Added gShopOpen to classes listener for shop-open visibility -->
+		<!-- ============================================================= -->
+		<!-- QOLLOCK CUSTOM: Add gShopOpen to the native class listener  -->
+		<!-- ============================================================= -->
 		<GlobalClassListener classes="gDetailView gShopOpen" />
+		<!-- ============================================================= -->
+		<!-- END QOLLOCK CUSTOM                                        -->
+		<!-- ============================================================= -->
 		<Panel id="BackgroundContainer" />
 		<Panel id="ArmorDisplayStats" class="displayStatsContainer">
 			<Label class="armorDesc statTitle" text="#CitadelHeroStats_Vitality" />

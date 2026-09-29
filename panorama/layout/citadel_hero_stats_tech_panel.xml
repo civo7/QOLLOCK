@@ -14,8 +14,13 @@
 		</snippet>
 	</snippets>
 	<CitadelHeroStatsTech>
-		<!-- QOLLOCK CUSTOM: Added gShopOpen to classes listener for shop-open visibility -->
+		<!-- ============================================================= -->
+		<!-- QOLLOCK CUSTOM: Add gShopOpen to the native class listener  -->
+		<!-- ============================================================= -->
 		<GlobalClassListener classes="gDetailView gShopOpen" />
+		<!-- ============================================================= -->
+		<!-- END QOLLOCK CUSTOM                                        -->
+		<!-- ============================================================= -->
 		<Panel id="BackgroundContainer" />
 		<Panel id="SpiritDisplayStats" class="displayStatsContainer">
 			<Label class="spiritDesc statTitle" text="#CitadelHeroStats_Spirit" />

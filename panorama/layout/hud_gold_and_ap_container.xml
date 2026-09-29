@@ -31,12 +31,14 @@
 				<Label id="hudUnsecuredLabel" class="UnsecuredLabel" text="#Citadel_Hero_Stats_Unsecured" />
 			</Panel>
 		</Panel>
+		<!-- ============================================================= -->
+		<!-- QOLLOCK CUSTOM: Hero image inside Level Amount             -->
+		<!-- ============================================================= -->
 		<Panel id="LevelAmount" class="ScalingStatImage">
-			<!-- ============================================================= -->
-			<!-- QOLLOCK CUSTOM: Hero Image inside Level Amount -->
-			<!-- ============================================================= -->
 			<CitadelHeroImage id="HeroImage" />
-			<!-- ============================================================= -->
 		</Panel>
+		<!-- ============================================================= -->
+		<!-- END QOLLOCK CUSTOM                                        -->
+		<!-- ============================================================= -->
 	</CitadelHudSoulAPContainer>
 </root>

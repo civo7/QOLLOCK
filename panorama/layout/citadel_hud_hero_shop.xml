@@ -13,8 +13,13 @@
 				<Panel class="mod_icon" />
 				<Label class="recentModPurchaseName" text="{s:recent_mod_name}" />
 				<Label class="recentModTierCost" text="{s:recent_tier_purchased}" />
-				<!-- QOLLOCK CUSTOM: Hero name binding for recent purchases popup -->
+				<!-- ========================================================= -->
+				<!-- QOLLOCK CUSTOM: Hero name for recent purchases             -->
+				<!-- ========================================================= -->
 				<Label class="recentModPurchaserHero" text="{s:recent_hero_name}" />
+				<!-- ========================================================= -->
+				<!-- END QOLLOCK CUSTOM                                      -->
+				<!-- ========================================================= -->
 			</Panel>
 		</snippet>
 	</snippets>
