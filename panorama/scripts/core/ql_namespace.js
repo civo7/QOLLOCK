@@ -30,7 +30,7 @@
     }
 
     // Create sub-namespace buckets
-    Q.VERSION = Q.VERSION || "4.0.1";
+    Q.VERSION = Q.VERSION || "4.0.2";
     try {
         const ctxId = $.GetContextPanel()?.id || "";
         Q.ROLE = (ctxId === "EscapeMenu") ? "em" : "hud";
