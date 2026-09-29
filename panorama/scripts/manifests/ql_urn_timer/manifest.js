@@ -43,7 +43,7 @@
             var _getCachedPanel = QOL.getCachedPanel;
             var _setCachedPanel = QOL.setCachedPanel;
             function _getGameSecondsForUrn(root) {
-                try { if (typeof QOL !== "undefined" && QOL.getGameSecondsForUrn) return QOL.getGameSecondsForUrn(root); } catch(e) {}
+                try { return QOL.core.time.readObservedGameTime(root); } catch(e) {}
                 return 0;
             }
             var _isConnectedToHideout = QOL.core.hud.isInHideout;
@@ -70,6 +70,7 @@
             var _debugLogIntervalMs = 2000;
 
             var _loop = null;
+            var _unsubscribeGameSecond = null;
             var _lastLogMs = 0;
 
             function _debugLog(msg) {
@@ -355,9 +356,11 @@
             return {
                 onEnable: function() {
                     var S = QOL.core.Scheduler;
+                    _unsubscribeGameSecond = QOL.core.time.subscribeGameSecond(_tick, 1);
                     _loop = S && S.createPollLoop ? S.createPollLoop(_tick, 0.5, "ql_urn_timer") : null;
                 },
                 onDisable: function() {
+                    if (_unsubscribeGameSecond) { _unsubscribeGameSecond(); _unsubscribeGameSecond = null; }
                     if (_loop) { _loop.stop(); _loop = null; }
                     var S = QOL.core.Scheduler;
                     if (S) S.cancelAllForFeature("ql_urn_timer");

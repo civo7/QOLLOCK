@@ -12,9 +12,11 @@ Provides parsing and formatting helpers for Deadlock match time and cooldown clo
 - `readGameTime(topBar)`: Reads the native `GameTime` label under `TopBar` and converts `"MM:SS"` text to total elapsed seconds. Caches label and TopBar references with `isAlive` checks. Returns `0` on parse failure or missing panel.
 - `parseClockSeconds(str)`: Parses `"MM:SS"` or `"M:SS"` strings into integer seconds. Clamps seconds to modulo 60.
 - `getGameSecondsForUrn(topBar)`: Alias for `readGameTime`.
+- `subscribeGameSecond(callback, priority)`: Starts a shared 100 ms observation of the native GameTime label while subscribed. Calls listeners on a changed second, ordered by ascending priority, and returns an unsubscribe function. Rejuvenator state updates before minimap consumers.
+- `readObservedGameTime(topBar)`: Returns the last shared sample while observing, or reads the label directly before the first sample.
 
 Backward-compatibility aliases on root `QOL`: `QOL.getGameSecondsForUrn`, `QOL.parseClockSeconds`, `QOL.formatSeconds`.
 
 ## Invariants & Architectural Notes
-- Does not poll on its own; acts as a pure utility called by feature manifests (`ql_urn`, `ql_rejuv`, `ql_spm`, etc.).
+- Polls only while a feature has a game-second subscription. The slower feature loops still handle native state changes between seconds, using the last observed second for countdowns.
 - Label lookup is cached to prevent redundant C++ DOM traversal every frame.

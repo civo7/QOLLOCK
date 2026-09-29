@@ -70,7 +70,7 @@
                 }
                 return null;
             };
-            var GetGameSecondsForUrn = function() { return QOL.getGameSecondsForUrn ? QOL.getGameSecondsForUrn() : 0; };
+            var GetGameSecondsForUrn = function(root) { return QOL.core.time.readObservedGameTime(root); };
             var IsStreetBrawlModeActive = function(r) { return QOL.isStreetBrawlModeActive ? QOL.isStreetBrawlModeActive(r) : false; };
             var isConnectedToHideout = QOL.core.hud.isInHideout;
             var BRIDGE_DURATION_SEC = 300;
@@ -184,6 +184,7 @@
             }
 
             var _loop = null;
+            var _unsubscribeGameSecond = null;
             var _root = null;
 
             var FormatClockMmSs = QOL.core.time.formatSeconds;
@@ -417,9 +418,11 @@
                 onEnable: function() {
                     var S = QOL.core.Scheduler;
                     _tick();
+                    _unsubscribeGameSecond = QOL.core.time.subscribeGameSecond(_tick, 1);
                     _loop = S && S.createPollLoop ? S.createPollLoop(_tick, 0.3, "ql_minimap_timers") : null;
                 },
                 onDisable: function() {
+                    if (_unsubscribeGameSecond) { _unsubscribeGameSecond(); _unsubscribeGameSecond = null; }
                     if (_loop) { _loop.stop(); _loop = null; }
                     var S = QOL.core.Scheduler; if (S) S.cancelAllForFeature("ql_minimap_timers");
                     var root = _root || $.GetContextPanel();
