@@ -365,10 +365,11 @@ function buildMatchHud(doc, { players = 12, damageNumbers = 24, dataFeed = 6, ch
 }
 
 /**
- * Rebuild a tree captured from a live match instead of modelling one.
+ * Rebuild a full per-panel tree captured from a live match instead of modelling one.
  *
- * Takes the JSON that scripts/import_tree_dump.js produces from a
- * Dev Panel -> "Panel Tree Dump" console log, and materialises it under doc.root.
+ * Takes the full hierarchy JSON that scripts/import_tree_dump.js produces from
+ * a per-panel dump of a sufficiently small subtree and materialises it under
+ * doc.root. The usual Dev Panel summary has no ancestry and is rejected.
  * The point is to remove our guesses from the measurement: buildMatchHud below
  * composes layout XML plus hand-written assumptions about what C++ creates, and
  * those assumptions have been wrong by more than an order of magnitude in both
@@ -383,7 +384,10 @@ function buildMatchHud(doc, { players = 12, damageNumbers = 24, dataFeed = 6, ch
  */
 function buildCapturedHud(doc, captured) {
     const notes = [];
-    if (!captured || !captured.root) throw new Error("[hud_tree] captured tree has no root");
+    if (!captured || captured.kind === "summary" || !captured.root ||
+        typeof captured.root !== "object" || Array.isArray(captured.root)) {
+        throw new Error("[hud_tree] a full per-panel tree is required; aggregate summaries contain no ancestry");
+    }
 
     for (const w of captured.warnings || []) notes.push(`capture warning: ${w}`);
     if (captured.meta && captured.meta.truncated) {

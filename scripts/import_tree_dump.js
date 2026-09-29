@@ -1,6 +1,6 @@
 // scripts/import_tree_dump.js
 // =============================================================================
-// Convert a captured [QOLTREE] console dump into a tree the profiler can build.
+// Import a [QOLTREE] hierarchy or a [QOLSUM] aggregate from the game log.
 // =============================================================================
 // The headless profiler's tree (simulator/perf/hud_tree.js) is assembled from layout
 // XML plus hand-modelled guesses about what C++ creates at runtime. Its numbers are
@@ -10,9 +10,10 @@
 // (2.4ms avg, 9ms peak), and ranked ql_showrank at 13.5% where the game measured
 // 1-3ms total.
 //
-// This closes that loop. Dev Panel -> "Panel Tree Dump" writes the live tree to the
-// console log; this turns that log into JSON; profile_hud.js --tree <json> then
-// measures against the real thing.
+// The Dev Panel button writes an aggregate summary, which this importer can
+// validate and save. It has no ancestry and cannot drive profile_hud.js --tree.
+// That mode requires a complete per-panel Hud dump, which is usually too large
+// for the game's rolling console log.
 //
 //   node scripts/import_tree_dump.js <console.log> [-o out.json]
 //   node scripts/import_tree_dump.js <console.log> --stats
@@ -42,10 +43,9 @@ const END = "[QOLTREE:END]";
  * a full per-panel dump of that is ~3MB and the game's console log is a rolling
  * buffer, so the first attempt arrived with 2,152 of 37,524 lines and no START.
  *
- * The aggregate carries what the profiler actually needs — total panels, the depth
- * profile, and which ids exist and how often. Lookup cost is decided by tree size
- * and by whether an id exists at all (a hit stops early, a miss visits everything),
- * and none of that requires knowing each panel individually.
+ * The aggregate constrains the size of a synthetic stress tree and inventories
+ * ids, but it has no parent-child links or traversal order. It cannot be used
+ * as a full profiler tree.
  */
 function parseTreeSummary(text) {
     const lines = String(text || "").split(/\r?\n/);

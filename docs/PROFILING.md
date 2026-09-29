@@ -133,8 +133,9 @@ It has no engine timings and cannot produce milliseconds. Do not quote it as suc
 - The **tree** is assembled from real layout XML (the mod's patched copies plus the
   vanilla files it does not override, 12 top-bar players, ~3100 panels) but it is
   calibrated, not captured from a live match. C++ decides composition and creates
-  much of the content dynamically. `--tree` improves the input from a capture;
-  it does not reproduce the engine or remove lifecycle and rendering caveats.
+  much of the content dynamically. `--tree` accepts only a complete per-panel
+  hierarchy; it does not reproduce the engine or remove lifecycle and rendering
+  caveats.
 - The single `cost` column combines ops using **estimated weights**, documented in
   `scripts/simulator/perf/counters.js`. Raw counters are always reported alongside.
   Any conclusion that flips when you nudge a weight is one to draw from the raw
@@ -162,14 +163,21 @@ fraction of the panels.
 A model built from our assumptions cannot falsify those assumptions. Captures
 help constrain its inputs; they do not make it an independent game oracle.
 
-## Capturing the real tree (`--tree`)
+## Capturing the real tree
 
 ```
 1. In game:   Settings → Dev Panel → "Panel Tree Dump"   (in a real match)
 2. Save the console log.
 3. node scripts/import_tree_dump.js <log> --stats
-4. node scripts/profile_hud.js --tree scripts/simulator/perf/runs/captured_tree.json
 ```
+
+The Dev Panel button produces an **aggregate summary**. It records the real
+panel count and depth distribution, but not parent-child links. The repository's
+`captured_tree.json` is such a summary; `profile_hud.js --tree` rejects it rather
+than silently profiling a one-panel HUD. Whole-HUD profiling with `--tree`
+requires a complete per-panel Hud hierarchy; the current rolling game log has
+not retained one. Small `QOL.dumpTree` subtree captures remain useful for
+targeted hierarchy inspection, not a whole-HUD performance baseline.
 
 **Ground truth, 2026-08-21: a live match HUD is 37,524 panels.** The modelled tree is
 3,099 — so it understates the real thing by 12×, and a full-tree miss costs 12× more
@@ -187,9 +195,9 @@ panel:
 - panel count per type
 - panel count per id (capped, most frequent first)
 
-These counts constrain the size and contents of a captured tree. They do not
-preserve complete ancestry, traversal order or native bindings, so lookup cost
-and behavior in the reconstructed model remain estimates.
+These counts constrain the size and contents of a model. They do not preserve
+ancestry, traversal order or native bindings, so a tree cannot be reconstructed
+from them for lookup profiling.
 
 `QOL.dumpTree` still exists for a full per-panel dump of a single subtree, which is
 small enough to survive. It is not wired to a button.
@@ -199,9 +207,9 @@ small enough to survive. It is not wired to a button.
 in traversal order, not necessarily the live panel — that cost a full debug cycle on
 the build-save pipeline).
 
-Every way a capture can be incomplete — rolled log, missing END, capped id list,
-depth lines lost — is reported by the importer and carried into the profile header as
-a tree note. A partial capture is a **floor**, not a baseline.
+The importer reports rolled logs, missing END lines, capped id lists and lost
+depth lines. Warnings on a full hierarchy are carried into the profile header;
+a partial capture is a **floor**, not a baseline.
 
 Captured and modelled runs are **not comparable** — the header and saved JSON record
 which one you got, so don't diff across them.
@@ -215,12 +223,19 @@ then the simulated tree lacks the heart panels, so healthbar work is only
 partially covered — changes there need an in-game check. A run saved at one
 healthbar setting is not a valid baseline for a run at another.
 
-## Regression ceilings (removed)
+## Regression guards
 
-The historical `tests/perf_guards.test.js` ceiling suite was removed. That does
-not mean the current repository has no tests: [TESTING.md](TESTING.md) documents
-the current behavior regressions and npm gate. No current performance-ceiling
-test with that filename should be invoked or cited as passing.
+The historical `tests/perf_guards.test.js` ceiling suite was removed. The
+current `tests/large_tree_profile.test.js` adds anonymous panels to the modelled
+HUD until it matches the saved aggregate's panel count. It runs production HUD
+callbacks over ten 100 ms virtual windows and checks peak node visits, callback
+count and full-tree misses. A negative control deliberately adds a callback
+burst and repeated root misses, proving that the guard detects those changes.
+The added panels have synthetic ancestry. The thresholds are operation budgets
+for this fixed simulator scenario, not FPS or client milliseconds; the test
+does not cover every feature configuration. The simulator scans a whole subtree
+even after an id hit to detect duplicate ids, so its hit-visit counts are not
+measured native `FindChildTraverse` work.
 
 The profiler reports scheduled-callback errors. Inspect them alongside operation
 counts: an exception or registry auto-disable can reduce later measured work

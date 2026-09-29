@@ -185,10 +185,10 @@ function wrapScheduledLoops(sandbox) {
  * @param {boolean} [opts.enableAll=true]
  * @param {object}  [opts.configOverrides]
  * @param {number}  [opts.warmupMs=8000]  virtual ms to run before counting
- * @param {object}  [opts.capturedTree]   parsed output of scripts/import_tree_dump.js;
- *                                        when given, the real captured tree is used
- *                                        instead of the modelled composition and
- *                                        `players`/`damageNumbers` no longer apply
+ * @param {object}  [opts.capturedTree]   full per-panel output of
+ *                                        scripts/import_tree_dump.js (not an
+ *                                        aggregate summary); replaces the
+ *                                        modelled composition
  */
 function createProfiledHud({
     players = 12,

@@ -289,9 +289,9 @@ function main() {
         }
     }
 
-    // --tree <json> — profile against a tree captured from a live match
-    // (scripts/import_tree_dump.js output) instead of the modelled composition.
-    // This is the only mode whose panel counts are not a guess.
+    // --tree <json> needs a full per-panel dump from import_tree_dump.js.
+    // The usual Dev Panel aggregate contains counts but no ancestry, so it
+    // cannot serve as a traversal tree and is rejected below.
     let capturedTree = null;
     const treeArg = arg("tree", null);
     if (treeArg) {
@@ -305,8 +305,10 @@ function main() {
             process.stderr.write(`[profiler] FATAL: could not parse ${treeArg}: ${e.message}\n`);
             process.exit(2);
         }
-        if (!capturedTree || !capturedTree.root) {
-            process.stderr.write(`[profiler] FATAL: ${treeArg} has no root — was it written by import_tree_dump.js?\n`);
+        if (!capturedTree || capturedTree.kind === "summary" || !capturedTree.root ||
+            typeof capturedTree.root !== "object" || Array.isArray(capturedTree.root)) {
+            process.stderr.write(`[profiler] FATAL: ${treeArg} is not a full per-panel tree. ` +
+                "Aggregate panel summaries have no ancestry and cannot be used with --tree.\n");
             process.exit(2);
         }
     }
@@ -318,10 +320,10 @@ function main() {
         capturedTree,
     });
 
-    // A harness that produces an empty profile must fail loudly, not print
-    // reassuring zeroes.
-    if (h.meta.wrappedFeatures === 0) {
-        process.stderr.write("[profiler] FATAL: no features wrapped — QOL_FEATURE_REGISTRY was empty.\n");
+    // The legacy registry may be empty after a migration to manifests. The
+    // Scheduler wrapper must still be present to attribute their poll loops.
+    if (h.meta.wrappedFeatures === 0 && !h.meta.wrappedScheduler) {
+        process.stderr.write("[profiler] FATAL: no feature callbacks could be wrapped.\n");
         process.stderr.write(h.diagnose() + "\n");
         process.exit(2);
     }

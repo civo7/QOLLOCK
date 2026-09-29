@@ -126,7 +126,8 @@ node scripts/profile_hud.js --seconds 20               # per-feature cost report
 node scripts/profile_hud.js --seconds 20 --save before # then make a change
 node scripts/profile_hud.js --seconds 20 --compare before
 node scripts/audit_panel_ids.js                        # candidate ids absent from scanned sources
-node scripts/import_tree_dump.js <dump>                # import captured tree data
+node scripts/import_tree_dump.js <dump>                # import a tree summary or full dump
+node --test tests/large_tree_profile.test.js           # synthetic large-tree operation guard
 ```
 
 These tools count operations and expose JavaScript exceptions under the supplied
@@ -135,9 +136,11 @@ rendered frame. An id absent from XML/JavaScript can still be created by C++.
 
 `scripts/import_tree_dump.js` can use captures from `panorama/scripts/tools/qol_dump_tree.js`. The Dev
 button currently captures aggregate counts, not a complete panel hierarchy.
-Captures improve the inputs but do not reproduce native methods, dynamic
-lifecycle, bindings or rendering. Do not turn a modelled green result into a
-claim about the client.
+The aggregate can size a synthetic stress scenario but cannot be passed to
+`profile_hud.js --tree`, which requires a full per-panel hierarchy. The large
+tree test checks virtual 100 ms peaks in callbacks and traversal visits, not
+rendering or FPS. Do not turn a modelled green result into a claim about the
+client.
 
 Read `docs/PROFILING.md` first: it cannot produce milliseconds, and the healthbar
 variants are only partially covered.
