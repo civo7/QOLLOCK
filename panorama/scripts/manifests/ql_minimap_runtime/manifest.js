@@ -2,7 +2,7 @@
 // =============================================================================
 // QOLLOCK — Minimap Runtime (Zoom, Sizing, Overlays, Customization)
 // =============================================================================
-// OWNS:        Minimap sizing/offset, Alt/Tab zoom, draw-over-UI reparenting,
+// OWNS:        Minimap sizing/offset, Alt/Tab zoom, draw-over-UI stacking,
 //              crate overlay markers, tunnel overlay, minimalist map opacity,
 //              and icon canvas wash color.
 // DOES NOT OWN: Native minimap renderer or CitadelMinimap engine component.
@@ -524,23 +524,12 @@
                 var drawOverUiAlt = zoomAltActive && Number(cfg.ALT_ZOOM_DRAW_OVER_UI) === 1;
                 var drawOverUi = drawOverUiTab || drawOverUiAlt;
                 if (drawOverUi) {
-                    _captureMinimapOriginalParent(minimapPersp);
-
-                    var targetRoot = _resolveHudRootForMinimapDraw(root);
-                    var reparented = false;
-                    if (targetRoot && minimapPersp.GetParent && minimapPersp.GetParent() !== targetRoot && minimapPersp.SetParent) {
-                        minimapPersp.SetParent(targetRoot);
-                        reparented = true;
-                    }
-
-                    if (targetRoot && (reparented || !_drawOverUiActive) && targetRoot.GetChildCount && targetRoot.GetChild && targetRoot.MoveChildAfter) {
-                        var count = targetRoot.GetChildCount();
-                        if (count > 0) {
-                            var lastChild = targetRoot.GetChild(count - 1);
-                            if (lastChild && lastChild !== minimapPersp) {
-                                targetRoot.MoveChildAfter(minimapPersp, lastChild);
-                            }
-                        }
+                    // The native location labels added in build 6711 inherit their
+                    // string dialog variables through this hierarchy. Reparenting
+                    // minimap_persp makes both labels resolve as "INVALID", so keep
+                    // the native parent and use the stacking override only.
+                    if (_drawOverUiOriginalParent && minimapPersp.GetParent && minimapPersp.GetParent() !== _drawOverUiOriginalParent) {
+                        _restoreMinimapOriginalOrder(minimapPersp);
                     }
 
                     if (minimapPersp.style.zIndex !== "2147483647") {

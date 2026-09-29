@@ -556,7 +556,7 @@ test("ql_minimap_timers maintains calibrated base coordinates across minimap sca
     instance.onDisable();
 });
 
-test("ql_minimap_runtime ALT_ZOOM_DRAW_OVER_UI stays stable without oscillation when reparented", () => {
+test("ql_minimap_runtime ALT_ZOOM_DRAW_OVER_UI preserves the native minimap hierarchy", () => {
     const hud = sim.createHud({ inHideout: false });
     hud.assertLoaded();
     const Q = hud.sandbox.global.QOL;
@@ -576,15 +576,17 @@ test("ql_minimap_runtime ALT_ZOOM_DRAW_OVER_UI stays stable without oscillation 
     gameplayHud.AddClass("gDetailView");
     hud.clock.advance(100);
 
-    // Tick 1: should zoom and reparent to root
+    // The patch's location labels inherit dialog variables through gameplayHud,
+    // so draw-over mode must zoom without reparenting minimap_persp.
     assert.strictEqual(persp.style.align, "center center", "Minimap must be centered in alt zoom");
-    assert.strictEqual(persp.GetParent(), root, "Minimap must be reparented to hudRoot under draw over ui");
+    assert.strictEqual(persp.GetParent(), gameplayHud, "Minimap must retain its native parent under draw over ui");
+    assert.strictEqual(persp.style.zIndex, "2147483647", "Draw over ui must use the stacking override");
 
     // Advance multiple ticks while holding Alt
     for (let i = 0; i < 5; i++) {
         hud.clock.advance(50);
         assert.strictEqual(persp.style.align, "center center", `Tick ${i + 1}: Minimap must remain centered without oscillating`);
-        assert.strictEqual(persp.GetParent(), root, `Tick ${i + 1}: Minimap must remain reparented to hudRoot`);
+        assert.strictEqual(persp.GetParent(), gameplayHud, `Tick ${i + 1}: Minimap must retain its native parent`);
     }
 
     // Release Alt
@@ -597,7 +599,7 @@ test("ql_minimap_runtime ALT_ZOOM_DRAW_OVER_UI stays stable without oscillation 
     Q.core.FeatureRegistry.disable("ql_minimap_runtime");
 });
 
-test("ql_minimap_runtime Tab draw over UI does not reorder the map while Tab stays open", () => {
+test("ql_minimap_runtime Tab draw over UI does not reparent the map while Tab stays open", () => {
     const hud = sim.createHud({ inHideout: false });
     hud.assertLoaded();
     const Q = hud.sandbox.global.QOL;
@@ -624,18 +626,17 @@ test("ql_minimap_runtime Tab draw over UI does not reorder the map while Tab sta
     stableListener.AddClass("gScoreboardOpen");
     hud.clock.advance(500);
 
-    assert.strictEqual(persp.GetParent(), root, "Tab draw over UI moves the map above the gameplay HUD");
-    assert.strictEqual(persp.style.align, "center center", "Tab zoom remains active after reparenting");
-    assert.strictEqual(moves, 0, "Reparenting places the map last without an extra reorder");
+    assert.strictEqual(persp.GetParent(), minimapHost, "Tab draw over UI preserves the native minimap hierarchy");
+    assert.strictEqual(persp.style.align, "center center", "Tab zoom remains active");
+    assert.strictEqual(moves, 0, "Draw over UI does not reorder the native hierarchy");
 
-    // A reparented GlobalClassListener may lose its native class while the
-    // separate listener in the original HUD tree keeps tracking Tab.
+    // The separate stationary listener remains the authoritative Tab signal.
     persp.RemoveClass("gScoreboardOpen");
 
     for (let i = 0; i < 4; i++) {
         $.CreatePanel("Panel", root, `temporary_hud_overlay_${i}`);
         hud.clock.advance(500);
-        assert.strictEqual(persp.GetParent(), root, `Tick ${i + 1}: the map stays in the overlay layer`);
+        assert.strictEqual(persp.GetParent(), minimapHost, `Tick ${i + 1}: the map stays in its native hierarchy`);
         assert.strictEqual(persp.style.align, "center center", `Tick ${i + 1}: Tab zoom stays active`);
         assert.strictEqual(moves, 0, `Tick ${i + 1}: the map is not moved again`);
     }

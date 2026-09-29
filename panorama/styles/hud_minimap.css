@@ -13,6 +13,13 @@
 	transition-property: transform, ui-scale, opacity, pre-transform-scale2d;
 }
 
+/* Build 6711 removed the replacement zipline scene while retaining the class
+ * that hides the canvas containing the native lane lines. */
+.HideOldZiplines #canvas
+{
+	visibility: visible;
+}
+
 .minimalist_minimap_active #map_render
 {
 	opacity: .9;
