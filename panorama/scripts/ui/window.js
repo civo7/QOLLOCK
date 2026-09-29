@@ -50,6 +50,7 @@
     const MAX_BOOT_ATTEMPTS = 30;
     let _settingsToggleDebounceUntilMs = 0;
     let _settingsOpenGuardUntilMs = 0;
+    let _cancelConsumedUntilMs = 0;
     let _uiBuilt = false;
 
     // =========================================================================
@@ -90,7 +91,7 @@
         // Prevent click fall-through to background
         _window.SetPanelEvent("onactivate", () => {});
         _window.SetPanelEvent("oncancel", () => {
-            forceCloseModSettings();
+            handleModSettingsCancel();
         });
 
         _header = _window.FindChildTraverse("SettingsHeader");
@@ -1135,6 +1136,18 @@
         Q.events?.emit?.("ui:settings_closed");
     };
 
+    const handleModSettingsCancel = () => {
+        const now = getNowMs();
+        if (isOpen()) {
+            // The same MenuBack action can reach both the focused window and
+            // its escape-menu parent. Consume that one action in both places.
+            _cancelConsumedUntilMs = now + 100;
+            forceCloseModSettings(true);
+            return true;
+        }
+        return now < _cancelConsumedUntilMs;
+    };
+
     const setOpen = (open) => {
         if (open) {
             if (!isOpen()) {
@@ -1173,7 +1186,7 @@
 
         const tabHost = body || win;
         win.SetPanelEvent("oncancel", () => {
-            forceCloseModSettings();
+            handleModSettingsCancel();
         });
 
         let curTab = (typeof globalThis.currentTab !== "undefined") ? globalThis.currentTab : _activeTab;
@@ -2193,16 +2206,9 @@
             });
         }
 
-        const em = root?.FindChildTraverse ? root.FindChildTraverse("EscapeMenu") : null;
-        if (em && isAlive(em)) {
-            em.SetPanelEvent("oncancel", () => {
-                if (isOpen()) {
-                    setOpen(false);
-                } else {
-                    try { $.DispatchEvent("CitadelResumePlaying", ctx); } catch (_) {}
-                }
-            });
-        }
+        // Keep the XML root's native CitadelResumePlaying() fallback. The root
+        // is the context panel itself, so FindChildTraverse("EscapeMenu")
+        // cannot locate it as a descendant.
     };
 
     // =========================================================================
@@ -2308,6 +2314,7 @@
         buildUI,
         toggleSettingsWindow,
         forceCloseModSettings,
+        handleModSettingsCancel,
         closeOpenSettingsDropdowns,
         syncTabActiveStates,
         setActiveTabAndRefresh,
@@ -2324,6 +2331,8 @@
     $.BuildUI = () => windowApi.buildUI();
     $.ToggleSettingsWindow = () => windowApi.toggleSettingsWindow();
     $.ForceCloseModSettings = (ignoreGuard) => windowApi.forceCloseModSettings(ignoreGuard);
+    $.HandleModSettingsCancel = () => windowApi.handleModSettingsCancel();
+    $.IsModSettingsOpen = () => windowApi.isOpen();
 
     globalThis.BuildUI = buildUI;
     globalThis.ToggleSettingsWindow = toggleSettingsWindow;

@@ -68,8 +68,8 @@
 		<include src="s2r://panorama/scripts/ql_settings.vjs_c" />
 	</scripts>
 	<!-- ============================================================= -->
-	<CitadelHudEscapeMenu oncancel="if ($.ForceCloseModSettings) { $.ForceCloseModSettings(); } else { $.DispatchEvent(&apos;CitadelResumePlaying&apos;, $.GetContextPanel()); }">
-		<Panel id="EscapeBackground" onactivate="if ($.ForceCloseModSettings) { $.ForceCloseModSettings(); } else { $.DispatchEvent(&apos;CitadelResumePlaying&apos;, $.GetContextPanel()); }" />
+	<CitadelHudEscapeMenu oncancel="if (!$.HandleModSettingsCancel || !$.HandleModSettingsCancel()) { CitadelResumePlaying(); }">
+		<Panel id="EscapeBackground" onactivate="if ($.IsModSettingsOpen &amp;&amp; $.IsModSettingsOpen()) { $.ForceCloseModSettings(true); } else { CitadelResumePlaying(); }" />
 		<!-- ============================================================= -->
 		<!-- QOLLOCK CUSTOM: Settings Modal Window -->
 		<!-- ============================================================= -->

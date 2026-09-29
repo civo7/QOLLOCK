@@ -245,6 +245,50 @@ test("window: escape background click closes settings window first if open", () 
     assert.strictEqual(windowApi.isOpen(), false);
 });
 
+test("Escape closes QOLLOCK settings once, then resumes the native pause menu", () => {
+    const { windowApi, win, mockDollar, sandbox } = createTestEnvironment();
+    let now = 1000;
+    sandbox.Date = { now: () => now };
+    const xml = fs.readFileSync(path.resolve(__dirname, "../panorama/layout/hud_escape_menu.xml"), "utf8");
+    const handler = xml.match(/<CitadelHudEscapeMenu oncancel="([^"]+)"/);
+    assert.ok(handler, "escape menu must declare a cancel handler");
+    let resumes = 0;
+    const cancel = () => vm.runInNewContext(handler[1], {
+        $: mockDollar,
+        CitadelResumePlaying: () => { resumes++; }
+    });
+
+    windowApi.boot();
+    cancel();
+    assert.equal(resumes, 1, "Escape should resume when QOLLOCK settings are closed");
+
+    windowApi.setOpen(true);
+    cancel();
+    assert.equal(windowApi.isOpen(), false);
+    assert.equal(resumes, 1, "first Escape should only close QOLLOCK settings");
+
+    windowApi.setOpen(true);
+    win._fire("oncancel");
+    cancel();
+    assert.equal(resumes, 1, "a cancel bubbling from the settings window must not resume in the same press");
+    now += 101;
+    cancel();
+    assert.equal(resumes, 2, "next Escape should resume the native menu");
+
+    const backgroundHandler = xml.match(/<Panel id="EscapeBackground" onactivate="([^"]+)"/);
+    assert.ok(backgroundHandler);
+    const clickBackground = () => vm.runInNewContext(backgroundHandler[1].replace(/&amp;/g, "&"), {
+        $: mockDollar,
+        CitadelResumePlaying: () => { resumes++; }
+    });
+    windowApi.setOpen(true);
+    clickBackground();
+    assert.equal(windowApi.isOpen(), false);
+    assert.equal(resumes, 2);
+    clickBackground();
+    assert.equal(resumes, 3, "background click should resume when QOLLOCK settings are closed");
+});
+
 test("window: ensureDiscordTextureLogo and ensureDiscordFooterTextureLogo attach logo image", () => {
     const { windowApi, mockDollar, win } = createTestEnvironment();
     const btn = mockDollar.CreatePanel("Button", win, "TestDiscordBtn");
