@@ -41,7 +41,6 @@
     var PANEL_ID_GAMEPLAY_HUD = "gameplay_hud";
     var MINIMAP_CAST_RANGE_BASE_SIZE = 400.0;
     var MINIMAP_LAYOUT_BASE_SIZE_PX = 400;
-    var MINIMAP_DRAW_OVER_UI_REASSERT_MS = 250;
     var MINIMAP_CRATE_OVERLAY_MARKER_BORDER_OPACITY = 0.45;
     var MINIMAP_CRATE_OVERLAY_MARKER_OPACITY = 0.75;
     var MINIMAP_CRATE_OVERLAY_MARKER_SIZE_PX = 2;
@@ -165,7 +164,6 @@
             var _drawOverUiActive = false;
             var _drawOverUiOriginalParent = null;
             var _drawOverUiOriginalIndex = -1;
-            var _drawOverUiNextReassertMs = 0;
 
             // Cached panel references
             var _tunnelOverlay = null;
@@ -514,13 +512,11 @@
             }
 
             function _updateZoomDrawOverUi(root, cfg, zoomTabActive, zoomAltActive, minimapPersp) {
-                var nowMs = Date.now ? Date.now() : (new Date()).getTime();
                 minimapPersp = isPanelValid(minimapPersp)
                     ? minimapPersp
                     : (root && root.FindChildTraverse ? root.FindChildTraverse("minimap_persp") : null);
                 if (!isPanelValid(minimapPersp)) {
                     _drawOverUiActive = false;
-                    _drawOverUiNextReassertMs = 0;
                     return;
                 }
 
@@ -537,10 +533,7 @@
                         reparented = true;
                     }
 
-                    var shouldReassertOrder = reparented ||
-                        !_drawOverUiActive ||
-                        nowMs >= (_drawOverUiNextReassertMs || 0);
-                    if (targetRoot && shouldReassertOrder && targetRoot.GetChildCount && targetRoot.GetChild && targetRoot.MoveChildAfter) {
+                    if (targetRoot && (reparented || !_drawOverUiActive) && targetRoot.GetChildCount && targetRoot.GetChild && targetRoot.MoveChildAfter) {
                         var count = targetRoot.GetChildCount();
                         if (count > 0) {
                             var lastChild = targetRoot.GetChild(count - 1);
@@ -550,7 +543,6 @@
                         }
                     }
 
-                    _drawOverUiNextReassertMs = nowMs + MINIMAP_DRAW_OVER_UI_REASSERT_MS;
                     if (minimapPersp.style.zIndex !== "2147483647") {
                         minimapPersp.style.zIndex = "2147483647";
                     }
@@ -566,7 +558,6 @@
                     minimapPersp.style.zIndex = "0";
                 }
                 _drawOverUiActive = false;
-                _drawOverUiNextReassertMs = 0;
             }
 
             function _buildMinimapRuntimeSignature(cfg) {

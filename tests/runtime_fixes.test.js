@@ -597,6 +597,49 @@ test("ql_minimap_runtime ALT_ZOOM_DRAW_OVER_UI stays stable without oscillation 
     Q.core.FeatureRegistry.disable("ql_minimap_runtime");
 });
 
+test("ql_minimap_runtime Tab draw over UI does not reorder the map while Tab stays open", () => {
+    const hud = sim.createHud({ inHideout: false });
+    hud.assertLoaded();
+    const Q = hud.sandbox.global.QOL;
+    const $ = hud.sandbox.global.$;
+    const root = hud.root;
+    const hudCore = $.CreatePanel("Panel", root, "HudCore");
+    const gameplayHud = $.CreatePanel("Panel", hudCore, "gameplay_hud");
+    const minimapHost = $.CreatePanel("Panel", gameplayHud, "minimap_host");
+    const persp = $.CreatePanel("Panel", minimapHost, "minimap_persp");
+    const container = $.CreatePanel("Panel", persp, "minimap_container");
+    $.CreatePanel("Panel", container, "hud_minimap");
+    $.CreatePanel("Panel", root, "scoreboard_overlay");
+
+    let moves = 0;
+    root.MoveChildAfter = (panel) => {
+        moves++;
+        root.addChild(panel);
+    };
+
+    Q.core.ConfigStore.set("ql_minimap_runtime", "ENABLE_TAB_ZOOM", 1);
+    Q.core.ConfigStore.set("ql_minimap_runtime", "TAB_ZOOM_DRAW_OVER_UI", 1);
+    persp.AddClass("gScoreboardOpen");
+    hud.clock.advance(500);
+
+    assert.strictEqual(persp.GetParent(), root, "Tab draw over UI moves the map above the gameplay HUD");
+    assert.strictEqual(persp.style.align, "center center", "Tab zoom remains active after reparenting");
+    assert.strictEqual(moves, 0, "Reparenting places the map last without an extra reorder");
+
+    for (let i = 0; i < 4; i++) {
+        $.CreatePanel("Panel", root, `temporary_hud_overlay_${i}`);
+        hud.clock.advance(500);
+        assert.strictEqual(persp.GetParent(), root, `Tick ${i + 1}: the map stays in the overlay layer`);
+        assert.strictEqual(persp.style.align, "center center", `Tick ${i + 1}: Tab zoom stays active`);
+        assert.strictEqual(moves, 0, `Tick ${i + 1}: the map is not moved again`);
+    }
+
+    persp.RemoveClass("gScoreboardOpen");
+    hud.clock.advance(500);
+    assert.strictEqual(persp.GetParent(), minimapHost, "Closing Tab restores the original parent");
+    Q.core.FeatureRegistry.disable("ql_minimap_runtime");
+});
+
 test("ql_compass MINIMAP_FLIP sets flip classes on hud_minimap and overlays correctly", () => {
     const hud = sim.createHud({ inHideout: false });
     hud.assertLoaded();
