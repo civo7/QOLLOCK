@@ -51,7 +51,7 @@ exports. `setStyleIfChanged` and `setPanelOpacitySafe` are not methods of
 
 The leaf `QOL_UTILS.ClearStyleSafe` used by HUD manifests also tries native
 `ClearPropertyFromCode` first, then legacy assignments only if native clearing
-is unavailable or throws. The core boolean helper above remains strict.
+is unavailable, reports `false`, or throws. The core boolean helper above remains strict.
 
 A partial native style-write failure returns `sig: null` from `syncStyles`, so a later call retries the map. `readTextDeep` returns empty text when native child enumeration fails. Panel validity (`isAlive`) is unrelated to player life state.
 

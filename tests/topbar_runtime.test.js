@@ -14,10 +14,12 @@ function setup() {
     core.addChild(gameplay);
     const top = env.doc.create("CitadelHudTopBar", { id: "TopBar" });
     core.addChild(top);
+    const bottom = env.doc.create("Panel", { id: "hud_signature" });
+    core.addChild(bottom);
     Q.setCachedPanel?.("gameplayHud", gameplay);
     env.global.QOL.ui.window.setOpen(true);
     env.clock.advance(600);
-    return { ...env, Q, root, core, gameplay, top };
+    return { ...env, Q, root, core, gameplay, top, bottom };
 }
 
 function publish(env, values) {
@@ -105,4 +107,45 @@ test("topbar: takeover still releases styles and restores them when visible", ()
     env.root.RemoveClass("HudTakeoverEnabled");
     env.clock.advance(1000);
     expectChanged(env.top);
+});
+
+test("top and bottom offset row reset and Default preset overwrite a stale native offset", () => {
+    const env = setup();
+    env.root.AddClass("InHideout");
+    const rows = [];
+    for (const [panel, prefix] of [[env.top, "TOP_BAR"], [env.bottom, "BOTTOM_BAR"]]) {
+        panel.ClearPropertyFromCode = name => {
+            if (name === "x" || name === "y") return undefined;
+            return true;
+        };
+        for (const [axis, shape, value] of [["X", "offset_n1500_1500", "-100"], ["Y", "offset_n500_500", "50"]]) {
+            const key = `${prefix}_${axis}_OFFSET`;
+            const row = env.global.CreateSliderRow(env.list, key, key, shape);
+            const input = row.FindChildrenWithClassTraverse("ValueInput")[0];
+            input.text = value;
+            input._fire("oninputsubmit");
+            rows.push({ key, row, panel, axis });
+        }
+    }
+    env.clock.advance(1500);
+    assert.equal(env.top.style.x, "-100px");
+    assert.equal(env.bottom.style.y, "-50px");
+    for (const { key, row, panel, axis } of rows) {
+        row.FindChildrenWithClassTraverse("SettingRowResetBtn")[0]._fire("onactivate");
+        env.clock.advance(1200);
+        assert.equal(env.global.MOD_CONFIG[key], 0);
+        assert.equal(panel.style[axis.toLowerCase()], "0px");
+    }
+    for (const { key } of rows) env.global.MOD_CONFIG[key] = key.endsWith("X_OFFSET") ? -100 : 50;
+    env.global.SaveAndSync();
+    env.clock.advance(1200);
+    assert.equal(env.bottom.style.x, "-100px");
+    assert.equal(env.global.QOL.ui.presets.applyPresetByName("Default"), true);
+    env.clock.advance(1200);
+    for (const { key, panel, axis } of rows) {
+        assert.equal(env.global.MOD_CONFIG[key], 0);
+        assert.equal(panel.style[axis.toLowerCase()], "0px");
+    }
+    assert.deepEqual(env.doc.eventErrors, []);
+    assert.deepEqual(env.clock.errors, []);
 });

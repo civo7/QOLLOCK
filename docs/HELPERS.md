@@ -87,7 +87,7 @@ that motivated it.
 ## Native style restoration
 
 `QOL_UTILS.ClearStyleSafe(panel, property)` in `ql_utils.js` first calls native
-`ClearPropertyFromCode` and returns on success. If unavailable or throwing, it
+`ClearPropertyFromCode` and returns unless it reports `false`. If unavailable, returning `false`, or throwing, it
 retains the legacy delete/null/empty-string fallbacks. Callers restoring default
 geometry or opacity must release the native override, not just mutate a JS
 property. `QOL.core.panel.clearStyleProperty` remains the stricter boolean API

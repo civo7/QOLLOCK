@@ -31,6 +31,8 @@
             var _lastSig = "";
             var _lastPanel = null;
             var _loop = null;
+            var _offsetXApplied = false;
+            var _offsetYApplied = false;
 
             function _hasNonDefault(cfg) {
                 if (!cfg) return false;
@@ -80,6 +82,11 @@
 
             var _clearStyle = QOL.utils.ClearStyleSafe;
 
+            function _releaseOffset(panel, prop, hadOffset) {
+                if (hadOffset) panel.style[prop] = "0px";
+                _clearStyle(panel, prop);
+            }
+
             function _apply(cfg) {
                 var root = $.GetContextPanel();
                 var active = _hasNonDefault(cfg);
@@ -97,6 +104,8 @@
                 if (bp !== _lastPanel) {
                     _lastPanel = bp;
                     _lastSig = "";
+                    _offsetXApplied = false;
+                    _offsetYApplied = false;
                 }
                 if (!bp) return;
 
@@ -115,8 +124,10 @@
                 _lastSig = sig;
 
                 if (!enabled) {
-                    _clearStyle(bp, "x");
-                    _clearStyle(bp, "y");
+                    _releaseOffset(bp, "x", _offsetXApplied);
+                    _releaseOffset(bp, "y", _offsetYApplied);
+                    _offsetXApplied = false;
+                    _offsetYApplied = false;
                     _clearStyle(bp, "preTransformScale2d");
                     _clearStyle(bp, "uiScale");
                     _clearStyle(bp, "opacity");
@@ -126,10 +137,11 @@
                 }
 
                 if (ox !== 0) bp.style.x = ox + "px";
-                else _clearStyle(bp, "x");
-
+                else _releaseOffset(bp, "x", _offsetXApplied);
                 if (oy !== 0) bp.style.y = (-oy) + "px";
-                else _clearStyle(bp, "y");
+                else _releaseOffset(bp, "y", _offsetYApplied);
+                _offsetXApplied = ox !== 0;
+                _offsetYApplied = oy !== 0;
 
                 _clearStyle(bp, "preTransformScale2d");
 
@@ -167,14 +179,13 @@
                     var S = QOL.core.Scheduler;
                     if (S) S.cancelAllForFeature(ctx.id);
                     _lastSig = "";
-                    _lastPanel = null;
                     try {
                         var root = $.GetContextPanel();
                         _applyCurrencyColor(root, "");
                         var bp = root ? root.FindChildTraverse("hud_signature") : null;
                         if (bp && bp.style) {
-                            _clearStyle(bp, "x");
-                            _clearStyle(bp, "y");
+                            _releaseOffset(bp, "x", _offsetXApplied && bp === _lastPanel);
+                            _releaseOffset(bp, "y", _offsetYApplied && bp === _lastPanel);
                             _clearStyle(bp, "preTransformScale2d");
                             _clearStyle(bp, "uiScale");
                             _clearStyle(bp, "opacity");
@@ -182,6 +193,9 @@
                             var isSupposed = FR && FR.isFeatureSupposedToBeEnabled ? FR.isFeatureSupposedToBeEnabled("ql_bottom_bar") : false;
                             if (bp.SetHasClass) bp.SetHasClass("qol-hidden", !isSupposed);
                         }
+                        _lastPanel = null;
+                        _offsetXApplied = false;
+                        _offsetYApplied = false;
                     } catch(e) {}
                 },
                 onSettingsChanged: function() { _apply(ctx.config.all()); }

@@ -58,6 +58,8 @@
             var _lastSig = "";
             var _lastPanel = null;
             var _loop = null;
+            var _offsetXApplied = false;
+            var _offsetYApplied = false;
 
             function _clamp(v, lo, hi) {
                 var n = Number(v);
@@ -68,6 +70,11 @@
             }
 
             var _clearStyle = QOL.utils.ClearStyleSafe;
+
+            function _releaseOffset(panel, prop, hadOffset) {
+                if (hadOffset) panel.style[prop] = "0px";
+                _clearStyle(panel, prop);
+            }
 
             function _hasNonDefault(cfg) {
                 if (!cfg) return false;
@@ -86,6 +93,8 @@
                 if (topBar !== _lastPanel) {
                     _lastPanel = topBar;
                     _lastSig = "";
+                    _offsetXApplied = false;
+                    _offsetYApplied = false;
                 }
 
                 // Visibility gate: if the top bar is hidden in spectator/replay mode, don't apply styles.
@@ -116,10 +125,11 @@
 
                 if (enabled && active && hudVisible) {
                     if (ox !== 0) topBar.style.x = ox + "px";
-                    else _clearStyle(topBar, "x");
-
+                    else _releaseOffset(topBar, "x", _offsetXApplied);
                     if (oy !== 0) topBar.style.y = (-oy) + "px";
-                    else _clearStyle(topBar, "y");
+                    else _releaseOffset(topBar, "y", _offsetYApplied);
+                    _offsetXApplied = ox !== 0;
+                    _offsetYApplied = oy !== 0;
 
                     _clearStyle(topBar, "preTransformScale2d");
                     if (Math.abs(scNum - 1.0) > 0.0001) topBar.style.uiScale = Math.round(scNum * 100) + "%";
@@ -131,8 +141,10 @@
                         _clearStyle(topBar, "opacity");
                     }
                 } else {
-                    _clearStyle(topBar, "x");
-                    _clearStyle(topBar, "y");
+                    _releaseOffset(topBar, "x", _offsetXApplied);
+                    _releaseOffset(topBar, "y", _offsetYApplied);
+                    _offsetXApplied = false;
+                    _offsetYApplied = false;
                     _clearStyle(topBar, "preTransformScale2d");
                     _clearStyle(topBar, "uiScale");
                     _clearStyle(topBar, "opacity");
@@ -159,18 +171,20 @@
                     var S = QOL.core.Scheduler;
                     if (S) S.cancelAllForFeature("ql_topbar");
                     _lastSig = "";
-                    _lastPanel = null;
                     var root = $.GetContextPanel ? $.GetContextPanel() : null;
                     var topBar = root ? root.FindChildTraverse("TopBar") : null;
                     if (topBar) {
                         var isSupposed = FR && FR.isFeatureSupposedToBeEnabled ? FR.isFeatureSupposedToBeEnabled("ql_topbar") : false;
                         if (topBar.SetHasClass) topBar.SetHasClass("qol-hidden", !isSupposed);
-                        _clearStyle(topBar, "x");
-                        _clearStyle(topBar, "y");
+                        _releaseOffset(topBar, "x", _offsetXApplied && topBar === _lastPanel);
+                        _releaseOffset(topBar, "y", _offsetYApplied && topBar === _lastPanel);
                         _clearStyle(topBar, "preTransformScale2d");
                         _clearStyle(topBar, "uiScale");
                         _clearStyle(topBar, "opacity");
                     }
+                    _lastPanel = null;
+                    _offsetXApplied = false;
+                    _offsetYApplied = false;
                 },
                 onSettingsChanged: function() {
                     _apply(ctx.config.all());
