@@ -34,26 +34,59 @@
 
     let cachedGameTimeTopBar = null;
     let cachedGameTimeLabel = null;
+    let nextGameTimeSearchMs = 0;
+    let topBarSearchRoot = null;
+    let nextTopBarSearchMs = 0;
     let observedGameTime = null;
     let observationLoop = null;
     const secondListeners = [];
+
+    const isWithin = (panel, ancestor) => {
+        let current = panel;
+        for (let depth = 0; depth < 64 && isAlive(current); depth++) {
+            if (current === ancestor) return true;
+            try { current = current.GetParent ? current.GetParent() : null; }
+            catch (_) { return false; }
+        }
+        return false;
+    };
 
     /**
      * Parse the top bar's GameTime label ("MM:SS") into total seconds. Returns 0 on parse failure.
      */
     const readGameTime = (topBar) => {
-        let bar = topBar;
-        if (!isAlive(bar)) {
-            const hud = Q.core.hud ? Q.core.hud.findHud() : (panelHelpers.findHud ? panelHelpers.findHud() : null);
-            if (isAlive(hud)) {
-                bar = hud.FindChildTraverse("TopBar");
+        const source = isAlive(topBar) ? topBar
+            : (Q.core.hud ? Q.core.hud.findHud() : (panelHelpers.findHud ? panelHelpers.findHud() : null));
+        if (!isAlive(source)) return 0;
+        let bar = source;
+        if (source.id !== "TopBar") {
+            if (isAlive(cachedGameTimeTopBar) && cachedGameTimeTopBar.id === "TopBar" && isWithin(cachedGameTimeTopBar, source)) {
+                bar = cachedGameTimeTopBar;
+            } else {
+                const now = Date.now ? Date.now() : (new Date()).getTime();
+                if (source !== topBarSearchRoot || now >= nextTopBarSearchMs) {
+                    topBarSearchRoot = source;
+                    bar = source.FindChildTraverse("TopBar") || source;
+                    nextTopBarSearchMs = bar === source ? now + 1000 : 0;
+                }
             }
         }
         if (!isAlive(bar)) return 0;
 
-        if (!isAlive(cachedGameTimeLabel) || cachedGameTimeTopBar !== bar) {
+        const now = Date.now ? Date.now() : (new Date()).getTime();
+        if (!isAlive(cachedGameTimeLabel) && cachedGameTimeTopBar === bar && now < nextGameTimeSearchMs) return 0;
+        if (!isAlive(cachedGameTimeLabel) || cachedGameTimeTopBar !== bar || !isWithin(cachedGameTimeLabel, bar)) {
             cachedGameTimeTopBar = bar;
             cachedGameTimeLabel = bar.FindChildTraverse("GameTime");
+            nextGameTimeSearchMs = isAlive(cachedGameTimeLabel) ? 0 : now + 1000;
+        }
+        if (!isAlive(cachedGameTimeLabel) && bar !== source) {
+            // During native panel construction the clock can precede TopBar.
+            topBarSearchRoot = source;
+            nextTopBarSearchMs = (Date.now ? Date.now() : (new Date()).getTime()) + 1000;
+            cachedGameTimeTopBar = source;
+            cachedGameTimeLabel = source.FindChildTraverse("GameTime");
+            nextGameTimeSearchMs = isAlive(cachedGameTimeLabel) ? 0 : now + 1000;
         }
         const label = cachedGameTimeLabel;
         if (!isAlive(label)) return 0;

@@ -9,7 +9,7 @@ Provides parsing and formatting helpers for Deadlock match time and cooldown clo
 
 ## Interface (`QOL.core.time`)
 - `formatSeconds(seconds)`: Formats finite seconds into an `M:SS` string (e.g. `65` -> `"1:05"`). Non-finite or negative inputs clamp to `0`.
-- `readGameTime(topBar)`: Reads the native `GameTime` label under `TopBar` and converts `"MM:SS"` text to total elapsed seconds. Caches label and TopBar references with `isAlive` checks. Returns `0` on parse failure or missing panel.
+- `readGameTime(topBar)`: Reads the native `GameTime` label under `TopBar` and converts `"MM:SS"` text to total elapsed seconds. Reuses live TopBar/label references only while they remain under the supplied HUD, and backs off missing-panel searches. Falls back to a clock directly under the supplied root during panel construction. Returns `0` on parse failure or missing panel.
 - `parseClockSeconds(str)`: Parses `"MM:SS"` or `"M:SS"` strings into integer seconds. Clamps seconds to modulo 60.
 - `getGameSecondsForUrn(topBar)`: Alias for `readGameTime`.
 - `subscribeGameSecond(callback, priority)`: Starts a shared 100 ms observation of the native GameTime label while subscribed. Calls listeners on a changed second, ordered by ascending priority, and returns an unsubscribe function. Rejuvenator state updates before minimap consumers.
