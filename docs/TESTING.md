@@ -107,7 +107,15 @@ by `Scheduler.createPollLoop` without changing feature settings. It includes
 synchronous native calls inside those callbacks, but excludes deferred layout,
 rendering, GPU work and code running outside these callbacks. Timing uses
 `Date.now()`; printed decimals are not sub-millisecond measurement precision.
-This is a way to locate expensive polling callbacks, not an FPS benchmark.
+The current-config run also attempts a temporary `FindChildTraverse` prototype
+hook. Its report counts native lookup calls by managed poll owner and calls made
+outside those polls, plus the number of live HUD panels covered by the hook at
+sample start. `unavailable` or `partial-tree` means those counts are incomplete;
+panels created later may use a previously unseen prototype. Native traversal
+steps inside `FindChildTraverse`, other panel-search APIs, and all paths outside
+the HUD JavaScript context remain unobservable. The initial panel census and
+the temporary hook add overhead, so this run is diagnostic rather than a clean
+FPS or frame-time benchmark. The hook is restored on completion or stop.
 
 The expanded-config stress mode temporarily enables additional toggles and
 restores the configuration. It does not exercise every feature, gameplay event

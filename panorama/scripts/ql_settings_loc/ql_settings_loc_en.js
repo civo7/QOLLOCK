@@ -5,6 +5,9 @@
     var _root = (typeof globalThis !== "undefined") ? globalThis : (typeof window !== "undefined") ? window : {};
     if (!_root.SETTINGS_LOCALE_TEXT) _root.SETTINGS_LOCALE_TEXT = {};
     _root.SETTINGS_LOCALE_TEXT["en"] = {
+    "Benchmark (Current Config)": "Benchmark (Current Config)",
+    "Measure Scheduler polls and FindChildTraverse calls for 10 seconds with current settings. Native panel visits and FPS are unavailable.": "Measure Scheduler polls and FindChildTraverse calls for 10 seconds with current settings. Native panel visits and FPS are unavailable.",
+    "Run Current (10s)": "Run Current (10s)",
     "Fixed Icon Size": "Fixed Icon Size",
     "Resizes the minimap using width and height instead of scaling the whole HUD. Applies to Base, Alt and Tab views.": "Resizes the minimap using width and height instead of scaling the whole HUD. Applies to Base, Alt and Tab views.",
     "<font color=\"#66cc99\">Free</font> updates for new features, <font color=\"#66cc99\">$5</font> for arbitrary changes": "<font color=\"#66cc99\">Free</font> updates for new features, <font color=\"#66cc99\">$5</font> for arbitrary changes",

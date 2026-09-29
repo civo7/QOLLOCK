@@ -5,6 +5,9 @@
     var _root = (typeof globalThis !== "undefined") ? globalThis : (typeof window !== "undefined") ? window : {};
     if (!_root.SETTINGS_LOCALE_TEXT) _root.SETTINGS_LOCALE_TEXT = {};
     _root.SETTINGS_LOCALE_TEXT["ru"] = {
+    "Benchmark (Current Config)": "Бенчмарк (текущие настройки)",
+    "Measure Scheduler polls and FindChildTraverse calls for 10 seconds with current settings. Native panel visits and FPS are unavailable.": "За 10 секунд измеряет вызовы Scheduler и FindChildTraverse с текущими настройками. Число панелей, просмотренных движком, и FPS недоступны.",
+    "Run Current (10s)": "Запустить (10 с)",
     "Fixed Icon Size": "Фиксированный размер иконок",
     "Resizes the minimap using width and height instead of scaling the whole HUD. Applies to Base, Alt and Tab views.": "Изменяет ширину и высоту миникарты вместо масштабирования всего HUD. Применяется в обычном режиме, с Alt и Tab.",
     "<font color=\"#66cc99\">Free</font> updates for new features, <font color=\"#66cc99\">$5</font> for arbitrary changes": "<font color=\"#66cc99\">Бесплатные</font> изменения для новых функций, <font color=\"#66cc99\">$5</font> за произвольные правки",

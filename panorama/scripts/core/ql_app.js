@@ -486,7 +486,7 @@
                                     timestamp: _nowMs()
                                 };
                                 _writeDiagSnapshot(hudPanel, forceToken);
-                            });
+                            }, isStress ? null : { capturePanelLookups: true, panelRoot: hudPanel });
                         } catch (bmErr) {
                             if (isStress) _restoreStressBenchmark(hudPanel, "error");
                             if (Logger) Logger.logWarn("Benchmark", `Benchmark start failed: ${bmErr.message || bmErr}`);

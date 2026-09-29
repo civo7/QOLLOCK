@@ -10,7 +10,7 @@ performance records live in the existing State.
 | `schedule(callback, rateSec, featureId)` | Alias for recurring polling, not a one-shot timeout. |
 | `cancelAllForFeature(id)` / `cancelAll(id)` | Cancel managed loops for that one feature. |
 | `getTimings(featureId?)`, `resetTimings(featureId?)` | Read/reset recorded per-feature callback statistics. |
-| `startBenchmark(durationSec, onComplete)` | Starts callback timing; returns `{stop()}` or null if State is unavailable. Completion receives `(report, stats)`. |
+| `startBenchmark(durationSec, onComplete, options?)` | Starts callback timing; returns `{stop()}` or null if State is unavailable. Completion receives `(report, stats)`. The optional current-config `capturePanelLookups` diagnostic probes `FindChildTraverse` calls from `panelRoot`; it does not count native traversal steps. |
 | `isBenchmarkActive()` | Reports the current benchmark flag. |
 | `formatBenchmarkReport(stats, durationSec, activeCount)` | Formats recorded benchmark data, not rendered frame timings. |
 | `getWorkSnapshot()` | Read-only array of `{id, polls, once}` outstanding managed tasks, without panel handles. |
@@ -40,6 +40,11 @@ not imply sub-millisecond precision. Stats cover synchronous callback/native
 work, not deferred layout, rendering, GPU work or all JS. Benchmark spike counts
 currently use a 4ms threshold; historical 8ms descriptions are obsolete.
 See [PROFILING.md](../PROFILING.md) for valid comparisons and client verification.
+The optional lookup probe temporarily wraps writable panel prototypes found in
+the starting HUD tree, restores them on completion or stop, and reports coverage.
+Unsupported native prototypes yield `unavailable`; changed or newly created
+panel prototypes can leave counts incomplete. The probe is only enabled by the
+current-config Dev benchmark, not by normal polling or the expanded-config run.
 
 ## Managed one-shot callbacks
 

@@ -70,12 +70,17 @@ test("QOL_DiagRequest with bm_ token triggers benchmark and writes benchmark rep
     hud.assertLoaded();
     const Scheduler = hud.sandbox.global.QOL.core.Scheduler;
     assert.ok(Scheduler && typeof Scheduler.startBenchmark === "function", "Scheduler.startBenchmark must be available");
+    const nativeLookup = hud.root.FindChildTraverse;
 
     const bmToken = "bm_2_normal_" + Date.now();
     hud.root.SetAttributeString("QOL_DiagRequest", bmToken);
 
-    // Advance clock by 3 seconds (2s benchmark + 1s buffer)
-    hud.clock.advance(3000);
+    hud.clock.advance(300);
+    assert.notStrictEqual(hud.root.FindChildTraverse, nativeLookup, "Diagnostic lookup hook should be active during the sample");
+
+    // Advance beyond the 2s benchmark and verify that the native method is restored.
+    hud.clock.advance(2700);
+    assert.strictEqual(hud.root.FindChildTraverse, nativeLookup, "Diagnostic lookup hook must be removed after the sample");
 
     const rawDiag = hud.root.GetAttributeString("QOL_Diag", "");
     assert.ok(rawDiag, "QOL_Diag must exist after benchmark");
@@ -85,6 +90,14 @@ test("QOL_DiagRequest with bm_ token triggers benchmark and writes benchmark rep
     assert.strictEqual(diag.benchmark.token, bmToken, "benchmark.token must match bmToken");
     assert.ok(diag.benchmark.report.includes("QOLLOCK IN-GAME BENCHMARK REPORT"), "Report must include benchmark header");
     assert.strictEqual(typeof diag.benchmark.stats.totalJsMs, "number", "stats.totalJsMs must be a number");
+    const lookups = diag.benchmark.stats.lookupStats;
+    assert.strictEqual(lookups.status, "active");
+    assert.ok(lookups.panelsScanned > 0);
+    assert.strictEqual(lookups.panelsCovered, lookups.panelsScanned);
+    assert.ok(lookups.totalCalls >= lookups.pollCalls);
+    assert.ok(lookups.pollCalls > 0);
+    assert.ok(Object.keys(lookups.byFeature).length > 0);
+    assert.match(diag.benchmark.report, /not engine-internal panel visits/);
 });
 
 test("QOL_DiagRequest with bm_ stress token enables all features and restores config", () => {
@@ -125,4 +138,24 @@ test("QOL_DiagRequest with bm_ stress token enables all features and restores co
     assert.ok(diag.benchmark, "benchmark must be attached in QOL_Diag");
     assert.strictEqual(diag.benchmark.token, bmToken, "benchmark.token must match bmToken");
     assert.ok(diag.benchmark.report.includes("QOLLOCK IN-GAME BENCHMARK REPORT"), "Report must include benchmark header");
+});
+
+test("panel lookup benchmark restores its hook on early stop and reports unsupported roots", () => {
+    const hud = sim.createHud();
+    hud.assertLoaded();
+    const scheduler = hud.sandbox.global.QOL.core.Scheduler;
+    const nativeLookup = hud.root.FindChildTraverse;
+    const stopped = scheduler.startBenchmark(10, null, { capturePanelLookups: true, panelRoot: hud.root });
+    assert.notStrictEqual(hud.root.FindChildTraverse, nativeLookup);
+    stopped.stop();
+    assert.strictEqual(hud.root.FindChildTraverse, nativeLookup);
+
+    let completed = null;
+    scheduler.startBenchmark(1, (report, stats) => { completed = { report, stats }; },
+        { capturePanelLookups: true, panelRoot: {} });
+    hud.clock.advance(1500);
+    assert.ok(completed);
+    assert.strictEqual(completed.stats.lookupStats.status, "unavailable");
+    assert.match(completed.report, /Panel lookup hook: unavailable/);
+    assert.strictEqual(hud.root.FindChildTraverse, nativeLookup);
 });

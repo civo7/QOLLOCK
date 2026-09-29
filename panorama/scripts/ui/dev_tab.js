@@ -1249,9 +1249,9 @@
             "BenchmarkRunBtn",
             "BenchmarkNormalStatus",
             "s2r://panorama/images/icons/icon_play.vsvg",
-            "Benchmark (Current Config)",
-            "Measure Scheduler poll callbacks for 10s with current settings and copy the report. Does not measure FPS or rendering cost.",
-            "Run Current (10s)",
+            globalThis.LocalizeSettingsText("Benchmark (Current Config)", true),
+            globalThis.LocalizeSettingsText("Measure Scheduler polls and FindChildTraverse calls for 10 seconds with current settings. Native panel visits and FPS are unavailable.", true),
+            globalThis.LocalizeSettingsText("Run Current (10s)", true),
             (statusLbl, btn) => runInGameBenchmark(list, statusLbl, btn, false)
         );
 

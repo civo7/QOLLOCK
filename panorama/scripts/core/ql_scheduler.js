@@ -219,6 +219,8 @@
             const t0 = (perfActive || observation) ? nowMs() : 0;
             const delayMs = observation && dueMs !== null ? Math.max(0, t0 - dueMs) : 0;
             let threw = false;
+            const lookup = lookupObservation;
+            if (lookup) lookup.enter(featureId);
             try {
                 callback();
             } catch (e) {
@@ -229,6 +231,8 @@
                     try { EventBus.emit("scheduler:error", { featureId, message: errMsg, timestamp: nowMs() }); } catch (_) { /* best-effort */ }
                 }
                 $.Msg(`[QOLLock][ERROR][Scheduler] poll loop threw — ${errMsg} (continuing)`);
+            } finally {
+                if (lookup) lookup.leave();
             }
             if (!threw && hadError && EventBus && typeof featureId === "string" && featureId) {
                 try { EventBus.emit("scheduler:tick_ok", { featureId }); } catch (_) { /* best-effort */ }
@@ -365,6 +369,100 @@
 
     let benchmarkTimer = null;
     let benchmarkProgressTimer = null;
+    let lookupObservation = null;
+
+    // A native FindChildTraverse does its walk inside the engine. Count calls,
+    // never claim that these are the engine's internal node visits.
+    const startLookupObservation = panelRoot => {
+        const result = { status: "unavailable", panelsScanned: 0, panelsCovered: 0, scanErrors: 0,
+            prototypesHooked: 0, totalCalls: 0, pollCalls: 0, outsidePollCalls: 0,
+            byFeature: {} };
+        const restorers = [];
+        let currentFeature = "";
+        let stopped = false;
+        const stop = () => {
+            if (stopped) return result;
+            stopped = true;
+            for (let i = restorers.length - 1; i >= 0; i--) restorers[i]();
+            if (lookupObservation === session) lookupObservation = null;
+            return result;
+        };
+        const session = {
+            result,
+            enter: id => { currentFeature = id || "<anonymous>"; },
+            leave: () => { currentFeature = ""; },
+            stop
+        };
+
+        let root = null;
+        try { root = panelRoot || $.GetContextPanel(); } catch (_) {}
+        if (!root || typeof root.GetChildCount !== "function") return session;
+
+        // Discover the panel prototypes present at the start of the sample.
+        // The census is outside the timed window and capped to avoid an unbounded walk.
+        const seen = [];
+        const stack = [root];
+        const maxPanels = 50000;
+        while (stack.length && result.panelsScanned < maxPanels) {
+            const panel = stack.pop();
+            try { if (panel.IsValid && !panel.IsValid()) continue; } catch (_) { result.scanErrors++; continue; }
+            result.panelsScanned++;
+            try {
+                let proto = Object.getPrototypeOf(panel);
+                while (proto) {
+                    if (seen.indexOf(proto) >= 0) break;
+                    seen.push(proto);
+                    const descriptor = Object.getOwnPropertyDescriptor(proto, "FindChildTraverse");
+                    if (descriptor && typeof descriptor.value === "function") {
+                        const targetProto = proto;
+                        const original = descriptor.value;
+                        const wrapped = function(...args) {
+                            result.totalCalls++;
+                            if (currentFeature) {
+                                result.pollCalls++;
+                                result.byFeature[currentFeature] = (result.byFeature[currentFeature] || 0) + 1;
+                            } else result.outsidePollCalls++;
+                            return original.apply(this, args);
+                        };
+                        wrapped.__qolLookupProbe = true;
+                        try {
+                            Object.defineProperty(targetProto, "FindChildTraverse", { ...descriptor, value: wrapped });
+                            if (targetProto.FindChildTraverse === wrapped) {
+                                restorers.push(() => {
+                                    try {
+                                        if (targetProto.FindChildTraverse === wrapped) Object.defineProperty(targetProto, "FindChildTraverse", descriptor);
+                                    } catch (_) {}
+                                });
+                                result.prototypesHooked++;
+                            }
+                        } catch (_) { /* native prototype may be read-only */ }
+                    }
+                    proto = Object.getPrototypeOf(proto);
+                }
+                if (panel.FindChildTraverse && result.prototypesHooked > 0) {
+                    let covered = false;
+                    let p = Object.getPrototypeOf(panel);
+                    while (p) {
+                        if (restorers.length && seen.indexOf(p) >= 0 &&
+                            Object.prototype.hasOwnProperty.call(p, "FindChildTraverse")) {
+                            // A hooked method is identifiable by its replacement marker below.
+                            covered = !!p.FindChildTraverse.__qolLookupProbe;
+                            break;
+                        }
+                        p = Object.getPrototypeOf(p);
+                    }
+                    if (covered) result.panelsCovered++;
+                }
+                const count = panel.GetChildCount();
+                for (let i = count - 1; i >= 0; i--) stack.push(panel.GetChild(i));
+            } catch (_) { result.scanErrors++; /* destroyed panel or unsupported native object */ }
+        }
+        result.status = result.prototypesHooked > 0 ?
+            ((stack.length || result.scanErrors || result.panelsCovered < result.panelsScanned) ?
+                "partial-tree" : "active") : "unavailable";
+        lookupObservation = session;
+        return session;
+    };
 
     const padL = (val, len) => {
         let s = String(val != null ? val : "");
@@ -391,6 +489,12 @@
 
         const sep = "--------------------------------------------------------------------------------";
         const eq = "================================================================================";
+        const lookups = bm.lookupStats;
+        const lookupLines = lookups ? [
+            `Panel lookup hook: ${lookups.status}; ${lookups.panelsCovered}/${lookups.panelsScanned} panels covered at start`,
+            `FindChildTraverse calls: ${lookups.totalCalls} (${lookups.pollCalls} in timed polls, ${lookups.outsidePollCalls} outside)`,
+            "These are native lookup calls, not engine-internal panel visits. Other search APIs are excluded."
+        ] : [];
 
         const lines = [
             eq,
@@ -405,6 +509,7 @@
             "Scope: Scheduler poll callbacks only, including synchronous native calls.",
             "Clock: Date.now() milliseconds; decimal formatting does not imply sub-millisecond accuracy.",
             "Not measured: FPS, frame-time percentiles, deferred layout/rendering, GPU, or work outside these callbacks.",
+            ...lookupLines,
             "A zero-cost or inactive feature may simply not have exercised its gameplay path.",
             "",
             "TOP FEATURES BY TIMED POLL CALLBACKS:",
@@ -445,6 +550,14 @@
             }
         }
 
+        if (bm.lookupStats && bm.lookupStats.status !== "unavailable") {
+            lines.push("", "FINDCHILDTRAVERSE CALLS IN SCHEDULER POLLS:");
+            const lookupRows = Object.keys(bm.lookupStats.byFeature)
+                .sort((a, b) => bm.lookupStats.byFeature[b] - bm.lookupStats.byFeature[a]);
+            if (!lookupRows.length) lines.push("  No instrumented lookups in timed polls.");
+            for (const id of lookupRows) lines.push(`  ${id}: ${bm.lookupStats.byFeature[id]}`);
+        }
+
         lines.push(sep);
         try {
             lines.push(`Generated: ${new Date().toISOString()}`);
@@ -454,7 +567,7 @@
         return lines.join("\n");
     };
 
-    const startBenchmark = (durationSec, onComplete) => {
+    const startBenchmark = (durationSec, onComplete, options) => {
         const durSec = (typeof durationSec === "number" && durationSec > 0) ? durationSec : 10;
         const state = getState();
         if (!state) return null;
@@ -467,6 +580,8 @@
             $.CancelScheduled(benchmarkProgressTimer);
             benchmarkProgressTimer = null;
         }
+        if (lookupObservation) lookupObservation.stop();
+        const lookupSession = options?.capturePanelLookups ? startLookupObservation(options.panelRoot) : null;
 
         state.benchmarkActive = true;
         state.benchmarkStats = {
@@ -508,6 +623,7 @@
             }
             const bm = state.benchmarkStats;
             state.benchmarkActive = false;
+            if (lookupSession) bm.lookupStats = lookupSession.stop();
             const actualDurSec = Math.max(0.1, (nowMs() - (bm ? bm.startTime : 0)) / 1000);
 
             let activeCount = 0;
@@ -544,6 +660,7 @@
                     benchmarkProgressTimer = null;
                 }
                 if (state) state.benchmarkActive = false;
+                if (lookupSession) lookupSession.stop();
             }
         };
     };
