@@ -68,13 +68,13 @@
 		<include src="s2r://panorama/scripts/ql_settings.vjs_c" />
 	</scripts>
 	<!-- ============================================================= -->
-	<!-- ============================================================= -->
-	<!-- QOLLOCK CUSTOM: Close settings before resuming from MenuBack  -->
-	<!-- ============================================================= -->
-	<CitadelHudEscapeMenu oncancel="if (!$.HandleModSettingsCancel || !$.HandleModSettingsCancel()) { CitadelResumePlaying(); }">
+	<CitadelHudEscapeMenu oncancel="CitadelResumePlaying()">
+		<!-- ============================================================= -->
+		<!-- QOLLOCK CUSTOM: Close settings on background activation    -->
+		<!-- ============================================================= -->
 		<Panel id="EscapeBackground" onactivate="if ($.IsModSettingsOpen &amp;&amp; $.IsModSettingsOpen()) { $.ForceCloseModSettings(true); } else { CitadelResumePlaying(); }" />
 		<!-- ============================================================= -->
-		<!-- END QOLLOCK CUSTOM: MenuBack handling                      -->
+		<!-- END QOLLOCK CUSTOM                                        -->
 		<!-- ============================================================= -->
 		<!-- ============================================================= -->
 		<!-- QOLLOCK CUSTOM: Settings Modal Window -->
