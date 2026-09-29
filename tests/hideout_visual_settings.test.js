@@ -51,6 +51,41 @@ test("bottom bar reapplies unchanged settings to a replacement panel", () => {
     assert.deepEqual(hud.clock.errors, []);
 });
 
+test("bottom bar checks its known parent between periodic full-HUD searches", () => {
+    const hud = createHud({ inHideout: true });
+    hud.assertLoaded();
+    const { $, QOL: Q } = hud.sandbox.global;
+    Q.core.App.shutdown();
+    const parent = $.CreatePanel("Panel", hud.root, "AbilitiesContainer");
+    const first = $.CreatePanel("Panel", parent, "hud_signature");
+    let fullSearches = 0;
+    const original = hud.root.FindChildTraverse;
+    hud.root.FindChildTraverse = function(id) {
+        if (id === "hud_signature") fullSearches++;
+        return original.call(this, id);
+    };
+    const cfg = { HUD_BOTTOM_BAR_ENABLED: 1, BOTTOM_BAR_X_OFFSET: 100 };
+    const feature = Q.core.FeatureRegistry.getManifest("ql_bottom_bar").create({
+        id: "ql_bottom_bar", config: { all: () => cfg }
+    });
+    feature.onEnable();
+    assert.equal(first.style.x, "100px");
+    assert.equal(fullSearches, 1);
+    hud.clock.advance(2000);
+    assert.equal(fullSearches, 1, "steady polls should use the direct parent");
+
+    first.DeleteAsync(0);
+    hud.clock.advance(1);
+    const replacement = $.CreatePanel("Panel", parent, "hud_signature");
+    hud.clock.advance(600);
+    assert.equal(replacement.style.x, "100px");
+    assert.equal(fullSearches, 1, "same-parent replacement should not need a full HUD walk");
+    hud.clock.advance(5000);
+    assert.ok(fullSearches >= 2, "periodic full search should detect an unexpected reparent");
+    feature.onDisable();
+    assert.deepEqual(hud.clock.errors, []);
+});
+
 test("souls offsets follow a replacement panel without another setting edit", () => {
     const hud = createHud({ inHideout: true });
     hud.assertLoaded();

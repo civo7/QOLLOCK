@@ -30,6 +30,9 @@
         create: function(ctx) {
             var _lastSig = "";
             var _lastPanel = null;
+            var _lastParent = null;
+            var _lastRoot = null;
+            var _nextFullSearchMs = 0;
             var _loop = null;
             var _offsetXApplied = false;
             var _offsetYApplied = false;
@@ -87,6 +90,20 @@
                 _clearStyle(panel, prop);
             }
 
+            function _findBar(root) {
+                if (!root) return null;
+                // The live panel's parent is authoritative even when the native
+                // bar is replaced. A direct-child check avoids a full HUD walk.
+                if (_lastRoot === root && QOL.utils.IsPanelValid(_lastParent) && _lastParent.FindChild) {
+                    try {
+                        var direct = _lastParent.FindChild("hud_signature");
+                        if (QOL.utils.IsPanelValid(direct) && Date.now() < _nextFullSearchMs) return direct;
+                    } catch(e) {}
+                }
+                _nextFullSearchMs = Date.now() + 5000;
+                return root.FindChildTraverse ? root.FindChildTraverse("hud_signature") : null;
+            }
+
             function _apply(cfg) {
                 var root = $.GetContextPanel();
                 var active = _hasNonDefault(cfg);
@@ -100,9 +117,12 @@
                 // applies it unconditionally (ql_feat_bottombar.js:93 before guard at :94).
                 _applyCurrencyColor(root, wc);
 
-                var bp = root.FindChildTraverse("hud_signature");
+                var bp = _findBar(root);
                 if (bp !== _lastPanel) {
                     _lastPanel = bp;
+                    _lastRoot = root;
+                    try { _lastParent = bp && bp.GetParent ? bp.GetParent() : null; }
+                    catch(e) { _lastParent = null; }
                     _lastSig = "";
                     _offsetXApplied = false;
                     _offsetYApplied = false;
@@ -170,7 +190,7 @@
                     var S = QOL.core.Scheduler;
                     _loop = S && S.createPollLoop ? S.createPollLoop(function() {
                         var root = $.GetContextPanel();
-                        var panel = root && root.FindChildTraverse ? root.FindChildTraverse("hud_signature") : null;
+                        var panel = _findBar(root);
                         if (panel !== _lastPanel) _apply(ctx.config.all());
                     }, 0.5, ctx.id) : null;
                 },
@@ -194,6 +214,9 @@
                             if (bp.SetHasClass) bp.SetHasClass("qol-hidden", !isSupposed);
                         }
                         _lastPanel = null;
+                        _lastParent = null;
+                        _lastRoot = null;
+                        _nextFullSearchMs = 0;
                         _offsetXApplied = false;
                         _offsetYApplied = false;
                     } catch(e) {}

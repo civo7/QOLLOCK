@@ -12,6 +12,12 @@ transitions invalidate pending expiry and hero-mapping callbacks so old work
 cannot recreate UI later. Re-entry should seed current native history without
 replaying old purchases.
 
+The HUD poll retries a missing native shop panel at a bounded interval instead
+of walking the full HUD on every tick. The existing `engine:shop_opened` signal
+retries discovery on the next poll; periodic retry remains the fallback when
+that event arrives before native layout or is unavailable. Once found, the
+purchase container is resolved directly under its native panel.
+
 Scoreboard positioning reads the current state through
 `QOL.core.hud.isScoreboardOpen`. Native rendering and reported client stutter
 require client evidence separate from Node lifecycle checks.

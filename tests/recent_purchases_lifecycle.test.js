@@ -12,7 +12,9 @@ function setup(overrides = {}) {
     const preset = env.sandbox.evalJson('Object.assign({}, QOL.buildDefaultConfig(), QOL_PRESETS["7eventy7"])');
     Q.core.ConfigAdapter.loadFromFlat({ ...preset, ...overrides });
     const cfg = Q.core.ConfigStore.view("ql_recent_purchases");
-    const feature = Q.core.FeatureRegistry.getManifest("ql_recent_purchases").create({ config: { view: () => cfg } });
+    const feature = Q.core.FeatureRegistry.getManifest("ql_recent_purchases").create({
+        config: { view: () => cfg }, events: Q.core.EventBus
+    });
     const shop = $.CreatePanel("Panel", env.root, "RecentPurchasesPanel");
     const container = $.CreatePanel("Panel", shop, "RecentPurchasesContainer");
     const topbar = $.CreatePanel("Panel", env.root, "TopBar");
@@ -144,5 +146,30 @@ test("shop filter controls do not duplicate across feature disable and reenable"
         assert.equal(env.shop.Children().filter(p => p.id === "PurchaseFiltersContainer").length, 0);
         assert.equal(nativeRow.IsValid(), true);
     }
+    clean(env);
+});
+
+test("missing native purchase panel backs off full-HUD searches and shop-open retries immediately", () => {
+    const env = setup({ ENABLE_SHOP_RECENT_PURCHASES: 1, ENABLE_SHOP_ITEM_NOTIFICATIONS: 0 });
+    env.shop.DeleteAsync(0);
+    env.clock.advance(1);
+    let searches = 0;
+    const original = env.root.FindChildTraverse;
+    env.root.FindChildTraverse = function(id) {
+        if (id === "RecentPurchasesPanel") searches++;
+        return original.call(this, id);
+    };
+
+    env.feature.onEnable();
+    env.clock.advance(1200);
+    assert.equal(searches, 1, "missing shop panel should not trigger a full HUD walk every poll");
+
+    const replacement = env.$.CreatePanel("Panel", env.root, "RecentPurchasesPanel");
+    env.$.CreatePanel("Panel", replacement, "RecentPurchasesContainer");
+    env.Q.core.EventBus.emit("engine:shop_opened");
+    env.clock.advance(250);
+    assert.equal(searches, 2, "shop-open event should bypass the miss backoff");
+    assert.equal(replacement.FindChild("PurchaseFiltersContainer")?.IsValid(), true);
+    env.feature.onDisable();
     clean(env);
 });
