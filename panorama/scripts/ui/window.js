@@ -90,9 +90,7 @@
 
         // Prevent click fall-through to background
         _window.SetPanelEvent("onactivate", () => {});
-        _window.SetPanelEvent("oncancel", () => {
-            handleModSettingsCancel();
-        });
+        _window.SetPanelEvent("oncancel", handleSettingsWindowCancel);
 
         _header = _window.FindChildTraverse("SettingsHeader");
         const body = _window.FindChildTraverse("SettingsBody") || _window;
@@ -1138,6 +1136,7 @@
 
     const handleModSettingsCancel = () => {
         const now = getNowMs();
+        if (now < _cancelConsumedUntilMs) return true;
         if (isOpen()) {
             // The same MenuBack action can reach both the focused window and
             // its escape-menu parent. Consume that one action in both places.
@@ -1145,7 +1144,18 @@
             forceCloseModSettings(true);
             return true;
         }
-        return now < _cancelConsumedUntilMs;
+        // The native root may receive the same MenuBack after the focused
+        // settings panel. Let that root resume once, then consume the duplicate.
+        _cancelConsumedUntilMs = now + 100;
+        return false;
+    };
+
+    const handleSettingsWindowCancel = () => {
+        if (handleModSettingsCancel()) return;
+        // A hidden SettingsWindow can retain MenuBack focus. In that case the
+        // root's XML oncancel never runs, so use the existing resume event.
+        const ctx = typeof $.GetContextPanel === "function" ? $.GetContextPanel() : null;
+        if (ctx) $.DispatchEvent("CitadelResumePlaying", ctx);
     };
 
     const setOpen = (open) => {
@@ -1185,9 +1195,7 @@
         }
 
         const tabHost = body || win;
-        win.SetPanelEvent("oncancel", () => {
-            handleModSettingsCancel();
-        });
+        win.SetPanelEvent("oncancel", handleSettingsWindowCancel);
 
         let curTab = (typeof globalThis.currentTab !== "undefined") ? globalThis.currentTab : _activeTab;
         if (curTab === "Layout") curTab = "HUD";

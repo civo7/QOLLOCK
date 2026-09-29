@@ -262,11 +262,13 @@ test("Escape closes QOLLOCK settings once, then resumes the native pause menu", 
     cancel();
     assert.equal(resumes, 1, "Escape should resume when QOLLOCK settings are closed");
 
+    now += 101;
     windowApi.setOpen(true);
     cancel();
     assert.equal(windowApi.isOpen(), false);
     assert.equal(resumes, 1, "first Escape should only close QOLLOCK settings");
 
+    now += 101;
     windowApi.setOpen(true);
     win._fire("oncancel");
     cancel();
@@ -287,6 +289,37 @@ test("Escape closes QOLLOCK settings once, then resumes the native pause menu", 
     assert.equal(resumes, 2);
     clickBackground();
     assert.equal(resumes, 3, "background click should resume when QOLLOCK settings are closed");
+});
+
+test("MenuBack on a hidden settings window resumes once", () => {
+    const { windowApi, win, mockDollar, sandbox } = createTestEnvironment();
+    let now = 1000;
+    sandbox.Date = { now: () => now };
+    let dispatches = 0;
+    mockDollar.DispatchEvent = (name) => {
+        if (name === "CitadelResumePlaying") dispatches++;
+    };
+    const xml = fs.readFileSync(path.resolve(__dirname, "../panorama/layout/hud_escape_menu.xml"), "utf8");
+    const handler = xml.match(/<CitadelHudEscapeMenu oncancel="([^"]+)"/);
+    assert.ok(handler);
+    let nativeResumes = 0;
+    const cancelRoot = () => vm.runInNewContext(handler[1], {
+        $: mockDollar,
+        CitadelResumePlaying: () => { nativeResumes++; }
+    });
+
+    windowApi.boot();
+    assert.equal(windowApi.isOpen(), false);
+    win._fire("oncancel");
+    assert.equal(dispatches, 1, "hidden settings focus still resumes the game");
+    cancelRoot();
+    assert.equal(nativeResumes, 0, "the same MenuBack is consumed at the root");
+
+    now += 101;
+    cancelRoot();
+    assert.equal(nativeResumes, 1, "a later MenuBack is independent");
+    win._fire("oncancel");
+    assert.equal(dispatches, 1, "a root-first MenuBack does not dispatch a second resume");
 });
 
 test("the native MenuBack binding remains the only EscapeButton", () => {

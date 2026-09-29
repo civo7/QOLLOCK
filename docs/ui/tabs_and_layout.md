@@ -112,7 +112,7 @@ Because layout is purely declarative:
 
 - **Window Close Semantics (`forceCloseModSettings`)**:
   Closing the settings window (via the header close button 'X' or ESC handling) toggles the visibility of the `SettingsWindow` panel without dispatching `CitadelResumePlaying`. This ensures that closing the QOLLOCK settings window preserves Deadlock's native Escape Menu rather than dismissing the pause state.
-  A later ESC while QOLLOCK settings are hidden resumes the native game menu. The escape-menu XML checks the live window state before choosing between those actions; the function used to close QOLLOCK settings exists even while the window is hidden.
+  A later ESC while QOLLOCK settings are hidden resumes the native game menu. The escape-menu XML checks the live window state before choosing between those actions. The settings window's cancel handler also resumes when it receives `MenuBack` while hidden, because that focused-panel path can bypass the XML root cancel handler. Both paths consume a duplicate cancel from the same key press.
 
 
 ## 6. Dirty edits and asynchronous restore
