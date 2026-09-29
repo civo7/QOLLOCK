@@ -46,6 +46,11 @@ Use:
 
 `build_mod/build_mod.bat` (Windows), or `build_mod/build_mod.ps1` directly.
 
+At the build destination prompt, enter `1` for a local VPK or `2` for the game
+addons folder. Add `f` or `-f` for a clean rebuild (for example, `1 f` or
+`2 -f`). Enter `s` to start Deadlock, `r` to restart it, or `0` for build tool
+settings. The build tool compiles Panorama `.svg` sources to `.vsvg_c` assets.
+
 Project expectation:
 - close Deadlock
 - compile changed files

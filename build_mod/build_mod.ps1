@@ -400,7 +400,7 @@ $InitialMod = $ModFolderName
 while ($true) {
     Clear-Host
     Write-Host "=== Deadlock Mod Compiler (Incremental Build) ===" -ForegroundColor Cyan
-    Write-Host "Tip: add '--force' (or '-f') after the number, e.g. '6 --force', for a full clean rebuild of that mod.`n" -ForegroundColor DarkGray
+    Write-Host "Tip: add '--force' (or '-f') after a menu number for a full clean rebuild, e.g. '2 -f'.`n" -ForegroundColor DarkGray
     
     $SelectedMod = $InitialMod
 
@@ -492,11 +492,33 @@ while ($true) {
         elseif ($Config.BuildDestination -eq "Addons") { $BuildMode = 2 } 
         else {
             Write-Host "`nSelect build destination:" -ForegroundColor Cyan
-            Write-Host "[1] Local (/tools/builds/$SelectedMod.vpk)"
+            Write-Host "[1] Local (build_mod/builds/$SelectedMod.vpk)"
             Write-Host "[2] Game Addons Folder ($AddonsDir)"
+            Write-Host "[0] Settings"
+            Write-Host "[S] Start Deadlock"
+            Write-Host "[R] Restart Deadlock"
             while ($BuildMode -notin @(1, 2)) {
-                $modeSelection = Read-Host "Enter 1 or 2"
-                if ([int]::TryParse($modeSelection, [ref]$null)) { $BuildMode = [int]$modeSelection }
+                $parsedRun = Parse-RunFlags -InputText (Read-Host "Enter 1, 2, 0, S, or R")
+                $selection = $parsedRun.Command.ToUpperInvariant()
+                switch ($selection) {
+                    '0' {
+                        Show-SettingsMenu -ConfigObject $Config
+                        $null = Resolve-BuildPaths
+                    }
+                    'S' { Start-Deadlock }
+                    'R' {
+                        Kill-Deadlock
+                        Start-Deadlock
+                    }
+                    '1' {
+                        $Force = $Force -or $parsedRun.Force
+                        $BuildMode = 1
+                    }
+                    '2' {
+                        $Force = $Force -or $parsedRun.Force
+                        $BuildMode = 2
+                    }
+                }
             }
         }
     }
@@ -585,7 +607,7 @@ while ($true) {
         $FilesToCompile = New-Object System.Collections.Generic.List[string]
         
         $Utf8NoBom = New-Object System.Text.UTF8Encoding $false
-        $AllowedExts = @('.xml', '.css', '.js', '.vsndevts', '.wav', '.vtex', '.vdata', '.vsvg', '.vpcf', '.vmdl', '.vmat')
+        $AllowedExts = @('.xml', '.css', '.js', '.vsndevts', '.wav', '.vtex', '.vdata', '.vsvg', '.svg', '.vpcf', '.vmdl', '.vmat')
         $CompileOutputs = @{
             '.xml'      = '.vxml_c'
             '.css'      = '.vcss_c'
@@ -595,6 +617,7 @@ while ($true) {
             '.vtex'     = '.vtex_c'
             '.vdata'    = '.vdata_c'
             '.vsvg'     = '.vsvg_c'
+            '.svg'      = '.vsvg_c'
             '.vpcf'     = '.vpcf_c'
             '.vmdl'     = '.vmdl_c'
             '.vmat'     = '.vmat_c'
