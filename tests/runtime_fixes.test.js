@@ -609,6 +609,7 @@ test("ql_minimap_runtime Tab draw over UI does not reorder the map while Tab sta
     const persp = $.CreatePanel("Panel", minimapHost, "minimap_persp");
     const container = $.CreatePanel("Panel", persp, "minimap_container");
     $.CreatePanel("Panel", container, "hud_minimap");
+    const stableListener = $.CreatePanel("Panel", gameplayHud, "DamageReportGlobalClassListener");
     $.CreatePanel("Panel", root, "scoreboard_overlay");
 
     let moves = 0;
@@ -620,11 +621,16 @@ test("ql_minimap_runtime Tab draw over UI does not reorder the map while Tab sta
     Q.core.ConfigStore.set("ql_minimap_runtime", "ENABLE_TAB_ZOOM", 1);
     Q.core.ConfigStore.set("ql_minimap_runtime", "TAB_ZOOM_DRAW_OVER_UI", 1);
     persp.AddClass("gScoreboardOpen");
+    stableListener.AddClass("gScoreboardOpen");
     hud.clock.advance(500);
 
     assert.strictEqual(persp.GetParent(), root, "Tab draw over UI moves the map above the gameplay HUD");
     assert.strictEqual(persp.style.align, "center center", "Tab zoom remains active after reparenting");
     assert.strictEqual(moves, 0, "Reparenting places the map last without an extra reorder");
+
+    // A reparented GlobalClassListener may lose its native class while the
+    // separate listener in the original HUD tree keeps tracking Tab.
+    persp.RemoveClass("gScoreboardOpen");
 
     for (let i = 0; i < 4; i++) {
         $.CreatePanel("Panel", root, `temporary_hud_overlay_${i}`);
@@ -634,7 +640,7 @@ test("ql_minimap_runtime Tab draw over UI does not reorder the map while Tab sta
         assert.strictEqual(moves, 0, `Tick ${i + 1}: the map is not moved again`);
     }
 
-    persp.RemoveClass("gScoreboardOpen");
+    stableListener.RemoveClass("gScoreboardOpen");
     hud.clock.advance(500);
     assert.strictEqual(persp.GetParent(), minimapHost, "Closing Tab restores the original parent");
     Q.core.FeatureRegistry.disable("ql_minimap_runtime");

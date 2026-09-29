@@ -99,9 +99,11 @@ without legacy fallback writes. Neither helper forces a new default value.
   on the cached HUD and supplied root. Use it for that shared predicate;
   feature-specific intro handling or visibility policy remains with the caller.
 - `QOL.core.hud.isScoreboardOpen(root, anchor)` reads `gScoreboardOpen` from
-  HUD/ancestor state, an optional feature anchor, or the native `minimap_persp`
-  GlobalClassListener. Engine toggle events prompt a refresh; they carry no
-  app-provided visibility payload.
+  HUD/ancestor state, the stationary native `DamageReportGlobalClassListener`,
+  or, when that listener is absent, an optional feature anchor or native
+  `minimap_persp` GlobalClassListener. The stationary listener takes precedence
+  because Draw Over UI can reparent the minimap. Engine toggle events prompt a
+  refresh; they carry no app-provided visibility payload.
 - `QOL.core.hud.readHudLifeState(root)` returns `alive`, `dead`, or `unknown`.
   This is HUD presentation evidence, not verified local-player entity identity.
   Spectating, replay, hideout and ambiguous classes return `unknown`.

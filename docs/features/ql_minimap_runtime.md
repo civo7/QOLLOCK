@@ -7,6 +7,8 @@ Rejuvenator phase state have separate owners. Crate positions come from
 `ql_minimap_crate_data.js`.
 
 Draw-over-UI behavior must retain the original parent for restoration.
+Tab state comes from the stationary HUD scoreboard listener while the minimap
+GlobalClassListener is reparented.
 Scoreboard toggle is a refresh trigger, not a boolean state payload. Deferred
 refreshes belong to the feature Scheduler task group so disable cancels them;
 event subscriptions still require explicit removal.

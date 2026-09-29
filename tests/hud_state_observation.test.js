@@ -12,6 +12,12 @@ test('scoreboard reads native listener state and follows listener replacement',(
  const other=doc.create('Panel',{id:'Detached'});listener.SetParent(other);
  listener=doc.create('Panel',{id:'minimap_persp'});root.addChild(listener);listener.SetHasClass('gScoreboardOpen',true);
  assert.equal(Q.core.hud.isScoreboardOpen(root),true);
+ let stable=doc.create('Panel',{id:'DamageReportGlobalClassListener'});root.addChild(stable);
+ assert.equal(Q.core.hud.isScoreboardOpen(root,listener),false,'stationary listener overrides a stale minimap class');
+ stable.SetHasClass('gScoreboardOpen',true);listener.SetHasClass('gScoreboardOpen',false);
+ assert.equal(Q.core.hud.isScoreboardOpen(root,listener),true,'stationary listener tracks Tab after minimap class loss');
+ stable.SetParent(other);stable=doc.create('Panel',{id:'DamageReportGlobalClassListener'});root.addChild(stable);
+ assert.equal(Q.core.hud.isScoreboardOpen(root),false,'replaced stationary listener is resolved again');
 });
 
 test('HUD life evidence stays unknown for ambiguous, spectator and replay states',()=>{

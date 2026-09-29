@@ -170,12 +170,18 @@
     };
 
     // Read persistent native class state; an engine toggle notification is only
-    // a reason to refresh it. minimap_persp is a GlobalClassListener in hud.xml.
+    // a reason to refresh it. Prefer the stationary GlobalClassListener because
+    // minimap_persp can be reparented by Tab zoom's Draw Over UI option.
     const isScoreboardOpen = (root, anchor) => {
         const hud = findHud(root);
         if (!isAlive(hud)) return false;
         const has = panel => QOL_UTILS.HasClassInHierarchy(panel, "gScoreboardOpen");
-        if (has(hud) || (isAlive(anchor) && has(anchor))) return true;
+        if (has(hud)) return true;
+        const stableListener = Q.panelCache
+            ? Q.panelCache.resolve(hud, "hud.stableScoreboardListener", "DamageReportGlobalClassListener")
+            : _panelHelpers.findTraverse(hud, "DamageReportGlobalClassListener");
+        if (isAlive(stableListener)) return has(stableListener);
+        if (isAlive(anchor) && has(anchor)) return true;
         const listener = Q.panelCache
             ? Q.panelCache.resolve(hud, "hud.scoreboardListener", "minimap_persp")
             : _panelHelpers.findTraverse(hud, "minimap_persp");
