@@ -218,12 +218,7 @@ CitadelHudHeroShop.disable_shop_blue_active
 	visibility: visible;
 }
 
-CitadelHudHeroShop.simplify_shop_active.showingFavorites #ShopModListsContainer
-{
-	background-image: none;
-}
-
-CitadelHudHeroShop.simplify_shop_active.showingSearch #ShopModListsContainer
+CitadelHudHeroShop.simplify_shop_active #ShopModListsContainer
 {
 	background-image: none;
 }
@@ -232,21 +227,6 @@ CitadelHudHeroShop.simplify_shop_active .ShopNavigationTabIcon
 {
 	background-color: #2b2c2b;
 	opacity: 0.6;
-}
-
-CitadelHudHeroShop.simplify_shop_active #ShopModsListTech
-{
-	background-image: none;
-}
-
-CitadelHudHeroShop.simplify_shop_active #ShopModsListArmor
-{
-	background-image: none;
-}
-
-CitadelHudHeroShop.simplify_shop_active #ShopModsListWeapon
-{
-	background-image: none;
 }
 
 CitadelHudHeroShop.simplify_shop_active #MainPanel
@@ -269,17 +249,19 @@ CitadelHudHeroShop.simplify_shop_active .ShopNavigationTab
 	border-radius: 12px;
 }
 
-CitadelHudHeroShop.simplify_shop_active.showingFavorites #FavoritesNav.NavigationButton .ShopNavigationTabIcon,CitadelHudHeroShop.simplify_shop_active.showingWeapon #WeaponNav.NavigationButton .ShopNavigationTabIcon,CitadelHudHeroShop.simplify_shop_active.showingArmor #ArmorNav.NavigationButton .ShopNavigationTabIcon,CitadelHudHeroShop.simplify_shop_active.showingTech #TechNav.NavigationButton .ShopNavigationTabIcon
-{
-	height: 210px;
-}
-
-CitadelHudHeroShop.simplify_shop_active #SearchNav,CitadelHudHeroShop.simplify_shop_active.showingSearch #SearchNav
+CitadelHudHeroShop.simplify_shop_active .NavigationButton
 {
 	background-image: none;
-	background-color: #2b2c2b;
-	border-radius: 12px;
-	opacity: 0.6;
+}
+
+CitadelHudHeroShop.simplify_shop_active.showingFavorites #FavoritesNav.NavigationButton .ShopNavigationTabIcon,
+CitadelHudHeroShop.simplify_shop_active.showingRecommendations #RecommendedNav.NavigationButton .ShopNavigationTabIcon,
+CitadelHudHeroShop.simplify_shop_active.showingAllItems #FilteredNav.NavigationButton .ShopNavigationTabIcon,
+CitadelHudHeroShop.simplify_shop_active.showingWeapon #WeaponNav.NavigationButton .ShopNavigationTabIcon,
+CitadelHudHeroShop.simplify_shop_active.showingArmor #ArmorNav.NavigationButton .ShopNavigationTabIcon,
+CitadelHudHeroShop.simplify_shop_active.showingTech #TechNav.NavigationButton .ShopNavigationTabIcon
+{
+	height: 200px;
 }
 
 .simplify_shop_stats_active #TestPanel,
