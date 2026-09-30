@@ -5,13 +5,11 @@ CitadelHudHeroShop.simplify_shop_active CitadelShopModsBuildCategory
 {
 	border-radius: 6px;
 	border: 0px solid #00000060;
-	background-color: none;
-	margin: 3px;
+	background-color: #ffffff0d;
 }
 
 CitadelHudHeroShop.simplify_shop_active CitadelShopModsBuildCategory #BuildCategoryHeader
 {
-	width: fit-children;
 	border-radius: 4px 4px 0px 0px;
 }
 
@@ -29,7 +27,7 @@ CitadelHudHeroShop.simplify_shop_active CitadelShopModsBuild .BuildHeaderShared
 
 CitadelHudHeroShop.simplify_shop_active CitadelShopModsBuildCategory.Optional
 {
-	background-color: none;
+	background-color: #283e65a0;
 }
 
 CitadelHudHeroShop.simplify_shop_active CitadelShopModsBuildCategory #ModsContainer
