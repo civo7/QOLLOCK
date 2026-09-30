@@ -1,6 +1,6 @@
-/* Prettified by Source 2 Viewer 17.0.0.0 - https://valveresourceformat.github.io */
+/* QOLLOCK damage-number presentation rules. Loaded by hud.css so Valve's
+ * compiled hud_event_indicator stylesheet remains authoritative. */
 
-@import url("s2r://panorama/styles/base/hud_event_indicator.vcss_c");
 @import url("s2r://panorama/styles/qol_damage_fountain_full.vcss_c");
 @keyframes 'qol_clean_damage_fade'
 {
