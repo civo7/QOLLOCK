@@ -3,9 +3,13 @@
 @import url("s2r://panorama/styles/base/citadel_shop_mod_view.vcss_c");
 CitadelHudHeroShop.simplify_shop_active CitadelShopMod
 {
+	width: 80px;
+	min-width: 80px;
+	max-width: 80px;
 	height: 80px;
 	min-height: 80px;
 	max-height: 80px;
+	margin: 2px;
 }
 
 CitadelHudHeroShop.simplify_shop_active .paperTexture, CitadelHudHeroShop.simplify_shop_active .paperWear

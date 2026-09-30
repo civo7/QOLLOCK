@@ -4,7 +4,26 @@
 CitadelHudHeroShop.simplify_shop_active CitadelShopModsBuild .BuildHeaderShared
 {
 	background-image: none;
-	background-color: #2b2c2b;
-	opacity: 0.6;
+	background-color: #2b2c2b99;
+	height: 60px;
+	opacity: 1;
+}
+
+CitadelHudHeroShop.simplify_shop_active CitadelShopModsBuild .SelectedBuildName
+{
+	color: offWhite;
+	font-size: 20px;
+	margin-left: 5px;
+}
+
+CitadelHudHeroShop.simplify_shop_active CitadelShopModsBuild .BuildDetails
+{
+	wash-color: offWhite;
+}
+
+CitadelHudHeroShop.simplify_shop_active CitadelShopModsBuild #CategoryContainer
+{
+	margin-top: 60px;
+	padding: 10px 20px;
 }
 
