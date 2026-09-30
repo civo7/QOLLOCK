@@ -2,35 +2,35 @@
 
 @import url("s2r://panorama/styles/base/citadel_shop_mods_recommended.vcss_c");
 
-CitadelHudHeroShop.simplify_shop_active CitadelShopModsRecommended
+CitadelHudHeroShop.simplify_shop_active CitadelShopModsRecommended#ShopModsRecommended
 {
-	background-image: none !important;
+	background-image: none;
 	background-color: #070b0bf2;
 }
 
-CitadelHudHeroShop.simplify_shop_active CitadelShopModsRecommended #ModsContainer
+CitadelHudHeroShop.simplify_shop_active CitadelShopModsRecommended#ShopModsRecommended #ModsContainer
 {
-	background-image: none !important;
+	background-image: none;
 	background-color: none;
 }
 
-CitadelHudHeroShop.simplify_shop_active CitadelShopModsRecommended #TreeHeaders
+CitadelHudHeroShop.simplify_shop_active CitadelShopModsRecommended#ShopModsRecommended #TreeHeaders
 {
 	visibility: collapse;
 }
 
-CitadelHudHeroShop.simplify_shop_active CitadelShopModsRecommended #PopularItemsHeader
+CitadelHudHeroShop.simplify_shop_active CitadelShopModsRecommended#ShopModsRecommended #PopularItemsHeader
 {
 	height: 48px;
 	background-color: #2b2c2b99;
 }
 
-CitadelHudHeroShop.simplify_shop_active CitadelShopModsRecommended #PopularItemsHeader .recommendations_header_bg
+CitadelHudHeroShop.simplify_shop_active CitadelShopModsRecommended#ShopModsRecommended #PopularItemsHeader .recommendations_header_bg
 {
-	background-image: none !important;
+	background-image: none;
 }
 
-CitadelHudHeroShop.simplify_shop_active CitadelShopModsRecommended #PopularItemsHeader #HeroHeader
+CitadelHudHeroShop.simplify_shop_active CitadelShopModsRecommended#ShopModsRecommended #PopularItemsHeader #HeroHeader
 {
 	width: 100%;
 	height: 100%;
@@ -38,13 +38,13 @@ CitadelHudHeroShop.simplify_shop_active CitadelShopModsRecommended #PopularItems
 	padding: 0px 15px;
 }
 
-CitadelHudHeroShop.simplify_shop_active CitadelShopModsRecommended #PopularItemsHeader #HeroContainer,
-CitadelHudHeroShop.simplify_shop_active CitadelShopModsRecommended #PopularItemsHeader #HeaderHeroLogo
+CitadelHudHeroShop.simplify_shop_active CitadelShopModsRecommended#ShopModsRecommended #PopularItemsHeader #HeroContainer,
+CitadelHudHeroShop.simplify_shop_active CitadelShopModsRecommended#ShopModsRecommended #PopularItemsHeader #HeaderHeroLogo
 {
 	visibility: collapse;
 }
 
-CitadelHudHeroShop.simplify_shop_active CitadelShopModsRecommended #PopularItemsHeader #HeaderLabel
+CitadelHudHeroShop.simplify_shop_active CitadelShopModsRecommended#ShopModsRecommended #PopularItemsHeader #HeaderLabel
 {
 	visibility: visible;
 	vertical-align: middle;
@@ -55,50 +55,50 @@ CitadelHudHeroShop.simplify_shop_active CitadelShopModsRecommended #PopularItems
 	color: offWhite;
 }
 
-CitadelHudHeroShop.simplify_shop_active CitadelShopModsRecommended #PopularItemsHeader .InfoIcon
+CitadelHudHeroShop.simplify_shop_active CitadelShopModsRecommended#ShopModsRecommended #PopularItemsHeader .InfoIcon
 {
 	vertical-align: middle;
 	margin: 0px 0px 0px 8px;
 	wash-color: offWhite;
 }
 
-CitadelHudHeroShop.simplify_shop_active CitadelShopModsRecommended #ModTiers
+CitadelHudHeroShop.simplify_shop_active CitadelShopModsRecommended#ShopModsRecommended #ModTiers
 {
-	flow-children: down !important;
+	flow-children: down;
 	width: 100%;
-	margin: 0px !important;
+	margin: 0px;
 	padding: 0px;
 }
 
-CitadelHudHeroShop.simplify_shop_active CitadelShopModsRecommended .tierRow
+CitadelHudHeroShop.simplify_shop_active CitadelShopModsRecommended#ShopModsRecommended .tierRow
 {
 	flow-children: down;
-	width: 100% !important;
+	width: 100%;
 	height: fit-children;
-	x: 0px !important;
-	y: 0px !important;
-	margin: 0px 0px 8px 0px !important;
-	ignore-parent-flow: false !important;
+	x: 0px;
+	y: 0px;
+	margin: 0px 0px 8px 0px;
+	ignore-parent-flow: false;
 	overflow: noclip;
 }
 
-CitadelHudHeroShop.simplify_shop_active CitadelShopModsRecommended .CostSticker
+CitadelHudHeroShop.simplify_shop_active CitadelShopModsRecommended#ShopModsRecommended .CostSticker
 {
 	visibility: collapse;
 }
 
-CitadelHudHeroShop.simplify_shop_active CitadelShopModsRecommended .tierRow .CostLabel
+CitadelHudHeroShop.simplify_shop_active CitadelShopModsRecommended#ShopModsRecommended .tierRow .CostLabel
 {
 	width: 100px;
 	height: 40px;
-	margin: 0px 0px 0px 15px !important;
+	margin: 0px 0px 0px 15px;
 	background-color: #2b2c2b;
 	border-radius: 6px;
 	opacity: 0.6;
 	transform: none;
 }
 
-CitadelHudHeroShop.simplify_shop_active CitadelShopModsRecommended .tierRow .CostLabel .currencySymbol
+CitadelHudHeroShop.simplify_shop_active CitadelShopModsRecommended#ShopModsRecommended .tierRow .CostLabel .currencySymbol
 {
 	width: 12px;
 	height: 20px;
@@ -110,38 +110,38 @@ CitadelHudHeroShop.simplify_shop_active CitadelShopModsRecommended .tierRow .Cos
 	background-repeat: no-repeat;
 }
 
-CitadelHudHeroShop.simplify_shop_active CitadelShopModsRecommended .tierRow .CostLabel Label
+CitadelHudHeroShop.simplify_shop_active CitadelShopModsRecommended#ShopModsRecommended .tierRow .CostLabel Label
 {
 	width: 80px;
-	font-family: numericOracle !important;
-	font-size: 30px !important;
+	font-family: numericOracle;
+	font-size: 30px;
 	font-weight: bold;
-	color: #7eb192 !important;
-	margin: 0px !important;
-	padding: 0px !important;
+	color: #7eb192;
+	margin: 0px;
+	padding: 0px;
 	vertical-align: middle;
 	text-align: center;
-	text-shadow: none !important;
+	text-shadow: none;
 }
 
-CitadelHudHeroShop.simplify_shop_active CitadelShopModsRecommended #ModLists
+CitadelHudHeroShop.simplify_shop_active CitadelShopModsRecommended#ShopModsRecommended #ModLists
 {
 	border-top: 0px;
 }
 
-CitadelHudHeroShop.simplify_shop_active CitadelShopModsRecommended #ModLists .mod_list_bg
+CitadelHudHeroShop.simplify_shop_active CitadelShopModsRecommended#ShopModsRecommended #ModLists .mod_list_bg
 {
 	background-image: none;
 	opacity: 0;
 }
 
-CitadelHudHeroShop.simplify_shop_active CitadelShopModsRecommended #ModLists .ModList
+CitadelHudHeroShop.simplify_shop_active CitadelShopModsRecommended#ShopModsRecommended #ModLists .ModList
 {
 	margin: 0px;
 	padding: 0px;
 }
 
-CitadelHudHeroShop.simplify_shop_active CitadelShopModsRecommended #ModLists CitadelShopModsTier
+CitadelHudHeroShop.simplify_shop_active CitadelShopModsRecommended#ShopModsRecommended #ModLists CitadelShopModsTier
 {
 	padding: 0px;
 }

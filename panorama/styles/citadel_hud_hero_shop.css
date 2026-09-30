@@ -220,7 +220,7 @@ CitadelHudHeroShop.disable_shop_blue_active
 
 CitadelHudHeroShop.simplify_shop_active #ShopModListsContainer
 {
-	background-image: none !important;
+	background-image: none;
 	background-color: #070b0bf2;
 	wash-color: none;
 }
@@ -238,12 +238,12 @@ CitadelHudHeroShop.simplify_shop_active #MainPanel
 
 CitadelHudHeroShop.simplify_shop_active .ShopNavigationTabBackground
 {
-	background-image: none !important;
+	background-image: none;
 }
 
 CitadelHudHeroShop.simplify_shop_active .ShopNavigationTabEdgeOverlay
 {
-	background-image: none !important;
+	background-image: none;
 }
 
 CitadelHudHeroShop.simplify_shop_active .ShopNavigationTab
@@ -253,7 +253,7 @@ CitadelHudHeroShop.simplify_shop_active .ShopNavigationTab
 
 CitadelHudHeroShop.simplify_shop_active #ShopNavigation .NavigationButton
 {
-	background-image: none !important;
+	background-image: none;
 }
 
 CitadelHudHeroShop.simplify_shop_active.showingFavorites #FavoritesNav.NavigationButton .ShopNavigationTabIcon,

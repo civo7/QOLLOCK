@@ -1,33 +1,33 @@
 /* Prettified by Source 2 Viewer 17.0.0.0 - https://valveresourceformat.github.io */
 
 @import url("s2r://panorama/styles/base/citadel_shop_mods_build.vcss_c");
-CitadelHudHeroShop.simplify_shop_active CitadelShopModsBuild
+CitadelHudHeroShop.simplify_shop_active CitadelShopModsBuild#ShopModsSelectedBuild
 {
-	background-image: none !important;
+	background-image: none;
 	background-color: #070b0bf2;
 }
 
-CitadelHudHeroShop.simplify_shop_active CitadelShopModsBuild .BuildHeaderShared
+CitadelHudHeroShop.simplify_shop_active CitadelShopModsBuild#ShopModsSelectedBuild .BuildHeaderShared
 {
-	background-image: none !important;
+	background-image: none;
 	background-color: #2b2c2b99;
 	height: 60px;
 	opacity: 1;
 }
 
-CitadelHudHeroShop.simplify_shop_active CitadelShopModsBuild .SelectedBuildName
+CitadelHudHeroShop.simplify_shop_active CitadelShopModsBuild#ShopModsSelectedBuild .SelectedBuildName
 {
 	color: offWhite;
 	font-size: 20px;
 	margin-left: 5px;
 }
 
-CitadelHudHeroShop.simplify_shop_active CitadelShopModsBuild .BuildDetails
+CitadelHudHeroShop.simplify_shop_active CitadelShopModsBuild#ShopModsSelectedBuild .BuildDetails
 {
 	wash-color: offWhite;
 }
 
-CitadelHudHeroShop.simplify_shop_active CitadelShopModsBuild #CategoryContainer
+CitadelHudHeroShop.simplify_shop_active CitadelShopModsBuild#ShopModsSelectedBuild #CategoryContainer
 {
 	margin-top: 60px;
 	padding: 10px 30px 10px 20px;
