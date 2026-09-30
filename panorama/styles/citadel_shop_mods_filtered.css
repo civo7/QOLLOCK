@@ -23,7 +23,7 @@ CitadelHudHeroShop.simplify_shop_active CitadelShopModsFiltered#ShopModsFiltered
 {
 	flow-children: down;
 	width: 100%;
-	margin: 0px;
+	margin: 16px 0px 0px 0px;
 	padding: 0px;
 }
 
@@ -70,7 +70,7 @@ CitadelHudHeroShop.simplify_shop_active CitadelShopModsFiltered#ShopModsFiltered
 {
 	width: 100px;
 	height: 40px;
-	margin: 0px 0px 0px 15px;
+	margin: 0px 0px 4px 0px;
 	background-color: #2b2c2b;
 	border-radius: 6px;
 	opacity: 0.6;

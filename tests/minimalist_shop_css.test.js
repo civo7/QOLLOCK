@@ -72,6 +72,7 @@ test("minimalist catalog removes parchment while preserving refreshed controls",
 
     assert.match(ruleBody(filtered, "CitadelHudHeroShop.simplify_shop_active CitadelShopModsFiltered#ShopModsFiltered #TreeHeaders"), /visibility:\s*collapse;/);
     assert.match(ruleBody(recommended, "CitadelHudHeroShop.simplify_shop_active CitadelShopModsRecommended#ShopModsRecommended .CostSticker"), /visibility:\s*collapse;/);
+    assert.match(ruleBody(recommended, "CitadelHudHeroShop.simplify_shop_active CitadelShopModsRecommended#ShopModsRecommended .tierRow .CostLabel"), /margin:\s*0px 0px 4px 0px;/);
     assert.match(ruleBody(recommended, "CitadelHudHeroShop.simplify_shop_active CitadelShopModsRecommended#ShopModsRecommended #ModLists .mod_list_bg"), /background-image:\s*none;/);
     assert.match(ruleBody(filtered, "CitadelHudHeroShop.simplify_shop_active CitadelShopModsFiltered#ShopModsFiltered #ModLists .mod_list_bg"), /background-image:\s*none;/);
 });
@@ -86,7 +87,9 @@ test("minimalist category tabs stack full-width item rows by price", () => {
     // resets on the known component ID so they beat those selectors without
     // depending on where Valve applies each Showing* state class.
     const componentPrefix = "CitadelHudHeroShop.simplify_shop_active CitadelShopModsFiltered#ShopModsFiltered";
-    assert.match(ruleBody(css, `${componentPrefix} #ModTiers`), /flow-children:\s*down;/);
+    const tiers = ruleBody(css, `${componentPrefix} #ModTiers`);
+    assert.match(tiers, /flow-children:\s*down;/);
+    assert.match(tiers, /margin:\s*16px 0px 0px 0px;/);
 
     for (let tier = 1; tier <= 5; tier += 1) {
         const tierRow = ruleBody(css, `${componentPrefix} .tierRow.EModTier_${tier}`);
@@ -103,7 +106,7 @@ test("minimalist category tabs stack full-width item rows by price", () => {
     }
     const price = ruleBody(css, `${componentPrefix} .tierRow .CostLabel`);
     assert.match(price, /background-color:\s*#2b2c2b;/);
-    assert.match(price, /margin:\s*0px 0px 0px 15px;/);
+    assert.match(price, /margin:\s*0px 0px 4px 0px;/);
 });
 
 test("minimalist All Items controls use dark surfaces without hiding the catalog", () => {
