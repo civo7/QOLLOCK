@@ -1,0 +1,62 @@
+@import url("s2r://panorama/styles/base/unit_status_v2.vcss_c");
+
+@keyframes 'active_damage_wiggle'
+{
+	0%
+	{
+		transform: rotateZ(0deg);
+	}
+
+	50%
+	{
+		transform: rotateZ(0deg) skew(0deg);
+	}
+
+	100%
+	{
+		transform: rotateZ(0deg);
+	}
+}
+
+@keyframes 'TagGroove1'
+{
+	0%
+	{
+		transform: rotateZ(0deg);
+	}
+
+	25%
+	{
+		transform: rotateZ(0deg);
+	}
+
+	26%
+	{
+		transform: rotateZ(0deg);
+	}
+
+	50%
+	{
+		transform: rotateZ(0deg);
+	}
+
+	51%
+	{
+		transform: rotateZ(0deg);
+	}
+
+	75%
+	{
+		transform: rotateZ(0deg);
+	}
+
+	76%
+	{
+		transform: rotateZ(0deg);
+	}
+
+	100%
+	{
+		transform: rotateZ(0deg);
+	}
+}

@@ -103,6 +103,7 @@ test("Urn Tracker overlay creation, state calculation, and root classes", () => 
 
     hudModule.applyRootClasses(root, { ENABLE_URN_DIFF: 1 }, Date.now(), false);
     assert.strictEqual(root.BHasClass("urn_diff_disabled"), false, "urn_diff_disabled must NOT be active when ENABLE_URN_DIFF is 1");
+
 });
 
 test("Combat signal, passive cooldown mode, and account lookup functions exported and functioning", () => {
