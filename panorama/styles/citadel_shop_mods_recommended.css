@@ -66,7 +66,7 @@ CitadelHudHeroShop.simplify_shop_active CitadelShopModsRecommended#ShopModsRecom
 {
 	flow-children: down;
 	width: 100%;
-	margin: 0px;
+	margin: 0px 0px 0px 8px;
 	padding: 0px;
 }
 

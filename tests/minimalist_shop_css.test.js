@@ -56,7 +56,9 @@ test("minimalist catalog removes parchment while preserving refreshed controls",
     assert.match(surface, /background-image:\s*none;/);
     assert.doesNotMatch(surface, /!important/);
     assert.match(surface, /background-color:\s*#070b0bf2;/);
-    assert.match(ruleBody(shop, "CitadelHudHeroShop.simplify_shop_active #ShopNavigation .NavigationButton"), /background-image:\s*none;/);
+    const navigationButton = ruleBody(shop, "CitadelHudHeroShop.simplify_shop_active #ShopNavigation .NavigationButton");
+    assert.match(navigationButton, /width:\s*70px;/);
+    assert.match(navigationButton, /background-image:\s*none;/);
     assert.match(ruleBody(shop, "CitadelHudHeroShop.simplify_shop_active .ShopNavigationTabBackground"), /background-image:\s*none;/);
     assert.match(ruleBody(shop, "CitadelHudHeroShop.simplify_shop_active .ShopNavigationTabEdgeOverlay"), /background-image:\s*none;/);
     assert.match(ruleBody(filtered, "CitadelHudHeroShop.simplify_shop_active CitadelShopModsFiltered#ShopModsFiltered"), /background-color:\s*#070b0bf2;/);
@@ -72,6 +74,7 @@ test("minimalist catalog removes parchment while preserving refreshed controls",
 
     assert.match(ruleBody(filtered, "CitadelHudHeroShop.simplify_shop_active CitadelShopModsFiltered#ShopModsFiltered #TreeHeaders"), /visibility:\s*collapse;/);
     assert.match(ruleBody(recommended, "CitadelHudHeroShop.simplify_shop_active CitadelShopModsRecommended#ShopModsRecommended .CostSticker"), /visibility:\s*collapse;/);
+    assert.match(ruleBody(recommended, "CitadelHudHeroShop.simplify_shop_active CitadelShopModsRecommended#ShopModsRecommended #ModTiers"), /margin:\s*0px 0px 0px 8px;/);
     assert.match(ruleBody(recommended, "CitadelHudHeroShop.simplify_shop_active CitadelShopModsRecommended#ShopModsRecommended .tierRow .CostLabel"), /margin:\s*0px 0px 4px 0px;/);
     assert.match(ruleBody(recommended, "CitadelHudHeroShop.simplify_shop_active CitadelShopModsRecommended#ShopModsRecommended #ModLists .mod_list_bg"), /background-image:\s*none;/);
     assert.match(ruleBody(filtered, "CitadelHudHeroShop.simplify_shop_active CitadelShopModsFiltered#ShopModsFiltered #ModLists .mod_list_bg"), /background-image:\s*none;/);
@@ -89,7 +92,7 @@ test("minimalist category tabs stack full-width item rows by price", () => {
     const componentPrefix = "CitadelHudHeroShop.simplify_shop_active CitadelShopModsFiltered#ShopModsFiltered";
     const tiers = ruleBody(css, `${componentPrefix} #ModTiers`);
     assert.match(tiers, /flow-children:\s*down;/);
-    assert.match(tiers, /margin:\s*16px 0px 0px 0px;/);
+    assert.match(tiers, /margin:\s*16px 0px 0px 8px;/);
 
     for (let tier = 1; tier <= 5; tier += 1) {
         const tierRow = ruleBody(css, `${componentPrefix} .tierRow.EModTier_${tier}`);

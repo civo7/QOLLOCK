@@ -253,6 +253,7 @@ CitadelHudHeroShop.simplify_shop_active .ShopNavigationTab
 
 CitadelHudHeroShop.simplify_shop_active #ShopNavigation .NavigationButton
 {
+	width: 70px;
 	background-image: none;
 }
 
