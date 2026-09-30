@@ -2,22 +2,25 @@
 // =============================================================================
 // QOLLOCK — Crosshair Active Stats Mirror
 // =============================================================================
-// OWNS:        Crosshair stat overlay mirroring #hudPlayerStats modifiers.
+// OWNS:        Crosshair stat overlay mirroring #hudActivePlayerStats modifiers.
 //              15 stat rows with icons, debuff/buff classification,
-//              caster-consensus sign correction, layout/opacity/scale.
-// DOES NOT OWN: #hudPlayerStats source panel (Valve), stat values (game)
-// DEPENDS ON:  QOL.core.FeatureRegistry, QOL.core.Scheduler, QOL delegates
+//              native polarity, layout/opacity/scale.
+// DOES NOT OWN: #hudActivePlayerStats source panel (Valve), stat values (game)
+// DEPENDS ON:  QOL.core.FeatureRegistry, QOL.core.Scheduler,
+//              QOL.core.panel.findHud, QOL.panelCache.resolve, QOL delegates
 // CONFIG KEYS: ENABLE_CROSSHAIR_STATS, CROSSHAIR_STATS_SHOW_DEBUFFS/BUFFS,
 //              X/Y_OFFSET, SCALE, OPACITY, + 15 per-stat toggles
-// PATTERN:     Polling (~5Hz). Creates QOLCrosshairStatsOverlay with 15 rows.
+// PATTERN:     Polling (10Hz). Creates QOLCrosshairStatsOverlay with 15 rows.
 // STATE KEYS:  crosshairStats (built, lastLayoutSig, lastContentSig,
-//              lastVisibleCount, rowPanels, rowValues, sourceContainers)
+//              lastVisibleCount, rowPanels, rowValues, sourceContainers,
+//              sourceValueRefs, sourcePanel)
 // =============================================================================
 
 (function() {
     "use strict";
     var FR = QOL.core.FeatureRegistry;
     if (!FR) { $.Msg("[QOLLock] crosshair_stats: FeatureRegistry not found — aborting"); return; }
+    var SOURCE_PANEL_ID = "hudActivePlayerStats";
 
     FR.register({
         id: "ql_crosshair_stats",
@@ -52,20 +55,20 @@
             var _loop = null;
 
             var STAT_DEFS = [
-                { id: "fireRateContainer",        key: "fireRate",      icon: "FireRate",                cfg: "CROSSHAIR_STATS_SHOW_FIRERATE" },
-                { id: "speedDisplayContainer",    key: "moveSpeed",     icon: "MoveSpeed",               cfg: "CROSSHAIR_STATS_SHOW_MOVESPEED" },
-                { id: "healingAmpContainer",      key: "healAmp",       icon: "HealAmplifcation",        cfg: "CROSSHAIR_STATS_SHOW_HEALAMP" },
-                { id: "bulletResistContainer",    key: "bulletResist",  icon: "ResistBullet",            cfg: "CROSSHAIR_STATS_SHOW_BULLETRESIST" },
-                { id: "techResistContainer",      key: "techResist",    icon: "ResistSpirit",            cfg: "CROSSHAIR_STATS_SHOW_TECHRESIST" },
-                { id: "bulletLifeStealContainer", key: "bulletLifesteal", icon: "HealthStealingBullets", cfg: "CROSSHAIR_STATS_SHOW_BULLETLIFESTEAL" },
-                { id: "techLifeStealContainer",   key: "techLifesteal", icon: "HealthStealingSpirit",    cfg: "CROSSHAIR_STATS_SHOW_TECHLIFESTEAL" },
-                { id: "weaponPowerContainer",     key: "weaponPower",   icon: "DamageWeapon",            cfg: "CROSSHAIR_STATS_SHOW_WEAPONPOWER" },
-                { id: "spiritContainer",          key: "spirit",        icon: "Spirit",                  cfg: "CROSSHAIR_STATS_SHOW_SPIRIT" },
-                { id: "abilityRangeContainer",    key: "range",         icon: "Range",                   cfg: "CROSSHAIR_STATS_SHOW_RANGE" },
-                { id: "abilityDurationContainer", key: "duration",      icon: "Duration",                cfg: "CROSSHAIR_STATS_SHOW_DURATION" },
-                { id: "damageAmpContainer",       key: "damageAmp",     icon: "DamageWeapon",            cfg: "CROSSHAIR_STATS_SHOW_DAMAGEAMP" },
+                { id: "fireRateContainer",        key: "fireRate",      icon: "FireRate",                cfg: "CROSSHAIR_STATS_SHOW_FIRERATE", expectsPostfix: true },
+                { id: "speedDisplayContainer",    key: "moveSpeed",     icon: "MoveSpeed",               cfg: "CROSSHAIR_STATS_SHOW_MOVESPEED", expectsPostfix: true },
+                { id: "healingAmpContainer",      key: "healAmp",       icon: "HealingReduction",        cfg: "CROSSHAIR_STATS_SHOW_HEALAMP", expectsPostfix: true },
+                { id: "bulletResistContainer",    key: "bulletResist",  icon: "ResistBullet",            cfg: "CROSSHAIR_STATS_SHOW_BULLETRESIST", expectsPostfix: true },
+                { id: "techResistContainer",      key: "techResist",    icon: "ResistSpirit",            cfg: "CROSSHAIR_STATS_SHOW_TECHRESIST", expectsPostfix: true },
+                { id: "bulletLifeStealContainer", key: "bulletLifesteal", icon: "HealthStealingBullets", cfg: "CROSSHAIR_STATS_SHOW_BULLETLIFESTEAL", expectsPostfix: true },
+                { id: "techLifeStealContainer",   key: "techLifesteal", icon: "HealthStealingSpirit",    cfg: "CROSSHAIR_STATS_SHOW_TECHLIFESTEAL", expectsPostfix: true },
+                { id: "weaponPowerContainer",     key: "weaponPower",   icon: "DamageWeapon",            cfg: "CROSSHAIR_STATS_SHOW_WEAPONPOWER", deltaSelector: true, deltaPostfix: "%" },
+                { id: "spiritContainer",          key: "spirit",        icon: "Spirit",                  cfg: "CROSSHAIR_STATS_SHOW_SPIRIT", deltaSelector: true, deltaPrefix: "+" },
+                { id: "abilityRangeContainer",    key: "range",         icon: "Range",                   cfg: "CROSSHAIR_STATS_SHOW_RANGE", expectsPostfix: true },
+                { id: "abilityDurationContainer", key: "duration",      icon: "Duration",                cfg: "CROSSHAIR_STATS_SHOW_DURATION", expectsPostfix: true },
+                { id: "damageAmpContainer",       key: "damageAmp",     icon: "DamageAmplification",     cfg: "CROSSHAIR_STATS_SHOW_DAMAGEAMP" },
                 { id: "clipSizeContainer",        key: "clipSize",      icon: "AmmoClipSize",            cfg: "CROSSHAIR_STATS_SHOW_CLIPSIZE" },
-                { id: "regenPerSecondContainer",  key: "regen",         icon: "HealthRegen",             cfg: "CROSSHAIR_STATS_SHOW_REGEN" },
+                { id: "regenPerSecondContainer",  key: "regen",         icon: "HealthRegen",             cfg: "CROSSHAIR_STATS_SHOW_REGEN", expectsPostfix: true },
                 { id: "bulletEvasionContainer",   key: "bulletEvasion", icon: "MoveDodge",               cfg: "CROSSHAIR_STATS_SHOW_BULLETEVASION" }
             ];
 
@@ -73,6 +76,8 @@
             var _getPanel = QOL.getCachedPanel;
             var _setPanel = QOL.setCachedPanel;
             var _isAlive = QOL.utils.IsPanelValid;
+            var _findHud = QOL.core.panel && QOL.core.panel.findHud;
+            var _resolvePanel = QOL.panelCache && QOL.panelCache.resolve;
             function _isOn(cfg, k) { return Number(cfg[k]) === 1; }
             function _clamp(cfg, key, fallback, min, max) { var v = Number(cfg[key]); if (!isFinite(v)) v = fallback; if (v < min) v = min; if (v > max) v = max; return v; }
             function _getGameplayHud(root) { try { if (typeof QOL !== "undefined" && QOL.getGameplayHudPanel) return QOL.getGameplayHudPanel(root); } catch(e) {} return root; }
@@ -85,18 +90,37 @@
                     if (typeof QOL !== "undefined" && QOL.state) {
                         var st = QOL.state;
                         if (!st.crosshairStats) {
-                            st.crosshairStats = { built: false, lastLayoutSig: "", lastContentSig: "", lastVisibleCount: -1, rowPanels: {}, rowValues: {}, sourceContainers: {} };
+                            st.crosshairStats = { built: false, lastLayoutSig: "", lastContentSig: "", lastVisibleCount: -1, rowPanels: {}, rowValues: {}, sourceContainers: {}, sourceValueRefs: {}, sourcePanel: null };
                         }
+                        if (!st.crosshairStats.sourceValueRefs) st.crosshairStats.sourceValueRefs = {};
                         return st.crosshairStats;
                     }
                 } catch(e) {}
-                return { built: false, lastLayoutSig: "", lastContentSig: "", lastVisibleCount: -1, rowPanels: {}, rowValues: {}, sourceContainers: {} };
+                return { built: false, lastLayoutSig: "", lastContentSig: "", lastVisibleCount: -1, rowPanels: {}, rowValues: {}, sourceContainers: {}, sourceValueRefs: {}, sourcePanel: null };
             }
-            function _getSourcePanel(root) {
-                var panel = _getPanel("crosshairStatsSource");
-                if (_isAlive(panel)) return panel;
-                panel = (root && root.FindChildTraverse) ? root.FindChildTraverse("hudPlayerStats") : null;
-                _setPanel("crosshairStatsSource", panel);
+            function _getSourcePanel(root, st) {
+                var owner = root;
+                try { if (_findHud) owner = _findHud(root) || root; } catch(e) { owner = root; }
+                var panel = null;
+                if (_resolvePanel && _isAlive(owner)) {
+                    panel = _resolvePanel(owner, "crosshairStatsSource", SOURCE_PANEL_ID);
+                } else {
+                    panel = _getPanel("crosshairStatsSource");
+                    var reusable = false;
+                    if (_isAlive(panel)) {
+                        try { reusable = panel.id === SOURCE_PANEL_ID; } catch(e) { reusable = false; }
+                    }
+                    if (!reusable) {
+                        panel = (owner && owner.FindChildTraverse) ? owner.FindChildTraverse(SOURCE_PANEL_ID) : null;
+                        _setPanel("crosshairStatsSource", panel);
+                    }
+                }
+                if (panel !== st.sourcePanel) {
+                    st.sourcePanel = panel;
+                    st.sourceContainers = {};
+                    st.sourceValueRefs = {};
+                    st.lastContentSig = "";
+                }
                 return panel;
             }
             function _getSourceContainer(st, source, def) {
@@ -104,6 +128,7 @@
                 if (_isAlive(c)) return c;
                 c = (source && source.FindChildTraverse) ? source.FindChildTraverse(def.id) : null;
                 st.sourceContainers[def.key] = c || null;
+                st.sourceValueRefs[def.key] = null;
                 return c;
             }
 
@@ -112,7 +137,7 @@
                 if (!s) return "";
                 var out = "", inTag = false;
                 for (var i = 0; i < s.length; i++) { var ch = s.charAt(i); if (ch === "<") { inTag = true; continue; } if (ch === ">") { inTag = false; continue; } if (!inTag) out += ch; }
-                out = out.split("&nbsp;").join(" ").split("&amp;").join("&");
+                out = out.split("&nbsp;").join(" ").split("&amp;").join("&").split("&lt;").join("<").split("&gt;").join(">");
                 var parts = out.split(/\s+/), clean = [];
                 for (var p = 0; p < parts.length; p++) { if (parts[p]) clean.push(parts[p]); }
                 return clean.join(" ");
@@ -127,11 +152,57 @@
                 }
                 return "";
             }
-            function _readModifierValue(container) {
+            function _firstByClass(panel, className) {
+                if (!_isAlive(panel) || !panel.FindChildrenWithClassTraverse) return null;
+                try {
+                    var matches = panel.FindChildrenWithClassTraverse(className) || [];
+                    return matches.length ? matches[0] : null;
+                } catch(e) { return null; }
+            }
+            function _readPanelText(panel) {
+                if (!_isAlive(panel)) return "";
+                try { return (typeof panel.text === "string") ? panel.text : ""; } catch(e) { return ""; }
+            }
+            function _getSourceValueRefs(st, container, def) {
+                var refs = st.sourceValueRefs[def.key];
+                var current = refs && refs.container === container && _isAlive(refs.core);
+                if (current && def.deltaSelector) current = _isAlive(refs.statNumberDelta);
+                else if (current) {
+                    current = _isAlive(refs.statNumber);
+                    if (current && def.expectsPostfix) current = _isAlive(refs.statPostfix);
+                    else if (current && refs.statPostfix) current = _isAlive(refs.statPostfix);
+                }
+                if (current) return refs;
+                var core = _firstByClass(container, "miniModifierCore");
+                refs = {
+                    container: container,
+                    core: core,
+                    statNumber: core ? _firstByClass(core, "statNumber") : null,
+                    statPostfix: core ? _firstByClass(core, "statPostfix") : null,
+                    statNumberDelta: core ? _firstByClass(core, "statNumberDelta") : null
+                };
+                st.sourceValueRefs[def.key] = refs;
+                return refs;
+            }
+            function _formatDelta(def, value) {
+                if (!value) return "";
+                var first = value.charAt(0);
+                var prefix = (def.deltaPrefix && first !== "+" && first !== "-" && first !== "−") ? def.deltaPrefix : "";
+                return prefix + value + (def.deltaPostfix || "");
+            }
+            function _readModifierValue(st, container, def) {
                 if (!_isAlive(container)) return "";
-                var core = null; try { core = container.FindChildTraverse("miniModifierCore"); } catch(e) {}
-                if (!_isAlive(core)) return _readBfs(container);
-                return _readBfs(core);
+                var refs = _getSourceValueRefs(st, container, def);
+                if (!refs.core) return _readBfs(container);
+                if (def.deltaSelector) {
+                    var hasDelta = false;
+                    try { hasDelta = container.BHasClass("has_delta"); } catch(e) { hasDelta = false; }
+                    if (!hasDelta) return "";
+                    return _formatDelta(def, _stripHtml(_readPanelText(refs.statNumberDelta)));
+                }
+                var number = _stripHtml(_readPanelText(refs.statNumber));
+                var postfix = _stripHtml(_readPanelText(refs.statPostfix));
+                return number || postfix ? number + postfix : _readBfs(refs.core);
             }
             function _classifyBySign(txt) {
                 if (!txt) return 0;
@@ -142,24 +213,6 @@
                 try { if (container.BHasClass("isNegative") || container.BHasClass("IsNegative")) return -1; if (container.BHasClass("isPositive") || container.BHasClass("IsPositive")) return 1; } catch(e) {}
                 return 0;
             }
-            function _classifyByCasterConsensus(container) {
-                if (!_isAlive(container)) return 0;
-                var list = null; try { list = container.FindChildTraverse("casterList"); } catch(e) {}
-                if (!_isAlive(list)) return 0;
-                var queue = []; try { if (list.Children) queue = (list.Children() || []).slice(); } catch(e) { return 0; }
-                var guard = 0, enemy = 0, friend = 0;
-                while (queue.length && guard < VALUE_BFS_LIMIT) { var node = queue.shift(); guard++; if (!node) continue;
-                    try { if (node.BHasClass && node.BHasClass("casterAndModifiers")) { if (node.BHasClass("enemy")) enemy++; else if (node.BHasClass("friend")) friend++; } } catch(e) {}
-                    try { if (node.Children) { var kids = node.Children() || []; for (var i = 0; i < kids.length; i++) queue.push(kids[i]); } } catch(e) {}
-                }
-                if (enemy > 0 && friend === 0) return -1; if (friend > 0 && enemy === 0) return 1; return 0;
-            }
-            function _applySign(txt, isNeg) {
-                if (!txt) return txt; var i = 0;
-                while (i < txt.length) { var ch = txt.charAt(i); if (ch === " " || ch === "+" || ch === "-" || ch === "−") { i++; continue; } break; }
-                return (isNeg ? "−" : "+") + txt.substring(i);
-            }
-
             // ── Overlay lifecycle ──
             function _ensureOverlay(root) {
                 var st = _ensureState();
@@ -178,7 +231,7 @@
                     if (row.SetHasClass) row.SetHasClass("qol-hidden", true); else row.style.visibility = "collapse";
                     st.rowPanels[def.key] = row; st.rowValues[def.key] = row.FindChildTraverse(rowId + "_value");
                 }
-                st.built = true; st.lastLayoutSig = ""; st.lastContentSig = ""; st.lastVisibleCount = -1; st.sourceContainers = {};
+                st.built = true; st.lastLayoutSig = ""; st.lastContentSig = ""; st.lastVisibleCount = -1; st.sourceContainers = {}; st.sourceValueRefs = {};
                 _setPanel("crosshairStatsOverlay", overlay); return overlay;
             }
             function _removeOverlay(root) {
@@ -186,7 +239,7 @@
                 if (!_isAlive(overlay) && root && root.FindChildTraverse) overlay = root.FindChildTraverse("QOLCrosshairStatsOverlay");
                 if (_isAlive(overlay)) { try { overlay.DeleteAsync(0); } catch(e) {} }
                 _setPanel("crosshairStatsOverlay", null); _setPanel("crosshairStatsSource", null);
-                st.built = false; st.rowPanels = {}; st.rowValues = {}; st.sourceContainers = {};
+                st.built = false; st.rowPanels = {}; st.rowValues = {}; st.sourceContainers = {}; st.sourceValueRefs = {}; st.sourcePanel = null;
                 st.lastLayoutSig = ""; st.lastContentSig = ""; st.lastVisibleCount = -1;
             }
 
@@ -228,7 +281,7 @@
                     }
 
                     // Content
-                    var source = _getSourcePanel(root); var contentParts = []; var visibleCount = 0;
+                    var source = _getSourcePanel(root, st); var contentParts = []; var visibleCount = 0;
                     for (var s = 0; s < STAT_DEFS.length; s++) {
                         var def = STAT_DEFS[s];
                         if (def.cfg && !_isOn(cfg, def.cfg)) { contentParts.push(""); continue; }
@@ -236,11 +289,10 @@
                         var active = false;
                         if (_isAlive(container)) { try { active = container.BHasClass("shouldShow"); } catch(e) { active = false; } }
                         if (!active) { contentParts.push(""); continue; }
-                        var valueText = _stripHtml(_readModifierValue(container));
-                        var consensus = _classifyByCasterConsensus(container);
-                        var cls, displayValue = valueText;
-                        if (consensus < 0) { cls = -1; displayValue = _applySign(valueText, true); }
-                        else { cls = _classifyByGameClass(container); if (cls === 0) cls = _classifyBySign(valueText); }
+                        var valueText = _stripHtml(_readModifierValue(st, container, def));
+                        if (!valueText) { contentParts.push(""); continue; }
+                        var cls = _classifyByGameClass(container); if (cls === 0) cls = _classifyBySign(valueText);
+                        var displayValue = valueText;
                         var isNeg = (cls < 0);
                         if (isNeg ? !showDebuffs : !showBuffs) { contentParts.push(""); continue; }
                         visibleCount++; contentParts.push(def.key + (isNeg ? "-" : "+") + displayValue);
@@ -296,8 +348,10 @@
     test: function(ctx) {
         try {
             var root = $.GetContextPanel();
-            var stats = root ? root.FindChildTraverse("hudPlayerStats") : null;
-            return { passed: !!stats, name: "Crosshair stats panel exists", message: stats ? "" : "hudPlayerStats not found", assertions: [{ passed: !!stats, name: "hudPlayerStats panel exists" }] };
+            var stats = root ? root.FindChildTraverse(SOURCE_PANEL_ID) : null;
+            var modifier = stats && stats.FindChildTraverse ? stats.FindChildTraverse("fireRateContainer") : null;
+            var passed = !!stats && !!modifier;
+            return { passed: passed, name: "Crosshair stats source exists", message: passed ? "" : (!stats ? "hudActivePlayerStats not found" : "fireRateContainer not found"), assertions: [{ passed: !!stats, name: "hudActivePlayerStats panel exists" }, { passed: !!modifier, name: "active modifier rows exist" }] };
         } catch(e) { return { passed: false, name: "Crosshair stats panel check", message: (e && e.message ? e.message : String(e)) }; }
     }
     });
