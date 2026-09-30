@@ -762,7 +762,13 @@
                             setPanelOpacitySafe(p, op, 1.0);
                         } else {
                             // The inner container/frame have fixed 400px CSS dimensions.
-                            if (fixedIconSize) {
+                            // hud_minimap now owns a much larger native render surface in
+                            // zoom modes. Never replace those dimensions with viewport
+                            // dimensions or its text and canvas elements become distorted.
+                            if (p.id === PANEL_ID_MINIMAP) {
+                                QOL.utils.ClearStyleSafe(p, "width");
+                                QOL.utils.ClearStyleSafe(p, "height");
+                            } else if (fixedIconSize) {
                                 if (p.style.width !== minimapSizeText) p.style.width = minimapSizeText;
                                 if (p.style.height !== minimapSizeText) p.style.height = minimapSizeText;
                             } else {

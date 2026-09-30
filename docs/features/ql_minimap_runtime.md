@@ -14,8 +14,10 @@ Scoreboard toggle is a refresh trigger, not a boolean state payload. Deferred
 refreshes belong to the feature Scheduler task group so disable cancels them;
 event subscriptions still require explicit removal.
 
-Fixed Icon Size changes outer and inner minimap geometry together. It prevents
-whole-map magnification but does not guarantee that every native icon keeps a
-fixed pixel size. Turning it off must release inner width and height overrides.
+Fixed Icon Size changes the outer minimap and viewport geometry together, but
+must leave `hud_minimap` width and height under native control. Build 6711 uses
+a larger internal render surface for zoom modes; replacing it with viewport
+dimensions distorts native text and map elements. Turning Fixed Icon Size off
+must release the remaining inner width and height overrides.
 Check markers, click targets, range circles, Alt/Tab switching and reset in the
 repacked client.

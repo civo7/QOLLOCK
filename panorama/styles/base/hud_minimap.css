@@ -207,7 +207,7 @@
 	overflow: noclip;
 }
 
-.NewMinimapBackgroundsContainer
+.NewMinimapBackgroundsContainer,.HideOldZiplines #canvas
 {
 	visibility: collapse;
 }
