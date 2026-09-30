@@ -15,9 +15,11 @@
 
 /* Build 6711 removed the replacement zipline scene while retaining the class
  * that hides the canvas containing the native lane lines. */
+.HudMinimap.HideOldZiplines #canvas,
 .HideOldZiplines #canvas
 {
-	visibility: visible;
+	visibility: visible !important;
+	opacity: 1 !important;
 }
 
 .minimalist_minimap_active #map_render
