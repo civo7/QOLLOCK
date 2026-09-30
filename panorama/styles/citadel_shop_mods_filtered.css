@@ -1,0 +1,114 @@
+/* Prettified by Source 2 Viewer 17.0.0.0 - https://valveresourceformat.github.io */
+
+@import url("s2r://panorama/styles/base/citadel_shop_mods_filtered.vcss_c");
+
+CitadelHudHeroShop.simplify_shop_active CitadelShopModsFiltered
+{
+	background-image: none !important;
+	background-color: #070b0bf2;
+}
+
+CitadelHudHeroShop.simplify_shop_active CitadelShopModsFiltered #ModsContainer
+{
+	background-image: none !important;
+	background-color: none;
+}
+
+CitadelHudHeroShop.simplify_shop_active CitadelShopModsFiltered #TreeHeaders
+{
+	visibility: collapse;
+}
+
+CitadelHudHeroShop.simplify_shop_active CitadelShopModsFiltered #ModTiers
+{
+	flow-children: down !important;
+	width: 100%;
+	margin: 0px !important;
+	padding: 0px;
+}
+
+CitadelHudHeroShop.simplify_shop_active CitadelShopModsFiltered .tierRow
+{
+	flow-children: down;
+	width: 100% !important;
+	height: fit-children;
+	x: 0px !important;
+	y: 0px !important;
+	margin: 0px 0px 8px 0px !important;
+	ignore-parent-flow: false !important;
+	overflow: noclip;
+}
+
+CitadelHudHeroShop.simplify_shop_active CitadelShopModsFiltered .CostSticker
+{
+	visibility: collapse;
+}
+
+CitadelHudHeroShop.simplify_shop_active CitadelShopModsFiltered .tierRow .CostLabel
+{
+	width: 100px;
+	height: 40px;
+	margin: 0px 0px 0px 15px !important;
+	background-color: #2b2c2b;
+	border-radius: 6px;
+	opacity: 0.6;
+	transform: none;
+}
+
+CitadelHudHeroShop.simplify_shop_active CitadelShopModsFiltered .tierRow .CostLabel .currencySymbol
+{
+	width: 12px;
+	height: 20px;
+	margin-left: 5px;
+	margin-right: 0px;
+	vertical-align: middle;
+	background-image: url("s2r://panorama/images/shop/catalog/price_currency_psd.vtex");
+	background-size: contain;
+	background-repeat: no-repeat;
+}
+
+CitadelHudHeroShop.simplify_shop_active CitadelShopModsFiltered .tierRow .CostLabel Label
+{
+	width: 80px;
+	font-family: numericOracle !important;
+	font-size: 30px !important;
+	font-weight: bold;
+	color: #7eb192 !important;
+	margin: 0px !important;
+	padding: 0px !important;
+	vertical-align: middle;
+	text-align: center;
+	text-shadow: none !important;
+}
+
+CitadelHudHeroShop.simplify_shop_active CitadelShopModsFiltered #ModLists
+{
+	border-top: 0px;
+}
+
+CitadelHudHeroShop.simplify_shop_active CitadelShopModsFiltered #ModLists .mod_list_bg
+{
+	background-image: none;
+	opacity: 0;
+}
+
+CitadelHudHeroShop.simplify_shop_active CitadelShopModsFiltered #ModLists .ModList
+{
+	margin: 0px;
+	padding: 0px;
+}
+
+CitadelHudHeroShop.simplify_shop_active CitadelShopModsFiltered #ModLists CitadelShopModsTier
+{
+	padding: 0px;
+}
+
+CitadelHudHeroShop.simplify_shop_active.showingWeapon CitadelShopModsFiltered #ModLists .ModList,
+CitadelHudHeroShop.simplify_shop_active.showingArmor CitadelShopModsFiltered #ModLists .ModList,
+CitadelHudHeroShop.simplify_shop_active.showingTech CitadelShopModsFiltered #ModLists .ModList,
+CitadelHudHeroShop.simplify_shop_active.ShowingWeaponOnly CitadelShopModsFiltered #ModLists .ModList,
+CitadelHudHeroShop.simplify_shop_active.ShowingVitalityOnly CitadelShopModsFiltered #ModLists .ModList,
+CitadelHudHeroShop.simplify_shop_active.ShowingSpiritOnly CitadelShopModsFiltered #ModLists .ModList
+{
+	width: 100% !important;
+}

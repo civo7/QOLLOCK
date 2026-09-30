@@ -43,30 +43,40 @@ test("shop layout exposes the current catalog surfaces and navigation tabs", () 
 });
 
 test("minimalist catalog removes parchment while preserving refreshed controls", () => {
-    const css = read("panorama/styles/citadel_hud_hero_shop.css");
-    const surface = ruleBody(css, "CitadelHudHeroShop.simplify_shop_active #ShopModListsContainer");
+    const shop = read("panorama/styles/citadel_hud_hero_shop.css");
+    const filtered = read("panorama/styles/citadel_shop_mods_filtered.css");
+    const recommended = read("panorama/styles/citadel_shop_mods_recommended.css");
+
+    assert.match(filtered, /@import url\("s2r:\/\/panorama\/styles\/base\/citadel_shop_mods_filtered\.vcss_c"\);/);
+    assert.match(recommended, /@import url\("s2r:\/\/panorama\/styles\/base\/citadel_shop_mods_recommended\.vcss_c"\);/);
+
+    const surface = ruleBody(shop, "CitadelHudHeroShop.simplify_shop_active #ShopModListsContainer");
     assert.match(surface, /background-image:\s*none !important;/);
     assert.match(surface, /background-color:\s*#070b0bf2;/);
-    assert.match(ruleBody(css, "CitadelHudHeroShop.simplify_shop_active #ShopNavigation .NavigationButton"), /background-image:\s*none !important;/);
-    assert.match(ruleBody(css, "CitadelHudHeroShop.simplify_shop_active .ShopNavigationTabBackground"), /background-image:\s*none !important;/);
-    assert.match(ruleBody(css, "CitadelHudHeroShop.simplify_shop_active .ShopNavigationTabEdgeOverlay"), /background-image:\s*none !important;/);
-    assert.match(ruleBody(css, "CitadelHudHeroShop.simplify_shop_active CitadelShopModsFiltered #ModsContainer"), /background-image:\s*none !important;/);
-    assert.match(ruleBody(css, "CitadelHudHeroShop.simplify_shop_active CitadelShopModsRecommended #ModsContainer"), /background-image:\s*none !important;/);
+    assert.match(ruleBody(shop, "CitadelHudHeroShop.simplify_shop_active #ShopNavigation .NavigationButton"), /background-image:\s*none !important;/);
+    assert.match(ruleBody(shop, "CitadelHudHeroShop.simplify_shop_active .ShopNavigationTabBackground"), /background-image:\s*none !important;/);
+    assert.match(ruleBody(shop, "CitadelHudHeroShop.simplify_shop_active .ShopNavigationTabEdgeOverlay"), /background-image:\s*none !important;/);
+    assert.match(ruleBody(filtered, "CitadelHudHeroShop.simplify_shop_active CitadelShopModsFiltered"), /background-color:\s*#070b0bf2;/);
+    assert.match(ruleBody(recommended, "CitadelHudHeroShop.simplify_shop_active CitadelShopModsRecommended"), /background-color:\s*#070b0bf2;/);
+    assert.match(ruleBody(filtered, "CitadelHudHeroShop.simplify_shop_active CitadelShopModsFiltered #ModsContainer"), /background-image:\s*none !important;/);
+    assert.match(ruleBody(recommended, "CitadelHudHeroShop.simplify_shop_active CitadelShopModsRecommended #ModsContainer"), /background-image:\s*none !important;/);
 
-    const recommendationHeader = ruleBody(css, "CitadelHudHeroShop.simplify_shop_active CitadelShopModsRecommended #PopularItemsHeader");
+    const recommendationHeader = ruleBody(recommended, "CitadelHudHeroShop.simplify_shop_active CitadelShopModsRecommended #PopularItemsHeader");
     assert.match(recommendationHeader, /background-color:\s*#2b2c2b99;/);
     assert.doesNotMatch(recommendationHeader, /visibility:\s*collapse;/);
-    assert.match(ruleBody(css, "CitadelHudHeroShop.simplify_shop_active CitadelShopModsRecommended #PopularItemsHeader #HeaderLabel"), /visibility:\s*visible;/);
-    assert.match(ruleBody(css, "CitadelHudHeroShop.simplify_shop_active CitadelShopModsRecommended #PopularItemsHeader .recommendations_header_bg"), /background-image:\s*none !important;/);
+    assert.match(ruleBody(recommended, "CitadelHudHeroShop.simplify_shop_active CitadelShopModsRecommended #PopularItemsHeader #HeaderLabel"), /visibility:\s*visible;/);
+    assert.match(ruleBody(recommended, "CitadelHudHeroShop.simplify_shop_active CitadelShopModsRecommended #PopularItemsHeader .recommendations_header_bg"), /background-image:\s*none !important;/);
 
-    assert.match(ruleBody(css, "CitadelHudHeroShop.simplify_shop_active CitadelShopModsFiltered #TreeHeaders"), /visibility:\s*collapse;/);
-    assert.match(ruleBody(css, "CitadelHudHeroShop.simplify_shop_active CitadelShopModsRecommended .CostSticker"), /visibility:\s*collapse;/);
-    assert.match(ruleBody(css, "CitadelHudHeroShop.simplify_shop_active CitadelShopModsRecommended #ModLists .mod_list_bg"), /background-image:\s*none;/);
-    assert.match(ruleBody(css, "CitadelHudHeroShop.simplify_shop_active CitadelShopModsFiltered #ModLists .mod_list_bg"), /background-image:\s*none;/);
+    assert.match(ruleBody(filtered, "CitadelHudHeroShop.simplify_shop_active CitadelShopModsFiltered #TreeHeaders"), /visibility:\s*collapse;/);
+    assert.match(ruleBody(recommended, "CitadelHudHeroShop.simplify_shop_active CitadelShopModsRecommended .CostSticker"), /visibility:\s*collapse;/);
+    assert.match(ruleBody(recommended, "CitadelHudHeroShop.simplify_shop_active CitadelShopModsRecommended #ModLists .mod_list_bg"), /background-image:\s*none;/);
+    assert.match(ruleBody(filtered, "CitadelHudHeroShop.simplify_shop_active CitadelShopModsFiltered #ModLists .mod_list_bg"), /background-image:\s*none;/);
 });
 
 test("minimalist category tabs stack full-width item rows by price", () => {
-    const css = read("panorama/styles/citadel_hud_hero_shop.css");
+    const css = read("panorama/styles/citadel_shop_mods_filtered.css");
+    assert.match(css, /@import url\("s2r:\/\/panorama\/styles\/base\/citadel_shop_mods_filtered\.vcss_c"\);/);
+
     const tiers = ruleBody(css, "CitadelHudHeroShop.simplify_shop_active CitadelShopModsFiltered #ModTiers");
     assert.match(tiers, /flow-children:\s*down !important;/);
 
@@ -92,7 +102,9 @@ test("minimalist category tabs stack full-width item rows by price", () => {
 });
 
 test("minimalist All Items controls use dark surfaces without hiding the catalog", () => {
-    const css = read("panorama/styles/citadel_hud_hero_shop.css");
+    const css = read("panorama/styles/citadel_ui_shop_filters.css");
+    assert.match(css, /@import url\("s2r:\/\/panorama\/styles\/base\/citadel_ui_shop_filters\.vcss_c"\);/);
+
     const backer = ruleBody(css, "CitadelHudHeroShop.simplify_shop_active CitadelShopFilters .filter_backer");
     assert.match(backer, /background-image:\s*none !important;/);
     assert.match(backer, /background-color:\s*#0b0c0ce6;/);
@@ -110,6 +122,7 @@ test("minimalist builds retain patch controls on the historical dark surfaces", 
     const card = read("panorama/styles/citadel_shop_mod_view.css");
 
     assert.match(ruleBody(build, "CitadelHudHeroShop.simplify_shop_active CitadelShopModsBuild"), /background-image:\s*none !important;/);
+    assert.match(ruleBody(build, "CitadelHudHeroShop.simplify_shop_active CitadelShopModsBuild"), /background-color:\s*#070b0bf2;/);
     const buildHeader = ruleBody(build, "CitadelHudHeroShop.simplify_shop_active CitadelShopModsBuild .BuildHeaderShared");
     assert.match(buildHeader, /background-image:\s*none !important;/);
     assert.match(buildHeader, /background-color:\s*#2b2c2b99;/);
