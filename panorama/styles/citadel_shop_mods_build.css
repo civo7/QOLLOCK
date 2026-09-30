@@ -4,7 +4,7 @@
 CitadelHudHeroShop.simplify_shop_active CitadelShopModsBuild#ShopModsSelectedBuild
 {
 	background-image: none;
-	background-color: #070b0bf2;
+	background-color: #070b0b00;
 }
 
 CitadelHudHeroShop.simplify_shop_active CitadelShopModsBuild#ShopModsSelectedBuild .BuildHeaderShared

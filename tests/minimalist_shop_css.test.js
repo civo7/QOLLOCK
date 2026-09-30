@@ -55,14 +55,14 @@ test("minimalist catalog removes parchment while preserving refreshed controls",
     const surface = ruleBody(shop, "CitadelHudHeroShop.simplify_shop_active #ShopModListsContainer");
     assert.match(surface, /background-image:\s*none;/);
     assert.doesNotMatch(surface, /!important/);
-    assert.match(surface, /background-color:\s*#070b0bf2;/);
+    assert.match(surface, /background-color:\s*#070b0b4d;/);
     const navigationButton = ruleBody(shop, "CitadelHudHeroShop.simplify_shop_active #ShopNavigation .NavigationButton");
     assert.match(navigationButton, /width:\s*70px;/);
     assert.match(navigationButton, /background-image:\s*none;/);
     assert.match(ruleBody(shop, "CitadelHudHeroShop.simplify_shop_active .ShopNavigationTabBackground"), /background-image:\s*none;/);
     assert.match(ruleBody(shop, "CitadelHudHeroShop.simplify_shop_active .ShopNavigationTabEdgeOverlay"), /background-image:\s*none;/);
-    assert.match(ruleBody(filtered, "CitadelHudHeroShop.simplify_shop_active CitadelShopModsFiltered#ShopModsFiltered"), /background-color:\s*#070b0bf2;/);
-    assert.match(ruleBody(recommended, "CitadelHudHeroShop.simplify_shop_active CitadelShopModsRecommended#ShopModsRecommended"), /background-color:\s*#070b0bf2;/);
+    assert.match(ruleBody(filtered, "CitadelHudHeroShop.simplify_shop_active CitadelShopModsFiltered#ShopModsFiltered"), /background-color:\s*#070b0b00;/);
+    assert.match(ruleBody(recommended, "CitadelHudHeroShop.simplify_shop_active CitadelShopModsRecommended#ShopModsRecommended"), /background-color:\s*#070b0b00;/);
     assert.match(ruleBody(filtered, "CitadelHudHeroShop.simplify_shop_active CitadelShopModsFiltered#ShopModsFiltered #ModsContainer"), /background-image:\s*none;/);
     assert.match(ruleBody(recommended, "CitadelHudHeroShop.simplify_shop_active CitadelShopModsRecommended#ShopModsRecommended #ModsContainer"), /background-image:\s*none;/);
 
@@ -135,7 +135,7 @@ test("minimalist builds retain patch controls on the historical dark surfaces", 
     assert.doesNotMatch(build, /!important/);
 
     assert.match(ruleBody(build, "CitadelHudHeroShop.simplify_shop_active CitadelShopModsBuild#ShopModsSelectedBuild"), /background-image:\s*none;/);
-    assert.match(ruleBody(build, "CitadelHudHeroShop.simplify_shop_active CitadelShopModsBuild#ShopModsSelectedBuild"), /background-color:\s*#070b0bf2;/);
+    assert.match(ruleBody(build, "CitadelHudHeroShop.simplify_shop_active CitadelShopModsBuild#ShopModsSelectedBuild"), /background-color:\s*#070b0b00;/);
     const buildHeader = ruleBody(build, "CitadelHudHeroShop.simplify_shop_active CitadelShopModsBuild#ShopModsSelectedBuild .BuildHeaderShared");
     assert.match(buildHeader, /background-image:\s*none;/);
     assert.match(buildHeader, /background-color:\s*#2b2c2b99;/);
