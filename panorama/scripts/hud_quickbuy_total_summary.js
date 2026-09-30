@@ -586,6 +586,8 @@ function SetKnownModIconClasses(targetModIcon,sourceModIcon){
 		'HideModTierLabel',
 		'isEnhanced',
 		'hasUpgradeLevel',
+		'isCorrupted',
+		'isActiveItem',
 		'Locked',
 		'unowned',
 		'owned',

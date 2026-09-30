@@ -15,6 +15,7 @@
 	<!-- QOLLOCK CUSTOM: Quickbuy hit testing on the root and contents -->
 	<!-- ============================================================= -->
 	<Panel class="HudQuickbuy" acceptsfocus="false" hittest="false" hittestchildren="true">
+		<GlobalClassListener classes="gStreetBrawl gQuickbuyShopShowQueue" />
 		<Panel class="EmptyContents HudQuickbuyElement" hittest="false" hittestchildren="true">
 			<!-- ========================================================= -->
 			<!-- END QOLLOCK CUSTOM                                      -->
@@ -128,29 +129,39 @@
 		<!-- ============================================================= -->
 		<!-- END QOLLOCK CUSTOM                                        -->
 		<!-- ============================================================= -->
-		<!-- ============================================================= -->
-		<!-- QOLLOCK CUSTOM: Shop Total Summary -->
-		<!-- ============================================================= -->
-		<Panel id="QuickbuyShopTotalSummary" hittest="false">
-			<Panel class="QuickbuyShopTotalSummaryIconFrame" hittest="false">
-				<Image class="goldIcon QuickbuyShopTotalSummaryIcon" hittest="false" />
-			</Panel>
-			<Panel class="Labels" hittest="false">
-				<Panel class="BindingLabel" hittest="false">
-					<Label class="ShopSummaryLabel" text="Total Cost" hittest="false" />
+		<Panel class="QuickbuyShopSummaryContainer">
+			<!-- ============================================================= -->
+			<!-- QOLLOCK CUSTOM: Shop Total Summary -->
+			<!-- ============================================================= -->
+			<Panel id="QuickbuyShopTotalSummary" hittest="false">
+				<Panel class="QuickbuyShopTotalSummaryIconFrame" hittest="false">
+					<Image class="goldIcon QuickbuyShopTotalSummaryIcon" hittest="false" />
 				</Panel>
-				<Panel class="QuickbuyShopTotalCostRow" hittest="false">
-					<Image class="goldIcon QuickbuyShopTotalCostIcon" hittest="false" />
-					<Label id="QuickbuyShopTotalCostLabel" class="QuickbuyShopTotalCostLabel" text="0" hittest="false" />
+				<Panel class="Labels" hittest="false">
+					<Panel class="BindingLabel" hittest="false">
+						<Label class="ShopSummaryLabel" text="Total Cost" hittest="false" />
+					</Panel>
+					<Panel class="QuickbuyShopTotalCostRow" hittest="false">
+						<Image class="goldIcon QuickbuyShopTotalCostIcon" hittest="false" />
+						<Label id="QuickbuyShopTotalCostLabel" class="QuickbuyShopTotalCostLabel" text="0" hittest="false" />
+					</Panel>
 				</Panel>
 			</Panel>
-		</Panel>
-		<!-- ============================================================= -->
-		<Panel id="QuickbuyShopSummary" onmouseactivate="CitadelQuickbuyToggleShopQueue()">
-			<CitadelModIcon id="QuickbuyShopSummaryModIcon" hittest="false" />
-			<Panel class="Labels">
-				<Panel class="BindingLabel">
-					<Label class="ShopSummaryLabel" text="#Citadel_Hud_Quickbuy" />
+			<!-- ============================================================= -->
+			<Panel id="QuickbuyShopSummary" class="QuickbuyShopSummary" onmouseactivate="CitadelQuickbuyToggleShopQueue()">
+				<CitadelModIcon id="QuickbuyShopSummaryModIcon" class="QuickbuyShopSummaryModIcon" hittest="false" />
+				<Panel class="Labels">
+					<Panel class="BindingLabel">
+						<Panel class="quickbuy_icon" />
+						<Label class="ShopSummaryLabel" text="#Citadel_Hud_Quickbuy" />
+					</Panel>
+					<Panel class="quickbuy_details">
+						<Label class="ItemsReadyLabel" text="#Citadel_Hud_Quickbuy_ShopSummaryItemsInQueue:f" />
+						<Panel class="ItemsForSell">
+							<Panel class="sell_icon" />
+							<Label class="ItemsSellLabel" text="{d:sell_queue_size}" />
+						</Panel>
+					</Panel>
 				</Panel>
 			</Panel>
 		</Panel>

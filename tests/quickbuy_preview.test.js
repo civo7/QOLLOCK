@@ -32,9 +32,13 @@ test("quickbuy preview follows source changes, clearing, re-enable and image rep
     image.SetImage = value => paths.push(value);
     sourceImage.SetAttributeString("src", "new_item");
     sourceIcon.AddClass("isArmor");
+    sourceIcon.AddClass("isCorrupted");
+    sourceIcon.AddClass("isActiveItem");
     env.sandbox.dispatch("CitadelQuickbuyItemsChanged");
     assert.deepEqual(paths, ["new_item"]);
     assert.equal(targetIcon.BHasClass("isArmor"), true);
+    assert.equal(targetIcon.BHasClass("isCorrupted"), true);
+    assert.equal(targetIcon.BHasClass("isActiveItem"), true);
     paths.length = 0;
     // A native refresh may overwrite the same instance: keep reasserting the
     // desired final path, without an intervening clear or an assumed sole writer.
