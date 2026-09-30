@@ -385,7 +385,7 @@
                 versionText.AddClass("FooterVersionLabelText");
                 versionText.text = (typeof MOD_DISPLAY_VERSION !== "undefined")
                     ? MOD_DISPLAY_VERSION
-                    : (Q.VERSION || "4.0.2");
+                    : (Q.VERSION || "4.0.3");
             }
 
             versionBtn.SetPanelEvent("onactivate", () => {
@@ -1431,7 +1431,7 @@
                     footerVersionText.AddClass("FooterVersionLabelText");
                     footerVersionText.text = (typeof MOD_DISPLAY_VERSION !== "undefined")
                         ? MOD_DISPLAY_VERSION
-                        : (Q.VERSION || "4.0.2");
+                        : (Q.VERSION || "4.0.3");
                 }
                 footerVersionLabel.SetPanelEvent("onactivate", () => {
                     setActiveTabAndRefresh("Dev");
