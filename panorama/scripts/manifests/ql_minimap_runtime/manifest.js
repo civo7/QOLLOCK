@@ -712,7 +712,6 @@
                     var minimapScaleText = Math.round(minimapScale * 100) + "%";
                     var fixedIconSize = Number(cfg.MINIMAP_FIXED_ICON_SIZE) === 1;
                     var mapUiScale = fixedIconSize ? "100%" : minimapScaleText;
-                    var mapDimensions = fixedIconSize ? minimapSizeText : "400px";
 
                     var op = 1.0;
                     if (zoomAlt) {
@@ -733,8 +732,11 @@
                             if (p.style.uiScale !== mapUiScale) {
                                 p.style.uiScale = mapUiScale;
                             }
-                            if (p.style.width !== mapDimensions) p.style.width = mapDimensions;
-                            if (p.style.height !== mapDimensions) p.style.height = mapDimensions;
+                            // Build 6711 expanded the native host to 440x520 so
+                            // location text and edge UI have space outside the
+                            // square map viewport. Preserve that native aspect.
+                            QOL.utils.ClearStyleSafe(p, "width");
+                            QOL.utils.ClearStyleSafe(p, "height");
                             if (p.style.preTransformScale2d !== "1.00, 1.00") {
                                 p.style.preTransformScale2d = "1.00, 1.00";
                             }

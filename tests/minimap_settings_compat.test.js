@@ -45,8 +45,8 @@ test("fixed icon size changes Base/Alt/Tab geometry and survives export/import",
         clock.advance(1200);
     };
     const geometry = (size, scale) => {
-        assert.equal(map.style.width, size);
-        assert.equal(map.style.height, size);
+        assert.equal(map.style.width, undefined);
+        assert.equal(map.style.height, undefined);
         assert.equal(map.style.uiScale, scale);
         for (const panel of inner) {
             const expected = panel.id !== "hud_minimap" && g.MOD_CONFIG.MINIMAP_FIXED_ICON_SIZE === 1 ? size : undefined;

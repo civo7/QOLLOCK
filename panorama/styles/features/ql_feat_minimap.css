@@ -68,9 +68,6 @@
 
 #minimap_persp
 {
-    width: 400px;
-    height: 400px;
-    transform: none;
     transform-origin: 100% 100%;
     transition-property: opacity, margin, margin-left, margin-right, margin-top, margin-bottom, pre-transform-scale2d;
     transition-duration: 0.12s;

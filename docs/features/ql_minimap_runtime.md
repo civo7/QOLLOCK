@@ -19,5 +19,9 @@ must leave `hud_minimap` width and height under native control. Build 6711 uses
 a larger internal render surface for zoom modes; replacing it with viewport
 dimensions distorts native text and map elements. Turning Fixed Icon Size off
 must release the remaining inner width and height overrides.
+
+The same build changed `minimap_persp` to a non-square native host so location
+text and edge UI fit around the square map viewport. Scaling may use `ui-scale`,
+but must not replace that host's native width or height.
 Check markers, click targets, range circles, Alt/Tab switching and reset in the
 repacked client.

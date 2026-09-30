@@ -280,8 +280,8 @@ test("ql_minimap_runtime scales minimap via uiScale and preserves base 400px geo
     hud.clock.advance(500);
 
     assert.strictEqual(persp.style.uiScale, "150%", "minimap_persp must receive uiScale: 150%");
-    assert.strictEqual(persp.style.width, "400px", "minimap_persp width must stay 400px base");
-    assert.strictEqual(persp.style.height, "400px", "minimap_persp height must stay 400px base");
+    assert.ok(!persp.style.width, "minimap_persp width must remain under native control");
+    assert.ok(!persp.style.height, "minimap_persp height must remain under native control");
     assert.strictEqual(persp.style.opacity, "0.5", "minimap_persp must receive configured opacity");
     assert.strictEqual(persp.style.marginRight, "-20px", "minimap_persp marginRight must be 30 - 50 = -20px");
     assert.strictEqual(persp.style.marginBottom, "50px", "minimap_persp marginBottom must be 30 + 20 = 50px");
