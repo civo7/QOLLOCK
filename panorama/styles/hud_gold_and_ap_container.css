@@ -91,7 +91,7 @@
 	visibility: collapse;
 }
 
-.better_unsecured_active #hudDealthGoldLabel,.better_unsecured_active #hudDeathGoldLabel
+.better_unsecured_active #hudDeathGoldLabel
 {
 	visibility: collapse;
 }
@@ -188,21 +188,21 @@
 		color: blueAPTextColor;
 		text-shadow: 0px 0px 0px 4.4 offBlack;
 	}
-	
+
 	25%
 	{
 		transform: scaleX(1.05) scaleY(1.05);
 		color: blueAPTextColor;
 		text-shadow: 0px 0px 0px 5.0 offBlack;
 	}
-	
+
 	100%
 	{
 		transform: scaleX(1) scaleY(1);
 		color: blueAPTextColor;
 		text-shadow: 0px 0px 0px 4.0 offBlack;
 	}
-	
+
 }
 
 @keyframes 'animGoldIncreaseEvent_med'
@@ -213,21 +213,21 @@
 		color: offWhite;
 		text-shadow: 0px 0px 0px 5.0 blueAPTextColor;
 	}
-	
+
 	25%
 	{
 		transform: scaleX(1.1) scaleY(1.1);
 		color: offWhite;
 		text-shadow: 0px 0px 0px 6.0 blueAPTextColor;
 	}
-	
+
 	100%
 	{
 		transform: scaleX(1) scaleY(1);
 		color: blueAPTextColor;
 		text-shadow: 0px 0px 0px 4.0 offBlack;
 	}
-	
+
 }
 
 @keyframes 'animGoldIncreaseEvent_max'
@@ -238,21 +238,21 @@
 		color: offWhite;
 		text-shadow: 0px 0px 0px 6.0 blueAPTextColor;
 	}
-	
+
 	25%
 	{
 		transform: scaleX(1.2) scaleY(1.2);
 		color: colorGold;
 		text-shadow: 0px 0px 0px 7.0 blueAPTextColor;
 	}
-	
+
 	100%
 	{
 		transform: scaleX(1) scaleY(1);
 		color: blueAPTextColor;
 		text-shadow: 0px 0px 0px 4.0 offBlack;
 	}
-	
+
 }
 
 .klutz_healthbar_active .goldDecreaseEvent_Min .CurrencyLabel
@@ -281,21 +281,21 @@
 		color: offBlack;
 		text-shadow: 0px 0px 0px 4.0 colorEnemy;
 	}
-	
+
 	50%
 	{
 		transform: scaleX(0.9) scaleY(0.9);
 		color: offBlack;
 		text-shadow: 0px 0px 0px 10.0 colorEnemy;
 	}
-	
+
 	100%
 	{
 		transform: scaleX(1) scaleY(1);
 		color: blueAPTextColor;
 		text-shadow: 0px 0px 0px 4.0 offBlack;
 	}
-	
+
 }
 
 @keyframes 'animGoldDecreaseEvent_med'
@@ -306,21 +306,21 @@
 		color: offBlack;
 		text-shadow: 0px 0px 0px 4.0 colorEnemy;
 	}
-	
+
 	50%
 	{
 		transform: scaleX(0.9) scaleY(0.9);
 		color: offBlack;
 		text-shadow: 0px 0px 0px 10.0 colorEnemy;
 	}
-	
+
 	100%
 	{
 		transform: scaleX(1) scaleY(1);
 		color: blueAPTextColor;
 		text-shadow: 0px 0px 0px 4.0 offBlack;
 	}
-	
+
 }
 
 @keyframes 'animGoldDecreaseEvent_max'
@@ -331,21 +331,21 @@
 		color: offBlack;
 		text-shadow: 0px 0px 0px 7.0 colorEnemy;
 	}
-	
+
 	50%
 	{
 		transform: scaleX(0.9) scaleY(0.9);
 		color: offBlack;
 		text-shadow: 0px 0px 0px 10.0 colorEnemy;
 	}
-	
+
 	100%
 	{
 		transform: scaleX(1) scaleY(1);
 		color: blueAPTextColor;
 		text-shadow: 0px 0px 0px 4.0 offBlack;
 	}
-	
+
 }
 
 .klutz_healthbar_active #HudCurrentAPContainer .CurrencyLabel
@@ -483,7 +483,7 @@
 	margin-top: 7px;
 }
 
-.klutz_healthbar_active #hudDealthGoldLabel
+.klutz_healthbar_active #hudDeathGoldLabel
 {
 	margin-right: 3px;
 }
@@ -510,17 +510,17 @@
 	{
 		opacity: 0.2;
 	}
-	
+
 	50%
 	{
 		opacity: 1;
 	}
-	
+
 	100%
 	{
 		opacity: 0.2;
 	}
-	
+
 }
 
 .klutz_healthbar_active .death_penalty_gold_danger_level_2 .hudDeathGoldContainer
@@ -589,17 +589,17 @@
 	{
 		opacity: 1;
 	}
-	
+
 	50%
 	{
 		opacity: 1;
 	}
-	
+
 	100%
 	{
 		opacity: 0;
 	}
-	
+
 }
 
 .klutz_healthbar_active #death_penalty_gold_flash

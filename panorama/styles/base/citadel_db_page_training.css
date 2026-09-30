@@ -1,4 +1,4 @@
-/* Prettified by Source 2 Viewer 19.2.0.0 - https://valveresourceformat.github.io */
+/* Prettified by Source 2 Viewer - https://valveresourceformat.github.io */
 
 CitadelTrainingPage
 {
@@ -127,7 +127,7 @@ Label.unavailableText
 	background-position: center;
 	background-repeat: no-repeat;
 	background-color: none;
-	background-image: url("s2r://panorama/images/main_menu/menu_shop_lg_png.vtex");
+	background-color: gray;
 }
 
 #LearnToPlayer .buttonImage
@@ -136,7 +136,34 @@ Label.unavailableText
 	background-position: center;
 	background-repeat: no-repeat;
 	background-color: none;
-	background-image: url("s2r://panorama/images/main_menu/menu_learn_png.vtex");
+	background-color: gray;
+}
+
+#VoiceLines .buttonImage
+{
+	background-color: gradient( radial, 50% 50%, 0% 0%, 70% 70%, from( #24352c ), to( #0b0f0c ) );
+}
+
+.VoiceLinesGlyph
+{
+	width: 132px;
+	height: 132px;
+	horizontal-align: center;
+	vertical-align: center;
+	background-image: url("s2r://panorama/images/icons/icon_sound_on.vsvg");
+	background-size: contain;
+	background-repeat: no-repeat;
+	background-position: center;
+	wash-color: brandGreen;
+	opacity: 0.85;
+	transition-property: pre-transform-scale2d, opacity;
+	transition-duration: 0.2s;
+}
+
+#VoiceLines:hover .VoiceLinesGlyph
+{
+	pre-transform-scale2d: 1.1;
+	opacity: 1;
 }
 
 #GettingStarted .buttonImage
@@ -362,37 +389,37 @@ Label.unavailableText
 		pre-transform-scale2d: 1;
 		transform: rotateZ(0deg);
 	}
-	
+
 	10%
 	{
 		pre-transform-scale2d: 1.5;
 		transform: rotateZ(2deg);
 	}
-	
+
 	15%
 	{
 		pre-transform-scale2d: 1;
 		transform: rotateZ(0deg);
 	}
-	
+
 	20%
 	{
 		pre-transform-scale2d: 1.5;
 		transform: rotateZ(-2deg);
 	}
-	
+
 	35%
 	{
 		pre-transform-scale2d: 1;
 		transform: rotateZ(0deg);
 	}
-	
+
 	100%
 	{
 		pre-transform-scale2d: 1;
 		transform: rotateZ(0deg);
 	}
-	
+
 }
 
 @keyframes 'newplayer_glow'
@@ -401,17 +428,17 @@ Label.unavailableText
 	{
 		brightness: 1;
 	}
-	
+
 	50%
 	{
 		brightness: 2;
 	}
-	
+
 	100%
 	{
 		brightness: 1;
 	}
-	
+
 }
 
 .in_party #HeroTesting

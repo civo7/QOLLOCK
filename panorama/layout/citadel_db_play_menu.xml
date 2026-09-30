@@ -56,6 +56,9 @@
 							</Panel>
 						</Button>
 						<Button id="Option_ExploreMap" class="playoption option1 smallButton" onactivate="CitadelStartExploreMap() AsyncEvent( 0.2, CitadelNavigateBackToHome() )">
+							<Panel id="UnavailableOverlay">
+								<Label text="#menu_play_unavailable_in_party" />
+							</Panel>
 							<Panel class="TextArea">
 								<Panel id="DescArea">
 									<Label text="#menu_play_explore_map_desc" class="playModeDesc" />
@@ -80,6 +83,9 @@
 				<Panel id="SubModesContainerBottom">
 					<Panel id="SubModes">
 						<Button id="Option_Lobby" class="playoption option3 smallButton" onactivate="CitadelStartCustomMatch()">
+							<Panel id="UnavailableOverlay">
+								<Label text="#menu_play_unavailable_in_party" />
+							</Panel>
 							<Panel class="TextArea">
 								<Panel id="DescArea">
 									<Label text="#menu_play_custom_game_desc" class="playModeDesc" />

@@ -132,12 +132,10 @@
             function _findLabel(root, container) {
                 var label = null;
                 if (container && container.FindChildTraverse) {
-                    label = container.FindChildTraverse("hudDealthGoldLabel");
-                    if (!label) label = container.FindChildTraverse("hudDeathGoldLabel");
+                    label = container.FindChildTraverse("hudDeathGoldLabel");
                 }
                 if (!label && root && root.FindChildTraverse) {
-                    label = root.FindChildTraverse("hudDealthGoldLabel");
-                    if (!label) label = root.FindChildTraverse("hudDeathGoldLabel");
+                    label = root.FindChildTraverse("hudDeathGoldLabel");
                 }
                 if (!label && container && container.FindChildrenWithClassTraverse) {
                     var labels = container.FindChildrenWithClassTraverse("death_penalty_gold") || [];

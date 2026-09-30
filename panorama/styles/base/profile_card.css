@@ -1,4 +1,4 @@
-/* Prettified by Source 2 Viewer 19.2.0.0 - https://valveresourceformat.github.io */
+/* Prettified by Source 2 Viewer - https://valveresourceformat.github.io */
 
 @define backgroundGradient: gradient( linear, 0% 0%, 0% 100%, from( #ffffff02 ), to( #ffffff04 ) );
 @define backgroundGradientHover: gradient( linear, 0% 0%, 0% 100%, from( #ffffff06 ), to( #ffffff10) );
@@ -127,7 +127,6 @@ CitadelProfileCard #AvatarImage.HasCompendium Image
 {
 	visibility: collapse;
 	text-align: left;
-	margin-left: -4px;
 	margin-top: -2px;
 }
 
@@ -198,6 +197,8 @@ CitadelTooltipProfileCard .nicknameContainer
 #UserRichPresence Label
 {
 	font-size: 16px;
+	white-space: nowrap;
+	text-overflow: shrink;
 	color: offWhite&44;
 }
 

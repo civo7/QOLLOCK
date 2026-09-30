@@ -1,8 +1,8 @@
 <!-- xml reconstructed by Source 2 Viewer 17.0.0.0 - https://valveresourceformat.github.io -->
 <root>
 	<styles>
-		<include src="s2r://panorama/styles/hud_quickbuy.vcss_c" />
-		<include src="s2r://panorama/styles/hud_quickbuy_entry.vcss_c" />
+		<include src="s2r://panorama/styles/hud_quickbuy.vcss" />
+		<include src="s2r://panorama/styles/hud_quickbuy_entry.vcss" />
 	</styles>
 	<!-- ============================================================= -->
 	<!-- QOLLOCK CUSTOM: Total Summary Script -->
@@ -33,6 +33,7 @@
 			<!-- ========================================================= -->
 			<!-- END QOLLOCK CUSTOM                                      -->
 			<!-- ========================================================= -->
+			<Panel id="HudMiniContents">
 			<Panel class="PurchaseDisabledContainer">
 				<Panel class="purchasingDisabledX disabledX1" />
 				<Panel class="purchasingDisabledX disabledX2" />
@@ -44,6 +45,7 @@
 			</Panel>
 			<Panel class="QueueSize">
 				<Label class="ItemReadyLabel" text="#Citadel_Hud_Quickbuy_ItemsReady" />
+			</Panel>
 			</Panel>
 		</Panel>
 		<!-- ============================================================= -->
@@ -118,12 +120,7 @@
 					<Panel id="ToggleAutoBuyContainer">
 						<ToggleButton id="AutoBuyToggleButton" text="#Citadel_Hud_BuildOrder_AutobuyToggle" html="true" onactivate="CitadelQuickbuyToggleAutoBuy()" />
 					</Panel>
-					<Button id="ClearQueue" class="SecondaryButton outline red" onactivate="CitadelQuickbuyClearQueue()">
-						<Label text="#Citadel_Hud_BuildOrder_ClearQueue" />
-					</Button>
-					<Button id="ClearQueueButton" class="BuildHeaderButton SecondaryButton light hasIcon fill" onmouseactivate="CitadelQuickbuyClearQueue();">
-						<Label class="ClearQueue" text="#Citadel_Hud_BuildOrder_ClearQueue" />
-					</Button>
+					<CitadelButton id="ClearQueueButton" class="Fill Small HasText" onmouseactivate="CitadelQuickbuyClearQueue();" text="#Citadel_Hud_BuildOrder_ClearQueue" />
 				</Panel>
 				<Label class="emptyQueueLabel" html="true" text="#Citadel_Hud_Quickbuy_Empty" hittest="false" />
 			</Panel>
@@ -155,7 +152,6 @@
 				<Panel class="BindingLabel">
 					<Label class="ShopSummaryLabel" text="#Citadel_Hud_Quickbuy" />
 				</Panel>
-				<Label class="ItemsReadyLabel" text="#Citadel_Hud_Quickbuy_ShopSummaryItemsInQueue:f" />
 			</Panel>
 		</Panel>
 	</Panel>

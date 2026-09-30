@@ -1,4 +1,4 @@
-/* Prettified by Source 2 Viewer 19.2.0.0 - https://valveresourceformat.github.io */
+/* Prettified by Source 2 Viewer - https://valveresourceformat.github.io */
 
 @define unlearnedWashColor: rgba(255, 255, 255, 0.2);
 @define abilityOffsetX: 440px;
@@ -44,14 +44,14 @@
 	visibility: collapse;
 }
 
-#hud_signature:hover .hud_abilities,.wants_scoreboard #hud_signature .hud_abilities,.gDetailView #hud_signature .hud_abilities
+#hud_signature:hover .hud_abilities,.gScoreboardOpen:not(.gShopOpen) #hud_signature .hud_abilities,.gDetailView #hud_signature .hud_abilities
 {
 	background-color: colorCommonDarkGray;
 	padding: 5px 10px 0px 10px;
-	border-top: 6px solid spiritBrightColor;
+	border-top: 6px solid deadlockGreen;
 }
 
-.gShopOpen .abilitiesHeaderColor,.wants_scoreboard .abilitiesHeaderColor,.gDetailView .abilitiesHeaderColor
+.gShopOpen .abilitiesHeaderColor,.gScoreboardOpen:not(.gShopOpen) .abilitiesHeaderColor,.gDetailView .abilitiesHeaderColor
 {
 	visibility: visible;
 }
@@ -190,20 +190,20 @@
 		wash-color: spiritBrightColor&00;
 		transform: rotateZ(0deg);
 	}
-	
+
 	50%
 	{
 		pre-transform-scale2d: 1.3;
 		wash-color: spiritBrightColor;
 	}
-	
+
 	100%
 	{
 		pre-transform-scale2d: 1;
 		wash-color: spiritBrightColor&00;
 		transform: rotateZ(0deg);
 	}
-	
+
 }
 
 .Tier2 .ability_bg
@@ -222,20 +222,20 @@
 		wash-color: spiritBrightColor&00;
 		transform: rotateZ(0deg);
 	}
-	
+
 	50%
 	{
 		pre-transform-scale2d: 1.3;
 		wash-color: spiritBrightColor;
 	}
-	
+
 	100%
 	{
 		pre-transform-scale2d: 1;
 		wash-color: spiritBrightColor&00;
 		transform: rotateZ(0deg);
 	}
-	
+
 }
 
 .Tier3 .ability_bg
@@ -254,20 +254,20 @@
 		wash-color: spiritBrightColor&00;
 		transform: rotateZ(0deg);
 	}
-	
+
 	50%
 	{
 		pre-transform-scale2d: 1.3;
 		wash-color: spiritBrightColor;
 	}
-	
+
 	100%
 	{
 		pre-transform-scale2d: 1;
 		wash-color: spiritBrightColor&00;
 		transform: rotateZ(0deg);
 	}
-	
+
 }
 
 .signature.item_passive.Tier0 .ability_bg
@@ -296,20 +296,20 @@
 		wash-color: spiritBrightColor&00;
 		transform: rotateZ(0deg);
 	}
-	
+
 	50%
 	{
 		pre-transform-scale2d: 1.3;
 		wash-color: spiritBrightColor;
 	}
-	
+
 	100%
 	{
 		pre-transform-scale2d: 1;
 		wash-color: spiritBrightColor&00;
 		transform: rotateZ(0deg);
 	}
-	
+
 }
 
 .signature.item_passive.Tier2 .ability_bg
@@ -328,20 +328,20 @@
 		wash-color: spiritBrightColor&00;
 		transform: rotateZ(0deg);
 	}
-	
+
 	50%
 	{
 		pre-transform-scale2d: 1.3;
 		wash-color: spiritBrightColor;
 	}
-	
+
 	100%
 	{
 		pre-transform-scale2d: 1;
 		wash-color: spiritBrightColor&00;
 		transform: rotateZ(0deg);
 	}
-	
+
 }
 
 .signature.item_passive.Tier3 .ability_bg
@@ -360,20 +360,20 @@
 		wash-color: spiritBrightColor&00;
 		transform: rotateZ(0deg);
 	}
-	
+
 	50%
 	{
 		pre-transform-scale2d: 1.3;
 		wash-color: spiritBrightColor;
 	}
-	
+
 	100%
 	{
 		pre-transform-scale2d: 1;
 		wash-color: spiritBrightColor&00;
 		transform: rotateZ(0deg);
 	}
-	
+
 }
 
 .cooling_down .ability_bg,.ability_not_ready .ability_bg
@@ -435,12 +435,12 @@
 	{
 		transform: rotateZ(0deg);
 	}
-	
+
 	100%
 	{
 		transform: rotateZ(180deg);
 	}
-	
+
 }
 
 .ability_icon
@@ -486,19 +486,19 @@
 		pre-transform-scale2d: 1;
 		transform: translateY(0px);
 	}
-	
+
 	50%
 	{
 		pre-transform-scale2d: 1.1;
 		transform: translateY(-10px);
 	}
-	
+
 	100%
 	{
 		pre-transform-scale2d: 1;
 		transform: translateY(0px);
 	}
-	
+
 }
 
 .learning_ability .image_container
@@ -730,21 +730,21 @@ Label.ability_key
 		pre-transform-scale2d: 1;
 		wash-color: offBlack;
 	}
-	
+
 	50%
 	{
 		opacity: 1;
 		pre-transform-scale2d: 1.1;
 		wash-color: offBlack;
 	}
-	
+
 	100%
 	{
 		opacity: 0.6;
 		pre-transform-scale2d: 1;
 		wash-color: offBlack;
 	}
-	
+
 }
 
 @keyframes 'FlashAbilityBG'
@@ -755,21 +755,21 @@ Label.ability_key
 		wash-color: #9d87ff;
 		pre-transform-scale2d: 1;
 	}
-	
+
 	50%
 	{
 		opacity: 1.0;
 		wash-color: #9d87ff;
 		pre-transform-scale2d: 1.1;
 	}
-	
+
 	100%
 	{
 		opacity: 0.3;
 		wash-color: #9d87ff;
 		pre-transform-scale2d: 1;
 	}
-	
+
 }
 
 .ability_upgradable .image_container
@@ -872,19 +872,19 @@ Label.ability_key
 		text-shadow: 0px 0px 0px 5.0 rgba(200, 200, 200, 0.95);
 		transform: translateY(0px);
 	}
-	
+
 	50%
 	{
 		text-shadow: 0px 0px 0px 5.0 yellow;
 		transform: translateY(-10px);
 	}
-	
+
 	100%
 	{
 		text-shadow: 0px 0px 0px 5.0 rgba(200, 200, 200, 0.95);
 		transform: translateY(0px);
 	}
-	
+
 }
 
 .bonusCounterIncreased .bonusCounter
@@ -917,17 +917,17 @@ Label.ability_key
 	{
 		background-color: rgba(200, 200, 200, 0.95);
 	}
-	
+
 	50%
 	{
 		background-color: yellow;
 	}
-	
+
 	100%
 	{
 		background-color: rgba(200, 200, 200, 0.95);
 	}
-	
+
 }
 
 .unifiedChargeCounterIncreased .unifiedChargeCounter

@@ -76,7 +76,7 @@
 
                 const goldContainer = root.FindChildTraverse ? root.FindChildTraverse("gold_and_ap_container") : null;
                 if (goldContainer && goldContainer.FindChildTraverse) {
-                    const fromGoldById = goldContainer.FindChildTraverse("hudDealthGoldLabel");
+                    const fromGoldById = goldContainer.FindChildTraverse("hudDeathGoldLabel");
                     if (_isPanelValid(fromGoldById)) return fromGoldById;
 
                     const fromGoldByClass = goldContainer.FindChildrenWithClassTraverse ? (goldContainer.FindChildrenWithClassTraverse("death_penalty_gold") || []) : [];
@@ -85,7 +85,7 @@
                     }
                 }
 
-                const byId = root.FindChildTraverse ? root.FindChildTraverse("hudDealthGoldLabel") : null;
+                const byId = root.FindChildTraverse ? root.FindChildTraverse("hudDeathGoldLabel") : null;
                 if (_isPanelValid(byId)) return byId;
 
                 const candidates = root.FindChildrenWithClassTraverse ? (root.FindChildrenWithClassTraverse("death_penalty_gold") || []) : [];

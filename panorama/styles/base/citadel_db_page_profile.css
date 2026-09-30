@@ -1,4 +1,4 @@
-/* Prettified by Source 2 Viewer 19.2.0.0 - https://valveresourceformat.github.io */
+/* Prettified by Source 2 Viewer - https://valveresourceformat.github.io */
 
 CitadelProfilePage
 {
@@ -7,6 +7,7 @@ CitadelProfilePage
 	background-size: 100% 100%;
 	flow-children: right;
 	background-color: #00000090;
+	world-blur: ingameHudBlur;
 }
 
 .AsyncContents
@@ -33,13 +34,13 @@ CitadelProfilePage
 		opacity: 0;
 		transform: translateX(300px);
 	}
-	
+
 	100%
 	{
 		opacity: 1;
 		transform: translateX(0px);
 	}
-	
+
 }
 
 .LeftPanel

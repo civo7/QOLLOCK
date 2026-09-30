@@ -1,4 +1,4 @@
-/* Prettified by Source 2 Viewer 19.2.0.0 - https://valveresourceformat.github.io */
+/* Prettified by Source 2 Viewer - https://valveresourceformat.github.io */
 
 CitadelModIcon
 {
@@ -51,6 +51,28 @@ CitadelModIcon.newSlotUnlocked
 	visibility: visible;
 }
 
+#Corrupted
+{
+	width: 100%;
+	height: 100%;
+	vertical-align: bottom;
+	horizontal-align: left;
+	visibility: collapse;
+	opacity: 1;
+	background-image: url("s2r://panorama/images/shop/corrupted_items/item_frame_corrupted_psd.vtex");
+	background-size: 100% 100%;
+}
+
+.isActiveItem #Corrupted
+{
+	background-image: url("s2r://panorama/images/shop/corrupted_items/item_frame_corrupted_active_psd.vtex");
+}
+
+.isCorrupted #Corrupted
+{
+	visibility: visible;
+}
+
 @keyframes 'FlexSlotUnlocked'
 {
 	0%
@@ -58,20 +80,20 @@ CitadelModIcon.newSlotUnlocked
 		pre-transform-scale2d: 1;
 		border: 3px solid offWhite&00;
 	}
-	
+
 	50%
 	{
 		pre-transform-scale2d: 2;
 		border: 3px solid offWhite;
 		background-color: offWhite&20;
 	}
-	
+
 	100%
 	{
 		pre-transform-scale2d: 1;
 		border: 3px solid offWhite&00;
 	}
-	
+
 }
 
 CitadelModIcon.IsNewItem
@@ -120,18 +142,18 @@ CitadelHudTopBarPlayer:selected CitadelModIcon
 		brightness: 1;
 		wash-color: none;
 	}
-	
+
 	50%
 	{
 		brightness: 3;
 	}
-	
+
 	100%
 	{
 		brightness: 1;
 		wash-color: none;
 	}
-	
+
 }
 
 .mod_icon
@@ -148,6 +170,11 @@ CitadelHudTopBarPlayer:selected CitadelModIcon
 	height: 100%;
 	width: 100%;
 	visibility: collapse;
+}
+
+.isActiveItem #ModIconImage
+{
+	border-radius: 50px;
 }
 
 .hasAbility #ModIconImage
@@ -226,23 +253,6 @@ CitadelHudTopBarPlayer:selected CitadelModIcon
 #PlayersContainer CitadelHudTopBarPlayer .unowned.mod_icon_single_container
 {
 	background-color: #00000099;
-}
-
-.isWeapon .mod_icon_single_container
-{
-	background-color: #DD9541;
-	background-color: courageLightColor;
-}
-
-.isArmor .mod_icon_single_container
-{
-	background-color: fortitudeBrightColor;
-	background-color: fortitudeLightColor;
-}
-
-.isTech .mod_icon_single_container
-{
-	background-color: spiritLightColor;
 }
 
 .isTier5 .mod_icon_single_container

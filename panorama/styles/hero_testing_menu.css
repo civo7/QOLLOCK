@@ -1,37 +1,14 @@
-/* Prettified by Source 2 Viewer 17.0.0.0 - https://valveresourceformat.github.io */
-
-@keyframes 'HTPPTabActivePulse'
-{
-	0%
-	{
-		box-shadow: fill rgba(102, 204, 153, 0.18) 0px 0px 5px 0px;
-		brightness: 1.05;
-	}
-	
-	50%
-	{
-		box-shadow: fill rgba(102, 204, 153, 0.34) 0px 0px 10px 0px;
-		brightness: 1.12;
-	}
-	
-	100%
-	{
-		box-shadow: fill rgba(102, 204, 153, 0.18) 0px 0px 5px 0px;
-		brightness: 1.05;
-	}
-	
-}
+/* Prettified by Source 2 Viewer - https://valveresourceformat.github.io */
 
 .hero_testing_root
 {
 	width: 80%;
 	height: 100%;
 	horizontal-align: right;
-	z-index: 7;
 	flow-children: down;
 }
 
-.connectedToHeroTesting.isShowingRosterConfirmPage #HeroTestingShop
+.hero_testing_root.gShopOpen
 {
 	visibility: collapse;
 }
@@ -39,7 +16,17 @@
 .hero_testing_header
 {
 	width: 100%;
-	height: 100px;
+	flow-children: down;
+}
+
+.gScoreboardOpen.menu_expanded .hero_testing_header
+{
+	visibility: collapse;
+}
+
+.menu_pinned.menu_expanded .hero_testing_header
+{
+	visibility: collapse;
 }
 
 .hero_selection_offset
@@ -76,28 +63,222 @@
 	ui-scale: 70%;
 }
 
-.hud_hero_testing_root,.hero_testing_shop_root
+#collapse_menu_panel
 {
-	width: 675px;
-	flow-children: down;
-	x: 0px;
-	y: 150px;
-	horizontal-align: right;
-	z-index: 201;
+	margin-top: 15px;
+	width: fit-children;
+	flow-children: right;
 	visibility: collapse;
+	horizontal-align: center;
 }
 
-.connectedToHeroTesting .hud_hero_testing_root,.connectedToHeroTesting .hero_testing_shop_root,.connectedToBotMatch .hero_testing_shop_root
+.gScoreboardOpen #collapse_menu_panel
 {
 	visibility: visible;
 }
 
-.hud_hero_testing_root.gShopOpen,.hero_testing_root.gShopOpen
+.menu_pinned #collapse_menu_panel
+{
+	visibility: visible;
+}
+
+.no_tab_active #collapse_menu_panel
 {
 	visibility: collapse;
 }
 
-.connectedToHeroTesting .gShopOpen.hud_hero_testing_root,.connectedToHeroTesting.connectedToHideout .gShopOpen.hud_hero_testing_root
+#collapse_button
+{
+	horizontal-align: center;
+	vertical-align: center;
+	flow-children: right;
+	opacity: 0.7;
+}
+
+#collapse_button Label
+{
+	text-transform: uppercase;
+	font-weight: bold;
+}
+
+#pin_button
+{
+	vertical-align: center;
+	flow-children: right;
+	margin-right: 24px;
+	opacity: 0.7;
+}
+
+#pin_button:hover
+{
+	opacity: 1;
+}
+
+#pin_button Label
+{
+	text-transform: uppercase;
+	font-weight: bold;
+}
+
+.pin_label
+{
+	visibility: visible;
+}
+
+.unpin_label
+{
+	visibility: collapse;
+}
+
+.menu_pinned .pin_label
+{
+	visibility: collapse;
+}
+
+.menu_pinned .unpin_label
+{
+	visibility: visible;
+}
+
+.menu_pinned #pin_button
+{
+	opacity: 1;
+}
+
+.menu_pinned #pin_button Label
+{
+	color: goldColor;
+}
+
+#pin_icon
+{
+	vertical-align: middle;
+	margin-left: 10px;
+	transform: rotateZ(45deg);
+}
+
+.menu_pinned #pin_icon
+{
+	transform: rotateZ(0deg);
+	wash-color: goldColor;
+}
+
+#free_cursor_button
+{
+	vertical-align: center;
+	flow-children: right;
+	margin-right: 24px;
+	opacity: 0.7;
+}
+
+#free_cursor_button:hover
+{
+	opacity: 1;
+}
+
+#free_cursor_button Label
+{
+	text-transform: uppercase;
+	font-weight: bold;
+}
+
+.free_cursor_label
+{
+	visibility: visible;
+}
+
+.lock_cursor_label
+{
+	visibility: collapse;
+}
+
+.cursor_freed .free_cursor_label
+{
+	visibility: collapse;
+}
+
+.cursor_freed .lock_cursor_label
+{
+	visibility: visible;
+}
+
+.cursor_freed #free_cursor_button
+{
+	opacity: 1;
+}
+
+.cursor_freed #free_cursor_button Label
+{
+	color: goldColor;
+}
+
+#free_cursor_icon
+{
+	vertical-align: middle;
+	margin-left: 8px;
+}
+
+.cursor_freed #free_cursor_icon
+{
+	wash-color: goldColor;
+}
+
+.expand_label
+{
+	visibility: visible;
+}
+
+.collapse_label
+{
+	visibility: collapse;
+}
+
+.menu_expanded .expand_label
+{
+	visibility: collapse;
+}
+
+.menu_expanded .collapse_label
+{
+	visibility: visible;
+}
+
+#collapse_icon
+{
+	vertical-align: middle;
+	margin-left: 10px;
+}
+
+.menu_expanded #collapse_icon
+{
+	transform: rotateZ(180deg);
+}
+
+#LaneChallengePanel
+{
+	visibility: collapse;
+}
+
+.hud_hero_testing_root
+{
+	flow-children: down;
+	x: 0px;
+	y: 10px;
+	horizontal-align: right;
+	visibility: collapse;
+}
+
+.connectedToHeroTesting .gShopOpen.hud_hero_testing_root
+{
+	visibility: collapse;
+}
+
+.connectedToHeroTesting .hud_hero_testing_root
+{
+	visibility: visible;
+}
+
+.connectedToHeroTesting.connectedToHideout .hud_hero_testing_root
 {
 	visibility: collapse;
 }
@@ -107,447 +288,315 @@
 	visibility: collapse;
 }
 
-#hero_testing_stub,#hero_testing_container
+.nav_menu_item.small_text .InlineGlyph
+{
+	width: 25px;
+	height: 25px;
+	vertical-align: center;
+}
+
+.nav_menu_tab_contents
 {
 	flow-children: down;
-	font-family: sans;
-	box-shadow: fill rgba(0, 0, 0, 0.5) 0px 0px 16px 0px;
-	background-color: #10130d;
-	opacity: 0.98;
-	border-radius: 12px;
-	padding: 5px;
-	horizontal-align: right;
-	vertical-align: top;
-	width: 675px;
-	z-index: 98;
-	border: 1px solid #ffffff01;
+}
+
+.tab_selector
+{
+	height: fit-children;
+	width: fit-children;
+	flow-children: right;
+	horizontal-align: center;
 	visibility: collapse;
 }
 
-#hero_testing_container
+.gScoreboardOpen.menu_expanded .tab_selector
 {
-	height: fit-children;
-	max-height: none;
-	overflow: noclip;
+	visibility: visible;
+}
+
+.menu_pinned.menu_expanded .tab_selector
+{
+	visibility: visible;
+}
+
+.tab_wrapper
+{
+	max-width: 180px;
+}
+
+#hero_tools,#bot_control,#map_control,#misc_control
+{
+	visibility: collapse;
+}
+
+.gScoreboardOpen.menu_expanded #hero_tools,.gScoreboardOpen.menu_expanded.hero_tools_active #hero_tools,.gScoreboardOpen.menu_expanded.bot_control_active #bot_control,.gScoreboardOpen.menu_expanded.map_control_active #map_control,.gScoreboardOpen.menu_expanded.misc_control_active #misc_control,.menu_pinned.menu_expanded #hero_tools,.menu_pinned.menu_expanded.hero_tools_active #hero_tools,.menu_pinned.menu_expanded.bot_control_active #bot_control,.menu_pinned.menu_expanded.map_control_active #map_control,.menu_pinned.menu_expanded.misc_control_active #misc_control
+{
+	visibility: visible;
+}
+
+.gScoreboardOpen.menu_expanded.hero_tools_active #bot_control,.gScoreboardOpen.menu_expanded.hero_tools_active #map_control,.gScoreboardOpen.menu_expanded.bot_control_active #hero_tools,.gScoreboardOpen.menu_expanded.bot_control_active #map_control,.gScoreboardOpen.menu_expanded.map_control_active #hero_tools,.gScoreboardOpen.menu_expanded.map_control_active #bot_control,.gScoreboardOpen.menu_expanded.misc_control_active #hero_tools,.menu_pinned.menu_expanded.bot_control_active #hero_tools,.menu_pinned.menu_expanded.map_control_active #hero_tools,.menu_pinned.menu_expanded.misc_control_active #hero_tools
+{
+	visibility: collapse;
 }
 
 #hero_testing_stub
 {
-	visibility: visible;
-	opacity: 0.8;
+	flow-children: down;
+	box-shadow: fill rgba(0, 0, 0, 0.5) 0px 0px 16px 0px;
+	background-color: #2E2E2Ef8;
+	border-radius: 12px;
+	padding: 5px;
 	padding-bottom: 20px;
-	width: 350px;
+	horizontal-align: right;
+	vertical-align: top;
+	width: 400px;
+	z-index: 98;
 }
 
-#hero_testing_stub,#hero_testing_stub *
+.hero_testing_tab
 {
-	vertical-align: center;
+	margin-right: 15px;
 }
 
-#hero_testing_stub_header_row
+.hero_testing_tab .RadioBox
 {
-	flow-children: right;
-	width: 300px;
-	padding-left: 10px;
-	padding-right: 10px;
-	padding-top: 8px;
-	padding-bottom: 4px;
+	visibility: collapse;
 }
 
-#hero_testing_stub_header_row > *
+.hero_testing_tab Label
 {
-	vertical-align: center;
-}
-
-#hero_testing_stub_title
-{
-	font-style: normal;
-	font-size: 32px;
-	line-height: 40px;
-	text-align: left;
-	color: rgba(255, 255, 255, 1.0);
-	font-weight: bold;
-}
-
-#hero_testing_stub_header_spacer
-{
-	width: fill-parent-flow(1.0);
-}
-
-#hero_testing_stub_hint
-{
-	vertical-align: center;
-	font-size: 13px;
-	line-height: 16px;
+	horizontal-align: center;
 	text-align: center;
-	color: #9aa4a7;
-}
-
-.gScoreboardOpen #hero_testing_stub
-{
-	visibility: collapse;
-}
-
-.gScoreboardOpen #hero_testing_container
-{
-	visibility: visible;
-}
-
-.force_testing_tools_active .hud_hero_testing_root,.force_testing_tools_active .hero_testing_root
-{
-	visibility: visible;
-}
-
-.hide_testing_tools_active .hud_hero_testing_root,.hide_testing_tools_active .hero_testing_root
-{
-	visibility: collapse;
+	box-shadow: 0px 0px 0px #00000044;
+	padding-right: 5px;
+	padding-left: 5px;
 }
 
 .nav_menu_item
 {
-	flow-children: down;
-	width: fit-children;
-	min-width: 96px;
-	max-width: 650px;
+	flow-children: right;
+	width: 400px;
 	padding-left: 0px;
-	padding-right: 0px;
-	padding-top: 0px;
-	padding-bottom: 0px;
-	border-radius: 3px;
-	vertical-align: center;
 }
 
 .nav_menu_item.full_width
 {
-	width: 642px;
-	min-width: 642px;
-	max-width: 642px;
+	width: 380px;
+	padding-left: 10px;
+	padding-right: 10px;
 }
 
 .nav_menu_item.half_width
 {
-	width: 318px;
-	min-width: 318px;
-	max-width: 318px;
+	width: 200px;
+	padding-left: 10px;
+	padding-right: 10px;
 }
 
 .nav_menu_item.third_width
 {
-	width: 208px;
-	min-width: 208px;
-	max-width: 208px;
+	width: 130px;
+	padding-left: 10px;
+	padding-right: 10px;
 }
 
-.nav_menu_item.quarter_width
+.nav_menu_item:disabled
 {
-	width: 154px;
-	min-width: 154px;
-	max-width: 154px;
+	opacity: 0.35;
 }
 
-.nav_menu_item_container.htpp_row_2col
+.tile_row
 {
-	flow-children: right;
+	margin-top: 3px;
+	margin-bottom: 3px;
 }
 
-.nav_menu_item_container.htpp_row_3col
+.tile_row_label
 {
-	flow-children: right;
+	width: 90px;
+	padding-left: 10px;
+	vertical-align: center;
+	font-size: 18px;
+	color: offWhite&66;
 }
 
-.nav_menu_item_container.htpp_row_4col
+.action_tile
 {
-	flow-children: right;
+	width: 44px;
+	height: 30px;
+	margin-right: 6px;
+	vertical-align: center;
+	border: 1px solid #ffefd733;
+	border-radius: 4px;
+	background-color: #00000066;
+	transition-property: background-color, border;
+	transition-duration: 0.1s;
 }
 
-.nav_menu_item.htpp_btn_2,.CitadelSettingsCheckbox.htpp_btn_2
+.action_tile Label
 {
-	width: 322px;
-	min-width: 322px;
-	max-width: 322px;
+	horizontal-align: center;
+	vertical-align: center;
+	text-align: center;
+	font-size: 16px;
+	color: offWhite&aa;
 }
 
-.nav_menu_item.htpp_btn_3,.CitadelSettingsCheckbox.htpp_btn_3
+.action_tile:hover
 {
-	width: 212px;
-	min-width: 212px;
-	max-width: 212px;
+	border: 1px solid #ffefd766;
+	background-color: #ffefd714;
 }
 
-.nav_menu_item.htpp_btn_4,.CitadelSettingsCheckbox.htpp_btn_4
+.action_tile:hover Label
 {
-	width: 158px;
-	min-width: 158px;
-	max-width: 158px;
+	color: offWhite;
 }
 
-.nav_menu_item.htpp_btn_5,.CitadelSettingsCheckbox.htpp_btn_5
+.action_tile:active
 {
-	width: 125px;
-	min-width: 125px;
-	max-width: 125px;
+	background-color: #ffefd733;
+}
+
+.action_tile.tile_stop
+{
+	width: 56px;
+	margin-left: 12px;
+}
+
+.trooper_row .action_tile
+{
+	width: 72px;
+}
+
+.nav_menu_item.fifth_width
+{
+	width: 76px;
+	padding-left: 6px;
+	padding-right: 6px;
+}
+
+.nav_menu_item.fifth_width Label
+{
+	padding-right: 0px;
+	text-align: center;
+}
+
+.nav_menu_item.keybind_glyph_width
+{
+	width: 38px;
+	padding-left: 6px;
+	padding-right: 0px;
+}
+
+.nav_menu_item.keybind_glyph_width Label
+{
+	padding-right: 0px;
+	text-align: center;
+}
+
+.nav_menu_item.keybind_label_width
+{
+	width: 150px;
+	padding-left: 6px;
+	padding-right: 6px;
+}
+
+.nav_menu_item.keybind_label_width Label
+{
+	padding-right: 0px;
+	text-align: center;
 }
 
 .nav_menu_item_container
 {
 	flow-children: right;
-	width: 650px;
-	height: fit-children;
+	width: 400px;
 	padding-left: 0px;
-	vertical-align: center;
-	horizontal-align: center;
-	margin-top: 4px;
-	margin-bottom: 4px;
 }
 
 .nav_menu_item_container.vertical_item
 {
-	vertical-align: center;
+	vertical-align: top;
 	flow-children: down;
-	width: 318px;
+	width: 200px;
 	padding-left: 0px;
 }
 
-Button.nav_menu_item.htpp_spawn_action
+.spawn_hero_label
 {
-	background-color: #00000000;
-	border: 0px solid #00000000;
-	box-shadow: none;
-	padding-left: 0px;
-	padding-right: 0px;
+	padding-left: 10px;
 }
 
-Button.nav_menu_item.htpp_spawn_action:hover
+.nav_menu_item_container.spawn_hero_block
 {
-	background-color: #00000000;
-	border: 0px solid #00000000;
-	box-shadow: none;
-	brightness: 1.0;
-	transform: translateY(0px);
+	margin-top: 10px;
+	margin-bottom: 10px;
 }
 
-Button.nav_menu_item.htpp_spawn_action:active
+#SpawnBotCard,#BotsSpawnBotCard
 {
-	background-color: #00000000;
-	border: 0px solid #00000000;
-	box-shadow: none;
-	brightness: 1.0;
-	transform: translateY(0px);
-}
-
-Button.nav_menu_item.small_text.htpp_spawn_action.htpp_glow_red Label
-{
-	color: #ff7272;
-	text-shadow: 0px 0px 3px #ff3f3f66;
-}
-
-Button.nav_menu_item.small_text.htpp_spawn_action.htpp_glow_green Label
-{
-	color: #78e57f;
-	text-shadow: 0px 0px 3px #40d05066;
-}
-
-Button.nav_menu_item.small_text.htpp_spawn_action.htpp_glow_blue Label
-{
-	color: #91dcff;
-	text-shadow: 0px 0px 3px #1b536d;
-}
-
-Button.nav_menu_item.small_text.htpp_spawn_action.htpp_glow_yellow Label
-{
-	color: #fff491;
-	text-shadow: 0px 0px 3px #7c7323;
-}
-
-
-Button.nav_menu_item.small_text.htpp_spawn_action.htpp_glow_white Label
-{
-	color: #f5f7f8;
-	text-shadow: 0px 0px 3px #ffffff55;
-}
-
-.nav_menu_item_container.htpp_hero_control_split
-{
-	flow-children: right;
-	width: 650px;
-	horizontal-align: center;
-}
-
-#SpawnBotCard
-{
-	margin-right: 8px;
-}
-
-.htpp_hero_control_rows
-{
-	flow-children: down;
-	width: fill-parent-flow(1.0);
-}
-
-.htpp_hero_control_row
-{
-	flow-children: right;
-	width: 100%;
-	margin-bottom: 4px;
-}
-
-.htpp_hero_control_row:last-child
-{
-	margin-bottom: 0px;
-}
-
-.nav_menu_item.htpp_hero_ctrl_btn
-{
-	width: 150px;
-	min-width: 150px;
-	max-width: 150px;
-}
-
-.htpp_hero_control_row > .nav_menu_item.htpp_hero_ctrl_btn
-{
-	width: fill-parent-flow(1.0);
-	min-width: 0px;
-	max-width: 9999px;
-}
-
-.htpp_hero_control_row > .nav_menu_item
-{
-	margin-right: 6px;
-}
-
-.htpp_hero_control_row > .nav_menu_item:last-child
-{
-	margin-right: 0px;
-}
-
-.nav_menu_item_container.htpp_separator_top
-{
-	border-top: 1px solid rgba(255, 255, 255, 0.08);
-	padding-top: 6px;
-	margin-top: 8px;
-}
-
-.nav_menu_item_container.htpp_separator_bottom
-{
-	border-bottom: 1px solid rgba(255, 255, 255, 0.08);
-	padding-bottom: 6px;
-	margin-bottom: 8px;
-}
-
-Button.nav_menu_item
-{
-	background-color: #1f1d1b;
-	border: 1px solid rgba(255, 255, 255, 0.05);
-	border-radius: 7px;
-	box-shadow: fill rgba(0, 0, 0, 0.24) 0px 1px 2px 0px;
-	min-height: 30px;
-	padding-top: 3px;
-	padding-bottom: 3px;
-	padding-left: 4px;
-	padding-right: 4px;
-	transition-property: brightness, background-color, border-color, box-shadow, transform;
-	transition-duration: 0.14s;
-	transition-timing-function: ease-in-out;
-}
-
-.nav_menu_item_container > .nav_menu_item
-{
-	margin-right: 6px;
-	margin-bottom: 4px;
-}
-
-.nav_menu_item_container > .nav_menu_item:last-child
-{
-	margin-right: 0px;
-}
-
-Button.nav_menu_item:hover
-{
-	background-color: #2b2927;
-	border-color: rgba(255, 255, 255, 0.08);
-	brightness: 1.09;
-	box-shadow: fill rgba(0, 0, 0, 0.24) 0px 1px 2px 0px;
-}
-
-Button.nav_menu_item:active
-{
-	background-color: #262320;
-	border-color: rgba(102, 204, 153, 0.45);
-	brightness: 1.04;
-	box-shadow: fill rgba(102, 204, 153, 0.20) 0px 0px 6px 0px;
-	transform: translateY(1px);
+	width: 60px;
+	height: 100px;
+	margin: 14px 0px 0px 10px;
 }
 
 .nav_menu_item:hover
 {
-	background-color: none;
+	background-color: rgba(255, 255, 255, 0.5);
 }
 
 .nav_menu_item:active
 {
-	background-color: none;
+	background-color: rgba(255, 255, 255, 0.75);
 }
 
 .nav_menu_item Label
 {
-	padding-right: 4px;
+	padding-right: 16px;
+	padding-bottom: 4px;
 	font-style: normal;
-	font-size: 14px;
-	line-height: 18px;
+	font-size: 32px;
+	text-overflow: shrink min( 18px );
+	line-height: 52px;
 	text-align: left;
-	color: #9aa4a7;
-	text-overflow: shrink;
+	color: offWhite&66;
 }
 
-Button.nav_menu_item Label
+.Language_japanese .nav_menu_item Label
 {
-	color: #9aa4a7;
-	font-weight: semi-bold;
-	padding-left: 0px;
 	padding-right: 0px;
-	text-align: center;
-	horizontal-align: center;
-	vertical-align: center;
+	font-size: 16px;
+}
+
+.Language_french .nav_menu_item Label,.Language_indonesian .nav_menu_item Label,.Language_russian .nav_menu_item Label,.Language_thai .nav_menu_item Label,.Language_turkish .nav_menu_item Label,.Language_ukrainian .nav_menu_item Label
+{
+	font-size: 18px;
 }
 
 .small_text Label
 {
-	padding-right: 4px;
-	line-height: 16px;
-	font-size: 13px;
+	padding-right: 8px;
+	padding-bottom: 4px;
+	line-height: 30px;
+	font-size: 18px;
 }
 
-Button.nav_menu_item.small_text Label
+.Language_brazilian .small_text Label,.Language_czech .small_text Label,.Language_french .small_text Label,.Language_german .small_text Label,.Language_italian .small_text Label,.Language_latam .small_text Label,.Language_polish .small_text Label,.Language_russian .small_text Label,.Language_spanish .small_text Label,.Language_thai .small_text Label,.Language_turkish .small_text Label,.Language_ukrainian .small_text Label
 {
+	font-size: 18px;
+	line-height: 26px;
+}
+
+.Language_indonesian .small_text Label,.Language_japanese .small_text Label
+{
+	padding-right: 0px;
 	font-size: 16px;
-	line-height: 16px;
-	color: #9aa4a7;
-	text-overflow: shrink;
 }
 
-Button.nav_menu_item.third_width Label,Button.nav_menu_item.quarter_width Label
+.center_text
 {
-	font-size: 12px;
-	line-height: 15px;
-}
-
-.CitadelSettingsCheckbox.small_text
-{
-	padding-top: 2px;
-	padding-bottom: 2px;
-}
-
-.CitadelSettingsCheckbox.small_text Label
-{
-	line-height: 16px;
-	font-size: 13px;
-	padding-bottom: 0;
-}
-
-.nav_menu_item.small_text
-{
-	padding-top: 3px;
-	padding-bottom: 3px;
+	horizontal-align: center;
 }
 
 .CitadelSettingsCheckbox
@@ -557,104 +606,115 @@ Button.nav_menu_item.third_width Label,Button.nav_menu_item.quarter_width Label
 
 ToggleButton Label,.CitadelSettingsCheckbox Label
 {
-	padding-right: 4px;
-	padding-bottom: 0px;
-	line-height: 16px;
-	font-size: 13px;
+	padding-right: 16px;
+	padding-bottom: 4px;
+	line-height: 30px;
+	font-size: 18px;
 	text-align: left;
-	color: #9aa4a7;
-	text-overflow: shrink;
-}
-
-ToggleButton.htpp_toggle_compact Label,.CitadelSettingsCheckbox.htpp_toggle_compact Label
-{
-	font-size: 12px;
-	line-height: 14px;
-	letter-spacing: 0.1px;
-}
-
-.htpp_section ToggleButton.CitadelSettingsCheckbox Label,.htpp_section .CitadelSettingsCheckbox Label
-{
-	color: #f5f7f8;
-	text-shadow: 0px 0px 3px #ffffff55;
-}
-
-.htpp_section ToggleButton.CitadelSettingsCheckbox:selected Label,.htpp_section .CitadelSettingsCheckbox:selected Label,.htpp_section ToggleButton.CitadelSettingsCheckbox.selected Label,.htpp_section .CitadelSettingsCheckbox.selected Label,.htpp_section ToggleButton.CitadelSettingsCheckbox.IsSelected Label,.htpp_section .CitadelSettingsCheckbox.IsSelected Label
-{
-	color: #78e57f;
-	text-shadow: 0px 0px 3px #40d05066;
+	color: offWhite&66;
 }
 
 .CitadelSettingsCheckbox.half_width
 {
-	width: 318px;
-	min-width: 318px;
-	max-width: 318px;
-	padding-left: 4px;
-	padding-right: 4px;
+	width: 200px;
+	padding-left: 10px;
+	padding-right: 0px;
 }
 
 .set_ap Label
 {
 	padding-right: 32px;
 	padding-bottom: 4px;
-	line-height: 22px;
-	font-size: 16px;
+	line-height: 30px;
+	font-size: 20px;
+}
+
+.testing_prompt
+{
+	width: 380px;
+	padding-left: 10px;
+	padding-right: 10px;
+	margin-top: 8px;
+	margin-right: 4px;
+}
+
+.testing_prompt Label
+{
+	color: offWhite&66;
+}
+
+.gScoreboardOpen .testing_prompt
+{
+	visibility: collapse;
+}
+
+.menu_pinned .testing_prompt
+{
+	visibility: collapse;
 }
 
 .nav_menu_item_header
 {
 	padding-left: 10px;
+	padding-top: 8px;
 	padding-right: 32px;
 	line-height: 52px;
 	text-align: left;
 	color: rgba(255, 255, 255, 0.5);
-	font-weight: bold;
-	width: 650px;
+	width: 400px;
+}
+
+.nav_menu_item_container.row_gap
+{
+	margin-top: 12px;
+}
+
+.nav_menu_item_header.section_gap
+{
+	margin-top: 14px;
 }
 
 .nav_menu_item_header Label
 {
-	padding-top: 10px;
 	font-style: normal;
-	font-size: 32px;
-	line-height: 40px;
+	font-size: 24px;
+	line-height: 28px;
 	text-align: left;
-	color: rgba(255, 255, 255, 1.0);
+	color: offWhite;
+	max-width: 360px;
+	text-overflow: shrink;
+	font-family: block;
 }
 
-.dash
+.nav_menu_tab_contents .nav_menu_item_header Label
 {
-	background-color: grey;
-	height: 1px;
-	vertical-align: center;
-	width: 230px;
-	x: 280px;
+	text-decoration: underline;
+}
+
+.Language_german .nav_menu_item_header Label,.Language_japanese .nav_menu_item_header Label
+{
+	line-height: normal;
+	font-size: 28px;
+}
+
+.Language_french .nav_menu_item_header Label
+{
+	font-size: 21px;
+}
+
+.Language_italian .nav_menu_item_header Label,.Language_latam .nav_menu_item_header Label,.Language_spanish .nav_menu_item_header Label
+{
+	font-size: 24px;
+}
+
+.Language_thai .nav_menu_item_header Label
+{
+	max-height: 60px;
 }
 
 .nav_menu_item:hover Label,.nav_menu_item:active Label
 {
-	color: #9aa4a7;
-}
-
-Button.nav_menu_item:hover Label,Button.nav_menu_item:active Label
-{
-	color: #b4c0c4;
-}
-
-#hover_tips
-{
-	background-color: #444444ff;
-	width: 720px;
-	height: 60px;
-	x: 1000px;
-	y: 430px;
-	visibility: collapse;
-}
-
-.hover_tips_active #hover_tips
-{
-	visibility: visible;
+	color: offWhite&66;
 }
 
 .menu_divider
@@ -662,52 +722,182 @@ Button.nav_menu_item:hover Label,Button.nav_menu_item:active Label
 	height: 20px;
 }
 
-#LaneChallengePanel
+.input_control
+{
+	width: 200px;
+	flow-children: right;
+}
+
+.input_control.wide_input
+{
+	width: 300px;
+}
+
+.input_control .nav_menu_item
+{
+	width: fill-parent-flow( 1.0 );
+	padding-left: 10px;
+	padding-right: 4px;
+}
+
+.input_control .nav_menu_item Label
+{
+	width: 100%;
+	text-overflow: shrink;
+}
+
+.input_control .dummy_stat_input
+{
+	margin-right: 6px;
+}
+
+.input_control .dummy_stat_entry
+{
+	width: 52px;
+	padding: 2px 6px 0px 6px;
+}
+
+.hotkey_input
+{
+	width: 72px;
+	height: 28px;
+	margin-right: 6px;
+	vertical-align: center;
+	border-radius: 4px;
+	border: 1px solid #ffefd733;
+	background-color: #00000066;
+}
+
+.hotkey_input:hover
+{
+	border: 1px solid #ffefd766;
+}
+
+.hotkey_hint
+{
+	horizontal-align: center;
+	vertical-align: center;
+	font-size: 13px;
+	letter-spacing: 1px;
+	text-transform: uppercase;
+	color: offWhite&55;
+}
+
+.nav_menu_item.highlight_item Label,.nav_menu_item.highlight_item:hover Label
+{
+	color: goldColor&cc;
+}
+
+.highlight_icon
+{
+	width: 16px;
+	height: 16px;
+	vertical-align: center;
+	wash-color: goldColor&cc;
+}
+
+#combat_log_icon
+{
+	width: 14px;
+}
+
+.dummy_stat_row
+{
+	width: 380px;
+	height: 36px;
+	margin-left: 10px;
+}
+
+.dummy_stat_label
+{
+	vertical-align: center;
+	font-size: 18px;
+	color: offWhite&66;
+}
+
+.dummy_stat_input
+{
+	horizontal-align: right;
+	vertical-align: center;
+	flow-children: right;
+}
+
+.dummy_stat_entry
+{
+	vertical-align: center;
+	width: 56px;
+	height: 28px;
+	padding: 2px 8px 0px 8px;
+	border-radius: 4px 0px 0px 4px;
+	border: 1px solid #ffefd733;
+	background-color: #00000066;
+	font-size: 18px;
+	text-align: right;
+	color: #8c8a86;
+}
+
+.dummy_stat_entry:hover
+{
+	border: 1px solid #ffefd766;
+}
+
+.dummy_stat_entry:focus
+{
+	border: 1px solid #ffefd7aa;
+	background-color: #000000aa;
+	color: offWhite;
+}
+
+.dummy_stat_spinner
 {
 	flow-children: down;
-	border-radius: 12px;
-	padding: 0px;
-	padding-bottom: 20px;
-	horizontal-align: right;
-	vertical-align: top;
-	width: 675px;
-	z-index: 98;
-	visibility: collapse;
+	width: 20px;
+	height: 28px;
+	margin-left: -1px;
 }
 
-#LaneChallengePanel.laneChallengeActive
+.dummy_stat_spin_button
 {
-	visibility: visible;
+	width: 20px;
+	height: 14px;
+	border: 1px solid #ffefd733;
+	background-color: #ffefd714;
 }
 
-.lane_challenge
+.dummy_stat_spin_button Image
 {
-	padding-right: 16px;
-	font-style: normal;
-	font-size: 20px;
-	line-height: 32px;
-	text-align: left;
-	color: rgba(255, 255, 255, 0.5);
+	width: 8px;
+	height: 8px;
+	horizontal-align: center;
+	vertical-align: center;
+	wash-color: offWhite&99;
 }
 
-#StopLaneChallengeBtn
+.dummy_stat_spin_button:hover
 {
-	visibility: collapse;
+	background-color: #ffefd733;
 }
 
-#StartLaneChallengeBtn
+.dummy_stat_spin_button:hover Image
 {
-	visibility: visible;
+	wash-color: offWhite;
 }
 
-.laneChallengeActive #StopLaneChallengeBtn
+.dummy_stat_spin_button:active
 {
-	visibility: visible;
+	background-color: #ffefd755;
 }
 
-.laneChallengeActive #StartLaneChallengeBtn
+.dummy_stat_spin_up
 {
-	visibility: collapse;
+	border-radius: 0px 4px 0px 0px;
+}
+
+.dummy_stat_spin_down
+{
+	margin-top: -1px;
+	height: 15px;
+	border-radius: 0px 0px 4px 0px;
 }
 
 .coop_sandbox .hide_in_coop
@@ -715,761 +905,8 @@ Button.nav_menu_item:hover Label,Button.nav_menu_item:active Label
 	visibility: collapse;
 }
 
-.in_party .hide_in_coop
+.hero_testing_keybinder.hasSecondaryBinding #LabelFXContainer2,.hero_testing_keybinder.hasPrimaryBinding.hasSecondaryBinding .KeybindConjunction
 {
 	visibility: collapse;
-}
-
-.htpp_section
-{
-	flow-children: down;
-	padding: 4px;
-	padding-bottom: 8px;
-	horizontal-align: right;
-	vertical-align: top;
-	width: 100%;
-	height: fit-children;
-	overflow: noclip;
-	visibility: collapse;
-}
-
-[id="htpp_section_GameRules"] Label
-{
-	text-shadow: -1px 0px 0px #00000066,1px 0px 0px #00000066,0px -1px 0px #00000066,0px 1px 0px #00000066;
-}
-
-.htpp_section.htpp_section_selected
-{
-	visibility: visible;
-}
-
-.htpp_section .nav_menu_item_header
-{
-	visibility: collapse;
-}
-
-.htpp_disabled,*.htpp_disabled,#hero_testing_stub.htpp_disabled
-{
-	visibility: collapse;
-}
-
-.htpp_enabled,*.htpp_enabled,.connectedToHeroTesting.htpp_enabled,*.connectedToHeroTesting.htpp_enabled
-{
-	visibility: visible;
-}
-
-.connectedToHeroTesting #stats_game_clock,.connectedToHeroTesting #minimap_persp,.connectedToHeroTesting #ObjectivesMap,.connectedToHeroTesting .top_left_team_panel,.connectedToHeroTesting .top_right_team_panel
-{
-	visibility: collapse;
-}
-
-.htpp_tab_buttons_container
-{
-	margin-top: 4px;
-	flow-children: right-wrap;
-	width: 650px;
-	height: fit-children;
-	padding-left: 0px;
-	padding-bottom: 2px;
-}
-
-.htpp_tab_button
-{
-	vertical-align: top;
-	background-color: none;
-	border: 0px solid transparent;
-	border-left: 2px solid transparent;
-	height: fit-children;
-	min-height: 30px;
-	width: fit-children;
-	min-width: 85px;
-	max-width: 85px;
-	padding: 3px;
-	padding-left: 8px;
-	padding-right: 8px;
-	border-radius: 4px;
-	margin-right: 4px;
-	margin-top: 3px;
-	box-shadow: none;
-	transition-property: background-color, border, brightness, transform;
-	transition-duration: 0.16s;
-	transition-timing-function: ease-in-out;
-}
-
-.htpp_tab_button:hover
-{
-	background-color: rgba(255, 255, 255, 0.02);
-	border-left: 2px solid transparent;
-	brightness: 1.08;
-	transform: translateX(2px);
-}
-
-.htpp_tab_button_selected
-{
-	border-left: 2px solid #66cc99;
-	background-color: gradient( linear, 0% 0%, 100% 0%, from( rgba(102, 204, 153, 0.24) ), to( rgba(102, 204, 153, 0.08) ) );
-	border-color: transparent;
-	box-shadow: none;
-	brightness: 1.08;
-	animation-name: none;
-}
-
-.htpp_tab_button_selected:hover
-{
-	border-left: 2px solid #66cc99;
-	background-color: gradient( linear, 0% 0%, 100% 0%, from( rgba(102, 204, 153, 0.24) ), to( rgba(102, 204, 153, 0.08) ) );
-	border-color: transparent;
-	brightness: 1.12;
-	transform: translateX(2px);
-}
-
-.htpp_tab_group
-{
-	width: 650px;
-	flow-children: down;
-	padding-left: 6px;
-	padding-right: 6px;
-	padding-top: 4px;
-	padding-bottom: 8px;
-	margin-bottom: 6px;
-	background-color: #00000033;
-	border-bottom: 1px solid rgba(255, 255, 255, 0.06);
-	border-radius: 8px;
-}
-
-.htpp_primary_tab_buttons_container
-{
-	flow-children: right-wrap;
-	width: 650px;
-}
-
-.htpp_drag_bar
-{
-	width: 650px;
-	height: 26px;
-	margin-top: 2px;
-	margin-bottom: 4px;
-	padding-top: 2px;
-	border-radius: 6px;
-	background-color: #1f1d1bff;
-	border: 1px solid #2a2a2aff;
-	horizontal-align: center;
-	opacity: 0.4;
-}
-
-.htpp_drag_bar Label
-{
-	width: 100%;
-	text-align: center;
-	horizontal-align: center;
-	vertical-align: center;
-	font-size: 13px;
-	font-weight: semi-bold;
-	letter-spacing: 0.5px;
-	color: #8d9698;
-	text-transform: uppercase;
-}
-
-.htpp_drag_bar:hover
-{
-	background-color: #2a2825ff;
-	border-color: #3a3a3aff;
-	brightness: 1.05;
-}
-
-.htpp_drag_bar:active
-{
-	background-color: #31302cff;
-	border-color: rgba(102, 204, 153, 0.40);
-}
-
-#htpp_section_GameRules Button.nav_menu_item:hover,#htpp_section_GameRules ToggleButton.nav_menu_item:hover,#htpp_section_GameRules .CitadelSettingsCheckbox.nav_menu_item:hover
-{
-	background-color: gradient( linear, 0% 0%, 0% 100%, from( rgba(0, 0, 0, 0.44) ), to( rgba(0, 0, 0, 0.28) ) );
-	border-color: transparent;
-	brightness: 1.08;
-	box-shadow: fill rgba(0, 0, 0, 0.22) 0px 1px 2px 0px;
-	transform: translateY(-1px);
-}
-
-#htpp_section_GameRules Button.nav_menu_item.htpp_spawn_action:hover
-{
-	background-color: gradient( linear, 0% 0%, 0% 100%, from( rgba(0, 0, 0, 0.44) ), to( rgba(0, 0, 0, 0.28) ) );
-	border: 0px solid transparent;
-	brightness: 1.08;
-	box-shadow: fill rgba(0, 0, 0, 0.22) 0px 1px 2px 0px;
-	transform: translateY(-1px);
-}
-
-#htpp_section_GameRules Button.nav_menu_item.htpp_spawn_action:active
-{
-	background-color: #262320;
-	border: 1px solid rgba(102, 204, 153, 0.45);
-	brightness: 1.04;
-	box-shadow: fill rgba(102, 204, 153, 0.20) 0px 0px 6px 0px;
-	transform: translateY(1px);
-}
-
-#htpp_section_GameRules Button.nav_menu_item:hover Label,#htpp_section_GameRules ToggleButton.nav_menu_item:hover Label,#htpp_section_GameRules .CitadelSettingsCheckbox.nav_menu_item:hover Label
-{
-	color: #c7ccd0ee;
-	text-shadow: -1px 0px 0px #00000066,1px 0px 0px #00000066,0px -1px 0px #00000066,0px 1px 0px #00000066;
-}
-
-#htpp_section_GameRules Button.nav_menu_item.small_text.htpp_spawn_action.htpp_glow_red Label
-{
-	color: #ff7f7f;
-	text-shadow: 0px 0px 2px #ff3f3f3d;
-}
-
-#htpp_section_GameRules Button.nav_menu_item.small_text.htpp_spawn_action.htpp_glow_green Label
-{
-	color: #84df8a;
-	text-shadow: 0px 0px 2px #40d0503d;
-}
-
-#htpp_section_GameRules Button.nav_menu_item.small_text.htpp_spawn_action.htpp_glow_blue Label
-{
-	color: #91dcff;
-	text-shadow: 0px 0px 2px #1b536d;
-}
-
-#htpp_section_GameRules Button.nav_menu_item.small_text.htpp_spawn_action.htpp_glow_yellow Label
-{
-	color: #fff491;
-	text-shadow: 0px 0px 2px #7c7323;
-}
-
-#htpp_section_GameRules Button.nav_menu_item.small_text.htpp_spawn_action.htpp_glow_white Label
-{
-	color: #f3f5f6;
-	text-shadow: 0px 0px 2px #ffffff38;
-}
-
-#HTPP_LoadTestingEnvironmentButton
-{
-	visibility: collapse;
-}
-
-#htpp_section_GameRules ToggleButton.CitadelSettingsCheckbox Label,#htpp_section_GameRules .CitadelSettingsCheckbox Label
-{
-	text-shadow: 0px 0px 2px #ffffff42;
-}
-
-#htpp_section_GameRules ToggleButton.CitadelSettingsCheckbox:selected Label,#htpp_section_GameRules .CitadelSettingsCheckbox:selected Label,#htpp_section_GameRules ToggleButton.CitadelSettingsCheckbox.selected Label,#htpp_section_GameRules .CitadelSettingsCheckbox.selected Label,#htpp_section_GameRules ToggleButton.CitadelSettingsCheckbox.IsSelected Label,#htpp_section_GameRules .CitadelSettingsCheckbox.IsSelected Label
-{
-	text-shadow: 0px 0px 2px #40d0504a;
-}
-
-.htpp_drag_bar:active Label
-{
-	color: #ffffff;
-}
-
-.htpp_primary_tab_button
-{
-	background-color: none;
-	border: 0px solid transparent;
-	border-left: 2px solid transparent;
-	padding-top: 5px;
-	padding-bottom: 5px;
-	padding-left: 12px;
-	padding-right: 12px;
-	border-radius: 4px;
-	margin-right: 2px;
-	margin-top: 2px;
-	box-shadow: none;
-	transition-property: background-color, border, brightness, transform;
-	transition-duration: 0.16s;
-	transition-timing-function: ease-in-out;
-}
-
-.htpp_primary_tab_button Label
-{
-	width: 100%;
-	horizontal-align: center;
-	vertical-align: center;
-	text-align: center;
-	font-size: 18px;
-	font-weight: semi-bold;
-	color: #8d9698;
-}
-
-#htpp_primary_tab_button_Core,#htpp_primary_tab_button_World,#htpp_primary_tab_button_Host
-{
-	min-width: 170px;
-	min-height: 42px;
-}
-
-#htpp_primary_tab_button_Core Label,#htpp_primary_tab_button_World Label,#htpp_primary_tab_button_Host Label
-{
-	font-family: block;
-	font-size: 20px;
-	letter-spacing: 0.8px;
-}
-
-.htpp_primary_tab_button:hover
-{
-	background-color: rgba(255, 255, 255, 0.02);
-	border-left: 2px solid transparent;
-	brightness: 1.08;
-	transform: translateX(2px);
-}
-
-.htpp_primary_tab_button_selected
-{
-	border-left: 2px solid #66cc99;
-	background-color: gradient( linear, 0% 0%, 100% 0%, from( rgba(102, 204, 153, 0.24) ), to( rgba(102, 204, 153, 0.08) ) );
-	border-color: transparent;
-	box-shadow: none;
-	brightness: 1.12;
-	animation-name: none;
-}
-
-.htpp_primary_tab_button_selected:hover
-{
-	border-left: 2px solid #66cc99;
-	background-color: gradient( linear, 0% 0%, 100% 0%, from( rgba(102, 204, 153, 0.24) ), to( rgba(102, 204, 153, 0.08) ) );
-	border-color: transparent;
-	brightness: 1.15;
-	transform: translateX(2px);
-}
-
-.htpp_tab_button_selected Label,.htpp_primary_tab_button_selected Label,.htpp_section_subtab_button_selected Label
-{
-	color: #ffffff;
-	text-shadow: 0px 0px 6px rgba(102, 204, 153, 0.40);
-}
-
-.htpp_section_tab_hidden
-{
-	visibility: collapse;
-}
-
-.htpp_section .htpp_subsection_header
-{
-	visibility: collapse;
-}
-
-.htpp_dynamic_subtabs,.htpp_section_subtabs
-{
-	flow-children: right-wrap;
-	width: 650px;
-	margin-top: 2px;
-	margin-bottom: 2px;
-	visibility: collapse;
-}
-
-.htpp_section_subtab_button
-{
-	background-color: none;
-	border: 0px solid transparent;
-	border-left: 2px solid transparent;
-	border-radius: 4px;
-	min-height: 28px;
-	width: fit-children;
-	min-width: 85px;
-	max-width: 85px;
-	padding-top: 3px;
-	padding-bottom: 3px;
-	padding-left: 8px;
-	padding-right: 8px;
-	margin-right: 4px;
-	margin-top: 3px;
-	box-shadow: none;
-	transition-property: background-color, border, brightness, transform;
-	transition-duration: 0.16s;
-	transition-timing-function: ease-in-out;
-}
-
-.htpp_section_subtab_button Label
-{
-	width: fit-children;
-	horizontal-align: center;
-	vertical-align: center;
-	text-align: center;
-	font-size: 14px;
-	color: #8d9698;
-}
-
-.htpp_tab_button Label
-{
-	width: fit-children;
-	horizontal-align: center;
-	vertical-align: center;
-	text-align: center;
-	font-size: 14px;
-	letter-spacing: 0.3px;
-}
-
-.htpp_adjust_row
-{
-	flow-children: right;
-	horizontal-align: center;
-	margin-top: 2px;
-	margin-bottom: 2px;
-}
-
-.htpp_adjust_pair_row
-{
-	flow-children: right;
-	horizontal-align: center;
-}
-
-.htpp_adjust_row_compact
-{
-	width: fit-children;
-	margin-right: 10px;
-}
-
-.htpp_adjust_row_compact:last-child
-{
-	margin-right: 0px;
-}
-
-.htpp_noclip_speed_inline
-{
-	width: 263px;
-	min-width: 263px;
-	max-width: 263px;
-	margin-top: 0px;
-	margin-bottom: 0px;
-	margin-right: 0px;
-	vertical-align: center;
-}
-
-.htpp_adjust_row_compact.htpp_noclip_speed_inline .htpp_adjust_title
-{
-	width: 120px;
-	min-width: 120px;
-	max-width: 120px;
-	padding-left: 6px;
-	padding-right: 4px;
-	text-align: left;
-	text-transform: none;
-	letter-spacing: 0px;
-	font-size: 12px;
-}
-
-.htpp_adjust_row_compact.htpp_noclip_speed_inline Button.nav_menu_item.htpp_adjust_button
-{
-	width: 24px;
-	min-width: 24px;
-	max-width: 24px;
-	padding-left: 0px;
-	padding-right: 0px;
-}
-
-.htpp_noclip_speed_inline > .nav_menu_item
-{
-	margin-right: 1px;
-}
-
-.htpp_noclip_speed_inline > .nav_menu_item:last-child
-{
-	margin-right: 0px;
-}
-
-.htpp_adjust_single_row .htpp_adjust_row_compact
-{
-	width: 162px;
-	min-width: 162px;
-	max-width: 162px;
-	margin-right: 0px;
-}
-
-.htpp_adjust_single_row .htpp_adjust_row_compact:last-child
-{
-	margin-right: 0px;
-}
-
-.htpp_adjust_title
-{
-	width: 118px;
-	vertical-align: center;
-	text-align: left;
-	padding-left: 8px;
-	padding-right: 8px;
-	color: #b8c3c7;
-	font-size: 14px;
-	font-weight: semi-bold;
-	text-transform: uppercase;
-	letter-spacing: 0.4px;
-}
-
-.htpp_adjust_row_compact .htpp_adjust_title
-{
-	width: 84px;
-	padding-left: 4px;
-	padding-right: 4px;
-}
-
-.htpp_adjust_single_row .htpp_adjust_row_compact .htpp_adjust_title
-{
-	width: 55px;
-	padding-left: 2px;
-	padding-right: 0px;
-	text-align: right;
-	font-size: 12px;
-	margin-right: 2px;
-}
-
-Button.nav_menu_item.htpp_adjust_button
-{
-	width: 92px;
-	min-width: 92px;
-	max-width: 92px;
-}
-
-.htpp_adjust_row_compact Button.nav_menu_item.htpp_adjust_button
-{
-	width: 48px;
-	min-width: 48px;
-	max-width: 48px;
-}
-
-.htpp_adjust_single_row .htpp_adjust_row_compact Button.nav_menu_item.htpp_adjust_button
-{
-	width: 24px;
-	min-width: 24px;
-	max-width: 24px;
-}
-
-.htpp_adjust_single_row .htpp_adjust_row_compact > .nav_menu_item
-{
-	margin-right: 1px;
-}
-
-.htpp_adjust_single_row .htpp_adjust_row_compact > .nav_menu_item:last-child
-{
-	margin-right: 0px;
-}
-
-Button.nav_menu_item.htpp_adjust_button_flat
-{
-	background-color: #00000000;
-	border: 0px solid #00000000;
-	box-shadow: none;
-	padding-left: 0px;
-	padding-right: 0px;
-}
-
-Button.nav_menu_item.htpp_adjust_button_flat:hover
-{
-	background-color: #00000000;
-	border: 0px solid #00000000;
-	box-shadow: none;
-	brightness: 1.0;
-	transform: translateY(0px);
-}
-
-Button.nav_menu_item.htpp_adjust_button_flat:active
-{
-	background-color: #00000000;
-	border: 0px solid #00000000;
-	box-shadow: none;
-	brightness: 1.0;
-	transform: translateY(0px);
-}
-
-#htpp_section_GameRules Button.nav_menu_item.htpp_adjust_button_flat:hover
-{
-	background-color: gradient( linear, 0% 0%, 0% 100%, from( rgba(0, 0, 0, 0.44) ), to( rgba(0, 0, 0, 0.28) ) );
-	border: 0px solid transparent;
-	brightness: 1.08;
-	box-shadow: fill rgba(0, 0, 0, 0.20) 0px 1px 2px 0px;
-	transform: translateY(-1px);
-}
-
-#htpp_section_GameRules .htpp_basic_action_row Button.nav_menu_item Label
-{
-	width: 100%;
-	text-align: center;
-	horizontal-align: center;
-	vertical-align: center;
-	padding-left: 0px;
-	padding-right: 0px;
-	font-size: 16px;
-	line-height: 18px;
-}
-
-#htpp_section_GameRules .htpp_basic_action_row > .nav_menu_item
-{
-	width: 154px;
-	min-width: 154px;
-	max-width: 154px;
-}
-
-#htpp_section_GameRules Button.nav_menu_item.htpp_adjust_button_flat:active
-{
-	background-color: #262320;
-	border: 1px solid rgba(102, 204, 153, 0.40);
-	brightness: 1.03;
-	box-shadow: fill rgba(102, 204, 153, 0.16) 0px 0px 5px 0px;
-	transform: translateY(1px);
-}
-
-#htpp_section_GameRules .htpp_adjust_title.htpp_adjust_state_neg
-{
-	text-shadow: 0px 0px 2px #ff3f3f44;
-}
-
-#htpp_section_GameRules .htpp_adjust_title.htpp_adjust_state_pos
-{
-	text-shadow: 0px 0px 2px #40d05044;
-}
-
-#htpp_section_GameRules .htpp_adjust_title.htpp_adjust_state_neutral
-{
-	text-shadow: 0px 0px 2px #ffffff33;
-}
-
-Button.nav_menu_item.htpp_adjust_btn_minus Label
-{
-	color: #ff7272;
-	text-shadow: 0px 0px 3px #ff3f3f66;
-}
-
-Button.nav_menu_item.htpp_adjust_btn_plus Label
-{
-	color: #78e57f;
-	text-shadow: 0px 0px 3px #40d05066;
-}
-
-Button.nav_menu_item.htpp_adjust_btn_equal Label
-{
-	color: #f5f7f8;
-	text-shadow: 0px 0px 3px #ffffff55;
-}
-
-.htpp_adjust_title.htpp_adjust_state_neg
-{
-	color: #ff8b8b;
-	text-shadow: 0px 0px 4px #ff3f3f66;
-}
-
-.htpp_adjust_title.htpp_adjust_state_pos
-{
-	color: #95f09b;
-	text-shadow: 0px 0px 4px #40d05066;
-}
-
-.htpp_adjust_title.htpp_adjust_state_neutral
-{
-	color: #f5f7f8;
-	text-shadow: 0px 0px 4px #ffffff55;
-}
-
-.htpp_meta_row
-{
-	margin-bottom: 8px;
-	padding-bottom: 6px;
-	border-bottom: 1px solid rgba(102, 204, 153, 0.24);
-}
-
-Button.nav_menu_item.htpp_meta_button
-{
-	background-color: gradient( linear, 0% 0%, 100% 0%, from( rgba(102, 204, 153, 0.24) ), to( rgba(102, 204, 153, 0.08) ) );
-	border-color: rgba(102, 204, 153, 0.82);
-	box-shadow: fill rgba(102, 204, 153, 0.20) 0px 0px 6px 0px;
-}
-
-Button.nav_menu_item.htpp_meta_button Label
-{
-	color: #ffffff;
-	text-shadow: 0px 0px 6px rgba(102, 204, 153, 0.40);
-}
-
-Button.nav_menu_item.htpp_meta_button:hover
-{
-	background-color: gradient( linear, 0% 0%, 100% 0%, from( rgba(102, 204, 153, 0.30) ), to( rgba(102, 204, 153, 0.12) ) );
-	border-color: rgba(102, 204, 153, 0.95);
-	brightness: 1.08;
-}
-
-.htpp_section_subtab_button:hover
-{
-	background-color: rgba(255, 255, 255, 0.02);
-	border-left: 2px solid transparent;
-	brightness: 1.08;
-	transform: translateX(2px);
-}
-
-.htpp_section_subtab_button_selected
-{
-	border-left: 2px solid #66cc99;
-	background-color: gradient( linear, 0% 0%, 100% 0%, from( rgba(102, 204, 153, 0.24) ), to( rgba(102, 204, 153, 0.08) ) );
-	border-color: transparent;
-	box-shadow: none;
-	brightness: 1.08;
-	animation-name: none;
-}
-
-.htpp_section_subtab_button_selected:hover
-{
-	border-left: 2px solid #66cc99;
-	background-color: gradient( linear, 0% 0%, 100% 0%, from( rgba(102, 204, 153, 0.24) ), to( rgba(102, 204, 153, 0.08) ) );
-	border-color: transparent;
-	brightness: 1.12;
-	transform: translateX(2px);
-}
-
-.htpp_center_text Label,.small_text .htpp_center_text,.small_text .htpp_center_text Label
-{
-	text-align: center;
-	horizontal-align: center;
-	vertical-align: center;
-	padding-right: 0;
-	padding-bottom: 0;
-	text-overflow: shrink;
-}
-
-.htpp_subsection_header
-{
-	margin-top: 8px;
-	margin-bottom: 4px;
-	flow-children: right;
-}
-
-.htpp_subsection_header Label
-{
-	padding: 0;
-}
-
-.htpp_subsection_arrow
-{
-	width: 20px;
-	height: 20px;
-	background-size: 12px 14px;
-	background-repeat: no-repeat;
-	background-position: center;
-	background-image: url("s2r://panorama/images/glyphs/arrow_right.vsvg");
-	margin-right: 8px;
-	horizontal-align: center;
-	vertical-align: center;
-	border-radius: 3px;
-	transform: rotateZ(90deg);
-	transition-property: brightness;
-	transition-duration: 0.1s;
-	transition-timing-function: ease-in;
-}
-
-.htpp_subsection_arrow:hover
-{
-	brightness: 1.5;
-}
-
-.htpp_subsection_arrow_enabled
-{
-	transform: rotateZ(0deg);
-}
-
-.htpp_subsection
-{
-	flow-children: down;
-	padding: 5px;
-	horizontal-align: right;
-	vertical-align: top;
-	width: 100%;
 }
 

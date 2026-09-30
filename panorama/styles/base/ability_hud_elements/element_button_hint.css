@@ -1,4 +1,4 @@
-/* Prettified by Source 2 Viewer 19.2.0.0 - https://valveresourceformat.github.io */
+/* Prettified by Source 2 Viewer - https://valveresourceformat.github.io */
 
 Citadel_AbilityHUDElement_ButtonHint
 {
@@ -27,7 +27,7 @@ Citadel_AbilityHUDElement_ButtonHint
 {
 	flow-children: right;
 	transform: translateX(100px);
-	margin-left: 50%;
+	margin-left: 70%;
 	vertical-align: center;
 	horizontal-align: left;
 }
@@ -44,7 +44,7 @@ Citadel_AbilityHUDElement_ButtonHint
 {
 	flow-children: left;
 	transform: translateX(-100px);
-	margin-right: 50%;
+	margin-right: 70%;
 	vertical-align: center;
 	horizontal-align: right;
 }

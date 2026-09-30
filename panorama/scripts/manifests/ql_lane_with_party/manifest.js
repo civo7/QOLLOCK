@@ -73,19 +73,6 @@
                 option = selector && selector.FindChildTraverse ? selector.FindChildTraverse(LANE_PREF_WITH_PARTY_OPTION_ID) : null;
                 if (!option && root && root.FindChildTraverse) option = root.FindChildTraverse(LANE_PREF_WITH_PARTY_OPTION_ID);
 
-                if (!option && selector && selector.FindChildrenWithClassTraverse) {
-                    var dropDownChildren = selector.FindChildrenWithClassTraverse("DropDownChild") || [];
-                    for (var i = 0; i < dropDownChildren.length; i++) {
-                        var child = dropDownChildren[i];
-                        if (!child || !IsPanelValid(child)) continue;
-                        var cid = ReadPanelIdTextMaybe(child);
-                        if (cid === LANE_PREF_WITH_PARTY_OPTION_ID) {
-                            option = child;
-                            break;
-                        }
-                    }
-                }
-
                 SetCachedPanel("lanePreferenceWithPartyOption", option);
                 return option || null;
             }
