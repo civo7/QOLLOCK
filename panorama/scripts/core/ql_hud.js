@@ -698,7 +698,7 @@
         const friendlyLabelsOk = friendlyLabels && friendlyLabels.length > 0 && friendlyLabels.every((p) => isAlive(p));
         const enemyLabelsOk = enemyLabels && enemyLabels.length > 0 && enemyLabels.every((p) => isAlive(p));
 
-        const shouldRescan = nowMs >= nextSearchMs || !teamsContainer || !friendlyTeamPanel || !enemyTeamPanel || !friendlyLabelsOk || !enemyLabelsOk;
+        const shouldRescan = nowMs >= nextSearchMs || !friendlyTeamPanel || !enemyTeamPanel || !friendlyLabelsOk || !enemyLabelsOk;
         if (!shouldRescan) return;
 
         let topBar = getCachedPanel("topBarPanel");
@@ -708,34 +708,79 @@
         }
         if (!topBar) return;
 
-        teamsContainer = topBar.FindChildTraverse ? (topBar.FindChildTraverse("TeamsContainer") || null) : null;
+        const directFriendlyPanel = topBar.FindChildTraverse ? (topBar.FindChildTraverse("TeamScoreFriendly") || null) : null;
+        const directEnemyPanel = topBar.FindChildTraverse ? (topBar.FindChildTraverse("TeamScoreEnemy") || null) : null;
+        const directFriendlyLabels = (directFriendlyPanel && directFriendlyPanel.FindChildrenWithClassTraverse)
+            ? (directFriendlyPanel.FindChildrenWithClassTraverse("ScoreLabel") || [])
+            : [];
+        const directEnemyLabels = (directEnemyPanel && directEnemyPanel.FindChildrenWithClassTraverse)
+            ? (directEnemyPanel.FindChildrenWithClassTraverse("ScoreLabel") || [])
+            : [];
+
+        if (directFriendlyLabels.length > 0 && directEnemyLabels.length > 0) {
+            teamsContainer = findFirstPanelByClass(topBar, "TeamNetworth") || topBar;
+            friendlyTeamPanel = directFriendlyPanel;
+            enemyTeamPanel = directEnemyPanel;
+            friendlyLabels = directFriendlyLabels;
+            enemyLabels = directEnemyLabels;
+        } else {
+            teamsContainer = topBar.FindChildTraverse ? (topBar.FindChildTraverse("TeamsContainer") || null) : null;
+            let friendlyCandidates = teamsContainer && teamsContainer.FindChildrenWithClassTraverse
+                ? (teamsContainer.FindChildrenWithClassTraverse("friend") || [])
+                : [];
+            if (friendlyCandidates.length === 0 && teamsContainer?.FindChildrenWithClassTraverse) {
+                friendlyCandidates = teamsContainer.FindChildrenWithClassTraverse("team1") || [];
+            }
+            let enemyCandidates = teamsContainer && teamsContainer.FindChildrenWithClassTraverse
+                ? (teamsContainer.FindChildrenWithClassTraverse("enemy") || [])
+                : [];
+            if (enemyCandidates.length === 0 && teamsContainer?.FindChildrenWithClassTraverse) {
+                enemyCandidates = teamsContainer.FindChildrenWithClassTraverse("team2") || [];
+            }
+
+            friendlyTeamPanel = friendlyCandidates.length > 0 ? friendlyCandidates[0] : null;
+            enemyTeamPanel = enemyCandidates.length > 0 ? enemyCandidates[0] : null;
+            friendlyLabels = (friendlyTeamPanel && friendlyTeamPanel.FindChildrenWithClassTraverse)
+                ? (friendlyTeamPanel.FindChildrenWithClassTraverse("hiddenGoldValue") || [])
+                : [];
+            enemyLabels = (enemyTeamPanel && enemyTeamPanel.FindChildrenWithClassTraverse)
+                ? (enemyTeamPanel.FindChildrenWithClassTraverse("hiddenGoldValue") || [])
+                : [];
+        }
+
         setCachedPanel("urnTrackerTeamsContainer", teamsContainer);
-
-        if (!teamsContainer) {
-            state.urnTrackerNextPanelSearchMs = nowMs + URN_TRACKER_PANEL_CACHE_REFRESH_MS;
-            return;
-        }
-
-        let friendlyCandidates = teamsContainer.FindChildrenWithClassTraverse ? (teamsContainer.FindChildrenWithClassTraverse("friend") || []) : [];
-        if (friendlyCandidates.length === 0 && teamsContainer.FindChildrenWithClassTraverse) {
-            friendlyCandidates = teamsContainer.FindChildrenWithClassTraverse("team1") || [];
-        }
-        let enemyCandidates = teamsContainer.FindChildrenWithClassTraverse ? (teamsContainer.FindChildrenWithClassTraverse("enemy") || []) : [];
-        if (enemyCandidates.length === 0 && teamsContainer.FindChildrenWithClassTraverse) {
-            enemyCandidates = teamsContainer.FindChildrenWithClassTraverse("team2") || [];
-        }
-
-        friendlyTeamPanel = friendlyCandidates.length > 0 ? friendlyCandidates[0] : null;
-        enemyTeamPanel = enemyCandidates.length > 0 ? enemyCandidates[0] : null;
-        friendlyLabels = (friendlyTeamPanel && friendlyTeamPanel.FindChildrenWithClassTraverse) ? (friendlyTeamPanel.FindChildrenWithClassTraverse("hiddenGoldValue") || []) : [];
-        enemyLabels = (enemyTeamPanel && enemyTeamPanel.FindChildrenWithClassTraverse) ? (enemyTeamPanel.FindChildrenWithClassTraverse("hiddenGoldValue") || []) : [];
-
         setCachedPanel("urnTrackerFriendlyTeamPanel", friendlyTeamPanel);
         setCachedPanel("urnTrackerEnemyTeamPanel", enemyTeamPanel);
         if (!state.cachedPanels) state.cachedPanels = {};
         state.cachedPanels.urnTrackerFriendlyGoldLabels = friendlyLabels;
         state.cachedPanels.urnTrackerEnemyGoldLabels = enemyLabels;
         state.urnTrackerNextPanelSearchMs = nowMs + URN_TRACKER_PANEL_CACHE_REFRESH_MS;
+    };
+
+    const parseUrnNetworthValue = (valueText) => {
+        let raw = String(valueText || "")
+            .replace(/<[^>]*>/g, "")
+            .replace(/&(?:nbsp|thinsp);|&#(?:160|8239);/gi, "")
+            .replace(/[\u00a0\u202f\s]/g, "")
+            .toLowerCase();
+        if (!raw) return 0;
+
+        let multiplier = 1;
+        const suffix = raw.match(/([kmb])$/);
+        if (suffix) {
+            multiplier = suffix[1] === "k" ? 1000 : (suffix[1] === "m" ? 1000000 : 1000000000);
+            raw = raw.slice(0, -1);
+            if (!raw.includes(".") && (raw.match(/,/g) || []).length === 1) {
+                raw = raw.replace(",", ".");
+            } else {
+                raw = raw.replace(/,/g, "");
+            }
+        } else {
+            raw = raw.replace(/,/g, "");
+        }
+
+        const value = Number(raw.replace(/[^0-9.+-]/g, ""));
+        return Number.isFinite(value) && value > 0 ? Math.round(value * multiplier) : 0;
     };
 
     const getCachedUrnTeamNetworthValue = (labelsKey) => {
@@ -745,8 +790,7 @@
         let total = 0;
         for (let i = 0; i < labels.length; i++) {
             if (!isAlive(labels[i])) return 0;
-            const v = parseInt(String(labels[i].text).replace(/,/g, ""), 10);
-            if (Number.isFinite(v)) total += v;
+            total += parseUrnNetworthValue(labels[i].text);
         }
         return total;
     };
@@ -797,6 +841,9 @@
 
         setCachedPanel("urnTrackerPanel", panel);
         setCachedPanel("urnTrackerLabel", label);
+        const state = getState();
+        state.urnTrackerLastText = "";
+        state.urnTrackerLastClass = "";
         return panel;
     };
 

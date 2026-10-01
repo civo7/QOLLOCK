@@ -163,7 +163,7 @@
 				<Label id="SpentSoulDisplay" class="SpentSoulDisplay" text="-" />
 			</Panel>
 			<Panel class="LeftRightFlow AlignHorizontalCenter SPMContainer">
-				<Label id="HiddenGoldValue" class="hiddenGoldValue" text="{i:gold}" />
+				<Label id="HiddenGoldValue" class="hiddenGoldValue" html="true" text="{s:gold}" />
 				<Label id="PlayerSPMDisplay" class="playerSPMDisplay" text="0/m" />
 			</Panel>
 			<!-- ============================================================= -->
