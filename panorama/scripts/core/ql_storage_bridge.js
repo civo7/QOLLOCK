@@ -19,23 +19,26 @@
     Q.core = Q.core || {};
 
     const BRIDGE_PANEL_ID = "QOLStorageBridge";
-    const BRIDGE_LOCAL_URL = "https://predi-i.github.io/qollock-updates/bridge.html";
+    const BRIDGE_URL = "https://predi-i.github.io/qollock-updates/bridge.html";
     const SETTINGS_STORAGE_KEY = "qollock_settings";
     const REQUEST_TIMEOUT_MS = 5000;
     const WATCHDOG_INTERVAL_SEC = 20.0;
+    const CACHED_PAGE_RETRY_SEC = 1.0;
     const MAX_INIT_ATTEMPTS = 5;
 
     const CHUNK_SIZE = 1500;
 
     let _bridgePanel = null;
     let _bridgeReady = false;
-    let _isPageLoaded = false;
     let _reqCounter = 0;
+    let _fragmentCounter = 0;
     let _pendingRequests = {};
     let _requestQueue = [];
     let _activeRequest = null;
     let _watchdogTimer = null;
     let _initAttempts = 0;
+    let _oldPageLogged = false;
+    let _cachedPageRetryScheduled = false;
     let _hasAutoloaded = false;
     let _autoloadEnabled = false;
     let _autoloadState = null;
@@ -143,77 +146,9 @@
         });
     };
 
-    /**
-     * Injects the CEF localStorage IPC script into the Chromium document.
-     */
-    const _injectBridgeScript = () => {
-        if (!_isPanelAlive(_bridgePanel) || typeof _bridgePanel.SetURL !== "function") return;
-
-        const jsCode = "javascript:(function(){" +
-            "var CHUNK_SIZE = 1500;" +
-            "var _loadBuffers = Object.create(null);" +
-            "var _saveBuffers = Object.create(null);" +
-            "var _sendSeq = 0;" +
-            "function isValidId(id) { return typeof id === 'string' && /^qol_\\d+_\\d+$/.test(id); }" +
-            "function decodeText(text, isB64) {" +
-                "if (!isB64 || typeof text !== 'string') return String(text);" +
-                "try { return decodeURIComponent(escape(atob(text))); } catch (_) { try { return atob(text); } catch (__) { return String(text); } }" +
-            "}" +
-            "function send(id, ok, data, err, extra) {" +
-                "var resp = { id: id, ok: !!ok, _seq: ++_sendSeq };" +
-                "if (data !== undefined) resp.data = data;" +
-                "if (err) resp.error = String(err);" +
-                "if (extra) { for (var k in extra) { if (Object.prototype.hasOwnProperty.call(extra, k)) resp[k] = extra[k]; } }" +
-                "document.title = 'QOL_RES:' + JSON.stringify(resp);" +
-            "}" +
-            "window.__qolSave = function(k, v, id, isB64) {" +
-                "if (!isValidId(id)) return;" +
-                "try { localStorage.setItem(decodeText(k, isB64), decodeText(v, isB64)); send(id, true); } catch (e) { send(id, false, undefined, e && e.message ? e.message : e); }" +
-            "};" +
-            "window.__qolSaveChunk = function(key, part, total, chunk, id, isB64) {" +
-                "if (!isValidId(id)) return;" +
-                "try {" +
-                    "if (!Number.isInteger(part) || !Number.isInteger(total) || part < 0 || part >= total || total > 5000) { send(id, false, undefined, 'Invalid save chunk boundaries'); return; }" +
-                    "if (!_saveBuffers[id]) { _saveBuffers[id] = new Array(total); setTimeout(function() { if (_saveBuffers[id]) delete _saveBuffers[id]; }, 30000); }" +
-                    "_saveBuffers[id][part] = decodeText(chunk, isB64);" +
-                    "if (part + 1 === total) { var full = _saveBuffers[id].join(''); delete _saveBuffers[id]; localStorage.setItem(decodeText(key, isB64), full); send(id, true); }" +
-                    "else { send(id, true, undefined, null, { savePartAck: part }); }" +
-                "} catch (e) { if (_saveBuffers[id]) delete _saveBuffers[id]; send(id, false, undefined, e && e.message ? e.message : e); }" +
-            "};" +
-            "window.__qolLoad = function(k, id, isB64) {" +
-                "if (!isValidId(id)) return;" +
-                "try {" +
-                    "var val = localStorage.getItem(decodeText(k, isB64));" +
-                    "if (val === null || val === undefined || val.length <= CHUNK_SIZE) { send(id, true, val); return; }" +
-                    "var chunks = [];" +
-                    "for (var i = 0; i < val.length; i += CHUNK_SIZE) chunks.push(val.slice(i, i + CHUNK_SIZE));" +
-                    "_loadBuffers[id] = chunks;" +
-                    "setTimeout(function() { if (_loadBuffers[id]) delete _loadBuffers[id]; }, 30000);" +
-                    "send(id, true, chunks[0], null, { chunked: true, part: 0, total: chunks.length });" +
-                "} catch (e) { send(id, false, undefined, e && e.message ? e.message : e); }" +
-            "};" +
-            "window.__qolNextChunk = function(id, part) {" +
-                "if (!isValidId(id)) return;" +
-                "try {" +
-                    "var chunks = _loadBuffers[id];" +
-                    "if (!chunks || !Number.isInteger(part) || part < 0 || part >= chunks.length) { if (_loadBuffers[id]) delete _loadBuffers[id]; send(id, false, undefined, 'Invalid chunk index'); return; }" +
-                    "var chunkData = chunks[part];" +
-                    "if (part + 1 === chunks.length) delete _loadBuffers[id];" +
-                    "send(id, true, chunkData, null, { chunked: true, part: part, total: chunks.length });" +
-                "} catch (e) { if (_loadBuffers[id]) delete _loadBuffers[id]; send(id, false, undefined, e && e.message ? e.message : e); }" +
-            "};" +
-            "window.__qolRemove = function(k, id, isB64) {" +
-                "if (!isValidId(id)) return;" +
-                "try { localStorage.removeItem(decodeText(k, isB64)); send(id, true); } catch (e) { send(id, false, undefined, e && e.message ? e.message : e); }" +
-            "};" +
-            "document.title = 'QOL_BRIDGE_READY:' + Date.now();" +
-        "})();void(0);";
-
-        try {
-            _bridgePanel.SetURL(jsCode);
-        } catch (e) {
-            _logWarn(`_injectBridgeScript failed: ${e?.message || e}`);
-        }
+    const _sendFragment = (f, a) => {
+        const message = { q: String(++_fragmentCounter), f, a };
+        _bridgePanel.SetURL(BRIDGE_URL + "#" + encodeURIComponent(JSON.stringify(message)));
     };
 
     const _cancelPendingTimer = (pending) => {
@@ -308,6 +243,11 @@
             }
 
             const pending = _pendingRequests[reqId];
+            // CEF can deliver each title twice, including chunk acknowledgments.
+            if (typeof resp._seq === "number") {
+                if (resp._seq <= pending.lastResponseSeq) return;
+                pending.lastResponseSeq = resp._seq;
+            }
 
             if (!resp.ok) {
                 const err = new Error(resp.error || "CEF bridge request failed");
@@ -323,9 +263,8 @@
                     const b64Key = pending.b64Key;
                     const b64Chunk = pending.saveChunks[nextPart];
                     const total = pending.saveChunks.length;
-                    const nextJs = `javascript:window.__qolSaveChunk && window.__qolSaveChunk('${b64Key}', ${nextPart}, ${total}, '${b64Chunk}', '${reqId}', true);void(0);`;
                     try {
-                        _bridgePanel.SetURL(nextJs);
+                        _sendFragment("saveChunk", [b64Key, nextPart, total, b64Chunk, reqId, true]);
                     } catch (e) {
                         _finishRequest(reqId, new Error(`Failed to send save chunk ${nextPart}: ${e?.message || e}`), null);
                     }
@@ -357,9 +296,8 @@
                 const nextPart = pending.expectedPart;
                 if (nextPart < resp.total) {
                     _resetPendingTimer(pending, reqId);
-                    const nextChunkJs = `javascript:window.__qolNextChunk && window.__qolNextChunk('${reqId}', ${nextPart});void(0);`;
                     try {
-                        _bridgePanel.SetURL(nextChunkJs);
+                        _sendFragment("next", [reqId, nextPart]);
                     } catch (e) {
                         _finishRequest(reqId, new Error(`Failed to request chunk ${nextPart}: ${e?.message || e}`), null);
                     }
@@ -385,8 +323,10 @@
      */
     const _onHtmlTitle = (panel, title) => {
         if (!title || typeof title !== "string") return;
+        if (panel !== _bridgePanel) return;
 
-        if (title.indexOf("QOL_BRIDGE_READY") === 0) {
+        if (/^QOL_BRIDGE_READY:frag1(?:$|:)/.test(title)) {
+            if (_bridgeReady) return;
             _bridgeReady = true;
             _log("Bridge connected and ready.");
             _processQueue();
@@ -407,8 +347,25 @@
                 }
                 _watchdogTimer = null;
             }
+            _cachedPageRetryScheduled = false;
 
             _runAutoload();
+            return;
+        }
+
+        if (title.indexOf("QOL_BRIDGE_READY") === 0) {
+            if (_bridgeReady || _initAttempts >= MAX_INIT_ATTEMPTS) return;
+            if (!_oldPageLogged) {
+                _oldPageLogged = true;
+                _logWarn("Outdated cached bridge page: waiting for fragment protocol v1.");
+            }
+            if (!_cachedPageRetryScheduled && typeof $.Schedule === "function") {
+                _cachedPageRetryScheduled = true;
+                if (_watchdogTimer && typeof $.CancelScheduled === "function") {
+                    try { $.CancelScheduled(_watchdogTimer); } catch (_) {}
+                }
+                _watchdogTimer = $.Schedule(CACHED_PAGE_RETRY_SEC, _watchdogTick);
+            }
             return;
         }
 
@@ -422,33 +379,23 @@
             _handleResponse(title.slice(8));
             return;
         }
-
-        // Local directory listing page loaded (Index of C:/ in tests or dev)
-        if (!_isPageLoaded && (title.indexOf("Index of") === 0 || title.indexOf("Directory listing") === 0)) {
-            _isPageLoaded = true;
-            _log(`CEF directory loaded (${title.slice(0, 40)}), injecting bridge script...`);
-            _injectBridgeScript();
-        }
     };
 
     /**
      * Watchdog to verify the bridge achieves ready state after creation.
      */
     const _watchdogTick = () => {
+        _watchdogTimer = null;
+        _cachedPageRetryScheduled = false;
         if (_bridgeReady) return;
         _initAttempts++;
         if (_initAttempts < MAX_INIT_ATTEMPTS) {
-            if (_isPanelAlive(_bridgePanel) && typeof _bridgePanel.SetURL === "function") {
-                if (_isPageLoaded) {
-                    _log(`Watchdog: directory loaded but bridge not ready (attempt ${_initAttempts}/${MAX_INIT_ATTEMPTS}), re-injecting script...`);
-                    _injectBridgeScript();
-                } else {
-                    _log(`Watchdog: bridge not ready yet (attempt ${_initAttempts}/${MAX_INIT_ATTEMPTS}), retrying URL navigation...`);
-                    _bridgePanel.SetURL(BRIDGE_LOCAL_URL);
-                }
-            }
             if (typeof $.Schedule === "function") {
                 _watchdogTimer = $.Schedule(WATCHDOG_INTERVAL_SEC, _watchdogTick);
+            }
+            if (_isPanelAlive(_bridgePanel) && typeof _bridgePanel.SetURL === "function") {
+                _log(`Watchdog: bridge not ready yet (attempt ${_initAttempts}/${MAX_INIT_ATTEMPTS}), retrying URL navigation...`);
+                _bridgePanel.SetURL(BRIDGE_URL);
             }
         } else {
             _logWarn(`Watchdog: bridge failed to initialize after ${MAX_INIT_ATTEMPTS} attempts.`);
@@ -476,6 +423,7 @@
                 callback,
                 timer: null,
                 expectedPart: 0,
+                lastResponseSeq: 0,
                 chunks: null,
                 start: () => {
                     if (!_isPanelAlive(_bridgePanel) || typeof _bridgePanel.SetURL !== "function") {
@@ -574,12 +522,14 @@
         }
 
         _bridgeReady = false;
-        _isPageLoaded = false;
+        _initAttempts = 0;
+        _oldPageLogged = false;
+        _cachedPageRetryScheduled = false;
 
         if (typeof panel.SetURL === "function") {
             try {
-                panel.SetURL(BRIDGE_LOCAL_URL);
-                _log(`Mounting bridge URL: ${BRIDGE_LOCAL_URL}`);
+                panel.SetURL(BRIDGE_URL);
+                _log(`Mounting bridge URL: ${BRIDGE_URL}`);
             } catch (e) {
                 _logWarn(`panel.SetURL failed: ${e?.message || e}`);
             }
@@ -605,7 +555,7 @@
         if (valStr.length <= CHUNK_SIZE) {
             const b64Val = _utf8ToBase64(valStr);
             return _sendRequest((id) => {
-                _bridgePanel.SetURL(`javascript:window.__qolSave && window.__qolSave('${b64Key}', '${b64Val}', '${id}', true);void(0);`);
+                _sendFragment("save", [b64Key, b64Val, id, true]);
             }, callback);
         }
 
@@ -622,7 +572,7 @@
 
         return _sendRequest((id) => {
             const total = chunks.length;
-            _bridgePanel.SetURL(`javascript:window.__qolSaveChunk && window.__qolSaveChunk('${b64Key}', 0, ${total}, '${chunks[0]}', '${id}', true);void(0);`);
+            _sendFragment("saveChunk", [b64Key, 0, total, chunks[0], id, true]);
         }, callback, { b64Key, saveChunks: chunks });
     };
 
@@ -632,7 +582,7 @@
     const load = (key, callback) => {
         const b64Key = _utf8ToBase64(String(key));
         return _sendRequest((id) => {
-            _bridgePanel.SetURL(`javascript:window.__qolLoad && window.__qolLoad('${b64Key}', '${id}', true);void(0);`);
+            _sendFragment("load", [b64Key, id, true]);
         }, callback);
     };
 
@@ -642,7 +592,7 @@
     const remove = (key, callback) => {
         const b64Key = _utf8ToBase64(String(key));
         return _sendRequest((id) => {
-            _bridgePanel.SetURL(`javascript:window.__qolRemove && window.__qolRemove('${b64Key}', '${id}', true);void(0);`);
+            _sendFragment("remove", [b64Key, id, true]);
         }, callback);
     };
 
@@ -728,7 +678,6 @@
         loadSettings,
         clearSettings,
         _onHtmlTitle,
-        _injectBridgeScript,
     };
 
     Q.core.storageBridge = storageBridgeApi;
