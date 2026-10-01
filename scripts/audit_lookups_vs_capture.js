@@ -57,11 +57,15 @@ function main() {
     }
 
     const cap = JSON.parse(fs.readFileSync(capturePath, "utf8"));
-    if (!cap.byId) {
-        process.stderr.write("capture has no id table — is it a summary capture?\n");
+    const real = new Set(
+        Array.isArray(cap.uniqueIds)
+            ? cap.uniqueIds
+            : (cap.byId ? Object.keys(cap.byId) : [])
+    );
+    if (real.size === 0) {
+        process.stderr.write("capture has no id table (neither uniqueIds nor byId) — is it a summary capture?\n");
         process.exit(2);
     }
-    const real = new Set(Object.keys(cap.byId));
 
     const scriptsRoot = path.join(__dirname, "..", "panorama", "scripts");
     const found = new Map();   // id -> Set of "file:line"
@@ -85,7 +89,8 @@ function main() {
         .filter(([id]) => !real.has(id))
         .sort((a, b) => b[1].size - a[1].size);
 
-    process.stdout.write(`capture: ${cap.panels} panels, ${real.size} distinct ids (${cap.capturedFrom || capturePath})\n`);
+    const totalPanels = cap.summary?.totalPanels || cap.panels || "unknown";
+    process.stdout.write(`capture: ${totalPanels} panels, ${real.size} distinct ids (${cap.capturedFrom || capturePath})\n`);
     if (cap.end && cap.end.idsCapped) {
         // Without this the output is untrustworthy: a capped id list makes present ids
         // look absent, which is exactly the wrong direction for this check.
