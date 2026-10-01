@@ -10,11 +10,13 @@ Each realm owns a direct child `CitadelHTMLPanel` named `QOLStorageBridge` and i
 
 ## Transport
 
-Commands are serialized through a FIFO queue and sent with `SetURL("javascript:...")`. Responses arrive through `HTMLTitle` as `QOL_RES:` JSON. Keys and outbound values use UTF-8 Base64, including characters such as `#` that otherwise affect URL parsing.
+Commands are serialized through a FIFO queue and sent by changing the HTTPS page's fragment: `SetURL(BRIDGE_URL + "#" + encodeURIComponent(JSON.stringify({ q, f, a })))`. Each message has a unique string `q`; `f` selects `save`, `saveChunk`, `load`, `next`, or `remove`, and `a` carries the existing operation arguments. Keys and outbound values remain UTF-8 Base64. Fragment changes fire `hashchange` without reloading the page or sending the payload to the server. The page ignores a fragment present at initial load, so navigation cannot replay an old request. Deadlock's HTTPS-only `SetURL` filter no longer permits script injection or local-file fallbacks.
+
+Readiness requires `QOL_BRIDGE_READY:frag1`, identifying fragment protocol version 1. A plain `QOL_BRIDGE_READY` comes from an old cached page and must not release queued commands. The bridge logs the unsupported page once and retries the bare HTTPS URL after one second, allowing the hosted service worker to activate. These retries share the startup watchdog's five-attempt limit; exhaustion fails remaining queued requests. Duplicate ready titles are harmless. Responses arrive through `HTMLTitle` as `QOL_RES:` JSON; request IDs reject stale replies and response sequence numbers suppress duplicate chunk titles.
 
 Large transfers use sequential chunks and acknowledgment handshakes. Outbound chunks are at most 1500 UTF-16 code units; boundaries move back one unit when necessary to preserve a surrogate pair. Incoming load chunks enforce the expected part order. CEF-side buffers expire after 30 seconds.
 
-Requests have a five-second timeout, reset on dispatch and chunk progress. A queued request that expires is removed and cannot execute after a later connection. Timing out a command already sent does not undo a write CEF may have performed. A 20-second startup watchdog retries navigation up to the configured five-attempt limit.
+Requests have a five-second timeout, reset on dispatch and chunk progress. A queued request that expires is removed and cannot execute after a later connection. Timing out a command already sent does not undo a write CEF may have performed. A 20-second startup watchdog retries ordinary navigation failures up to the same five-attempt limit.
 
 ## Restore and save behavior
 
@@ -40,4 +42,6 @@ High-level callbacks use `(error, result)`. Supplying a callback attaches a Prom
 
 ## Verification limits
 
-Offline tests can verify queue ordering, parser boundaries, stale-response rejection, callback settlement, and execution of embedded bridge JavaScript against a storage model. They do not prove native CEF title delivery, the browser profile's persistence across game updates, or recovery after closing the client. Loading the bridge page may require network access. No latency, quota, or offline-availability guarantee follows from a passing simulation. A freshly repacked in-game restart/save/restore check remains necessary.
+Run `node --test tests/storage_bridge.test.js` for focused offline verification. The tests execute the real page script from `tests/fixtures/qollock_bridge.html`, a verbatim mirror of the hosted `qollock-updates/bridge.html`. Keep that fixture synchronized when the hosted protocol changes. The CEF fake models HTTPS-only navigation, fragment-only `hashchange`, ignored initial fragments, duplicate title delivery, and disk-backed localStorage across simulated JavaScript restarts. Regressions cover round trips, Unicode-safe chunking, settings larger than 30 KB, cached-page recovery and exhaustion, FIFO ordering, timeouts, parser boundaries, stale-response rejection, callback settlement, and edit-safe restore.
+
+These tests do not prove native CEF title delivery, actual service-worker activation, the browser profile's persistence across game updates, or recovery after closing the client. Loading the bridge page may require network access. No latency, quota, or offline-availability guarantee follows from a passing simulation. After a maintainer repack, verify saving and restoring through a full in-game restart, including startup with an old cached page.

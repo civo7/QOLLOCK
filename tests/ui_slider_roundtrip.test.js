@@ -70,10 +70,12 @@ test("typed settings edit invalidates HUD startup restore before the save deboun
     let requestUrl = "";
     panel.SetURL = (url) => { requestUrl = url; };
     bridge.enableAutoload(true);
-    bridge._onHtmlTitle(panel, "QOL_BRIDGE_READY");
-    assert.match(requestUrl, /__qolLoad/);
-    const request = requestUrl.match(/'(qol_\d+_\d+)'/);
-    assert.ok(request, "startup load is actually pending");
+    bridge._onHtmlTitle(panel, "QOL_BRIDGE_READY:frag1");
+    assert.ok(requestUrl.startsWith("https://predi-i.github.io/qollock-updates/bridge.html#"));
+    const request = JSON.parse(decodeURIComponent(requestUrl.slice(requestUrl.indexOf("#") + 1)));
+    assert.equal(request.f, "load");
+    const requestId = request.a[1];
+    assert.match(requestId, /^qol_\d+_\d+$/, "startup load is actually pending");
     const rawBefore = hud.root.GetAttributeString("Deadlock_Mod_Settings_v1", "");
     const stampBefore = hudGlobal.QOL.core.persistence.getConfigChangeStamp(hud.root);
 
@@ -88,7 +90,7 @@ test("typed settings edit invalidates HUD startup restore before the save deboun
         "SaveAndSync has not run yet");
 
     bridge._onHtmlTitle(panel, "QOL_RES:" + JSON.stringify({
-        id: request[1], ok: true,
+        id: requestId, ok: true,
         data: hudGlobal.WrapConfigForStorage({ TOP_BAR_SCALE: 0.5 }),
     }));
     await Promise.resolve();
