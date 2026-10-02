@@ -14,22 +14,7 @@
 	</styles>
 	<scripts>
 	</scripts>
-	<!-- Vanilla leaves this panel hit-testable and declares no click handler on it:
-	     the C++ side binds the player callout ("<hero> is Missing") to the panel
-	     itself. So hittest="false" here silently removed callouts while leaving
-	     items hoverable, because hittestchildren defaults to true.
-
-	     That attribute arrived via 5366d75 -> 5cbf520 while chasing the top bar
-	     swallowing minimap clicks. The geometry cause of that has since been fixed
-	     separately (b65b3c8 shrank .wants_scoreboard CitadelHudTopBarPlayer from
-	     600px to 230px; base/citadel_hud_top_bar.css now matches vanilla again), so
-	     the hit-test workaround is no longer carrying its own weight.
-
-	     Do not reintroduce it here. If the top bar starts eating minimap input
-	     again, fix the panel that actually overlaps rather than the whole player
-	     panel — and note that CSS `hittest` is NOT a safe tool for it: vanilla
-	     styles never use that property once, so it may simply be ignored. -->
-	<CitadelHudTopBarPlayer>
+	<CitadelHudTopBarPlayer hittest="false">
 		<GlobalClassListener classes="gDetailView" />
 		<!-- ============================================================= -->
 		<!-- QOLLOCK CUSTOM: Permanent top bar nickname display            -->
@@ -59,7 +44,7 @@
 			<Panel id="HeroContents" class="HeroContents">
 				<Panel class="SoulsValueContainer">
 					<Panel class="SoulsImage" />
-					<Label id="SoulsValue" class="SoulsValue" html="true" text="{g:citadel_thousands:gold}" />
+					<Label id="SoulsValue" class="SoulsValue" html="true" text="{s:gold}" />
 				</Panel>
 				<Panel id="HeroImageArea">
 					<Panel class="HeroContentsCoinBackground" />
@@ -74,7 +59,9 @@
 						<Label class="HeroLevelLabel" text="{i:player_level}" />
 					</Panel>
 					<Panel id="HealthBar">
-						<ProgressBar id="HeroHealth" min="0" max="1" vertical="true" />
+						<Panel id="HealthBar_Contents">
+							<Panel id="HealthBar_Fill" />
+						</Panel>
 						<Panel id="HealthBar_Border" />
 					</Panel>
 					<Panel class="DeathStatus">
@@ -176,7 +163,7 @@
 				<Label id="SpentSoulDisplay" class="SpentSoulDisplay" text="-" />
 			</Panel>
 			<Panel class="LeftRightFlow AlignHorizontalCenter SPMContainer">
-				<Label id="HiddenGoldValue" class="hiddenGoldValue" text="{i:gold}" />
+				<Label id="HiddenGoldValue" class="hiddenGoldValue" html="true" text="{s:gold}" />
 				<Label id="PlayerSPMDisplay" class="playerSPMDisplay" text="0/m" />
 			</Panel>
 			<!-- ============================================================= -->

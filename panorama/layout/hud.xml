@@ -47,8 +47,8 @@
 		<!-- ============================================================= -->
 		<include src="s2r://panorama/scripts/ql_shared_presets.vjs_c" />
 		<include src="s2r://panorama/scripts/ql_bridge.vjs_c" />
-			<include src="s2r://panorama/scripts/ql_state.vjs_c" />
-			<include src="s2r://panorama/scripts/ql_panelcache.vjs_c" />
+		<include src="s2r://panorama/scripts/ql_state.vjs_c" />
+		<include src="s2r://panorama/scripts/ql_panelcache.vjs_c" />
 		<include src="s2r://panorama/scripts/ql_config.vjs_c" />
 		<include src="s2r://panorama/scripts/ql_recent_purchases_data.vjs_c" />
 		<include src="s2r://panorama/scripts/ql_minimap_crate_data.vjs_c" />

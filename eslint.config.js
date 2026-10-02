@@ -469,6 +469,7 @@ module.exports = [
         ignores: [
             "node_modules/**",
             "build_mod/**",
+            "scripts/game_update_runs/**",
             "scripts/simulator/perf/runs/**",
             "tools/local_chat_translation/**",
             "_restore_*/**",
