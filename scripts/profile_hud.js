@@ -305,8 +305,9 @@ function main() {
             process.stderr.write(`[profiler] FATAL: could not parse ${treeArg}: ${e.message}\n`);
             process.exit(2);
         }
-        if (!capturedTree || capturedTree.kind === "summary" || !capturedTree.root ||
-            typeof capturedTree.root !== "object" || Array.isArray(capturedTree.root)) {
+        const rootNode = capturedTree ? (capturedTree.domTree || capturedTree.root) : null;
+        if (!capturedTree || capturedTree.kind === "summary" || !rootNode ||
+            typeof rootNode !== "object" || Array.isArray(rootNode)) {
             process.stderr.write(`[profiler] FATAL: ${treeArg} is not a full per-panel tree. ` +
                 "Aggregate panel summaries have no ancestry and cannot be used with --tree.\n");
             process.exit(2);

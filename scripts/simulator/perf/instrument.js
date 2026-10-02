@@ -39,19 +39,16 @@ let _installed = false;
 function walkCount(root, id) {
     const stack = [];
     for (let i = root._children.length - 1; i >= 0; i--) stack.push(root._children[i]);
-    let found = null;
     let visited = 0;
-    let duplicates = 0;
     while (stack.length > 0) {
         const node = stack.pop();
         visited++;
         if (node.id === id) {
-            if (found === null) found = node;
-            else duplicates++;
+            return { found: node, visited };
         }
         for (let i = node._children.length - 1; i >= 0; i--) stack.push(node._children[i]);
     }
-    return { found, visited, duplicates };
+    return { found: null, visited };
 }
 
 function install() {
@@ -62,9 +59,18 @@ function install() {
     Panel.prototype.FindChildTraverse = function (id) {
         this._assertValid("FindChildTraverse");
         if (!id) return null;
-        const { found, visited, duplicates } = walkCount(this, id);
+        const { found, visited } = walkCount(this, id);
         counters.recordTraverse(id, visited, !!found);
-        if (duplicates > 0 && this._doc) this._doc._warnDuplicateId(id, duplicates + 1);
+        if (typeof counters.onTraverse === "function") {
+            counters.onTraverse({
+                type: "FindChildTraverse",
+                target: id,
+                label: counters.label,
+                rootPanel: this,
+                found,
+                visited
+            });
+        }
         return found;
     };
 
@@ -82,6 +88,16 @@ function install() {
             for (let i = node._children.length - 1; i >= 0; i--) stack.push(node._children[i]);
         }
         counters.recordClassTraverse(visited);
+        if (typeof counters.onClassTraverse === "function") {
+            counters.onClassTraverse({
+                type: "FindChildrenWithClassTraverse",
+                target: className,
+                label: counters.label,
+                rootPanel: this,
+                matches: out.length,
+                visited
+            });
+        }
         return out;
     };
 
@@ -91,7 +107,18 @@ function install() {
     Panel.prototype.FindChild = function (id) {
         counters.add("traverseCalls", 1);
         counters.add("traverseNodes", this._children.length);
-        return origFindChild.call(this, id);
+        const res = origFindChild.call(this, id);
+        if (typeof counters.onFindChild === "function") {
+            counters.onFindChild({
+                type: "FindChild",
+                target: id,
+                label: counters.label,
+                rootPanel: this,
+                found: res,
+                visited: this._children.length
+            });
+        }
+        return res;
     };
 
     // ── Classes ───────────────────────────────────────────────────────────

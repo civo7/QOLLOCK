@@ -384,8 +384,9 @@ function buildMatchHud(doc, { players = 12, damageNumbers = 24, dataFeed = 6, ch
  */
 function buildCapturedHud(doc, captured) {
     const notes = [];
-    if (!captured || captured.kind === "summary" || !captured.root ||
-        typeof captured.root !== "object" || Array.isArray(captured.root)) {
+    const rootNode = captured ? (captured.domTree || captured.root) : null;
+    if (!captured || captured.kind === "summary" || !rootNode ||
+        typeof rootNode !== "object" || Array.isArray(rootNode)) {
         throw new Error("[hud_tree] a full per-panel tree is required; aggregate summaries contain no ancestry");
     }
 
@@ -397,21 +398,80 @@ function buildCapturedHud(doc, captured) {
         notes.push("capture was depth-clipped — deep subtrees are missing");
     }
 
-    const hud = doc.root;
-    if (captured.root.id) hud.id = captured.root.id;
-    for (const cls of captured.root.classes || []) hud.AddClass(cls);
-
     let panels = 1;
-    // Iterative to survive a deep real tree without blowing the JS stack.
-    const stack = [[captured.root, hud]];
-    while (stack.length > 0) {
-        const [node, parent] = stack.pop();
-        for (const child of node.children || []) {
-            const panel = parent.addChild(
+    const hudNode = (rootNode.id === "CitadelHudRoot" && (rootNode.children || []).find((c) => c.id === "Hud"))
+        ? rootNode.children.find((c) => c.id === "Hud")
+        : (rootNode.id === "Hud" ? rootNode : null);
+
+    if (hudNode && hudNode !== rootNode) {
+        // Captured tree is anchored at CitadelHudRoot.
+        // Map CitadelHudRoot to doc.absRoot and Hud child to doc.root (context panel).
+        doc.absRoot.id = rootNode.id || "CitadelHudRoot";
+        doc.absRoot.paneltype = rootNode.type || "Panel";
+        for (const cls of rootNode.classes || []) doc.absRoot.AddClass(cls);
+        if (rootNode.breadcrumbs) doc.absRoot.breadcrumbs = rootNode.breadcrumbs;
+
+        const hud = doc.root;
+        hud.id = hudNode.id || "Hud";
+        hud.paneltype = hudNode.type || "CitadelHud";
+        for (const cls of hudNode.classes || []) hud.AddClass(cls);
+        if (hudNode.breadcrumbs) hud.breadcrumbs = hudNode.breadcrumbs;
+
+        // Mount sibling children of CitadelHudRoot (except the Hud child itself) to doc.absRoot
+        for (const child of rootNode.children || []) {
+            if (child === hudNode) continue;
+            const siblingPanel = doc.absRoot.addChild(
                 doc.create(child.type || "Panel", { id: child.id || "", classes: child.classes || [] })
             );
+            if (child.breadcrumbs) siblingPanel.breadcrumbs = child.breadcrumbs;
             panels++;
-            if (child.children && child.children.length > 0) stack.push([child, panel]);
+            if (child.children && child.children.length > 0) {
+                const stack = [[child, siblingPanel]];
+                while (stack.length > 0) {
+                    const [n, p] = stack.pop();
+                    for (const c of n.children || []) {
+                        const cp = p.addChild(
+                            doc.create(c.type || "Panel", { id: c.id || "", classes: c.classes || [] })
+                        );
+                        if (c.breadcrumbs) cp.breadcrumbs = c.breadcrumbs;
+                        panels++;
+                        if (c.children && c.children.length > 0) stack.push([c, cp]);
+                    }
+                }
+            }
+        }
+
+        // Populate children under doc.root (Hud)
+        const stack = [[hudNode, hud]];
+        while (stack.length > 0) {
+            const [node, parent] = stack.pop();
+            for (const child of node.children || []) {
+                const panel = parent.addChild(
+                    doc.create(child.type || "Panel", { id: child.id || "", classes: child.classes || [] })
+                );
+                if (child.breadcrumbs) panel.breadcrumbs = child.breadcrumbs;
+                panels++;
+                if (child.children && child.children.length > 0) stack.push([child, panel]);
+            }
+        }
+    } else {
+        const hud = doc.root;
+        if (rootNode.id) hud.id = rootNode.id;
+        if (rootNode.type) hud.paneltype = rootNode.type;
+        for (const cls of rootNode.classes || []) hud.AddClass(cls);
+        if (rootNode.breadcrumbs) hud.breadcrumbs = rootNode.breadcrumbs;
+
+        const stack = [[rootNode, hud]];
+        while (stack.length > 0) {
+            const [node, parent] = stack.pop();
+            for (const child of node.children || []) {
+                const panel = parent.addChild(
+                    doc.create(child.type || "Panel", { id: child.id || "", classes: child.classes || [] })
+                );
+                if (child.breadcrumbs) panel.breadcrumbs = child.breadcrumbs;
+                panels++;
+                if (child.children && child.children.length > 0) stack.push([child, panel]);
+            }
         }
     }
 

@@ -227,13 +227,20 @@ function createProfiledHud({
             : buildMatchHud(doc, { players, damageNumbers });
     });
 
+    wrapScheduledLoops(sandbox);
+
     const scripts = layout.hudScripts();
     if (scripts.missing.length > 0) {
         const list = scripts.missing.map((m) => `${m.src} (hud.xml:${m.line})`).join(", ");
         throw new Error(`[profiler] hud.xml references missing scripts: ${list}`);
     }
     silently(() => {
-        for (const s of scripts.scripts) sandbox.load(s.absPath);
+        for (const s of scripts.scripts) {
+            sandbox.load(s.absPath);
+            if (s.absPath.includes("ql_scheduler")) {
+                wrapPollLoops(sandbox);
+            }
+        }
     });
 
     if (sandbox.loadErrors.length > 0) {

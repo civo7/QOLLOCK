@@ -103,6 +103,20 @@ class Panel {
         return this._parent || null;
     }
 
+    getBreadcrumbs() {
+        if (this.breadcrumbs) return this.breadcrumbs;
+        const parts = [];
+        let cur = this;
+        while (cur) {
+            let tag = cur.type || "Panel";
+            if (cur.id) tag += "#" + cur.id;
+            if (cur._classes && cur._classes.size > 0) tag += "." + [...cur._classes].join(".");
+            parts.unshift(tag);
+            cur = cur._parent;
+        }
+        return parts.join(" > ");
+    }
+
     GetChildCount() {
         this._assertValid("GetChildCount");
         return this._children.length;
@@ -187,22 +201,14 @@ class Panel {
         const stack = [];
         // Push in reverse so we pop children in declaration order.
         for (let i = this._children.length - 1; i >= 0; i--) stack.push(this._children[i]);
-        let found = null;
-        let duplicates = 0;
         while (stack.length > 0) {
             const node = stack.pop();
             if (node.id === id) {
-                if (found === null) found = node;
-                else duplicates++;
-                // Keep scanning only to count duplicates — cheap, and duplicate
-                // ids are a real Panorama footgun worth surfacing.
+                return node;
             }
             for (let i = node._children.length - 1; i >= 0; i--) stack.push(node._children[i]);
         }
-        if (duplicates > 0 && this._doc) {
-            this._doc._warnDuplicateId(id, duplicates + 1);
-        }
-        return found;
+        return null;
     }
 
     FindChildInLayoutFile(id) {
