@@ -8,7 +8,7 @@
 
     // Increment this for every public QOLLOCK release, independently from the
     // Settings schema/version. Publish the same number through qollock-updates.
-    var QOL_UPDATE_MARKER = 6;
+    var QOL_UPDATE_MARKER = 7;
     var MARKER_BASE_URL = "https://raw.githubusercontent.com/Predi-i/qollock-updates/main/markers/";
     var CURRENT_MAX_RATIO = 1.35;
     var OUTDATED_MIN_RATIO = 4.0;

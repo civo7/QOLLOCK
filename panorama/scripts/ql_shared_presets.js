@@ -34,7 +34,7 @@
 "use strict";
 
 // Shared preset source-of-truth used by ql_settings.js and ql_core.js.
-var QOL_SCHEMA_SEMVER = "4.0.3";
+var QOL_SCHEMA_SEMVER = "4.0.4";
 var QOL_SCHEMA_WIRE_VERSION = 2;
 
 // ---- Shared storage keys ----
@@ -1781,6 +1781,8 @@ var QOL_COMPACT_SCHEMA_4_0_1 = QOL_COMPACT_SCHEMA_UTILS.AppendUniqueSchemaFields
 var QOL_COMPACT_SCHEMA_4_0_2 = QOL_COMPACT_SCHEMA_4_0_1;
 // 4.0.3 changes no payload fields; retain the 4.0.2 wire layout.
 var QOL_COMPACT_SCHEMA_4_0_3 = QOL_COMPACT_SCHEMA_4_0_2;
+// 4.0.4 changes no payload fields; retain the 4.0.3 wire layout.
+var QOL_COMPACT_SCHEMA_4_0_4 = QOL_COMPACT_SCHEMA_4_0_3;
 
 
 var QOL_LATEST_COMPACT_SEMVER = QOL_SCHEMA_SEMVER;
@@ -2070,6 +2072,10 @@ var QOL_COMPACT_SCHEMA_REGISTRY = {
     "4.0.3": {
         wireVersion: QOL_COMPACT_WIRE_VERSION_2_0_1,
         schema: QOL_COMPACT_SCHEMA_4_0_3
+    },
+    "4.0.4": {
+        wireVersion: QOL_COMPACT_WIRE_VERSION_2_0_1,
+        schema: QOL_COMPACT_SCHEMA_4_0_4
     }
 };
 var QOL_COMPACT_SCHEMA_WIRE_TO_SEMVER = (typeof QOL_CODEC === "object" && QOL_CODEC && typeof QOL_CODEC.BuildWireToSemver === "function")
