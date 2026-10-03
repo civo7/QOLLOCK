@@ -57,7 +57,24 @@ test("rejuvenator capture timer stays visible while native charges remain", () =
     feature.onDisable();
 });
 
-test("rejuvenator capture timer ends early when native charges reach zero", () => {
+test("rejuvenator capture timer survives transient zero charges while the native buff remains", () => {
+    const { hud, gameTime, friendly, buff, buffTime, feature } = createCaptureHarness();
+
+    friendly.RemoveClass("RejuvCount_3");
+    friendly.AddClass("RejuvCount_0");
+    gameTime.text = "20:02";
+    hud.clock.advance(1200);
+
+    assert.equal(buff.style.opacity, "1.00");
+    assert.equal(buff.BHasClass("pop-out"), true);
+    assert.equal(buff.BHasClass("pop-in"), false);
+    assert.equal(buffTime.text, "2:58");
+    assert.deepEqual(hud.clock.errors, []);
+
+    feature.onDisable();
+});
+
+test("rejuvenator capture timer ends early when charges and native buff both clear", () => {
     const { hud, gameTime, friendly, timer, buff, feature } = createCaptureHarness();
 
     friendly.RemoveClass("RejuvCount_3");

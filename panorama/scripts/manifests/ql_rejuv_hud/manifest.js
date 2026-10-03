@@ -128,6 +128,7 @@
 
             function RejuvHasAnyCharges(state, root, nowMs) { return RejuvReadChargeCount(state, root, nowMs) > 0; }
             function RejuvGetChargeCount(state, root, nowMs) { return RejuvReadChargeCount(state, root, nowMs); }
+            function RejuvHasNativeBuff(state) { var timer = state && IsPanelValid(state.cacheRejuvTimer) ? state.cacheRejuvTimer : null; try { return !!(timer && timer.BHasClass && timer.BHasClass("has_rejuv")); } catch(e) { return false; } }
 
             function RejuvFindMidBossButton(root) { if (!root||!root.FindChildrenWithClassTraverse) return null; var all = root.FindChildrenWithClassTraverse("mid_boss")||[]; for (var i = 0; i < all.length; i++) { var p = all[i]; if (!IsPanelValid(p)) continue; if (p.BHasClass && p.BHasClass("map_button")) return p; if (PanelHasClassToken(p,"map_button")) return p; } return null; }
 
@@ -196,9 +197,10 @@
                     if (remaining <= 0) { RejuvShowSpawn(state, root); } else { state.counter = remaining; RejuvSetLabels(state, root, FormatClockMmSs(remaining), REJUV_SEQ[state.idx].num); var _rjHUD = GetRejuvPanel(state,root,"rejuvHUD","RejuvHUD"); ApplyRedYellowPanelClasses(_rjHUD, remaining < 10 && (remaining%2)===1, remaining < 20 && (remaining%2)===1); }
                 }
 
-                // The capture buff ends on either signal: its three-minute duration
-                // expires, or both teams' native RejuvCount_N charge tokens reach zero.
-                if (state.buffStartTime > 0) { var elapsed = nowSec - state.buffStartTime; state.buffCounter = Math.max(0, REJUV_DURATION_SEC - elapsed); var _rbt = GetRejuvPanel(state,root,"rejuvBuffTime","RejuvTimeBuff"); var _btt = FormatClockMmSs(state.buffCounter); if (_rbt && _rbt.text !== _btt) _rbt.text = _btt; var _lcc = RejuvGetChargeCount(state, root, nowMs); if (_lcc <= 0 || state.buffCounter <= 0) RejuvEndBuff(state, root, nowMs, false); }
+                // RejuvCount_N can briefly read as zero immediately after capture.
+                // Only end early when the native timer also drops has_rejuv; either
+                // live signal is enough to retain the three-minute countdown.
+                if (state.buffStartTime > 0) { var elapsed = nowSec - state.buffStartTime; state.buffCounter = Math.max(0, REJUV_DURATION_SEC - elapsed); var _rbt = GetRejuvPanel(state,root,"rejuvBuffTime","RejuvTimeBuff"); var _btt = FormatClockMmSs(state.buffCounter); if (_rbt && _rbt.text !== _btt) _rbt.text = _btt; var _lcc = RejuvGetChargeCount(state, root, nowMs); var _nativeBuffActive = RejuvHasNativeBuff(state); if ((!_nativeBuffActive && _lcc <= 0) || state.buffCounter <= 0) RejuvEndBuff(state, root, nowMs, false); }
 
                 // Bridge buff HUD
                 var remainingBridge = BRIDGE_DURATION_SEC - (nowSec % BRIDGE_DURATION_SEC); var bridgeText = FormatClockMmSs(remainingBridge);
