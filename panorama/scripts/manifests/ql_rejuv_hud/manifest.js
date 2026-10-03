@@ -59,7 +59,6 @@
 
             // ── Constants ──
             var BRIDGE_DURATION_SEC = 300;
-            var BUFF_LOCKOUT_SEC = 120;
             var REJUV_DURATION_SEC = 180;
             var REJUV_SCAN_INTERVAL_MS = 3000;
             var REJUV_SCAN_INTERVAL_FAST_MS = 1000;
@@ -82,7 +81,7 @@
 
             function EnsureRejuvState() {
                 if (State.rejuvState) return State.rejuvState;
-                State.rejuvState = { running: false, wasInHideout: false, idx: 0, counter: 0, phaseStart: 0, claimCount: 0, spawnWaiting: false, lastScanFound: false, lastRejuvChargeCount: 0, lastMidBossActive: false, buffStartTime: 0, buffCounter: 0, lastBuffGameSec: -BUFF_LOCKOUT_SEC, lastSec: -1, lastGlobalSec: -1, lastRuntimeSec: -1, lastRuntimeFeatureSig: "", nextScanMs: 0, rotatingUntilMs: 0, rejuvBuffHideAtMs: 0, lastChargesLookupMs: 0, lastChargeCountReadMs: 0, lastChargeCountValue: 0, nextMidBossLookupMs: 0, cacheTopBar: null, cacheCharges: null, cacheFriendly: null, cacheEnemy: null, cacheRejuvTimer: null, cacheMidBossButton: null, panels: {} };
+                State.rejuvState = { running: false, wasInHideout: false, idx: 0, counter: 0, phaseStart: 0, claimCount: 0, spawnWaiting: false, lastScanFound: false, lastRejuvChargeCount: 0, lastMidBossActive: false, buffStartTime: 0, buffCounter: 0, lastSec: -1, lastGlobalSec: -1, lastRuntimeSec: -1, lastRuntimeFeatureSig: "", nextScanMs: 0, rotatingUntilMs: 0, rejuvBuffHideAtMs: 0, lastChargesLookupMs: 0, lastChargeCountReadMs: 0, lastChargeCountValue: 0, nextMidBossLookupMs: 0, cacheTopBar: null, cacheCharges: null, cacheFriendly: null, cacheEnemy: null, cacheRejuvTimer: null, cacheMidBossButton: null, panels: {} };
                 return State.rejuvState;
             }
 
@@ -137,7 +136,7 @@
             function RejuvGetScanIntervalMs(state) { if (!state) return REJUV_SCAN_INTERVAL_MS; if (state.spawnWaiting || state.buffStartTime > 0) return REJUV_SCAN_INTERVAL_FAST_MS; return REJUV_SCAN_INTERVAL_MS; }
 
             function RejuvResetState(state, root, nowMs) {
-                state.running = false; state.idx = 0; state.counter = 0; state.phaseStart = 0; state.claimCount = 0; state.spawnWaiting = false; state.lastScanFound = false; state.lastRejuvChargeCount = 0; state.lastMidBossActive = false; state.lastBuffGameSec = -BUFF_LOCKOUT_SEC; state.lastSec = -1; state.lastGlobalSec = -1; state.lastRuntimeSec = -1; state.lastRuntimeFeatureSig = ""; state._cachedRuntimeFeatureSig = ""; state._cachedConfigRef = null; state.nextScanMs = nowMs + RejuvGetScanIntervalMs(state); state.rotatingUntilMs = 0; state.rejuvBuffHideAtMs = 0; state.lastChargesLookupMs = 0; state.lastChargeCountReadMs = 0; state.lastChargeCountValue = 0; state.nextMidBossLookupMs = 0; state._lastMidBossSpawned = undefined; state._lastHadRejuvPerTick = false; state.cacheTopBar = null; state.cacheCharges = null; state.cacheFriendly = null; state.cacheEnemy = null; state.cacheRejuvTimer = null; state.cacheMidBossButton = null;
+                state.running = false; state.idx = 0; state.counter = 0; state.phaseStart = 0; state.claimCount = 0; state.spawnWaiting = false; state.lastScanFound = false; state.lastRejuvChargeCount = 0; state.lastMidBossActive = false; state.lastSec = -1; state.lastGlobalSec = -1; state.lastRuntimeSec = -1; state.lastRuntimeFeatureSig = ""; state._cachedRuntimeFeatureSig = ""; state._cachedConfigRef = null; state.nextScanMs = nowMs + RejuvGetScanIntervalMs(state); state.rotatingUntilMs = 0; state.rejuvBuffHideAtMs = 0; state.lastChargesLookupMs = 0; state.lastChargeCountReadMs = 0; state.lastChargeCountValue = 0; state.nextMidBossLookupMs = 0; state._lastMidBossSpawned = undefined; state._lastHadRejuvPerTick = false; state.cacheTopBar = null; state.cacheCharges = null; state.cacheFriendly = null; state.cacheEnemy = null; state.cacheRejuvTimer = null; state.cacheMidBossButton = null;
                 if (Number(REJUV_SEQ[0].dur) <= 0) { RejuvShowSpawn(state, root); } else { RejuvSetLabels(state, root, FormatClockMmSs(REJUV_SEQ[0].dur), REJUV_SEQ[0].num); RejuvResetImage(state, root); }
                 RejuvEndBuff(state, root, nowMs, true);
             }
@@ -177,7 +176,7 @@
                 var midBossBtn = IsPanelValid(state.cacheMidBossButton) ? state.cacheMidBossButton : null;
                 if (midBossBtn) { var mbs = !!(midBossBtn.BHasClass && midBossBtn.BHasClass("midboss_spawned")); if (mbs !== state._lastMidBossSpawned) { state._lastMidBossSpawned = mbs; state.nextScanMs = 0; } }
                 var _rjv = IsPanelValid(state.cacheRejuvTimer) ? state.cacheRejuvTimer : null;
-                if (_rjv && _rjv.BHasClass) { var _hrn = _rjv.BHasClass("has_rejuv"); if (_hrn && !state._lastHadRejuvPerTick) { if (nowSec >= (state.lastBuffGameSec||0) + BUFF_LOCKOUT_SEC) { state.lastBuffGameSec = nowSec; RejuvStartBuff(state, root, nowSec, true); } } state._lastHadRejuvPerTick = _hrn; }
+                if (_rjv && _rjv.BHasClass) { var _hrn = _rjv.BHasClass("has_rejuv"); if (_hrn && !state._lastHadRejuvPerTick) RejuvStartBuff(state, root, nowSec, true); state._lastHadRejuvPerTick = _hrn; }
                 else { state._lastHadRejuvPerTick = false; }
 
                 // Fast-path early-exit
@@ -214,7 +213,7 @@
                     var found = RejuvHasAnyCharges(state, root, nowMs); var chargeCount = RejuvGetChargeCount(state, root, nowMs); var midBossActive = RejuvIsMidBossSpawned(state, root, nowMs);
                     if (state.lastMidBossActive && !midBossActive) { state.claimCount++; RejuvStartPhaseManual(state, root, state.claimCount > 2 ? 3 : state.claimCount, nowSec, nowMs); }
                     else if (state.spawnWaiting && found && !state.lastScanFound) { state.claimCount++; RejuvStartPhaseManual(state, root, state.claimCount > 2 ? 3 : state.claimCount, nowSec, nowMs); }
-                    if (((state.lastRejuvChargeCount||0) === 0 && chargeCount >= 1) && nowSec >= ((state.lastBuffGameSec||0) + BUFF_LOCKOUT_SEC)) { state.lastBuffGameSec = nowSec; RejuvStartBuff(state, root, nowSec, true); }
+                    if ((state.lastRejuvChargeCount||0) === 0 && chargeCount >= 1) RejuvStartBuff(state, root, nowSec, true);
                     state.lastScanFound = found; state.lastRejuvChargeCount = chargeCount; state.lastMidBossActive = midBossActive; state.nextScanMs = nowMs + RejuvGetScanIntervalMs(state);
                 }
                 state.lastRuntimeSec = nowSec; state.lastRuntimeFeatureSig = state._cachedRuntimeFeatureSig;

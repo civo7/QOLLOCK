@@ -108,6 +108,31 @@ test("rejuvenator capture timer ends early when charges and native buff both cle
     feature.onDisable();
 });
 
+test("rejuvenator capture timer rearms for a second claim inside the old lockout window", () => {
+    const { hud, gameTime, friendly, timer, buff, buffTime, feature } = createCaptureHarness();
+
+    friendly.RemoveClass("RejuvCount_3");
+    friendly.AddClass("RejuvCount_0");
+    timer.RemoveClass("has_rejuv");
+    gameTime.text = "20:02";
+    hud.clock.advance(1200);
+    assert.equal(buff.style.opacity, "0.00");
+
+    friendly.RemoveClass("RejuvCount_0");
+    friendly.AddClass("RejuvCount_3");
+    timer.AddClass("has_rejuv");
+    gameTime.text = "20:30";
+    hud.clock.advance(1200);
+
+    assert.equal(buff.style.opacity, "1.00");
+    assert.equal(buff.BHasClass("pop-out"), true);
+    assert.equal(buff.BHasClass("pop-in"), false);
+    assert.equal(buffTime.text, "3:00");
+    assert.deepEqual(hud.clock.errors, []);
+
+    feature.onDisable();
+});
+
 test("rejuvenator capture timer ends after 180 seconds while charges remain", () => {
     const { hud, gameTime, buff, feature } = createCaptureHarness();
 
