@@ -4,11 +4,6 @@ const test = require("node:test");
 const assert = require("node:assert/strict");
 const { createHud } = require("../scripts/simulator");
 
-function exposeClassTokens(panel) {
-    panel.GetClassTokens = () => panel.GetClasses().split(/\s+/).filter(Boolean);
-    return panel;
-}
-
 test("rejuvenator capture timer stays visible while current native charges remain", () => {
     const hud = createHud({ inHideout: false });
     hud.assertLoaded();
@@ -20,16 +15,18 @@ test("rejuvenator capture timer stays visible while current native charges remai
     gameTime.text = "20:00";
 
     const charges = $.CreatePanel("Panel", topBar, "RejuvenatorCharges");
-    const friendly = exposeClassTokens($.CreatePanel("Panel", charges, "RejuvenatorFriendly"));
+    const friendly = $.CreatePanel("Panel", charges, "RejuvenatorFriendly");
     friendly.AddClass("RejuvCount_3");
-    exposeClassTokens($.CreatePanel("Panel", friendly, "FriendlyRejuvIcon"));
+    $.CreatePanel("Panel", friendly, "FriendlyRejuvIcon");
     const timer = $.CreatePanel("Panel", charges, "RejuvenatorTimer");
-    const enemy = exposeClassTokens($.CreatePanel("Panel", charges, "RejuvenatorEnemy"));
+    const enemy = $.CreatePanel("Panel", charges, "RejuvenatorEnemy");
     enemy.AddClass("RejuvCount_0");
 
     const buff = $.CreatePanel("Panel", topBar, "RejuvBuff");
     const buffTime = $.CreatePanel("Label", buff, "RejuvTimeBuff");
 
+    assert.equal(typeof friendly.GetClassTokens, "undefined");
+    assert.equal(Array.from(Q.getPanelClassTokens(friendly)).join(" "), "RejuvCount_3");
     assert.equal(Q.getHighestRejuvChargeTokenOnPanel(friendly), 3);
 
     const feature = Q.core.FeatureRegistry.getManifest("ql_rejuv_hud").create({
@@ -58,7 +55,7 @@ test("rejuvenator charge helper retains the legacy class token", () => {
     hud.assertLoaded();
     const Q = hud.sandbox.global.QOL;
     const $ = hud.sandbox.global.$;
-    const panel = exposeClassTokens($.CreatePanel("Panel", hud.root, "LegacyRejuvCharges"));
+    const panel = $.CreatePanel("Panel", hud.root, "LegacyRejuvCharges");
     panel.AddClass("rejuv_charges_2");
 
     assert.equal(Q.getHighestRejuvChargeTokenOnPanel(panel), 2);

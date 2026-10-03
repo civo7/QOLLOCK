@@ -625,9 +625,8 @@
     const getPanelClassTokens = (panel) => {
         if (!isAlive(panel)) return [];
         try {
-            if (typeof panel.GetClassTokens === "function") {
-                const tokens = panel.GetClassTokens();
-                if (Array.isArray(tokens)) return tokens;
+            if (typeof panel.GetClasses === "function") {
+                return String(panel.GetClasses() || "").split(/\s+/).filter(Boolean);
             }
         } catch (_) {}
         return [];
