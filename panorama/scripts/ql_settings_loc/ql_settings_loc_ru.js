@@ -736,6 +736,7 @@
     "25%": "25%",
     "65%": "65%",
     "75%": "75%",
+    "Active Item Slots": "Слоты активных предметов",
     "Active Stats": "Активные статы",
     "Alert Threshold": "Порог оповещения",
     "Automatically selects 'With Party' in lane preference. Requires the party screen to be open.": "Автоматически выбирает «С группой» в предпочтении линии. Требуется открытый экран группы.",

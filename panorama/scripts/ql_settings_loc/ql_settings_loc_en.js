@@ -736,6 +736,7 @@
     "25%": "25%",
     "65%": "65%",
     "75%": "75%",
+    "Active Item Slots": "Active Item Slots",
     "Active Stats": "Active Stats",
     "Alert Threshold": "Alert Threshold",
     "Automatically selects 'With Party' in lane preference. Requires the party screen to be open.": "Automatically selects 'With Party' in lane preference. Requires the party screen to be open.",

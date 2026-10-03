@@ -8,6 +8,8 @@ for (const method of ["drag", "type"]) {
     for (const [key, feature, shape, rawValues, expectedValues] of [
         ["TOP_BAR_SCALE", "ql_topbar", "scale_0_5_1_5", [1.23, -9, 9], [1.25, 0.5, 1.5]],
         ["SOULS_X_OFFSET", "ql_souls", "offset_n1500_1500", [123, -9000, 9000], [125, -1500, 1500]],
+        ["ACTIVE_ITEMS_SCALE", "ql_bottom_bar", "size_50_250", [137, -9, 999], [137, 50, 250]],
+        ["ACTIVE_ITEMS_X_OFFSET", "ql_bottom_bar", "offset_n1500_1500_s1", [123, -9000, 9000], [123, -1500, 1500]],
     ]) {
         test(`settings ${method} ${key}: live values survive real export/import including bounds`, () => {
             const env = loadSettingsEnvironment();

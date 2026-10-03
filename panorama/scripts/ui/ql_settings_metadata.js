@@ -418,6 +418,9 @@ const SECTION_DESCRIPTION_OVERRIDE_BY_TAB_TITLE = {
     "Overlay|Zipline Boost": "An always visible zipline boost overlay.",
 };
 const SETTING_PERF_IMPACT_TIERS = {
+    ACTIVE_ITEMS_SCALE: "none",
+    ACTIVE_ITEMS_X_OFFSET: "none",
+    ACTIVE_ITEMS_Y_OFFSET: "none",
     ALT_ZOOM_DRAW_OVER_UI: "low",
     ALT_ZOOM_OPACITY: "none",
     AMMO_CURRENT_SCALE: "none",

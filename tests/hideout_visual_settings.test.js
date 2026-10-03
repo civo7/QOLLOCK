@@ -51,6 +51,41 @@ test("bottom bar reapplies unchanged settings to a replacement panel", () => {
     assert.deepEqual(hud.clock.errors, []);
 });
 
+test("active item slots scale and move precisely across panel replacement and reset", () => {
+    const hud = createHud({ inHideout: true });
+    hud.assertLoaded();
+    const { $, QOL: Q } = hud.sandbox.global;
+    const parent = $.CreatePanel("Panel", hud.root, "AbilitiesContainer");
+    const first = $.CreatePanel("Panel", parent, "ActiveAbilitiesMenu");
+    hud.clock.advance(600);
+    assert.equal(first.style.uiScale, undefined, "native scale remains CSS-owned at the default");
+    assert.equal(first.style.x, undefined, "native X remains CSS-owned at the default");
+    assert.equal(first.style.y, undefined, "native Y remains CSS-owned at the default");
+
+    Q.core.ConfigStore.set("ql_bottom_bar", "ACTIVE_ITEMS_SCALE", 137);
+    Q.core.ConfigStore.set("ql_bottom_bar", "ACTIVE_ITEMS_X_OFFSET", 123);
+    Q.core.ConfigStore.set("ql_bottom_bar", "ACTIVE_ITEMS_Y_OFFSET", -47);
+    assert.equal(first.style.uiScale, "137%");
+    assert.equal(first.style.x, "123px");
+    assert.equal(first.style.y, "47px");
+
+    first.DeleteAsync(0);
+    hud.clock.advance(1);
+    const replacement = $.CreatePanel("Panel", parent, "ActiveAbilitiesMenu");
+    hud.clock.advance(600);
+    assert.equal(replacement.style.uiScale, "137%");
+    assert.equal(replacement.style.x, "123px");
+    assert.equal(replacement.style.y, "47px");
+
+    Q.core.ConfigStore.set("ql_bottom_bar", "ACTIVE_ITEMS_SCALE", 100);
+    Q.core.ConfigStore.set("ql_bottom_bar", "ACTIVE_ITEMS_X_OFFSET", 0);
+    Q.core.ConfigStore.set("ql_bottom_bar", "ACTIVE_ITEMS_Y_OFFSET", 0);
+    assert.equal(replacement.style.uiScale || "", "");
+    assert.equal(replacement.style.x || "", "");
+    assert.equal(replacement.style.y || "", "");
+    assert.deepEqual(hud.clock.errors, []);
+});
+
 test("bottom bar checks its known parent between periodic full-HUD searches", () => {
     const hud = createHud({ inHideout: true });
     hud.assertLoaded();

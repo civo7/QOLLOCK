@@ -34,7 +34,7 @@
 "use strict";
 
 // Shared preset source-of-truth used by ql_settings.js and ql_core.js.
-var QOL_SCHEMA_SEMVER = "4.0.4";
+var QOL_SCHEMA_SEMVER = "4.0.5";
 var QOL_SCHEMA_WIRE_VERSION = 2;
 
 // ---- Shared storage keys ----
@@ -1783,6 +1783,14 @@ var QOL_COMPACT_SCHEMA_4_0_2 = QOL_COMPACT_SCHEMA_4_0_1;
 var QOL_COMPACT_SCHEMA_4_0_3 = QOL_COMPACT_SCHEMA_4_0_2;
 // 4.0.4 changes no payload fields; retain the 4.0.3 wire layout.
 var QOL_COMPACT_SCHEMA_4_0_4 = QOL_COMPACT_SCHEMA_4_0_3;
+var QOL_COMPACT_SCHEMA_4_0_5 = QOL_COMPACT_SCHEMA_UTILS.AppendUniqueSchemaFields(
+    QOL_COMPACT_SCHEMA_4_0_4,
+    [
+        { key: "ACTIVE_ITEMS_SCALE", min: 50, max: 250, step: 1 },
+        { key: "ACTIVE_ITEMS_X_OFFSET", min: -1500, max: 1500, step: 1 },
+        { key: "ACTIVE_ITEMS_Y_OFFSET", min: -500, max: 500, step: 1 }
+    ]
+);
 
 
 var QOL_LATEST_COMPACT_SEMVER = QOL_SCHEMA_SEMVER;
@@ -1821,6 +1829,7 @@ var QOL_LATEST_COMPACT_SEMVER = QOL_SCHEMA_SEMVER;
 // 3.1.8        Crosshair Active Stats: per-stat visibility toggles (15 fields) so users can
 //              hide individual modifier rows (firerate, move speed, resists, lifesteal, ...).
 //              All default on.
+// 4.0.5        Active item slot scale and X/Y offsets.
 // ==========================================================================
 // Known issue: ENABLE_COLORED_HEALTHBAR appears twice in V24+ schemas
 // (once from V2 base, once from V24 concat). Harmless — the decode
@@ -2076,6 +2085,10 @@ var QOL_COMPACT_SCHEMA_REGISTRY = {
     "4.0.4": {
         wireVersion: QOL_COMPACT_WIRE_VERSION_2_0_1,
         schema: QOL_COMPACT_SCHEMA_4_0_4
+    },
+    "4.0.5": {
+        wireVersion: QOL_COMPACT_WIRE_VERSION_2_0_1,
+        schema: QOL_COMPACT_SCHEMA_4_0_5
     }
 };
 var QOL_COMPACT_SCHEMA_WIRE_TO_SEMVER = (typeof QOL_CODEC === "object" && QOL_CODEC && typeof QOL_CODEC.BuildWireToSemver === "function")
@@ -2672,6 +2685,9 @@ var QOL_DEFAULT_CONFIG = {
         BOTTOM_BAR_X_OFFSET: 0,
         BOTTOM_BAR_Y_OFFSET: 0,
         BOTTOM_BAR_WASH_COLOR: 0,
+        ACTIVE_ITEMS_SCALE: 100,
+        ACTIVE_ITEMS_X_OFFSET: 0,
+        ACTIVE_ITEMS_Y_OFFSET: 0,
         HUD_SOULS_ENABLED: 1,
         SOULS_OPACITY: 1.0,
         SOULS_X_OFFSET: 0,
