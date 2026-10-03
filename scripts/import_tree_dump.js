@@ -31,6 +31,7 @@
 
 const fs = require("fs");
 const path = require("path");
+const { inspectCapture } = require("./capture_tree");
 
 const MARKER = "[QOLTREE]";
 const START = "[QOLTREE:START]";
@@ -64,6 +65,9 @@ function parseTreeSummary(text) {
     for (const line of lines) {
         let rest = field(line, "[QOLSUM:START]\t");
         if (rest !== null) {
+            if (meta.panels !== null) warnings.push("multiple summaries in this log — using the last one");
+            for (const table of [byDepth, byId, byType]) for (const key of Object.keys(table)) delete table[key];
+            end = null;
             const get = (k) => {
                 const m = new RegExp(`${k}=([^\\t]*)`).exec(rest);
                 return m ? m[1].trim() : null;
@@ -95,6 +99,7 @@ function parseTreeSummary(text) {
 
         rest = field(line, "[QOLSUM:DEPTH]\t");
         if (rest !== null) {
+            if (end) continue;
             const [d, n] = rest.split("\t");
             byDepth[Number(d)] = Number(n) || 0;
             continue;
@@ -102,6 +107,7 @@ function parseTreeSummary(text) {
 
         rest = field(line, "[QOLSUM:TYPE]\t");
         if (rest !== null) {
+            if (end) continue;
             const [type, n] = rest.split("\t");
             if (type) byType[type] = Number(n) || 0;
             continue;
@@ -109,6 +115,7 @@ function parseTreeSummary(text) {
 
         rest = field(line, "[QOLSUM:ID]\t");
         if (rest !== null) {
+            if (end) continue;
             const [id, n] = rest.split("\t");
             if (id) byId[id] = Number(n) || 0;
             continue;
@@ -164,7 +171,7 @@ function parseTreeDump(text) {
         if (line.indexOf(START) !== -1) {
             // A second START means the button was pressed twice into one log. The last
             // dump wins — an earlier one may be from a different match state.
-            if (sawStart && count > 0) {
+            if (count > 0) {
                 warnings.push("multiple dumps in this log — using the last one");
                 root = null;
                 stack.length = 0;
@@ -173,6 +180,11 @@ function parseTreeDump(text) {
                 sawEnd = false;
             }
             sawStart = true;
+            sawEnd = false;
+            meta.truncated = false;
+            meta.clipped = false;
+            meta.reportedPanels = null;
+            meta.root = null;
             const rest = afterMarker(line, START) || "";
             const m = /root=([^\t]*)/.exec(rest);
             if (m) meta.root = m[1].trim();
@@ -192,6 +204,7 @@ function parseTreeDump(text) {
         // Must test the plain marker last: START and END also contain "[QOLTREE".
         const rest = afterMarker(line, MARKER + "\t");
         if (rest === null) continue;
+        if (sawEnd) continue;
 
         const parts = rest.split("\t");
         if (parts.length < 5) {
@@ -244,6 +257,12 @@ function parseTreeDump(text) {
     if (meta.truncated) warnings.push("dump hit its panel cap: the real tree is LARGER than this");
     if (meta.clipped) warnings.push("dump hit its depth cap: deep subtrees are missing");
 
+    const pending = root ? [root] : [];
+    while (pending.length) {
+        const node = pending.pop();
+        if (node.childCount !== node.children.length) warnings.push(`child-count mismatch for ${node.id || node.type}: declared ${node.childCount}, parsed ${node.children.length}`);
+        pending.push(...node.children);
+    }
     return { root, panels: count, maxDepth, warnings, meta };
 }
 
@@ -262,12 +281,21 @@ function summarize(root) {
     }
     const top = (map, n) =>
         [...map.entries()].sort((a, b) => b[1] - a[1]).slice(0, n);
-    return { total, duplicateIds: top(byId, 15).filter(([, c]) => c > 1), topTypes: top(byType, 15) };
+    return { total, duplicateIds: top(byId, byId.size).filter(([, c]) => c > 1).slice(0, 15), topTypes: top(byType, 15) };
 }
 
 function main() {
     const argv = process.argv.slice(2);
-    const logPath = argv.find((a) => !a.startsWith("-"));
+    let logPath = null, requestedOutput = null;
+    for (let i = 0; i < argv.length; i++) {
+        const option = argv[i];
+        if (option === "--stats") continue;
+        if (option === "-o") {
+            requestedOutput = argv[++i];
+            if (!requestedOutput || requestedOutput.startsWith("-")) throw new Error("-o requires an output path");
+        } else if (!option.startsWith("-") && !logPath) logPath = option;
+        else throw new Error("unknown argument: " + option);
+    }
     if (!logPath) {
         process.stderr.write(
             "usage: node scripts/import_tree_dump.js <console.log> [-o out.json] [--stats]\n" +
@@ -280,12 +308,23 @@ function main() {
         process.exit(2);
     }
 
-    const outIdx = argv.indexOf("-o");
-    const outPath = outIdx !== -1 && argv[outIdx + 1]
-        ? argv[outIdx + 1]
-        : path.join("scripts", "simulator", "perf", "runs", "captured_tree.json");
+    const outPath = requestedOutput || path.join("scripts", "simulator", "perf", "runs", "captured_tree.json");
+    if (path.resolve(logPath) === path.resolve(outPath)) throw new Error("input and output capture paths must differ");
+    if (fs.existsSync(outPath)) throw new Error("output already exists; choose a new -o path to preserve previous captures");
 
     const text = fs.readFileSync(logPath, "utf8");
+    if (text.trimStart().startsWith("{")) {
+        const capture = JSON.parse(text);
+        const inspected = inspectCapture(capture);
+        process.stdout.write(`captured hierarchy: ${inspected.panels} panels under ${inspected.fidelity.scope}\n`);
+        for (const note of inspected.notes) process.stdout.write(`NOTE: ${note}\n`);
+        if (argv.includes("--stats")) process.stdout.write(JSON.stringify(summarize(inspected.root), null, 2) + "\n");
+        fs.mkdirSync(path.dirname(outPath), { recursive: true });
+        // Preserve forest, raw descriptions, literal text and all receiver metadata.
+        fs.writeFileSync(outPath, JSON.stringify({ ...capture, capturedFrom: path.basename(logPath) }), { flag: "wx" });
+        process.stdout.write(`wrote ${outPath}\n`);
+        return;
+    }
 
     // Prefer the aggregate: it is the mode that survives a real HUD. The full dump is
     // only usable on a subtree small enough not to overrun the console log.
@@ -328,7 +367,7 @@ function main() {
             byType: summary.byType,
             end: summary.end,
             warnings: summary.warnings,
-        }, null, 1));
+        }, null, 1), { flag: "wx" });
         process.stdout.write(`\nwrote ${outPath}\n`);
         return;
     }
@@ -378,11 +417,13 @@ function main() {
         meta: parsed.meta,
         warnings: parsed.warnings,
         root: parsed.root,
-    }, null, 1));
+    }, null, 1), { flag: "wx" });
     process.stdout.write(`\nwrote ${outPath}\n`);
     process.stdout.write("profile against it with: node scripts/profile_hud.js --tree " + outPath + "\n");
 }
 
-if (require.main === module) main();
+if (require.main === module) {
+    try { main(); } catch (error) { process.stderr.write("[capture import] FATAL: " + error.message + "\n"); process.exitCode = 2; }
+}
 
 module.exports = { parseTreeDump, parseTreeSummary, summarize };

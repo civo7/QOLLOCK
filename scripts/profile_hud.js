@@ -48,6 +48,7 @@
 const fs = require("node:fs");
 const path = require("node:path");
 const { createProfiledHud } = require("./simulator/perf/profile.js");
+const { inspectCapture, comparisonIssues } = require("./capture_tree.js");
 
 const PERF_DIR = path.join(__dirname, "simulator", "perf", "runs");
 
@@ -304,6 +305,7 @@ function main() {
         }
         try {
             capturedTree = JSON.parse(fs.readFileSync(treeArg, "utf8"));
+            inspectCapture(capturedTree, { requireHud: true });
         } catch (e) {
             process.stderr.write(`[profiler] FATAL: could not parse ${treeArg}: ${e.message}\n`);
             process.exit(2);
@@ -368,6 +370,12 @@ function main() {
             process.exit(1);
         }
         const prev = JSON.parse(fs.readFileSync(p, "utf8"));
+        const issues = comparisonIssues(payload, prev);
+        if (issues.length) {
+            process.stderr.write("[profiler] comparison refused: " + issues.join("; ") + ". Use equivalent inputs and an error-free baseline.\n");
+            process.exitCode = 2;
+            return;
+        }
         const comparison = "\n" + compareReport(snap, prev.snapshot, { top }) + "\n";
         (wantJson ? process.stderr : process.stdout).write(comparison);
     }
@@ -394,4 +402,6 @@ function main() {
     }
 }
 
-if (require.main === module) main();
+if (require.main === module) {
+    try { main(); } catch (error) { process.stderr.write("[profiler] FATAL: " + error.message + "\n"); process.exitCode = 2; }
+}

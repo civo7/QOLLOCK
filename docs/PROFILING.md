@@ -174,6 +174,21 @@ help constrain its inputs; they do not make it an independent game oracle.
 
 ## Capturing the real tree
 
+Prefer the standalone HUD-Dumper v4 native Debugger exporter and its verified
+receiver JSON. [Capture testing](CAPTURE_TESTING.md) describes the workflow.
+The selected `domTree` can now include Debugger-rendered classes and literal
+text; other native windows in `domForest` are not attached to the simulated HUD.
+Reports carry capture identity, collection duration and fidelity limitations.
+Full live coverage and description freshness remain unverified, even when all
+transport packets and descriptions are valid. Inspector row visibility is not
+target-panel visibility; description attributes are not runtime attribute reads.
+
+`import_tree_dump.js <capture.json> -o <new.json>` validates and preserves the
+receiver payload without overwriting earlier captures. Whole-HUD replay rejects
+invalid trees, mismatched counts, ambiguous HUD contexts and focused subtrees.
+It starts from the supplied hierarchy without injecting the synthetic build/shop
+model. QOLLOCK can still create its own panels during boot and the measured run.
+
 The separate historical HUD-Dumper v2 collector also produces `domTree` JSON,
 accepted by both offline tools. Its snapshot can contain incomplete class data:
 when class enumeration is unavailable it probes a predefined whitelist. It
@@ -193,13 +208,13 @@ The Dev Panel button produces an **aggregate summary**. It records the real
 panel count and depth distribution, but not parent-child links. The repository's
 `captured_tree.json` is such a summary; `profile_hud.js --tree` rejects it rather
 than silently profiling a one-panel HUD. Whole-HUD profiling with `--tree`
-requires a complete per-panel Hud hierarchy; the current rolling game log has
-not retained one. Small `QOL.dumpTree` subtree captures remain useful for
+requires a complete per-panel Hud hierarchy; use the standalone receiver rather
+than a rolling whole-HUD console log. Small `QOL.dumpTree` subtree captures remain useful for
 targeted hierarchy inspection, not a whole-HUD performance baseline.
 
 **Ground truth, 2026-08-21: a live match HUD is 37,524 panels.** The modelled tree is
-3,099 — so it understates the real thing by 12×, and a full-tree miss costs 12× more
-than any modelled number suggested.
+3,099 — so it understates that historical panel count by about 12×. This ratio
+does not establish a native lookup-time or frame-time multiplier.
 
 That measurement also killed the first version of this tool. A per-panel dump of
 37,524 panels is ~3MB of `$.Msg`, and the game's console log is a rolling buffer: the
@@ -231,6 +246,9 @@ a partial capture is a **floor**, not a baseline.
 
 Captured and modelled runs are **not comparable** — the header and saved JSON record
 which one you got, so don't diff across them.
+The CLI refuses comparisons with different capture fingerprints, input config,
+warm-up or enabled coverage, and runs containing callback/registry errors. Older
+saved runs without input fingerprints need a fresh baseline.
 
 ### Known coverage gap
 
@@ -247,6 +265,9 @@ The historical `perf_guards` and `large_tree_profile` ceiling suites were
 removed. `tests/profiler_trace.test.js` uses portable fixtures to check warm-up
 exclusion, observer/counter agreement, direct-search early exit, precise virtual
 timestamps, duplicate-ID ordering, capture context/counts and clean CLI JSON.
+`tests/capture_tree.test.js` also checks native capture integrity, forest scope,
+literal text/attribute separation, replacement of modeled panels, static class
+dependencies, repeated console dumps, non-overwriting import and comparison gates.
 Production callbacks run in these accounting regressions, but no operation
 budget or green result establishes an FPS target. Simulated ID searches stop
 on the first matching descendant; these visits are not measured native steps.

@@ -68,7 +68,7 @@ test("captured window counts both roots and preserves sibling order, duplicate I
     assert.equal(doc.absRoot.Children()[0].enabled, false);
     assert.equal(doc.root.type, "CitadelHud");
     assert.equal(doc.root.FindChild("duplicate").GetAttributeString("value"), "42");
-    assert.ok(tree.notes.some(n => n.includes("1 captured Labels lack text")));
+    assert.ok(tree.notes.some(n => n.includes("1 captured Labels/TextEntries lack text")));
 });
 
 test("aggregate and window captures without a Hud context cannot silently become a HUD", () => {

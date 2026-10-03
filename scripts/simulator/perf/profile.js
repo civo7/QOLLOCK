@@ -38,6 +38,7 @@
 "use strict";
 
 const path = require("node:path");
+const crypto = require("node:crypto");
 const { install, counters, silently } = require("./instrument.js");
 const { buildMatchHud, buildCapturedHud } = require("./hud_tree.js");
 
@@ -212,7 +213,9 @@ function createProfiledHud({
         pollRates.set(label, Number(rate) || 0.2);
     };
 
-    const game = new BuildsModel({ sandbox, titleMode: TITLE_MODE.RESOLVED, hero: "hero_werewolf", inHideout: false });
+    // Captured replay must not inject a synthetic shop or bind native commands
+    // to a model whose panels are unrelated to the supplied hierarchy.
+    const game = capturedTree ? null : new BuildsModel({ sandbox, titleMode: TITLE_MODE.RESOLVED, hero: "hero_werewolf", inHideout: false });
 
     // Build the tree BEFORE the mod loads: in-engine the HUD exists before the
     // mod's scripts run, and several features cache panel refs at boot.
@@ -227,6 +230,16 @@ function createProfiledHud({
             : buildMatchHud(doc, { players, damageNumbers });
     });
     const capturedHudClasses = capturedTree ? [...doc.root._classes] : null;
+    const treeHash = crypto.createHash("sha256");
+    const pendingPanels = [doc.absRoot];
+    while (pendingPanels.length) {
+        const panel = pendingPanels.pop();
+        treeHash.update(JSON.stringify([panel.id, panel.type, [...panel._classes].sort(),
+            [...panel._attrs].sort((a, b) => a[0].localeCompare(b[0])), panel.text,
+            panel.visible, panel.enabled, panel._children.length]));
+        for (let i = panel._children.length - 1; i >= 0; i--) pendingPanels.push(panel._children[i]);
+    }
+    const treeFingerprint = treeHash.digest("hex");
 
     wrapScheduledLoops(sandbox);
 
@@ -264,9 +277,10 @@ function createProfiledHud({
     // profile on the same code path a real install takes.
     let configApplied = false;
     let configBytes = 0;
+    const inputConfig = makeMaximalConfig(sandbox, configOverrides, enableAll);
     silently(() => {
         if (!enableAll && Object.keys(configOverrides).length === 0) return;
-        const cfg = makeMaximalConfig(sandbox, configOverrides, enableAll);
+        const cfg = inputConfig;
         if (!cfg) return;
         const schema = sandbox.eval(
             `(function(){ try { return String(QOL_SCHEMA_VERSION || QOL_CONFIG_SCHEMA_VERSION || ""); } catch(e) { return ""; } })()`
@@ -303,13 +317,16 @@ function createProfiledHud({
             players, damageNumbers, configApplied, configBytes,
             configMode: enableAll ? "expanded" : "defaults",
             configOverrides: { ...configOverrides },
+            configFingerprint: crypto.createHash("sha256").update(JSON.stringify(inputConfig)).digest("hex"),
             healthbarType: Number(configOverrides.HEALTHBAR_TYPE) || 0,
             wrappedFeatures, wrappedScheduler, wrappedLoops, warmupMs,
             // Which tree the numbers describe. A modelled run and a captured run are
             // not comparable, so this has to travel with the results.
             treeSource: capturedTree ? "captured" : "modelled",
+            treeFingerprint,
             capturedFrom: capturedTree ? (capturedTree.capturedFrom || capturedTree.timestampUtc || "unknown") : null,
             capturedHudClasses,
+            captureFidelity: tree.fidelity || null,
         },
 
         /** Count for `ms` of virtual time and return a snapshot. */

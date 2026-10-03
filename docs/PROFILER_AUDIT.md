@@ -91,3 +91,33 @@ The corrected 10-second expanded run has 43 enabled manifests, zero Clock
 callback errors and zero final registry streaks. Its crosshair source misses
 account for 97,540 modeled visits/second. That establishes a specific search
 candidate under this input, not a promised FPS gain or whole-mod cost.
+
+## Native Debugger integration follow-up
+
+The rebuilt native Debugger export is now imported locally as a separate
+hero-testing capture, preserving the historical v2 file. The selected HUD has
+15,435 panels and 1,331 displayed classes. Its collection interval is 547,968ms;
+97 Label/TextEntry descriptions lack text and the target visible/enabled state
+is absent. Freshness and full live coverage remain unverified.
+
+Review found another replay defect: `BuildsModel` created a synthetic shop before
+capture import, and the importer appended the hierarchy without clearing those
+modeled panels. Captured replay now omits that model and replaces prior panel
+children. Portable regressions check that native text/classes survive and that
+neither model panels nor inspector visibility/description attributes contaminate
+the runtime hierarchy. Class-search traces now retain the first result identity.
+
+The dependency audit derives active HUD includes and compares ID/class reads
+against the selected hierarchy. Current XML declarations and supported source
+creation sites are separate evidence. A declared/snippet panel missing in this
+JSON is conditional/state evidence, not an invalid lookup; source absence also
+cannot rule out C++ creation. For example, `recentPurchase` is a shop XML snippet
+and `HeroNameHidden` is declared in QOLLOCK's top-bar override. Their absence in
+the standalone capture must not be used to delete these searches. Optional active
+stats need appearance/replacement scenarios rather than an existence assertion.
+
+The fresh 10-second expanded replay still enables 43 manifests without callback
+errors or final registry streaks. Repeated scoped crosshair source misses and
+the root-level recent-purchases hero-label search are investigation candidates.
+Their modeled visit counts establish neither native cost nor a client bug.
+See [capture testing](CAPTURE_TESTING.md) for the workflow and regression scope.

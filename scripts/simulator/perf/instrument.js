@@ -14,8 +14,8 @@
 // they are only as realistic as that tree. hud_tree.js builds one calibrated
 // against the real vanilla layouts (~10k panel elements across 457 files, of
 // which a live match HUD instantiates a few thousand). Absolute numbers are
-// therefore indicative; RATIOS between features, and BEFORE/AFTER deltas on the
-// same tree, are trustworthy — that is what this harness is for.
+// describe modeled operations only. Ratios and before/after deltas require the
+// same inputs and coverage; they do not establish ratios of native CPU cost.
 // =============================================================================
 
 "use strict";
@@ -94,6 +94,7 @@ function install() {
                 label: counters.label,
                 rootPanel: this,
                 matches: out.length,
+                found: out[0] || null,
                 visited
             });
         }

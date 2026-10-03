@@ -136,14 +136,22 @@ node scripts/profile_hud.js --seconds 20 --compare before
 node scripts/audit_panel_ids.js                        # candidate ids absent from scanned sources
 node scripts/import_tree_dump.js <dump>                # import a tree summary or full dump
 node scripts/trace_feature_hud.js --all --seconds 10   # offline lookup events on a captured hierarchy
-node --test tests/profiler_trace.test.js               # measurement-window and importer regressions
+node scripts/audit_lookups_vs_capture.js <capture.json> --json # active HUD ID/class dependencies
+node --test tests/profiler_trace.test.js tests/capture_tree.test.js # accounting and import regressions
 ```
 
 These tools count operations and expose JavaScript exceptions under the supplied
 model. They cannot establish which calls the live engine makes or the cost of a
 rendered frame. An id absent from XML/JavaScript can still be created by C++.
 
-`scripts/import_tree_dump.js` can use captures from `panorama/scripts/tools/qol_dump_tree.js`. The Dev
+The preferred full hierarchy source is the standalone HUD-Dumper native Debugger
+export. See [capture testing](CAPTURE_TESTING.md) for importing its receiver JSON,
+scope/fidelity checks and the dependency audit. The audit derives active HUD
+scripts from XML and scans syntax, including resolvable aliases and class checks;
+dynamic arguments are reported separately. Settings/profile/quickbuy contexts
+are not part of that HUD audit.
+
+`scripts/import_tree_dump.js` also supports captures from `panorama/scripts/tools/qol_dump_tree.js`. The Dev
 button currently captures aggregate counts, not a complete panel hierarchy.
 The aggregate can size a synthetic stress scenario but cannot be passed to
 `profile_hud.js --tree`, which requires a full per-panel hierarchy. The historical

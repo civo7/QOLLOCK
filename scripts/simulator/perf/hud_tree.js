@@ -36,6 +36,7 @@
 
 const fs = require("node:fs");
 const path = require("node:path");
+const { inspectCapture } = require("../../capture_tree.js");
 
 const REPO_ROOT = path.resolve(__dirname, "..", "..", "..");
 const MOD_LAYOUT = path.join(REPO_ROOT, "panorama", "layout");
@@ -376,41 +377,37 @@ function buildMatchHud(doc, { players = 12, damageNumbers = 24, dataFeed = 6, ch
  * directions (see docs/PROFILING.md).
  *
  * A window-root capture maps CitadelHudRoot to doc.absRoot and its direct Hud
- * child to doc.root. A subtree capture maps its root to the context panel.
+ * child to doc.root. A Hud-root capture maps directly to the context panel;
+ * focused subtrees are rejected for whole-HUD replay.
  * Supplied fields are retained; omitted data and native lifecycle remain unknown.
  *
  * Any warning recorded at import time is surfaced here as a note, so a truncated or
  * depth-clipped capture cannot quietly become a trusted baseline.
  */
 function buildCapturedHud(doc, captured) {
-    const notes = [];
-    const rootNode = captured ? (captured.domTree || captured.root) : null;
-    if (!captured || captured.kind === "summary" || !rootNode ||
-        typeof rootNode !== "object" || Array.isArray(rootNode)) {
-        throw new Error("[hud_tree] a full per-panel tree is required; aggregate summaries contain no ancestry");
-    }
-    for (const w of captured.warnings || []) notes.push("capture warning: " + w);
-    if (captured.meta && captured.meta.truncated) notes.push("capture was truncated — counts are a floor");
-    if (captured.meta && captured.meta.clipped) notes.push("capture was depth-clipped — deep subtrees are missing");
+    const { root: rootNode, notes, fidelity } = inspectCapture(captured, { requireHud: true });
 
     let panels = 0;
-    let labelsWithoutText = 0;
     const hudNode = rootNode.id === "CitadelHudRoot"
         ? (rootNode.children || []).find(c => c.id === "Hud") : null;
     if (rootNode.id === "CitadelHudRoot" && !hudNode) {
         throw new Error("[hud_tree] CitadelHudRoot capture has no direct Hud context");
     }
+    // Replace any earlier model/import, preserving the context object identity.
+    doc.root.RemoveAndDeleteChildren();
+    for (const child of doc.absRoot.Children()) if (child !== doc.root) child._destroy();
     function populate(node, panel) {
         doc._unindex(panel);
         panel.id = node.id || "";
         panel.type = panel.paneltype = node.type || "Panel";
         panel._classes = new Set(node.classes || []);
         doc._index(panel);
-        if (node.breadcrumbs) panel.breadcrumbs = node.breadcrumbs;
-        if (typeof node.text === "string") panel.text = node.text;
-        else if (panel.type === "Label") labelsWithoutText++;
+        panel.breadcrumbs = node.breadcrumbs || null;
+        panel.text = typeof node.text === "string" ? node.text : "";
+        panel._attrs.clear();
         for (const key of ["visible", "enabled", "checked", "hittest", "hittestchildren"]) {
-            if (typeof node[key] === "boolean") panel[key] = node[key];
+            panel[key] = typeof node[key] === "boolean" ? node[key] :
+                ["visible", "enabled"].includes(key) ? true : undefined;
         }
         for (const [key, value] of Object.entries(node.attributes || {})) panel.SetAttributeString(key, value);
         panels++;
@@ -423,15 +420,7 @@ function buildCapturedHud(doc, captured) {
         }
     }
     populate(rootNode, hudNode ? doc.absRoot : doc.root);
-    if (captured.summary && captured.summary.totalPanels !== undefined && captured.summary.totalPanels !== panels) {
-        notes.push("capture summary panel count differs from imported hierarchy: " + captured.summary.totalPanels + " vs " + panels);
-    }
-    if (labelsWithoutText) notes.push(labelsWithoutText + " captured Labels lack text; value-dependent paths use empty model text");
-    if (captured.domTree && captured.version === "2.0.0") {
-        notes.push("HUD-Dumper v2 class inventory may be limited to its probe whitelist; absent classes are not authoritative");
-    }
-    notes.push("static hierarchy snapshot; native bindings, gameplay, computed layout and CSS are not replayed");
-    return { panels, notes, byLayout: { captured: panels } };
+    return { panels, notes, fidelity, byLayout: { captured: panels } };
 }
 
 module.exports = { buildMatchHud, buildCapturedHud, parseLayout, countNodes, COMPOSITION };

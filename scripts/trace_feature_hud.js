@@ -5,6 +5,7 @@
 const fs = require("node:fs");
 const path = require("node:path");
 const { createProfiledHud } = require("./simulator/perf/profile.js");
+const { loadXmlEvidence, indexEvidence, sourceStatus } = require("./capture_sources");
 
 const DEFAULT_CAPTURE = path.join(__dirname, "..", "captures", "deadlock_hud_dump.json");
 
@@ -12,6 +13,7 @@ function parseArgs(args = process.argv.slice(2)) {
     const opts = {
         feature: null, seconds: 10, warmupMs: 8000, capturePath: DEFAULT_CAPTURE,
         verbose: false, json: false, includeEvents: false, enableAll: true, configOverrides: {},
+        vanilla: null,
     };
     for (let i = 0; i < args.length; i++) {
         const a = args[i];
@@ -26,6 +28,7 @@ function parseArgs(args = process.argv.slice(2)) {
         else if (a === "--events") opts.includeEvents = true;
         else if (a === "--defaults") opts.enableAll = false;
         else if (a === "--capture") opts.capturePath = value();
+        else if (a === "--vanilla") opts.vanilla = value();
         else if (a === "--seconds") opts.seconds = Number(value());
         else if (a === "--warmup") opts.warmupMs = Number(value()) * 1000;
         else if (a === "--enable") {
@@ -59,9 +62,19 @@ function registryState(hud) {
     })`);
 }
 
+// Child-index paths distinguish anonymous panels and duplicate IDs. Breadcrumbs
+// alone can be identical for two different search roots or results.
+function panelPath(panel) {
+    const parts = [];
+    for (let current = panel; current; current = current._parent) {
+        parts.unshift(current._parent ? current._parent._children.indexOf(current) : 0);
+    }
+    return parts.join("/");
+}
+
 // Called after HUD construction/warm-up. Callbacks read the virtual clock at
 // execution time; no fixed time slicing or rounded-up sample duration.
-function collectTrace(hud, { seconds, feature = null }) {
+function collectTrace(hud, { seconds, feature = null, xmlEvidence = [] }) {
     const counters = hud.counters;
     const events = [];
     const startMs = hud.clock.now();
@@ -80,7 +93,9 @@ function collectTrace(hud, { seconds, feature = null }) {
             hudRootSearch: e.type !== "FindChild" &&
                 (e.rootPanel === hud.doc.root || e.rootPanel === hud.doc.absRoot),
             searchRoot: e.rootPanel.getBreadcrumbs(),
+            searchRootPath: panelPath(e.rootPanel),
             resultBreadcrumbs: e.found ? e.found.getBreadcrumbs() : null,
+            resultPath: e.found ? panelPath(e.found) : null,
         });
     };
     for (const key of hooks) counters[key] = observe;
@@ -88,12 +103,19 @@ function collectTrace(hud, { seconds, feature = null }) {
     try { snapshot = hud.measure(seconds * 1000); }
     finally { hooks.forEach((key, i) => { counters[key] = previous[i]; }); }
 
-    const byFeature = new Map();
+    const byFeature = new Map(), bySearch = new Map();
     for (const e of events) {
+        const key = JSON.stringify([e.feature, e.type, e.target, e.searchRootPath]);
+        if (!bySearch.has(key)) bySearch.set(key, { feature: e.feature, type: e.type, target: e.target,
+            searchRoot: e.searchRoot, searchRootPath: e.searchRootPath, calls: 0, visits: 0, misses: 0 });
+        const search = bySearch.get(key);
+        search.calls++;
+        search.visits += e.visited;
+        if (!e.found) search.misses++;
         let row = byFeature.get(e.feature);
         if (!row) {
             row = { feature: e.feature, calls: 0, visits: 0, misses: 0,
-                hudRootMisses: 0, missedTargets: {}, foundTargets: {} };
+                hudRootMisses: 0, missedTargets: Object.create(null), foundTargets: Object.create(null) };
             byFeature.set(e.feature, row);
         }
         row.calls++;
@@ -102,9 +124,16 @@ function collectTrace(hud, { seconds, feature = null }) {
             row.misses++;
             if (e.hudRootSearch) row.hudRootMisses++;
             row.missedTargets[e.target] = (row.missedTargets[e.target] || 0) + 1;
-        } else row.foundTargets[e.target] = { path: e.resultBreadcrumbs, visits: e.visited };
+        } else row.foundTargets[e.target] = { path: e.resultBreadcrumbs, resultPath: e.resultPath, visits: e.visited };
     }
     const endState = registryState(hud);
+    const xmlIndex = indexEvidence(xmlEvidence);
+    const searches = [...bySearch.values()].sort((a, b) => b.visits - a.visits).map(row => {
+        const kind = row.type === "FindChildrenWithClassTraverse" ? "class" : "id";
+        const token = kind === "class" ? row.target.slice(1) : row.target;
+        const evidence = xmlIndex.get(kind + ":" + token) || [];
+        return { ...row, sourceStatus: sourceStatus(evidence), xmlEvidence: evidence };
+    });
     return {
         scope: "offline simulated lookup operations; no native timings or FPS",
         selection: "label filter only; other enabled features remain running",
@@ -118,6 +147,7 @@ function collectTrace(hud, { seconds, feature = null }) {
             missesPerSec: row.misses / seconds,
         })),
         snapshot, events,
+        searches,
     };
 }
 
@@ -137,10 +167,20 @@ function reportText(result, verbose) {
         out.push(`${r.feature.padEnd(35)} ${r.callsPerSec.toFixed(1).padStart(9)} ` +
             `${r.visitsPerSec.toFixed(1).padStart(12)} ${r.missesPerSec.toFixed(1).padStart(12)}`);
         for (const [target, count] of Object.entries(r.missedTargets)) {
-            out.push(`  Absent in this scenario: ${target} (${(count / result.seconds).toFixed(1)}/s)`);
+            out.push(`  Missed in simulated searches: ${target} (${(count / result.seconds).toFixed(1)}/s)`);
         }
     }
     if (!result.features.length) out.push("No lookup events for this label in this window; this does not establish performance.");
+    out.push("", "TOP SEARCH SCOPES (modeled visits, not native timings)");
+    for (const search of result.searches.slice(0, 10)) {
+        out.push(`${search.feature} ${search.type}(${JSON.stringify(search.target)}): ` +
+            `${(search.visits / result.seconds).toFixed(1)} visits/s; ${(search.misses / result.seconds).toFixed(1)} misses/s`,
+        `  Under [${search.searchRootPath}]: ${search.searchRoot}`);
+        if (search.misses) {
+            out.push(`  ${search.sourceStatus}; missing in this simulated scope/state, not proof of native absence.`);
+            for (const symbol of search.xmlEvidence.slice(0, 2)) out.push(`  ${symbol.evidence}: ${symbol.file}:${symbol.line}`);
+        }
+    }
     out.push("", "Misses are investigation candidates, not proof of invalid IDs or memory leaks.");
     for (const error of result.callbackErrors) out.push(`CALLBACK ERROR @${error.atMs}ms: ${error.message}`);
     return out.join("\n");
@@ -154,7 +194,8 @@ function main() {
             capturedTree, warmupMs: opts.warmupMs,
             enableAll: opts.enableAll, configOverrides: opts.configOverrides,
         });
-        const result = collectTrace(hud, opts);
+        const result = collectTrace(hud, { ...opts, xmlEvidence: loadXmlEvidence({ vanilla: opts.vanilla }) });
+        result.xmlScope = opts.vanilla ? "QOLLOCK and extracted native layouts; overrides take precedence" : "QOLLOCK layouts only; pass --vanilla for native source evidence";
         if (opts.json) {
             if (!opts.includeEvents) delete result.events;
             process.stdout.write(JSON.stringify(result, null, 2) + "\n");

@@ -1,113 +1,97 @@
-// scripts/audit_lookups_vs_capture.js
-// =============================================================================
-// Cross-check every literal FindChildTraverse id in the mod against a CAPTURED
-// panel tree, and report the ones that cannot resolve.
-// =============================================================================
-// This is the stronger sibling of audit_panel_ids.js. That script compares against
-// layout XML plus $.CreatePanel calls, which cannot see the panels C++ builds at
-// runtime — so it reports ids that do exist (false positives) and, worse, has no way
-// to confirm the ones that don't.
-//
-// A capture from a live match has no such gap: if an id is not in the capture, no
-// lookup for it succeeded in that match, and every attempt walked the whole tree
-// (31,411 panels measured) before returning null.
-//
-// It found the top-bar slot numbering bug that both the XML audit and the modelled
-// profiler had backwards: the engine creates TopBarPlayer1..12 and no TopBarPlayer0.
-//
-//   node scripts/audit_lookups_vs_capture.js [capture.json]
-//
-// CAVEAT, and it matters: absence from ONE capture means "did not exist in that
-// match state", not "can never exist". A panel that only appears in the shop, the
-// escape menu, a specific game mode, or the hideout will read as absent if the
-// capture was taken elsewhere. Treat output as a list to investigate, not a kill
-// list — check what state the capture was taken in first.
-// =============================================================================
-
 "use strict";
 
+// Static dependencies in active HUD scripts vs one observed hierarchy. Presence
+// does not prove reachability from a caller, timing, visibility or native cost.
 const fs = require("node:fs");
 const path = require("node:path");
+const { inspectCapture } = require("./capture_tree");
+const { scanSource } = require("./audit_game_update");
+const { hudScripts, REPO_ROOT } = require("./simulator/layout");
+const { loadXmlEvidence, indexEvidence, sourceStatus } = require("./capture_sources");
+const DEFAULT_CAPTURE = path.join(REPO_ROOT, "captures", "deadlock_hud_dump.json");
 
-const DEFAULT_CAPTURE = path.join(__dirname, "simulator", "perf", "runs", "captured_tree.json");
-
-/** Every .js under panorama/scripts, excluding our own tooling. */
-function modScripts(dir, out = []) {
-    for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
-        const full = path.join(dir, entry.name);
-        if (entry.isDirectory()) {
-            if (entry.name === "tools") continue;
-            modScripts(full, out);
-        } else if (entry.name.endsWith(".js")) {
-            out.push(full);
+function auditCapture(capture, sources, xmlEvidence = []) {
+    const inspected = inspectCapture(capture, { allowSummary: true });
+    const xmlIndex = indexEvidence(xmlEvidence);
+    const grouped = new Map(), dynamic = [], created = new Map();
+    for (const { file, text } of sources) {
+        const scanned = scanSource(text, file);
+        dynamic.push(...scanned.dynamic);
+        for (const site of scanned.created) {
+            if (!created.has(site.token)) created.set(site.token, []);
+            created.get(site.token).push(site);
+        }
+        for (const site of scanned.lookups) {
+            const key = site.kind + ":" + site.token;
+            if (!grouped.has(key)) grouped.set(key, { kind: site.kind, token: site.token, sites: [] });
+            grouped.get(key).sites.push(site);
         }
     }
-    return out;
+    const dependencies = [...grouped.values()].map(row => {
+        const matches = (row.kind === "id" ? inspected.ids : inspected.classes).get(row.token) || [];
+        const declarations = xmlIndex.get(row.kind + ":" + row.token) || [];
+        const creation = row.kind === "id" ? created.get(row.token) || [] : [];
+        return { ...row, status: matches.length ? "OBSERVED" : "NOT_OBSERVED",
+            occurrences: matches[0]?.count || matches.length, examples: matches.slice(0, 3),
+            modCreationEvidence: creation, sourceStatus: sourceStatus(declarations, creation), xmlEvidence: declarations };
+    }).sort((a, b) => a.status.localeCompare(b.status) || b.sites.length - a.sites.length || a.token.localeCompare(b.token));
+    return {
+        scope: "static active-HUD dependencies; not native lookup execution or performance",
+        fidelity: inspected.fidelity, notes: inspected.notes,
+        summary: { scripts: sources.length, dependencies: dependencies.length,
+            notObserved: dependencies.filter(r => r.status === "NOT_OBSERVED").length,
+            duplicateIds: dependencies.filter(r => r.kind === "id" && r.occurrences > 1).length,
+            sourceCreatedNotObserved: dependencies.filter(r => r.status === "NOT_OBSERVED" && r.modCreationEvidence.length).length,
+            xmlDeclaredNotObserved: dependencies.filter(r => r.status === "NOT_OBSERVED" && r.sourceStatus === "XML_DECLARED").length,
+            dynamicCalls: dynamic.length },
+        dependencies, dynamic,
+    };
 }
 
-function main() {
-    const capturePath = process.argv[2] || DEFAULT_CAPTURE;
-    if (!fs.existsSync(capturePath)) {
-        process.stderr.write(
-            `no capture at ${capturePath}\n\n` +
-            "Produce one with: Settings -> Dev Panel -> Panel Tree Dump (in a real match),\n" +
-            "then: node scripts/import_tree_dump.js <log>\n"
-        );
-        process.exit(2);
+function reportText(result) {
+    const out = ["QOLLOCK CAPTURE DEPENDENCY AUDIT", result.scope,
+        `Capture: ${result.fidelity.panels} panels under ${result.fidelity.scope}; classes: ${result.fidelity.classCoverage}`,
+        `Active HUD scripts: ${result.summary.scripts}; dependencies: ${result.summary.dependencies}; not observed: ${result.summary.notObserved}`,
+        `Dynamic arguments omitted from static comparison: ${result.summary.dynamicCalls}`,
+        `XML-declared but not observed in this snapshot: ${result.summary.xmlDeclaredNotObserved}`];
+    for (const note of result.notes) out.push("NOTE: " + note);
+    for (const row of result.dependencies) {
+        if (row.status === "OBSERVED" && (row.kind !== "id" || row.occurrences < 2)) continue;
+        out.push("", `${row.status} ${row.kind === "class" ? "." : "#"}${row.token} (${row.occurrences} occurrences)`);
+        for (const site of row.sites) out.push(`  ${site.file}:${site.line} ${site.call}`);
+        if (row.modCreationEvidence.length) out.push("  QOLLOCK source creates this ID; availability depends on feature config/lifecycle.");
+        for (const symbol of row.xmlEvidence.slice(0, 3)) out.push(`  ${symbol.evidence}: ${symbol.file}:${symbol.line} (${symbol.ancestry})`);
+        if (row.status === "NOT_OBSERVED" && row.sourceStatus === "XML_DECLARED") out.push("  Declared in XML; may be conditional, a snippet or another UI state. Absence here is not a broken lookup.");
+        if (row.occurrences > 1) out.push("  Duplicate IDs require caller scope/order inspection; existence does not identify the intended panel.");
     }
-
-    const cap = JSON.parse(fs.readFileSync(capturePath, "utf8"));
-    const real = new Set(
-        Array.isArray(cap.uniqueIds)
-            ? cap.uniqueIds
-            : (cap.byId ? Object.keys(cap.byId) : [])
-    );
-    if (real.size === 0) {
-        process.stderr.write("capture has no id table (neither uniqueIds nor byId) — is it a summary capture?\n");
-        process.exit(2);
-    }
-
-    const scriptsRoot = path.join(__dirname, "..", "panorama", "scripts");
-    const found = new Map();   // id -> Set of "file:line"
-    const RE = /FindChildTraverse\(\s*["']([A-Za-z0-9_]+)["']\s*\)/g;
-
-    for (const file of modScripts(scriptsRoot)) {
-        const text = fs.readFileSync(file, "utf8");
-        const lines = text.split(/\r?\n/);
-        lines.forEach((line, i) => {
-            let m;
-            RE.lastIndex = 0;
-            while ((m = RE.exec(line)) !== null) {
-                const rel = path.relative(path.join(__dirname, ".."), file).replace(/\\/g, "/");
-                if (!found.has(m[1])) found.set(m[1], new Set());
-                found.get(m[1]).add(`${rel}:${i + 1}`);
-            }
-        });
-    }
-
-    const absent = [...found.entries()]
-        .filter(([id]) => !real.has(id))
-        .sort((a, b) => b[1].size - a[1].size);
-
-    const totalPanels = cap.summary?.totalPanels || cap.panels || "unknown";
-    process.stdout.write(`capture: ${totalPanels} panels, ${real.size} distinct ids (${cap.capturedFrom || capturePath})\n`);
-    if (cap.end && cap.end.idsCapped) {
-        // Without this the output is untrustworthy: a capped id list makes present ids
-        // look absent, which is exactly the wrong direction for this check.
-        process.stdout.write("WARNING: capture's id list was CAPPED — absences below may be false\n");
-    }
-    process.stdout.write(`literal FindChildTraverse ids in the mod: ${found.size}, absent from capture: ${absent.length}\n\n`);
-
-    for (const [id, sites] of absent) {
-        process.stdout.write(`  ${id}\n`);
-        for (const site of [...sites].sort()) process.stdout.write(`      ${site}\n`);
-    }
-
-    process.stdout.write(
-        "\nAbsent means \"not in this capture\", not \"impossible\". Panels that only exist\n" +
-        "in the shop, escape menu, hideout or another mode will show up here if the\n" +
-        "capture was taken elsewhere. Confirm the state before deleting a lookup.\n"
-    );
+    out.push("", "NOT_OBSERVED means unknown outside this captured scope/state. Do not delete a lookup from this result.",
+        "OBSERVED does not establish reachability from the caller. Use trace_feature_hud.js for simulated search scopes.");
+    return out.join("\n") + "\n";
 }
 
-if (require.main === module) main();
+function main(args = process.argv.slice(2)) {
+    let capturePath = null, vanilla = null, json = false;
+    for (let i = 0; i < args.length; i++) {
+        const arg = args[i];
+        if (arg === "--json") json = true;
+        else if (arg === "--vanilla") {
+            vanilla = args[++i];
+            if (!vanilla || vanilla.startsWith("--")) throw new Error("--vanilla requires an extracted Panorama directory");
+        } else if (!arg.startsWith("-") && !capturePath) capturePath = arg;
+        else throw new Error("usage: node scripts/audit_lookups_vs_capture.js [capture.json] [--vanilla <panorama-dir>] [--json]");
+    }
+    const capture = JSON.parse(fs.readFileSync(capturePath || DEFAULT_CAPTURE, "utf8"));
+    const loaded = hudScripts();
+    if (loaded.missing.length) throw new Error("HUD includes missing scripts");
+    const sources = [...new Set(loaded.scripts.map(s => s.absPath))]
+        .filter(file => !file.includes(path.sep + "tools" + path.sep))
+        .map(file => ({ file: path.relative(REPO_ROOT, file).replace(/\\/g, "/"), text: fs.readFileSync(file, "utf8") }));
+    const result = auditCapture(capture, sources, loadXmlEvidence({ vanilla }));
+    result.xmlScope = vanilla ? "QOLLOCK layouts plus extracted native layouts; QOLLOCK overrides take precedence" : "QOLLOCK layouts only; pass --vanilla for native source evidence";
+    process.stdout.write(json ? JSON.stringify(result, null, 2) + "\n" : result.xmlScope + "\n" + reportText(result));
+}
+
+module.exports = { auditCapture, reportText, main };
+if (require.main === module) {
+    try { main(); } catch (error) { process.stderr.write("[capture audit] FATAL: " + error.message + "\n"); process.exitCode = 2; }
+}
