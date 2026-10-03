@@ -218,6 +218,12 @@ test("INVARIANT 3: production settings tabs render, bind known keys, and selecte
             assert.equal(slider._fire("onvaluechanged"), true);
             assert.equal(g.MOD_CONFIG[key], tab === "HUD" ? 1.25 : 150);
             interactions++;
+            if (tab === "HUD") {
+                assert.ok(list.FindChildrenWithClassTraverse("SettingRow_ACTIVE_ITEMS_SCALE")[0],
+                    "active item scale renders as a normal setting row");
+                assert.equal(list.FindChildTraverse("ActiveItemSlotsSubSectionHeader"), null,
+                    "active item controls must not use a nested collapsible section");
+            }
         }
         clock.advance(400);
         assert.deepStrictEqual(doc.eventErrors, [], `${tab} event handlers must not silently fail`);

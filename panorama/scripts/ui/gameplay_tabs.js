@@ -263,7 +263,6 @@
         const createTitle = getCreateSectionTitle();
         const createSep = getCreateSeparator();
         const createAnimatedToggle = getCreateAnimatedToggle();
-        const createCollapsibleSubSection = getCreateCollapsibleSubSection();
         const createSecondaryCheckboxRow = getCreateSecondaryCheckboxRow();
         const palette = getPaletteOptions();
 
@@ -318,12 +317,10 @@
                 if (createRow) {
                     createRow(sectionParent, "Color", "BOTTOM_BAR_WASH_COLOR", "palette", null, null, null, palette, "Choose a preset color wash for the bottom ability bar.");
                 }
-                if (createCollapsibleSubSection && createSliderRow) {
-                    createCollapsibleSubSection(sectionParent, "Active Item Slots", (activeItemsParent) => {
-                        createSliderRow(activeItemsParent, "Scale", "ACTIVE_ITEMS_SCALE", "size_50_250");
-                        createSliderRow(activeItemsParent, "Horizontal Offset", "ACTIVE_ITEMS_X_OFFSET", "offset_n1500_1500_s1");
-                        createSliderRow(activeItemsParent, "Vertical Offset", "ACTIVE_ITEMS_Y_OFFSET", "offset_n500_500_s1");
-                    });
+                if (createSliderRow) {
+                    createSliderRow(sectionParent, "Active Item Scale", "ACTIVE_ITEMS_SCALE", "size_50_250");
+                    createSliderRow(sectionParent, "Active Item Horizontal Offset", "ACTIVE_ITEMS_X_OFFSET", "offset_n1500_1500_s1");
+                    createSliderRow(sectionParent, "Active Item Vertical Offset", "ACTIVE_ITEMS_Y_OFFSET", "offset_n500_500_s1");
                 }
             });
         }
