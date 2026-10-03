@@ -196,10 +196,9 @@
                     if (remaining <= 0) { RejuvShowSpawn(state, root); } else { state.counter = remaining; RejuvSetLabels(state, root, FormatClockMmSs(remaining), REJUV_SEQ[state.idx].num); var _rjHUD = GetRejuvPanel(state,root,"rejuvHUD","RejuvHUD"); ApplyRedYellowPanelClasses(_rjHUD, remaining < 10 && (remaining%2)===1, remaining < 20 && (remaining%2)===1); }
                 }
 
-                // Charge tokens detect the claim edge, but they are not the lifetime
-                // of the player's three-minute buff and may clear immediately after
-                // capture. Once started, keep the countdown until its own duration ends.
-                if (state.buffStartTime > 0) { var elapsed = nowSec - state.buffStartTime; state.buffCounter = Math.max(0, REJUV_DURATION_SEC - elapsed); var _rbt = GetRejuvPanel(state,root,"rejuvBuffTime","RejuvTimeBuff"); var _btt = FormatClockMmSs(state.buffCounter); if (_rbt && _rbt.text !== _btt) _rbt.text = _btt; if (state.buffCounter <= 0) RejuvEndBuff(state, root, nowMs, false); }
+                // The capture buff ends on either signal: its three-minute duration
+                // expires, or both teams' native RejuvCount_N charge tokens reach zero.
+                if (state.buffStartTime > 0) { var elapsed = nowSec - state.buffStartTime; state.buffCounter = Math.max(0, REJUV_DURATION_SEC - elapsed); var _rbt = GetRejuvPanel(state,root,"rejuvBuffTime","RejuvTimeBuff"); var _btt = FormatClockMmSs(state.buffCounter); if (_rbt && _rbt.text !== _btt) _rbt.text = _btt; var _lcc = RejuvGetChargeCount(state, root, nowMs); if (_lcc <= 0 || state.buffCounter <= 0) RejuvEndBuff(state, root, nowMs, false); }
 
                 // Bridge buff HUD
                 var remainingBridge = BRIDGE_DURATION_SEC - (nowSec % BRIDGE_DURATION_SEC); var bridgeText = FormatClockMmSs(remainingBridge);

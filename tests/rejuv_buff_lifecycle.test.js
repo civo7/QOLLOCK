@@ -4,7 +4,7 @@ const test = require("node:test");
 const assert = require("node:assert/strict");
 const { createHud } = require("../scripts/simulator");
 
-test("rejuvenator capture timer uses its duration instead of transient charge state", () => {
+function createCaptureHarness() {
     const hud = createHud({ inHideout: false });
     hud.assertLoaded();
     const Q = hud.sandbox.global.QOL;
@@ -41,10 +41,24 @@ test("rejuvenator capture timer uses its duration instead of transient charge st
     gameTime.text = "20:01";
     hud.clock.advance(1200);
 
+    return { hud, Q, gameTime, friendly, timer, buff, buffTime, feature };
+}
+
+test("rejuvenator capture timer stays visible while native charges remain", () => {
+    const { hud, buff, buffTime, feature } = createCaptureHarness();
+
     assert.equal(buff.style.opacity, "1.00");
     assert.equal(buff.BHasClass("pop-out"), true);
     assert.equal(buff.BHasClass("pop-in"), false);
     assert.equal(buffTime.text, "2:59");
+
+    assert.deepEqual(hud.clock.errors, []);
+
+    feature.onDisable();
+});
+
+test("rejuvenator capture timer ends early when native charges reach zero", () => {
+    const { hud, gameTime, friendly, timer, buff, feature } = createCaptureHarness();
 
     friendly.RemoveClass("RejuvCount_3");
     friendly.AddClass("RejuvCount_0");
@@ -52,10 +66,16 @@ test("rejuvenator capture timer uses its duration instead of transient charge st
     gameTime.text = "20:02";
     hud.clock.advance(1200);
 
-    assert.equal(buff.style.opacity, "1.00");
-    assert.equal(buff.BHasClass("pop-out"), true);
-    assert.equal(buff.BHasClass("pop-in"), false);
-    assert.equal(buffTime.text, "2:58");
+    assert.equal(buff.style.opacity, "0.00");
+    assert.equal(buff.BHasClass("pop-out"), false);
+    assert.equal(buff.BHasClass("pop-in"), true);
+    assert.deepEqual(hud.clock.errors, []);
+
+    feature.onDisable();
+});
+
+test("rejuvenator capture timer ends after 180 seconds while charges remain", () => {
+    const { hud, gameTime, buff, feature } = createCaptureHarness();
 
     gameTime.text = "23:00";
     hud.clock.advance(1200);
