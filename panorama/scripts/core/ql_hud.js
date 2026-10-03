@@ -649,7 +649,9 @@
             if (!isAlive(node)) return;
             const tokens = getPanelClassTokens(node);
             for (const t of tokens) {
-                const m = String(t).match(/^rejuv_charges_(\d+)$/i);
+                // Current TopBar uses RejuvCount_N; retain the former token for
+                // compatibility with older HUD resources.
+                const m = String(t).match(/^(?:RejuvCount_|rejuv_charges_)(\d+)$/i);
                 if (m) {
                     const num = parseInt(m[1], 10);
                     if (num > max) max = num;

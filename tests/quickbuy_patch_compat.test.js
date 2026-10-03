@@ -72,6 +72,16 @@ test("quick-buy styles extend refreshed native resources without stale toggle se
     assert.match(miniContents, /width:\s*70px;/);
     assert.match(miniContents, /height:\s*70px;/);
 
+    const narrowBuyQueue = ruleBody(css, ".support_4_3_active .gShopOpen #QuickbuyQueue");
+    const narrowSellQueue = ruleBody(css, ".support_4_3_active .gShopOpen #QuickbuySellQueue");
+    const narrowSummary = ruleBody(css, ".support_4_3_active .QuickbuyShopSummaryContainer");
+    const narrowQueueOuter = ruleBody(css, ".support_4_3_active .gShopOpen #CitadelHudQuickbuy .QuickbuyQueueOuter");
+    assert.match(narrowBuyQueue, /width:\s*210px;/);
+    assert.match(narrowSellQueue, /width:\s*210px;/);
+    assert.match(narrowSummary, /margin-left:\s*0px;/);
+    assert.match(narrowQueueOuter, /margin-left:\s*10px;/);
+    assert.doesNotMatch(css, /\.support_4_3_active \.gShopOpen #QuickBuyQueueContainer/);
+
     assert.doesNotMatch(css, /\.QuickbuyItem\.IsBeingDragged\.isWeapon/);
     assert.match(entry, /#QuickbuyPreview2Entry/);
     assert.match(entry, /#NotifyButton/);

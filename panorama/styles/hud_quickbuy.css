@@ -282,25 +282,18 @@
 
 .support_4_3_active .QuickbuyShopSummaryContainer
 {
+	margin-left: 0px;
+}
+
+.support_4_3_active .gShopOpen #QuickbuyQueue,
+.support_4_3_active .gShopOpen #QuickbuySellQueue
+{
+	width: 210px;
+}
+
+.support_4_3_active .gShopOpen #CitadelHudQuickbuy .QuickbuyQueueOuter
+{
 	margin-left: 10px;
-	margin-top: 10px;
-}
-
-.support_4_3_active #QuickbuyShopSummary,
-.support_4_3_active #QuickbuyShopTotalSummary
-{
-	width: 200px;
-	height: 85px;
-}
-
-.support_4_3_active .gShopOpen #QuickBuyQueueContainer
-{
-	width: 37%;
-}
-
-.support_4_3_active .gShopOpen #QuickbuyQueue
-{
-	padding-right: 0px;
 }
 
 .hud_shift_active #CitadelHudQuickbuy .HudQuickbuyElement
