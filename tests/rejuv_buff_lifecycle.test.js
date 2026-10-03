@@ -25,8 +25,9 @@ function createCaptureHarness() {
     const buff = $.CreatePanel("Panel", topBar, "RejuvBuff");
     const buffTime = $.CreatePanel("Label", buff, "RejuvTimeBuff");
 
-    assert.equal(typeof friendly.GetClassTokens, "undefined");
-    assert.equal(Array.from(Q.getPanelClassTokens(friendly)).join(" "), "RejuvCount_3");
+    // Live panels can fail to enumerate their class list even though BHasClass
+    // still reports the native RejuvCount_N token shown by Panorama Debugger.
+    friendly.GetClasses = () => "";
     assert.equal(Q.getHighestRejuvChargeTokenOnPanel(friendly), 3);
 
     const feature = Q.core.FeatureRegistry.getManifest("ql_rejuv_hud").create({
@@ -62,6 +63,22 @@ test("rejuvenator capture timer survives transient zero charges while the native
 
     friendly.RemoveClass("RejuvCount_3");
     friendly.AddClass("RejuvCount_0");
+    gameTime.text = "20:02";
+    hud.clock.advance(1200);
+
+    assert.equal(buff.style.opacity, "1.00");
+    assert.equal(buff.BHasClass("pop-out"), true);
+    assert.equal(buff.BHasClass("pop-in"), false);
+    assert.equal(buffTime.text, "2:58");
+    assert.deepEqual(hud.clock.errors, []);
+
+    feature.onDisable();
+});
+
+test("rejuvenator capture timer survives a native buff signal drop while charges remain", () => {
+    const { hud, gameTime, timer, buff, buffTime, feature } = createCaptureHarness();
+
+    timer.RemoveClass("has_rejuv");
     gameTime.text = "20:02";
     hud.clock.advance(1200);
 
@@ -111,6 +128,7 @@ test("rejuvenator charge helper retains the legacy class token", () => {
     const $ = hud.sandbox.global.$;
     const panel = $.CreatePanel("Panel", hud.root, "LegacyRejuvCharges");
     panel.AddClass("rejuv_charges_2");
+    panel.GetClasses = () => "";
 
     assert.equal(Q.getHighestRejuvChargeTokenOnPanel(panel), 2);
 });
