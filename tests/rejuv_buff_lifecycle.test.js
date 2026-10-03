@@ -4,7 +4,7 @@ const test = require("node:test");
 const assert = require("node:assert/strict");
 const { createHud } = require("../scripts/simulator");
 
-test("rejuvenator capture timer stays visible while current native charges remain", () => {
+test("rejuvenator capture timer uses its duration instead of transient charge state", () => {
     const hud = createHud({ inHideout: false });
     hud.assertLoaded();
     const Q = hud.sandbox.global.QOL;
@@ -45,6 +45,23 @@ test("rejuvenator capture timer stays visible while current native charges remai
     assert.equal(buff.BHasClass("pop-out"), true);
     assert.equal(buff.BHasClass("pop-in"), false);
     assert.equal(buffTime.text, "2:59");
+
+    friendly.RemoveClass("RejuvCount_3");
+    friendly.AddClass("RejuvCount_0");
+    timer.RemoveClass("has_rejuv");
+    gameTime.text = "20:02";
+    hud.clock.advance(1200);
+
+    assert.equal(buff.style.opacity, "1.00");
+    assert.equal(buff.BHasClass("pop-out"), true);
+    assert.equal(buff.BHasClass("pop-in"), false);
+    assert.equal(buffTime.text, "2:58");
+
+    gameTime.text = "23:00";
+    hud.clock.advance(1200);
+
+    assert.equal(buff.style.opacity, "0.00");
+    assert.equal(buff.BHasClass("pop-out"), false);
     assert.deepEqual(hud.clock.errors, []);
 
     feature.onDisable();
