@@ -10,6 +10,14 @@ CitadelHudHeroShop.disable_shop_blue_active
 	world-blur: none !important;
 }
 
+/* The native top bar has z-index 10 and can become opaque while the scoreboard
+   is open. Keep the open shop above it instead of allowing portraits to bleed
+   through the catalog. */
+.gShopOpen CitadelHudHeroShop
+{
+	z-index: 20;
+}
+
 .support_4_3_active #Shop
 {
 	margin-right: 0px;
