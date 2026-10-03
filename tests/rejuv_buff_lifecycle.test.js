@@ -42,7 +42,7 @@ function createCaptureHarness() {
     gameTime.text = "20:01";
     hud.clock.advance(1200);
 
-    return { hud, Q, gameTime, friendly, timer, buff, buffTime, feature };
+    return { hud, Q, $, topBar, gameTime, charges, friendly, timer, buff, buffTime, feature };
 }
 
 test("rejuvenator capture timer stays visible while native charges remain", () => {
@@ -116,6 +116,37 @@ test("rejuvenator capture timer ends after 180 seconds while charges remain", ()
 
     assert.equal(buff.style.opacity, "0.00");
     assert.equal(buff.BHasClass("pop-out"), false);
+    assert.deepEqual(hud.clock.errors, []);
+
+    feature.onDisable();
+});
+
+test("rejuvenator capture timer rearms after the native charge subtree is replaced", () => {
+    const { hud, $, topBar, gameTime, charges, buff, buffTime, feature } = createCaptureHarness();
+
+    gameTime.text = "23:00";
+    hud.clock.advance(1200);
+    assert.equal(buff.style.opacity, "0.00");
+
+    charges.DeleteAsync(0);
+    hud.clock.advance(1);
+    const replacementCharges = $.CreatePanel("Panel", topBar, "RejuvenatorCharges");
+    const replacementFriendly = $.CreatePanel("Panel", replacementCharges, "RejuvenatorFriendly");
+    replacementFriendly.AddClass("RejuvCount_3");
+    replacementFriendly.GetClasses = () => "";
+    $.CreatePanel("Panel", replacementFriendly, "FriendlyRejuvIcon");
+    const replacementTimer = $.CreatePanel("Panel", replacementCharges, "RejuvenatorTimer");
+    replacementTimer.AddClass("has_rejuv");
+    const replacementEnemy = $.CreatePanel("Panel", replacementCharges, "RejuvenatorEnemy");
+    replacementEnemy.AddClass("RejuvCount_0");
+
+    gameTime.text = "27:00";
+    hud.clock.advance(6500);
+
+    assert.equal(buff.style.opacity, "1.00");
+    assert.equal(buff.BHasClass("pop-out"), true);
+    assert.equal(buff.BHasClass("pop-in"), false);
+    assert.equal(buffTime.text, "3:00");
     assert.deepEqual(hud.clock.errors, []);
 
     feature.onDisable();

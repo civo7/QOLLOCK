@@ -178,6 +178,7 @@
                 if (midBossBtn) { var mbs = !!(midBossBtn.BHasClass && midBossBtn.BHasClass("midboss_spawned")); if (mbs !== state._lastMidBossSpawned) { state._lastMidBossSpawned = mbs; state.nextScanMs = 0; } }
                 var _rjv = IsPanelValid(state.cacheRejuvTimer) ? state.cacheRejuvTimer : null;
                 if (_rjv && _rjv.BHasClass) { var _hrn = _rjv.BHasClass("has_rejuv"); if (_hrn && !state._lastHadRejuvPerTick) { if (nowSec >= (state.lastBuffGameSec||0) + BUFF_LOCKOUT_SEC) { state.lastBuffGameSec = nowSec; RejuvStartBuff(state, root, nowSec, true); } } state._lastHadRejuvPerTick = _hrn; }
+                else { state._lastHadRejuvPerTick = false; }
 
                 // Fast-path early-exit
                 if (state.lastRuntimeSec === nowSec && state.lastRuntimeFeatureSig === state._cachedRuntimeFeatureSig && nowMs < (state.nextScanMs||0) && (state.rotatingUntilMs <= 0 || nowMs < state.rotatingUntilMs) && (state.rejuvBuffHideAtMs <= 0 || nowMs < state.rejuvBuffHideAtMs) && state.buffStartTime <= 0) return;
