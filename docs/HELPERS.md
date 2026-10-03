@@ -98,6 +98,10 @@ without legacy fallback writes. Neither helper forces a new default value.
 - `QOL.core.hud.isInHideout(root)` checks `connectedToHideout` / `InHideout`
   on the cached HUD and supplied root. Use it for that shared predicate;
   feature-specific intro handling or visibility policy remains with the caller.
+- `QOL.core.hud.isGameplayHudShown(root)` checks native combat HUD presentation
+  gates and current ancestry. `InHideout` suppresses the first hideout room;
+  `connectedToHideout` alone permits the combat room. A root fallback is false,
+  and missing native panels are retried. See [HUD state](core/hud.md) for scope.
 - `QOL.core.hud.isScoreboardOpen(root, anchor)` reads `gScoreboardOpen` from
   HUD/ancestor state, the stationary native `DamageReportGlobalClassListener`,
   or, when that listener is absent, an optional feature anchor or native

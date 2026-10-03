@@ -10,6 +10,7 @@ Provides Deadlock-specific HUD element discovery, match mode detection (Hideout,
 ## Interface (`QOL.core.hud`)
 - `findHud(preferredRoot)`: Resolves and returns the main `#Hud` panel (delegates to `QOL.core.panel.findHud`).
 - `isInHideout(root)`: Checks if player is in sandbox/testing/hideout mode (`connectedToHideout` / `InHideout` classes).
+- `isGameplayHudShown(root)`: Reports native combat-HUD presentation evidence; requires a real Hud, joined-team state and a visible native `gameplay_hud` ancestry.
 - `isStreetBrawl(root)`: Checks if active match is in Street Brawl mode (`gamemode_streetbrawl`).
 - `isClassActive(className)`: Checks if a given class token is active on the HUD root.
 - `applyRootClasses(root, config, timestamp, force)`: Synchronizes feature CSS classes onto the root container based on active configuration settings.
@@ -22,6 +23,23 @@ the helper reads current classes on each call rather than caching mode state.
 Do not duplicate the predicate through two `isClassActive` calls or legacy
 fallbacks. Feature-specific intro/visibility rules remain separate, and the
 unsecured-souls timer intentionally has no hideout suppression.
+
+## Combat HUD visibility
+
+`isGameplayHudShown(root)` is separate from the hideout connection predicate and
+top-bar visibility policy. `InHideout` is the native area gate for the first
+hideout room; `connectedToHideout` alone also applies in the combat room and
+must not suppress combat UI. The helper follows native `hud.css` gates for
+unjoined, Escape-menu, takeover, post-game and shop presentation, and rejects
+explicitly hidden/transparent native panels or ancestors. Unset inline opacity
+does not establish transparency. This is observed presentation state, not
+computed CSS visibility or local-player identity.
+
+The helper reads current ancestor state rather than retaining an ancestor list.
+Its native panel cache is rebound after destruction, reparenting or a changed
+Hud. Missing native gameplay panels are retried at the discovery interval in
+source. Crosshair stats uses this gate before source discovery/value reads;
+its scoped `InHideout` row CSS also suppresses presentation between ticks.
 
 ## Engine Reality Note
 - Many in-game panels are created dynamically at runtime by C++ code. The HUD root undergoes structural changes during match phase transitions (draft, spawn, hideout, game active). Always use `findHud()` or cache panel references with `isPanelAlive()` validation.

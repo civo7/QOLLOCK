@@ -9,7 +9,7 @@
     vertical-align: center;
     width: fit-children;
     height: fit-children;
-    margin-left: 130px;
+    margin-left: 135px;
     flow-children: down;
     padding: 2px 0px;
 }
@@ -20,62 +20,68 @@
     vertical-align: center;
     width: fit-children;
     margin: 2px 0px;
-    padding: 3px 9px 3px 7px;
-    border-radius: 4px;
-    border-left: 3px solid #ffffff30;
-    background-color: #0f141cdc;
-    transition-property: background-color, border-left-color;
+    padding: 2px 7px 2px 5px;
+    border-radius: 3px;
+    border-left: 2px solid #ffffff30;
+    background-color: #000000a6;
+    transition-property: background-color;
     transition-duration: 0.15s;
 }
 
 .QOLCrosshairStatRow.isDebuff
 {
-    background-color: #321010d8;
-    border-left-color: #ff5a5a;
+    border-left: 2px solid #ff6e6e;
 }
 
 .QOLCrosshairStatRow.isBuff
 {
-    background-color: #102614d8;
-    border-left-color: #58e070;
+    border-left: 2px solid #7ae66e;
+}
+
+/* Native area flag: CSS hides rows immediately, before the next HUD-state tick.
+   Row opacity has no inline override, so overlay opacity settings cannot win. */
+.InHideout .QOLCrosshairStatRow
+{
+    opacity: 0;
 }
 
 .QOLCrosshairStatIcon
 {
-    width: 18px;
-    height: 18px;
+    width: 17px;
+    height: 17px;
     vertical-align: center;
     margin-right: 6px;
     background-size: contain;
     background-repeat: no-repeat;
-    wash-color: offWhite;
+    wash-color: #FFEFD7;
 }
 
 .QOLCrosshairStatRow.isDebuff .QOLCrosshairStatIcon
 {
-    wash-color: #ff7b7b;
+    wash-color: #FFEFD7;
 }
 
 .QOLCrosshairStatRow.isBuff .QOLCrosshairStatIcon
 {
-    wash-color: #8ff19b;
+    wash-color: #FFEFD7;
 }
 
 .QOLCrosshairStatValue
 {
-    font-size: 15px;
+    font-size: 14px;
     font-weight: bold;
     font-family: sansMono;
     color: offWhite;
     vertical-align: center;
+    text-shadow: 0px 1px 3px 2.0 #000000;
 }
 
 .QOLCrosshairStatRow.isDebuff .QOLCrosshairStatValue
 {
-    color: #ff8d8d;
+    color: #ff6e6e;
 }
 
 .QOLCrosshairStatRow.isBuff .QOLCrosshairStatValue
 {
-    color: #8ff19b;
+    color: #7ae66e;
 }

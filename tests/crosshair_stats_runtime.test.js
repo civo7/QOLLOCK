@@ -11,6 +11,17 @@ const test = require("node:test");
 const assert = require("node:assert");
 const sim = require("../scripts/simulator/index.js");
 
+function createCrosshairHud() {
+    const hud = sim.createHud({ inHideout: false });
+    hud.assertLoaded();
+    const { $ } = hud.sandbox.global;
+    hud.root.AddClass("joined_team");
+    const core = $.CreatePanel("Panel", hud.root, "");
+    core.AddClass("HudCore");
+    hud.gameplay = $.CreatePanel("Panel", core, "gameplay_hud");
+    return hud;
+}
+
 function addClass(panel, className) {
     if (className) panel.AddClass(className);
     return panel;
@@ -86,9 +97,77 @@ function nativeOwners($, source) {
     return { list, weapon, spirit, vitality, weaponCore, spiritCore };
 }
 
+test("crosshair suspends stat work in the first hideout room and refreshes in the combat room", () => {
+    const hud = createCrosshairHud();
+    const { $, QOL: Q } = hud.sandbox.global;
+    hud.root.AddClass("connectedToHideout");
+    const source = $.CreatePanel("Panel", hud.root, "hudActivePlayerStats");
+    const owners = nativeOwners($, source);
+    const fire = addModifier($, owners.weapon, "fireRateContainer", {
+        number: "+10", postfix: "%", classes: ["shouldShow", "isPositive"]
+    });
+    const number = fire.FindChildrenWithClassTraverse("statNumber")[0];
+    let hidden = false, currentText = "+10";
+    Object.defineProperty(number, "text", { get() {
+        if (hidden) throw new Error("stat labels must not be read while the gameplay HUD is suppressed");
+        return currentText;
+    }, set(text) { currentText = text; }, configurable: true });
+    enableActiveStats(Q);
+    hud.clock.advance(300);
+    const overlay = hud.root.FindChildTraverse("QOLCrosshairStatsOverlay");
+    assert.strictEqual(value(hud.root, "fireRate").text, "+10%");
+    assert.strictEqual(overlay.style.visibility, "visible");
+    for (const cls of ["InHideout", "ShowEscapeMenu", "HudTakeoverEnabled"]) {
+        hud.root.AddClass(cls);hidden = true;currentText = "+20";
+        hud.clock.advance(900);
+        assert.strictEqual(overlay.style.visibility, "collapse");
+        assert.strictEqual(hud.clock.errors.length, 0);
+        hud.root.RemoveClass(cls);hidden = false;
+        hud.clock.advance(100);
+        assert.strictEqual(overlay.style.visibility, "visible");
+        assert.strictEqual(value(hud.root, "fireRate").text, "+20%");
+    }
+    hud.gameplay.visible = false;hidden = true;
+    hud.clock.advance(900);
+    assert.strictEqual(overlay.style.visibility, "collapse");
+    assert.strictEqual(hud.clock.errors.length, 0);
+    hud.gameplay.visible = true;hidden = false;
+    hud.clock.advance(100);
+    assert.strictEqual(overlay.style.visibility, "visible");
+});
+
+test("crosshair missing-row discovery waits while cached values keep updating", () => {
+    const hud = createCrosshairHud();
+    const { $, QOL: Q } = hud.sandbox.global;
+    const source = $.CreatePanel("Panel", hud.root, "hudActivePlayerStats");
+    const owners = nativeOwners($, source);
+    const fire = addModifier($, owners.weapon, "fireRateContainer", {
+        number: "+10", postfix: "%", classes: ["shouldShow", "isPositive"]
+    });
+    enableActiveStats(Q);
+    Q.core.ConfigAdapter.loadFromFlat({ CROSSHAIR_STATS_SHOW_DAMAGEAMP: 1 });
+    hud.clock.advance(100);
+    const scanTimes = [];
+    const traverse = source.FindChildTraverse.bind(source);
+    source.FindChildTraverse = id => {
+        if (id === "damageAmpContainer") scanTimes.push(hud.clock.now());
+        return traverse(id);
+    };
+    hud.clock.advance(2000);
+    assert.ok(scanTimes.length >= 2 && scanTimes.length <= 3);
+    assert.ok(scanTimes.every((time, index) => index === 0 || time - scanTimes[index - 1] >= 800));
+    addModifier($, owners.vitality, "damageAmpContainer", {
+        number: "+7", classes: ["shouldShow", "isPositive"]
+    });
+    fire.FindChildrenWithClassTraverse("statNumber")[0].text = "+11";
+    hud.clock.advance(100);
+    assert.strictEqual(value(hud.root, "fireRate").text, "+11%");
+    hud.clock.advance(800);
+    assert.strictEqual(value(hud.root, "damageAmp").text, "+7");
+});
+
 test("crosshair discovers conditional rows in narrow owners and recovers from row/owner replacement", () => {
-    const hud = sim.createHud({ inHideout: false });
-    hud.assertLoaded();
+    const hud = createCrosshairHud();
     const { $, QOL: Q } = hud.sandbox.global;
     enableActiveStats(Q);
     hud.clock.advance(300);
@@ -101,7 +180,7 @@ test("crosshair discovers conditional rows in narrow owners and recovers from ro
     const fire = addModifier($, owners.weapon, "fireRateContainer", {
         number: "+10", postfix: "%", classes: ["shouldShow", "isPositive"]
     });
-    hud.clock.advance(100);
+    hud.clock.advance(800);
     assert.strictEqual(value(hud.root, "fireRate").text, "+10%");
 
     // No column is asserted for damageAmp: this synthetic conditional row
@@ -111,7 +190,7 @@ test("crosshair discovers conditional rows in narrow owners and recovers from ro
     const damage = addModifier($, owners.vitality, "damageAmpContainer", {
         number: "+7", classes: ["shouldShow", "isPositive"]
     });
-    hud.clock.advance(100);
+    hud.clock.advance(800);
     assert.strictEqual(value(hud.root, "damageAmp").text, "+7");
     damage.DeleteAsync(0);
     hud.clock.advance(100);
@@ -134,7 +213,7 @@ test("crosshair discovers conditional rows in narrow owners and recovers from ro
     addModifier($, replacement, "fireRateContainer", {
         number: "+25", postfix: "%", classes: ["shouldShow", "isPositive"]
     });
-    hud.clock.advance(100);
+    hud.clock.advance(800);
     assert.strictEqual(value(hud.root, "fireRate").text, "+25%");
     replacement.DeleteAsync(0);
     owners.weapon.DeleteAsync(0);
@@ -144,13 +223,12 @@ test("crosshair discovers conditional rows in narrow owners and recovers from ro
     addModifier($, lateColumn, "fireRateContainer", {
         number: "+30", postfix: "%", classes: ["shouldShow", "isPositive"]
     });
-    hud.clock.advance(100);
+    hud.clock.advance(800);
     assert.strictEqual(value(hud.root, "fireRate").text, "+30%");
 });
 
 test("crosshair compatibility search finds late rows outside verified paths and resets on disable", () => {
-    const hud = sim.createHud({ inHideout: false });
-    hud.assertLoaded();
+    const hud = createCrosshairHud();
     const { $, QOL: Q } = hud.sandbox.global;
     const source = $.CreatePanel("Panel", hud.root, "hudActivePlayerStats");
     nativeOwners($, source);
@@ -162,7 +240,7 @@ test("crosshair compatibility search finds late rows outside verified paths and 
     const evasion = addModifier($, unexpected, "bulletEvasionContainer", {
         number: "+4", classes: ["shouldShow", "isPositive"]
     });
-    hud.clock.advance(1600);
+    hud.clock.advance(800);
     assert.strictEqual(value(hud.root, "bulletEvasion").text, "+4");
     const number = evasion.FindChildrenWithClassTraverse("statNumber")[0];
     number.text = "+5";
@@ -180,8 +258,7 @@ test("crosshair compatibility search finds late rows outside verified paths and 
 });
 
 test("crosshair Active Stats reads the renamed source and current value classes", () => {
-    const hud = sim.createHud({ inHideout: false });
-    hud.assertLoaded();
+    const hud = createCrosshairHud();
     const { $, QOL: Q } = hud.sandbox.global;
 
     // This ID is now a different CitadelHudPlayerStats component. Giving it a
@@ -255,8 +332,7 @@ test("crosshair Active Stats reads the renamed source and current value classes"
 });
 
 test("crosshair Active Stats invalidates cached rows when its native source is replaced", () => {
-    const hud = sim.createHud({ inHideout: false });
-    hud.assertLoaded();
+    const hud = createCrosshairHud();
     const { $, QOL: Q } = hud.sandbox.global;
 
     let source = $.CreatePanel("Panel", hud.root, "hudActivePlayerStats");

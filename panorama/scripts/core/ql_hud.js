@@ -260,6 +260,55 @@
         return true;
     };
 
+    const gameplayVisibility = { hud: null, panel: null, nextSearchMs: 0 };
+    const GAMEPLAY_HUD_DISCOVERY_MS = 800;
+    // Native hud.css gates. InHideout is area-specific; connectedToHideout
+    // remains set in the combat room and must not suppress this predicate.
+    const isGameplayHudShown = (root) => {
+        try {
+            const hud = findHud(root);
+            if (!isAlive(hud) || (hud.id !== "Hud" && hud.paneltype !== "CitadelHud")) return false;
+            let joined = false;
+            let ancestor = hud;
+            for (let depth = 0; isAlive(ancestor) && depth < 64; depth++) {
+                if (isPanelSuppressedMaybe(ancestor) || ancestor.style?.visibility === "collapse" || ancestor.BHasClass("HudHiddenPanel")) return false;
+                if (["InHideout", "ShowEscapeMenu", "HudTakeoverEnabled", "inPostGame", "GameStatePostGame"]
+                    .some(cls => ancestor.BHasClass(cls))) return false;
+                if (ancestor.BHasClass("joined_team")) joined = true;
+                ancestor = ancestor.GetParent();
+            }
+            if (ancestor || !joined) return false;
+            if (gameplayVisibility.hud !== hud) {
+                gameplayVisibility.hud = hud;
+                gameplayVisibility.panel = null;
+                gameplayVisibility.nextSearchMs = 0;
+            }
+            let panel = gameplayVisibility.panel;
+            // Validate current ancestry, including a live old generation moved
+            // away from this Hud. Never retain a cached ancestor list.
+            let current = panel;
+            for (let depth = 0; isAlive(current) && current !== hud && depth < 64; depth++) current = current.GetParent();
+            if (panel && current !== hud) {
+                gameplayVisibility.panel = panel = null;
+                gameplayVisibility.nextSearchMs = 0;
+            }
+            if (!panel) {
+                const now = Date.now();
+                if (now < gameplayVisibility.nextSearchMs) return false;
+                gameplayVisibility.nextSearchMs = now + GAMEPLAY_HUD_DISCOVERY_MS;
+                gameplayVisibility.panel = panel = _panelHelpers.findTraverse(hud, PANEL_ID_GAMEPLAY_HUD);
+            }
+            if (!isAlive(panel) || panel.BHasClass("gShopOpen")) return false;
+            current = panel;
+            for (let depth = 0; isAlive(current) && depth < 64; depth++) {
+                if (isPanelSuppressedMaybe(current) || current.style?.visibility === "collapse" || current.BHasClass("HudHiddenPanel")) return false;
+                if (current === hud) return true;
+                current = current.GetParent();
+            }
+        } catch (_) { /* native handles can disappear during transitions */ }
+        return false;
+    };
+
     const isHudVisibleForTopBarRuntime = (root, topBar) => {
         if (!root) return true;
         const hasAnyClass = (panel, classNames) => {
@@ -1351,6 +1400,7 @@
         getGameplayHudPanel,
         isCustomHudContextActive,
         isHudVisibleForTopBarRuntime,
+        isGameplayHudShown,
         isColorWarningEnabled,
         updateReloadCircleExceptionState,
         ensureUrnTrackerOverlay,

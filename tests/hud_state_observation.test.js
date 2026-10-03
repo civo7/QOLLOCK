@@ -4,6 +4,41 @@ const assert=require('node:assert/strict');
 const {createHud}=require('../scripts/simulator');
 function setup(){const env=createHud({inHideout:false});env.assertLoaded();return {...env,Q:env.sandbox.global.QOL};}
 
+test('gameplay HUD visibility distinguishes hideout rooms and reads live native gates',()=>{
+ const {Q,root,doc}=setup();const read=()=>Q.core.hud.isGameplayHudShown(root);
+ root.AddClass('joined_team');root.AddClass('connectedToHideout');
+ const core=doc.create('Panel',{classes:['HudCore']});root.addChild(core);
+ const gameplay=doc.create('Panel',{id:'gameplay_hud'});core.addChild(gameplay);
+ assert.equal(read(),true,'connectedToHideout alone permits the combat room');
+ for(const cls of ['InHideout','ShowEscapeMenu','HudTakeoverEnabled','inPostGame','GameStatePostGame','HudHiddenPanel']){
+  root.AddClass(cls);assert.equal(read(),false,cls);root.RemoveClass(cls);assert.equal(read(),true,cls+' cleared');
+ }
+ root.RemoveClass('joined_team');assert.equal(read(),false);root.AddClass('joined_team');
+ gameplay.AddClass('gShopOpen');assert.equal(read(),false);gameplay.RemoveClass('gShopOpen');
+ gameplay.visible=false;assert.equal(read(),false);gameplay.visible=true;
+ for(const panel of [core,gameplay]){
+  panel.style.visibility='collapse';assert.equal(read(),false);panel.style.visibility='';
+  panel.style.opacity='0';assert.equal(read(),false);panel.style.opacity='';assert.equal(read(),true,'unset opacity is not zero');
+ }
+ doc.absRoot.AddClass('InHideout');assert.equal(read(),false,'area gate can belong to a Hud ancestor');doc.absRoot.RemoveClass('InHideout');
+ const loading=doc.create('Panel',{id:'Loading'});assert.equal(Q.core.hud.isGameplayHudShown(loading),false,'a findHud fallback is not gameplay evidence');
+});
+
+test('gameplay visibility rebinds replaced native panels and retries a missing HUD',()=>{
+ const {Q,root,doc,clock}=setup();root.AddClass('joined_team');
+ assert.equal(Q.core.hud.isGameplayHudShown(root),false);
+ const core=doc.create('Panel',{classes:['HudCore']});root.addChild(core);
+ let gameplay=doc.create('Panel',{id:'gameplay_hud'});core.addChild(gameplay);
+ clock.advance(800);assert.equal(Q.core.hud.isGameplayHudShown(root),true,'late native HUD is discovered');
+ const retired=doc.create('Panel',{id:'Retired'});doc.absRoot.addChild(retired);
+ gameplay.SetParent(retired);
+ gameplay=doc.create('Panel',{id:'gameplay_hud'});core.addChild(gameplay);gameplay.visible=false;
+ assert.equal(Q.core.hud.isGameplayHudShown(root),false,'a live old generation cannot mask the hidden replacement');
+ gameplay.visible=true;assert.equal(Q.core.hud.isGameplayHudShown(root),true);
+ gameplay.DeleteAsync(0);clock.advance(0);
+ assert.equal(Q.core.hud.isGameplayHudShown(root),false);
+});
+
 test('scoreboard reads native listener state and follows listener replacement',()=>{
  const {Q,root,doc}=setup();let listener=doc.create('Panel',{id:'minimap_persp'});root.addChild(listener);
  listener.SetHasClass('gScoreboardOpen',true);

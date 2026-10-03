@@ -51,7 +51,7 @@
             { key: "CROSSHAIR_STATS_SHOW_BULLETEVASION", type: "toggle", default: true }
         ],
         create: function(ctx) {
-            var BASE_X = 130, BASE_Y = 0, VALUE_BFS_LIMIT = 200;
+            var BASE_X = 135, BASE_Y = 0, VALUE_BFS_LIMIT = 200;
             var _loop = null;
 
             var STAT_DEFS = [
@@ -93,11 +93,14 @@
                 moveSpeed: "VitalityColumn", healAmp: "VitalityColumn", bulletResist: "VitalityColumn",
                 techResist: "VitalityColumn", regen: "VitalityColumn", weaponPower: "Weapon", spirit: "Spirit"
             };
-            const FALLBACK_RETRY_MS = 1500;
-            let sourceScopes = {}, sourceParents = {}, fallbackNextMs = {};
+            const DISCOVERY_RETRY_MS = 800;
+            let sourceScopes = {}, sourceParents = {}, discoveryNextMs = {};
+            let scopeParents = {}, scopeNextMs = {};
+            let sourceOwner = null, sourceNextMs = 0, hudSuppressed = false;
 
             function _resetDiscovery() {
-                sourceScopes = {}; sourceParents = {}; fallbackNextMs = {};
+                sourceScopes = {}; sourceParents = {}; discoveryNextMs = {};
+                scopeParents = {}; scopeNextMs = {};
             }
             function _isDirectChild(panel, parent) {
                 if (!_isAlive(panel) || !_isAlive(parent)) return false;
@@ -112,7 +115,7 @@
                 } catch (_) {}
                 return false;
             }
-            function _getSourceOwners(st, source) {
+            function _getSourceOwners(st, source, nowMs) {
                 const owners = [];
                 const checked = {};
                 let changed = false;
@@ -121,9 +124,18 @@
                     for (const id of path) {
                         if (!checked[id]) {
                             const previous = sourceScopes[id];
-                            const panel = _isDirectChild(previous, parent) ? previous : _findChild(parent, id);
+                            let panel = previous;
+                            if (!_isDirectChild(panel, parent)) {
+                                if (previous || scopeParents[id] !== parent) scopeNextMs[id] = 0;
+                                panel = null;
+                                if (nowMs >= (scopeNextMs[id] || 0)) {
+                                    panel = _findChild(parent, id);
+                                    scopeNextMs[id] = nowMs + DISCOVERY_RETRY_MS;
+                                }
+                            }
                             if ((previous || null) !== (panel || null)) changed = true;
                             sourceScopes[id] = panel || null;
+                            scopeParents[id] = parent;
                             checked[id] = true;
                         }
                         parent = sourceScopes[id];
@@ -132,7 +144,7 @@
                 }
                 if (changed) {
                     st.sourceContainers = {}; st.sourceValueRefs = {};
-                    sourceParents = {}; fallbackNextMs = {};
+                    sourceParents = {}; discoveryNextMs = {};
                     st.lastContentSig = "";
                 }
                 return owners;
@@ -160,6 +172,12 @@
             function _getSourcePanel(root, st) {
                 var owner = root;
                 try { if (_findHud) owner = _findHud(root) || root; } catch(e) { owner = root; }
+                if (sourceOwner !== owner) { sourceOwner = owner; sourceNextMs = 0; }
+                if (_isAlive(st.sourcePanel) && st.sourcePanel.id === SOURCE_PANEL_ID && _belongsToSource(st.sourcePanel, owner)) return st.sourcePanel;
+                if (st.sourcePanel) sourceNextMs = 0;
+                const nowMs = Date.now();
+                if (nowMs < sourceNextMs) return null;
+                sourceNextMs = nowMs + DISCOVERY_RETRY_MS;
                 var panel = null;
                 if (_resolvePanel && _isAlive(owner)) {
                     panel = _resolvePanel(owner, "crosshairStatsSource", SOURCE_PANEL_ID);
@@ -189,8 +207,11 @@
                 if (_isDirectChild(c, sourceParents[def.key]) && _belongsToSource(c, source)) {
                     // A compatibility result must not mask a row later created
                     // at its verified path (old native generations may stay alive).
-                    const current = preferred && sourceParents[def.key] !== preferred
-                        ? _findChild(preferred, def.id) : null;
+                    let current = null;
+                    if (preferred && sourceParents[def.key] !== preferred && nowMs >= (discoveryNextMs[def.key] || 0)) {
+                        current = _findChild(preferred, def.id);
+                        discoveryNextMs[def.key] = nowMs + DISCOVERY_RETRY_MS;
+                    }
                     if (!current || current === c) return c;
                     c = current;
                     st.sourceContainers[def.key] = c;
@@ -199,7 +220,9 @@
                     return c;
                 }
                 // A replaced/reparented row must bypass an earlier negative-cache deadline.
-                if (c) fallbackNextMs[def.key] = 0;
+                if (c) discoveryNextMs[def.key] = 0;
+                if (nowMs < (discoveryNextMs[def.key] || 0)) return null;
+                discoveryNextMs[def.key] = nowMs + DISCOVERY_RETRY_MS;
                 c = _findChild(preferred, def.id);
                 // Do not assign an unverified column to conditional/C++-created rows.
                 if (!c) c = _findChild(source, def.id);
@@ -210,9 +233,8 @@
                         if (c) break;
                     }
                 }
-                if (!c && nowMs >= (fallbackNextMs[def.key] || 0)) {
+                if (!c) {
                     c = source.FindChildTraverse ? source.FindChildTraverse(def.id) : null;
-                    fallbackNextMs[def.key] = nowMs + FALLBACK_RETRY_MS;
                 }
                 st.sourceContainers[def.key] = c || null;
                 sourceParents[def.key] = c ? c.GetParent() : null;
@@ -233,7 +255,7 @@
             function _readBfs(root) {
                 var queue = []; try { if (root.Children) queue = (root.Children() || []).slice(); } catch(e) { return ""; }
                 var guard = 0;
-                while (queue.length && guard < VALUE_BFS_LIMIT) { var node = queue.shift(); guard++; if (!node) continue;
+                while (guard < queue.length && guard < VALUE_BFS_LIMIT) { var node = queue[guard]; guard++; if (!node) continue;
                     try { if (node.id === "casterList") continue; } catch(e) {}
                     try { if (typeof node.text === "string") { var t = node.text; if (t && t.length && t.charAt(0) !== "#") return t; } } catch(e) {}
                     try { if (node.Children) { var kids = node.Children() || []; for (var i = 0; i < kids.length; i++) queue.push(kids[i]); } } catch(e) {}
@@ -321,6 +343,7 @@
                 }
                 st.built = true; st.lastLayoutSig = ""; st.lastContentSig = ""; st.lastVisibleCount = -1; st.sourceContainers = {}; st.sourceValueRefs = {};
                 _resetDiscovery();
+                sourceOwner = null; sourceNextMs = 0; hudSuppressed = false;
                 _setPanel("crosshairStatsOverlay", overlay); return overlay;
             }
             function _removeOverlay(root) {
@@ -330,6 +353,7 @@
                 _setPanel("crosshairStatsOverlay", null); _setPanel("crosshairStatsSource", null);
                 st.built = false; st.rowPanels = {}; st.rowValues = {}; st.sourceContainers = {}; st.sourceValueRefs = {}; st.sourcePanel = null;
                 _resetDiscovery();
+                sourceOwner = null; sourceNextMs = 0; hudSuppressed = false;
                 st.lastLayoutSig = ""; st.lastContentSig = ""; st.lastVisibleCount = -1;
             }
 
@@ -342,6 +366,20 @@
                     if (!_isOn(cfg, "ENABLE_CROSSHAIR_STATS")) {
                         if (st.built || _getPanel("crosshairStatsOverlay")) _removeOverlay(root);
                         return;
+                    }
+                    if (!QOL.core.hud.isGameplayHudShown(root)) {
+                        const hiddenOverlay = _getPanel("crosshairStatsOverlay");
+                        if (_isAlive(hiddenOverlay) && !hudSuppressed) {
+                            hiddenOverlay.SetHasClass("qol-hidden", true);
+                            hiddenOverlay.style.visibility = "collapse";
+                        }
+                        hudSuppressed = true;
+                        return;
+                    }
+                    if (hudSuppressed) {
+                        hudSuppressed = false;
+                        st.lastContentSig = ""; st.lastVisibleCount = -1;
+                        discoveryNextMs = {}; scopeNextMs = {}; sourceNextMs = 0;
                     }
                     var overlay = _ensureOverlay(root); if (!overlay) return;
 
@@ -372,8 +410,8 @@
 
                     // Content
                     var source = _getSourcePanel(root, st); var contentParts = []; var visibleCount = 0;
-                    const owners = source ? _getSourceOwners(st, source) : [];
                     const nowMs = Date.now();
+                    const owners = source ? _getSourceOwners(st, source, nowMs) : [];
                     for (var s = 0; s < STAT_DEFS.length; s++) {
                         var def = STAT_DEFS[s];
                         if (def.cfg && !_isOn(cfg, def.cfg)) { contentParts.push(""); continue; }
@@ -432,6 +470,7 @@
                     if (st) {
                         st.lastLayoutSig = "";
                         st.lastContentSig = "";
+                        discoveryNextMs = {}; scopeNextMs = {}; sourceNextMs = 0;
                     }
                     _tick();
                 }

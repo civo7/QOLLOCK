@@ -15,7 +15,8 @@ const { parseArgs, matchesLabel, collectTrace } = require("../scripts/trace_feat
 
 install();
 const fixture = () => ({ domTree: { id: "CitadelHudRoot", children: [
-    { id: "Hud", classes: ["connectedToGame"], children: [
+    { id: "Hud", classes: ["connectedToGame", "joined_team"], children: [
+        { id: "gameplay_hud", children: [] },
         { id: "hudActivePlayerStats", children: [] },
     ] },
 ] } });
@@ -94,10 +95,11 @@ test("production crosshair trace excludes warm-up and agrees with independent op
         assert.equal(result.features.length, 1);
         for (const target of ["damageAmpContainer", "bulletEvasionContainer"]) {
             const searches = result.events.filter(e => e.target === target);
-            assert.equal(searches.filter(e => e.type === "FindChild").length / result.seconds, 10,
-                "conditional rows must still be checked at the value-update cadence");
-            assert.ok(searches.filter(e => e.type === "FindChildTraverse").length <= Math.ceil(result.seconds / 1.5),
-                "missing-row compatibility traversal must be throttled");
+            if (result.seconds >= 0.8) assert.ok(searches.length > 0);
+            assert.ok(searches.filter(e => e.type === "FindChild").length <= Math.ceil(result.seconds / 0.8),
+                "missing rows must only be rediscovered at the requested cadence");
+            assert.ok(searches.filter(e => e.type === "FindChildTraverse").length <= Math.ceil(result.seconds / 0.8),
+                "compatibility searches share the discovery cadence");
         }
         assert.ok(result.events.every(e => e.t >= 0 && e.t <= result.seconds));
         const row = result.snapshot.rows.find(r => r.label === "mf:ql_crosshair_stats");
@@ -133,11 +135,11 @@ test("CLI emits parseable JSON even with a feature and verbose, without a local 
     const capturePath = path.join(dir, "tree.json");
     fs.writeFileSync(capturePath, JSON.stringify(fixture()));
     const cli = spawnSync(process.execPath, ["scripts/trace_feature_hud.js", "ql_crosshair_stats",
-        "--capture", capturePath, "--seconds", "0.2", "--json", "--verbose", "--events"],
+        "--capture", capturePath, "--seconds", "2", "--json", "--verbose", "--events"],
     { cwd: path.resolve(__dirname, ".."), encoding: "utf8" });
     assert.equal(cli.status, 0, cli.stderr);
     const result = JSON.parse(cli.stdout);
-    assert.equal(result.features[0].missedTargets.damageAmpContainer, 2);
+    assert.ok(result.features[0].missedTargets.damageAmpContainer >= 1);
     assert.ok(result.events.length > 0);
     assert.match(result.scope, /no native timings or FPS/);
 });

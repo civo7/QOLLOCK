@@ -140,7 +140,7 @@ its values update at the normal cadence. Source/owner changes, reparented or
 destroyed rows, and disable clear the associated discovery caches. A cached
 compatibility result cannot mask a row later created at its verified path.
 
-An equivalent 10-second expanded replay of the rebuilt hero-testing capture
+The initial equivalent 10-second expanded replay of the rebuilt hero-testing capture
 reduced crosshair modeled lookup visits from 97,600 to 6,516 per second (93.3%).
 Recursive source misses fell from 20 to 1.2 per second in that measurement
 window. Direct lookup calls increased, and ownership checks also add native
@@ -155,3 +155,19 @@ and disable/re-enable cleanup. After maintainer compilation/repacking, client
 checks must still exercise buffs/debuffs, conditional stat appearance and
 native HUD transitions. Compare native callback/frame timings in an equivalent
 scene before claiming an optimization benefit.
+
+The subsequent visibility/style port from standalone Active Stats separates
+missing source/owner/row discovery from cached value polling. Discovery now
+shares the manifest's retry interval, including direct and compatibility paths;
+late conditional rows at any placement may wait for that interval. Destroyed or
+reparented cached panels, changed owners, settings changes and return from a
+suppressed HUD prompt a fresh discovery pass. Cached values keep updating at
+the existing cadence. Missing value-label children retain their normal retries.
+
+Crosshair stats calls `QOL.core.hud.isGameplayHudShown` before source work and
+suspends stat reads while native combat HUD presentation is suppressed. Native
+`InHideout` row CSS hides the first hideout room immediately; `connectedToHideout`
+alone does not hide the combat room. The portable HUD fixtures now explicitly
+supply joined-team state and the native gameplay panel instead of letting an
+incomplete hierarchy stand in for a visible HUD. Client room transitions and
+the imported Panorama styling still require maintainer compile/repack checks.
