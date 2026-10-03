@@ -121,3 +121,37 @@ errors or final registry streaks. Repeated scoped crosshair source misses and
 the root-level recent-purchases hero-label search are investigation candidates.
 Their modeled visit counts establish neither native cost nor a client bug.
 See [capture testing](CAPTURE_TESTING.md) for the workflow and regression scope.
+
+## Crosshair source discovery follow-up
+
+The first runtime optimization is limited to crosshair stats. Its source search
+was already scoped to `hudActivePlayerStats`, rather than the entire HUD.
+Extracted active-player-stats XML and the native Debugger capture agree on the
+direct paths through `StatList`'s columns and `HudStatBlock/CoreStats`'s Weapon
+and Spirit owners. The feature now caches these owners with parent checks and
+uses direct-child searches for missing rows. No owner is inferred for optional
+rows absent from the available evidence: they are checked across the narrow
+owners and source itself. Existing value polling remains unchanged.
+
+A compatibility traversal still searches the source periodically if direct
+lookups fail. A row appearing outside the verified paths may therefore be
+discovered after the fallback retry interval defined in the manifest; once found,
+its values update at the normal cadence. Source/owner changes, reparented or
+destroyed rows, and disable clear the associated discovery caches. A cached
+compatibility result cannot mask a row later created at its verified path.
+
+An equivalent 10-second expanded replay of the rebuilt hero-testing capture
+reduced crosshair modeled lookup visits from 97,600 to 6,516 per second (93.3%).
+Recursive source misses fell from 20 to 1.2 per second in that measurement
+window. Direct lookup calls increased, and ownership checks also add native
+parent/validity reads; these are not included in lookup-visit counts. Neither
+the count reduction nor this static capture establishes a native timing or FPS
+gain. Configuration, capture fingerprint, warm-up and sample duration match;
+both runs have no callback errors or final registry error streaks.
+
+Portable regressions cover late sources/rows/columns, replacement while old
+panels remain alive, unfamiliar fallback placement, responsive value updates,
+and disable/re-enable cleanup. After maintainer compilation/repacking, client
+checks must still exercise buffs/debuffs, conditional stat appearance and
+native HUD transitions. Compare native callback/frame timings in an equivalent
+scene before claiming an optimization benefit.

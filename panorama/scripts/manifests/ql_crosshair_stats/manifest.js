@@ -78,6 +78,65 @@
             var _isAlive = QOL.utils.IsPanelValid;
             var _findHud = QOL.core.panel && QOL.core.panel.findHud;
             var _resolvePanel = QOL.panelCache && QOL.panelCache.resolve;
+            const _findChild = QOL.core.panel.findChild;
+            // Verified against active-player-stats XML and the native Debugger capture.
+            const SOURCE_PATHS = [
+                ["StatList", "WeaponColumn"],
+                ["StatList", "SpiritColumn"],
+                ["StatList", "VitalityColumn"],
+                ["HudStatBlock", "CoreStats", "Weapon"],
+                ["HudStatBlock", "CoreStats", "Spirit"]
+            ];
+            const SOURCE_OWNER = {
+                fireRate: "WeaponColumn", clipSize: "WeaponColumn", bulletLifesteal: "WeaponColumn",
+                range: "SpiritColumn", duration: "SpiritColumn", techLifesteal: "SpiritColumn",
+                moveSpeed: "VitalityColumn", healAmp: "VitalityColumn", bulletResist: "VitalityColumn",
+                techResist: "VitalityColumn", regen: "VitalityColumn", weaponPower: "Weapon", spirit: "Spirit"
+            };
+            const FALLBACK_RETRY_MS = 1500;
+            let sourceScopes = {}, sourceParents = {}, fallbackNextMs = {};
+
+            function _resetDiscovery() {
+                sourceScopes = {}; sourceParents = {}; fallbackNextMs = {};
+            }
+            function _isDirectChild(panel, parent) {
+                if (!_isAlive(panel) || !_isAlive(parent)) return false;
+                try { return panel.GetParent() === parent; } catch (_) { return false; }
+            }
+            function _belongsToSource(panel, source) {
+                try {
+                    for (let depth = 0; depth < 64 && _isAlive(panel); depth++) {
+                        if (panel === source) return true;
+                        panel = panel.GetParent();
+                    }
+                } catch (_) {}
+                return false;
+            }
+            function _getSourceOwners(st, source) {
+                const owners = [];
+                const checked = {};
+                let changed = false;
+                for (const path of SOURCE_PATHS) {
+                    let parent = source;
+                    for (const id of path) {
+                        if (!checked[id]) {
+                            const previous = sourceScopes[id];
+                            const panel = _isDirectChild(previous, parent) ? previous : _findChild(parent, id);
+                            if ((previous || null) !== (panel || null)) changed = true;
+                            sourceScopes[id] = panel || null;
+                            checked[id] = true;
+                        }
+                        parent = sourceScopes[id];
+                    }
+                    if (_isAlive(parent)) owners.push(parent);
+                }
+                if (changed) {
+                    st.sourceContainers = {}; st.sourceValueRefs = {};
+                    sourceParents = {}; fallbackNextMs = {};
+                    st.lastContentSig = "";
+                }
+                return owners;
+            }
             function _isOn(cfg, k) { return Number(cfg[k]) === 1; }
             function _clamp(cfg, key, fallback, min, max) { var v = Number(cfg[key]); if (!isFinite(v)) v = fallback; if (v < min) v = min; if (v > max) v = max; return v; }
             function _getGameplayHud(root) { try { if (typeof QOL !== "undefined" && QOL.getGameplayHudPanel) return QOL.getGameplayHudPanel(root); } catch(e) {} return root; }
@@ -116,6 +175,7 @@
                     }
                 }
                 if (panel !== st.sourcePanel) {
+                    _resetDiscovery();
                     st.sourcePanel = panel;
                     st.sourceContainers = {};
                     st.sourceValueRefs = {};
@@ -123,11 +183,39 @@
                 }
                 return panel;
             }
-            function _getSourceContainer(st, source, def) {
+            function _getSourceContainer(st, source, def, owners, nowMs) {
                 var c = st.sourceContainers[def.key];
-                if (_isAlive(c)) return c;
-                c = (source && source.FindChildTraverse) ? source.FindChildTraverse(def.id) : null;
+                const preferred = sourceScopes[SOURCE_OWNER[def.key]];
+                if (_isDirectChild(c, sourceParents[def.key]) && _belongsToSource(c, source)) {
+                    // A compatibility result must not mask a row later created
+                    // at its verified path (old native generations may stay alive).
+                    const current = preferred && sourceParents[def.key] !== preferred
+                        ? _findChild(preferred, def.id) : null;
+                    if (!current || current === c) return c;
+                    c = current;
+                    st.sourceContainers[def.key] = c;
+                    sourceParents[def.key] = preferred;
+                    st.sourceValueRefs[def.key] = null;
+                    return c;
+                }
+                // A replaced/reparented row must bypass an earlier negative-cache deadline.
+                if (c) fallbackNextMs[def.key] = 0;
+                c = _findChild(preferred, def.id);
+                // Do not assign an unverified column to conditional/C++-created rows.
+                if (!c) c = _findChild(source, def.id);
+                if (!c) {
+                    for (const owner of owners) {
+                        if (owner === preferred) continue;
+                        c = _findChild(owner, def.id);
+                        if (c) break;
+                    }
+                }
+                if (!c && nowMs >= (fallbackNextMs[def.key] || 0)) {
+                    c = source.FindChildTraverse ? source.FindChildTraverse(def.id) : null;
+                    fallbackNextMs[def.key] = nowMs + FALLBACK_RETRY_MS;
+                }
                 st.sourceContainers[def.key] = c || null;
+                sourceParents[def.key] = c ? c.GetParent() : null;
                 st.sourceValueRefs[def.key] = null;
                 return c;
             }
@@ -232,6 +320,7 @@
                     st.rowPanels[def.key] = row; st.rowValues[def.key] = row.FindChildTraverse(rowId + "_value");
                 }
                 st.built = true; st.lastLayoutSig = ""; st.lastContentSig = ""; st.lastVisibleCount = -1; st.sourceContainers = {}; st.sourceValueRefs = {};
+                _resetDiscovery();
                 _setPanel("crosshairStatsOverlay", overlay); return overlay;
             }
             function _removeOverlay(root) {
@@ -240,6 +329,7 @@
                 if (_isAlive(overlay)) { try { overlay.DeleteAsync(0); } catch(e) {} }
                 _setPanel("crosshairStatsOverlay", null); _setPanel("crosshairStatsSource", null);
                 st.built = false; st.rowPanels = {}; st.rowValues = {}; st.sourceContainers = {}; st.sourceValueRefs = {}; st.sourcePanel = null;
+                _resetDiscovery();
                 st.lastLayoutSig = ""; st.lastContentSig = ""; st.lastVisibleCount = -1;
             }
 
@@ -282,10 +372,12 @@
 
                     // Content
                     var source = _getSourcePanel(root, st); var contentParts = []; var visibleCount = 0;
+                    const owners = source ? _getSourceOwners(st, source) : [];
+                    const nowMs = Date.now();
                     for (var s = 0; s < STAT_DEFS.length; s++) {
                         var def = STAT_DEFS[s];
                         if (def.cfg && !_isOn(cfg, def.cfg)) { contentParts.push(""); continue; }
-                        var container = source ? _getSourceContainer(st, source, def) : null;
+                        var container = source ? _getSourceContainer(st, source, def, owners, nowMs) : null;
                         var active = false;
                         if (_isAlive(container)) { try { active = container.BHasClass("shouldShow"); } catch(e) { active = false; } }
                         if (!active) { contentParts.push(""); continue; }

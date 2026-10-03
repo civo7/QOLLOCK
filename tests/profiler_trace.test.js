@@ -92,8 +92,13 @@ test("production crosshair trace excludes warm-up and agrees with independent op
     for (const result of [short, long]) {
         assert.deepEqual(result.callbackErrors, []);
         assert.equal(result.features.length, 1);
-        assert.equal(result.features[0].missedTargets.damageAmpContainer / result.seconds, 10);
-        assert.equal(result.features[0].missedTargets.bulletEvasionContainer / result.seconds, 10);
+        for (const target of ["damageAmpContainer", "bulletEvasionContainer"]) {
+            const searches = result.events.filter(e => e.target === target);
+            assert.equal(searches.filter(e => e.type === "FindChild").length / result.seconds, 10,
+                "conditional rows must still be checked at the value-update cadence");
+            assert.ok(searches.filter(e => e.type === "FindChildTraverse").length <= Math.ceil(result.seconds / 1.5),
+                "missing-row compatibility traversal must be throttled");
+        }
         assert.ok(result.events.every(e => e.t >= 0 && e.t <= result.seconds));
         const row = result.snapshot.rows.find(r => r.label === "mf:ql_crosshair_stats");
         assert.equal(result.features[0].calls, row.traverseCalls + row.classTraverseCalls);
