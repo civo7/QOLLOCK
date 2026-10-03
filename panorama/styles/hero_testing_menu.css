@@ -5,15 +5,7 @@
 /* The native menu deliberately collapses in the hideout even when the engine's
    hero-testing class is active. QOLLOCK exposes the testing controls there when
    the user enables the corresponding convar. */
-.connectedToHeroTesting.connectedToHideout .hud_hero_testing_root
+.connectedToHeroTesting.connectedToHideout:not(.InHideout) .hud_hero_testing_root
 {
-	visibility: visible;
-}
-
-/* Native hud.css also fades the component host during the hideout transition. */
-.connectedToHeroTesting.InHideout #hud_hero_testing
-{
-	opacity: 1;
-	pre-transform-scale2d: 1;
-	wash-color: white;
+    visibility: visible;
 }

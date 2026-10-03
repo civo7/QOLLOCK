@@ -674,9 +674,8 @@
     const getPanelClassTokens = (panel) => {
         if (!isAlive(panel)) return [];
         try {
-            if (typeof panel.GetClassTokens === "function") {
-                const tokens = panel.GetClassTokens();
-                if (Array.isArray(tokens)) return tokens;
+            if (typeof panel.GetClasses === "function") {
+                return String(panel.GetClasses() || "").split(/\s+/).filter(Boolean);
             }
         } catch (_) {}
         return [];
@@ -696,14 +695,14 @@
         let max = 0;
         const scanNode = (node) => {
             if (!isAlive(node)) return;
-            const tokens = getPanelClassTokens(node);
-            for (const t of tokens) {
-                // Current TopBar uses RejuvCount_N; retain the former token for
-                // compatibility with older HUD resources.
-                const m = String(t).match(/^(?:RejuvCount_|rejuv_charges_)(\d+)$/i);
-                if (m) {
-                    const num = parseInt(m[1], 10);
+            // Class enumeration is not reliable on every live Panorama panel.
+            // The current native stylesheet defines counts 1-4, so probe those
+            // verified tokens directly through BHasClass instead.
+            for (let num = 4; num >= 1; num--) {
+                if (panelHasClassToken(node, `RejuvCount_${num}`) ||
+                    panelHasClassToken(node, `rejuv_charges_${num}`)) {
                     if (num > max) max = num;
+                    break;
                 }
             }
         };
