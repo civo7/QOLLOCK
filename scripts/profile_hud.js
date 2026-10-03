@@ -1,9 +1,8 @@
 // scripts/profile_hud.js
 // =============================================================================
-// QOLLOCK frame-cost profiler — CLI.
+// QOLLOCK offline operation profiler — CLI.
 // =============================================================================
-// Answers "which feature is making the game stutter in a teamfight" with numbers
-// instead of guesses, and lets you prove an optimisation worked.
+// Counts simulated operations to guide client performance investigations.
 //
 //   node scripts/profile_hud.js                     # profile, print report
 //   node scripts/profile_hud.js --save baseline     # write perf/runs/baseline.json
@@ -94,16 +93,16 @@ function report(snap, meta, tree, opts) {
     const total = snap.total;
 
     out.push("=".repeat(100));
-    out.push("QOLLOCK FRAME-COST PROFILE");
+    out.push("QOLLOCK OFFLINE OPERATION PROFILE (no native timings or FPS)");
     out.push("=".repeat(100));
     out.push(`scenario        : ${meta.treeSource === "captured"
-        ? `CAPTURED tree from ${meta.capturedFrom} (real match)`
+        ? `CAPTURED hierarchy from ${meta.capturedFrom} (static snapshot)`
         : `${meta.players} players (teamfight), ${meta.damageNumbers} floating damage panels`}`);
     out.push(`healthbar       : HEALTHBAR_TYPE=${meta.healthbarType} ` +
              `(${["default", "minimalist", "fg", "klutz", "budhud", "minecraft"][meta.healthbarType] || "?"})`);
     out.push(`HUD tree        : ${tree.panels} panels (${meta.treeSource === "captured" ? "captured from the game" : "modelled from layout XML — see docs/PROFILING.md"})`);
     out.push(`sample          : ${secs}s of virtual game time (after ${meta.warmupMs / 1000}s warm-up)`);
-    out.push(`config          : ${meta.configApplied ? `all features ON (${fmt(meta.configBytes)} bytes stored)` : "DEFAULTS ONLY — no config applied!"}`);
+    out.push(`config          : ${meta.configMode} (${fmt(meta.configBytes)} bytes stored); not every feature/variant is exercised`);
     out.push(`attribution     : ${meta.wrappedFeatures} old-system features wrapped, scheduler ${meta.wrappedScheduler ? "wrapped" : "NOT WRAPPED"}`);
     if (tree.notes.length > 0) {
         out.push("");
@@ -118,17 +117,17 @@ function report(snap, meta, tree, opts) {
     const rows = [
         ["tree nodes visited", total.traverseNodes + total.classTraverseNodes,
          `${fmt(rate(total.traverseCalls + total.classTraverseCalls, secs))} lookups/s`],
-        ["  of which MISSED (walked whole subtree, found nothing)", null,
+        ["  id lookups that MISSED in this model", null,
          `${fmt(rate(total.traverseMisses, secs))} misses/s`],
-        ["style writes — value CHANGED", total.styleWritesChanged, "each dirties layout"],
-        ["style writes — value IDENTICAL (pure waste)", total.styleWritesRedundant, "still dirties layout"],
-        ["class writes — CHANGED", total.classWritesChanged, "each re-matches styles"],
-        ["class writes — no-op", total.classWritesRedundant, "cheap, but noise"],
+        ["style writes — value CHANGED", total.styleWritesChanged, "native layout cost unmeasured"],
+        ["style writes — value IDENTICAL", total.styleWritesRedundant, "redundant model assignments"],
+        ["class writes — CHANGED", total.classWritesChanged, "native style cost unmeasured"],
+        ["class writes — no-op", total.classWritesRedundant, "redundant model assignments"],
         ["attribute reads", total.attrReads, `${fmt(rate(total.attrReadBytes, secs))} bytes/s`],
         ["attribute writes", total.attrWrites, `${fmt(rate(total.attrWriteBytes, secs))} bytes/s`],
-        ["label text writes — CHANGED", total.textWritesChanged, "re-measures font, re-lays out"],
-        ["label text writes — IDENTICAL (pure waste)", total.textWritesRedundant, ""],
-        ["panels created", total.panelCreates, "most expensive op per unit"],
+        ["label text writes — CHANGED", total.textWritesChanged, "native layout cost unmeasured"],
+        ["label text writes — IDENTICAL", total.textWritesRedundant, ""],
+        ["panels created", total.panelCreates, "native creation cost unmeasured"],
         ["panels destroyed", total.panelDeletes, ""],
     ];
     for (const [label, count, note] of rows) {
@@ -174,8 +173,8 @@ function report(snap, meta, tree, opts) {
     if (snap.misses.length > 0) {
         out.push("");
         out.push("-".repeat(100));
-        out.push("WASTED TREE WALKS — lookups that found nothing, ranked by nodes burned");
-        out.push("A miss visits every descendant. If the id can never exist, the whole walk is dead work.");
+        out.push("MODEL LOOKUP MISSES — investigation candidates, ranked by visits");
+        out.push("Absent in this scenario does not establish an invalid ID, a leak or native traversal cost.");
         out.push("-".repeat(100));
         out.push(`  ${"panel id".padEnd(42)} ${"nodes/s".padStart(9)} ${"calls/s".padStart(8)}  charged to`);
         for (const m of snap.misses.slice(0, 25)) {
@@ -184,7 +183,7 @@ function report(snap, meta, tree, opts) {
         const shown = snap.misses.slice(0, 25).reduce((n, m) => n + m.nodes, 0);
         const all = snap.misses.reduce((n, m) => n + m.nodes, 0);
         out.push("");
-        out.push(`  total wasted: ${fmt(rate(all, secs))} nodes/s across ${snap.misses.length} distinct ids ` +
+        out.push(`  visits on misses: ${fmt(rate(all, secs))} nodes/s across ${snap.misses.length} distinct ids ` +
                  `(${pct(shown, all).trim()} shown) — ${pct(all, total.traverseNodes + total.classTraverseNodes).trim()} of ALL tree walking`);
     }
 
@@ -192,7 +191,7 @@ function report(snap, meta, tree, opts) {
         out.push("");
         out.push("-".repeat(100));
         out.push("REDUNDANT STYLE WRITES — same value rewritten, by feature and property");
-        out.push("Panorama does not compare before dirtying layout, so these cost the same as real writes.");
+        out.push("Native setter behavior and layout cost are not measured here.");
         out.push("-".repeat(100));
         for (const r of snap.redundantStyleProps.slice(0, 25)) {
             out.push(`  ${r.label.slice(0, 34).padEnd(34)} ${r.prop.padEnd(28)} ${fmt(rate(r.count, secs)).padStart(9)}/s`);
@@ -265,13 +264,17 @@ function compareReport(cur, prev, opts) {
 }
 
 function main() {
-    const seconds = num(arg("seconds", 10), 10);
+    const seconds = Number(arg("seconds", 10));
     const players = num(arg("players", 12), 12);
     const top = num(arg("top", 20), 20);
     const healthbar = num(arg("healthbar", 0), 0);
     const wantJson = has("json");
     const saveName = arg("save", null);
     const compareName = arg("compare", null);
+    if (!Number.isFinite(seconds) || seconds <= 0) {
+        process.stderr.write("[profiler] FATAL: --seconds must be positive.\n");
+        process.exit(2);
+    }
 
     // --enable KEY[=VALUE][,KEY...] — force config keys the maximal config leaves
     // alone. Bare KEY means 1, which is what a toggle needs.
@@ -319,6 +322,7 @@ function main() {
         warmupMs: 8000,
         configOverrides: overrides,
         capturedTree,
+        enableAll: !has("defaults"),
     });
 
     // The legacy registry may be empty after a migration to manifests. The
@@ -329,7 +333,13 @@ function main() {
         process.exit(2);
     }
 
+    const registryState = () => h.sandbox.evalJson(`({
+        enabled: QOL.core.FeatureRegistry.getEnabledIds(),
+        errors: QOL.core.FeatureRegistry.getErrorCounts()
+    })`);
+    const startState = registryState();
     const snap = h.measure(seconds * 1000);
+    const endState = registryState();
 
     if (snap.total.costUnits === 0) {
         process.stderr.write("[profiler] FATAL: zero operations recorded — the mod did nothing.\n");
@@ -337,12 +347,18 @@ function main() {
         process.exit(2);
     }
 
-    const payload = { meta: h.meta, tree: { panels: h.tree.panels, notes: h.tree.notes }, snapshot: snap };
+    const payload = {
+        meta: h.meta, tree: { panels: h.tree.panels, notes: h.tree.notes }, snapshot: snap,
+        enabledStart: startState.enabled, enabledEnd: endState.enabled,
+        registryErrorsStart: startState.errors, registryErrorsEnd: endState.errors,
+        callbackErrors: h.clock.errors.map(e => ({ atMs: e.at, message: e.error.message })),
+    };
 
     if (wantJson) {
         process.stdout.write(JSON.stringify(payload, null, 2) + "\n");
     } else {
         process.stdout.write(report(snap, h.meta, h.tree, { top }) + "\n");
+        process.stdout.write(`enabled coverage: ${startState.enabled.length} -> ${endState.enabled.length}\n`);
     }
 
     if (compareName) {
@@ -352,23 +368,29 @@ function main() {
             process.exit(1);
         }
         const prev = JSON.parse(fs.readFileSync(p, "utf8"));
-        process.stdout.write("\n" + compareReport(snap, prev.snapshot, { top }) + "\n");
+        const comparison = "\n" + compareReport(snap, prev.snapshot, { top }) + "\n";
+        (wantJson ? process.stderr : process.stdout).write(comparison);
     }
 
     if (saveName) {
         fs.mkdirSync(PERF_DIR, { recursive: true });
         const p = path.join(PERF_DIR, String(saveName).replace(/\.json$/, "") + ".json");
         fs.writeFileSync(p, JSON.stringify(payload, null, 2));
-        process.stdout.write(`\nsaved -> ${path.relative(process.cwd(), p)}\n`);
+        (wantJson ? process.stderr : process.stdout).write(`\nsaved -> ${path.relative(process.cwd(), p)}\n`);
     }
 
     // Report any scheduled-callback throws: a feature crashing every tick both
     // skews the profile and is a bug in its own right.
     if (h.clock.errors.length > 0) {
+        process.exitCode = 1;
         process.stderr.write(`\n[profiler] WARNING: ${h.clock.errors.length} scheduled callback(s) threw during the run.\n`);
         for (const e of h.clock.errors.slice(0, 5)) {
             process.stderr.write(`  @${e.at}ms ${e.error.message}\n`);
         }
+    }
+    if (Object.values(endState.errors).some(n => n > 0)) {
+        process.stderr.write("[profiler] WARNING: nonzero final registry error streaks; inspect JSON coverage.\n");
+        process.exitCode = 1;
     }
 }
 

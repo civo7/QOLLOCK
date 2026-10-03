@@ -28,9 +28,8 @@ let _installed = false;
 
 /**
  * Count nodes in a depth-first walk, mirroring Panel.FindChildTraverse exactly
- * (self excluded, pre-order, keeps scanning after a hit to count duplicates —
- * which is what the unpatched simulator does, and matters because it means the
- * node count for a HIT is the same as for a MISS in this model).
+ * (self excluded, pre-order, stopping at the first matching descendant).
+ * These are model visits, not observed native traversal steps.
  *
  * We deliberately do NOT reuse the original method and infer the count: the
  * whole point is to know how many nodes were touched, and only a
@@ -61,7 +60,7 @@ function install() {
         if (!id) return null;
         const { found, visited } = walkCount(this, id);
         counters.recordTraverse(id, visited, !!found);
-        if (typeof counters.onTraverse === "function") {
+        if (counters.enabled && typeof counters.onTraverse === "function") {
             counters.onTraverse({
                 type: "FindChildTraverse",
                 target: id,
@@ -88,7 +87,7 @@ function install() {
             for (let i = node._children.length - 1; i >= 0; i--) stack.push(node._children[i]);
         }
         counters.recordClassTraverse(visited);
-        if (typeof counters.onClassTraverse === "function") {
+        if (counters.enabled && typeof counters.onClassTraverse === "function") {
             counters.onClassTraverse({
                 type: "FindChildrenWithClassTraverse",
                 target: className,
@@ -103,19 +102,23 @@ function install() {
 
     // FindChild is a direct-children scan — cheap, but still worth counting so a
     // feature that scans 12 player panels' children every tick shows up.
-    const origFindChild = Panel.prototype.FindChild;
     Panel.prototype.FindChild = function (id) {
-        counters.add("traverseCalls", 1);
-        counters.add("traverseNodes", this._children.length);
-        const res = origFindChild.call(this, id);
-        if (typeof counters.onFindChild === "function") {
+        this._assertValid("FindChild");
+        let visited = 0;
+        let res = null;
+        for (const child of this._children) {
+            visited++;
+            if (child.id === id) { res = child; break; }
+        }
+        counters.recordTraverse(id, visited, !!res);
+        if (counters.enabled && typeof counters.onFindChild === "function") {
             counters.onFindChild({
                 type: "FindChild",
                 target: id,
                 label: counters.label,
                 rootPanel: this,
                 found: res,
-                visited: this._children.length
+                visited
             });
         }
         return res;

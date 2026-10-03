@@ -365,19 +365,19 @@ function buildMatchHud(doc, { players = 12, damageNumbers = 24, dataFeed = 6, ch
 }
 
 /**
- * Rebuild a full per-panel tree captured from a live match instead of modelling one.
+ * Rebuild a supplied per-panel hierarchy instead of composing layout snippets.
  *
  * Takes the full hierarchy JSON that scripts/import_tree_dump.js produces from
  * a per-panel dump of a sufficiently small subtree and materialises it under
  * doc.root. The usual Dev Panel summary has no ancestry and is rejected.
- * The point is to remove our guesses from the measurement: buildMatchHud below
+ * This constrains hierarchy guesses: buildMatchHud above
  * composes layout XML plus hand-written assumptions about what C++ creates, and
  * those assumptions have been wrong by more than an order of magnitude in both
  * directions (see docs/PROFILING.md).
  *
- * The capture's own root becomes doc.root — its id and classes are copied onto it
- * rather than mounted beneath it, because in-engine #Hud IS the context panel and
- * several features depend on that.
+ * A window-root capture maps CitadelHudRoot to doc.absRoot and its direct Hud
+ * child to doc.root. A subtree capture maps its root to the context panel.
+ * Supplied fields are retained; omitted data and native lifecycle remain unknown.
  *
  * Any warning recorded at import time is surfaced here as a note, so a truncated or
  * depth-clipped capture cannot quietly become a trusted baseline.
@@ -389,92 +389,48 @@ function buildCapturedHud(doc, captured) {
         typeof rootNode !== "object" || Array.isArray(rootNode)) {
         throw new Error("[hud_tree] a full per-panel tree is required; aggregate summaries contain no ancestry");
     }
+    for (const w of captured.warnings || []) notes.push("capture warning: " + w);
+    if (captured.meta && captured.meta.truncated) notes.push("capture was truncated — counts are a floor");
+    if (captured.meta && captured.meta.clipped) notes.push("capture was depth-clipped — deep subtrees are missing");
 
-    for (const w of captured.warnings || []) notes.push(`capture warning: ${w}`);
-    if (captured.meta && captured.meta.truncated) {
-        notes.push("capture was truncated — real tree is larger, treat counts as a floor");
+    let panels = 0;
+    let labelsWithoutText = 0;
+    const hudNode = rootNode.id === "CitadelHudRoot"
+        ? (rootNode.children || []).find(c => c.id === "Hud") : null;
+    if (rootNode.id === "CitadelHudRoot" && !hudNode) {
+        throw new Error("[hud_tree] CitadelHudRoot capture has no direct Hud context");
     }
-    if (captured.meta && captured.meta.clipped) {
-        notes.push("capture was depth-clipped — deep subtrees are missing");
-    }
-
-    let panels = 1;
-    const hudNode = (rootNode.id === "CitadelHudRoot" && (rootNode.children || []).find((c) => c.id === "Hud"))
-        ? rootNode.children.find((c) => c.id === "Hud")
-        : (rootNode.id === "Hud" ? rootNode : null);
-
-    if (hudNode && hudNode !== rootNode) {
-        // Captured tree is anchored at CitadelHudRoot.
-        // Map CitadelHudRoot to doc.absRoot and Hud child to doc.root (context panel).
-        doc.absRoot.id = rootNode.id || "CitadelHudRoot";
-        doc.absRoot.paneltype = rootNode.type || "Panel";
-        for (const cls of rootNode.classes || []) doc.absRoot.AddClass(cls);
-        if (rootNode.breadcrumbs) doc.absRoot.breadcrumbs = rootNode.breadcrumbs;
-
-        const hud = doc.root;
-        hud.id = hudNode.id || "Hud";
-        hud.paneltype = hudNode.type || "CitadelHud";
-        for (const cls of hudNode.classes || []) hud.AddClass(cls);
-        if (hudNode.breadcrumbs) hud.breadcrumbs = hudNode.breadcrumbs;
-
-        // Mount sibling children of CitadelHudRoot (except the Hud child itself) to doc.absRoot
-        for (const child of rootNode.children || []) {
-            if (child === hudNode) continue;
-            const siblingPanel = doc.absRoot.addChild(
-                doc.create(child.type || "Panel", { id: child.id || "", classes: child.classes || [] })
-            );
-            if (child.breadcrumbs) siblingPanel.breadcrumbs = child.breadcrumbs;
-            panels++;
-            if (child.children && child.children.length > 0) {
-                const stack = [[child, siblingPanel]];
-                while (stack.length > 0) {
-                    const [n, p] = stack.pop();
-                    for (const c of n.children || []) {
-                        const cp = p.addChild(
-                            doc.create(c.type || "Panel", { id: c.id || "", classes: c.classes || [] })
-                        );
-                        if (c.breadcrumbs) cp.breadcrumbs = c.breadcrumbs;
-                        panels++;
-                        if (c.children && c.children.length > 0) stack.push([c, cp]);
-                    }
-                }
-            }
+    function populate(node, panel) {
+        doc._unindex(panel);
+        panel.id = node.id || "";
+        panel.type = panel.paneltype = node.type || "Panel";
+        panel._classes = new Set(node.classes || []);
+        doc._index(panel);
+        if (node.breadcrumbs) panel.breadcrumbs = node.breadcrumbs;
+        if (typeof node.text === "string") panel.text = node.text;
+        else if (panel.type === "Label") labelsWithoutText++;
+        for (const key of ["visible", "enabled", "checked", "hittest", "hittestchildren"]) {
+            if (typeof node[key] === "boolean") panel[key] = node[key];
         }
-
-        // Populate children under doc.root (Hud)
-        const stack = [[hudNode, hud]];
-        while (stack.length > 0) {
-            const [node, parent] = stack.pop();
-            for (const child of node.children || []) {
-                const panel = parent.addChild(
-                    doc.create(child.type || "Panel", { id: child.id || "", classes: child.classes || [] })
-                );
-                if (child.breadcrumbs) panel.breadcrumbs = child.breadcrumbs;
-                panels++;
-                if (child.children && child.children.length > 0) stack.push([child, panel]);
-            }
-        }
-    } else {
-        const hud = doc.root;
-        if (rootNode.id) hud.id = rootNode.id;
-        if (rootNode.type) hud.paneltype = rootNode.type;
-        for (const cls of rootNode.classes || []) hud.AddClass(cls);
-        if (rootNode.breadcrumbs) hud.breadcrumbs = rootNode.breadcrumbs;
-
-        const stack = [[rootNode, hud]];
-        while (stack.length > 0) {
-            const [node, parent] = stack.pop();
-            for (const child of node.children || []) {
-                const panel = parent.addChild(
-                    doc.create(child.type || "Panel", { id: child.id || "", classes: child.classes || [] })
-                );
-                if (child.breadcrumbs) panel.breadcrumbs = child.breadcrumbs;
-                panels++;
-                if (child.children && child.children.length > 0) stack.push([child, panel]);
-            }
+        for (const [key, value] of Object.entries(node.attributes || {})) panel.SetAttributeString(key, value);
+        panels++;
+        for (const child of node.children || []) {
+            // Reappend the pre-existing context in capture order, including siblings
+            // before Hud. Otherwise duplicate-id searches can return a different hit.
+            const cp = child === hudNode ? doc.root : doc.create(child.type || "Panel");
+            panel.addChild(cp);
+            populate(child, cp);
         }
     }
-
+    populate(rootNode, hudNode ? doc.absRoot : doc.root);
+    if (captured.summary && captured.summary.totalPanels !== undefined && captured.summary.totalPanels !== panels) {
+        notes.push("capture summary panel count differs from imported hierarchy: " + captured.summary.totalPanels + " vs " + panels);
+    }
+    if (labelsWithoutText) notes.push(labelsWithoutText + " captured Labels lack text; value-dependent paths use empty model text");
+    if (captured.domTree && captured.version === "2.0.0") {
+        notes.push("HUD-Dumper v2 class inventory may be limited to its probe whitelist; absent classes are not authoritative");
+    }
+    notes.push("static hierarchy snapshot; native bindings, gameplay, computed layout and CSS are not replayed");
     return { panels, notes, byLayout: { captured: panels } };
 }
 

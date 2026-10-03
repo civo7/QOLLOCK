@@ -96,9 +96,12 @@ node scripts/profile_hud.js --seconds 30         # longer sample
 node scripts/profile_hud.js --players 12         # teamfight size
 node scripts/profile_hud.js --healthbar 5        # 5 = minecraft; see below
 node scripts/profile_hud.js --json
+node scripts/profile_hud.js --tree captures/deadlock_hud_dump.json --seconds 10
+node scripts/profile_hud.js --defaults --enable ENABLE_CROSSHAIR_STATS=1
 ```
 
-The workflow that produced every number in this branch:
+For before/after comparisons, use the same tree, settings and sample window.
+The historical workflow used:
 
 ```
 git stash push -- panorama/      # park your changes, keep the harness
@@ -109,10 +112,13 @@ node scripts/profile_hud.js --seconds 20 --compare baseline
 
 ## What it measures
 
-Every engine-facing call the mod makes is intercepted and charged to the feature
+Instrumented operations made by the simulated mod are charged to the feature
 on the stack at the time — old-system features via their registry `update`, new
 manifests via `Scheduler.createPollLoop`, and the mod's own scheduled loops by
 callback name. Anything else lands in `<unattributed>`.
+
+Custom JavaScript walks through `Children()`/`GetChild()` and uninstrumented
+APIs do not contribute native-search visit counts. This is not total JS work.
 
 The headline metric is **tree nodes visited**, not lookups. A call count hides
 the thing that actually hurts, because a miss costs the whole subtree while a hit
@@ -136,6 +142,9 @@ It has no engine timings and cannot produce milliseconds. Do not quote it as suc
   much of the content dynamically. `--tree` accepts only a complete per-panel
   hierarchy; it does not reproduce the engine or remove lifecycle and rendering
   caveats.
+- Captured imports retain supplied IDs, types, classes, ordering, text,
+  attributes and basic boolean state. Missing text stays empty and is reported;
+  computed geometry, CSS, native bindings and gameplay are not replayed.
 - The single `cost` column combines ops using **estimated weights**, documented in
   `scripts/simulator/perf/counters.js`. Raw counters are always reported alongside.
   Any conclusion that flips when you nudge a weight is one to draw from the raw
@@ -164,6 +173,15 @@ A model built from our assumptions cannot falsify those assumptions. Captures
 help constrain its inputs; they do not make it an independent game oracle.
 
 ## Capturing the real tree
+
+The separate historical HUD-Dumper v2 collector also produces `domTree` JSON,
+accepted by both offline tools. Its snapshot can contain incomplete class data:
+when class enumeration is unavailable it probes a predefined whitelist. It
+does not serialize `panel.text`. The repository's v2 capture has no text for
+its Labels and has hero-testing classes; do not treat it as a text-complete
+match fixture or interpret an absent class as native absence. Improve the
+collector and label each captured scenario before relying on value-dependent
+paths. Structure alone remains useful for narrowing search candidates.
 
 ```
 1. In game:   Settings → Dev Panel → "Panel Tree Dump"   (in a real match)
@@ -225,17 +243,13 @@ healthbar setting is not a valid baseline for a run at another.
 
 ## Regression guards
 
-The historical `tests/perf_guards.test.js` ceiling suite was removed. The
-current `tests/large_tree_profile.test.js` adds anonymous panels to the modelled
-HUD until it matches the saved aggregate's panel count. It runs production HUD
-callbacks over ten 100 ms virtual windows and checks peak node visits, callback
-count and full-tree misses. A negative control deliberately adds a callback
-burst and repeated root misses, proving that the guard detects those changes.
-The added panels have synthetic ancestry. The thresholds are operation budgets
-for this fixed simulator scenario, not FPS or client milliseconds; the test
-does not cover every feature configuration. The simulator scans a whole subtree
-even after an id hit to detect duplicate ids, so its hit-visit counts are not
-measured native `FindChildTraverse` work.
+The historical `perf_guards` and `large_tree_profile` ceiling suites were
+removed. `tests/profiler_trace.test.js` uses portable fixtures to check warm-up
+exclusion, observer/counter agreement, direct-search early exit, precise virtual
+timestamps, duplicate-ID ordering, capture context/counts and clean CLI JSON.
+Production callbacks run in these accounting regressions, but no operation
+budget or green result establishes an FPS target. Simulated ID searches stop
+on the first matching descendant; these visits are not measured native steps.
 
 The profiler reports scheduled-callback errors. Inspect them alongside operation
 counts: an exception or registry auto-disable can reduce later measured work
@@ -267,6 +281,38 @@ and confirm it applies.
 
 ## Reading the report
 
+### Offline lookup tracer
+
+```
+node scripts/trace_feature_hud.js ql_crosshair_stats --seconds 10
+node scripts/trace_feature_hud.js --all --seconds 10 --json
+node scripts/trace_feature_hud.js ql_crosshair_stats --seconds 0.2 --json --events
+node scripts/trace_feature_hud.js --defaults --enable ENABLE_CROSSHAIR_STATS=1
+```
+
+The tracer uses the same instrumented HUD as the operation profiler. It starts
+observing after warm-up and uses the callback's virtual execution timestamp.
+`--warmup` changes that warm-up duration in seconds. A feature argument filters
+attribution labels; other enabled features keep running and no feature is forced
+on by its name. `--all` reports all observed labels, not all possible features.
+`--defaults` avoids the expanded configuration; `--enable KEY[=VALUE],...` adds
+explicit numeric overrides. Expanded settings still omit some toggles/variants.
+
+ID traversal, class traversal and direct-child search events are included.
+Rates divide only measured events by the actual sample duration. JSON remains
+machine-readable even with `--verbose`; `--events` includes individual events.
+Enabled IDs, current registry error streaks and Clock callback errors accompany
+the report; registry streaks are not cumulative errors. Fatal input errors exit
+with status 2; the tracer exits with status 1 for collected callback errors or
+nonzero final registry streaks. Caught transient failures can still evade these
+end-state checks. No-event labels receive no performance verdict.
+
+Misses describe this supplied scenario. They do not prove invalid IDs, memory
+leaks or native cost. Captured trees are static; successful callbacks do not
+prove feature output without text/bindings. Compare client frame times separately.
+
+### Operation profiler
+
 ```
 feature                    cost/s  share   nodes/s  miss/s  style±  style=
 feat:statBonuses            30.3k  18.4%     30.3k     4.1       0       0
@@ -278,7 +324,7 @@ feat:statBonuses            30.3k  18.4%     30.3k     4.1       0       0
 - `new` — panels created. The most expensive op per unit; should be ~0 in steady
   state.
 
-The **WASTED TREE WALKS** section lists misses by panel id in the supplied model.
+The **MODEL LOOKUP MISSES** section lists misses by panel id in the supplied model.
 Cross-reference with `audit_panel_ids.js` to prioritize debugger inspection;
 absence from both inputs still does not exclude native C++ panel creation.
 

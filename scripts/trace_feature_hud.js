@@ -1,321 +1,172 @@
-// scripts/trace_feature_hud.js
-// =============================================================================
-// Live Feature Trace & Traversal Profiler against real captured HUD DOM.
-// =============================================================================
-// Usage:
-//   node scripts/trace_feature_hud.js [feature] [--seconds 1] [--capture path.json] [--verbose]
-//   node scripts/trace_feature_hud.js --all
-//   node scripts/trace_feature_hud.js ql_rejuv_hud --verbose
-//   node scripts/trace_feature_hud.js ql_hud --verbose
-// =============================================================================
-
+// Offline lookup trace of production HUD JavaScript over a captured panel tree.
+// Native execution time, layout, rendering and gameplay are not simulated.
 "use strict";
 
 const fs = require("node:fs");
 const path = require("node:path");
 const { createProfiledHud } = require("./simulator/perf/profile.js");
-const { install } = require("./simulator/perf/instrument.js");
 
 const DEFAULT_CAPTURE = path.join(__dirname, "..", "captures", "deadlock_hud_dump.json");
 
-function parseArgs() {
-    const args = process.argv.slice(2);
+function parseArgs(args = process.argv.slice(2)) {
     const opts = {
-        feature: null,
-        seconds: 1,
-        capturePath: DEFAULT_CAPTURE,
-        verbose: false,
-        all: false,
-        json: false,
+        feature: null, seconds: 10, warmupMs: 8000, capturePath: DEFAULT_CAPTURE,
+        verbose: false, json: false, includeEvents: false, enableAll: true, configOverrides: {},
     };
-
     for (let i = 0; i < args.length; i++) {
         const a = args[i];
-        if (a === "--all") {
-            opts.all = true;
-        } else if (a === "--verbose" || a === "-v") {
-            opts.verbose = true;
-        } else if (a === "--json") {
-            opts.json = true;
-        } else if (a === "--seconds" && i + 1 < args.length) {
-            opts.seconds = Math.max(0.1, Number(args[++i]) || 1);
-        } else if (a === "--capture" && i + 1 < args.length) {
-            opts.capturePath = args[++i];
-        } else if (!a.startsWith("--") && !opts.feature) {
-            opts.feature = a;
-        }
+        const value = () => {
+            const v = args[++i];
+            if (!v || v.startsWith("--")) throw new Error(`missing value for ${a}`);
+            return v;
+        };
+        if (a === "--all") continue;
+        if (a === "--verbose" || a === "-v") opts.verbose = true;
+        else if (a === "--json") opts.json = true;
+        else if (a === "--events") opts.includeEvents = true;
+        else if (a === "--defaults") opts.enableAll = false;
+        else if (a === "--capture") opts.capturePath = value();
+        else if (a === "--seconds") opts.seconds = Number(value());
+        else if (a === "--warmup") opts.warmupMs = Number(value()) * 1000;
+        else if (a === "--enable") {
+            for (const spec of value().split(",")) {
+                const [key, raw = "1"] = spec.split("=");
+                const n = Number(raw);
+                if (!key || !raw || !Number.isFinite(n)) throw new Error(`invalid override: ${spec}`);
+                opts.configOverrides[key] = n;
+            }
+        } else if (!a.startsWith("-") && !opts.feature) opts.feature = a;
+        else throw new Error(`unknown argument: ${a}`);
     }
-
-    if (opts.feature) {
-        opts.verbose = true; // Auto-enable verbose in single-feature inspection
+    if (!Number.isFinite(opts.seconds) || opts.seconds <= 0 || opts.seconds > 120) {
+        throw new Error("--seconds must be greater than 0 and at most 120");
     }
-
+    if (!Number.isFinite(opts.warmupMs) || opts.warmupMs < 0 || opts.warmupMs > 120000) {
+        throw new Error("--warmup must be between 0 and 120 seconds");
+    }
     return opts;
 }
 
-function formatFmt(n) {
-    if (n === 0) return "0";
-    if (Math.abs(n) >= 1e6) return (n / 1e6).toFixed(1) + "M";
-    if (Math.abs(n) >= 1e3) return (n / 1e3).toFixed(1) + "k";
-    if (Number.isInteger(n)) return String(n);
-    return n.toFixed(1);
+function matchesLabel(label, feature) {
+    if (!feature) return true;
+    return label === feature || label.replace(/^(mf:|feat:|loop:)/, "") === feature;
 }
 
-function truncateMiddle(str, maxLen = 70) {
-    if (!str || str.length <= maxLen) return str;
-    const half = Math.floor((maxLen - 5) / 2);
-    return str.slice(0, half) + " ... " + str.slice(-half);
+function registryState(hud) {
+    return hud.sandbox.evalJson(`({
+        enabled: QOL.core.FeatureRegistry.getEnabledIds(),
+        errors: QOL.core.FeatureRegistry.getErrorCounts()
+    })`);
+}
+
+// Called after HUD construction/warm-up. Callbacks read the virtual clock at
+// execution time; no fixed time slicing or rounded-up sample duration.
+function collectTrace(hud, { seconds, feature = null }) {
+    const counters = hud.counters;
+    const events = [];
+    const startMs = hud.clock.now();
+    const startState = registryState(hud);
+    const hooks = ["onTraverse", "onClassTraverse", "onFindChild"];
+    const previous = hooks.map(key => counters[key]);
+    const observe = e => {
+        const label = e.label || "<unattributed>";
+        if (!matchesLabel(label, feature)) return;
+        events.push({
+            t: (hud.clock.now() - startMs) / 1000,
+            feature: label, type: e.type,
+            target: e.type === "FindChildrenWithClassTraverse" ? "." + e.target : e.target,
+            found: e.matches === undefined ? !!e.found : e.matches > 0,
+            matches: e.matches, visited: e.visited,
+            hudRootSearch: e.type !== "FindChild" &&
+                (e.rootPanel === hud.doc.root || e.rootPanel === hud.doc.absRoot),
+            searchRoot: e.rootPanel.getBreadcrumbs(),
+            resultBreadcrumbs: e.found ? e.found.getBreadcrumbs() : null,
+        });
+    };
+    for (const key of hooks) counters[key] = observe;
+    let snapshot;
+    try { snapshot = hud.measure(seconds * 1000); }
+    finally { hooks.forEach((key, i) => { counters[key] = previous[i]; }); }
+
+    const byFeature = new Map();
+    for (const e of events) {
+        let row = byFeature.get(e.feature);
+        if (!row) {
+            row = { feature: e.feature, calls: 0, visits: 0, misses: 0,
+                hudRootMisses: 0, missedTargets: {}, foundTargets: {} };
+            byFeature.set(e.feature, row);
+        }
+        row.calls++;
+        row.visits += e.visited;
+        if (!e.found) {
+            row.misses++;
+            if (e.hudRootSearch) row.hudRootMisses++;
+            row.missedTargets[e.target] = (row.missedTargets[e.target] || 0) + 1;
+        } else row.foundTargets[e.target] = { path: e.resultBreadcrumbs, visits: e.visited };
+    }
+    const endState = registryState(hud);
+    return {
+        scope: "offline simulated lookup operations; no native timings or FPS",
+        selection: "label filter only; other enabled features remain running",
+        seconds: (hud.clock.now() - startMs) / 1000,
+        totalPanels: hud.tree.panels, meta: hud.meta, notes: hud.tree.notes,
+        enabledStart: startState.enabled, enabledEnd: endState.enabled,
+        registryErrorsStart: startState.errors, registryErrorsEnd: endState.errors,
+        callbackErrors: hud.clock.errors.map(e => ({ atMs: e.at, message: e.error.message })),
+        features: [...byFeature.values()].sort((a, b) => b.visits - a.visits).map(row => ({
+            ...row, callsPerSec: row.calls / seconds, visitsPerSec: row.visits / seconds,
+            missesPerSec: row.misses / seconds,
+        })),
+        snapshot, events,
+    };
+}
+
+function reportText(result, verbose) {
+    const out = ["QOLLOCK OFFLINE HUD LOOKUP TRACE", result.scope, result.selection,
+        `Tree: ${result.totalPanels} panels; sample: ${result.seconds}s; warm-up: ${result.meta.warmupMs / 1000}s`,
+        `Config: ${result.meta.configMode}; enabled: ${result.enabledStart.length} -> ${result.enabledEnd.length}`];
+    for (const note of result.notes) out.push(`NOTE: ${note}`);
+    if (verbose) for (const e of result.events) {
+        out.push(`[T=${e.t.toFixed(3)}s] [${e.feature}] ${e.type}(${JSON.stringify(e.target)}) ` +
+            `${e.found ? "FOUND" : "MISS"}; ${e.visited} model visits`,
+        `  Under: ${e.searchRoot}`);
+        if (e.resultBreadcrumbs) out.push(`  Result: ${e.resultBreadcrumbs}`);
+    }
+    out.push("", "FEATURE                             LOOKUPS/S     VISITS/S     MISSES/S");
+    for (const r of result.features) {
+        out.push(`${r.feature.padEnd(35)} ${r.callsPerSec.toFixed(1).padStart(9)} ` +
+            `${r.visitsPerSec.toFixed(1).padStart(12)} ${r.missesPerSec.toFixed(1).padStart(12)}`);
+        for (const [target, count] of Object.entries(r.missedTargets)) {
+            out.push(`  Absent in this scenario: ${target} (${(count / result.seconds).toFixed(1)}/s)`);
+        }
+    }
+    if (!result.features.length) out.push("No lookup events for this label in this window; this does not establish performance.");
+    out.push("", "Misses are investigation candidates, not proof of invalid IDs or memory leaks.");
+    for (const error of result.callbackErrors) out.push(`CALLBACK ERROR @${error.atMs}ms: ${error.message}`);
+    return out.join("\n");
 }
 
 function main() {
-    const opts = parseArgs();
-
-    if (!fs.existsSync(opts.capturePath)) {
-        process.stderr.write(`[tracer] FATAL: capture file not found at ${opts.capturePath}\n`);
-        process.exit(2);
-    }
-
-    let capture;
     try {
-        capture = JSON.parse(fs.readFileSync(opts.capturePath, "utf8"));
+        const opts = parseArgs();
+        const capturedTree = JSON.parse(fs.readFileSync(opts.capturePath, "utf8"));
+        const hud = createProfiledHud({
+            capturedTree, warmupMs: opts.warmupMs,
+            enableAll: opts.enableAll, configOverrides: opts.configOverrides,
+        });
+        const result = collectTrace(hud, opts);
+        if (opts.json) {
+            if (!opts.includeEvents) delete result.events;
+            process.stdout.write(JSON.stringify(result, null, 2) + "\n");
+        } else process.stdout.write(reportText(result, opts.verbose || !!opts.feature) + "\n");
+        if (result.callbackErrors.length || Object.values(result.registryErrorsEnd).some(n => n > 0)) {
+            process.exitCode = 1;
+        }
     } catch (e) {
-        process.stderr.write(`[tracer] FATAL: failed to parse JSON from ${opts.capturePath}: ${e.message}\n`);
-        process.exit(2);
+        process.stderr.write(`[tracer] FATAL: ${e.message}\n`);
+        process.exitCode = 2;
     }
-
-    const totalDumpPanels = capture.summary?.totalPanels || 16511;
-
-    // Instrumentation & Event Log
-    const counters = install();
-    const events = [];
-    let currentVirtualSec = 0;
-
-    counters.onTraverse = (e) => {
-        const label = e.label || "<unattributed>";
-        const searchRoot = e.rootPanel?.getBreadcrumbs ? e.rootPanel.getBreadcrumbs() : (e.rootPanel?.id || "root");
-        const isRoot = e.visited >= totalDumpPanels * 0.9;
-        
-        events.push({
-            t: currentVirtualSec,
-            feature: label,
-            type: e.type,
-            target: e.target,
-            found: !!e.found,
-            visited: e.visited,
-            isRoot,
-            searchRoot,
-            resultBreadcrumbs: e.found?.getBreadcrumbs ? e.found.getBreadcrumbs() : null,
-        });
-    };
-
-    counters.onClassTraverse = (e) => {
-        const label = e.label || "<unattributed>";
-        const searchRoot = e.rootPanel?.getBreadcrumbs ? e.rootPanel.getBreadcrumbs() : (e.rootPanel?.id || "root");
-        const isRoot = e.visited >= totalDumpPanels * 0.9;
-
-        events.push({
-            t: currentVirtualSec,
-            feature: label,
-            type: e.type,
-            target: "." + e.target,
-            found: e.matches > 0,
-            matches: e.matches,
-            visited: e.visited,
-            isRoot,
-            searchRoot,
-            resultBreadcrumbs: null,
-        });
-    };
-
-    if (!opts.json) {
-        process.stdout.write("=".repeat(95) + "\n");
-        process.stdout.write("  QOLLOCK PANORAMA LIVE FEATURE TRACER\n");
-        process.stdout.write(`  Capture : ${path.basename(opts.capturePath)} (${totalDumpPanels} panels)\n`);
-        process.stdout.write(`  Target  : ${opts.feature ? `Single feature [${opts.feature}]` : "All active features"}\n`);
-        process.stdout.write(`  Window  : ${opts.seconds}s virtual gameplay\n`);
-        process.stdout.write("=".repeat(95) + "\n\n");
-    }
-
-    // Configure overrides if a single feature is requested
-    const overrides = {};
-    if (opts.feature) {
-        // Find matching feature key or manifest
-        const normalized = opts.feature.toLowerCase().replace(/^(mf:|feat:)/, "");
-        // If it starts with ql_, we can enable it specifically
-        overrides["ENABLE_ALL_FOR_PROFILE"] = 0;
-    }
-
-    const hud = createProfiledHud({
-        warmupMs: 1000,
-        capturedTree: capture,
-        configOverrides: overrides,
-    });
-
-    // Run virtual clock in small time steps to track timestamps accurately
-    counters.enabled = true;
-    const startSec = 0;
-    const endSec = opts.seconds;
-    const stepSec = 0.05; // 50ms tick granularity
-
-    for (let t = startSec; t < endSec; t += stepSec) {
-        currentVirtualSec = Number(t.toFixed(2));
-        hud.clock.advance(stepSec * 1000);
-    }
-
-    counters.enabled = false;
-
-    // Filter events if single feature requested
-    const filteredEvents = opts.feature
-        ? events.filter(e => {
-            const f = e.feature.toLowerCase();
-            const target = opts.feature.toLowerCase();
-            return f.includes(target);
-        })
-        : events;
-
-    // ── Live Chronological Trace Output ──────────────────────────────────────
-    if (opts.verbose && filteredEvents.length > 0) {
-        process.stdout.write("--- CHRONOLOGICAL EXECUTION TRACE ---\n");
-        let lastTime = -1;
-
-        for (const ev of filteredEvents) {
-            if (ev.t !== lastTime) {
-                lastTime = ev.t;
-                process.stdout.write(`\n[T = ${ev.t.toFixed(2)}s]\n`);
-            }
-
-            const prefix = `  [${ev.feature}] ${ev.type}("${ev.target}")`;
-            if (ev.found) {
-                process.stdout.write(`${prefix}\n`);
-                process.stdout.write(`     ↳ 🟢 FOUND in ${ev.visited} node visits\n`);
-                if (ev.resultBreadcrumbs) {
-                    process.stdout.write(`     ↳ Path: ${truncateMiddle(ev.resultBreadcrumbs, 80)}\n`);
-                }
-            } else {
-                const leakFlag = ev.isRoot ? " 🚨 FULL TREE WALK (100% HUD PENALTY)" : "";
-                process.stdout.write(`${prefix}\n`);
-                process.stdout.write(`     ↳ ❌ MISSED after ${ev.visited} node visits!${leakFlag}\n`);
-                process.stdout.write(`     ↳ Searched under: ${truncateMiddle(ev.searchRoot, 70)}\n`);
-            }
-        }
-        process.stdout.write("\n" + "-".repeat(95) + "\n\n");
-    }
-
-    // ── Per-Feature Aggregate Analysis ──────────────────────────────────────
-    const statsByFeature = new Map();
-
-    for (const ev of filteredEvents) {
-        let st = statsByFeature.get(ev.feature);
-        if (!st) {
-            st = {
-                feature: ev.feature,
-                calls: 0,
-                visits: 0,
-                misses: 0,
-                fullTreeMisses: 0,
-                missedTargets: new Map(), // target -> count
-                foundTargets: new Map(),  // target -> { path, visits }
-            };
-            statsByFeature.set(ev.feature, st);
-        }
-
-        st.calls++;
-        st.visits += ev.visited;
-        if (!ev.found) {
-            st.misses++;
-            if (ev.isRoot) st.fullTreeMisses++;
-            st.missedTargets.set(ev.target, (st.missedTargets.get(ev.target) || 0) + 1);
-        } else {
-            st.foundTargets.set(ev.target, {
-                path: ev.resultBreadcrumbs,
-                visits: ev.visited,
-            });
-        }
-    }
-
-    const featureRows = [...statsByFeature.values()].sort((a, b) => b.visits - a.visits);
-
-    if (opts.json) {
-        process.stdout.write(JSON.stringify({
-            seconds: opts.seconds,
-            totalPanels: totalDumpPanels,
-            features: featureRows.map(r => ({
-                feature: r.feature,
-                callsPerSec: r.calls / opts.seconds,
-                visitsPerSec: r.visits / opts.seconds,
-                missesPerSec: r.misses / opts.seconds,
-                fullTreeMisses: r.fullTreeMisses,
-                missedTargets: Object.fromEntries(r.missedTargets),
-                foundTargets: Object.fromEntries(r.foundTargets),
-            }))
-        }, null, 2));
-        return;
-    }
-
-    process.stdout.write("PER-FEATURE PERFORMANCE SCORECARD\n");
-    process.stdout.write("-".repeat(95) + "\n");
-    process.stdout.write(
-        `  ${"FEATURE".padEnd(32)} ${"LOOKUPS/S".padStart(10)} ${"VISITS/S".padStart(12)} ${"MISSES/S".padStart(10)} ${"HEALTH".padStart(12)}\n`
-    );
-    process.stdout.write("-".repeat(95) + "\n");
-
-    for (const r of featureRows) {
-        const callsSec = (r.calls / opts.seconds).toFixed(1);
-        const visitsSec = formatFmt(r.visits / opts.seconds);
-        const missSec = (r.misses / opts.seconds).toFixed(1);
-        
-        let health = "🟢 OPTIMAL";
-        if (r.fullTreeMisses > 0) {
-            health = "🔴 LEAK";
-        } else if (r.misses > 0 || r.visits / opts.seconds > 50000) {
-            health = "🟡 WATCH";
-        }
-
-        process.stdout.write(
-            `  ${r.feature.padEnd(32)} ${callsSec.padStart(10)} ${visitsSec.padStart(12)} ${missSec.padStart(10)} ${health.padStart(12)}\n`
-        );
-
-        if (r.missedTargets.size > 0) {
-            for (const [t, cnt] of r.missedTargets.entries()) {
-                const ratePerSec = (cnt / opts.seconds).toFixed(1);
-                process.stdout.write(`     └─ ❌ Missing: "${t}" (${ratePerSec}/s)\n`);
-            }
-        }
-    }
-
-    process.stdout.write("-".repeat(95) + "\n");
-    process.stdout.write("\n💡 SUGGESTIONS & OPTIMIZATION PATHS:\n");
-
-    for (const r of featureRows) {
-        if (r.missedTargets.size > 0) {
-            process.stdout.write(`  [${r.feature}]:\n`);
-            for (const [target] of r.missedTargets) {
-                if (target === "CitadelHudAbilitiesContainer") {
-                    process.stdout.write(`     • Replace "CitadelHudAbilitiesContainer" -> "AbilitiesContainer" (Hud.xml)\n`);
-                } else if (target === "CitadelHudTopBar") {
-                    process.stdout.write(`     • Replace "CitadelHudTopBar" -> "TopBar" (CitadelHudTopBar is a type, id is "TopBar")\n`);
-                } else if (target === "CitadelShop") {
-                    process.stdout.write(`     • Replace "CitadelShop" -> "CitadelHudHeroShop" or "Shop"\n`);
-                } else if (target === "MainContents") {
-                    process.stdout.write(`     • "MainContents" is a CSS class, NOT an ID! Use FindFirstPanelByClass.\n`);
-                } else if (target === "SelectedBuildInfoTitle") {
-                    process.stdout.write(`     • "SelectedBuildInfoTitle" does not exist; target is inside ShopModsSelectedBuild > SelectedBuildOuter\n`);
-                } else {
-                    process.stdout.write(`     • Unresolved target "${target}" wastes full tree walks when called from root.\n`);
-                }
-            }
-        }
-
-        // Check if feature found panels through expensive root traversals that could be shallow
-        for (const [target, info] of r.foundTargets) {
-            if (info.visits > 50 && info.path) {
-                // If it took > 50 visits, a shallow lookup or parent cache could optimize it
-                // process.stdout.write(`     • Found "${target}" in ${info.visits} visits at ${truncateMiddle(info.path, 60)}\n`);
-            }
-        }
-    }
-
-    process.stdout.write("\n" + "=".repeat(95) + "\n");
 }
 
-main();
+if (require.main === module) main();
+module.exports = { parseArgs, matchesLabel, collectTrace, reportText };

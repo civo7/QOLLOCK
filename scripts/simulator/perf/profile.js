@@ -10,8 +10,8 @@
 //
 // ATTRIBUTION MECHANISM
 //
-// Two wrappers, installed after the scripts load but before the clock advances
-// (which is when the mod's boot sequence and every poll loop first run):
+// Poll wrapping is installed immediately after ql_scheduler loads, before app
+// boot can allocate default-enabled loops. Legacy updates are wrapped after load.
 //
 //   * Old system — every entry in QOL_FEATURE_REGISTRY has its `update` replaced
 //     by a wrapper that pushes "feat:<name>" onto the attribution stack. The
@@ -30,9 +30,9 @@
 //
 // Features only run when enabled, and the mod reads its config from a panel
 // attribute. `enableAll` writes a config with every ENABLE_*/HUD_*_ENABLED key
-// set to 1 so the profile covers the whole surface — that is the worst case, and
-// it is also what a user running a maximal preset actually experiences. Pass
-// `configOverrides` to profile a narrower setup.
+// set to 1. This expands coverage but does not exercise every toggle, numeric
+// variant, event or gameplay state. With enableAll=false, overrides merge into
+// defaults without expanding unrelated toggles.
 // =============================================================================
 
 "use strict";
@@ -63,13 +63,13 @@ const USER_EDIT_REV_ATTR = "QOL_USER_EDIT_REV";
  * because that is the same convention ConfigStore uses to decide what to coerce
  * to a boolean.
  */
-function makeMaximalConfig(sandbox, overrides = {}) {
+function makeMaximalConfig(sandbox, overrides = {}, enableAll = true) {
     const defaults = sandbox.evalJson("(function(){ try { return QOL.buildDefaultConfig(); } catch(e) { return null; } })()");
     if (!defaults) return null;
 
     const cfg = { ...defaults };
     for (const key of Object.keys(cfg)) {
-        if (/^(ENABLE_|DISABLE_|HUD_.*_ENABLED$|SUPPORT_)/.test(key)) {
+        if (enableAll && /^(ENABLE_|DISABLE_|HUD_.*_ENABLED$|SUPPORT_)/.test(key)) {
             // DISABLE_* keys turn features OFF when set — leave them at their
             // default so "everything on" means what it says.
             if (key.indexOf("DISABLE_") === 0) continue;
@@ -226,6 +226,7 @@ function createProfiledHud({
             ? buildCapturedHud(doc, capturedTree)
             : buildMatchHud(doc, { players, damageNumbers });
     });
+    const capturedHudClasses = capturedTree ? [...doc.root._classes] : null;
 
     wrapScheduledLoops(sandbox);
 
@@ -265,7 +266,7 @@ function createProfiledHud({
     let configBytes = 0;
     silently(() => {
         if (!enableAll && Object.keys(configOverrides).length === 0) return;
-        const cfg = makeMaximalConfig(sandbox, configOverrides);
+        const cfg = makeMaximalConfig(sandbox, configOverrides, enableAll);
         if (!cfg) return;
         const schema = sandbox.eval(
             `(function(){ try { return String(QOL_SCHEMA_VERSION || QOL_CONFIG_SCHEMA_VERSION || ""); } catch(e) { return ""; } })()`
@@ -300,20 +301,23 @@ function createProfiledHud({
         pollRates,
         meta: {
             players, damageNumbers, configApplied, configBytes,
+            configMode: enableAll ? "expanded" : "defaults",
+            configOverrides: { ...configOverrides },
             healthbarType: Number(configOverrides.HEALTHBAR_TYPE) || 0,
             wrappedFeatures, wrappedScheduler, wrappedLoops, warmupMs,
             // Which tree the numbers describe. A modelled run and a captured run are
             // not comparable, so this has to travel with the results.
             treeSource: capturedTree ? "captured" : "modelled",
-            capturedFrom: capturedTree ? (capturedTree.capturedFrom || "unknown") : null,
+            capturedFrom: capturedTree ? (capturedTree.capturedFrom || capturedTree.timestampUtc || "unknown") : null,
+            capturedHudClasses,
         },
 
         /** Count for `ms` of virtual time and return a snapshot. */
         measure(ms) {
             counters.reset();
             counters.enabled = true;
-            clock.advance(ms);
-            counters.enabled = false;
+            try { clock.advance(ms); }
+            finally { counters.enabled = false; }
             return counters.snapshot(ms / 1000);
         },
 
