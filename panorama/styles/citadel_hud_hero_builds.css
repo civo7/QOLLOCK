@@ -1,6 +1,13 @@
 /* Prettified by Source 2 Viewer 17.0.0.0 - https://valveresourceformat.github.io */
 
 @import url("s2r://panorama/styles/base/citadel_hud_hero_builds.vcss_c");
+/* The open shop is raised above the native top bar. Keep the build editor,
+   which is a later HUD sibling, above that shop surface while editing. */
+CitadelHudHeroBuilds.gEditingBuilds
+{
+	z-index: 30;
+}
+
 .support_4_3_active .BuildEditSection
 {
 	width: 220px;
