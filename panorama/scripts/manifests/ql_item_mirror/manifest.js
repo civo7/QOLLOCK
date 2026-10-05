@@ -231,11 +231,12 @@
     }
 
 
-    function _findFirstExcludedModClassHit(iconContainer, excludedModClasses) {
-        if (!iconContainer || !excludedModClasses || !excludedModClasses.length) return "";
+    function _findFirstExcludedModClassHit(iconContainer, ownerIcon, excludedModClasses) {
+        if (!excludedModClasses || !excludedModClasses.length) return "";
         for (var i = 0; i < excludedModClasses.length; i++) {
             var cls = excludedModClasses[i];
-            if (iconContainer.BHasClass && iconContainer.BHasClass(cls)) return cls;
+            if (iconContainer && iconContainer.BHasClass && iconContainer.BHasClass(cls)) return cls;
+            if (ownerIcon && ownerIcon.BHasClass && ownerIcon.BHasClass(cls)) return cls;
         }
         return "";
     }
@@ -583,13 +584,22 @@
             
             function _ownerMatchesUseType(ownerIcon, requirePassiveItem, requireActiveItem) {
                     if (!ownerIcon || !ownerIcon.BHasClass) return false;
-                    if (requirePassiveItem && !ownerIcon.BHasClass("isPassiveItem")) return false;
-                    if (requireActiveItem && !ownerIcon.BHasClass("isActiveItem")) return false;
+                    var isActiveItem = ownerIcon.BHasClass("isActiveItem");
+                    if (requirePassiveItem && isActiveItem) return false;
+                    if (requireActiveItem && !isActiveItem) return false;
                     return true;
                 }
             
-            function _entryMatchesExcludedModClasses(iconContainer, excludedModClasses) {
-                    return _findFirstExcludedModClassHit(iconContainer, excludedModClasses).length === 0;
+            function _entryHasClass(entry, className) {
+                    if (!entry || !className) return false;
+                    var iconContainer = entry.iconContainer;
+                    var ownerIcon = entry.ownerIcon;
+                    if (iconContainer && iconContainer.BHasClass && iconContainer.BHasClass(className)) return true;
+                    return !!(ownerIcon && ownerIcon.BHasClass && ownerIcon.BHasClass(className));
+                }
+
+            function _entryMatchesExcludedModClasses(entry, excludedModClasses) {
+                    return _findFirstExcludedModClassHit(entry && entry.iconContainer, entry && entry.ownerIcon, excludedModClasses).length === 0;
                 }
             
             function _resolveTargetStyle(target) {
@@ -683,24 +693,25 @@
                             var ownerIcon = _findItemOwnerFromContainer(nested);
                             if (!ownerIcon || !ownerIcon.BHasClass || !ownerIcon.BHasClass("hasAbility")) continue;
             
-                            var ownerId = ownerIcon.id ? ownerIcon.id : "unknown";
+                            var ownerId = ownerIcon.id ? String(ownerIcon.id) : "";
             
                             // Dedup: skip entries for the same owner icon (same item appearing
                             // under multiple ModsContainers, e.g. Universal + Locked Universal panels).
                             // Check by both panel identity AND ownerId string, since different
                             // ModsContainers may produce distinct panel instances for the same item.
+                            // Dynamic CitadelModIcon panels can have no ID; an empty ID is not identity.
                             var isDuplicateOwner = false;
                             for (var si = 0; si < seenOwnerIcons.length; si++) {
                                 if (seenOwnerIcons[si] === ownerIcon) { isDuplicateOwner = true; break; }
                             }
-                            if (!isDuplicateOwner) {
+                            if (!isDuplicateOwner && ownerId.length > 0) {
                                 for (var sj = 0; sj < seenOwnerIds.length; sj++) {
                                     if (seenOwnerIds[sj] === ownerId) { isDuplicateOwner = true; break; }
                                 }
                             }
                             if (isDuplicateOwner) continue;
                             seenOwnerIcons.push(ownerIcon);
-                            seenOwnerIds.push(ownerId);
+                            if (ownerId.length > 0) seenOwnerIds.push(ownerId);
                             var cooldownState = ownerIcon.BHasClass("OffCooldown") ? "off" : "on";
                             var sourceImage = nested.FindChildTraverse ? nested.FindChildTraverse("ModIconImage") : null;
                             if (!sourceImage && ownerIcon.FindChildTraverse) sourceImage = ownerIcon.FindChildTraverse("ModIconImage");
@@ -712,7 +723,7 @@
                                 _ownerMatchesTier(ownerIcon, 3)) {
                                 var rawSrc = (sourceImage && sourceImage.GetAttributeString) ? sourceImage.GetAttributeString("src", "") : "";
                                 var rawDefaultSrc = (sourceImage && sourceImage.GetAttributeString) ? sourceImage.GetAttributeString("defaultsrc", "") : "";
-                                var exclusionHit = _findFirstExcludedModClassHit(nested, EXPRESS_SHOT_EXCLUDED_MOD_CLASSES);
+                                var exclusionHit = _findFirstExcludedModClassHit(nested, ownerIcon, EXPRESS_SHOT_EXCLUDED_MOD_CLASSES);
                                 _expressShotLog(
                                     "candidate ownerId=" + ownerId +
                                     " state=" + cooldownState +
@@ -767,7 +778,7 @@
                         if (isExpressTarget) _expressShotLog("reject ownerId=" + String(entry.ownerId || "") + " reason=no_icon_container");
                         return false;
                     }
-                    if (requireModClass.length > 0 && !iconContainer.BHasClass(requireModClass)) return false;
+                    if (requireModClass.length > 0 && !_entryHasClass(entry, requireModClass)) return false;
                     if (skipClassMatch) {
                         if (!skipIconMatch) {
                             if (!_iconSourceMatchesTarget(entry.iconSrc, target.iconSrc)) {
@@ -782,14 +793,14 @@
                             }
                         }
                     } else {
-                        if (!iconContainer.BHasClass(modClassName)) {
+                        if (!_entryHasClass(entry, modClassName)) {
                             if (isExpressTarget) _expressShotLog("reject ownerId=" + String(entry.ownerId || "") + " reason=class_mismatch expectedClass=" + String(modClassName || ""));
                             return false;
                         }
                     }
-                    if (!_entryMatchesExcludedModClasses(iconContainer, excludedModClasses)) {
+                    if (!_entryMatchesExcludedModClasses(entry, excludedModClasses)) {
                         if (isExpressTarget) {
-                            var excludedHit = _findFirstExcludedModClassHit(iconContainer, excludedModClasses);
+                            var excludedHit = _findFirstExcludedModClassHit(iconContainer, ownerIcon, excludedModClasses);
                             _expressShotLog("reject ownerId=" + String(entry.ownerId || "") + " reason=excluded_mod_class class=" + String(excludedHit || ""));
                         }
                         return false;

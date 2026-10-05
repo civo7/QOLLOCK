@@ -14,6 +14,7 @@ function fixture() {
     const instrumented = code.replace("onEnable: function() {", `
         sync: _syncMirrorItemFromSourceMulti,
         reconcile: _reconcileItemMirrorSourcesMulti,
+        discover: _buildItemMirrorSourcesMulti,
         style: _getInlineStyleProperty,
         onEnable: function() {`);
     const scheduled = [];
@@ -50,6 +51,56 @@ function fixture() {
         setText: value => { text = value; },
         setCooling: value => { cooling = value; }
     };
+}
+
+function makeTreePanel(id, classes = [], attributes = {}) {
+    const panel = {
+        id,
+        valid: true,
+        style: {},
+        children: [],
+        parent: null,
+        classes: new Set(classes),
+        attributes,
+        BHasClass(className) { return this.classes.has(className); },
+        GetParent() { return this.parent; },
+        Children() { return this.children; },
+        GetAttributeString(key, fallback) { return Object.hasOwn(this.attributes, key) ? this.attributes[key] : fallback; },
+        FindChildTraverse(childId) {
+            const queue = [...this.children];
+            while (queue.length) {
+                const child = queue.shift();
+                if (child.id === childId) return child;
+                queue.push(...child.children);
+            }
+            return null;
+        },
+        FindChildrenWithClassTraverse(className) {
+            const matches = [];
+            const queue = [...this.children];
+            while (queue.length) {
+                const child = queue.shift();
+                if (child.BHasClass(className)) matches.push(child);
+                queue.push(...child.children);
+            }
+            return matches;
+        },
+        add(child) {
+            child.parent = this;
+            this.children.push(child);
+            return child;
+        }
+    };
+    return panel;
+}
+
+function addPurchasedItem(parent, { itemClass, kindClass, tier, cooldownClass }) {
+    const owner = parent.add(makeTreePanel("", ["hasAbility", kindClass, itemClass, cooldownClass]));
+    const iconContainer = owner.add(makeTreePanel("modIconContainer", ["mod_icon_single_container"]));
+    iconContainer.add(makeTreePanel("ModIconImage", [], { src: `file://{images}/${itemClass}.psd` }));
+    iconContainer.add(makeTreePanel("CooldownMask"));
+    iconContainer.add(makeTreePanel("mod_tier_label", [`ModTierLevel${tier}`]));
+    return owner;
 }
 
 test("item mirror backs off empty text probes and discovers a late native label", () => {
@@ -126,4 +177,30 @@ test("item mirror inline style fallback matches whole properties and can be reus
         assert.equal(f.api.style(panel, "visibility"), "visible");
     }
     assert.equal(f.api.style({ GetAttributeString: () => "background-clip: border-box" }, "clip"), "");
+});
+
+test("item mirror discovers every purchased item when native classes live on anonymous owner panels", () => {
+    const f = fixture();
+    const root = makeTreePanel("Hud");
+    const stats = root.add(makeTreePanel("StatsAndModsContainer"));
+    const lowerLeft = stats.add(makeTreePanel("LowerLeft"));
+    const mods = lowerLeft.add(makeTreePanel("ModsContainer", ["ModsContainer"]));
+    addPurchasedItem(mods, { itemClass: "activeReload", kindClass: "isWeapon", tier: 2, cooldownClass: "OffCooldown" });
+    addPurchasedItem(mods, { itemClass: "magicBurst", kindClass: "isTech", tier: 1, cooldownClass: "OnCooldown" });
+    addPurchasedItem(mods, { itemClass: "unclassifiedPassive", kindClass: "isWeapon", tier: 2, cooldownClass: "OffCooldown" });
+    addPurchasedItem(mods, { itemClass: "explosiveBullets", kindClass: "isWeapon", tier: 3, cooldownClass: "OffCooldown" });
+
+    const scan = f.api.discover(root, {
+        ITEM_FILTER_DEF_PASSIVE: 1,
+        ITEM_FILTER_OFF_PASSIVE: 1,
+        ITEM_FILTER_DEF_ACTIVE: 1,
+        ITEM_FILTER_OFF_ACTIVE: 1
+    });
+
+    assert.equal(scan.scannedCount, 4);
+    assert.deepEqual(
+        Array.from(scan.matches, match => match.itemClassName),
+        ["activeReload", "magicBurst", "backstabber"],
+        "classless passive exceptions should work without isPassiveItem, while owner-carried exclusions still apply"
+    );
 });
