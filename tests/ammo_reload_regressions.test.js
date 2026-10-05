@@ -59,6 +59,8 @@ test("visual ammo state follows dynamically replaced native clip panels", () => 
     assert.match(css, /#clip_status\.qol-ammo-visual-enabled[^}]*visibility:\s*visible\s*!important;/s);
     assert.match(css, /#clip_status\.qol-ammo-visual-enabled #clip_progress_bar[^}]*visibility:\s*visible\s*!important;/s);
     assert.match(css, /\.has_bonus_clip #clip_status\.qol-ammo-visual-enabled #clip_bonus_progress_bar[^}]*visibility:\s*visible\s*!important;/s);
+    assert.match(css, /#clip_status\.qol-ammo-visual-enabled\.qol-ammo-pips-populated #clip_progress_bar[^}]*visibility:\s*collapse\s*!important;/s);
+    assert.match(css, /\.qol-ammo-pip\.qol-ammo-pip-live[^}]*border-color:\s*clipLiveBulletColor;/s);
     assert.match(css, /#clip_status\.qol-ammo-visual-disabled[^}]*visibility:\s*collapse;/s);
 
     const hud = createHud({ inHideout: true });
@@ -68,21 +70,37 @@ test("visual ammo state follows dynamically replaced native clip panels", () => 
     const decoy = addClipHalf($, decoyOwner, "clip_status");
     const gunData = $.CreatePanel("Panel", hud.root, "gun_data");
     const first = addClipHalf($, gunData, "clip_status");
-    $.CreatePanel("Panel", gunData, "ammo_panel");
+    const ammoPanel = $.CreatePanel("Panel", gunData, "ammo_panel");
+    const currentAmmo = $.CreatePanel("Label", ammoPanel, "CurrentAmmo");
+    currentAmmo.AddClass("weapon_ammo");
+    currentAmmo.text = "6";
+    const maxAmmo = $.CreatePanel("Label", ammoPanel, "MaxAmmo");
+    maxAmmo.AddClass("weapon_ammo_max");
+    maxAmmo.text = " / 8";
     Q.core.ConfigStore.set("ql_ammo", "ENABLE_AMMO_STATUS", true);
     assert.equal(first.BHasClass("qol-ammo-visual-enabled"), true);
     assert.equal(first.BHasClass("qol-ammo-visual-disabled"), false);
     assert.equal(decoy.BHasClass("qol-ammo-visual-enabled"), false, "hidden duplicate must not win clip resolution");
+    assert.equal(first.BHasClass("qol-ammo-pips-populated"), true);
+    assert.equal(first.FindChildrenWithClassTraverse("qol-ammo-pip").length, 8);
+    assert.equal(first.FindChildrenWithClassTraverse("qol-ammo-pip-live").length, 6);
+
+    currentAmmo.text = "5";
+    hud.clock.advance(120);
+    assert.equal(first.FindChildrenWithClassTraverse("qol-ammo-pip-live").length, 5, "pips follow the live ammo label");
 
     first.DeleteAsync(0);
     hud.clock.advance(1);
     const replacement = addClipHalf($, gunData, "clip_status");
     hud.clock.advance(600);
     assert.equal(replacement.BHasClass("qol-ammo-visual-enabled"), true);
+    assert.equal(replacement.FindChildrenWithClassTraverse("qol-ammo-pip").length, 8, "replacement receives owned pips");
 
     Q.core.ConfigStore.set("ql_ammo", "ENABLE_AMMO_STATUS", false);
+    hud.clock.advance(1);
     assert.equal(replacement.BHasClass("qol-ammo-visual-enabled"), false);
     assert.equal(replacement.BHasClass("qol-ammo-visual-disabled"), false, "disabled feature releases its owned classes");
+    assert.equal(replacement.FindChildrenWithClassTraverse("qol-ammo-pip").length, 0, "disable removes owned pips");
     assert.deepEqual(hud.clock.errors, []);
 });
 

@@ -57,8 +57,17 @@
             var _lastMirroredRings = [];
             var _lastTextTargets = [];
             var _loop = null;
+            var _loopRate = 0;
+            var _pipOwner = null;
+            var _pips = [];
+            var _pipMax = 0;
+            var _pipCurrent = -1;
             var _clearStyle = QOL.utils.ClearStyleSafe;
             var _isAlive = QOL.utils.IsPanelValid;
+            var MAX_CUSTOM_PIPS = 40;
+            // rate-exempt: 10Hz keeps shot-by-shot ammo pips responsive while enabled.
+            var AMMO_VISUAL_INTERVAL_SEC = 0.1;
+            var AMMO_IDLE_INTERVAL_SEC = 0.5;
 
             function _samePanels(a, b) {
                 if (a.length !== b.length) return false;
@@ -124,6 +133,72 @@
                 if (!_isAlive(panel) || !QOL.core.panel || !QOL.core.panel.setClass) return;
                 QOL.core.panel.setClass(panel, "qol-ammo-visual-enabled", enabled);
                 QOL.core.panel.setClass(panel, "qol-ammo-visual-disabled", !enabled);
+            }
+
+            function _removePips() {
+                if (_isAlive(_pipOwner) && QOL.core.panel && QOL.core.panel.setClass) {
+                    QOL.core.panel.setClass(_pipOwner, "qol-ammo-pips-populated", false);
+                }
+                for (var i = 0; i < _pips.length; i++) {
+                    if (_isAlive(_pips[i]) && _pips[i].DeleteAsync) _pips[i].DeleteAsync(0);
+                }
+                _pipOwner = null;
+                _pips = [];
+                _pipMax = 0;
+                _pipCurrent = -1;
+            }
+
+            function _readAmmoNumber(panel, className) {
+                if (!panel || !panel.FindChildrenWithClassTraverse) return NaN;
+                var labels = panel.FindChildrenWithClassTraverse(className) || [];
+                for (var i = 0; i < labels.length; i++) {
+                    var match = String(labels[i] && labels[i].text != null ? labels[i].text : "").match(/\d+/);
+                    if (match) return Number(match[0]);
+                }
+                return NaN;
+            }
+
+            function _createPips(clipPanel, maxAmmo) {
+                _removePips();
+                _pipOwner = clipPanel;
+                _pipMax = maxAmmo;
+                var segment = 90 / maxAmmo;
+                var gap = Math.min(1.2, segment * 0.18);
+                for (var i = 0; i < maxAmmo; i++) {
+                    var pip = $.CreatePanel("Panel", clipPanel, "QOLAmmoPip_" + i);
+                    pip.AddClass("qol-ammo-pip");
+                    pip.style.clip = "radial( 50% 50%, " + (i * segment + gap / 2) + "deg, " + ((i + 1) * segment - gap / 2) + "deg )";
+                    _pips.push(pip);
+                }
+                if (QOL.core.panel && QOL.core.panel.setClass) {
+                    QOL.core.panel.setClass(clipPanel, "qol-ammo-pips-populated", true);
+                }
+            }
+
+            function _syncPips(ammoPanel, clipPanel, enabled) {
+                if (!enabled || !_isAlive(ammoPanel) || !_isAlive(clipPanel) || _mirroredClipSibling(clipPanel)) {
+                    _removePips();
+                    return;
+                }
+                var current = _readAmmoNumber(ammoPanel, "weapon_ammo");
+                var maxAmmo = _readAmmoNumber(ammoPanel, "weapon_ammo_max");
+                current = Math.round(current);
+                maxAmmo = Math.round(maxAmmo);
+                if (!isFinite(current) || !isFinite(maxAmmo) || maxAmmo < 1 || maxAmmo > MAX_CUSTOM_PIPS) {
+                    _removePips();
+                    return;
+                }
+                current = Math.max(0, Math.min(maxAmmo, current));
+                if (_pipOwner !== clipPanel || _pipMax !== maxAmmo || _pips.length !== maxAmmo) {
+                    _createPips(clipPanel, maxAmmo);
+                }
+                if (_pipCurrent === current) return;
+                _pipCurrent = current;
+                for (var i = 0; i < _pips.length; i++) {
+                    if (!_isAlive(_pips[i])) continue;
+                    _pips[i].SetHasClass("qol-ammo-pip-live", i < current);
+                    _pips[i].SetHasClass("qol-ammo-pip-empty", i >= current);
+                }
             }
 
             function _applyClipState(root, ammoPanel, angle, visualEnabled) {
@@ -224,6 +299,7 @@
                 var ap = root.FindChildTraverse("ammo_panel");
                 var visualEnabled = cfg.ENABLE_AMMO_STATUS === true || Number(cfg.ENABLE_AMMO_STATUS) === 1;
                 _applyClipState(root, ap, _clamp(cfg.AMMO_CLIP_ANGLE, 0, 360), visualEnabled);
+                _syncPips(ap, _lastClipPanel, visualEnabled);
                 if (ap !== _lastMainPanel) {
                     _lastMainPanel = ap;
                     _lastMainSig = "";
@@ -263,16 +339,27 @@
                 try { ap.style.opacity = "1.00"; } catch(e) {}
             }
 
+            function _ensureLoop(cfg) {
+                var visualEnabled = cfg && (cfg.ENABLE_AMMO_STATUS === true || Number(cfg.ENABLE_AMMO_STATUS) === 1);
+                var targetRate = visualEnabled ? AMMO_VISUAL_INTERVAL_SEC : AMMO_IDLE_INTERVAL_SEC;
+                if (_loop && _loopRate === targetRate) return;
+                if (_loop) _loop.stop();
+                var S = QOL.core.Scheduler;
+                _loopRate = targetRate;
+                _loop = S && S.createPollLoop ? S.createPollLoop(function() { _apply(ctx.config.all()); }, targetRate, ctx.id) : null;
+            }
+
             return {
                 onEnable: function() {
                     _apply(ctx.config.all());
-                    var S = QOL.core.Scheduler;
-                    _loop = S && S.createPollLoop ? S.createPollLoop(function() { _apply(ctx.config.all()); }, 0.5, ctx.id) : null;
+                    _ensureLoop(ctx.config.all());
                 },
                 onDisable: function() {
                     if (_loop) { _loop.stop(); _loop = null; }
+                    _loopRate = 0;
                     var S = QOL.core.Scheduler;
                     if (S) S.cancelAllForFeature(ctx.id);
+                    _removePips();
                     _lastMainSig = ""; _lastClipSig = "";
                     _lastMainPanel = null; _lastTextTargets = [];
                     try {
@@ -294,7 +381,11 @@
                     _lastClipPanel = null; _lastMirroredClipPanel = null;
                     _lastRings = []; _lastMirroredRings = [];
                 },
-                onSettingsChanged: function() { _apply(ctx.config.all()); }
+                onSettingsChanged: function() {
+                    var cfg = ctx.config.all();
+                    _apply(cfg);
+                    _ensureLoop(cfg);
+                }
             };
         },
         test: function(ctx) {

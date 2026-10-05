@@ -30,6 +30,39 @@
 	visibility: visible !important;
 }
 
+#clip_status.qol-ammo-visual-enabled.qol-ammo-pips-populated #clip_progress_bar
+{
+	visibility: collapse !important;
+}
+
+#clip_status.qol-ammo-pips-populated #clip_bullet
+{
+	visibility: collapse !important;
+}
+
+.qol-ammo-pip
+{
+	width: 96px;
+	height: 96px;
+	vertical-align: center;
+	horizontal-align: center;
+	border-radius: 50%;
+	border: 6px solid clipEmptyBulletColor;
+	opacity: 0.35;
+}
+
+.qol-ammo-pip.qol-ammo-pip-live
+{
+	border-color: clipLiveBulletColor;
+	opacity: 0.8;
+}
+
+.lowAmmo .qol-ammo-pip.qol-ammo-pip-live
+{
+	border-color: clipLowBulletColor;
+	opacity: 1;
+}
+
 /*
  * Keep the magazine ring hidden for the whole reload so it doesn't blink.
  * The base HUD only collapses #clip_status while BOTH `attack_delayed` and
