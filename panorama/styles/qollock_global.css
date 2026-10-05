@@ -193,6 +193,15 @@
     100% { pre-transform-scale2d: 1; }
 }
 
+/* ── HUD layering ── */
+
+/* The shop is raised above the native top bar. Keep the native ability strip
+   above the catalog so its hover and upgrade controls remain interactive. */
+#AbilitiesContainer.gShopOpen
+{
+    z-index: 25;
+}
+
 /* ── BHOP gamemode ── */
 
 .bhop_gamemode_active #StatsAndModsContainer,
