@@ -9,6 +9,8 @@
     height: 36px;
     margin-top: 30px;
     margin-right: 2px;
+    x: -2px;
+    y: -2px;
     horizontal-align: left;
     vertical-align: top;
 }
