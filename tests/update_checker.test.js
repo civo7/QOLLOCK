@@ -124,10 +124,10 @@ function createUpdateCheckerEnvironment(initialConfig = {}) {
     };
 }
 
-test("update_checker: marker is bumped to 7 and exports on QOL.updateChecker", () => {
+test("update_checker: marker is bumped to 8 and exports on QOL.updateChecker", () => {
     const { sandbox } = createUpdateCheckerEnvironment();
     assert.ok(sandbox.QOL.updateChecker, "QOL.updateChecker must exist");
-    assert.strictEqual(sandbox.QOL.updateChecker.marker, 7);
+    assert.strictEqual(sandbox.QOL.updateChecker.marker, 8);
     assert.strictEqual(typeof sandbox.QOL.updateChecker.onSettingsOpened, "function");
     assert.strictEqual(typeof sandbox.QOL.updateChecker.onSettingsChanged, "function");
     assert.strictEqual(typeof sandbox.QOL.updateChecker.classifyMarker, "function");
