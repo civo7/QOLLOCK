@@ -157,6 +157,9 @@ test("ammo geometry and late text targets survive hideout panel replacement", ()
     text.AddClass("weapon_ammo");
     hud.clock.advance(600);
     assert.equal(text.style.color, Q.core.panel.resolvePaletteColor(3));
+    text.style.color = "#ffffff";
+    hud.clock.advance(600);
+    assert.equal(text.style.color, Q.core.panel.resolvePaletteColor(3), "selected ammo color survives native rewrites");
     const clip = $.CreatePanel("Panel", hud.root, "clip_status");
     const ring = $.CreatePanel("Panel", clip, "ClipRing");
     Q.core.ConfigStore.set("ql_ammo", "AMMO_CLIP_ANGLE", 45);

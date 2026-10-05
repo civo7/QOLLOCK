@@ -777,34 +777,39 @@ function createStaminaRing(hud) {
     element.AddClass("ability_element_charges");
     const container = $.CreatePanel("Panel", element, "charges_container");
     const foregrounds = [];
+    const charges = [];
     for (let i = 1; i <= 3; i++) {
         const charge = $.CreatePanel("Panel", container, "charge" + i);
         charge.AddClass("charge");
+        charges.push(charge);
         const fg = $.CreatePanel("Panel", charge, "");
         fg.AddClass("charge_fg");
-        fg.AddClass("finished");
         foregrounds.push(fg);
         $.CreatePanel("Panel", charge, "").AddClass("charge_drained");
     }
-    return { element, container, foregrounds };
+    return { element, container, charges, foregrounds };
 }
 
-test("stamina tint follows charge recovery without changing the selected color", () => {
+test("stamina tint follows current native charge states without a finished class", () => {
     const hud = sim.createHud({ inHideout: false });
     hud.assertLoaded();
     const Q = hud.sandbox.global.QOL;
-    const { foregrounds } = createStaminaRing(hud);
-    foregrounds[2].RemoveClass("finished");
+    const { charges, foregrounds } = createStaminaRing(hud);
+    charges[2].AddClass("charging");
     Q.core.ConfigAdapter.loadFromFlat({ STAMINA_CHARGE_COLOR: 13 });
     const blue = Q.core.panel.resolvePaletteColor(13);
     assert.strictEqual(foregrounds[0].style.washColor, blue);
     assert.strictEqual(foregrounds[1].style.washColor, blue);
 
-    foregrounds[2].AddClass("finished");
-    foregrounds[0].RemoveClass("finished");
+    charges[2].RemoveClass("charging");
+    charges[0].AddClass("draining");
     hud.clock.advance(600);
     assert.strictEqual(foregrounds[2].style.washColor, blue, "Recovered pip must not remain uncolored");
     assert.strictEqual(foregrounds[0].style.washColor, "transparent", "Recharging pip must recover its native feedback colors");
+
+    foregrounds[1].style.washColor = "transparent";
+    hud.clock.advance(600);
+    assert.strictEqual(foregrounds[1].style.washColor, blue, "Native updates must not permanently replace the selected tint");
 });
 
 test("stamina preset changes restore both native color and default rotation", () => {

@@ -6,6 +6,12 @@
 	visibility: visible;
 }
 
+#clip_status.qol-ammo-visual-enabled,
+#clip_status_mirrored.qol-ammo-visual-enabled
+{
+	visibility: visible !important;
+}
+
 /*
  * Keep the magazine ring hidden for the whole reload so it doesn't blink.
  * The base HUD only collapses #clip_status while BOTH `attack_delayed` and
@@ -17,16 +23,20 @@
  * continuous across the whole reload) keeps it steadily hidden, matching the
  * vanilla "ring hidden while reloading" behaviour.
  */
-.reloading #clip_status
-{
-	opacity: 0;
-	visibility: collapse;
-}
-
-.hide_ammo_custom #clip_status
+.hide_ammo_custom #clip_status,
+.hide_ammo_custom #clip_status_mirrored,
+#clip_status.qol-ammo-visual-disabled,
+#clip_status_mirrored.qol-ammo-visual-disabled
 {
 	opacity: 0 !important;
 	visibility: collapse;
+}
+
+.reloading #clip_status,
+.reloading #clip_status_mirrored
+{
+	opacity: 0 !important;
+	visibility: collapse !important;
 }
 
 .hide_magazine_active #ammo_panel .weapon_ammo_max

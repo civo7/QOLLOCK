@@ -36,7 +36,6 @@
         ],
         create: function(ctx) {
             var _lastAngleSig = "";
-            var _lastColorSig = "";
             var _colorPanels = [];
             var _anglePanel = null;
             var _loop = null;
@@ -69,13 +68,15 @@
             function _refreshColorPanels(cc) {
                 _colorPanels = [];
                 try {
-                    // Leave native recharge/drain feedback untinted.
+                    // Current native pips do not receive the former `finished`
+                    // class. Treat pips without an active feedback state as full.
                     var allFg = cc.FindChildrenWithClassTraverse("charge_fg") || [];
                     for (var i = 0; i < allFg.length; i++) {
                         var fg = allFg[i];
-                        if (fg && fg.BHasClass && fg.BHasClass("finished")) {
-                            _colorPanels.push(fg);
-                        }
+                        var charge = fg && fg.GetParent ? fg.GetParent() : null;
+                        var hasFeedback = charge && charge.BHasClass &&
+                            (charge.BHasClass("charging") || charge.BHasClass("draining") || charge.BHasClass("disabled"));
+                        if (fg && !hasFeedback) _colorPanels.push(fg);
                     }
                     var drained = cc.FindChildrenWithClassTraverse("charge_drained") || [];
                     for (var j = 0; j < drained.length; j++) {
@@ -107,16 +108,15 @@
                     try { previous[p].style.washColor = "transparent"; } catch(e) {}
                 }
 
-                var colorSig = String(colorIdx);
                 var pal = QOL.washColorPalette || [];
                 var wc = QOL.core.panel && QOL.core.panel.resolvePaletteColor
                     ? QOL.core.panel.resolvePaletteColor(colorIdx)
                     : pal[colorIdx];
                 for (var i = 0; i < _colorPanels.length; i++) {
-                    if (_lastColorSig === colorSig && previous.indexOf(_colorPanels[i]) !== -1) continue;
+                    // Native charge-state transitions can rewrite wash without
+                    // replacing the pip, so selected colors are reasserted.
                     _colorPanels[i].style.washColor = wc;
                 }
-                _lastColorSig = colorSig;
                 if (angle === 45 && colorIdx === 0) {
                     _anglePanel = null;
                     _lastAngleSig = "";
@@ -143,7 +143,7 @@
                     if (_loop) { _loop.stop(); _loop = null; }
                     var S = QOL.core.Scheduler;
                     if (S) S.cancelAllForFeature("ql_stamina");
-                    _lastAngleSig = ""; _lastColorSig = "";
+                    _lastAngleSig = "";
                     // Restore only the stamina ring that this instance changed.
                     try {
                         if (_anglePanel) _anglePanel.style.transform = "rotateZ(45deg)";

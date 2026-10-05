@@ -2,6 +2,8 @@
 
 const test = require("node:test");
 const assert = require("node:assert/strict");
+const fs = require("node:fs");
+const path = require("node:path");
 const { createHud } = require("../scripts/simulator");
 
 function addClipHalf($, root, id) {
@@ -49,6 +51,31 @@ test("magazine rotation keeps both native half-rings together across hero layout
     hud.clock.advance(600);
     assert.equal(standardAgain.style.transform || "", "");
     assert.equal(standardAgain.Children()[0].style.transform, "rotateZ(-45deg)");
+    assert.deepEqual(hud.clock.errors, []);
+});
+
+test("visual ammo state follows dynamically replaced native clip panels", () => {
+    const css = fs.readFileSync(path.join(__dirname, "..", "panorama/styles/ability_hud_elements/element_gun.css"), "utf8");
+    assert.match(css, /#clip_status\.qol-ammo-visual-enabled[^}]*visibility:\s*visible\s*!important;/s);
+    assert.match(css, /#clip_status\.qol-ammo-visual-disabled[^}]*visibility:\s*collapse;/s);
+
+    const hud = createHud({ inHideout: true });
+    hud.assertLoaded();
+    const { $, QOL: Q } = hud.sandbox.global;
+    const first = addClipHalf($, hud.root, "clip_status");
+    Q.core.ConfigStore.set("ql_ammo", "ENABLE_AMMO_STATUS", true);
+    assert.equal(first.BHasClass("qol-ammo-visual-enabled"), true);
+    assert.equal(first.BHasClass("qol-ammo-visual-disabled"), false);
+
+    first.DeleteAsync(0);
+    hud.clock.advance(1);
+    const replacement = addClipHalf($, hud.root, "clip_status");
+    hud.clock.advance(600);
+    assert.equal(replacement.BHasClass("qol-ammo-visual-enabled"), true);
+
+    Q.core.ConfigStore.set("ql_ammo", "ENABLE_AMMO_STATUS", false);
+    assert.equal(replacement.BHasClass("qol-ammo-visual-enabled"), false);
+    assert.equal(replacement.BHasClass("qol-ammo-visual-disabled"), false, "disabled feature releases its owned classes");
     assert.deepEqual(hud.clock.errors, []);
 });
 

@@ -95,18 +95,32 @@
             }
 
             function _releaseClipStyles(panel, rings) {
-                if (_isAlive(panel)) _clearStyle(panel, "transform");
+                if (_isAlive(panel)) {
+                    _clearStyle(panel, "transform");
+                    if (QOL.core.panel && QOL.core.panel.setClass) {
+                        QOL.core.panel.setClass(panel, "qol-ammo-visual-enabled", false);
+                        QOL.core.panel.setClass(panel, "qol-ammo-visual-disabled", false);
+                    }
+                }
                 for (var i = 0; i < rings.length; i++) {
                     if (_isAlive(rings[i])) _clearStyle(rings[i], "transform");
                 }
             }
 
-            function _applyClipAngle(root, angle) {
+            function _setClipVisual(panel, enabled) {
+                if (!_isAlive(panel) || !QOL.core.panel || !QOL.core.panel.setClass) return;
+                QOL.core.panel.setClass(panel, "qol-ammo-visual-enabled", enabled);
+                QOL.core.panel.setClass(panel, "qol-ammo-visual-disabled", !enabled);
+            }
+
+            function _applyClipState(root, angle, visualEnabled) {
                 var cs = root.FindChildTraverse("clip_status");
                 var mirrored = _mirroredClipSibling(cs);
                 var rings = _clipChildren(cs);
                 var mirroredRings = _clipChildren(mirrored);
-                var sig = angle + "|" + (mirrored ? "dual" : "single");
+                var sig = angle + "|" + (visualEnabled ? "visible" : "hidden") + "|" + (mirrored ? "dual" : "single");
+                _setClipVisual(cs, visualEnabled);
+                _setClipVisual(mirrored, visualEnabled);
                 if (_lastClipSig === sig && _lastClipPanel === cs &&
                     _lastMirroredClipPanel === mirrored && _samePanels(_lastRings, rings) &&
                     _samePanels(_lastMirroredRings, mirroredRings)) return;
@@ -195,7 +209,8 @@
             function _apply(cfg) {
                 var root = $.GetContextPanel();
                 var ap = root.FindChildTraverse("ammo_panel");
-                _applyClipAngle(root, _clamp(cfg.AMMO_CLIP_ANGLE, 0, 360));
+                var visualEnabled = cfg.ENABLE_AMMO_STATUS === true || Number(cfg.ENABLE_AMMO_STATUS) === 1;
+                _applyClipState(root, _clamp(cfg.AMMO_CLIP_ANGLE, 0, 360), visualEnabled);
                 if (ap !== _lastMainPanel) {
                     _lastMainPanel = ap;
                     _lastMainSig = "";
@@ -216,7 +231,14 @@
 
                 var sig = curScale + "|" + totScale + "|" + ox + "|" + oy + "|" + hideMagazine + "|" + hideAll + "|" + colorIdx;
                 var targets = _textTargets(ap);
-                if (_lastMainSig === sig && _samePanels(_lastTextTargets, targets)) return;
+                if (_lastMainSig === sig && _samePanels(_lastTextTargets, targets)) {
+                    // Ammo state changes can rewrite native label colors without
+                    // replacing the panels. Reassert a selected user color.
+                    if (colorIdx > 0) {
+                        for (var ti = 0; ti < targets.length; ti++) _applyTextColor(targets[ti], textColor);
+                    }
+                    return;
+                }
                 _lastMainSig = sig;
                 _lastTextTargets = targets;
 
