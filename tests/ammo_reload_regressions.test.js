@@ -82,8 +82,15 @@ test("visual ammo state follows dynamically replaced native clip panels", () => 
     assert.equal(first.BHasClass("qol-ammo-visual-disabled"), false);
     assert.equal(decoy.BHasClass("qol-ammo-visual-enabled"), false, "hidden duplicate must not win clip resolution");
     assert.equal(first.BHasClass("qol-ammo-pips-populated"), true);
-    assert.equal(first.FindChildrenWithClassTraverse("qol-ammo-pip").length, 8);
+    const pips = first.FindChildrenWithClassTraverse("qol-ammo-pip");
+    assert.equal(pips.length, 8);
     assert.equal(first.FindChildrenWithClassTraverse("qol-ammo-pip-live").length, 6);
+    assert.equal(pips[0].style.clip, "radial( 50% 50%, 0.6deg, 10.05deg )");
+    assert.equal(pips[1].style.clip, "radial( 50% 50%, 11.85deg, 10.05deg )", "each pip uses a fixed short sweep");
+
+    Q.core.ConfigStore.set("ql_ammo", "AMMO_TEXT_COLOR", 3);
+    assert.equal(pips[0].style.borderColor, Q.core.panel.resolvePaletteColor(3), "live pips follow ammo text color");
+    assert.equal(pips[7].style.borderColor || "", "", "empty pips retain their native empty color");
 
     currentAmmo.text = "5";
     hud.clock.advance(120);
@@ -96,6 +103,7 @@ test("visual ammo state follows dynamically replaced native clip panels", () => 
     assert.equal(replacement.BHasClass("qol-ammo-visual-enabled"), true);
     assert.equal(replacement.FindChildrenWithClassTraverse("qol-ammo-pip").length, 8, "replacement receives owned pips");
 
+    Q.core.ConfigStore.set("ql_ammo", "AMMO_TEXT_COLOR", 0);
     Q.core.ConfigStore.set("ql_ammo", "ENABLE_AMMO_STATUS", false);
     hud.clock.advance(1);
     assert.equal(replacement.BHasClass("qol-ammo-visual-enabled"), false);

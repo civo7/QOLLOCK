@@ -62,6 +62,7 @@
             var _pips = [];
             var _pipMax = 0;
             var _pipCurrent = -1;
+            var _pipColor = "";
             var _clearStyle = QOL.utils.ClearStyleSafe;
             var _isAlive = QOL.utils.IsPanelValid;
             var MAX_CUSTOM_PIPS = 40;
@@ -146,6 +147,7 @@
                 _pips = [];
                 _pipMax = 0;
                 _pipCurrent = -1;
+                _pipColor = "";
             }
 
             function _readAmmoNumber(panel, className) {
@@ -167,7 +169,9 @@
                 for (var i = 0; i < maxAmmo; i++) {
                     var pip = $.CreatePanel("Panel", clipPanel, "QOLAmmoPip_" + i);
                     pip.AddClass("qol-ammo-pip");
-                    pip.style.clip = "radial( 50% 50%, " + (i * segment + gap / 2) + "deg, " + ((i + 1) * segment - gap / 2) + "deg )";
+                    // Panorama's final radial argument is the sweep size, not
+                    // an absolute end angle. Keep every pip inside the same 90° arc.
+                    pip.style.clip = "radial( 50% 50%, " + (i * segment + gap / 2) + "deg, " + (segment - gap) + "deg )";
                     _pips.push(pip);
                 }
                 if (QOL.core.panel && QOL.core.panel.setClass) {
@@ -175,7 +179,7 @@
                 }
             }
 
-            function _syncPips(ammoPanel, clipPanel, enabled) {
+            function _syncPips(ammoPanel, clipPanel, enabled, textColor) {
                 if (!enabled || !_isAlive(ammoPanel) || !_isAlive(clipPanel) || _mirroredClipSibling(clipPanel)) {
                     _removePips();
                     return;
@@ -192,12 +196,16 @@
                 if (_pipOwner !== clipPanel || _pipMax !== maxAmmo || _pips.length !== maxAmmo) {
                     _createPips(clipPanel, maxAmmo);
                 }
-                if (_pipCurrent === current) return;
+                if (_pipCurrent === current && _pipColor === textColor) return;
                 _pipCurrent = current;
+                _pipColor = textColor;
                 for (var i = 0; i < _pips.length; i++) {
                     if (!_isAlive(_pips[i])) continue;
-                    _pips[i].SetHasClass("qol-ammo-pip-live", i < current);
-                    _pips[i].SetHasClass("qol-ammo-pip-empty", i >= current);
+                    var live = i < current;
+                    _pips[i].SetHasClass("qol-ammo-pip-live", live);
+                    _pips[i].SetHasClass("qol-ammo-pip-empty", !live);
+                    if (live && textColor) _pips[i].style.borderColor = textColor;
+                    else _clearStyle(_pips[i], "border-color");
                 }
             }
 
@@ -298,8 +306,12 @@
                 var root = $.GetContextPanel();
                 var ap = root.FindChildTraverse("ammo_panel");
                 var visualEnabled = cfg.ENABLE_AMMO_STATUS === true || Number(cfg.ENABLE_AMMO_STATUS) === 1;
+                var colorIdx = Number(cfg.AMMO_TEXT_COLOR) || 0;
+                var textColor = (typeof QOL !== "undefined" && QOL.core && QOL.core.panel && QOL.core.panel.resolvePaletteColor)
+                    ? QOL.core.panel.resolvePaletteColor(colorIdx)
+                    : ((typeof QOL !== "undefined" && QOL.washColorPalette && colorIdx > 0 && colorIdx < QOL.washColorPalette.length) ? QOL.washColorPalette[colorIdx] : "");
                 _applyClipState(root, ap, _clamp(cfg.AMMO_CLIP_ANGLE, 0, 360), visualEnabled);
-                _syncPips(ap, _lastClipPanel, visualEnabled);
+                _syncPips(ap, _lastClipPanel, visualEnabled, textColor);
                 if (ap !== _lastMainPanel) {
                     _lastMainPanel = ap;
                     _lastMainSig = "";
@@ -313,11 +325,6 @@
                 var totScale = _clamp(cfg.AMMO_TOTAL_SCALE !== undefined && cfg.AMMO_TOTAL_SCALE !== null ? cfg.AMMO_TOTAL_SCALE : cfg.AMMO_PANEL_SCALE, 100, 300);
                 var ox = _clamp(cfg.AMMO_PANEL_X_OFFSET, -200, 200);
                 var oy = _clamp(cfg.AMMO_PANEL_Y_OFFSET, -200, 200);
-                var colorIdx = Number(cfg.AMMO_TEXT_COLOR) || 0;
-                var textColor = (typeof QOL !== "undefined" && QOL.core && QOL.core.panel && QOL.core.panel.resolvePaletteColor)
-                    ? QOL.core.panel.resolvePaletteColor(colorIdx)
-                    : ((typeof QOL !== "undefined" && QOL.washColorPalette && colorIdx > 0 && colorIdx < QOL.washColorPalette.length) ? QOL.washColorPalette[colorIdx] : "");
-
                 var sig = curScale + "|" + totScale + "|" + ox + "|" + oy + "|" + hideMagazine + "|" + hideAll + "|" + colorIdx;
                 var targets = _textTargets(ap);
                 if (_lastMainSig === sig && _samePanels(_lastTextTargets, targets)) {
