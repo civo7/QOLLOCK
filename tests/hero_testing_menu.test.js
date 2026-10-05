@@ -13,7 +13,7 @@ test("hero-testing menu is restored only in the UI-visible practice area", () =>
     const css = read("panorama/styles/hero_testing_menu.css");
 
     assert.match(css, /@import url\("s2r:\/\/panorama\/styles\/base\/hero_testing_menu\.vcss_c"\);/);
-    assert.match(css, /\.hud_hero_testing_root\s*\{[^}]*y:\s*90px;/s);
+    assert.match(css, /\.hud_hero_testing_root\s*\{[^}]*y:\s*75px;/s);
     assert.match(css, /\.connectedToHeroTesting\.connectedToHideout:not\(\.InHideout\) \.hud_hero_testing_root\s*\{[^}]*visibility:\s*visible;/s);
     assert.doesNotMatch(css, /\.connectedToHeroTesting\.connectedToHideout \.hud_hero_testing_root/);
     assert.doesNotMatch(css, /\.connectedToHeroTesting\.InHideout #hud_hero_testing/);
