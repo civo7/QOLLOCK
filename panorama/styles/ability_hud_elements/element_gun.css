@@ -13,6 +13,24 @@
 }
 
 /*
+ * Valve separately collapses the foreground that displays the remaining
+ * rounds unless the native clip_style_progress_bar class is present. The
+ * QOL setting owns its visibility directly so the count remains visible when
+ * that native presentation class is absent or replaced with a hero layout.
+ */
+#clip_status.qol-ammo-visual-enabled #clip_progress_bar,
+#clip_status_mirrored.qol-ammo-visual-enabled #clip_progress_bar
+{
+	visibility: visible !important;
+}
+
+.has_bonus_clip #clip_status.qol-ammo-visual-enabled #clip_bonus_progress_bar,
+.has_bonus_clip #clip_status_mirrored.qol-ammo-visual-enabled #clip_bonus_progress_bar
+{
+	visibility: visible !important;
+}
+
+/*
  * Keep the magazine ring hidden for the whole reload so it doesn't blink.
  * The base HUD only collapses #clip_status while BOTH `attack_delayed` and
  * `reloading` are set (.attack_delayed.reloading #clip_status). During a

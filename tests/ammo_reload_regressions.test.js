@@ -57,6 +57,8 @@ test("magazine rotation keeps both native half-rings together across hero layout
 test("visual ammo state follows dynamically replaced native clip panels", () => {
     const css = fs.readFileSync(path.join(__dirname, "..", "panorama/styles/ability_hud_elements/element_gun.css"), "utf8");
     assert.match(css, /#clip_status\.qol-ammo-visual-enabled[^}]*visibility:\s*visible\s*!important;/s);
+    assert.match(css, /#clip_status\.qol-ammo-visual-enabled #clip_progress_bar[^}]*visibility:\s*visible\s*!important;/s);
+    assert.match(css, /\.has_bonus_clip #clip_status\.qol-ammo-visual-enabled #clip_bonus_progress_bar[^}]*visibility:\s*visible\s*!important;/s);
     assert.match(css, /#clip_status\.qol-ammo-visual-disabled[^}]*visibility:\s*collapse;/s);
 
     const hud = createHud({ inHideout: true });
