@@ -64,14 +64,19 @@ test("visual ammo state follows dynamically replaced native clip panels", () => 
     const hud = createHud({ inHideout: true });
     hud.assertLoaded();
     const { $, QOL: Q } = hud.sandbox.global;
-    const first = addClipHalf($, hud.root, "clip_status");
+    const decoyOwner = $.CreatePanel("Panel", hud.root, "HiddenGunTemplate");
+    const decoy = addClipHalf($, decoyOwner, "clip_status");
+    const gunData = $.CreatePanel("Panel", hud.root, "gun_data");
+    const first = addClipHalf($, gunData, "clip_status");
+    $.CreatePanel("Panel", gunData, "ammo_panel");
     Q.core.ConfigStore.set("ql_ammo", "ENABLE_AMMO_STATUS", true);
     assert.equal(first.BHasClass("qol-ammo-visual-enabled"), true);
     assert.equal(first.BHasClass("qol-ammo-visual-disabled"), false);
+    assert.equal(decoy.BHasClass("qol-ammo-visual-enabled"), false, "hidden duplicate must not win clip resolution");
 
     first.DeleteAsync(0);
     hud.clock.advance(1);
-    const replacement = addClipHalf($, hud.root, "clip_status");
+    const replacement = addClipHalf($, gunData, "clip_status");
     hud.clock.advance(600);
     assert.equal(replacement.BHasClass("qol-ammo-visual-enabled"), true);
 

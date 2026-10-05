@@ -94,6 +94,19 @@
                 return parent && parent.FindChildTraverse ? parent.FindChildTraverse("clip_status_mirrored") : null;
             }
 
+            function _resolveClipPanel(root, ammoPanel) {
+                // Standard gun layouts keep clip_status beside ammo_panel under
+                // gun_data. Anchor to that working ammo panel so duplicate IDs in
+                // hidden hero/template subtrees cannot win the global traversal.
+                var owner = ammoPanel && ammoPanel.GetParent ? ammoPanel.GetParent() : null;
+                var anchored = null;
+                if (owner) {
+                    if (owner.FindChild) anchored = owner.FindChild("clip_status");
+                    if (!anchored && owner.FindChildTraverse) anchored = owner.FindChildTraverse("clip_status");
+                }
+                return anchored || (root && root.FindChildTraverse ? root.FindChildTraverse("clip_status") : null);
+            }
+
             function _releaseClipStyles(panel, rings) {
                 if (_isAlive(panel)) {
                     _clearStyle(panel, "transform");
@@ -113,8 +126,8 @@
                 QOL.core.panel.setClass(panel, "qol-ammo-visual-disabled", !enabled);
             }
 
-            function _applyClipState(root, angle, visualEnabled) {
-                var cs = root.FindChildTraverse("clip_status");
+            function _applyClipState(root, ammoPanel, angle, visualEnabled) {
+                var cs = _resolveClipPanel(root, ammoPanel);
                 var mirrored = _mirroredClipSibling(cs);
                 var rings = _clipChildren(cs);
                 var mirroredRings = _clipChildren(mirrored);
@@ -210,7 +223,7 @@
                 var root = $.GetContextPanel();
                 var ap = root.FindChildTraverse("ammo_panel");
                 var visualEnabled = cfg.ENABLE_AMMO_STATUS === true || Number(cfg.ENABLE_AMMO_STATUS) === 1;
-                _applyClipState(root, _clamp(cfg.AMMO_CLIP_ANGLE, 0, 360), visualEnabled);
+                _applyClipState(root, ap, _clamp(cfg.AMMO_CLIP_ANGLE, 0, 360), visualEnabled);
                 if (ap !== _lastMainPanel) {
                     _lastMainPanel = ap;
                     _lastMainSig = "";
@@ -271,7 +284,7 @@
                             ap.style.preTransformScale2d = "1.00, 1.00";
                             _applyChildren(ap, 100, 100, "");
                         }
-                        var cs = root.FindChildTraverse("clip_status");
+                        var cs = _resolveClipPanel(root, ap);
                         var mirrored = _mirroredClipSibling(cs);
                         _releaseClipStyles(cs, _clipChildren(cs));
                         _releaseClipStyles(mirrored, _clipChildren(mirrored));
