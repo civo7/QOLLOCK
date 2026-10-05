@@ -224,12 +224,13 @@
 
 #CitadelPartyContainer CitadelParty
 {
-    flow-children: right;
+    flow-children: left;
 }
 
 #CitadelPartyContainer .FriendsCountContainer
 {
     vertical-align: center;
+    y: 20px;
     margin: 0px 16px 0px 0px;
 }
 

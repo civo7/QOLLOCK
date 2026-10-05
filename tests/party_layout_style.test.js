@@ -9,9 +9,9 @@ function read(relativePath) {
     return fs.readFileSync(path.join(__dirname, "..", relativePath), "utf8").replace(/\r\n/g, "\n");
 }
 
-test("hideout friends-playing count sits beside the party slots", () => {
+test("hideout friends-playing count sits left of and aligned with the party slots", () => {
     const css = read("panorama/styles/qollock_global.css");
 
-    assert.match(css, /#CitadelPartyContainer CitadelParty\s*\{[^}]*flow-children:\s*right;/s);
-    assert.match(css, /#CitadelPartyContainer \.FriendsCountContainer\s*\{[^}]*vertical-align:\s*center;[^}]*margin:\s*0px 16px 0px 0px;/s);
+    assert.match(css, /#CitadelPartyContainer CitadelParty\s*\{[^}]*flow-children:\s*left;/s);
+    assert.match(css, /#CitadelPartyContainer \.FriendsCountContainer\s*\{[^}]*vertical-align:\s*center;[^}]*y:\s*20px;[^}]*margin:\s*0px 16px 0px 0px;/s);
 });
