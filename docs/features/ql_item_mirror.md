@@ -13,7 +13,9 @@ item must not inherit another item's cooldown or completion flash.
 
 The mirror prefers numeric native cooldown text, then estimates remaining
 time from radial movement. Missing text can appear later, so source replacement
-and retry paths must recover without searching every frame. Shop, hideout,
-disable and HUD replacement must clear or rebuild owned overlays and
-signatures. Verify the affected category filters and transitions in the client
-after maintainer compile/repack.
+and retry paths must recover without searching every frame. The mirror follows
+the shared combat-HUD visibility gate: the initial `InHideout` room suppresses
+it, while `connectedToHideout` alone must not suppress the playable Hero Testing
+combat room. Shop, other suppressed gameplay states, disable and HUD replacement
+must clear or rebuild owned overlays and signatures. Verify the affected
+category filters and transitions in the client after maintainer compile/repack.

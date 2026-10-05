@@ -9,19 +9,25 @@ const vm = require("node:vm");
 function fixture() {
     let manifest;
     let now = 10000;
+    let gameplayShown = true;
     const code = fs.readFileSync(path.join(__dirname, "../panorama/scripts/manifests/ql_item_mirror/manifest.js"), "utf8");
     // Expose private operations only in this VM, while executing the real manifest.
     const instrumented = code.replace("onEnable: function() {", `
         sync: _syncMirrorItemFromSourceMulti,
         reconcile: _reconcileItemMirrorSourcesMulti,
         discover: _buildItemMirrorSourcesMulti,
+        gameplayShown: _isItemMirrorGameplayShown,
         style: _getInlineStyleProperty,
         onEnable: function() {`);
     const scheduled = [];
     const sandbox = {
         Date: { now: () => now },
         QOL: {
-            core: { FeatureRegistry: { register: m => { manifest = m; } }, Logger: { logWarn: m => { throw new Error(m); } } },
+            core: {
+                FeatureRegistry: { register: m => { manifest = m; } },
+                Logger: { logWarn: m => { throw new Error(m); } },
+                hud: { isGameplayHudShown: () => gameplayShown }
+            },
             utils: { PerfNowMs: () => now, IsPanelValid: p => !!p && p.valid !== false }
         },
         QOL_UTILS: { SetPanelOpacitySafe: (p, value) => { p.style.opacity = value; } },
@@ -48,10 +54,20 @@ function fixture() {
         api, source, slot, owner, makeSlot, scheduled,
         tick: ms => { now += ms; api.sync(slot, source); },
         searches: () => searches,
+        setGameplayShown: value => { gameplayShown = value; },
         setText: value => { text = value; },
         setCooling: value => { cooling = value; }
     };
 }
+
+test("item mirror follows combat HUD visibility in the Hero Testing combat room", () => {
+    const f = fixture();
+    const connectedHeroTestingHud = { classes: ["connectedToHideout", "connectedToHeroTesting"] };
+    f.setGameplayShown(true);
+    assert.equal(f.api.gameplayShown(connectedHeroTestingHud), true, "connectedToHideout alone must not suppress combat UI");
+    f.setGameplayShown(false);
+    assert.equal(f.api.gameplayShown(connectedHeroTestingHud), false, "the initial InHideout room remains suppressed by the shared HUD gate");
+});
 
 function makeTreePanel(id, classes = [], attributes = {}) {
     const panel = {

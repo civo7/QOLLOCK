@@ -285,6 +285,10 @@
             var ITEM_MIRROR_FLASH_DEBUG = false, ITEM_MIRROR_COOLDOWN_DEBUG = false;
             var ITEM_MIRROR_EXPRESS_DEBUG = false, ITEM_MIRROR_EXCEPTION_DEBUG = false;
             var ITEM_MIRROR_COOLDOWN_DEBUG_THROTTLE_MS = 350;
+            function _isItemMirrorGameplayShown(root) {
+                    return !!(QOL.core && QOL.core.hud && QOL.core.hud.isGameplayHudShown && QOL.core.hud.isGameplayHudShown(root));
+                }
+
             function _findItemOwnerFromContainer(iconContainer) {
                     var current = iconContainer;
                     while (current) {
@@ -1959,8 +1963,7 @@
                     if (_loop) _loop.reschedule(ITEM_MIRROR_RENDER_INTERVAL_MS_IDLE / 1000);
                     return;
                 }
-                var inHideout = QOL.core.hud.isInHideout(hud);
-                if (inHideout) {
+                if (!_isItemMirrorGameplayShown(hud)) {
                     if (_overlay) _hideOverlay();
                     if (_loop) _loop.reschedule(ITEM_MIRROR_RENDER_INTERVAL_MS_IDLE / 1000);
                     return;
