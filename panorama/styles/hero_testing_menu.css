@@ -2,6 +2,11 @@
 
 @import url("s2r://panorama/styles/base/hero_testing_menu.vcss_c");
 
+.hud_hero_testing_root
+{
+    y: 60px;
+}
+
 /* The native menu deliberately collapses in the hideout even when the engine's
    hero-testing class is active. QOLLOCK exposes the testing controls there when
    the user enables the corresponding convar. */
