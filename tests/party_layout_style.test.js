@@ -13,5 +13,5 @@ test("hideout friends-playing count sits left of and aligned with the party slot
     const css = read("panorama/styles/qollock_global.css");
 
     assert.match(css, /#CitadelPartyContainer CitadelParty\s*\{[^}]*flow-children:\s*left;/s);
-    assert.match(css, /#CitadelPartyContainer \.FriendsCountContainer\s*\{[^}]*vertical-align:\s*center;[^}]*y:\s*20px;[^}]*margin:\s*0px 16px 0px 0px;/s);
+    assert.match(css, /#CitadelPartyContainer \.FriendsCountContainer\s*\{[^}]*vertical-align:\s*center;[^}]*x:\s*90px;[^}]*y:\s*35px;[^}]*margin:\s*0px 16px 0px 0px;/s);
 });

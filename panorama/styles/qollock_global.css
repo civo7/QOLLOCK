@@ -230,7 +230,8 @@
 #CitadelPartyContainer .FriendsCountContainer
 {
     vertical-align: center;
-    y: 20px;
+    x: 90px;
+    y: 35px;
     margin: 0px 16px 0px 0px;
 }
 
