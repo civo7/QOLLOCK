@@ -10398,7 +10398,7 @@ CitadelHudEscapeMenu.QOLVisualCheckActive
 
 #SettingsTabBar
 {
-	width: 138px;
+	width: 150px;
 	background-color: gradient( linear, 0% 0%, 0% 100%, from( rgba(16, 21, 26, 0.90) ), to( rgba(9, 12, 15, 0.82) ) );
 	border-right: 1px solid rgba(255, 252, 244, 0.04);
 	padding: 10px 8px;
