@@ -1,0 +1,14 @@
+/* QOLLOCK party-layout overrides. */
+
+/* The friends count and party-settings button are mutually exclusive. Overlay
+   the count in the button's native slot instead of leaving it below the row. */
+.FriendsCountContainer
+{
+    ignore-parent-flow: true;
+    width: 36px;
+    height: 36px;
+    margin-top: 30px;
+    margin-right: 2px;
+    horizontal-align: left;
+    vertical-align: top;
+}

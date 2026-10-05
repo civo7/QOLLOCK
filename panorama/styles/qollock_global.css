@@ -220,24 +220,6 @@
     opacity: 1;
 }
 
-/* ── Hideout party strip ── */
-
-#CitadelPartyContainer CitadelParty
-{
-    flow-children: down;
-}
-
-#CitadelPartyContainer .FriendsCountContainer
-{
-    ignore-parent-flow: true;
-    width: 44px;
-    height: 44px;
-    margin-top: 26px;
-    margin-right: 2px;
-    horizontal-align: left;
-    vertical-align: top;
-}
-
 /* ── HudTakeover ── */
 
 .HudTakeoverEnabled .HudCore

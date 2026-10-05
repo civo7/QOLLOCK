@@ -9,9 +9,13 @@ function read(relativePath) {
     return fs.readFileSync(path.join(__dirname, "..", relativePath), "utf8").replace(/\r\n/g, "\n");
 }
 
-test("hideout friends-playing count occupies the party-settings button slot", () => {
-    const css = read("panorama/styles/qollock_global.css");
+test("hideout friends-playing count occupies the current party-settings button slot", () => {
+    const layout = read("panorama/layout/citadel_party.xml");
+    const css = read("panorama/styles/qollock_party.css");
+    const globalCss = read("panorama/styles/qollock_global.css");
 
-    assert.match(css, /#CitadelPartyContainer CitadelParty\s*\{[^}]*flow-children:\s*down;/s);
-    assert.match(css, /#CitadelPartyContainer \.FriendsCountContainer\s*\{[^}]*ignore-parent-flow:\s*true;[^}]*width:\s*44px;[^}]*height:\s*44px;[^}]*margin-top:\s*26px;[^}]*margin-right:\s*2px;[^}]*horizontal-align:\s*left;[^}]*vertical-align:\s*top;/s);
+    assert.match(layout, /<include src="s2r:\/\/panorama\/styles\/citadel_party\.vcss_c" \/>[\s\S]*<include src="s2r:\/\/panorama\/styles\/qollock_party\.vcss_c" \/>/);
+    assert.match(layout, /<Button id="JoinCreateParty"[^>]*oncontextmenu="CitadelCopyPartyCode\(\)" \/>/);
+    assert.match(css, /\.FriendsCountContainer\s*\{[^}]*ignore-parent-flow:\s*true;[^}]*width:\s*36px;[^}]*height:\s*36px;[^}]*margin-top:\s*30px;[^}]*margin-right:\s*2px;[^}]*horizontal-align:\s*left;[^}]*vertical-align:\s*top;/s);
+    assert.doesNotMatch(globalCss, /#CitadelPartyContainer \.FriendsCountContainer/);
 });
