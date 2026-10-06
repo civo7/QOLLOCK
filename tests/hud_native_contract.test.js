@@ -17,8 +17,9 @@ test("HUD override is the current native layout plus QOLLOCK includes", () => {
 
     assert.doesNotMatch(layout, /<CitadelChatWheel\b/);
     assert.equal((layout.match(/<CitadelHudMovementSpeed\b/g) || []).length, 1);
-    assert.match(layout, /styles\/ability_property_icons\.vcss/);
-    assert.doesNotMatch(layout, /styles\/hud_timer\.vcss/);
+    assert.match(layout, /styles\/ability_property_icons\.vcss_c/);
+    assert.doesNotMatch(layout, /styles\/hud_timer\.vcss_c/);
+    assert.doesNotMatch(layout, /styles\/[^"\s]+\.vcss"/);
 
     assert.match(layout, /scripts\/core\/ql_app\.vjs_c/);
     assert.doesNotMatch(layout, /id="minimap_overlay_root"/);
