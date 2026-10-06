@@ -38,9 +38,23 @@
         if (current !== owner) return;
         owner.feedback = null;
         owner.inspector?.sync();
-        owner.undo.enabled = owner.transaction.canUndo();
-        owner.redo.enabled = owner.transaction.canRedo();
+        refreshHistory(owner);
         refreshFrames(owner);
+    }
+    function refreshHistory(owner) {
+        const pending = owner.inspector?.hasPending();
+        owner.undo.enabled = !owner.applied && !owner.drag && (owner.transaction.canUndo() || pending);
+        owner.redo.enabled = !owner.applied && !owner.drag && !pending && owner.transaction.canRedo();
+        owner.reset.enabled = !owner.applied && !owner.drag && !!owner.selected;
+    }
+    function historyAction(owner, redo) {
+        if (current !== owner || owner.applied || owner.drag) return;
+        if (!owner.inspector.commit()) {
+            owner.feedback = "Enter a valid number or #RRGGBB color.";
+            return;
+        }
+        if (redo) owner.transaction.redo(); else owner.transaction.undo();
+        refreshFields(owner);
     }
     function select(owner, element) {
         if (current !== owner || owner.drag || owner.applied || !owner.transaction.canEditElement(element.id)) return false;
@@ -80,6 +94,7 @@
         // cursor. Establish its origin after that first layout, never from the
         // source frame's old parent coordinates.
         const point = drag.endPoint || G.absolute(drag.proxy);
+        drag.lastPoint = point;
         if (!drag.origin) drag.origin = point;
         const delta = { x: point.x - drag.origin.x, y: point.y - drag.origin.y };
         const values = drag.resize ? G.resizeValues(drag.element, drag.startValues, drag.startBox, delta, owner.overlay, drag.resize)
@@ -127,11 +142,15 @@
             $.DispatchEvent("UIHideTextTooltip", frame);
             owner.dragTimer = $.Schedule(0, () => updateDrag(owner));
         });
-        $.RegisterEventHandler("DragEnd", frame, () => {
+        $.RegisterEventHandler("DragEnd", frame, (_panel, droppedPanel) => {
             if (current !== owner || owner.drag?.frame !== frame) return;
+            const drag = owner.drag;
+            // The compositor owns the displayPanel's lifetime. Its last sampled
+            // position survives a drop that releases the visual before delivery.
+            const visual = droppedPanel === drag.proxy && P.isAlive(droppedPanel) ? droppedPanel : drag.proxy;
+            drag.endPoint = P.isAlive(visual) ? G.absolute(visual) : drag.lastPoint || drag.origin;
+            drag.ending = true;
             if (owner.drag.resize) {
-                owner.drag.endPoint = G.absolute(owner.drag.proxy);
-                owner.drag.ending = true;
                 owner.drag.endDeadline = Date.now() + 2500;
                 return;
             }
@@ -187,6 +206,7 @@
             (!owner.applied && !owner.transaction.valid())) { stop(); return; }
         try {
             if (!owner.applied && !owner.transaction.publish()) { stop(); return; }
+            refreshHistory(owner);
             refreshFrames(owner);
             owner.status.text = localize(owner.feedback || (!owner.hud ? "Edit settings here; live HUD frames appear in a match or sandbox." :
                 owner.transaction.acknowledged() ? "Preview active" : "Waiting for HUD preview"));
@@ -330,8 +350,17 @@
             owner.fields = P.create("Panel", tools, "QOLCustomizeFields");
             const history = P.create("Panel", tools, "");
             history.AddClass("QOLCustomizeActions");
-            owner.undo = I.button(history, "QOLCustomizeUndo", "Undo", () => { if (current === owner) { owner.transaction.undo(); refreshFields(owner); } });
-            owner.redo = I.button(history, "QOLCustomizeRedo", "Redo", () => { if (current === owner) { owner.transaction.redo(); refreshFields(owner); } });
+            owner.undo = I.button(history, "QOLCustomizeUndo", "Undo", () => historyAction(owner, false));
+            owner.redo = I.button(history, "QOLCustomizeRedo", "Redo", () => historyAction(owner, true));
+            owner.reset = I.button(history, "QOLCustomizeReset", "Reset", () => {
+                if (current !== owner || owner.applied || owner.drag || !owner.selected) return;
+                if (owner.transaction.reset(owner.selected)) refreshFields(owner);
+            });
+            for (const [button, text] of [[owner.undo, "Undo the last change."], [owner.redo, "Restore the change canceled by Undo."],
+                [owner.reset, "Reset the selected element to defaults."]]) {
+                button.SetPanelEvent("onmouseover", () => $.DispatchEvent("UIShowTextTooltip", button, localize(text)));
+                button.SetPanelEvent("onmouseout", () => $.DispatchEvent("UIHideTextTooltip", button));
+            }
             const actions = P.create("Panel", tools, "");
             actions.AddClass("QOLCustomizeActions");
             owner.apply = I.button(actions, "QOLCustomizeApply", "Apply", () => {
@@ -349,6 +378,7 @@
                     owner.cancel.GetChild(0).text = localize("Close");
                     owner.undo.enabled = false;
                     owner.redo.enabled = false;
+                    owner.reset.enabled = false;
                     saveApplied(owner);
                 }
             }, true);

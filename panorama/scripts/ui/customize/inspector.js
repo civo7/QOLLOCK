@@ -7,12 +7,15 @@
     const localize = text => Q.ui.theme.LocalizeSettingsText(text, true);
     const label = (parent, text, role = "ModalInstructions") => {
         const panel = P.create("Label", parent, "");
+        panel.hittest = false;
         panel.AddClass(role);
         panel.text = localize(text);
         return panel;
     };
     function button(parent, id, text, action, primary = false) {
         const panel = P.create("Button", parent, id);
+        panel.hittest = true;
+        panel.hittestchildren = false;
         panel.AddClass("QOLCustomizeButton");
         panel.AddClass(primary ? "QOLUnifiedModalPrimary" : "QOLUnifiedModalSecondary");
         label(panel, text, "QOLCustomizeButtonLabel");
@@ -42,7 +45,7 @@
             : resizable ? "Pull the any corner to resize." : "This element is edited with the controls below.");
         if (element.note) label(parent, element.note);
         const lock = button(parent, "QOLCustomizeLock", "Lock dragging", () => {
-            if (!valid()) return;
+            if (!valid() || !commit()) return;
             session.setLocked(element.id, !session.isLocked(element.id));
             setActive(lock, session.isLocked(element.id));
             changed();
@@ -65,7 +68,7 @@
                 for (const [value, text] of field.options) {
                     const choice = button(options, "QOLCustomize_" + field.key + "_" + value, text, () => {
                         if (!valid()) return;
-                        session.edit({ [field.key]: value }); changed();
+                        if (commit({ [field.key]: value })) changed();
                     });
                     syncs.push(() => setActive(choice, Number(session.value(field.key)) === value));
                 }
@@ -74,8 +77,7 @@
             if (field.type === "toggle" || field.type === "side") {
                 const control = button(row, "QOLCustomize_" + field.key, field.type === "side" ? "Left" : "Enable", () => {
                     if (!valid()) return;
-                    session.edit({ [field.key]: Number(session.value(field.key)) === 1 ? 0 : 1 });
-                    changed();
+                    if (commit({ [field.key]: Number(session.value(field.key)) === 1 ? 0 : 1 })) changed();
                 });
                 syncs.push(() => {
                     const on = Number(session.value(field.key)) === 1;
@@ -97,7 +99,7 @@
                     choice.style.backgroundColor = hex;
                     choice.SetPanelEvent("onactivate", () => {
                         if (!valid()) return;
-                        session.edit({ [field.key]: value }); changed();
+                        if (commit({ [field.key]: value })) changed();
                     });
                     choice.SetPanelEvent("onmouseover", () => $.DispatchEvent("UIShowTextTooltip", choice, hex));
                     choice.SetPanelEvent("onmouseout", () => $.DispatchEvent("UIHideTextTooltip", choice));
@@ -120,8 +122,7 @@
                 button(controlHost, "QOLCustomizeDefault_" + field.key, "Default", () => {
                     if (!valid()) return;
                     input.RemoveClass("Invalid");
-                    session.edit({ [field.key]: 0 });
-                    changed();
+                    if (commit({ [field.key]: 0 })) changed();
                 });
             }
             const submit = () => {
@@ -145,14 +146,13 @@
                 if (swatch) swatch.style.backgroundColor = text || "transparent";
             });
         }
-        button(parent, "QOLCustomizeReset", "Reset", () => { if (valid()) { session.reset(element); changed(); } });
         const sync = () => { if (valid()) syncs.forEach(update => update()); };
-        function commit() {
+        function commit(patch = {}) {
             if (!valid()) return false;
-            const values = {};
+            const values = Object.assign({}, patch);
             let accepted = true;
             for (const { field, input, lastText } of entries) {
-                if (input.text === lastText) continue;
+                if (input.text === lastText || Object.prototype.hasOwnProperty.call(patch, field.key)) continue;
                 const value = read(field, input);
                 const invalid = value === null || Q.presentation.normalize(field.key, value) === null;
                 input.SetHasClass("Invalid", invalid);
@@ -162,7 +162,7 @@
             return accepted && (!Object.keys(values).length || session.edit(values));
         }
         sync();
-        return { sync, commit, availability };
+        return { sync, commit, availability, hasPending: () => entries.some(entry => entry.input.text !== entry.lastText) };
     }
     Q.ui.customizeInspector = { build, button, label, setActive };
 })();

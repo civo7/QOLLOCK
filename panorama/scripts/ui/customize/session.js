@@ -118,7 +118,7 @@
                 if (allowedElements.has(id)) { if (locked) locks.add(id); else locks.delete(id); }
             },
             isLocked: id => !allowedElements.has(id) || locks.has(id),
-            acknowledged: () => Q.presentation.preview.ack(hud) === token
+            acknowledged: () => Q.presentation.preview.ack(hud) === token && Q.presentation.preview.settled(hud)
         };
     }
     Q.ui.customizeSession = { create, resolveHud };

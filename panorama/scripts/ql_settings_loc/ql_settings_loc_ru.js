@@ -1037,5 +1037,8 @@
     "Unknown HUD element.": "Неизвестный элемент HUD.",
     "HEX (#RRGGBB)": "HEX (#RRGGBB)",
     "Drag an element to move it. Drag its corner to resize.": "Перетащи элемент для перемещения, уголок — для изменения масштаба.",
+    "Undo the last change.": "Отменить последнее изменение.",
+    "Restore the change canceled by Undo.": "Повторить изменение, отменённое кнопкой Undo.",
+    "Reset the selected element to defaults.": "Сбросить выбранный элемент к значениям по умолчанию.",
 };
 })();

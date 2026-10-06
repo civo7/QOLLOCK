@@ -34,6 +34,7 @@
         create: function(ctx) {
             var _lastSig = "";
             var _lastPanel = null;
+            var _visibilityOverride = false;
             var _lastParent = null;
             var _lastRoot = null;
             var _nextFullSearchMs = 0;
@@ -185,6 +186,8 @@
 
                 var bp = _findBar(root);
                 if (bp !== _lastPanel) {
+                    if (_visibilityOverride && QOL.utils.IsPanelValid(_lastPanel)) _clearStyle(_lastPanel, "visibility");
+                    _visibilityOverride = false;
                     _lastPanel = bp;
                     _lastRoot = root;
                     try { _lastParent = bp && bp.GetParent ? bp.GetParent() : null; }
@@ -208,6 +211,8 @@
                 var sig = ox + "|" + oy + "|" + op + "|" + scText + "|" + wcIdx + "|" + (enabled ? "1" : "0");
                 if (_lastSig === sig) return;
                 _lastSig = sig;
+                if (!enabled) { if (bp.style.visibility !== "collapse") bp.style.visibility = "collapse"; _visibilityOverride = true; }
+                else if (_visibilityOverride) { _clearStyle(bp, "visibility"); _visibilityOverride = false; }
 
                 if (!enabled) {
                     _releaseOffset(bp, "x", _offsetXApplied);
@@ -262,6 +267,8 @@
                     }, 0.5, ctx.id) : null;
                 },
                 onDisable: function() {
+                    if (_visibilityOverride && QOL.utils.IsPanelValid(_lastPanel)) _clearStyle(_lastPanel, "visibility");
+                    _visibilityOverride = false;
                     if (_loop) { _loop.stop(); _loop = null; }
                     var S = QOL.core.Scheduler;
                     if (S) S.cancelAllForFeature(ctx.id);
@@ -276,6 +283,7 @@
                             _clearStyle(bp, "preTransformScale2d");
                             _clearStyle(bp, "uiScale");
                             _clearStyle(bp, "opacity");
+                            if (_visibilityOverride) _clearStyle(bp, "visibility");
                             _clearStyle(bp, "washColor");
                             var isSupposed = FR && FR.isFeatureSupposedToBeEnabled ? FR.isFeatureSupposedToBeEnabled("ql_bottom_bar") : false;
                             if (bp.SetHasClass) bp.SetHasClass("qol-hidden", !isSupposed);

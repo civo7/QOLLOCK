@@ -57,6 +57,7 @@
         create: function(ctx) {
             var _lastSig = "";
             var _lastPanel = null;
+            var _visibilityOverride = false;
             var _loop = null;
             var _offsetXApplied = false;
             var _offsetYApplied = false;
@@ -91,6 +92,8 @@
                 var topBar = root.FindChildTraverse("TopBar");
                 if (!topBar) return;
                 if (topBar !== _lastPanel) {
+                    if (_visibilityOverride && QOL.utils.IsPanelValid(_lastPanel)) _clearStyle(_lastPanel, "visibility");
+                    _visibilityOverride = false;
                     _lastPanel = topBar;
                     _lastSig = "";
                     _offsetXApplied = false;
@@ -122,6 +125,8 @@
                 var sig = ox + "|" + oy + "|" + op + "|" + sc + "|" + (enabled ? "1" : "0") + "|" + (hudVisible ? "1" : "0") + "|" + (active ? "1" : "0");
                 if (_lastSig === sig) return;
                 _lastSig = sig;
+                if (!enabled) { if (topBar.style.visibility !== "collapse") topBar.style.visibility = "collapse"; _visibilityOverride = true; }
+                else if (_visibilityOverride) { _clearStyle(topBar, "visibility"); _visibilityOverride = false; }
 
                 if (enabled && active && hudVisible) {
                     if (ox !== 0) topBar.style.x = ox + "px";
@@ -167,6 +172,8 @@
                     _loop = S && S.createPollLoop ? S.createPollLoop(_tick, 0.5, "ql_topbar") : null;
                 },
                 onDisable: function() {
+                    if (_visibilityOverride && QOL.utils.IsPanelValid(_lastPanel)) _clearStyle(_lastPanel, "visibility");
+                    _visibilityOverride = false;
                     if (_loop) { _loop.stop(); _loop = null; }
                     var S = QOL.core.Scheduler;
                     if (S) S.cancelAllForFeature("ql_topbar");

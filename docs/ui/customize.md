@@ -46,6 +46,9 @@ HUD offset. Proxy movement updates only the draft; the gameplay manifest owns
 the resulting HUD layout. Proxies are deleted after move drops or resize
 settling, on canceled gestures and on exit, including after reparenting outside
 the editor subtree.
+Drop handling retains the last sampled compositor position if the temporary
+visual has already been released before DragEnd delivery. Removing that visual
+must not turn the final position into the origin or erase the gesture's history.
 Movable frames receive the verified native XML `draggable` attribute at creation;
 `SetDraggable` remains optional, as in the existing settings-header dragger.
 The earlier unconditional call could abort startup on a native API without that
@@ -98,7 +101,13 @@ Startup/update exceptions are logged and shown as diagnostic text rather than
 being described as a requirement to enter a match.
 
 The session holds a draft, selection locks and bounded undo/redo history. Reset
-reads current defaults from source. Numeric entries use the wire grid; supported
+stays beside Undo/Redo outside the scrolling inspector and reads current defaults
+for the selected element from source. Undo reverses one accepted edit or gesture;
+Redo restores the edit reversed by Undo until a new edit replaces that branch.
+History actions accept valid pending entries first. Toggle, enum and palette
+actions accept pending entries in other fields together with their own change.
+Button captions do not intercept input intended for their button.
+Numeric entries use the wire grid; supported
 color entries use [tagged RGB](../core/custom_colors.md). Missing conditional
 panels keep their controls available and remain searchable by localized element
 and field names. Fixed assets and separate-context additions without existing
@@ -153,7 +162,16 @@ and legacy ammo-scale aliases therefore follow the normal save semantics.
 Canonical `State.lastConfig`,
 storage attributes and exports remain unchanged during preview. Cancel, menu
 exit, expired leases and conflicting canonical edits restore canonical settings.
+Withdrawal expands a sparse canonical snapshot with current defaults before
+loading merging feature buckets; missing keys must not retain preview values.
+The preview indicator requires acknowledgment of the current payload, not just
+an earlier payload from the same session.
 Benchmark stress configuration blocks the preview layer.
+
+The native souls, inventory, top bar and signature owners use an owned collapse
+style while their visibility setting is off. This cannot be outbid by native
+ID/state CSS rules as the generic `qol-hidden` class could. Enabling, replacement
+and teardown release that override so native conditional visibility applies.
 
 Apply commits pending valid input through MarkConfigDirty/FlushPendingSave, then
 uses storageBridge.saveSettings. The editor reports success only after the CEF

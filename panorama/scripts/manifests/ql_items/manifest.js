@@ -30,6 +30,7 @@
             var _lastSig = "";
             var _lastWashColor = "";
             var _lastPanels = [];
+            var _visibilityOverride = false;
             var _loop = null;
 
             function _hasNonDefault(cfg) {
@@ -110,10 +111,16 @@
                 });
                 if (_lastSig === sig && samePanels) return;
                 var containerChanged = mc !== _lastPanels[0];
+                if (containerChanged) {
+                    if (_visibilityOverride && QOL.utils.IsPanelValid(_lastPanels[0])) QOL.utils.ClearStyleSafe(_lastPanels[0], "visibility");
+                    _visibilityOverride = false;
+                }
                 _lastPanels = panels;
                 _lastSig = sig;
 
                 if (!enabled) {
+                    if (mc.style.visibility !== "collapse") mc.style.visibility = "collapse";
+                    _visibilityOverride = true;
                     mc.style.x = "0px";
                     mc.style.y = "0px";
                     mc.style.washColor = "";
@@ -124,6 +131,7 @@
                     return;
                 }
 
+                if (_visibilityOverride) { QOL.utils.ClearStyleSafe(mc, "visibility"); _visibilityOverride = false; }
                 mc.style.x = ox + "px";
                 mc.style.y = (-oy) + "px";
                 if (mc.SetHasClass) mc.SetHasClass("qol-hidden", !enabled);
@@ -166,23 +174,27 @@
                     _loop = S && S.createPollLoop ? S.createPollLoop(_tick, 1.0, "ql_items") : null;
                 },
                 onDisable: function() {
+                    if (_visibilityOverride && QOL.utils.IsPanelValid(_lastPanels[0])) QOL.utils.ClearStyleSafe(_lastPanels[0], "visibility");
+                    _visibilityOverride = false;
                     if (_loop) { _loop.stop(); _loop = null; }
                     var S = QOL.core.Scheduler;
                     if (S) S.cancelAllForFeature("ql_items");
                     _lastSig = ""; _lastWashColor = "";
-                    _lastPanels = [];
                     try {
                         var root = $.GetContextPanel();
                         var mc = _resolveModsContainer(root);
                         if (mc && mc.style) {
                             mc.style.x = "0px"; mc.style.y = "0px"; mc.style.washColor = "";
                             _clearOpacity(mc);
+                            if (_visibilityOverride) QOL.utils.ClearStyleSafe(mc, "visibility");
                             var isSupposed = FR && FR.isFeatureSupposedToBeEnabled ? FR.isFeatureSupposedToBeEnabled("ql_items") : false;
                             if (mc.SetHasClass) mc.SetHasClass("qol-hidden", !isSupposed);
                             // Also reset all child panels that _apply touches.
                             _resetAllChildren(mc);
                         }
                     } catch(e) {}
+                    _visibilityOverride = false;
+                    _lastPanels = [];
                 },
                 onSettingsChanged: function() { _apply(ctx.config.all()); }
             };

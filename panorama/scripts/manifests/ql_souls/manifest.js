@@ -28,6 +28,7 @@
             var _lastSig = "";
             var _loop = null;
             var _cachedPanel = null;
+            var _visibilityOverride = false;
             var PANEL_ID = "gold_and_ap_container";
 
             var _clearStyle = QOL.utils.ClearStyleSafe;
@@ -41,9 +42,11 @@
                         _clearStyle(_cachedPanel, "x");
                         _clearStyle(_cachedPanel, "y");
                         _clearStyle(_cachedPanel, "opacity");
+                        if (_visibilityOverride) _clearStyle(_cachedPanel, "visibility");
                         if (_cachedPanel.SetHasClass) _cachedPanel.SetHasClass("qol-hidden", false);
                     }
                     _cachedPanel = current;
+                    _visibilityOverride = false;
                     _lastSig = "";
                 }
                 return _cachedPanel;
@@ -74,6 +77,8 @@
                 _lastSig = sig;
 
                 if (panel.SetHasClass) panel.SetHasClass("qol-hidden", !enabled);
+                if (!enabled) { if (panel.style.visibility !== "collapse") panel.style.visibility = "collapse"; _visibilityOverride = true; }
+                else if (_visibilityOverride) { _clearStyle(panel, "visibility"); _visibilityOverride = false; }
 
                 if (active && enabled) {
                     if (offsetX !== 0) panel.style.x = offsetX + "px"; else _clearStyle(panel, "x");
@@ -105,6 +110,8 @@
                     _loop = S && S.createPollLoop ? S.createPollLoop(_tick, 1.0, ctx.id) : null;
                 },
                 onDisable: function() {
+                    if (_visibilityOverride && QOL.utils.IsPanelValid(_cachedPanel)) _clearStyle(_cachedPanel, "visibility");
+                    _visibilityOverride = false;
                     if (_loop) { _loop.stop(); _loop = null; }
                     var S = QOL.core.Scheduler;
                     if (S) S.cancelAllForFeature("ql_souls");
@@ -117,9 +124,11 @@
                             _clearStyle(p, "x");
                             _clearStyle(p, "y");
                             _clearStyle(p, "opacity");
+                            if (_visibilityOverride) _clearStyle(p, "visibility");
                         }
                     } catch(e) {}
                     _cachedPanel = null;
+                    _visibilityOverride = false;
                 },
                 onSettingsChanged: function() {
                     _apply(ctx.config.all());

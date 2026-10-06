@@ -48,7 +48,9 @@
             QOL_UTILS.SafeSetAttribute(hud, ackAttr, raw ? payload.token : "");
             QOL_UTILS.SafeSetAttribute(hud, ackPayloadAttr, raw);
         }
-        return { changed, config: activeConfig || canonical };
+        // ConfigAdapter merges buckets. Passing a sparse canonical snapshot on
+        // withdrawal would retain missing draft keys rather than restore them.
+        return { changed, config: activeConfig || (changed ? Q.mergeConfig(canonical) : canonical) };
     }
     function reset(hud) {
         appliedPayload = "";
