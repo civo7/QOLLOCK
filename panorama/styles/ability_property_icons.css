@@ -1,0 +1,3 @@
+/* Native stylesheet retained under base/ so the HUD override is self-contained. */
+
+@import url("s2r://panorama/styles/base/ability_property_icons.vcss_c");
