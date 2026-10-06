@@ -397,8 +397,9 @@
     function collectResetKeysFromPanel(panel, outKeys, seen) {
         if (!panel || !outKeys || !seen) return;
         try {
-            if (panel.BHasClass && panel.BHasClass("SettingRow")) {
-                const rowKeys = getRowResetKeys(panel);
+            if (panel.BHasClass && (panel.BHasClass("SettingRow") || panel.BHasClass("QOLCustomizeEntry"))) {
+                const rowKeys = panel.BHasClass("QOLCustomizeEntry")
+                    ? Q.ui.customize.entryKeys(panel.GetAttributeString("QOL_CUSTOMIZE_ELEMENT", "")) : getRowResetKeys(panel);
                 for (let i = 0; i < rowKeys.length; i++) {
                     const key = rowKeys[i];
                     if (!key || seen[key]) continue;
@@ -434,6 +435,7 @@
             }
         }
         if (startIndex < 0) return keys;
+        collectResetKeysFromPanel(titleRow, keys, seen);
 
         for (let s = startIndex + 1; s < siblings.length; s++) {
             const sibling = siblings[s];
@@ -1030,6 +1032,7 @@
             };
             getSearchCollectState().sections.push(section);
             getSearchCollectState().currentSection = section;
+            if (customizeElement) Q.ui.customize?.collectEntry(customizeElement);
             return null;
         }
         const titleRow = $.CreatePanel("Panel", parent, "");
@@ -1147,7 +1150,7 @@
         const getSectionEnabled = () => (invertEnableToggle ? (getConfig()[enableConfigId] !== 1) : (getConfig()[enableConfigId] === 1));
 
         if (getSearchCollectMode() && getSearchCollectState()) {
-            createSectionTitle(parent, title);
+            createSectionTitle(parent, title, null, sectionOptions?.customizeElement);
             const searchToggleOptions = invertEnableToggle ? [{ invert: true }] : null;
             createRow(parent, "Enable", enableConfigId, "toggle", null, null, null, searchToggleOptions, enableDescription || "");
             if (buildRowsFn) {
@@ -1176,6 +1179,7 @@
             const keys = [];
             const seen = {};
             collectResetKeysFromPanel(body, keys, seen);
+            collectResetKeysFromPanel(titleRow, keys, seen);
             if (sectionOptions && sectionOptions.titleCheckbox && sectionOptions.titleCheckbox.configId && !seen[sectionOptions.titleCheckbox.configId]) {
                 keys.push(sectionOptions.titleCheckbox.configId);
                 seen[sectionOptions.titleCheckbox.configId] = true;

@@ -13,8 +13,10 @@ session-only and add no persistent settings or defaults.
 
 Section entry bindings live in `ui/gameplay_tabs.js`; `ui/controls.js` only hosts
 the optional action, and `ui/customize/tab.js` owns its launch behavior. The
-existing visual rows remain available during native acceptance, using the same
-stored keys and wire precision as the editor. Native children follow their
+ordinary gameplay tabs use these actions in place of position, scale, size and
+opacity sliders. Exact values remain in the inspector, using the same stored
+keys and wire precision. Search indexes the moved field names and keys and
+returns the scoped action; section reset includes the action's settings. Native children follow their
 parent's movement and existing shared colors retain their established ownership.
 
 Whole-HUD root classes remain owned by the app's complete configuration sync.

@@ -572,7 +572,9 @@
                     if (typeof gSearchResultRenderMode !== "undefined") gSearchResultRenderMode = true;
                     globalThis.gSearchResultRenderMode = true;
                     try {
-                        if (inlineSecondaryOption && createSecondaryToggle) {
+                        if (row.type === "customize") {
+                            rowPanel = Q.ui.customize?.createEntryAction(list, row.options?.[0]?.elementId);
+                        } else if (inlineSecondaryOption && createSecondaryToggle) {
                             rowPanel = createSecondaryToggle(
                                 list,
                                 row.label,

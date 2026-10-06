@@ -79,12 +79,11 @@ test("fixed icon size changes Base/Alt/Tab geometry and survives export/import",
         list.RemoveAndDeleteChildren();
         g.MOD_CONFIG.LANGUAGE = language;
         g.QOL.ui.gameplayTabs.renderMinimapTab(list);
-        const row = list.Children().find(p => p.GetAttributeString("QOL_ROW_RESET_KEYS", "") === "MINIMAP_SMALL_SIZE,MINIMAP_FIXED_ICON_SIZE");
+        const row = list.FindChildrenWithClassTraverse("SettingRow_MINIMAP_FIXED_ICON_SIZE")[0];
         assert.ok(row);
-        const checkbox = row.FindChildrenWithClassTraverse("SectionTitleCheckboxToggle")[0];
-        assert.ok(checkbox.GetParent().BHasClass("SliderValueGroup"));
-        assert.equal(checkbox.GetParent().Children().at(-1), checkbox, "checkbox sits after the size input");
-        assert.equal(checkbox.FindChildrenWithClassTraverse("SectionTitleCheckboxLabel")[0].text, caption);
+        const checkbox = row.FindChildrenWithClassTraverse("SwitchButton")[0];
+        assert.ok(checkbox);
+        assert.equal(row.FindChildrenWithClassTraverse("SettingLabel")[0].text, caption);
         checkbox._fire("onactivate");
         clock.advance(1200);
         assert.equal(g.MOD_CONFIG.MINIMAP_FIXED_ICON_SIZE, 1);
@@ -92,8 +91,7 @@ test("fixed icon size changes Base/Alt/Tab geometry and survives export/import",
         row.FindChildrenWithClassTraverse("SettingRowResetBtn")[0]._fire("onactivate");
         clock.advance(1200);
         assert.equal(g.MOD_CONFIG.MINIMAP_FIXED_ICON_SIZE, 0);
-        assert.equal(g.MOD_CONFIG.MINIMAP_SMALL_SIZE, 400);
-        assert.equal(checkbox.BHasClass("selected"), false);
+        assert.equal(g.MOD_CONFIG.MINIMAP_SMALL_SIZE, 650, "the separate toggle reset preserves customized size");
         update({ MINIMAP_SMALL_SIZE: 650 });
     }
     assert.deepEqual(clock.errors, []);

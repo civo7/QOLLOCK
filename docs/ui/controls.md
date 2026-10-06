@@ -17,13 +17,16 @@ debounced save and preview flow remains in use.
 `key`, `label` and `description`. It reuses the title-checkbox control after the
 slider value input. Both keys participate in row reset/changed-state tracking;
 checkbox visuals resync on reset and external config updates. Search collection
-also registers the checkbox setting. Minimap Size uses this for Fixed Icon Size.
+also registers the checkbox setting. Fixed Icon Size is now a regular minimap
+toggle, alongside the scoped Customize action.
 
 `createSectionTitle` accepts an optional fourth argument, a Customize element ID.
 Animated toggle sections accept `sectionOptions.customizeElement` alongside their
 existing title-checkbox options. Both add an action to the section header, which
 remains usable when its section body is collapsed. Search collection creates no
-editor actions. Gameplay tab renderers declare the bindings; the controls factory
+editor panels; it registers a scoped action with aliases for the element's field
+labels and keys. Results launch the same scoped editor. Section reset includes
+those fields even though their former sliders are absent. Gameplay tab renderers declare the bindings; the controls factory
 does not infer native panel owners or settings scope. See [Customize](customize.md).
 
 ## Automated checks and their limits

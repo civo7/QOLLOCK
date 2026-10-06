@@ -3,11 +3,21 @@
     const Q = globalThis.QOL;
     const P = Q.core.panel;
     const localize = text => Q.ui.theme.LocalizeSettingsText(text, true);
+    const entryKeys = id => Q.presentation.elements.find(element => element.id === id)?.fields.map(field => field.key) || [];
+    function collectEntry(elementId) {
+        const element = Q.presentation.elements.find(item => item.id === elementId);
+        const state = globalThis.gSearchCollectState;
+        if (!element || !state?.currentSection) return;
+        const aliases = [element.name, ...element.fields.flatMap(field => [field.key, field.label, localize(field.label)])];
+        state.currentSection.rows.push(Q.ui.search.buildSearchCollectedRow("Customize", "", "customize", null, null, null,
+            [{ elementId }], localize(element.name), aliases));
+    }
     function createEntryAction(parent, elementId) {
         if (!P.isAlive(parent) || !Q.presentation.elements.some(element => element.id === elementId)) return null;
         const action = P.create("Button", parent, "QOLCustomizeEntry_" + elementId);
         action.AddClass("SectionTitleActionBtn");
         action.AddClass("QOLCustomizeEntry");
+        action.SetAttributeString("QOL_CUSTOMIZE_ELEMENT", elementId);
         const caption = P.create("Label", action, "");
         caption.AddClass("SectionTitleActionLabel");
         caption.text = localize("Customize");
@@ -23,7 +33,12 @@
         return action;
     }
     Q.ui.customize.createEntryAction = createEntryAction;
+    Q.ui.customize.collectEntry = collectEntry;
+    Q.ui.customize.entryKeys = entryKeys;
     function render(list) {
+        // Gameplay sections already index scoped actions. The standalone
+        // launcher must not create panels during the search metadata pass.
+        if (globalThis.gSearchCollectMode) return;
         const I = Q.ui.customizeInspector;
         const host = Q.core.panel.create("Panel", list, "QOLCustomizeLaunch");
         host.AddClass("QOLCustomizeLaunch");

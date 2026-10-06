@@ -64,6 +64,8 @@ CitadelHudEscapeMenu.QOLCustomizeActive { background-color: #0000; }
 .QOLCustomizeResize.TopLeft { align: left top; border-right: 0px; border-bottom: 0px; border-left: 3px solid #a8d9ec; border-top: 3px solid #a8d9ec; }
 .QOLCustomizeResize.TopRight { align: right top; border-bottom: 0px; border-top: 3px solid #a8d9ec; }
 .QOLCustomizeResize.BottomLeft { align: left bottom; border-right: 0px; border-left: 3px solid #a8d9ec; }
+.QOLCustomizeTools > .ModalInstructions,
+#QOLCustomizeFields > .ModalInstructions { width: 100%; white-space: normal; height: fit-children; }
 .QOLCustomizeLaunch { flow-children: down; width: 100%; }
 
 /* Active Stats showcase (Crosshair tab): reuse the REAL crosshair-overlay styling so the preview

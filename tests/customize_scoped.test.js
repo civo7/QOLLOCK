@@ -168,3 +168,51 @@ test("scoped entry and instructions use English, Russian and incomplete-locale f
         clean(env);
     }
 });
+
+test("ordinary tabs replace geometry sliders with scoped actions and keep functional controls", () => {
+    const env = setup();
+    const migrated = new Set(env.global.QOL.presentation.elements.flatMap(element => element.fields
+        .filter(field => field.axis || field.resize || ["Scale", "Size", "Opacity", "Current Ammo", "Total Ammo", "Hint Size", "Width", "Height", "Tunnel Opacity", "Minimalist Opacity"].includes(field.label))
+        .map(field => field.key)));
+    for (const tab of ["Crosshair", "HUD", "Healthbar", "Overlay", "Minimap", "Shop", "UI"]) {
+        env.global.QOL.ui.window.setActiveTabAndRefresh(tab); env.clock.advance(300);
+        for (const key of migrated) assert.equal(env.list.FindChildrenWithClassTraverse("SettingRow_" + key).length, 0, tab + ": " + key);
+        assert.ok(env.list.FindChildrenWithClassTraverse("QOLCustomizeEntry").length, tab);
+    }
+    env.global.QOL.ui.window.setActiveTabAndRefresh("Minimap"); env.clock.advance(300);
+    assert.ok(env.list.FindChildrenWithClassTraverse("SettingRow_MINIMAP_FIXED_ICON_SIZE")[0]);
+    clean(env);
+});
+
+test("search for a moved field launches only its element without restoring old sliders", () => {
+    const env = setup();
+    const Q = env.global.QOL;
+    for (const [query, id, key] of [["PLAYER_HEALTHBAR_X_OFFSET", "healthbar", "PLAYER_HEALTHBAR_X_OFFSET"],
+        ["SOULS_SCALE", "souls", "SOULS_SCALE"], ["PASSIVE_COOLDOWN_SIZE", "cooldowns", "PASSIVE_COOLDOWN_SIZE"]]) {
+        assert.equal(Q.ui.search.renderSearchResults(env.list, query), true);
+        env.clock.advance(300);
+        assert.equal(env.list.FindChildrenWithClassTraverse("SettingRow_" + key).length, 0);
+        activate(env, "QOLCustomizeEntry_" + id);
+        assert.ok(env.em.FindChildTraverse("QOLCustomize_" + key));
+        assert.equal(env.em.FindChildrenWithClassTraverse("QOLCustomizeFrame").length, 1);
+        activate(env, "QOLCustomizeCancel"); env.clock.advance(300);
+    }
+    clean(env);
+});
+
+test("section resets include moved values, nested active items and newly added scales", () => {
+    const env = setup();
+    const g = env.global;
+    Object.assign(g.MOD_CONFIG, { BOTTOM_BAR_SCALE: 1.3, ACTIVE_ITEMS_SCALE: 150, SOULS_SCALE: 151, SOULS_X_OFFSET: 125, PLAYER_HEALTHBAR_SCALE: 180 });
+    for (const [tab, id, keys] of [["HUD", "bottomBar", ["BOTTOM_BAR_SCALE", "ACTIVE_ITEMS_SCALE"]],
+        ["HUD", "souls", ["SOULS_SCALE", "SOULS_X_OFFSET"]], ["Healthbar", "healthbar", ["PLAYER_HEALTHBAR_SCALE"]]]) {
+        g.QOL.ui.window.setActiveTabAndRefresh(tab); env.clock.advance(300);
+        const entry = env.em.FindChildTraverse("QOLCustomizeEntry_" + id);
+        const reset = entry.GetParent().FindChildrenWithClassTraverse("SectionResetBtn")[0];
+        assert.ok(reset); assert.equal(reset.enabled, true);
+        reset._fire("onactivate"); env.clock.advance(500);
+        for (const key of keys) assert.equal(g.MOD_CONFIG[key], g.QOL_DEFAULT_CONFIG[key], key);
+        if (id === "bottomBar") assert.equal(g.MOD_CONFIG.SOULS_SCALE, 151, "unrelated section is preserved");
+    }
+    clean(env);
+});

@@ -129,12 +129,6 @@
                         { label: "Get Filter" }
                     ], "Get Filter File Only");
                 }
-                if (createSliderRow) {
-                    createSliderRow(sectionParent, "Size", "PASSIVE_COOLDOWN_SIZE", "size_30_60");
-                    createSliderRow(sectionParent, "Opacity", "PASSIVE_COOLDOWN_OPACITY", "opacity");
-                    createSliderRow(sectionParent, "Horizontal Offset", "PASSIVE_COOLDOWN_X", "offset_n50_50");
-                    createSliderRow(sectionParent, "Vertical Offset", "PASSIVE_COOLDOWN_Y", "offset_n50_50");
-                }
             }, null, {
                 titleCheckbox: {
                     label: "Advanced",
@@ -153,12 +147,6 @@
                 if (createRow) {
                     createRow(sectionParent, "Show Debuffs", "CROSSHAIR_STATS_SHOW_DEBUFFS", "toggle", null, null, null, null);
                     createRow(sectionParent, "Show Buffs", "CROSSHAIR_STATS_SHOW_BUFFS", "toggle", null, null, null, null);
-                }
-                if (createSliderRow) {
-                    createSliderRow(sectionParent, "Scale", "CROSSHAIR_STATS_SCALE", "size_50_200");
-                    createSliderRow(sectionParent, "Opacity", "CROSSHAIR_STATS_OPACITY", "opacity");
-                    createSliderRow(sectionParent, "Horizontal Offset", "CROSSHAIR_STATS_X_OFFSET", "offset_n500_500");
-                    createSliderRow(sectionParent, "Vertical Offset", "CROSSHAIR_STATS_Y_OFFSET", "offset_n500_500");
                 }
                 if (createCollapsibleSubSection) {
                     createCollapsibleSubSection(sectionParent, "Visible Stats", (statsParent) => {
@@ -186,14 +174,7 @@
         createSep(list);
 
         if (createAnimatedToggle) {
-            createAnimatedToggle(list, "Damage Impact", "ENABLE_DAMAGE_IMPACT", "The popups that appear when getting a kill or CCing an enemy or healing an ally", (sectionParent) => {
-                if (createSliderRow) {
-                    createSliderRow(sectionParent, "Scale", "DAMAGE_IMPACT_SCALE", "scale_0_5_2_0");
-                    createSliderRow(sectionParent, "Opacity", "DAMAGE_IMPACT_OPACITY", "opacity");
-                    createSliderRow(sectionParent, "Horizontal Offset", "DAMAGE_IMPACT_X_OFFSET", "offset_n1000_1000");
-                    createSliderRow(sectionParent, "Vertical Offset", "DAMAGE_IMPACT_Y_OFFSET", "offset_n1000_1000");
-                }
-            });
+            createAnimatedToggle(list, "Damage Impact", "ENABLE_DAMAGE_IMPACT", "The popups that appear when getting a kill or CCing an enemy or healing an ally", null);
         }
 
         createSep(list);
@@ -214,10 +195,6 @@
             createRow(list, "Clean Indicators", "ENABLE_CLEAN_DAMAGE_INDICATORS", "toggle", null, null, null, null, "Modify damage numbers for a cleaner style and animation to be more out of the way");
             createRow(list, "Damage Fountain", "ENABLE_DAMAGE_FOUNTAIN", "toggle", null, null, null, null, "Fountain-style damage number animation.");
         }
-        if (createSliderRow) {
-            createSliderRow(list, "Size", "HUD_INDICATOR_SIZE", "size_10_60", "Default 18");
-            createSliderRow(list, "Opacity", "DAMAGE_NUMBER_OPACITY", "opacity");
-        }
 
         createSep(list);
         createTitle(list, "Ammo", null, "ammo");
@@ -225,16 +202,10 @@
             createRow(list, "Visual", "ENABLE_AMMO_STATUS", "toggle", null, null, null, null);
             createRow(list, "Current", "ENABLE_HIDE_AMMO_ALL", "toggle", null, null, null, [{ invert: true }]);
         }
-        if (createSliderRow) {
-            createSliderRow(list, "Current Size", "AMMO_CURRENT_SCALE", "size_100_300");
-        }
         if (createRow) {
             createRow(list, "Total", "ENABLE_HIDE_MAGAZINE", "toggle", null, null, null, [{ invert: true }]);
         }
         if (createSliderRow) {
-            createSliderRow(list, "Total Size", "AMMO_TOTAL_SCALE", "size_100_300");
-            createSliderRow(list, "Horizontal Offset", "AMMO_PANEL_X_OFFSET", "offset_n2000_2000");
-            createSliderRow(list, "Vertical Offset", "AMMO_PANEL_Y_OFFSET", "offset_n2000_2000");
             createSliderRow(list, "Rotate Magazine", "AMMO_CLIP_ANGLE", "angle_0_360", "Rotate the ammo magazine visualiser.", true);
         }
         if (createRow) {
@@ -243,14 +214,7 @@
 
         createSep(list);
         if (createAnimatedToggle) {
-            createAnimatedToggle(list, "Reload Cooldown", "ENABLE_RELOAD_COOLDOWN", "Estimated Active Reload Timer", (sectionParent) => {
-                if (createSliderRow) {
-                    createSliderRow(sectionParent, "Size", "RELOAD_COOLDOWN_SIZE", "size_16_60");
-                    createSliderRow(sectionParent, "Opacity", "RELOAD_COOLDOWN_OPACITY", "opacity");
-                    createSliderRow(sectionParent, "Horizontal Offset", "RELOAD_COOLDOWN_X_OFFSET", "offset_n75_75");
-                    createSliderRow(sectionParent, "Vertical Offset", "RELOAD_COOLDOWN_Y_OFFSET", "offset_n75_75");
-                }
-            });
+            createAnimatedToggle(list, "Reload Cooldown", "ENABLE_RELOAD_COOLDOWN", "Estimated Active Reload Timer", null);
         }
 
         createSep(list);
@@ -266,16 +230,10 @@
             createRow(list, "Highlight Mode", "ENABLE_RED_DIAMOND", "toggle", null, null, null, null);
             createRow(list, "Improved Hint", "ENABLE_IMPROVED_HINT", "toggle", null, null, null, null);
         }
-        if (createSliderRow) {
-            createSliderRow(list, "Size", "UNIT_TARGET_SIZE", "size_50_300_s5");
-            createSliderRow(list, "Opacity", "UNIT_TARGET_OPACITY", "opacity");
-            createSliderRow(list, "Hint Size", "UNIT_TARGET_HINT_SIZE", "size_50_200_s5");
-        }
     }
 
     function renderHudTab(list) {
         const createRow = getCreateRow();
-        const createSliderRow = getCreateSliderRow();
         const createTitle = getCreateSectionTitle();
         const createSep = getCreateSeparator();
         const createAnimatedToggle = getCreateAnimatedToggle();
@@ -303,12 +261,6 @@
                     createRow(sectionParent, "Enemy HP Warning", "ENABLE_TOPBAR_ENEMY_HP_WARNING", "multitoggle", null, null, null, TOPBAR_ENEMY_HP_WARNING_THRESHOLD_OPTIONS, "Enemy HP Warning");
                     createRow(sectionParent, "Ally HP Warning", "ENABLE_TOPBAR_ALLY_HP_WARNING", "multitoggle", null, null, null, TOPBAR_ALLY_HP_WARNING_THRESHOLD_OPTIONS, "Ally HP Warning");
                 }
-                if (createSliderRow) {
-                    createSliderRow(sectionParent, "Opacity", "TOP_BAR_OPACITY", "opacity");
-                    createSliderRow(sectionParent, "Scale", "TOP_BAR_SCALE", "scale_0_5_1_5");
-                    createSliderRow(sectionParent, "Horizontal Offset", "TOP_BAR_X_OFFSET", "offset_n1500_1500");
-                    createSliderRow(sectionParent, "Vertical Offset", "TOP_BAR_Y_OFFSET", "offset_n500_500");
-                }
             });
         }
 
@@ -324,21 +276,10 @@
                     createRow(sectionParent, "Clean Stacks", "ENABLE_CLEAN_STACKS", "toggle", null, null, null, null, "Move ability stacks to bottom-center of ability icon");
                     createRow(sectionParent, "Legacy Durations", "ENABLE_LEGACY_COOLDOWNS", "toggle", null, null, null, null, "");
                 }
-                if (createSliderRow) {
-                    createSliderRow(sectionParent, "Opacity", "BOTTOM_BAR_OPACITY", "opacity");
-                    createSliderRow(sectionParent, "Scale", "BOTTOM_BAR_SCALE", "scale_0_5_1_5");
-                    createSliderRow(sectionParent, "Horizontal Offset", "BOTTOM_BAR_X_OFFSET", "offset_n1500_1500");
-                    createSliderRow(sectionParent, "Vertical Offset", "BOTTOM_BAR_Y_OFFSET", "offset_n500_500");
-                }
                 if (createRow) {
                     createRow(sectionParent, "Color", "BOTTOM_BAR_WASH_COLOR", "palette", null, null, null, palette, "Choose a preset color wash for the bottom ability bar.");
                 }
-                if (createSliderRow) {
-                    createTitle(sectionParent, "Active Items", null, "activeItems");
-                    createSliderRow(sectionParent, "Active Item Scale", "ACTIVE_ITEMS_SCALE", "size_50_250");
-                    createSliderRow(sectionParent, "Active Item Horizontal Offset", "ACTIVE_ITEMS_X_OFFSET", "offset_n1500_1500_s1");
-                    createSliderRow(sectionParent, "Active Item Vertical Offset", "ACTIVE_ITEMS_Y_OFFSET", "offset_n500_500_s1");
-                }
+                createTitle(sectionParent, "Active Items", null, "activeItems");
             });
         }
 
@@ -348,11 +289,6 @@
             createAnimatedToggle(list, "Items", "HUD_ITEMS_ENABLED", "", (sectionParent) => {
                 if (createRow) {
                     createRow(sectionParent, "Minimalist Item Bar", "ENABLE_SIMPLIFY_ITEMS", "toggle", null, null, null, null);
-                }
-                if (createSliderRow) {
-                    createSliderRow(sectionParent, "Opacity", "ITEMS_OPACITY", "opacity");
-                    createSliderRow(sectionParent, "Horizontal Offset", "ITEMS_X_OFFSET", "offset_n1500_1500");
-                    createSliderRow(sectionParent, "Vertical Offset", "ITEMS_Y_OFFSET", "offset_n500_500");
                 }
                 if (createRow) {
                     createRow(sectionParent, "Color", "ITEMS_WASH_COLOR", "palette", null, null, null, palette, "Choose a preset color wash for the item bar.");
@@ -364,29 +300,14 @@
 
         if (createAnimatedToggle) {
             createAnimatedToggle(list, "Souls", "HUD_SOULS_ENABLED", "", (sectionParent) => {
-                if (createSliderRow) {
-                    createSliderRow(sectionParent, "Opacity", "SOULS_OPACITY", "opacity");
-                    createSliderRow(sectionParent, "Horizontal Offset", "SOULS_X_OFFSET", "offset_n1500_1500");
-                    createSliderRow(sectionParent, "Vertical Offset", "SOULS_Y_OFFSET", "offset_n500_500");
-                }
                 createSep(sectionParent);
                 createAnimatedToggle(sectionParent, "Unsecured Timer", "ENABLE_UNSECURED_SOUL_TIMER", "Realtime Drain Countdown", (unsecuredParent) => {
-                    if (createSliderRow) {
-                        createSliderRow(unsecuredParent, "Size", "UNSECURED_SOUL_TIMER_SCALE", "size_50_200", "");
-                        createSliderRow(unsecuredParent, "Horizontal Offset", "UNSECURED_SOUL_TIMER_X_OFFSET", "offset_n1500_1500");
-                        createSliderRow(unsecuredParent, "Vertical Offset", "UNSECURED_SOUL_TIMER_Y_OFFSET", "offset_n100_1000");
-                    }
                 });
                 createSep(sectionParent);
                 createAnimatedToggle(sectionParent, "Unsecured Plus", "ENABLE_BETTER_UNSECURED", "Customizable Unsecured Souls", (unsecuredPlusParent) => {
                     if (createRow) {
                         createRow(unsecuredPlusParent, "Icon", "ENABLE_BETTER_UNSECURED_SHOW_ICON", "toggle", null, null, null, null, "");
                         createRow(unsecuredPlusParent, "Text", "ENABLE_BETTER_UNSECURED_SHOW_TEXT", "toggle", null, null, null, null, "");
-                    }
-                    if (createSliderRow) {
-                        createSliderRow(unsecuredPlusParent, "Size", "UNSECURED_SOULS_HUD_SCALE", "size_50_200", "");
-                        createSliderRow(unsecuredPlusParent, "Horizontal Offset", "UNSECURED_SOULS_HUD_X_OFFSET", "offset_n1000_2000");
-                        createSliderRow(unsecuredPlusParent, "Vertical Offset", "UNSECURED_SOULS_HUD_Y_OFFSET", "offset_800_2000");
                     }
                 });
             });
@@ -396,32 +317,18 @@
 
         if (createAnimatedToggle) {
             createAnimatedToggle(list, "Chat", "ENABLE_CHAT", "", (sectionParent) => {
-                if (createSliderRow) {
-                    createSliderRow(sectionParent, "Size", "CHAT_SCALE", "size_50_200", "");
-                    createSliderRow(sectionParent, "Horizontal Offset", "CHAT_X_OFFSET", "offset_n1500_1500");
-                    createSliderRow(sectionParent, "Vertical Offset", "CHAT_Y_OFFSET", "offset_n250_800", "");
-                }
                 if (createRow) {
                     createRow(sectionParent, "Images in Chat", "ENABLE_IMAGES_IN_CHAT", "toggle", null, null, null, null, "");
                 }
             });
             createSep(list);
-            createAnimatedToggle(list, "Damage Report", "DISABLE_DAMAGE_REPORT", "", (sectionParent) => {
-                if (createSliderRow) {
-                    createSliderRow(sectionParent, "Horizontal Offset", "DAMAGE_REPORT_X_OFFSET", "offset_n1500_1500", "");
-                    createSliderRow(sectionParent, "Vertical Offset", "DAMAGE_REPORT_Y_OFFSET", "offset_n1500_200", "");
-                }
-            }, { invert: true });
+            createAnimatedToggle(list, "Damage Report", "DISABLE_DAMAGE_REPORT", "", null, { invert: true });
         }
 
         createSep(list);
         createTitle(list, "Player Stats", "ENABLE_STATS_POSITION", "playerStats");
         if (createRow) {
             createRow(list, "Side", "STATS_POSITION_SIDE", "buttongroup", null, null, null, STATS_POSITION_SIDE_OPTIONS);
-        }
-        if (createSliderRow) {
-            createSliderRow(list, "Horizontal Offset", "STATS_POSITION_X_OFFSET", "offset_n2000_2000", "");
-            createSliderRow(list, "Vertical Offset", "STATS_POSITION_Y_OFFSET", "offset_n2000_2000", "");
         }
         if (createRow) {
             createRow(list, "Hide in normal view", "STATS_POSITION_HIDE_NORMAL", "toggle", null, null, null, null, "Hide the bottom-left active stats block during normal play. It stays in the HUD (just made invisible), so the Crosshair Active Stats mirror keeps working.");
@@ -461,12 +368,6 @@
 
         if (createAnimatedToggle) {
             createAnimatedToggle(list, "Recent Purchases", "ENABLE_SHOP_RECENT_PURCHASES", "See the recent purchases made in the game.", (recentPurchasesParent) => {
-                if (createSliderRow) {
-                    createSliderRow(recentPurchasesParent, "Horizontal Offset", "RECENT_PURCHASES_PANEL_X_OFFSET", "offset_n1000_1000");
-                    createSliderRow(recentPurchasesParent, "Vertical Offset", "RECENT_PURCHASES_PANEL_Y_OFFSET", "offset_n500_500");
-                    createSliderRow(recentPurchasesParent, "Opacity", "RECENT_PURCHASES_PANEL_OPACITY", "opacity");
-                    createSliderRow(recentPurchasesParent, "Scale", "RECENT_PURCHASES_PANEL_SCALE", "scale_0_5_2_0");
-                }
             });
             createSep(list);
             createAnimatedToggle(list, "Item Buy Notifications", "ENABLE_SHOP_ITEM_NOTIFICATIONS", "Shows item buy notifications from recent purchases.", (notificationsParent) => {
@@ -477,10 +378,6 @@
                 if (createSliderRow) {
                     createSliderRow(notificationsParent, "Max Notifications", "RECENT_PURCHASES_QUICK_MAX", "count_1_5");
                     createSliderRow(notificationsParent, "Duration", "RECENT_PURCHASES_QUICK_DISPLAY_SEC", "sec_3_15", "Seconds each notification stays visible.");
-                    createSliderRow(notificationsParent, "Horizontal Offset", "RECENT_PURCHASES_QUICK_X_OFFSET", "offset_n500_500");
-                    createSliderRow(notificationsParent, "Vertical Offset", "RECENT_PURCHASES_QUICK_Y_OFFSET", "offset_n500_500");
-                    createSliderRow(notificationsParent, "Opacity", "RECENT_PURCHASES_QUICK_OPACITY", "opacity");
-                    createSliderRow(notificationsParent, "Scale", "RECENT_PURCHASES_QUICK_SCALE", "scale_0_5_1_5");
                 }
             });
         }
@@ -503,17 +400,10 @@
             createRow(list, "Minimalist", "ENABLE_SIMPLIFY_SHOP", "toggle", null, null, null, null);
             createRow(list, "Blur", "DISABLE_SHOP_BLUE", "toggle", null, null, null, [{ invert: true }]);
         }
-        if (createSliderRow) {
-            createSliderRow(list, "Horizontal Offset", "SHOP_OFFSET_X", "offset_n500_500");
-            createSliderRow(list, "Vertical Offset", "SHOP_OFFSET_Y", "offset_n500_500");
-            createSliderRow(list, "Opacity", "SHOP_OPACITY", "opacity");
-            createSliderRow(list, "Scale", "SHOP_SCALE", "scale_0_5_1_5");
-        }
     }
 
     function renderHealthbarTab(list) {
         const createRow = getCreateRow();
-        const createSliderRow = getCreateSliderRow();
         const createTitle = getCreateSectionTitle();
         const createAnimatedEnumSection = getCreateAnimatedEnumSection();
         const palette = getPaletteOptions();
@@ -535,12 +425,6 @@
                 }
             });
         }
-        if (createSliderRow) {
-            createSliderRow(list, "Size", "PLAYER_HEALTHBAR_SCALE", "size_50_200", "");
-            createSliderRow(list, "Opacity", "PLAYER_HEALTHBAR_OPACITY", "opacity", "");
-            createSliderRow(list, "Horizontal Offset", "PLAYER_HEALTHBAR_X_OFFSET", "offset_n1000_1000", "");
-            createSliderRow(list, "Vertical Offset", "PLAYER_HEALTHBAR_Y_OFFSET", "offset_n1000_1000", "");
-        }
         if (createRow) {
             createRow(list, "Accent Color", "PLAYER_HEALTHBAR_ACCENT_COLOR", "palette", null, null, null, palette, "Choose a preset accent color for the player healthbar frame.");
         }
@@ -548,7 +432,6 @@
 
     function renderUiTab(list) {
         const createRow = getCreateRow();
-        const createSliderRow = getCreateSliderRow();
         const createTitle = getCreateSectionTitle();
         const createSep = getCreateSeparator();
         const createAnimatedToggle = getCreateAnimatedToggle();
@@ -577,22 +460,13 @@
             createSep(list);
             createAnimatedToggle(list, "Minimalistic Pause", "ENABLE_MINIMALISTIC_PAUSE", "Use the compact minimalistic pause screen instead of the default large one.", null);
             createSep(list);
-            createAnimatedToggle(list, "Damage Report", "DISABLE_DAMAGE_REPORT", "", (sectionParent) => {
-                if (createSliderRow) {
-                    createSliderRow(sectionParent, "Horizontal Offset", "DAMAGE_REPORT_X_OFFSET", "offset_n1500_1500", "");
-                    createSliderRow(sectionParent, "Vertical Offset", "DAMAGE_REPORT_Y_OFFSET", "offset_n1500_200", "");
-                }
-            }, { invert: true });
+            createAnimatedToggle(list, "Damage Report", "DISABLE_DAMAGE_REPORT", "", null, { invert: true });
         }
 
         createSep(list);
         createTitle(list, "Player Stats", "ENABLE_STATS_POSITION", "playerStats");
         if (createRow) {
             createRow(list, "Side", "STATS_POSITION_SIDE", "buttongroup", null, null, null, STATS_POSITION_SIDE_OPTIONS);
-        }
-        if (createSliderRow) {
-            createSliderRow(list, "Horizontal Offset", "STATS_POSITION_X_OFFSET", "offset_n2000_2000", "");
-            createSliderRow(list, "Vertical Offset", "STATS_POSITION_Y_OFFSET", "offset_n2000_2000", "");
         }
         if (createRow) {
             createRow(list, "Hide in normal view", "STATS_POSITION_HIDE_NORMAL", "toggle", null, null, null, null, "Hide the bottom-left active stats block during normal play. It stays in the HUD (just made invisible), so the Crosshair Active Stats mirror keeps working.");
@@ -602,11 +476,6 @@
         createSep(list);
         if (createAnimatedToggle) {
             createAnimatedToggle(list, "Chat", "ENABLE_CHAT", "", (sectionParent) => {
-                if (createSliderRow) {
-                    createSliderRow(sectionParent, "Size", "CHAT_SCALE", "size_50_200", "");
-                    createSliderRow(sectionParent, "Horizontal Offset", "CHAT_X_OFFSET", "offset_n1500_1500", "");
-                    createSliderRow(sectionParent, "Vertical Offset", "CHAT_Y_OFFSET", "offset_n250_800", "");
-                }
                 if (createRow) {
                     createRow(sectionParent, "Images in Chat", "ENABLE_IMAGES_IN_CHAT", "toggle", null, null, null, null, "");
                 }
@@ -616,7 +485,6 @@
 
     function renderOverlayTab(list) {
         const createRow = getCreateRow();
-        const createSliderRow = getCreateSliderRow();
         const createSep = getCreateSeparator();
         const createAnimatedToggle = getCreateAnimatedToggle();
         const palette = getPaletteOptions();
@@ -633,41 +501,18 @@
                 if (createRow) {
                     createRow(sectionParent, "Full Keys", "ENABLE_FULL_KEYBOARD_LAYOUT", "toggle", null, null, null, null, "");
                 }
-                if (createSliderRow) {
-                    createSliderRow(sectionParent, "Size", "KEYBOARD_OVERLAY_SCALE", "size_70_150", "");
-                    createSliderRow(sectionParent, "Horizontal Offset", "KEYBOARD_OVERLAY_X_OFFSET", "offset_n1500_1500");
-                    createSliderRow(sectionParent, "Vertical Offset", "KEYBOARD_OVERLAY_Y_OFFSET", "offset_n400_1000");
-                }
                 if (createRow) {
                     createRow(sectionParent, "Color", "KEYBOARD_OVERLAY_WASH_COLOR", "palette", null, null, null, palette, "Choose a preset color wash for the keyboard overlay.");
                 }
             });
             createSep(list);
-            createAnimatedToggle(list, "Zipline Boost", "ENABLE_ZIP_BOOST", "Always Visible Boost", (sectionParent) => {
-                if (createSliderRow) {
-                    createSliderRow(sectionParent, "Size", "ZIP_BOOST_SCALE", "size_50_200", "");
-                    createSliderRow(sectionParent, "Horizontal Offset", "ZIP_BOOST_X_OFFSET", "offset_n2000_2000");
-                    createSliderRow(sectionParent, "Vertical Offset", "ZIP_BOOST_Y_OFFSET", "offset_0_1000");
-                }
-            });
+            createAnimatedToggle(list, "Zipline Boost", "ENABLE_ZIP_BOOST", "Always Visible Boost", null);
             createSep(list);
-            createAnimatedToggle(list, "Speed", "ENABLE_COMPASS_SPEED", "Show standalone movement speed.", (sectionParent) => {
-                if (createSliderRow) {
-                    createSliderRow(sectionParent, "Horizontal Offset", "COMPASS_SPEED_X_OFFSET", "offset_n2000_2000");
-                    createSliderRow(sectionParent, "Vertical Offset", "COMPASS_SPEED_Y_OFFSET", "offset_n2000_2000");
-                }
-            });
+            createAnimatedToggle(list, "Speed", "ENABLE_COMPASS_SPEED", "Show standalone movement speed.", null);
             createSep(list);
             createAnimatedToggle(list, "Compass", "ENABLE_COMPASS", "See your view angle.", (sectionParent) => {
                 if (createRow) {
                     createRow(sectionParent, "Minimalist", "ENABLE_SIMPLIFY_COMPASS", "toggle", null, null, null, null, "Simplifies the Compass overlay to its bare elements.");
-                }
-                if (createSliderRow) {
-                    createSliderRow(sectionParent, "Horizontal Stretch", "COMPASS_STRETCH_X", "size_50_200");
-                    createSliderRow(sectionParent, "Vertical Stretch", "COMPASS_STRETCH_Y", "size_50_200");
-                    createSliderRow(sectionParent, "Size", "COMPASS_SCALE", "size_50_200");
-                    createSliderRow(sectionParent, "Horizontal Offset", "COMPASS_X_OFFSET", "offset_n2000_2000");
-                    createSliderRow(sectionParent, "Vertical Offset", "COMPASS_Y_OFFSET", "offset_n1000_300");
                 }
             });
         }
@@ -675,7 +520,6 @@
 
     function renderMinimapTab(list) {
         const createRow = getCreateRow();
-        const createSliderRow = getCreateSliderRow();
         const createTitle = getCreateSectionTitle();
         const createSep = getCreateSeparator();
         const createAnimatedToggle = getCreateAnimatedToggle();
@@ -686,26 +530,14 @@
         if (createRow) {
             createRow(list, "Minimalist", "MINIMAL_MINIMAP", "toggle", null, null, null, null, "Cleans up visuals of the minimap significantly to reduce clutter.");
         }
-        if (createSliderRow) {
-            createSliderRow(list, "Minimalist Opacity", "MINIMAL_MINIMAP_OPACITY", "opacity");
-        }
         if (createRow) {
             createRow(list, "Flip", "MINIMAP_FLIP", "toggle", null, null, null, null, "Rotates the static minimap 180 degrees.");
             createRow(list, "Spinny Mode", "MINIMAP_ROTATE_WITH_PLAYER", "toggle", null, null, null, null, "");
-        }
-        if (createSliderRow) {
-            createSliderRow(list, "Size", "MINIMAP_SMALL_SIZE", "size_200_1000_s5", "Default 400", false, {
-                key: "MINIMAP_FIXED_ICON_SIZE", label: "Fixed Icon Size",
-                description: "Resizes the minimap using width and height instead of scaling the whole HUD. Applies to Base, Alt and Tab views."
-            });
-            createSliderRow(list, "Opacity", "MINIMAP_BASE_OPACITY", "opacity");
+            createRow(list, "Fixed Icon Size", "MINIMAP_FIXED_ICON_SIZE", "toggle", null, null, null, null,
+                "Resizes the minimap using width and height instead of scaling the whole HUD. Applies to Base, Alt and Tab views.");
         }
         if (createRow) {
             createRow(list, "Icons", "MINIMAP_ICON_COLOR", "palette", null, null, null, palette, "Choose a preset color wash for minimap icons.");
-        }
-        if (createSliderRow) {
-            createSliderRow(list, "Horizontal Offset", "MINIMAP_X_OFFSET", "offset_n1500_1500");
-            createSliderRow(list, "Vertical Offset", "MINIMAP_Y_OFFSET", "offset_n100_1000");
         }
 
         createSep(list);
@@ -737,9 +569,6 @@
             createRow(list, "Crate Overlay", "ENABLE_MINIMAP_CRATE_OVERLAY", "toggle", null, null, null, null, "Midtown-only crate markers on the minimap.");
             createRow(list, "Rem Tunnels", "ENABLE_MINIMAP_REM_TUNNELS", "toggle", null, null, null, null, "Show an overlay of the underground tunnels.");
         }
-        if (createSliderRow) {
-            createSliderRow(list, "Rem Tunnels Opacity", "MINIMAP_REM_TUNNELS_OPACITY", "opacity");
-        }
 
         createSep(list);
         if (createAnimatedToggle) {
@@ -748,26 +577,12 @@
                     createRow(sectionParent, "Draw Over UI", "ALT_ZOOM_DRAW_OVER_UI", "toggle", null, null, null, null);
                     createRow(sectionParent, "Rem Tunnels", "ENABLE_ALT_ZOOM_REM_TUNNELS", "toggle", null, null, null, null, "Show the underground tunnel overlay while Alt Zoom is active.");
                 }
-                if (createSliderRow) {
-                    createSliderRow(sectionParent, "Rem Tunnels Opacity", "ALT_ZOOM_REM_TUNNELS_OPACITY", "opacity");
-                    createSliderRow(sectionParent, "Size", "MINIMAP_LARGE_SIZE_ALT", "size_400_1200_s10");
-                    createSliderRow(sectionParent, "Opacity", "ALT_ZOOM_OPACITY", "opacity");
-                    createSliderRow(sectionParent, "Horizontal Offset", "ZOOM_X_OFFSET_ALT", "offset_n1500_1500");
-                    createSliderRow(sectionParent, "Vertical Offset", "ZOOM_Y_OFFSET_ALT", "offset_n1000_1000");
-                }
             });
             createSep(list);
             createAnimatedToggle(list, "Tab Zoom", "ENABLE_TAB_ZOOM", "Scoreboard Open", (sectionParent) => {
                 if (createRow) {
                     createRow(sectionParent, "Draw Over UI", "TAB_ZOOM_DRAW_OVER_UI", "toggle", null, null, null, null);
                     createRow(sectionParent, "Rem Tunnels", "ENABLE_TAB_ZOOM_REM_TUNNELS", "toggle", null, null, null, null, "Show the underground tunnel overlay while Tab Zoom is active.");
-                }
-                if (createSliderRow) {
-                    createSliderRow(sectionParent, "Rem Tunnels Opacity", "TAB_ZOOM_REM_TUNNELS_OPACITY", "opacity");
-                    createSliderRow(sectionParent, "Size", "MINIMAP_LARGE_SIZE_TAB", "size_400_1200_s10");
-                    createSliderRow(sectionParent, "Opacity", "TAB_ZOOM_OPACITY", "opacity");
-                    createSliderRow(sectionParent, "Horizontal Offset", "ZOOM_X_OFFSET_TAB", "offset_n1500_1500");
-                    createSliderRow(sectionParent, "Vertical Offset", "ZOOM_Y_OFFSET_TAB", "offset_n1000_1000");
                 }
             });
         }
