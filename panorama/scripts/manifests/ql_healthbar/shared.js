@@ -120,10 +120,12 @@
         var finalOffsetX = playerOffsetX + minimalistOffsetX;
         var finalOffsetY = (-playerOffsetY) + minimalistOffsetY;
         var finalScale = playerScale / 100;
-        // Scale the completed native group. Changing ui-scale reflows the
-        // tilted health bar and its independently positioned numbers; it also
-        // replaces the native/aspect-ratio baseline. Preserve that CSS layout.
-        var scaleText = String(finalScale);
+        // Inline ui-scale replaces CSS rather than multiplying it. Preserve
+        // the native baseline and its aspect-ratio override (source styles).
+        var basePct = 120;
+        var scaleRoot = (typeof QOL.getUIRoot === "function") ? QOL.getUIRoot() : null;
+        if (scaleRoot && scaleRoot.BHasClass("support_16_10_active")) basePct = 104;
+        var scaleText = Math.round(basePct * playerScale / 100) + "%";
         var opacityText = playerOpacity.toFixed(2);
         var scaleActive = Math.abs(finalScale - 1.0) > 0.0001;
         var opacityActive = Math.abs(playerOpacity - 1.0) > 0.0001;
@@ -149,9 +151,9 @@
             if (runtimeState.finalOffsetY !== 0) panel.style.y = String(runtimeState.finalOffsetY) + "px";
             else clearStyle(panel, "y");
         }
-        clearStyle(panel, "uiScale");
-        if (runtimeState.scaleActive) panel.style.preTransformScale2d = runtimeState.scaleText;
-        else clearStyle(panel, "preTransformScale2d");
+        clearStyle(panel, "preTransformScale2d");
+        if (runtimeState.scaleActive) panel.style.uiScale = runtimeState.scaleText;
+        else clearStyle(panel, "uiScale");
         if (runtimeState.opacityActive) panel.style.opacity = runtimeState.opacityText;
         else clearStyle(panel, "opacity");
     };

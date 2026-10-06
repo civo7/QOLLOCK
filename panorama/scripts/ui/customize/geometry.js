@@ -59,7 +59,7 @@
         return { x, y, width: Math.max(...boxes.map(item => item.x + item.width)) - x,
             height: Math.max(...boxes.map(item => item.y + item.height)) - y };
     }
-    function layoutBox(element, target, host) {
+    function frameBox(element, target, host) {
         const P = Q.core.panel;
         if (!alive(target)) return null;
         if (target.id === "TopBar") {
@@ -89,18 +89,6 @@
             return union(QOL_UTILS.FindPanelsByClass(target, "charge_fg"), host) || box(target, host);
         }
         return box(element.measureId ? P.findChild(target, element.measureId) : target, host);
-    }
-    function frameBox(element, target, host, config = {}) {
-        const measured = layoutBox(element, target, host);
-        if (!measured || !element.postScaleKey) return measured;
-        const factor = Number(config[element.postScaleKey] ?? 100) / 100;
-        const owner = box(Q.presentation.scaleTarget(element, target), host);
-        if (!owner || !Number.isFinite(factor) || factor <= 0) return measured;
-        // pre-transform-scale2d preserves native layout dimensions. Transform
-        // the content measurement around the same native group's center.
-        const centerX = owner.x + owner.width / 2, centerY = owner.y + owner.height / 2;
-        return { x: centerX + (measured.x - centerX) * factor, y: centerY + (measured.y - centerY) * factor,
-            width: measured.width * factor, height: measured.height * factor };
     }
     function resizeValues(element, startValues, startBox, delta, host, corner = { x: 1, y: 1 }) {
         const field = Q.presentation.resizeField(element);

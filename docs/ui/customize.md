@@ -104,11 +104,13 @@ panels keep their controls available and remain searchable by localized element
 and field names. Fixed assets and separate-context additions without existing
 settings have explanatory entries. Children without independent offsets inherit
 their parent's placement. Souls, items, stamina, compact stats, speed, ammo, AP and damage report have
-independent overall scales, applied by `ql_presentation_scale` after native
-layout. It owns only the scale override and releases it at default, disable or
-owner replacement; content, rotations and visibility keep their existing owners.
+independent overall scales, applied by `ql_presentation_scale` through `ui-scale`.
+It multiplies the verified CSS baseline for the current mode and releases its
+override at default, disable or owner replacement; content, rotations and
+visibility keep their existing owners.
 Compact stats scale the content block rather than its full-screen wrapper.
-Post-layout frame geometry includes this scale, including stamina pip unions.
+Frame geometry uses actual native layout measurements, including stamina pip
+unions, without multiplying them again by the configured scale.
 A panel replacement or hidden owner cancels an active move/resize gesture.
 Measurements account for menu origin, scroll offsets and native UI scale; the
 simulator cannot establish native layout or input behavior.

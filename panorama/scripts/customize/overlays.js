@@ -20,7 +20,7 @@
         ]),
         overlay("compass", "Compass", "QOLCompassRoot", [toggle("ENABLE_COMPASS"), t("ENABLE_SIMPLIFY_COMPASS", "Minimalist"),
             ...geometry("COMPASS_", true), f("COMPASS_STRETCH_X", "Width"), f("COMPASS_STRETCH_Y", "Height")]),
-        Object.assign(overlay("speed", "Speed", "QOLSpeedRoot", [toggle("ENABLE_COMPASS_SPEED"), ...geometry("COMPASS_SPEED_", true)]), { postScaleKey: "COMPASS_SPEED_SCALE" }),
+        Object.assign(overlay("speed", "Speed", "QOLSpeedRoot", [toggle("ENABLE_COMPASS_SPEED"), ...geometry("COMPASS_SPEED_", true)]), { scaleKey: "COMPASS_SPEED_SCALE" }),
         overlay("zipBoost", "Zipline Boost", "QOLZipBoostOverlay", [toggle("ENABLE_ZIP_BOOST"), ...geometry("ZIP_BOOST_", true)]),
         overlay("statBonuses", "Stat Bonuses", "QOLStatBonusesOverlay", [toggle("ENABLE_STAT_BONUSES"), ...geometry("STAT_BONUSES_", true)]),
         overlay("combatStatus", "Combat Status", "QOLCombatStatusOverlay", [toggle("ENABLE_COMBAT_STATUS"), t("ENABLE_COMBAT_INDICATOR", "Combat Indicator"), ...geometry("COMBAT_STATUS_", true)]),

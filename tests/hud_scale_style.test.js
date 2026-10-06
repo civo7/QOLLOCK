@@ -2,10 +2,9 @@
 // =============================================================================
 // Overall scaling preserves CSS baselines and independent opacity.
 // =============================================================================
-// Healthbar scale transforms the completed group to preserve its composition.
-// The bottom bar still uses ui-scale; an inline value REPLACES its CSS baseline,
-// rather than multiplying it. Both paths must release defaults and retain
-// independent opacity behavior. Native CSS baselines:
+// Both healthbar and bottom bar use ui-scale. An inline value REPLACES its
+// CSS baseline, rather than multiplying it. Both paths must release defaults
+// and retain independent opacity behavior. Native CSS baselines:
 //
 //   #health_and_abilities_container  base/hud.css:422            120%
 //                                    .support_16_10_active       104%
@@ -18,8 +17,8 @@
 //      whichever CSS rule applies. This is what made "lower the opacity" resize
 //      the healthbar: the runtime only starts on the first non-default key, and
 //      it wrote a flat ui-scale: 100% the moment it did.
-//   2. Bottom-bar scale multiplies its CSS baseline; healthbar scale leaves
-//      that baseline in CSS and transforms the completed group.
+//   2. Overall scale multiplies the applicable CSS baseline before writing
+//      the inline ui-scale value.
 // =============================================================================
 
 "use strict";
@@ -105,10 +104,18 @@ test("healthbar: opacity alone never touches ui-scale", () => {
     assert.strictEqual(panel.last("opacity"), "0.63", "opacity should still be applied");
 });
 
-test("healthbar: size scales the completed group while CSS keeps its baseline", () => {
+test("healthbar: size multiplies the native CSS baseline", () => {
     const panel = applyHealthbar(boot(), { PLAYER_HEALTHBAR_SCALE: 150 });
-    assert.strictEqual(panel.last("preTransformScale2d"), "1.5");
-    assert.ok(!panel.forced("uiScale"), "native and aspect-ratio ui-scale remain CSS-owned");
+    assert.strictEqual(panel.last("uiScale"), "180%");
+    assert.ok(!panel.forced("preTransformScale2d"));
+});
+
+test("healthbar: aspect-ratio changes select the current CSS scale baseline", () => {
+    const h = boot();
+    h.sandbox.global.QOL.getUIRoot().AddClass("support_16_10_active");
+    const panel = applyHealthbar(h, { PLAYER_HEALTHBAR_SCALE: 150 });
+    assert.strictEqual(panel.last("uiScale"), "156%");
+    assert.ok(!panel.forced("preTransformScale2d"));
 });
 
 test("healthbar: all-default config forces nothing", () => {

@@ -49,8 +49,8 @@ for (const type of [0, 1, 2, 3, 4, 5]) {
             input.text = String(scale);
             input._fire("oninputsubmit");
             clock.advance(1200);
-            assert.equal(health.style.preTransformScale2d, String(scale / 100));
-            assert.equal(health.style.uiScale, undefined, "native CSS baseline is never replaced");
+            assert.equal(health.style.uiScale, Math.round(120 * scale / 100) + "%");
+            assert.equal(health.style.preTransformScale2d, undefined);
             reset._fire("onactivate");
             clock.advance(1200);
             assert.equal(g.MOD_CONFIG.PLAYER_HEALTHBAR_SCALE, 100);

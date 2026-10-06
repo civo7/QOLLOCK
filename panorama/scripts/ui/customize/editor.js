@@ -91,7 +91,7 @@
             const snapshot = {};
             for (const field of drag.element.fields) snapshot[field.key] = owner.transaction.value(field.key);
             Object.assign(values, G.anchorValues(drag.element, drag.target, drag.startBox,
-                G.frameBox(drag.element, drag.target, owner.overlay, snapshot), snapshot, owner.overlay, drag.resize));
+                G.frameBox(drag.element, drag.target, owner.overlay), snapshot, owner.overlay, drag.resize));
         }
         const unchanged = Object.entries(values).every(([key, value]) => owner.transaction.value(key) === value);
         if (drag.ending && settled && drag.layoutReady && unchanged) { finishDrag(owner); return; }
@@ -106,7 +106,7 @@
             const target = resolve(owner, element);
             if (!P.isAlive(target) || !G.isShown(target) || !(resize ? Q.presentation.resizeField(element) : Q.presentation.canDrag(element))) return;
             if (!select(owner, element)) return;
-            const startBox = G.frameBox(element, target, owner.overlay, Object.assign({}, Q.getSettingsConfig(), owner.transaction.snapshot()));
+            const startBox = G.frameBox(element, target, owner.overlay);
             if (!startBox) return;
             const proxy = P.create("Panel", owner.overlay, "QOLCustomizeDragProxy");
             if (!P.isAlive(proxy)) return;
@@ -145,7 +145,7 @@
             const item = owner.frames.get(element.id);
             const target = owner.hud ? resolve(owner, element, config) : null;
             const measured = target && (!element.available || element.available(owner.hud, config)) && G.isShown(target)
-                ? G.frameBox(element, target, owner.overlay, config) : null;
+                ? G.frameBox(element, target, owner.overlay) : null;
             // Settings-only entries can share a native owner (warnings, ranks,
             // quickbuy), but must not place another input surface over it.
             const box = Q.presentation.hasFrame(element) ? measured : null;

@@ -8,19 +8,19 @@
     const t = (key, label) => f(key, label, "toggle");
     const detail = (id, name, path, fields, group = "HUD") => ({ id, name, path, fields, group });
     const thresholds = (prefix, side = "") => [25, 65, 75].map(value => t(prefix + value, side + value + "%"));
-    // Native health content must scale as a group without changing its layout.
+    // Shared healthbar scale preserves the native CSS baseline.
     const healthbar = Object.assign(detail("healthbar", "Healthbar", [...gameplay, "health_and_abilities_container"], [
         f("HEALTHBAR_TYPE", "Type", "enum", { options: [[0, "Default"], [1, "Minimalist"], [2, "Fighting Game"], [3, "Klutz's Bar"], [4, "Budhud"], [5, "Minecraft"]] }),
         ...geometry("PLAYER_HEALTHBAR_", true), opacity("PLAYER_HEALTHBAR_"), f("PLAYER_HEALTHBAR_ACCENT_COLOR", "Accent Color", "palette"),
         t("ENABLE_MINECRAFT_HEALTH_NUMBERS", "Health Numbers")
-    ], "Healthbar"), { postScaleKey: "PLAYER_HEALTHBAR_SCALE" });
+    ], "Healthbar"), { scaleKey: "PLAYER_HEALTHBAR_SCALE" });
     C.register([
         healthbar,
         detail("healthWarnings", "Health Warnings", [...gameplay, "health_and_abilities_container"], [
             ...thresholds("ENABLE_COLOR_WARNING_")
         ], "Healthbar"),
         detail("damageImpact", "Damage Impact", [...core, "damage_impact"], [t("ENABLE_DAMAGE_IMPACT", "Enable"), ...geometry("DAMAGE_IMPACT_", true), opacity("DAMAGE_IMPACT_")], "Crosshair"),
-        Object.assign(detail("damageReport", "Damage Report", [...core, "CitadelHudDamageReport"], [t("DISABLE_DAMAGE_REPORT", "Hide"), ...geometry("DAMAGE_REPORT_", true)]), { postScaleKey: "DAMAGE_REPORT_SCALE" }),
+        Object.assign(detail("damageReport", "Damage Report", [...core, "CitadelHudDamageReport"], [t("DISABLE_DAMAGE_REPORT", "Hide"), ...geometry("DAMAGE_REPORT_", true)]), { scaleKey: "DAMAGE_REPORT_SCALE" }),
         detail("chat", "Chat", [...core, "Chat"], [t("ENABLE_CHAT", "Enable"), t("ENABLE_IMAGES_IN_CHAT", "Images In Chat"), ...geometry("CHAT_", true)]),
         detail("objectives", "Objectives", [...core, "TopBar"], [t("ENABLE_OBJ_MAP", "Objective Map"), t("ENABLE_OBJ_DMG", "Objective Damage"), t("ENABLE_MISSING_HERO", "Missing Hero Opaque")]),
         detail("nicknames", "Nicknames", [...core, "TopBar"], [t("ENABLE_NICKNAMES", "Enable"), t("DISABLE_PLAYER_NAME_BLUR", "Hide Top Bar Background")]),

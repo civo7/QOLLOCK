@@ -56,9 +56,9 @@
     for (const [id, prefix] of [["souls", "SOULS_"], ["items", "ITEMS_"], ["playerStats", "STATS_POSITION_"], ["ammo", "AMMO_HUD_"], ["abilityPoints", "AP_"]]) {
         const element = nativeElements.find(item => item.id === id);
         element.fields.push({ key: prefix + "SCALE", label: "Scale", resize: true });
-        element.postScaleKey = prefix + "SCALE";
+        element.scaleKey = prefix + "SCALE";
     }
-    nativeElements.find(item => item.id === "stamina").postScaleKey = "STAMINA_SCALE";
+    nativeElements.find(item => item.id === "stamina").scaleKey = "STAMINA_SCALE";
     register(nativeElements);
 
     function normalize(key, value) {
