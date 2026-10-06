@@ -14,8 +14,9 @@ CitadelHudEscapeMenu.QOLVisualCheckActive
 
 /* Active Stats showcase (Crosshair tab): reuse the REAL crosshair-overlay styling so the preview
    rows are a 1:1 copy of the in-game overlay — same pill, accent border, property icon + value.
-   This pulls in .QOLCrosshairStatRow/.QOLCrosshairStatIcon/.QOLCrosshairStatValue and the property
-   icon backgrounds (ql_feat_crosshair_stats.css itself @imports ability_property_icons). */
+   The HUD layout already includes the property icons; the separate settings context needs them
+   here before loading the shared crosshair-stat rules. */
+@import url("s2r://panorama/styles/ability_property_icons.vcss_c");
 @import url("s2r://panorama/styles/features/ql_feat_crosshair_stats.vcss_c");
 
 @keyframes 'PulseWhiteTitle'

@@ -1,6 +1,4 @@
 /* QOLLOCK feature: Crosshair Active Stats — mirror active buffs/debuffs by the crosshair. */
-/* Import the game property icons so .PropertiesIcon.<Stat> background images resolve here. */
-@import url("s2r://panorama/styles/ability_property_icons.vcss_c");
 
 #QOLCrosshairStatsOverlay
 {
