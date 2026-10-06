@@ -25,9 +25,9 @@
         cleanup(() => P.delete(owner.drag?.proxy));
         for (const panel of owner.hidden) cleanup(() => { if (P.isAlive(panel)) panel.RemoveClass("QOLCustomizeHidden"); });
         for (const panel of owner.active) cleanup(() => { if (P.isAlive(panel)) panel.RemoveClass("QOLCustomizeActive"); });
-        for (const { frame, handle } of owner.frames.values()) {
+        for (const { frame, handles } of owner.frames.values()) {
             cleanup(() => P.delete(frame));
-            cleanup(() => P.delete(handle));
+            for (const handle of handles) cleanup(() => P.delete(handle));
         }
         cleanup(() => P.delete(owner.overlay));
         cleanup(() => { if (focus && P.isAlive(owner.window) && owner.window.BHasClass("Visible")) owner.window.SetFocus(); });
@@ -72,18 +72,32 @@
     function updateDrag(owner, reschedule = true) {
         if (current !== owner || !owner.drag) return;
         const drag = owner.drag;
-        if (!owner.transaction.valid() || !P.isAlive(drag.frame) || !P.isAlive(drag.proxy) || resolve(owner, drag.element) !== drag.target || !G.isShown(drag.target)) {
+        if (!owner.transaction.valid() || !P.isAlive(drag.frame) || (!drag.ending && !P.isAlive(drag.proxy)) || resolve(owner, drag.element) !== drag.target || !G.isShown(drag.target)) {
             finishDrag(owner, true);
             return;
         }
         // The native compositor reparents and positions the drag visual at the
         // cursor. Establish its origin after that first layout, never from the
         // source frame's old parent coordinates.
-        const point = G.absolute(drag.proxy);
+        const point = drag.endPoint || G.absolute(drag.proxy);
         if (!drag.origin) drag.origin = point;
         const delta = { x: point.x - drag.origin.x, y: point.y - drag.origin.y };
-        owner.transaction.edit(drag.resize ? G.resizeValues(drag.element, drag.startValues, drag.startBox, delta, owner.overlay)
-            : G.dragValues(drag.element, drag.target, drag.startValues, delta));
+        const values = drag.resize ? G.resizeValues(drag.element, drag.startValues, drag.startBox, delta, owner.overlay, drag.resize)
+            : G.dragValues(drag.element, drag.target, drag.startValues, delta);
+        // Only compensate an acknowledged layout. Reusing a stale frame would
+        // add the same correction repeatedly while the HUD consumes the draft.
+        const settled = drag.resize && Q.presentation.preview.settled(owner.hud);
+        if (settled && drag.layoutReady) {
+            const snapshot = {};
+            for (const field of drag.element.fields) snapshot[field.key] = owner.transaction.value(field.key);
+            Object.assign(values, G.anchorValues(drag.element, drag.target, drag.startBox,
+                G.frameBox(drag.element, drag.target, owner.overlay), snapshot, owner.overlay, drag.resize));
+        }
+        const unchanged = Object.entries(values).every(([key, value]) => owner.transaction.value(key) === value);
+        if (drag.ending && settled && drag.layoutReady && unchanged) { finishDrag(owner); return; }
+        drag.layoutReady = !!settled && unchanged;
+        if (!unchanged) owner.transaction.edit(values);
+        if (drag.ending && Date.now() >= drag.endDeadline) { finishDrag(owner); return; }
         if (reschedule) owner.dragTimer = $.Schedule(0.033, () => updateDrag(owner));
     }
     function bindDrag(owner, element, frame, resize = false) {
@@ -115,6 +129,12 @@
         });
         $.RegisterEventHandler("DragEnd", frame, () => {
             if (current !== owner || owner.drag?.frame !== frame) return;
+            if (owner.drag.resize) {
+                owner.drag.endPoint = G.absolute(owner.drag.proxy);
+                owner.drag.ending = true;
+                owner.drag.endDeadline = Date.now() + 2500;
+                return;
+            }
             updateDrag(owner, false);
             finishDrag(owner);
         });
@@ -155,9 +175,9 @@
                     zIndex: box.width * box.height < 30000 ? "3" : "1"
                 }, item.signature).sig;
             }
-            if (item.handle) {
+            for (const handle of item.handles) {
                 const canResize = !!box && owner.selected === element && !owner.applied && !owner.transaction.isLocked(element.id);
-                if (item.handle.visible !== canResize) item.handle.visible = canResize;
+                if (handle.visible !== canResize) handle.visible = canResize;
             }
         }
     }
@@ -280,19 +300,23 @@
                     if (current === owner && !owner.drag) $.DispatchEvent("UIShowTextTooltip", frame, localize(element.name));
                 });
                 frame.SetPanelEvent("onmouseout", () => $.DispatchEvent("UIHideTextTooltip", frame));
-                let handle = null;
+                const handles = [];
                 if (Q.presentation.resizeField(element)) {
-                    handle = P.create("Button", frame, "QOLCustomizeResize_" + element.id, { draggable: "true" });
-                    handle.AddClass("QOLCustomizeResize");
-                    handle.visible = false;
-                    handle.SetPanelEvent("onmouseover", () => {
-                        if (current === owner && !owner.drag) $.DispatchEvent("UIShowTextTooltip", handle, localize("Drag this corner to resize."));
-                    });
-                    handle.SetPanelEvent("onmouseout", () => $.DispatchEvent("UIHideTextTooltip", handle));
-                    bindDrag(owner, element, handle, true);
+                    for (const [name, x, y] of [["", 1, 1], ["TopLeft", -1, -1], ["TopRight", 1, -1], ["BottomLeft", -1, 1]]) {
+                        const handle = P.create("Button", frame, "QOLCustomizeResize_" + element.id + name, { draggable: "true" });
+                        handle.AddClass("QOLCustomizeResize");
+                        if (name) handle.AddClass(name);
+                        handle.visible = false;
+                        handle.SetPanelEvent("onmouseover", () => {
+                            if (current === owner && !owner.drag) $.DispatchEvent("UIShowTextTooltip", handle, localize("Drag this corner to resize."));
+                        });
+                        handle.SetPanelEvent("onmouseout", () => $.DispatchEvent("UIHideTextTooltip", handle));
+                        bindDrag(owner, element, handle, { x, y });
+                        handles.push(handle);
+                    }
                 }
                 const button = I.button(choices, "QOLCustomizeSelect_" + element.id, element.name, () => select(owner, element));
-                owner.frames.set(element.id, { frame, handle, button, caption: button.GetChild(0), signature: null });
+                owner.frames.set(element.id, { frame, handles, button, caption: button.GetChild(0), signature: null });
                 bindDrag(owner, element, frame);
             }
             search.SetPanelEvent("ontextentrychange", () => {

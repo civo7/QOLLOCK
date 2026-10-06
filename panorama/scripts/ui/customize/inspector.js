@@ -38,8 +38,8 @@
         const availability = label(parent, "");
         const draggable = Q.presentation.canDrag(element);
         const resizable = !!Q.presentation.resizeField(element);
-        label(parent, draggable ? (resizable ? "Drag to move. Pull the bottom-right corner to resize." : "Drag to move.")
-            : resizable ? "Pull the bottom-right corner to resize." : "This element is edited with the controls below.");
+        label(parent, draggable ? (resizable ? "Drag to move. Pull the any corner to resize." : "Drag to move.")
+            : resizable ? "Pull the any corner to resize." : "This element is edited with the controls below.");
         if (element.note) label(parent, element.note);
         const lock = button(parent, "QOLCustomizeLock", "Lock dragging", () => {
             if (!valid()) return;
@@ -50,9 +50,9 @@
         setActive(lock, session.isLocked(element.id));
         lock.visible = Q.presentation.canDrag(element) || !!Q.presentation.resizeField(element);
         const visibleFields = element.fields.filter(field => !field.hidden);
-        // Keep color picking in view rather than beneath a long list of flags.
-        const orderedFields = visibleFields.filter(field => field.type === "color" || field.type === "palette")
-            .concat(visibleFields.filter(field => field.type !== "color" && field.type !== "palette"));
+        // Geometry is the primary task; long palettes must not bury size and position.
+        const geometryField = field => field.resize || field.axis || field.label === "Opacity";
+        const orderedFields = visibleFields.filter(geometryField).concat(visibleFields.filter(field => !geometryField(field)));
         for (const field of orderedFields) {
             if (field.hidden) continue;
             const row = P.create("Panel", parent, "");

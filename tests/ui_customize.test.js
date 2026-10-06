@@ -657,3 +657,45 @@ test("all rendered editor text uses English/Russian catalogs and survives select
     activate(env, "QOLCustomizeCancel");
     clean(env);
 });
+
+for (const [suffix, x, y] of [["", 1, 1], ["TopLeft", -1, -1], ["TopRight", 1, -1], ["BottomLeft", -1, 1]]) {
+    test(`resize from ${suffix || "BottomRight"} pins the opposite corner after acknowledged layout`, () => {
+        const env = setup();
+        const panel = target(env, "bottomBar");
+        env.global.QOL.ui.customize.start();
+        activate(env, "QOLCustomizeSelect_bottomBar");
+        const frame = env.em.FindChildTraverse("QOLCustomizeFrame_bottomBar");
+        for (const name of ["", "TopLeft", "TopRight", "BottomLeft"]) {
+            const handle = env.em.FindChildTraverse("QOLCustomizeResize_bottomBar" + name);
+            assert.equal(handle.GetParent(), frame);
+            assert.equal(handle.visible, true);
+        }
+        const handle = env.em.FindChildTraverse("QOLCustomizeResize_bottomBar" + suffix);
+        const proxy = startDrag(env, handle);
+        proxy.actualxoffset += x * 32;
+        proxy.actualyoffset += y * 12;
+        env.global.$.DispatchEvent("DragEnd", handle, handle);
+        // Explicitly model layout at a native center/bottom anchor, separately
+        // from style writes. Production must discover the compensating offsets.
+        const store = env.hud.sandbox.global.QOL.core.ConfigStore;
+        const layout = () => {
+            const scale = store.get("ql_bottom_bar", "BOTTOM_BAR_SCALE");
+            panel.actuallayoutwidth = 160 * scale;
+            panel.actuallayoutheight = 60 * scale;
+            panel.actualxoffset = 200 - 80 * (scale - 1) + store.get("ql_bottom_bar", "BOTTOM_BAR_X_OFFSET");
+            panel.actualyoffset = 100 - 60 * (scale - 1) - store.get("ql_bottom_bar", "BOTTOM_BAR_Y_OFFSET");
+        };
+        for (let i = 0; i < 35; i++) { env.clock.advance(50); layout(); }
+        assert.equal(store.get("ql_bottom_bar", "BOTTOM_BAR_SCALE"), 1.2);
+        assert.ok(Math.abs(panel.actualxoffset + (x < 0 ? panel.actuallayoutwidth : 0) - (200 + (x < 0 ? 160 : 0))) <= 2.5);
+        assert.ok(Math.abs(panel.actualyoffset + (y < 0 ? panel.actuallayoutheight : 0) - (100 + (y < 0 ? 60 : 0))) <= 2.5);
+        activate(env, "QOLCustomizeUndo"); env.clock.advance(500);
+        assert.equal(store.get("ql_bottom_bar", "BOTTOM_BAR_SCALE"), 1);
+        assert.equal(store.get("ql_bottom_bar", "BOTTOM_BAR_X_OFFSET"), 0);
+        assert.equal(store.get("ql_bottom_bar", "BOTTOM_BAR_Y_OFFSET"), 0);
+        assert.equal(env.em.FindChildTraverse("QOLCustomizeUndo").enabled, false);
+        activate(env, "QOLCustomizeCancel"); env.clock.advance(100);
+        assert.equal(handle.IsValid(), false);
+        clean(env);
+    });
+}

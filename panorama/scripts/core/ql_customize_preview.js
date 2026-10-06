@@ -7,6 +7,7 @@
     const payloadAttr = "QOL_CUSTOMIZE_DRAFT";
     const leaseAttr = "QOL_CUSTOMIZE_LEASE";
     const ackAttr = "QOL_CUSTOMIZE_ACK";
+    const ackPayloadAttr = "QOL_CUSTOMIZE_ACK_PAYLOAD";
     let appliedPayload = "";
     let activeConfig = null;
 
@@ -45,6 +46,7 @@
             appliedPayload = raw;
             activeConfig = raw ? Q.mergeConfig(Object.assign({}, canonical, payload.values)) : null;
             QOL_UTILS.SafeSetAttribute(hud, ackAttr, raw ? payload.token : "");
+            QOL_UTILS.SafeSetAttribute(hud, ackPayloadAttr, raw);
         }
         return { changed, config: activeConfig || canonical };
     }
@@ -52,7 +54,10 @@
         appliedPayload = "";
         activeConfig = null;
         QOL_UTILS.SafeSetAttribute(hud, ackAttr, "");
+        QOL_UTILS.SafeSetAttribute(hud, ackPayloadAttr, "");
     }
     Q.presentation.preview = { write, clear, consume, reset, effective: canonical => activeConfig || canonical,
-        ack: hud => QOL_UTILS.SafeGetAttribute(hud, ackAttr, "") };
+        ack: hud => QOL_UTILS.SafeGetAttribute(hud, ackAttr, ""),
+        settled: hud => !!QOL_UTILS.SafeGetAttribute(hud, payloadAttr, "") &&
+            QOL_UTILS.SafeGetAttribute(hud, ackPayloadAttr, "") === QOL_UTILS.SafeGetAttribute(hud, payloadAttr, "") };
 })();

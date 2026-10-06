@@ -106,11 +106,15 @@ Measurements account for menu origin, scroll offsets and native UI scale; the
 simulator cannot establish native layout or input behavior.
 
 Selected surfaces with a declared overall scale or size expose a draggable
-bottom-right corner. The corner is a child aligned inside the measured frame;
+handle at each of the four corners. Every handle is aligned inside the measured frame;
 it is never a separately positioned drag visual. The selected inspector explains
 the element's actual move/resize capabilities. Corner movement projects onto the
-starting frame diagonal and edits the existing scale/size on its wire grid, preserving its bounds and making one history
-entry per gesture. It changes uniform scale/size rather than independent dimensions.
+signed starting frame diagonal and edits the existing scale/size on its wire grid, preserving its bounds and making one history
+entry per gesture. It changes uniform scale/size rather than independent dimensions. Where pixel
+offsets exist, the opposite corner is held using acknowledged native layout
+measurements. Compensation waits for a fresh preview and layout; end-of-drag
+settling remains part of the same undo entry. Elements without independent
+pixel offsets retain their native placement. Geometry controls precede palettes.
 Shop and base/Alt/Tab minimap corners reuse their existing scale/size fields.
 Ammo's legacy panel-scale key aliases current-ammo font size, so it remains
 accepted by the session but is hidden from the inspector; the current and total

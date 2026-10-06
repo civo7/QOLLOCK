@@ -90,15 +90,29 @@
         }
         return box(element.measureId ? P.findChild(target, element.measureId) : target, host);
     }
-    function resizeValues(element, startValues, startBox, delta, host) {
+    function resizeValues(element, startValues, startBox, delta, host, corner = { x: 1, y: 1 }) {
         const field = Q.presentation.resizeField(element);
         if (!field || !startBox || !(startBox.width > 0 && startBox.height > 0)) return {};
         // Project the corner movement onto the original diagonal: one uniform
         // scale, stable for tall/narrow frames and independent of UI density.
         const { width, height } = startBox;
-        const ratio = Math.max(0.1, 1 + (delta.x / scale(host, "x") * width + delta.y / scale(host, "y") * height) /
+        const ratio = Math.max(0.1, 1 + (corner.x * delta.x / scale(host, "x") * width + corner.y * delta.y / scale(host, "y") * height) /
             (width * width + height * height));
         return { [field.key]: Q.presentation.normalize(field.key, Number(startValues[field.key]) * ratio) };
+    }
+    function anchorValues(element, target, startBox, currentBox, currentValues, host, corner) {
+        const values = {};
+        if (!startBox || !currentBox) return values;
+        for (const field of element.fields) {
+            if (!field.axis || (field.unit && field.unit !== "px")) continue;
+            const axis = field.axis;
+            const size = axis === "x" ? "width" : "height";
+            const opposite = corner[axis] < 0 ? 1 : 0;
+            const correction = startBox[axis] + opposite * startBox[size] - currentBox[axis] - opposite * currentBox[size];
+            values[field.key] = Q.presentation.normalize(field.key, Number(currentValues[field.key]) +
+                correction * scale(host, axis) / scale(target.GetParent(), axis) * (field.direction || 1));
+        }
+        return values;
     }
     function dragValues(element, target, startValues, delta) {
         const parent = target.GetParent();
@@ -110,5 +124,5 @@
         }
         return values;
     }
-    Q.ui.customizeGeometry = { scale, absolute, box, frameBox, dragValues, resizeValues, isShown };
+    Q.ui.customizeGeometry = { scale, absolute, box, frameBox, dragValues, resizeValues, anchorValues, isShown };
 })();

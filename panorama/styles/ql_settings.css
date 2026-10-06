@@ -61,6 +61,9 @@ CitadelHudEscapeMenu.QOLCustomizeActive { background-color: #0000; }
 .QOLCustomizeOverlay .QOLCustomizeFrame.Selected { border: 1px solid #a8d9ec; }
 .QOLCustomizeResize { align: right bottom; width: 20px; height: 20px; border-right: 3px solid #a8d9ec; border-bottom: 3px solid #a8d9ec; z-index: 4; background-color: #182020ee; }
 .QOLCustomizeResize:hover { background-color: #a8d9ec66; }
+.QOLCustomizeResize.TopLeft { align: left top; border-right: 0px; border-bottom: 0px; border-left: 3px solid #a8d9ec; border-top: 3px solid #a8d9ec; }
+.QOLCustomizeResize.TopRight { align: right top; border-bottom: 0px; border-top: 3px solid #a8d9ec; }
+.QOLCustomizeResize.BottomLeft { align: left bottom; border-right: 0px; border-left: 3px solid #a8d9ec; }
 .QOLCustomizeLaunch { flow-children: down; width: 100%; }
 
 /* Active Stats showcase (Crosshair tab): reuse the REAL crosshair-overlay styling so the preview
