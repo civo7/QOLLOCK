@@ -43,7 +43,7 @@
         refreshFrames(owner);
     }
     function select(owner, element) {
-        if (current !== owner || owner.drag || owner.applied) return false;
+        if (current !== owner || owner.drag || owner.applied || !owner.transaction.canEditElement(element.id)) return false;
         if (owner.inspector && !owner.inspector.commit()) {
             owner.feedback = "Enter a valid number or #RRGGBB color.";
             owner.status.text = localize(owner.feedback);
@@ -121,7 +121,7 @@
     }
     function refreshFrames(owner) {
         const config = Object.assign({}, Q.getSettingsConfig(), owner.transaction.snapshot());
-        for (const element of Q.presentation.elements) {
+        for (const element of owner.elements) {
             const item = owner.frames.get(element.id);
             const target = owner.hud ? resolve(owner, element, config) : null;
             const measured = target && (!element.available || element.available(owner.hud, config)) && G.isShown(target)
@@ -194,9 +194,14 @@
         try { Q.core.storageBridge.saveSettings(Q.getSettingsConfig(), completed); }
         catch (error) { completed(error); }
     }
-    function start(onStop) {
+    function start(onStop, options = {}) {
         lastError = "";
         if (current || Q.ui.visualCheck?.isRunning()) return false;
+        const element = options.elementId ? Q.presentation.elements.find(item => item.id === options.elementId) : null;
+        if (options.elementId && !element) {
+            recordError(new Error(localize("Unknown HUD element.")));
+            return false;
+        }
         const context = $.GetContextPanel();
         const root = Q.core.persistence.getUIRoot();
         const hud = Q.ui.customizeSession.resolveHud(root);
@@ -204,7 +209,8 @@
         if (!P.isAlive(root) || !P.isAlive(window) || !window.BHasClass("Visible")) return false;
         const overlay = P.create("Panel", context, "QOLCustomizeEditor");
         if (!P.isAlive(overlay)) return false;
-        const owner = { context, hud, window, overlay, transaction: Q.ui.customizeSession.create(root, hud, window),
+        const owner = { context, hud, window, overlay, transaction: Q.ui.customizeSession.create(root, hud, window, element),
+            elements: element ? [element] : Q.presentation.elements,
             hidden: [], active: [], frames: new Map(), timer: null, dragTimer: null, drag: null, inspector: null, onStop, applied: false, saving: false };
         current = owner;
         try {
@@ -241,11 +247,13 @@
             tools.AddClass("QOLUnifiedModalSurface");
             tools.hittest = true;
             I.label(tools, "Customize", "ModalTitle").AddClass("QOLCustomizeTitle");
-            I.label(tools, "Select an element on the HUD or in the list.");
+            I.label(tools, element ? "Only this element can be edited. Other HUD elements stay locked."
+                : "Select an element on the HUD or in the list.");
             I.label(tools, "Press Enter to preview a typed value.");
             const catalog = P.create("Panel", overlay, "QOLCustomizeCatalog");
             catalog.AddClass("QOLCustomizeCatalog");
             catalog.AddClass("QOLUnifiedModalSurface");
+            catalog.visible = !element;
             I.label(catalog, "HUD Elements", "ModalTitle").AddClass("QOLCustomizeTitle");
             I.label(catalog, "Search elements");
             const search = P.create("TextEntry", catalog, "QOLCustomizeSearch");
@@ -256,7 +264,7 @@
             choices.AddClass("QOLCustomizeChoices");
             let group = "";
             // Groups are source keys; localized headings do not need ICU collation.
-            const ordered = Q.presentation.elements.slice().sort((a, b) => {
+            const ordered = owner.elements.slice().sort((a, b) => {
                 const left = a.group || "HUD", right = b.group || "HUD";
                 return left < right ? -1 : left > right ? 1 : 0;
             });
@@ -290,7 +298,7 @@
             search.SetPanelEvent("ontextentrychange", () => {
                 if (current !== owner) return;
                 const query = String(search.text || "").trim().toLowerCase();
-                for (const element of Q.presentation.elements) owner.frames.get(element.id).button.visible = !query ||
+                for (const element of owner.elements) owner.frames.get(element.id).button.visible = !query ||
                     [element.name, element.group || "HUD", ...element.fields.map(field => field.label)]
                         .some(text => (text + " " + localize(text)).toLowerCase().includes(query));
                 for (const heading of headings) heading.visible = !query;
@@ -324,7 +332,7 @@
             owner.status = I.label(tools, "Waiting for HUD preview");
             Q.preview?.hideAll?.();
             Q.tooltip?.hideRowTooltip?.();
-            select(owner, Q.presentation.elements[0]);
+            select(owner, owner.elements[0]);
             watch(owner);
             overlay.SetFocus();
             return current === owner;

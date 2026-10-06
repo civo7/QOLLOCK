@@ -72,7 +72,23 @@
     const getCreateSliderRow = () => (typeof globalThis.CreateSliderRow === "function" ? globalThis.CreateSliderRow : null);
     const getCreateSectionTitle = () => (typeof globalThis.CreateSectionTitle === "function" ? globalThis.CreateSectionTitle : ((p, t) => Q.ui?.renderer?.createSectionHeader?.(p, t)));
     const getCreateSeparator = () => (typeof globalThis.CreateSeparator === "function" ? globalThis.CreateSeparator : ((p) => Q.ui?.renderer?.createSeparator?.(p)));
-    const getCreateAnimatedToggle = () => (typeof globalThis.CreateAnimatedInlineToggleSection === "function" ? globalThis.CreateAnimatedInlineToggleSection : null);
+    const CUSTOMIZE_TOGGLE_ELEMENTS = {
+        HUD_TOP_BAR_ENABLED: "topBar", HUD_BOTTOM_BAR_ENABLED: "bottomBar", HUD_ITEMS_ENABLED: "items", HUD_SOULS_ENABLED: "souls",
+        ENABLE_PASSIVE_COOLDOWN: "cooldowns", ENABLE_CROSSHAIR_STATS: "activeStats", ENABLE_DAMAGE_IMPACT: "damageImpact",
+        ENABLE_RELOAD_COOLDOWN: "reload", ENABLE_UNSECURED_SOUL_TIMER: "unsecuredTimer", ENABLE_BETTER_UNSECURED: "unsecuredSouls",
+        ENABLE_CHAT: "chat", DISABLE_DAMAGE_REPORT: "damageReport", ENABLE_SHOP_RECENT_PURCHASES: "recentPurchases",
+        ENABLE_SHOP_ITEM_NOTIFICATIONS: "purchaseNotifications", ENABLE_KEYBOARD_OVERLAY: "keyboard", ENABLE_ZIP_BOOST: "zipBoost",
+        ENABLE_COMPASS_SPEED: "speed", ENABLE_COMPASS: "compass", ENABLE_ALT_ZOOM: "minimapAlt", ENABLE_TAB_ZOOM: "minimapTab"
+    };
+    const getCreateAnimatedToggle = () => {
+        const create = globalThis.CreateAnimatedInlineToggleSection;
+        if (typeof create !== "function") return null;
+        return (parent, title, key, description, build, toggleOptions, sectionOptions) => {
+            const element = CUSTOMIZE_TOGGLE_ELEMENTS[key];
+            const options = element ? Object.assign({}, sectionOptions, { customizeElement: element }) : sectionOptions;
+            return create(parent, title, key, description, build, toggleOptions, options);
+        };
+    };
     const getCreateCollapsibleSubSection = () => (typeof globalThis.CreateCollapsibleSubSection === "function" ? globalThis.CreateCollapsibleSubSection : null);
     const getCreateAnimatedEnumSection = () => (typeof globalThis.CreateAnimatedInlineEnumSection === "function" ? globalThis.CreateAnimatedInlineEnumSection : null);
     const getCreateSecondaryCheckboxRow = () => (typeof globalThis.CreateInlineSecondaryCheckboxToggleRow === "function" ? globalThis.CreateInlineSecondaryCheckboxToggleRow : null);
@@ -181,7 +197,7 @@
         }
 
         createSep(list);
-        createTitle(list, "Stamina");
+        createTitle(list, "Stamina", null, "stamina");
         if (createSliderRow) {
             createSliderRow(list, "Rotate", "STAMINA_CHARGE_ANGLE", "angle_0_360", "Rotate the stamina charge indicator.", true);
         }
@@ -190,7 +206,7 @@
         }
 
         createSep(list);
-        createTitle(list, "Damage Numbers");
+        createTitle(list, "Damage Numbers", null, "damageNumbers");
         if (createRow) {
             createRow(list, "Big Numbers", "ENABLE_CUMULATIVE_DMG", "toggle", null, null, null, null);
             createRow(list, "Small Numbers", "ENABLE_HIDE_SMALL_NUMBERS", "toggle", null, null, null, [{ invert: true }]);
@@ -204,7 +220,7 @@
         }
 
         createSep(list);
-        createTitle(list, "Ammo");
+        createTitle(list, "Ammo", null, "ammo");
         if (createRow) {
             createRow(list, "Visual", "ENABLE_AMMO_STATUS", "toggle", null, null, null, null);
             createRow(list, "Current", "ENABLE_HIDE_AMMO_ALL", "toggle", null, null, null, [{ invert: true }]);
@@ -245,7 +261,7 @@
         }
 
         createSep(list);
-        createTitle(list, "Item Target Reticle");
+        createTitle(list, "Item Target Reticle", null, "targetShapes");
         if (createRow) {
             createRow(list, "Highlight Mode", "ENABLE_RED_DIAMOND", "toggle", null, null, null, null);
             createRow(list, "Improved Hint", "ENABLE_IMPROVED_HINT", "toggle", null, null, null, null);
@@ -318,6 +334,7 @@
                     createRow(sectionParent, "Color", "BOTTOM_BAR_WASH_COLOR", "palette", null, null, null, palette, "Choose a preset color wash for the bottom ability bar.");
                 }
                 if (createSliderRow) {
+                    createTitle(sectionParent, "Active Items", null, "activeItems");
                     createSliderRow(sectionParent, "Active Item Scale", "ACTIVE_ITEMS_SCALE", "size_50_250");
                     createSliderRow(sectionParent, "Active Item Horizontal Offset", "ACTIVE_ITEMS_X_OFFSET", "offset_n1500_1500_s1");
                     createSliderRow(sectionParent, "Active Item Vertical Offset", "ACTIVE_ITEMS_Y_OFFSET", "offset_n500_500_s1");
@@ -398,7 +415,7 @@
         }
 
         createSep(list);
-        createTitle(list, "Player Stats", "ENABLE_STATS_POSITION");
+        createTitle(list, "Player Stats", "ENABLE_STATS_POSITION", "playerStats");
         if (createRow) {
             createRow(list, "Side", "STATS_POSITION_SIDE", "buttongroup", null, null, null, STATS_POSITION_SIDE_OPTIONS);
         }
@@ -469,7 +486,7 @@
         }
 
         createSep(list);
-        createTitle(list, "Shop Display");
+        createTitle(list, "Shop Display", null, "shop");
         if (createSecondaryCheckboxRow) {
             createSecondaryCheckboxRow(
                 list,
@@ -505,7 +522,7 @@
             globalThis.gEnumSectionSyncCallbacks = [];
         }
 
-        createTitle(list, "Player");
+        createTitle(list, "Player", null, "healthbar");
         if (createRow) {
             createRow(list, "Combat Indicator", "ENABLE_COMBAT_INDICATOR", "toggle", null, null, null, null);
             createRow(list, "Color Warning", "ENABLE_COLORED_HEALTHBAR", "multitoggle", null, null, null, COLOR_WARNING_THRESHOLD_OPTIONS, "HP Warning");
@@ -569,7 +586,7 @@
         }
 
         createSep(list);
-        createTitle(list, "Player Stats", "ENABLE_STATS_POSITION");
+        createTitle(list, "Player Stats", "ENABLE_STATS_POSITION", "playerStats");
         if (createRow) {
             createRow(list, "Side", "STATS_POSITION_SIDE", "buttongroup", null, null, null, STATS_POSITION_SIDE_OPTIONS);
         }
@@ -665,7 +682,7 @@
         const createSecondaryCheckboxRow = getCreateSecondaryCheckboxRow();
         const palette = getPaletteOptions();
 
-        createTitle(list, "Base");
+        createTitle(list, "Base", null, "minimap");
         if (createRow) {
             createRow(list, "Minimalist", "MINIMAL_MINIMAP", "toggle", null, null, null, null, "Cleans up visuals of the minimap significantly to reduce clutter.");
         }

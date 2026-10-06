@@ -14,7 +14,7 @@
         return P.isAlive(candidate) && candidate.paneltype === "CitadelHud" ? candidate : null;
     }
 
-    function create(root, hud, window) {
+    function create(root, hud, window, element = null) {
         globalThis.FlushPendingSave();
         const baseline = Object.assign({}, Q.getSettingsConfig());
         const fingerprint = JSON.stringify(baseline);
@@ -27,6 +27,10 @@
         const past = [];
         const future = [];
         const locks = new Set();
+        const editableElements = element ? [element] : Q.presentation.elements;
+        const allowedElements = new Set(editableElements.map(item => item.id));
+        const allowedKeys = new Set();
+        for (const item of editableElements) for (const field of item.fields) allowedKeys.add(field.key);
         const same = (a, b) => JSON.stringify(a) === JSON.stringify(b);
         const valid = () => !closed && P.isAlive(root) && (!hud || P.isAlive(hud)) && P.isAlive(window) && window.BHasClass("Visible") &&
             resolveHud(root) === hud &&
@@ -43,6 +47,7 @@
             if (!valid()) return false;
             const patch = {};
             for (const [key, value] of Object.entries(values)) {
+                if (!allowedKeys.has(key)) return false;
                 const normalized = Q.presentation.normalize(key, value);
                 if (normalized === null) return false;
                 patch[key] = normalized;
@@ -84,6 +89,7 @@
             return publish();
         }
         function reset(element) {
+            if (!allowedElements.has(element.id)) return false;
             const values = {};
             for (const field of element.fields) values[field.key] = QOL_DEFAULT_CONFIG[field.key];
             return edit(values);
@@ -107,7 +113,11 @@
             value: key => (effectiveDraft || (effectiveDraft = Q.mergeConfig(Object.assign({}, baseline, draft))))[key],
             snapshot: () => Object.assign({}, draft),
             canUndo: () => !gesture && !!past.length, canRedo: () => !gesture && !!future.length,
-            setLocked: (id, locked) => locked ? locks.add(id) : locks.delete(id), isLocked: id => locks.has(id),
+            canEditElement: id => allowedElements.has(id),
+            setLocked: (id, locked) => {
+                if (allowedElements.has(id)) { if (locked) locks.add(id); else locks.delete(id); }
+            },
+            isLocked: id => !allowedElements.has(id) || locks.has(id),
             acknowledged: () => Q.presentation.preview.ack(hud) === token
         };
     }

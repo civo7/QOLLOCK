@@ -1032,6 +1032,8 @@
     "Show panels": "Показать панели",
     "Show frames": "Показать рамки",
     "Hide frames": "Скрыть рамки",
+    "Only this element can be edited. Other HUD elements stay locked.": "Можно изменить только этот элемент. Остальные элементы HUD заблокированы.",
+    "Unknown HUD element.": "Неизвестный элемент HUD.",
     "HEX (#RRGGBB)": "HEX (#RRGGBB)",
     "Drag an element to move it. Drag its corner to resize.": "Перетащи элемент для перемещения, уголок — для изменения масштаба.",
 };

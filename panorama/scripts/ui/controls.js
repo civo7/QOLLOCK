@@ -1016,7 +1016,7 @@
         return sep;
     }
 
-    function createSectionTitle(parent, title, configIdForPerf) {
+    function createSectionTitle(parent, title, configIdForPerf, customizeElement) {
         const localizedTitle = localize(title || "");
         if (typeof gCurrentSettingsSectionTitle !== "undefined") {
             gCurrentSettingsSectionTitle = String(title || "");
@@ -1043,6 +1043,7 @@
         titleLabel.text = localizedTitle;
         getTooltip().bindSectionPerfTooltip(titleRow, title, "", getCurrentTab(), configIdForPerf || "", "toggle", null);
         createSectionResetButton(titleRow, () => collectResetKeysFromSectionTitleRow(titleRow), null, titleHead);
+        if (customizeElement) Q.ui.customize?.createEntryAction(titleRow, customizeElement);
         return titleLabel;
     }
 
@@ -1188,6 +1189,8 @@
         toggleSwitchButton.AddClass("SwitchButton");
         const toggleHandle = $.CreatePanel("Panel", toggleSwitchButton, "handle");
         toggleHandle.AddClass("SectionInlineToggleHandle");
+
+        if (sectionOptions?.customizeElement) Q.ui.customize?.createEntryAction(titleRow, sectionOptions.customizeElement);
 
         let titleCheckboxBtn = null;
         if (sectionOptions && sectionOptions.titleCheckbox) {

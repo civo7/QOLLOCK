@@ -1032,6 +1032,8 @@
     "Show panels": "Show panels",
     "Show frames": "Show frames",
     "Hide frames": "Hide frames",
+    "Only this element can be edited. Other HUD elements stay locked.": "Only this element can be edited. Other HUD elements stay locked.",
+    "Unknown HUD element.": "Unknown HUD element.",
     "HEX (#RRGGBB)": "HEX (#RRGGBB)",
     "Drag an element to move it. Drag its corner to resize.": "Drag an element to move it. Drag its corner to resize.",
 };

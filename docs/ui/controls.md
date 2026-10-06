@@ -19,6 +19,13 @@ slider value input. Both keys participate in row reset/changed-state tracking;
 checkbox visuals resync on reset and external config updates. Search collection
 also registers the checkbox setting. Minimap Size uses this for Fixed Icon Size.
 
+`createSectionTitle` accepts an optional fourth argument, a Customize element ID.
+Animated toggle sections accept `sectionOptions.customizeElement` alongside their
+existing title-checkbox options. Both add an action to the section header, which
+remains usable when its section body is collapsed. Search collection creates no
+editor actions. Gameplay tab renderers declare the bindings; the controls factory
+does not infer native panel owners or settings scope. See [Customize](customize.md).
+
 ## Automated checks and their limits
 
 `tests/ui_slider_roundtrip.test.js` loads the production HUD and settings XML

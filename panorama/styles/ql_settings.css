@@ -2647,6 +2647,12 @@ CitadelHudEscapeMenu.QOLCustomizeActive { background-color: #0000; }
 	visibility: collapse;
 }
 
+.QOLCustomizeEntry
+{
+	margin-left: 8px;
+	vertical-align: center;
+}
+
 #SettingsWindow .ConfigSectionIconBtn
 {
 	width: 22px;

@@ -3,6 +3,24 @@
 Customize is a registered settings tab. It edits existing persistent keys; it
 does not introduce a second configuration format or a gameplay renderer.
 
+Gameplay section headers also expose Customize for their declared surface. These
+entries call the same editor with `start(onStop, {elementId})`. A scoped session
+creates only that element's frame and inspector and hides the full catalog. Its
+key whitelist rejects edits and resets belonging to other elements; lock controls
+cannot expand the scope. Unknown IDs fail before opening or changing HUD state.
+The standalone Customize tab retains full-catalog editing. Scope and locks are
+session-only and add no persistent settings or defaults.
+
+Section entry bindings live in `ui/gameplay_tabs.js`; `ui/controls.js` only hosts
+the optional action, and `ui/customize/tab.js` owns its launch behavior. The
+existing visual rows remain available during native acceptance, using the same
+stored keys and wire precision as the editor. Native children follow their
+parent's movement and existing shared colors retain their established ownership.
+
+Whole-HUD root classes remain owned by the app's complete configuration sync.
+Top Bar updates apply only that feature's styles; passing its local config slice
+to the global class synchronizer would transiently reset unrelated settings.
+
 The editor can open wherever the settings window is available, including menus
 without gameplay HUD scripts. In that context exact values, HEX, reset, history
 and Apply/Cancel remain available. No draft is sent to a generic menu publication

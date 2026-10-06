@@ -1,6 +1,28 @@
 (() => {
     "use strict";
     const Q = globalThis.QOL;
+    const P = Q.core.panel;
+    const localize = text => Q.ui.theme.LocalizeSettingsText(text, true);
+    function createEntryAction(parent, elementId) {
+        if (!P.isAlive(parent) || !Q.presentation.elements.some(element => element.id === elementId)) return null;
+        const action = P.create("Button", parent, "QOLCustomizeEntry_" + elementId);
+        action.AddClass("SectionTitleActionBtn");
+        action.AddClass("QOLCustomizeEntry");
+        const caption = P.create("Label", action, "");
+        caption.AddClass("SectionTitleActionLabel");
+        caption.text = localize("Customize");
+        action.SetPanelEvent("onactivate", () => {
+            if (!P.isAlive(action)) return;
+            $.DispatchEvent("UIHideTextTooltip", action);
+            if (!Q.ui.customize.start(null, { elementId })) {
+                $.DispatchEvent("UIShowTextTooltip", action, Q.ui.customize.failureText() ||
+                    localize("The editor could not open. Close other visual tools and try again."));
+            }
+        });
+        action.SetPanelEvent("onmouseout", () => $.DispatchEvent("UIHideTextTooltip", action));
+        return action;
+    }
+    Q.ui.customize.createEntryAction = createEntryAction;
     function render(list) {
         const I = Q.ui.customizeInspector;
         const host = Q.core.panel.create("Panel", list, "QOLCustomizeLaunch");

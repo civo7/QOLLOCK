@@ -47,6 +47,18 @@ observed result, and remaining issue. A green offline suite is not a client pass
 
 ## HUD lifecycle and feature interactions
 
+- Open Customize from a gameplay section header. Move that element, enter exact
+  placement/opacity/scale or color where supported, and confirm other surfaces
+  cannot be selected or moved. Cancel must restore the imported placement; Apply
+  must preserve unrelated settings. Repeat with a disabled/absent surface and
+  through the full Customize tab. Native children still follow their parent.
+- Drag a resize corner, drop, reopen, then close via Escape during a gesture.
+  Confirm no drag proxy, stale frame, input blocker or preview survives exit.
+- Check ammo outside its original box and compact stats when both native stats
+  owners coexist. Verify right docking, reset, and replacement after respawn.
+- Import a genuine older settings code, edit only one element, save, fully
+  restart and compare placement and unrelated settings with the recovery copy.
+
 - Enter a normal match, die/respawn, return to menu, and enter another match.
   Confirm critical HUD panels remain usable and no repeated Panorama errors occur.
 - Open/close shop and settings; disable/re-enable affected features.
