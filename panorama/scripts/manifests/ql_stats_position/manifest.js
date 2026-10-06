@@ -2,10 +2,11 @@
 // =============================================================================
 // QOLLOCK — Stats Position (Move/Hide Active & Detailed Player Stats)
 // =============================================================================
-// OWNS:        Positioning and visibility of #hudPlayerStats (active modifiers
-//              block in compact mode and detailed list under TAB/scoreboard).
+// OWNS:        Positioning and visibility of the visible native stats owner
+//              (current #hudActivePlayerStats, legacy #hudPlayerStats).
 // DOES NOT OWN: CitadelHudActivePlayerStats content, modifier data stream.
-// DEPENDS ON:  QOL.core.FeatureRegistry, QOL.core.Scheduler, QOL.core.Hud
+// DEPENDS ON:  QOL.core.FeatureRegistry, QOL.core.Scheduler, QOL.core.Hud,
+//              QOL.presentation.chooseStatsPanel (shared with Customize)
 // CONFIG KEYS: ENABLE_STATS_POSITION, STATS_POSITION_SIDE,
 //              STATS_POSITION_X_OFFSET, STATS_POSITION_Y_OFFSET,
 //              STATS_POSITION_HIDE_NORMAL, STATS_POSITION_HIDE_SCOREBOARD
@@ -71,7 +72,9 @@
             var _applied = false;
 
             function _getStatsPanel(root) {
-                var current = (root && root.FindChildTraverse) ? root.FindChildTraverse("hudPlayerStats") : null;
+                const legacy = QOL.core.panel.findTraverse(root, "hudPlayerStats");
+                const active = QOL.core.panel.findTraverse(root, "hudActivePlayerStats");
+                const current = QOL.presentation.chooseStatsPanel(legacy, active);
                 if (current !== _panel) {
                     if (isPanelValid(_panel)) resetStatsPanel(_panel);
                     _panel = current;
@@ -111,8 +114,8 @@
                 var side = (Math.round(Number(cfg.STATS_POSITION_SIDE)) === 1) ? 1 : 0;
                 var rawX = Math.round(Number(cfg.STATS_POSITION_X_OFFSET) || 0);
                 var rawY = Math.round(Number(cfg.STATS_POSITION_Y_OFFSET) || 0);
-                var offX = Math.max(-500, Math.min(500, rawX));
-                var offY = Math.max(-500, Math.min(500, rawY));
+                var offX = Math.max(-2000, Math.min(2000, rawX));
+                var offY = Math.max(-2000, Math.min(2000, rawY));
 
                 var sig = hidden ? "hidden" : ("show|" + side + "|" + offX + "|" + offY);
                 if (_applied && _sig === sig) return;
@@ -190,12 +193,14 @@
         test: function(ctx) {
             try {
                 var root = $.GetContextPanel();
-                var panel = root ? root.FindChildTraverse("hudPlayerStats") : null;
+                const panel = QOL.presentation.chooseStatsPanel(
+                    QOL.core.panel.findTraverse(root, "hudPlayerStats"),
+                    QOL.core.panel.findTraverse(root, "hudActivePlayerStats"));
                 return {
                     passed: !!panel,
                     name: "Player stats panel exists",
-                    message: panel ? "" : "hudPlayerStats not found",
-                    assertions: [{ passed: !!panel, name: "hudPlayerStats panel exists" }]
+                    message: panel ? "" : "Native player stats owner not found",
+                    assertions: [{ passed: !!panel, name: "Native player stats owner exists" }]
                 };
             } catch(e) {
                 return {

@@ -105,6 +105,12 @@ entries measure the content but move the native host, with Alt priority when bot
 zoom states apply. World-bound targets and damage numbers use their existing
 size/visibility controls, without screen-position frames.
 
+Ammo and player-stats placement use expanded current-schema bounds consistently
+in the editor, ordinary controls and gameplay owners. Historical compact schemas
+retain their original bounds. The stats manifest and editor share the same
+visible-owner selection, including the coexisting collapsed legacy stats block;
+right docking changes native content rather than shrinking its full-screen owner.
+
 `core/ql_customize_preview.js` carries a leased draft through HUD attributes.
 The existing app config poll validates the session stamp and field whitelist,
 then normalizes the draft through the ordinary config merger and applies it to

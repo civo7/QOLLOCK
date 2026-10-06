@@ -34,7 +34,7 @@
 "use strict";
 
 // Shared preset source-of-truth used by ql_settings.js and ql_core.js.
-var QOL_SCHEMA_SEMVER = "4.0.7";
+var QOL_SCHEMA_SEMVER = "4.0.8";
 var QOL_SCHEMA_WIRE_VERSION = 2;
 
 // ---- Shared storage keys ----
@@ -1802,6 +1802,10 @@ var QOL_COMPACT_SCHEMA_4_0_7 = QOL_COMPACT_SCHEMA_4_0_6.map(field =>
     ["BOTTOM_BAR_WASH_COLOR", "KEYBOARD_OVERLAY_WASH_COLOR", "PLAYER_HEALTHBAR_ACCENT_COLOR", "MINIMAP_ICON_COLOR"].includes(field.key)
         ? Object.assign({}, field, { max: 0x1ffffff }) : field
 );
+var QOL_COMPACT_SCHEMA_4_0_8 = QOL_COMPACT_SCHEMA_4_0_7.map(field =>
+    ["AMMO_PANEL_X_OFFSET", "AMMO_PANEL_Y_OFFSET", "STATS_POSITION_X_OFFSET", "STATS_POSITION_Y_OFFSET"].includes(field.key)
+        ? Object.assign({}, field, { min: -2000, max: 2000 }) : field
+);
 
 var QOL_LATEST_COMPACT_SEMVER = QOL_SCHEMA_SEMVER;
 
@@ -1842,6 +1846,7 @@ var QOL_LATEST_COMPACT_SEMVER = QOL_SCHEMA_SEMVER;
 // 4.0.5        Active item slot scale and X/Y offsets.
 // 4.0.6        Tagged RGB colors for inventory, stamina and ammo text.
 // 4.0.7        Tagged RGB for the remaining existing presentation palettes.
+// 4.0.8        Screen-wide ammo/stat offsets; historical bounds remain unchanged.
 // ==========================================================================
 // Known issue: ENABLE_COLORED_HEALTHBAR appears twice in V24+ schemas
 // (once from V2 base, once from V24 concat). Harmless — the decode
@@ -2109,6 +2114,10 @@ var QOL_COMPACT_SCHEMA_REGISTRY = {
     "4.0.7": {
         wireVersion: QOL_COMPACT_WIRE_VERSION_2_0_1,
         schema: QOL_COMPACT_SCHEMA_4_0_7
+    },
+    "4.0.8": {
+        wireVersion: QOL_COMPACT_WIRE_VERSION_2_0_1,
+        schema: QOL_COMPACT_SCHEMA_4_0_8
     }
 };
 var QOL_COMPACT_SCHEMA_WIRE_TO_SEMVER = (typeof QOL_CODEC === "object" && QOL_CODEC && typeof QOL_CODEC.BuildWireToSemver === "function")

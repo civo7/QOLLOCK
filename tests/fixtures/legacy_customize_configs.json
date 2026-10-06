@@ -1,0 +1,70 @@
+{
+  "sourceCommit": "f6cba55",
+  "cases": [
+    {
+      "version": "3.1.7",
+      "code": "[QOL-3-1-7]:AloUSxQjZMhMDg8lk6khZCADh4clKBQAQkEGAIKiAWRkZLRYQjZiCRlkADyWwBgggwyAjCAcWFoyAicDycHjAUsswRJLQB5kzgBACwAyyJAhIUMmQ8kHBowMSzIBAFCWyChLZGT0L33IjlxMwGOc8ryKIkOGBgAAoAWgIyNbkZEpkP8fpQKQpJWQQQYAk5HJ0EB5AEM",
+      "expected": {
+        "SOULS_X_OFFSET": 350,
+        "SOULS_Y_OFFSET": -120,
+        "SOULS_OPACITY": 0.35,
+        "ITEMS_X_OFFSET": -250,
+        "ITEMS_OPACITY": 0.55,
+        "ITEMS_WASH_COLOR": 13,
+        "TOP_BAR_SCALE": 0.8,
+        "BOTTOM_BAR_SCALE": 1.2,
+        "AMMO_PANEL_X_OFFSET": -125,
+        "AMMO_PANEL_Y_OFFSET": 175,
+        "AMMO_CURRENT_SCALE": 145,
+        "STATS_POSITION_X_OFFSET": 300,
+        "STATS_POSITION_Y_OFFSET": -200,
+        "MINIMAP_SMALL_SIZE": 650,
+        "MINIMAP_LARGE_SIZE_ALT": 850
+      }
+    },
+    {
+      "version": "4.0.1",
+      "code": "[QOL-4-0-1]:AloUSxQjZMhMDg8lk6khZCADh4clKBQAQkEGAIKiAWRkZLRYQjZiCRlkADyWwBgggwyAjCAcWFoyAicDycHjAUsswRJLQB5kzgBACwAyyJAhIUMmQ8kHBowMSzIBAFCWyChLZGT0L33IjlxMwGOc8ryKIkOGBgAAoAWgIyNbkZEpkP8fpQKQpJWQQQYAk5HJ0EB5-P8DPQ",
+      "expected": {
+        "SOULS_X_OFFSET": 350,
+        "SOULS_Y_OFFSET": -120,
+        "SOULS_OPACITY": 0.35,
+        "ITEMS_X_OFFSET": -250,
+        "ITEMS_OPACITY": 0.55,
+        "ITEMS_WASH_COLOR": 13,
+        "TOP_BAR_SCALE": 0.8,
+        "BOTTOM_BAR_SCALE": 1.2,
+        "AMMO_PANEL_X_OFFSET": -125,
+        "AMMO_PANEL_Y_OFFSET": 175,
+        "AMMO_CURRENT_SCALE": 145,
+        "STATS_POSITION_X_OFFSET": 300,
+        "STATS_POSITION_Y_OFFSET": -200,
+        "MINIMAP_SMALL_SIZE": 650,
+        "MINIMAP_LARGE_SIZE_ALT": 850
+      }
+    },
+    {
+      "version": "4.0.5",
+      "code": "[QOL-4-0-5]:AloUSxQjZMhMDg8lk6khZCADh4clKBQAQkEGAIKiAWRkZLRYQjZiCRlkADyWwBgggwyAjCAcWFoyAicDycHjAUsswRJLQB5kzgBACwAyyJAhIUMmQ8kHBowMSzIBAFCWyChLZGT0L33IjlxMwGOc8ryKIkOGBgAAoAWgIyNbkZEpkP8fpQKQpJWQQQYAk5HJ0EB5-P-rejf6AJA",
+      "expected": {
+        "SOULS_X_OFFSET": 350,
+        "SOULS_Y_OFFSET": -120,
+        "SOULS_OPACITY": 0.35,
+        "ITEMS_X_OFFSET": -250,
+        "ITEMS_OPACITY": 0.55,
+        "ITEMS_WASH_COLOR": 13,
+        "TOP_BAR_SCALE": 0.8,
+        "BOTTOM_BAR_SCALE": 1.2,
+        "AMMO_PANEL_X_OFFSET": -125,
+        "AMMO_PANEL_Y_OFFSET": 175,
+        "AMMO_CURRENT_SCALE": 145,
+        "STATS_POSITION_X_OFFSET": 300,
+        "STATS_POSITION_Y_OFFSET": -200,
+        "MINIMAP_SMALL_SIZE": 650,
+        "MINIMAP_LARGE_SIZE_ALT": 850,
+        "ACTIVE_ITEMS_SCALE": 135,
+        "ACTIVE_ITEMS_X_OFFSET": 275
+      }
+    }
+  ]
+}

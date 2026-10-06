@@ -42,8 +42,8 @@
             { key: "AMMO_PANEL_SCALE", type: "slider", min: 100, max: 300, step: 1, default: 100 },
             { key: "AMMO_CURRENT_SCALE", type: "slider", min: 100, max: 300, step: 1, default: 100 },
             { key: "AMMO_TOTAL_SCALE", type: "slider", min: 100, max: 300, step: 1, default: 100 },
-            { key: "AMMO_PANEL_X_OFFSET", type: "slider", min: -200, max: 200, step: 5, default: 0 },
-            { key: "AMMO_PANEL_Y_OFFSET", type: "slider", min: -200, max: 200, step: 5, default: 0 },
+            { key: "AMMO_PANEL_X_OFFSET", type: "slider", min: -2000, max: 2000, step: 5, default: 0 },
+            { key: "AMMO_PANEL_Y_OFFSET", type: "slider", min: -2000, max: 2000, step: 5, default: 0 },
             { key: "AMMO_CLIP_ANGLE", type: "slider", min: 0, max: 360, step: 1, default: 0 },
             { key: "AMMO_TEXT_COLOR", type: "palette", default: 0 }
         ],
@@ -323,8 +323,8 @@
                 var hideAll = Number(cfg.ENABLE_HIDE_AMMO_ALL) === 1;
                 var curScale = _clamp(cfg.AMMO_CURRENT_SCALE !== undefined && cfg.AMMO_CURRENT_SCALE !== null ? cfg.AMMO_CURRENT_SCALE : cfg.AMMO_PANEL_SCALE, 100, 300);
                 var totScale = _clamp(cfg.AMMO_TOTAL_SCALE !== undefined && cfg.AMMO_TOTAL_SCALE !== null ? cfg.AMMO_TOTAL_SCALE : cfg.AMMO_PANEL_SCALE, 100, 300);
-                var ox = _clamp(cfg.AMMO_PANEL_X_OFFSET, -200, 200);
-                var oy = _clamp(cfg.AMMO_PANEL_Y_OFFSET, -200, 200);
+                var ox = _clamp(cfg.AMMO_PANEL_X_OFFSET, -2000, 2000);
+                var oy = _clamp(cfg.AMMO_PANEL_Y_OFFSET, -2000, 2000);
                 var sig = curScale + "|" + totScale + "|" + ox + "|" + oy + "|" + hideMagazine + "|" + hideAll + "|" + colorIdx;
                 var targets = _textTargets(ap);
                 if (_lastMainSig === sig && _samePanels(_lastTextTargets, targets)) {

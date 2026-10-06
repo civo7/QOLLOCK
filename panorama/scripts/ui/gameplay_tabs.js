@@ -217,8 +217,8 @@
         }
         if (createSliderRow) {
             createSliderRow(list, "Total Size", "AMMO_TOTAL_SCALE", "size_100_300");
-            createSliderRow(list, "Horizontal Offset", "AMMO_PANEL_X_OFFSET", "offset_n200_200");
-            createSliderRow(list, "Vertical Offset", "AMMO_PANEL_Y_OFFSET", "offset_n200_200");
+            createSliderRow(list, "Horizontal Offset", "AMMO_PANEL_X_OFFSET", "offset_n2000_2000");
+            createSliderRow(list, "Vertical Offset", "AMMO_PANEL_Y_OFFSET", "offset_n2000_2000");
             createSliderRow(list, "Rotate Magazine", "AMMO_CLIP_ANGLE", "angle_0_360", "Rotate the ammo magazine visualiser.", true);
         }
         if (createRow) {
@@ -403,8 +403,8 @@
             createRow(list, "Side", "STATS_POSITION_SIDE", "buttongroup", null, null, null, STATS_POSITION_SIDE_OPTIONS);
         }
         if (createSliderRow) {
-            createSliderRow(list, "Horizontal Offset", "STATS_POSITION_X_OFFSET", "offset_n500_500", "");
-            createSliderRow(list, "Vertical Offset", "STATS_POSITION_Y_OFFSET", "offset_n500_500", "");
+            createSliderRow(list, "Horizontal Offset", "STATS_POSITION_X_OFFSET", "offset_n2000_2000", "");
+            createSliderRow(list, "Vertical Offset", "STATS_POSITION_Y_OFFSET", "offset_n2000_2000", "");
         }
         if (createRow) {
             createRow(list, "Hide in normal view", "STATS_POSITION_HIDE_NORMAL", "toggle", null, null, null, null, "Hide the bottom-left active stats block during normal play. It stays in the HUD (just made invisible), so the Crosshair Active Stats mirror keeps working.");
@@ -574,8 +574,8 @@
             createRow(list, "Side", "STATS_POSITION_SIDE", "buttongroup", null, null, null, STATS_POSITION_SIDE_OPTIONS);
         }
         if (createSliderRow) {
-            createSliderRow(list, "Horizontal Offset", "STATS_POSITION_X_OFFSET", "offset_n500_500", "");
-            createSliderRow(list, "Vertical Offset", "STATS_POSITION_Y_OFFSET", "offset_n500_500", "");
+            createSliderRow(list, "Horizontal Offset", "STATS_POSITION_X_OFFSET", "offset_n2000_2000", "");
+            createSliderRow(list, "Vertical Offset", "STATS_POSITION_Y_OFFSET", "offset_n2000_2000", "");
         }
         if (createRow) {
             createRow(list, "Hide in normal view", "STATS_POSITION_HIDE_NORMAL", "toggle", null, null, null, null, "Hide the bottom-left active stats block during normal play. It stays in the HUD (just made invisible), so the Crosshair Active Stats mirror keeps working.");
