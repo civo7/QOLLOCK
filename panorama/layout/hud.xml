@@ -1,13 +1,13 @@
-<!-- xml reconstructed by Source 2 Viewer 17.0.0.0 - https://valveresourceformat.github.io -->
+<!-- xml reconstructed by Source 2 Viewer - https://valveresourceformat.github.io -->
 <root>
 	<styles>
-		<include src="s2r://panorama/styles/citadel_base_styles.vcss_c" />
-		<include src="s2r://panorama/styles/ability_property_icons.vcss_c" />
-		<include src="s2r://panorama/styles/hud_common.vcss_c" />
-		<include src="s2r://panorama/styles/npc_icons.vcss_c" />
-		<include src="s2r://panorama/styles/hud.vcss_c" />
+		<include src="s2r://panorama/styles/citadel_base_styles.vcss" />
+		<include src="s2r://panorama/styles/ability_property_icons.vcss" />
+		<include src="s2r://panorama/styles/hud_common.vcss" />
+		<include src="s2r://panorama/styles/npc_icons.vcss" />
+		<include src="s2r://panorama/styles/hud.vcss" />
 		<!-- ============================================================= -->
-		<!-- QOLLOCK CUSTOM: Global styles and settings loader             -->
+		<!-- QOLLOCK CUSTOM: Global styles                                 -->
 		<!-- ============================================================= -->
 		<include src="s2r://panorama/styles/showrank.vcss_c" />
 		<include src="s2r://panorama/styles/qollock_global.vcss_c" />
@@ -16,12 +16,9 @@
 		<!-- ============================================================= -->
 	</styles>
 	<!-- ============================================================= -->
-	<!-- QOLLOCK CUSTOM: HUD runtime scripts                         -->
+	<!-- QOLLOCK CUSTOM: HUD runtime scripts                           -->
 	<!-- ============================================================= -->
 	<scripts>
-		<!-- ============================================================= -->
-		<!-- Core infrastructure (peer/thirdeye architecture)              -->
-		<!-- ============================================================= -->
 		<include src="s2r://panorama/scripts/core/ql_namespace.vjs_c" />
 		<include src="s2r://panorama/scripts/ql_utils.vjs_c" />
 		<include src="s2r://panorama/scripts/core/ql_logger.vjs_c" />
@@ -38,9 +35,6 @@
 		<include src="s2r://panorama/scripts/core/ql_persistence.vjs_c" />
 		<include src="s2r://panorama/scripts/core/ql_storage_bridge.vjs_c" />
 		<include src="s2r://panorama/scripts/core/ql_codec.vjs_c" />
-		<!-- ============================================================= -->
-		<!-- Transitional runtime infrastructure                           -->
-		<!-- ============================================================= -->
 		<include src="s2r://panorama/scripts/ql_shared_presets.vjs_c" />
 		<include src="s2r://panorama/scripts/ql_bridge.vjs_c" />
 		<include src="s2r://panorama/scripts/ql_state.vjs_c" />
@@ -49,10 +43,7 @@
 		<include src="s2r://panorama/scripts/ql_recent_purchases_data.vjs_c" />
 		<include src="s2r://panorama/scripts/ql_minimap_crate_data.vjs_c" />
 		<include src="s2r://panorama/scripts/ql_perf_overlay.vjs_c" />
-		<!-- Dev tool: dumps the real panel tree to the console log so the headless
-		     profiler can be fed a captured tree instead of a modelled one. -->
 		<include src="s2r://panorama/scripts/tools/qol_dump_tree.vjs_c" />
-		<!-- Feature manifests (order-independent; all depend on FeatureRegistry) -->
 		<include src="s2r://panorama/scripts/manifests/ql_cast_failed_hint/manifest.vjs_c" />
 		<include src="s2r://panorama/scripts/manifests/ql_mouse_cursor/manifest.vjs_c" />
 		<include src="s2r://panorama/scripts/manifests/ql_statlocker/manifest.vjs_c" />
@@ -68,13 +59,11 @@
 		<include src="s2r://panorama/scripts/manifests/ql_ui_controls/manifest.vjs_c" />
 		<include src="s2r://panorama/scripts/manifests/ql_unsecured_souls_timer/manifest.vjs_c" />
 		<include src="s2r://panorama/scripts/manifests/ql_urn_timer/manifest.vjs_c" />
-		<!-- Disabled: legacy Unsecured Plus runtime remains authoritative above. -->
 		<include src="s2r://panorama/scripts/manifests/ql_on_death_arcade/manifest.vjs_c" />
 		<include src="s2r://panorama/scripts/manifests/ql_minimap_runtime/manifest.vjs_c" />
 		<include src="s2r://panorama/scripts/manifests/ql_recent_purchases/manifest.vjs_c" />
 		<include src="s2r://panorama/scripts/manifests/ql_target_shapes/manifest.vjs_c" />
 		<include src="s2r://panorama/scripts/manifests/ql_souls/manifest.vjs_c" />
-		<!-- Disabled: these style manifests do not track the authoritative flat config live. -->
 		<include src="s2r://panorama/scripts/manifests/ql_stat_bonuses/manifest.vjs_c" />
 		<include src="s2r://panorama/scripts/manifests/ql_stats_position/manifest.vjs_c" />
 		<include src="s2r://panorama/scripts/manifests/ql_damage_impact/manifest.vjs_c" />
@@ -100,7 +89,6 @@
 		<include src="s2r://panorama/scripts/manifests/ql_compass/manifest.vjs_c" />
 		<include src="s2r://panorama/scripts/manifests/ql_reload_cooldown/manifest.vjs_c" />
 		<include src="s2r://panorama/scripts/manifests/ql_item_mirror/manifest.vjs_c" />
-		<!-- Healthbar: shared style helpers, variants, and manifest -->
 		<include src="s2r://panorama/scripts/manifests/ql_healthbar/shared.vjs_c" />
 		<include src="s2r://panorama/scripts/manifests/ql_healthbar/variants/accent.vjs_c" />
 		<include src="s2r://panorama/scripts/manifests/ql_healthbar/variants/minimalist.vjs_c" />
@@ -110,11 +98,10 @@
 		<include src="s2r://panorama/scripts/manifests/ql_healthbar/manifest.vjs_c" />
 		<include src="s2r://panorama/scripts/manifests/ql_perf/manifest.vjs_c" />
 		<include src="s2r://panorama/scripts/manifests/ql_show_build_id/manifest.vjs_c" />
-		<!-- App: loads LAST, after all feature manifests -->
 		<include src="s2r://panorama/scripts/core/ql_app.vjs_c" />
 	</scripts>
 	<!-- ============================================================= -->
-	<!-- END QOLLOCK CUSTOM                                        -->
+	<!-- END QOLLOCK CUSTOM                                            -->
 	<!-- ============================================================= -->
 	<snippets>
 		<snippet name="OffscreenEnemySnippet">
@@ -160,13 +147,6 @@
 		</snippet>
 	</snippets>
 	<CitadelHud class="WindowRoot" hittest="false" disallowedstyleflags="hover,descendantfocus">
-		<!-- ============================================================= -->
-		<!-- QOLLOCK CUSTOM: Mirror gShopOpen for hero shop visibility  -->
-		<!-- ============================================================= -->
-		<GlobalClassListener classes="gShopOpen" />
-		<!-- ============================================================= -->
-		<!-- END QOLLOCK CUSTOM                                        -->
-		<!-- ============================================================= -->
 		<Panel class="HudCore" hittest="false" disallowedstyleflags="hover,descendantfocus">
 			<CitadelPingIndicator id="PingIndicator" hittest="false" />
 			<CitadelHudEventIndicatorsPanel id="HudEventIndicatorsPanel" />
@@ -330,15 +310,6 @@
 							<Panel id="HudMinimapContainer">
 								<HudMinimap id="hud_minimap" acceptsinput="false" acceptsfocus="false" />
 							</Panel>
-							<!-- ========================================================= -->
-							<!-- QOLLOCK CUSTOM: Minimap overlay anchor and markers         -->
-							<!-- ========================================================= -->
-							<Panel id="minimap_overlay_root" hittest="false" hittestchildren="false">
-								<Panel id="minimap_markers" hittest="false" hittestchildren="false" />
-							</Panel>
-							<!-- ========================================================= -->
-							<!-- END QOLLOCK CUSTOM                                      -->
-							<!-- ========================================================= -->
 						</Panel>
 						<Panel id="minimap_location">
 							<Label class="location_district" text="{s:district_name}" />
@@ -493,12 +464,5 @@
 			<CitadelRadialCommsWheel />
 		</Panel>
 		<HudPerfStatsBasics hittest="false" />
-		<!-- ============================================================= -->
-		<!-- QOLLOCK CUSTOM: Local CEF Storage Bridge                 -->
-		<!-- ============================================================= -->
-		<CitadelHTMLPanel id="QOLStorageBridge" class="QOLStorageBridge" hittest="false" acceptsfocus="false" />
-		<!-- ============================================================= -->
-		<!-- END QOLLOCK CUSTOM                                        -->
-		<!-- ============================================================= -->
 	</CitadelHud>
 </root>

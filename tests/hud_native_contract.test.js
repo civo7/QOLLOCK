@@ -12,17 +12,17 @@ function readLayout(name) {
     ).replace(/\r\n/g, "\n");
 }
 
-test("HUD override tracks the current native panel and style contract", () => {
+test("HUD override is the current native layout plus QOLLOCK includes", () => {
     const layout = readLayout("hud.xml");
 
     assert.doesNotMatch(layout, /<CitadelChatWheel\b/);
     assert.equal((layout.match(/<CitadelHudMovementSpeed\b/g) || []).length, 1);
-    assert.match(layout, /styles\/ability_property_icons\.vcss_c/);
-    assert.doesNotMatch(layout, /styles\/hud_timer\.vcss_c/);
+    assert.match(layout, /styles\/ability_property_icons\.vcss/);
+    assert.doesNotMatch(layout, /styles\/hud_timer\.vcss/);
 
     assert.match(layout, /scripts\/core\/ql_app\.vjs_c/);
-    assert.match(layout, /id="minimap_overlay_root"/);
-    assert.match(layout, /id="QOLStorageBridge"/);
+    assert.doesNotMatch(layout, /id="minimap_overlay_root"/);
+    assert.doesNotMatch(layout, /id="QOLStorageBridge"/);
 });
 
 test("unit-target override keeps QOLLOCK hooks on the refreshed native snippet", () => {
