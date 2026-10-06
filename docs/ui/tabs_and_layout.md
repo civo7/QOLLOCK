@@ -62,7 +62,10 @@ Q.ui.layout = [
 If `Q.ui.layout` is not yet loaded (e.g. isolated test harness), it gracefully falls back to canonical defaults.
 
 ### Canonical Tab Hierarchy
-- **General**: Support, Settings (`Config`), Presets, Console, Arcade
+- **General**: Support, Settings (`Config`), Customize, Presets, Console, Arcade
+
+Customize uses the registered renderer in `ui/customize/tab.js`; its overlay,
+session and cross-context preview contract are documented in [customize.md](customize.md).
 - **Gameplay**: Crosshair, Healthbar, HUD, Overlay, Minimap, Shop, Audio
 
 ---

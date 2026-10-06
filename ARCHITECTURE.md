@@ -132,6 +132,7 @@ are compatibility guards, not evidence that browser APIs are available in HUD.
 | `panorama/scripts/ql_settings.js` | Mutable settings-side `MOD_CONFIG`, module dependency injection and bootstrap |
 | `panorama/scripts/ql_settings_persistence.js` | Settings-side normalization, publication, import/export and update glue |
 | `panorama/scripts/ui/` | Settings shell, metadata, controls, registered tab renderers, search, drag, modals, themes and storage UI |
+| `panorama/scripts/ql_customize_data.js`, `customize/`, `core/ql_customize_preview.js`, `ui/customize/` | Shared presentation capabilities, transient HUD preview and settings editor; see [Customize](docs/ui/customize.md) |
 | `panorama/scripts/ql_settings_previews.js` | Preview ownership, positioning and update dispatch |
 | `panorama/scripts/ql_settings_tooltips.js` | Shared tooltip creation, text and scroll/position tracking |
 | `panorama/scripts/ql_settings_loc/` | Shipped runtime locale dictionaries; the UI text source of truth |

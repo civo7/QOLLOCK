@@ -11,8 +11,8 @@
 //              UNIT_TARGET_HINT_SIZE
 // CSS:         none (uiScale + SetPanelOpacitySafe only)
 // PATTERN:     Polling (5Hz with panels, 2Hz discovery, 1Hz idle).
-//              Reads State.lastResolvedGates.redDiamondEnabled (cross-feature gate).
-// CONFIG SRC:  State.lastConfig (Pattern B — enabledByDefault:true, no enableKey)
+//              Reads the registered red-diamond toggle and current root class.
+// CONFIG SRC:  ctx.config.view() (supports transient presentation drafts)
 // PORTED FROM: features/ql_feat_targetshapes.js (222 lines)
 // =============================================================================
 
@@ -207,11 +207,10 @@
             // ── Main tick (adapted from update function + NeedsTargetShapeRuntimeWork gate) ──
             function _tick() {
                 var root = _root || $.GetContextPanel(); if (root && !_root) _root = root;
-                // Pattern B: no enableKey → ConfigStore bucket is empty; read from global config
-                var cfg = (State.lastConfig) || {};
+                const cfg = ctx.config.view();
 
                 // Self-gating (replicates old NeedsTargetShapeRuntimeWork gate)
-                var redDiamondEnabled = !!(State.lastResolvedGates && State.lastResolvedGates.redDiamondEnabled);
+                const redDiamondEnabled = Utils.IsCfgEnabled(cfg, "ENABLE_RED_DIAMOND");
                 if (!NeedsTargetShapeRuntimeWork(cfg, redDiamondEnabled)) {
                     if (_loop) _loop.reschedule(1.0);
                     // Idle cleanup — reset State to prevent sticky-gate firing

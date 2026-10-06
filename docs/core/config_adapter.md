@@ -9,7 +9,9 @@ Requires ConfigStore. Shared defaults come from `ql_shared_presets.js`, not a
   multitoggle option keys. A shared key can reach several feature buckets.
 - Coercion combines registered toggle keys with compatibility name rules;
   numeric 0/1 toggles become booleans. Do not infer every key's type solely from
-  its prefix. Palette/numeric compatibility conversions also occur.
+  its prefix. Declared toggles take priority, then numeric suffixes, then legacy
+  toggle-prefix rules. Numeric opacity/size values of zero or one must remain
+  numeric even under `MINIMAL_` or `HUD_`. Palette conversions retain tagged RGB.
 - Values without owners enter the adapter's `_legacy` staging bucket. ConfigStore
   only accepts registered buckets; do not assume unowned settings reach a feature.
 - The optional enable-key map injects an `enabled` value for mapped keys. The

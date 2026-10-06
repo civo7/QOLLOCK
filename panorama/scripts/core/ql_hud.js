@@ -326,7 +326,7 @@
             return false;
         };
 
-        const walkthrough = hasAnyClass(root, ["QOLVisualCheckActive"]) || hasAnyClass(topBar, ["QOLVisualCheckActive"]);
+        const walkthrough = hasAnyClass(root, ["QOLVisualCheckActive", "QOLCustomizeActive"]) || hasAnyClass(topBar, ["QOLVisualCheckActive", "QOLCustomizeActive"]);
         const inHideout = isInHideout(root);
         const hiddenUiClasses = (walkthrough || inHideout) ? ["HudTakeoverEnabled"] : ["ShowEscapeMenu", "HudTakeoverEnabled"];
 
@@ -346,10 +346,8 @@
     };
 
     const isColorWarningEnabled = (cfg) => {
-        if (typeof QOL_UTILS !== "undefined" && QOL_UTILS.IsCfgEnabled) {
-            return QOL_UTILS.IsCfgEnabled(cfg, "ENABLE_COLOR_WARNING");
-        }
-        return Number(cfg?.ENABLE_COLOR_WARNING) === 1;
+        return ["ENABLE_COLORED_HEALTHBAR", "ENABLE_COLOR_WARNING_25", "ENABLE_COLOR_WARNING_65", "ENABLE_COLOR_WARNING_75"]
+            .some(key => Number(cfg?.[key]) === 1);
     };
 
     const getState = () => (typeof QOL !== "undefined" && QOL.state) ? QOL.state : (typeof State !== "undefined" ? State : { cachedPanels: {} });
@@ -1046,7 +1044,7 @@
         const budhudHealthbarEnabled = healthbarType === 4;
         const minecraftHealthbarEnabled = healthbarType === 5;
         const enemyV2EnhancedEnabled = false;
-        const colorWarningEnabled = Number(cfg?.ENABLE_COLOR_WARNING) === 1;
+        const colorWarningEnabled = isColorWarningEnabled(cfg);
         const cleanStacksEnabled = Number(cfg?.ENABLE_CLEAN_STACKS) === 1;
         const compassEnabled = Number(cfg?.ENABLE_COMPASS) === 1;
         const compassSpeedEnabled = Number(cfg?.ENABLE_COMPASS_SPEED) === 1;

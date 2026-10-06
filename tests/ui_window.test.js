@@ -270,11 +270,15 @@ test("Escape menu root keeps the native cancel path while QOLLOCK settings handl
 
     const backgroundHandler = xml.match(/<Panel id="EscapeBackground" onactivate="([^"]+)"/);
     assert.ok(backgroundHandler);
-    const clickBackground = () => vm.runInNewContext(backgroundHandler[1].replace(/&amp;/g, "&"), {
+    const clickBackground = (customizing = false) => vm.runInNewContext(backgroundHandler[1].replace(/&amp;/g, "&").replace(/&apos;/g, "'"), {
         $: mockDollar,
+        ...(customizing ? { QOL: { ui: { customize: { isRunning: () => true } } } } : {}),
         CitadelResumePlaying: () => { resumes++; }
     });
     windowApi.setOpen(true);
+    clickBackground(true);
+    assert.equal(windowApi.isOpen(), true, "missed editor clicks must preserve settings and the draft");
+    assert.equal(resumes, 2);
     clickBackground();
     assert.equal(windowApi.isOpen(), false);
     assert.equal(resumes, 2);

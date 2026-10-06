@@ -105,9 +105,16 @@ class Sandbox {
             DispatchEventAsync: (delaySec, name, ...args) =>
                 clock.schedule(delaySec, () => self.dispatch(name, args)),
 
-            RegisterEventHandler: (name, _panel, handler) => {
+            RegisterEventHandler: (name, panel, handler) => {
                 const list = self.eventHandlers.get(name) || [];
-                list.push(handler);
+                // Model panel-scoped delivery, not a broadcast to every
+                // DragStart/HTMLTitle handler registered on unrelated panels.
+                const scoped = (...args) => {
+                    if (!panel?.IsValid() || (args[0] !== panel && args[0] !== panel.id)) return;
+                    return handler(...args);
+                };
+                scoped.targetPanel = panel;
+                list.push(scoped);
                 self.eventHandlers.set(name, list);
                 return list.length;
             },
@@ -166,6 +173,7 @@ class Sandbox {
         const direct = this.eventHandlers.get(name);
         if (direct) {
             for (const h of direct) {
+                if (h.targetPanel && (!h.targetPanel.IsValid() || (args[0] !== h.targetPanel && args[0] !== h.targetPanel.id))) continue;
                 try {
                     h(...args);
                     handled = true;

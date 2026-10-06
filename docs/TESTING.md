@@ -29,6 +29,12 @@ the maintainer's compilation and client checks remain required.
 
 ## Focused release regressions
 
+Customize regressions exercise draft publication separately from canonical
+settings, Apply/Cancel, acknowledged saves, cleanup, measured frame geometry,
+drag proxies and corner resizing. Run `node --test tests/ui_customize.test.js
+tests/customize_catalog.test.js` for the editor subset. Modeled dimensions and
+input events do not establish native rendering or interaction.
+
 ```text
 node --test tests/storage_bridge.test.js tests/audio_runtime.test.js
 node --test tests/ui_slider_roundtrip.test.js tests/helper_api_contract.test.js

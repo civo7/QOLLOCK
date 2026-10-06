@@ -1110,6 +1110,7 @@
             : _settingsOpenGuardUntilMs;
         if (!ignoreGuard && now < guardUntil) return;
         Q.ui.visualCheck?.onMenuClosed();
+        Q.ui.customize?.onMenuClosed();
 
         const ctx = (typeof $.GetContextPanel === "function") ? $.GetContextPanel() : null;
         const win = (ctx && ctx.FindChildTraverse ? ctx.FindChildTraverse("SettingsWindow") : null) || findShell();
@@ -2206,6 +2207,7 @@
         const bg = root?.FindChildTraverse ? root.FindChildTraverse("EscapeBackground") : null;
         if (bg && isAlive(bg)) {
             bg.SetPanelEvent("onactivate", () => {
+                if (Q.ui.customize?.isRunning()) return;
                 if (isOpen()) {
                     setOpen(false);
                 } else {
@@ -2253,6 +2255,7 @@
                     : _settingsOpenGuardUntilMs;
                 if (now < guardUntil) return;
                 Q.ui.visualCheck?.onMenuClosed();
+                Q.ui.customize?.onMenuClosed();
                 const ctx = (typeof $.GetContextPanel === "function") ? $.GetContextPanel() : null;
                 const win = (ctx && ctx.FindChildTraverse ? ctx.FindChildTraverse("SettingsWindow") : null) || findShell();
                 if (win) win.RemoveClass("Visible");

@@ -1,0 +1,125 @@
+# HUD customization editor
+
+Customize is a registered settings tab. It edits existing persistent keys; it
+does not introduce a second configuration format or a gameplay renderer.
+
+The editor can open wherever the settings window is available, including menus
+without gameplay HUD scripts. In that context exact values, HEX, reset, history
+and Apply/Cancel remain available. No draft is sent to a generic menu publication
+root, no live-preview acknowledgment is claimed, and native selection frames
+remain absent. HUD identity comes from a named `Hud` or `CitadelHud` owner rather
+than persistence's generic-root fallback. A context/HUD change ends the draft
+instead of transferring it to a different gameplay tree.
+
+`ql_customize_data.js` and the data modules in `scripts/customize/` are shared by
+HUD and settings. They define scoped owner paths, existing editable fields and
+normalization against the current compact schema. The catalog includes native
+HUD families, overlays, map/shop states and additions in other script contexts;
+see [the visual surface inventory](../CUSTOMIZE_SURFACE_INVENTORY.md). The
+settings-only modules in `ui/customize/` separate the session, measured geometry,
+inspector, overlay and tab. Native HUD owners remain under their original parents.
+Frames use the existing Panorama DragStart/DragEnd contract. A temporary,
+input-transparent proxy is the compositor's displayPanel, while native HUD panels,
+selection frames and corners retain their parents. The proxy origin is sampled
+after native placement, so that the first compositor reparent cannot become a
+HUD offset. Proxy movement updates only the draft; the gameplay manifest owns
+the resulting HUD layout. Proxies are deleted on drop, canceled gesture or exit,
+including after reparenting outside the editor subtree.
+Movable frames receive the verified native XML `draggable` attribute at creation;
+`SetDraggable` remains optional, as in the existing settings-header dragger.
+The earlier unconditional call could abort startup on a native API without that
+method, although the simulator always supplied it. Locks and capability guards
+also gate the event handlers.
+
+Idle frames are transparent. Hover and selection show an outline without a
+content tint. Frames belong to independent movable/resizable surfaces and
+explicitly measured standalone selections such as stamina/AP. Settings-only
+entries that inherit an owner's geometry (health warnings, top-bar details,
+quickbuy) remain in the catalog without a competing hit-test frame. Their native
+owners can still be measured for availability. Hover identifies the element by localized
+tooltip. Smaller surfaces have input priority within larger family frames;
+editor chrome remains above all frames. Show frames exposes the outlines together. Hide panels
+temporarily collapses the catalog and inspector while retaining the view controls.
+These view choices are session-only. Missing elements are dimmed in the catalog;
+the selected inspector shows their availability without repeating a suffix on
+every catalog row.
+The canvas consumes activation, and EscapeBackground is guarded during an editor
+session. Missed clicks preserve the draft instead of resuming gameplay. Explicit
+Apply/Cancel and the native Escape path retain their existing lifecycle.
+
+Colors appear at the start of the inspector with preset swatches, a HEX entry,
+preview chip and native Default action. Numeric and HEX entries also submit on
+blur; malformed values remain marked rather than overwriting the accepted draft.
+The AP/infinity currency has its own selection frame under AbilitiesContainer.
+Its inspector exposes the existing shared bottom-bar color and explains that
+independent placement is not currently persisted.
+
+Modern compact stats are measured through the active owner's HudStatBlock;
+expanded modifier rows do not enlarge the compact block's hit box. The coexisting legacy owner is
+selected only when its content has layout; otherwise the active owner is used by
+both editor and gameplay manifest. Stamina frames measure the native foreground
+pips rather than an unrelated ability-charge widget.
+
+The editor suppresses hero-testing controls while active. It does not change
+the separate native ClientStatus window or its normal presentation.
+
+Top-bar frames measure the union of native player detail cards, clock, score and
+objective content from the extracted top-bar layouts. They exclude the full-height
+TopBar, TeamsContainer, PlayersContainer, chat and background owners. If no known
+content can be measured, no full-screen fallback frame is created.
+
+Panels, buttons and typography use the shared `QOLUnifiedModal*`, `ModalTitle`,
+`ModalInstructions` and `ValueInput` styles. The active settings theme applies to
+the editor through the ordinary theme classes. Customize CSS owns its layout,
+selection frames, swatches and invalid-field state; it does not define a separate
+button palette or text font. The launch page uses the same shared controls.
+Startup/update exceptions are logged and shown as diagnostic text rather than
+being described as a requirement to enter a match.
+
+The session holds a draft, selection locks and bounded undo/redo history. Reset
+reads current defaults from source. Numeric entries use the wire grid; supported
+color entries use [tagged RGB](../core/custom_colors.md). Missing conditional
+panels keep their controls available and remain searchable by localized element
+and field names. Fixed assets and separate-context additions without existing
+settings have explanatory entries. Children without independent offsets inherit
+their parent's placement; no settings or gameplay placeholders are invented.
+A panel replacement or hidden owner cancels an active move/resize gesture.
+Measurements account for menu origin, scroll offsets and native UI scale; the
+simulator cannot establish native layout or input behavior.
+
+Selected surfaces with a declared overall scale or size expose a draggable
+bottom-right corner. The corner is a child aligned inside the measured frame;
+it is never a separately positioned drag visual. The selected inspector explains
+the element's actual move/resize capabilities. Corner movement projects onto the
+starting frame diagonal and edits the existing scale/size on its wire grid, preserving its bounds and making one history
+entry per gesture. It changes uniform scale/size rather than independent dimensions.
+Shop and base/Alt/Tab minimap corners reuse their existing scale/size fields.
+Ammo's legacy panel-scale key aliases current-ammo font size, so it remains
+accepted by the session but is hidden from the inspector; the current and total
+ammo controls remain available and do not get an overall resize corner.
+
+Dragging currently requires existing pixel offsets. Cooldown offsets retain
+their percentage units and use exact numeric entry; their native containing-block
+geometry still needs verification before drag conversion. Minimap base/Alt/Tab
+entries measure the content but move the native host, with Alt priority when both
+zoom states apply. World-bound targets and damage numbers use their existing
+size/visibility controls, without screen-position frames.
+
+`core/ql_customize_preview.js` carries a leased draft through HUD attributes.
+The existing app config poll validates the session stamp and field whitelist,
+then normalizes the draft through the ordinary config merger and applies it to
+feature configuration and shared root styles/classes. Derived threshold masters
+and legacy ammo-scale aliases therefore follow the normal save semantics.
+Canonical `State.lastConfig`,
+storage attributes and exports remain unchanged during preview. Cancel, menu
+exit, expired leases and conflicting canonical edits restore canonical settings.
+Benchmark stress configuration blocks the preview layer.
+
+Apply commits pending valid input through MarkConfigDirty/FlushPendingSave, then
+uses storageBridge.saveSettings. The editor reports success only after the CEF
+response. Failed saves retain applied settings and offer Retry save or Close.
+Closing a draft discards it; closing after Apply does not undo the committed edit.
+This response does not prove persistence across a native client restart.
+
+The editor implementation and catalog are still awaiting maintainer compile,
+repack and client acceptance. Use [the release checklist](../TEST_CHECKLIST.md).

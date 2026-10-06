@@ -19,6 +19,14 @@
 		<include src="s2r://panorama/scripts/ql_shared_presets.vjs_c" />
 		<include src="s2r://panorama/scripts/ql_bridge.vjs_c" />
 		<include src="s2r://panorama/scripts/ql_config.vjs_c" />
+		<!-- ==== QOLLOCK customization capabilities and transient preview ==== -->
+		<include src="s2r://panorama/scripts/ql_customize_data.vjs_c" />
+		<include src="s2r://panorama/scripts/customize/overlays.vjs_c" />
+		<include src="s2r://panorama/scripts/customize/map_shop.vjs_c" />
+		<include src="s2r://panorama/scripts/customize/hud_details.vjs_c" />
+		<include src="s2r://panorama/scripts/customize/other_contexts.vjs_c" />
+		<include src="s2r://panorama/scripts/core/ql_customize_preview.vjs_c" />
+		<!-- ==== End QOLLOCK customization preview ==== -->
 		<include src="s2r://panorama/scripts/ql_custom_announcer_pack_meta.vjs_c" />
 		<!-- Phase 1: Locale modules (must load before ql_settings.js) -->
 		<include src="s2r://panorama/scripts/ql_settings_loc/ql_settings_loc_en.vjs_c" />
@@ -60,6 +68,13 @@
 		<include src="s2r://panorama/scripts/ui/console_tab.vjs_c" />
 		<include src="s2r://panorama/scripts/ui/arcade_tab.vjs_c" />
 		<include src="s2r://panorama/scripts/ui/visual_check.vjs_c" />
+		<!-- ==== QOLLOCK customization editor ==== -->
+		<include src="s2r://panorama/scripts/ui/customize/session.vjs_c" />
+		<include src="s2r://panorama/scripts/ui/customize/geometry.vjs_c" />
+		<include src="s2r://panorama/scripts/ui/customize/inspector.vjs_c" />
+		<include src="s2r://panorama/scripts/ui/customize/editor.vjs_c" />
+		<include src="s2r://panorama/scripts/ui/customize/tab.vjs_c" />
+		<!-- ==== End QOLLOCK customization editor ==== -->
 		<include src="s2r://panorama/scripts/ui/dev_tab.vjs_c" />
 		<include src="s2r://panorama/scripts/ui/gameplay_tabs.vjs_c" />
 		<include src="s2r://panorama/scripts/ui/theme.vjs_c" />
@@ -72,7 +87,7 @@
 		<!-- ============================================================= -->
 		<!-- QOLLOCK CUSTOM: Close settings on background activation    -->
 		<!-- ============================================================= -->
-		<Panel id="EscapeBackground" onactivate="if ($.IsModSettingsOpen &amp;&amp; $.IsModSettingsOpen()) { $.ForceCloseModSettings(true); } else { CitadelResumePlaying(); }" />
+		<Panel id="EscapeBackground" onactivate="if (typeof QOL !== &apos;undefined&apos; &amp;&amp; QOL.ui &amp;&amp; QOL.ui.customize &amp;&amp; QOL.ui.customize.isRunning()) {} else if ($.IsModSettingsOpen &amp;&amp; $.IsModSettingsOpen()) { $.ForceCloseModSettings(true); } else { CitadelResumePlaying(); }" />
 		<!-- ============================================================= -->
 		<!-- END QOLLOCK CUSTOM                                        -->
 		<!-- ============================================================= -->

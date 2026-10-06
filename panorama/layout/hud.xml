@@ -50,6 +50,14 @@
 		<include src="s2r://panorama/scripts/ql_state.vjs_c" />
 		<include src="s2r://panorama/scripts/ql_panelcache.vjs_c" />
 		<include src="s2r://panorama/scripts/ql_config.vjs_c" />
+		<!-- ==== QOLLOCK customization capabilities and transient preview ==== -->
+		<include src="s2r://panorama/scripts/ql_customize_data.vjs_c" />
+		<include src="s2r://panorama/scripts/customize/overlays.vjs_c" />
+		<include src="s2r://panorama/scripts/customize/map_shop.vjs_c" />
+		<include src="s2r://panorama/scripts/customize/hud_details.vjs_c" />
+		<include src="s2r://panorama/scripts/customize/other_contexts.vjs_c" />
+		<include src="s2r://panorama/scripts/core/ql_customize_preview.vjs_c" />
+		<!-- ==== End QOLLOCK customization preview ==== -->
 		<include src="s2r://panorama/scripts/ql_recent_purchases_data.vjs_c" />
 		<include src="s2r://panorama/scripts/ql_minimap_crate_data.vjs_c" />
 		<include src="s2r://panorama/scripts/ql_perf_overlay.vjs_c" />

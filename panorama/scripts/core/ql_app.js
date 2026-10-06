@@ -217,6 +217,7 @@
             }
         }
         if (!flatConfig) return;
+        if (!_benchmarkStressActive) flatConfig = QOL.presentation?.preview?.effective(flatConfig) || flatConfig;
         if (QOL?.core?.hud && typeof QOL.core.hud.applyRootClasses === "function") {
             try {
                 const nowMs = _nowMs();
@@ -560,6 +561,19 @@
                 _nextRootClassSyncMs = nowMs + 1000;
             }
 
+            // Drafts only affect registered presentation keys. Keep canonical
+            // state/storage separate, and restore it on expiry/exit/conflict.
+            const preview = QOL.presentation?.preview;
+            if (preview) {
+                const canonical = globalThis.State?.lastConfig || QOL.buildDefaultConfig();
+                const layer = preview.consume(hudPanel, canonical, _benchmarkStressActive);
+                if (layer.changed && !_benchmarkStressActive) {
+                    ConfigAdapter.loadFromFlat(layer.config, _enableKeyMap);
+                    _syncFeatureEnabledState();
+                    _syncRootClasses(hudPanel, layer.config);
+                }
+            }
+
             _syncDiagnosticState(hudPanel, nowMs);
 
             _configPollTimer = $.Schedule(0.25, poll);
@@ -727,6 +741,10 @@
             _restoreStressBenchmark(_findHud(), "shutdown");
         }
         _stopConfigPolling();
+        if (QOL.presentation?.preview) {
+            QOL.presentation.preview.reset(_hudPanel);
+            ConfigAdapter.loadFromFlat(globalThis.State?.lastConfig || QOL.buildDefaultConfig(), _enableKeyMap);
+        }
         if (FeatureRegistry) FeatureRegistry.shutdown();
         if (ConfigStore) {
             const hud = _findHud();

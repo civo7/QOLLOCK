@@ -105,18 +105,17 @@
     ]);
 
     const coerceType = (key, value) => {
-        // Toggle keys: numeric 0/1 → boolean
+        // Declared toggles take precedence; numeric fields must not become
+        // booleans merely because their prefix is HUD_ or MINIMAL_.
+        if (KNOWN_TOGGLE_KEYS.has(key) && typeof value === "number" && (value === 0 || value === 1)) return !!value;
+        if (/_SCALE$|_SIZE$|_OFFSET$|_OPACITY$|_ANGLE$|_INTERVAL$|_VOLUME$|_COUNT$|_DISPLAY_SEC$/.test(key)) return Number(value);
         if (typeof value === "number" && (value === 0 || value === 1)) {
             const toggleKeys = /^ENABLE_|^DISABLE_|^HUD_|^SHOW_|^SUPPORT_|^MINIMAL_|^DRAG_|^PREVIEWS_|^BHOP_|^ON_DEATH_GAME_|^ITEM_FILTER_/;
-            if (toggleKeys.test(key) || KNOWN_TOGGLE_KEYS.has(key)) return !!value;
+            if (toggleKeys.test(key)) return !!value;
         }
         // Palette keys: ensure number 0-29
         if (/_COLOR$|_WASH_COLOR$|AMMO_TEXT_COLOR|MINIMAP_ICON_COLOR/.test(key)) {
             return Math.round(Number(value)) || 0;
-        }
-        // Slider keys: ensure number
-        if (/_SCALE$|_SIZE$|_OFFSET$|_OPACITY$|_ANGLE$|_INTERVAL$|_VOLUME$|_COUNT$|_DISPLAY_SEC$/.test(key)) {
-            return Number(value);
         }
         return value;
     };

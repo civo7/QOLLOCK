@@ -355,6 +355,13 @@ class Panel {
         return this._fire("onactivate") || this._fire("onmouseactivate");
     }
 
+    // Flag only: tests dispatch verified DragStart/DragEnd callbacks and supply
+    // layout measurements. This does not simulate the native drag compositor.
+    SetDraggable(enabled) {
+        this._assertValid("SetDraggable");
+        this.draggable = !!enabled;
+    }
+
     SetFocus() {
         if (this._doc) this._doc.focused = this;
         return true;

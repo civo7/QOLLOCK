@@ -44,6 +44,7 @@
                 }
             ]
         },
+        { id: "Customize", name: "Customize", icon: "s2r://panorama/images/icons/icon_gear.vsvg", custom: true },
         {
             id: "Presets",
             name: "Presets",

@@ -3,9 +3,24 @@
 /* hud.css hides gameplay while EscapeMenu owns the cursor. The walkthrough
    keeps that input mode, but must expose the HUD being inspected. */
 .ShowEscapeMenu.QOLVisualCheckActive .HudCore,
-.ShowEscapeMenu .QOLVisualCheckActive .HudCore
+.ShowEscapeMenu .QOLVisualCheckActive .HudCore,
+.ShowEscapeMenu.QOLCustomizeActive .HudCore,
+.ShowEscapeMenu .QOLCustomizeActive .HudCore
 {
     opacity: 1.0;
+}
+
+.QOLCustomizeActive #hud_hero_testing
+{
+    visibility: collapse;
+}
+
+/* Ammo remains under the verified native gun owner. Offsets may leave its
+   small layout box without reparenting gameplay panels. */
+#gameplay_hud_alive #crosshair #gun,
+#gameplay_hud_alive #crosshair #gun #gun_data
+{
+    overflow: noclip;
 }
 
 /* ═══════════════════════════════════════════════════════════
