@@ -4087,7 +4087,7 @@ ProgressBar
 ProgressBar#CurrentMicLevel
 {
 	height: 32px;
-	background-color: rgba(0, 0, 0, 0.80));
+	background-color: rgba(0, 0, 0, 0.80);
 	opacity-mask: url("s2r://panorama/images/buttons/voice_level_mask_psd.vtex");
 }
 

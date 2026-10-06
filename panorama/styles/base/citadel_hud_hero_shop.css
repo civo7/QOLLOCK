@@ -1768,7 +1768,7 @@ CitadelTrainingPage #BackButton,CitadelTrainingPage .APHeader,CitadelTrainingPag
 
 .CitadelHudHeroShop:not(.showingRecommendations) #RecommendedNav.NavigationButton:hover .ShopNavigationTabBackground
 {
-	opacity-brush: gradient( linear, 80% 0%, 100% 0%, from( rgb(255, 142, 110) ), to(rgb(240, 78, 49)) ) );
+	opacity-brush: gradient( linear, 80% 0%, 100% 0%, from( rgb(255, 142, 110) ), to( rgb(240, 78, 49) ) );
 }
 
 .CitadelHudHeroShop:not(.showingAllItems) #FilteredNav.NavigationButton:hover .ShopNavigationTabBackground
