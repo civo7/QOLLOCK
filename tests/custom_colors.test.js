@@ -45,7 +45,7 @@ test("RGB settings survive the production UI publication, HUD, export and import
     const code = g.QOL.ui.configTab.getCurrentExportSettingsString();
     const result = g.QOL.ui.modal.tryApplyImportStringWithDiagnostics(code);
     assert.equal(result.ok, true);
-    assert.equal(result.schemaVersion, "4.0.8");
+    assert.equal(result.schemaVersion, g.QOL_SCHEMA_SEMVER);
     for (const [key, hex] of Object.entries(colors)) {
         assert.equal(g.QOL_UTILS.DecodeHexColor(result.candidateConfig[key]), hex);
         g.MOD_CONFIG[key] = 0;

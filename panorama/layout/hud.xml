@@ -109,6 +109,9 @@
 		<include src="s2r://panorama/scripts/manifests/ql_bottom_bar/manifest.vjs_c" />
 		<include src="s2r://panorama/scripts/manifests/ql_items/manifest.vjs_c" />
 		<include src="s2r://panorama/scripts/manifests/ql_stamina/manifest.vjs_c" />
+		<!-- ==== QOLLOCK independent HUD presentation scales ==== -->
+		<include src="s2r://panorama/scripts/manifests/ql_presentation_scale/manifest.vjs_c" />
+		<!-- ==== End QOLLOCK independent HUD presentation scales ==== -->
 		<include src="s2r://panorama/scripts/manifests/ql_compass/manifest.vjs_c" />
 		<include src="s2r://panorama/scripts/manifests/ql_reload_cooldown/manifest.vjs_c" />
 		<include src="s2r://panorama/scripts/manifests/ql_item_mirror/manifest.vjs_c" />

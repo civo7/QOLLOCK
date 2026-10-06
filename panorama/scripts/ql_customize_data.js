@@ -31,7 +31,7 @@
             { key: "AMMO_TOTAL_SCALE", label: "Total Ammo" }, { key: "AMMO_CLIP_ANGLE", label: "Rotation" }, color("AMMO_TEXT_COLOR")
         ] },
         { id: "stamina", name: "Stamina", path: [...crosshair, "dash", "charges_container"], frame: true, fields: [
-            { key: "STAMINA_CHARGE_ANGLE", label: "Rotation" }, color("STAMINA_CHARGE_COLOR")
+            { key: "STAMINA_SCALE", label: "Scale", resize: true }, { key: "STAMINA_CHARGE_ANGLE", label: "Rotation" }, color("STAMINA_CHARGE_COLOR")
         ] },
         { id: "playerStats", name: "Player Stats", path: [...lower, "hudPlayerStats"], fallbackPath: [...core, "hudActivePlayerStats"],
             resolve(hud) { return chooseStatsPanel(findPath(hud, [...lower, "hudPlayerStats"]), findPath(hud, [...core, "hudActivePlayerStats"])); }, fields: [
@@ -53,6 +53,12 @@
             elements.push(element);
         }
     }
+    for (const [id, prefix] of [["souls", "SOULS_"], ["items", "ITEMS_"], ["playerStats", "STATS_POSITION_"]]) {
+        const element = nativeElements.find(item => item.id === id);
+        element.fields.push({ key: prefix + "SCALE", label: "Scale", resize: true });
+        element.postScaleKey = prefix + "SCALE";
+    }
+    nativeElements.find(item => item.id === "stamina").postScaleKey = "STAMINA_SCALE";
     register(nativeElements);
 
     function normalize(key, value) {
@@ -107,9 +113,11 @@
         return hasContent(legacy) ? legacy : hasContent(active) ? active : legacy || active;
     }
     const resizeField = element => element.fields.find(field => field.resize) || null;
+    const scaleTarget = (element, target) => element.id === "playerStats"
+        ? Q.core.panel.findChild(target, "HudStatBlock") || target : target;
     const hasFrame = element => element.frame !== false && (element.frame === true || canDrag(element) || !!resizeField(element));
     const field = (key, label, type, extra = {}) => Object.assign({ key, label, ...(type ? { type } : {}) }, extra);
-    Q.presentation = { elements, fieldMap, wireFields, normalize, resolve, findPath, register, canDrag, resizeField, hasFrame, chooseStatsPanel,
+    Q.presentation = { elements, fieldMap, wireFields, normalize, resolve, findPath, register, canDrag, resizeField, hasFrame, chooseStatsPanel, scaleTarget,
         paths: { core, lower, abilities, crosshair, gameplay: [...core, "gameplay_hud"] },
         fields: { geometry, opacity, toggle, color, field } };
 })();

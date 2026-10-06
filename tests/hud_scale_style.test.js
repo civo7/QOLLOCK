@@ -105,13 +105,10 @@ test("healthbar: opacity alone never touches ui-scale", () => {
     assert.strictEqual(panel.last("opacity"), "0.63", "opacity should still be applied");
 });
 
-test("healthbar: a moved size slider scales the CSS base, not 100", () => {
+test("healthbar: size scales the completed group while CSS keeps its baseline", () => {
     const panel = applyHealthbar(boot(), { PLAYER_HEALTHBAR_SCALE: 150 });
-
-    assert.strictEqual(panel.last("uiScale"), (HEALTHBAR_BASE_PCT * 1.5) + "%",
-        "size 150 should be 1.5x the CSS base");
-    assert.ok(!panel.forced("preTransformScale2d"),
-        "scale belongs on ui-scale (vector), not pre-transform-scale2d (raster)");
+    assert.strictEqual(panel.last("preTransformScale2d"), "1.5");
+    assert.ok(!panel.forced("uiScale"), "native and aspect-ratio ui-scale remain CSS-owned");
 });
 
 test("healthbar: all-default config forces nothing", () => {

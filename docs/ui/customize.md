@@ -100,7 +100,12 @@ color entries use [tagged RGB](../core/custom_colors.md). Missing conditional
 panels keep their controls available and remain searchable by localized element
 and field names. Fixed assets and separate-context additions without existing
 settings have explanatory entries. Children without independent offsets inherit
-their parent's placement; no settings or gameplay placeholders are invented.
+their parent's placement. Souls, items, stamina, compact stats and speed have
+independent overall scales, applied by `ql_presentation_scale` after native
+layout. It owns only the scale override and releases it at default, disable or
+owner replacement; content, rotations and visibility keep their existing owners.
+Compact stats scale the content block rather than its full-screen wrapper.
+Post-layout frame geometry includes this scale, including stamina pip unions.
 A panel replacement or hidden owner cancels an active move/resize gesture.
 Measurements account for menu origin, scroll offsets and native UI scale; the
 simulator cannot establish native layout or input behavior.
@@ -115,7 +120,8 @@ offsets exist, the opposite corner is held using acknowledged native layout
 measurements. Compensation waits for a fresh preview and layout; end-of-drag
 settling remains part of the same undo entry. Elements without independent
 pixel offsets retain their native placement. Geometry controls precede palettes.
-Shop and base/Alt/Tab minimap corners reuse their existing scale/size fields.
+Shop, reload, item cooldowns and base/Alt/Tab minimap corners reuse their existing
+scale/size fields.
 Ammo's legacy panel-scale key aliases current-ammo font size, so it remains
 accepted by the session but is hidden from the inspector; the current and total
 ammo controls remain available and do not get an overall resize corner.

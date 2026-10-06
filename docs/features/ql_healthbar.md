@@ -26,3 +26,13 @@ Minecraft Hearts has a different layout and animation path from the native
 bar. Do not generalize geometry or performance results from mode 0 to it.
 For native layout, hero switching and fill alignment, follow
 [client verification](../TESTING.md) after maintainer compile/repack.
+
+Shared overall scale is applied after native layout with `pre-transform-scale2d`.
+The native CSS `ui-scale` remains in control of its normal/aspect-ratio baseline;
+changing it at runtime can separate tilted bar content and health numbers.
+The shared owner scales the complete group without replacing its rotations or
+variant-owned child animations. Reset and owner replacement release code styles.
+Client checks must cover the default bar and each variant at both scale limits,
+including health changes, barriers, regen and the aspect-ratio option. Post-layout
+scaling trades vector relayout for a stable composition; inspect text sharpness
+at larger sizes in the client.

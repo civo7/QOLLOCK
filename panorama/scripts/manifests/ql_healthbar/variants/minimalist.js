@@ -34,7 +34,7 @@
 
         var previousPanel = IsPanelValid(State.minimalistHealthbarOffsetPanel) ? State.minimalistHealthbarOffsetPanel : null;
         if (previousPanel && previousPanel !== healthContainer) {
-            ResetMinimalistHealthbarOffsetRuntime(previousPanel);
+            QOL.healthbar.resetPlayerStyle(previousPanel);
         }
 
         if (!healthContainer) {

@@ -20,7 +20,7 @@
         ]),
         overlay("compass", "Compass", "QOLCompassRoot", [toggle("ENABLE_COMPASS"), t("ENABLE_SIMPLIFY_COMPASS", "Minimalist"),
             ...geometry("COMPASS_", true), f("COMPASS_STRETCH_X", "Width"), f("COMPASS_STRETCH_Y", "Height")]),
-        overlay("speed", "Speed", "QOLSpeedRoot", [toggle("ENABLE_COMPASS_SPEED"), ...geometry("COMPASS_SPEED_")]),
+        Object.assign(overlay("speed", "Speed", "QOLSpeedRoot", [toggle("ENABLE_COMPASS_SPEED"), ...geometry("COMPASS_SPEED_", true)]), { postScaleKey: "COMPASS_SPEED_SCALE" }),
         overlay("zipBoost", "Zipline Boost", "QOLZipBoostOverlay", [toggle("ENABLE_ZIP_BOOST"), ...geometry("ZIP_BOOST_", true)]),
         overlay("statBonuses", "Stat Bonuses", "QOLStatBonusesOverlay", [toggle("ENABLE_STAT_BONUSES"), ...geometry("STAT_BONUSES_", true)]),
         overlay("combatStatus", "Combat Status", "QOLCombatStatusOverlay", [toggle("ENABLE_COMBAT_STATUS"), t("ENABLE_COMBAT_INDICATOR", "Combat Indicator"), ...geometry("COMBAT_STATUS_", true)]),
@@ -36,7 +36,7 @@
         ] },
         { id: "reload", name: "Reload Cooldown", group: "Crosshair", path: [...crosshair, "gun", "gun_data", "reticle_status", "QOLReloadCooldownText"], fields: [
             toggle("ENABLE_RELOAD_COOLDOWN"), t("ENABLE_HIDE_RELOAD_ICON", "Hide Reload Icon"), t("ENABLE_HIDE_RELOAD_CIRCLE", "Hide Reload Circle"),
-            ...geometry("RELOAD_COOLDOWN_"), f("RELOAD_COOLDOWN_SIZE", "Size"), opacity("RELOAD_COOLDOWN_")
+            ...geometry("RELOAD_COOLDOWN_"), f("RELOAD_COOLDOWN_SIZE", "Size", null, { resize: true }), opacity("RELOAD_COOLDOWN_")
         ] },
         { id: "cooldowns", name: "Item Cooldowns", group: "Crosshair", path: [...gameplay, "QOLItemMirrorRoot"],
             resolve(hud, config) {
@@ -47,7 +47,7 @@
                 toggle("ENABLE_PASSIVE_COOLDOWN"), t("ENABLE_OLD_ITEM_COOLDOWNS", "Basic Mode"),
                 f("PASSIVE_COOLDOWN_X", "Horizontal Offset (%)", null, { axis: "x", unit: "%" }),
                 f("PASSIVE_COOLDOWN_Y", "Vertical Offset (%)", null, { axis: "y", direction: -1, unit: "%" }),
-                f("PASSIVE_COOLDOWN_SIZE", "Size"), opacity("PASSIVE_COOLDOWN_"),
+                f("PASSIVE_COOLDOWN_SIZE", "Size", null, { resize: true }), opacity("PASSIVE_COOLDOWN_"),
                 t("ITEM_FILTER_DEF_PASSIVE", "Defensive Passive"), t("ITEM_FILTER_OFF_PASSIVE", "Offensive Passive"),
                 t("ITEM_FILTER_DEF_ACTIVE", "Defensive Active"), t("ITEM_FILTER_OFF_ACTIVE", "Offensive Active")
         ] }

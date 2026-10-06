@@ -8,12 +8,14 @@
     const t = (key, label) => f(key, label, "toggle");
     const detail = (id, name, path, fields, group = "HUD") => ({ id, name, path, fields, group });
     const thresholds = (prefix, side = "") => [25, 65, 75].map(value => t(prefix + value, side + value + "%"));
+    // Native health content must scale as a group without changing its layout.
+    const healthbar = Object.assign(detail("healthbar", "Healthbar", [...gameplay, "health_and_abilities_container"], [
+        f("HEALTHBAR_TYPE", "Type", "enum", { options: [[0, "Default"], [1, "Minimalist"], [2, "Fighting Game"], [3, "Klutz's Bar"], [4, "Budhud"], [5, "Minecraft"]] }),
+        ...geometry("PLAYER_HEALTHBAR_", true), opacity("PLAYER_HEALTHBAR_"), f("PLAYER_HEALTHBAR_ACCENT_COLOR", "Accent Color", "palette"),
+        t("ENABLE_MINECRAFT_HEALTH_NUMBERS", "Health Numbers")
+    ], "Healthbar"), { postScaleKey: "PLAYER_HEALTHBAR_SCALE" });
     C.register([
-        detail("healthbar", "Healthbar", [...gameplay, "health_and_abilities_container"], [
-            f("HEALTHBAR_TYPE", "Type", "enum", { options: [[0, "Default"], [1, "Minimalist"], [2, "Fighting Game"], [3, "Klutz's Bar"], [4, "Budhud"], [5, "Minecraft"]] }),
-            ...geometry("PLAYER_HEALTHBAR_", true), opacity("PLAYER_HEALTHBAR_"), f("PLAYER_HEALTHBAR_ACCENT_COLOR", "Accent Color", "palette"),
-            t("ENABLE_MINECRAFT_HEALTH_NUMBERS", "Health Numbers")
-        ], "Healthbar"),
+        healthbar,
         detail("healthWarnings", "Health Warnings", [...gameplay, "health_and_abilities_container"], [
             ...thresholds("ENABLE_COLOR_WARNING_")
         ], "Healthbar"),
