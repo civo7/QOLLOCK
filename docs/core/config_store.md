@@ -1,7 +1,7 @@
 # Feature configuration store
 
 Source: `panorama/scripts/core/ql_config_store.js`; export `QOL.core.ConfigStore`.
-Requires namespace and EventBus. This is in-memory feature configuration, not
+Requires namespace, utilities and EventBus. This is in-memory feature configuration, not
 settings UI state or disk persistence. See [configuration](config_parsing.md)
 and [adapter](config_adapter.md).
 
@@ -23,6 +23,10 @@ Accepted schema types are `toggle`, `slider`, `dropdown`, `text`, `palette`,
 not perform that same slider-decimal rounding. UI/wire consistency must be checked
 separately. Dropdown options, when provided, are compared by string value.
 Multitoggle options create individual boolean keys in addition to the group key.
+
+Palette validation also accepts tagged RGB values for the explicitly supported
+keys in `QOL_UTILS.SupportsCustomColor`; other owners retain palette-only values.
+See [custom colors](custom_colors.md) for format and compatibility.
 
 `config:changed` carries `{featureId, key, value}`. FeatureRegistry augments that
 payload with `changes` for `onSettingsChanged`. Consumers must not bypass this

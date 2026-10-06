@@ -55,12 +55,12 @@ var QOL_BRIDGE_CHANNELS = {
     "buildClearMsg":       { attr: BUILD_CLEAR_MSG_ATTR,                      type: "string",      desc: "Progress message" },
     "buildClearToken":     { attr: BUILD_CLEAR_TOKEN_ATTR,                    type: "string",      desc: "Correlation token" },
     "heroHint":            { attr: HERO_HINT_ATTR,                            type: "string",      desc: "Hero ID" },
-    "healthbarAccentColor":{ attr: PLAYER_HEALTHBAR_ACCENT_COLOR_ATTR,        type: "paletteIndex", desc: "0-29 palette index" },
-    "bottomBarWashColor":  { attr: BOTTOM_BAR_WASH_COLOR_ATTR,                type: "paletteIndex", desc: "0-29 palette index" },
-    "keyboardOverlayWashColor": { attr: KEYBOARD_OVERLAY_WASH_COLOR_ATTR,     type: "paletteIndex", desc: "0-29 palette index" },
-    "staminaChargeColor":  { attr: STAMINA_CHARGE_COLOR_ATTR,                 type: "paletteIndex", desc: "0-29 palette index" },
-    "ammoTextColor":       { attr: AMMO_TEXT_COLOR_ATTR,                      type: "paletteIndex", desc: "0-29 palette index" },
-    "minimapIconColor":    { attr: MINIMAP_ICON_COLOR_ATTR,                   type: "paletteIndex", desc: "0-29 palette index" },
+    "healthbarAccentColor":{ attr: PLAYER_HEALTHBAR_ACCENT_COLOR_ATTR,        type: "paletteIndex", customRgb: true, desc: "palette index or tagged RGB" },
+    "bottomBarWashColor":  { attr: BOTTOM_BAR_WASH_COLOR_ATTR,                type: "paletteIndex", customRgb: true, desc: "palette index or tagged RGB" },
+    "keyboardOverlayWashColor": { attr: KEYBOARD_OVERLAY_WASH_COLOR_ATTR,     type: "paletteIndex", customRgb: true, desc: "palette index or tagged RGB" },
+    "staminaChargeColor":  { attr: STAMINA_CHARGE_COLOR_ATTR,                 type: "paletteIndex", customRgb: true, desc: "palette index or tagged RGB" },
+    "ammoTextColor":       { attr: AMMO_TEXT_COLOR_ATTR,                      type: "paletteIndex", customRgb: true, desc: "palette index or tagged RGB" },
+    "minimapIconColor":    { attr: MINIMAP_ICON_COLOR_ATTR,                   type: "paletteIndex", customRgb: true, desc: "palette index or tagged RGB" },
     "healthbarAccentColorStorage": { attr: PLAYER_HEALTHBAR_ACCENT_COLOR_STORAGE_KEY, type: "string", desc: "Accent color storage key" }
 };
 
@@ -138,7 +138,7 @@ function QOLBridgeWrite(channelName, value, rootPanel) {
     } else if (chan.type === "paletteIndex") {
         var pi = Math.round(Number(value));
         if (!isFinite(pi) || pi < 0) pi = 0;
-        if (pi > 29) pi = 29;
+        if (pi > 29 && !(chan.customRgb && QOL_UTILS.IsCustomColor(pi))) pi = 29;
         outVal = String(pi);
     } else {
         outVal = String(value != null ? value : "");

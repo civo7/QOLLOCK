@@ -79,6 +79,7 @@
                 return (typeof value === "string") ? null : "must be string";
             case "palette":
                 if (typeof value !== "number" || isNaN(value)) return "must be number";
+                if (QOL_UTILS.SupportsCustomColor(schemaEntry.key) && QOL_UTILS.IsCustomColor(value)) return null;
                 if (value < 0 || value > 29) return "must be 0-29";
                 return null;
             case "multitoggle":

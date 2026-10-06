@@ -792,17 +792,30 @@
     ];
     exports.QOL_WASH_COLOR_PALETTE = QOL_WASH_COLOR_PALETTE;
 
+    // Keep legacy palette indices intact. The reserved band stores an RGB
+    // payload plus a tag, so literal black differs from native/default (0).
+    const CUSTOM_RGB_TAG = 0x1000000;
+    const CUSTOM_RGB_MAX = 0x1ffffff;
+    const customColorKeys = new Set(["ITEMS_WASH_COLOR", "STAMINA_CHARGE_COLOR", "AMMO_TEXT_COLOR",
+        "BOTTOM_BAR_WASH_COLOR", "KEYBOARD_OVERLAY_WASH_COLOR", "PLAYER_HEALTHBAR_ACCENT_COLOR", "MINIMAP_ICON_COLOR"]);
+    exports.SupportsCustomColor = key => customColorKeys.has(key);
+    exports.IsCustomColor = value => Number.isInteger(value) && value >= CUSTOM_RGB_TAG && value <= CUSTOM_RGB_MAX;
+    exports.EncodeHexColor = text => {
+        const hex = String(text ?? "").trim();
+        return /^#?[\da-f]{6}$/i.test(hex) ? CUSTOM_RGB_TAG + parseInt(hex.replace(/^#/, ""), 16) : null;
+    };
+    exports.DecodeHexColor = value => exports.IsCustomColor(value)
+        ? "#" + ("000000" + (value - CUSTOM_RGB_TAG).toString(16)).slice(-6).toUpperCase() : "";
     function NormalizePaletteColorIndex(value) {
-        var numeric = Math.round(Number(value));
-        if (!isFinite(numeric)) numeric = 0;
-        if (numeric < 0) numeric = 0;
-        if (numeric >= QOL_WASH_COLOR_PALETTE.length) numeric = 0;
-        return numeric;
+        const numeric = Math.round(Number(value));
+        if (exports.IsCustomColor(numeric)) return numeric;
+        return Number.isFinite(numeric) && numeric >= 0 && numeric < QOL_WASH_COLOR_PALETTE.length ? numeric : 0;
     }
     exports.NormalizePaletteColorIndex = NormalizePaletteColorIndex;
 
     function ResolveWashColorFromPalette(value) {
         var index = NormalizePaletteColorIndex(value);
+        if (exports.IsCustomColor(index)) return exports.DecodeHexColor(index);
         var color = QOL_WASH_COLOR_PALETTE[index] || "";
         return color ? String(color) : "";
     }

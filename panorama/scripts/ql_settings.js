@@ -217,7 +217,9 @@ function PublishPaletteColorBridge(configId, value) {
         attrName = MINIMAP_ICON_COLOR_ATTR;
     }
     if (!attrName) return "";
-    var bridgeValue = String(Math.max(0, Math.min(29, Math.round(Number(value) || 0))));
+    const bridgeValue = String(QOL_UTILS.SupportsCustomColor(configId)
+        ? QOL_UTILS.NormalizePaletteColorIndex(value)
+        : Math.max(0, Math.min(29, Math.round(Number(value) || 0))));
     var panel = $.GetContextPanel();
     var root = FindRootPanel();
     var hud = null;

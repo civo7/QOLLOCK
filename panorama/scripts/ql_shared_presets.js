@@ -34,7 +34,7 @@
 "use strict";
 
 // Shared preset source-of-truth used by ql_settings.js and ql_core.js.
-var QOL_SCHEMA_SEMVER = "4.0.5";
+var QOL_SCHEMA_SEMVER = "4.0.7";
 var QOL_SCHEMA_WIRE_VERSION = 2;
 
 // ---- Shared storage keys ----
@@ -1793,6 +1793,16 @@ var QOL_COMPACT_SCHEMA_4_0_5 = QOL_COMPACT_SCHEMA_UTILS.AppendUniqueSchemaFields
 );
 
 
+// Extend only the current schema: historical codes retain their original bounds.
+var QOL_COMPACT_SCHEMA_4_0_6 = QOL_COMPACT_SCHEMA_4_0_5.map(field =>
+    ["ITEMS_WASH_COLOR", "STAMINA_CHARGE_COLOR", "AMMO_TEXT_COLOR"].includes(field.key)
+        ? Object.assign({}, field, { max: 0x1ffffff }) : field
+);
+var QOL_COMPACT_SCHEMA_4_0_7 = QOL_COMPACT_SCHEMA_4_0_6.map(field =>
+    ["BOTTOM_BAR_WASH_COLOR", "KEYBOARD_OVERLAY_WASH_COLOR", "PLAYER_HEALTHBAR_ACCENT_COLOR", "MINIMAP_ICON_COLOR"].includes(field.key)
+        ? Object.assign({}, field, { max: 0x1ffffff }) : field
+);
+
 var QOL_LATEST_COMPACT_SEMVER = QOL_SCHEMA_SEMVER;
 
 // ==========================================================================
@@ -1830,6 +1840,8 @@ var QOL_LATEST_COMPACT_SEMVER = QOL_SCHEMA_SEMVER;
 //              hide individual modifier rows (firerate, move speed, resists, lifesteal, ...).
 //              All default on.
 // 4.0.5        Active item slot scale and X/Y offsets.
+// 4.0.6        Tagged RGB colors for inventory, stamina and ammo text.
+// 4.0.7        Tagged RGB for the remaining existing presentation palettes.
 // ==========================================================================
 // Known issue: ENABLE_COLORED_HEALTHBAR appears twice in V24+ schemas
 // (once from V2 base, once from V24 concat). Harmless — the decode
@@ -2089,6 +2101,14 @@ var QOL_COMPACT_SCHEMA_REGISTRY = {
     "4.0.5": {
         wireVersion: QOL_COMPACT_WIRE_VERSION_2_0_1,
         schema: QOL_COMPACT_SCHEMA_4_0_5
+    },
+    "4.0.6": {
+        wireVersion: QOL_COMPACT_WIRE_VERSION_2_0_1,
+        schema: QOL_COMPACT_SCHEMA_4_0_6
+    },
+    "4.0.7": {
+        wireVersion: QOL_COMPACT_WIRE_VERSION_2_0_1,
+        schema: QOL_COMPACT_SCHEMA_4_0_7
     }
 };
 var QOL_COMPACT_SCHEMA_WIRE_TO_SEMVER = (typeof QOL_CODEC === "object" && QOL_CODEC && typeof QOL_CODEC.BuildWireToSemver === "function")

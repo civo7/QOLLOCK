@@ -2180,6 +2180,7 @@
             const paletteButtons = [];
             const paletteRefreshFns = [];
             const sanitizePaletteValue = (value) => {
+                if (QOL_UTILS.SupportsCustomColor(configId) && QOL_UTILS.IsCustomColor(value)) return value;
                 let numeric = Math.round(Number(value));
                 if (!isFinite(numeric)) numeric = 0;
                 if (numeric < 0) numeric = 0;

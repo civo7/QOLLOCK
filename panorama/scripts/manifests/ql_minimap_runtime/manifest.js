@@ -70,23 +70,12 @@
         return false;
     }
 
-    function getWashColorPalette() {
-        if (typeof QOL !== "undefined" && QOL.washColorPalette) return QOL.washColorPalette;
-        return [];
-    }
-
     function normalizePaletteColorIndex(value) {
-        var palette = getWashColorPalette();
-        var numeric = Math.round(Number(value));
-        if (!isFinite(numeric) || numeric < 0 || numeric >= palette.length) numeric = 0;
-        return numeric;
+        return QOL_UTILS.NormalizePaletteColorIndex(value);
     }
 
     function resolveWashColorFromPalette(value) {
-        var palette = getWashColorPalette();
-        var index = normalizePaletteColorIndex(value);
-        var color = palette[index] || "";
-        return color ? String(color) : "";
+        return QOL_UTILS.ResolveWashColorFromPalette(value);
     }
 
     function setWashColorSafe(panel, color) {
