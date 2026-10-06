@@ -15,7 +15,7 @@ test("4:3 overrides adapt current native geometry without restoring stale fixed 
     const builds = read("panorama/styles/citadel_hud_hero_builds.css");
     const abilityOrder = read("panorama/styles/citadel_ui_ability_order.css");
 
-    assert.match(feature, /\.support_4_3_active #health_and_abilities_container\s*\{[^}]*margin-right:\s*960px;/s);
+    assert.match(feature, /\.support_4_3_active #health_and_abilities_container\s*\{[^}]*margin-left:\s*0px;[^}]*margin-right:\s*960px;/s);
     assert.doesNotMatch(feature, /\.support_4_3_active #Shop/);
     assert.doesNotMatch(feature, /width:\s*1350px/);
     assert.doesNotMatch(feature, /margin-left:\s*150px/);

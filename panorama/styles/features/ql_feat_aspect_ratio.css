@@ -15,9 +15,10 @@
 
 /* ── 4:3 Aspect Ratio ── */
 
-/* Keep the native centered HUD layout and only reduce its wide-screen reserve. */
+/* Keep the native centered HUD layout without squishing its fixed-width children. */
 .support_4_3_active #health_and_abilities_container
 {
+    margin-left: 0px;
     margin-right: 960px;
 }
 
