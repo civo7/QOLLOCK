@@ -8,7 +8,6 @@
 		<snippet name="UnitTarget">
 			<Panel class="unit_target_instance">
 				<Panel id="unscaled_panel">
-					<Label class="stack_count" text="{d:stack_count}" />
 					<!-- ========================================================= -->
 					<!-- QOLLOCK CUSTOM: Target hint class for CSS                  -->
 					<!-- ========================================================= -->

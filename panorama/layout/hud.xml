@@ -2,14 +2,10 @@
 <root>
 	<styles>
 		<include src="s2r://panorama/styles/citadel_base_styles.vcss_c" />
+		<include src="s2r://panorama/styles/ability_property_icons.vcss_c" />
 		<include src="s2r://panorama/styles/hud_common.vcss_c" />
 		<include src="s2r://panorama/styles/npc_icons.vcss_c" />
 		<include src="s2r://panorama/styles/hud.vcss_c" />
-		<include src="s2r://panorama/styles/hud_timer.vcss_c" />
-		<include src="s2r://panorama/styles/ability_hud_elements/element_gun.vcss_c" />
-		<include src="s2r://panorama/styles/citadel_hud_ability_upgrade_pips.vcss_c" />
-		<include src="s2r://panorama/styles/citadel_ui_binding.vcss_c" />
-		<include src="s2r://panorama/styles/citadel_ui_keyboard_glyph.vcss_c" />
 		<!-- ============================================================= -->
 		<!-- QOLLOCK CUSTOM: Global styles and settings loader             -->
 		<!-- ============================================================= -->
@@ -392,7 +388,6 @@
 			</Panel>
 			<CitadelHudSandboxTutorial id="hud_sandbox_tutorial" hittest="false" />
 			<CitadelPaused id="PausedInfo" />
-			<CitadelChatWheel id="ChatWheel" />
 			<CitadelHudSubtitles id="HudSubtitles" />
 			<Panel id="CheaterVoteBox">
 				<GlobalClassListener classes="gScoreboardOpen" />
@@ -498,7 +493,6 @@
 			<CitadelRadialCommsWheel />
 		</Panel>
 		<HudPerfStatsBasics hittest="false" />
-		<CitadelHudMovementSpeed id="MovementSpeedPanel" />
 		<!-- ============================================================= -->
 		<!-- QOLLOCK CUSTOM: Local CEF Storage Bridge                 -->
 		<!-- ============================================================= -->
