@@ -1034,6 +1034,17 @@
 	width: 100%;
 }
 
+/* Shared canvas for native bars, their numbers and Minecraft content. Runtime
+   fixes its logical dimensions before scaling; the engine owner retains CSS. */
+#QOLHealthbarGeometry
+{
+	width: 100%;
+	height: 100%;
+	flow-children: none;
+	overflow: noclip;
+	vertical-align: bottom;
+}
+
 .minecraft_healthbar_active .currentHealthLabel
 {
 	font-family: sans;

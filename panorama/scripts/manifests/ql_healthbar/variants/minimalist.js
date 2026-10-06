@@ -43,31 +43,35 @@
             State.minimalistHealthbarOffsetSig = "";
             State.minimalistHealthbarOffsetApplied = false;
             State.minimalistHealthbarOffsetPanel = null;
+            State.playerHealthbarScalePanel = null;
             State.playerHealthbarScaleOpacityRuntimeApplied = false;
             return;
         }
 
         var classActive = !!(root && root.BHasClass && root.BHasClass("minimalist_healthbar_active"));
         var runtimeState = BuildPlayerHealthbarRuntimeStyleState(cfg, enabled, classActive);
+        var geometry = QOL.healthbar.playerScaleGeometry(healthContainer);
         var accentColor = (cfg && cfg.PLAYER_HEALTHBAR_ACCENT_COLOR !== undefined) ? cfg.PLAYER_HEALTHBAR_ACCENT_COLOR : 0;
-        var styleSig = runtimeState.finalOffsetX + "|" + runtimeState.finalOffsetY + "|" + runtimeState.scaleText + "|" + runtimeState.opacityText + "|" + ((enabled && classActive) ? "1" : "0") + "|" + accentColor;
+        var styleSig = runtimeState.finalOffsetX + "|" + runtimeState.finalOffsetY + "|" + runtimeState.scaleText + "|" + runtimeState.opacityText + "|" + ((enabled && classActive) ? "1" : "0") + "|" + accentColor + "|" + geometry.width + "|" + geometry.height;
 
         if (
             State.minimalistHealthbarOffsetApplied &&
             State.minimalistHealthbarOffsetPanel === healthContainer &&
+            State.playerHealthbarScalePanel === geometry.target &&
             State.minimalistHealthbarOffsetSig === styleSig
         ) {
             ApplyPlayerHealthbarAccentColor(root, cfg, healthContainer);
             return;
         }
 
-        ApplyPlayerHealthbarRuntimeStyleToPanel(healthContainer, runtimeState, true);
+        ApplyPlayerHealthbarRuntimeStyleToPanel(healthContainer, runtimeState, true, geometry);
         ApplyPlayerHealthbarAccentColor(root, cfg, healthContainer);
         State.playerHealthbarScaleOpacityRuntimeApplied = runtimeState.scaleOpacityActive;
 
         State.minimalistHealthbarOffsetSig = styleSig;
         State.minimalistHealthbarOffsetApplied = true;
         State.minimalistHealthbarOffsetPanel = healthContainer;
+        State.playerHealthbarScalePanel = geometry.target;
     }
 
     // ── Export ──

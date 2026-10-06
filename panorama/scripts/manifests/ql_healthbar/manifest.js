@@ -40,7 +40,7 @@
         stateKeys: [
             // Dispatcher (35 keys from ql_feat_healthbar.js)
             "minimalistHealthbarOffsetSig", "minimalistHealthbarOffsetApplied",
-            "minimalistHealthbarOffsetPanel", "playerHealthbarScaleOpacityRuntimeApplied",
+            "minimalistHealthbarOffsetPanel", "playerHealthbarScalePanel", "playerHealthbarScaleOpacityRuntimeApplied",
             "budhudWasEnabled", "budhudNextUpdateMs",
             "budhudLastColor", "budhudLastPercentText",
             "budhudCurrentLabelBaseColor", "budhudCurrentLabelBaseColorCaptured",
@@ -183,6 +183,7 @@
                         State.minimalistHealthbarOffsetSig = "";
                         State.minimalistHealthbarOffsetApplied = false;
                         State.minimalistHealthbarOffsetPanel = null;
+                        State.playerHealthbarScalePanel = null;
                         State.playerHealthbarScaleOpacityRuntimeApplied = false;
                     } catch(e) {}
                 },

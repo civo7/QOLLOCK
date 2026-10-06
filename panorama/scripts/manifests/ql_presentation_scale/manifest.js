@@ -30,7 +30,7 @@
             function update() {
                 const cfg = ctx.config.view();
                 const root = $.GetContextPanel();
-                const styleRoot = Q.getUIRoot() || root;
+                const styleRoot = P.findHud(root) || root;
                 for (const element of elements) {
                     const previous = applied.get(element.id);
                     const percent = Number(cfg[element.scaleKey]);

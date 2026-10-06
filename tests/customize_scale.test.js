@@ -101,6 +101,11 @@ test("overall ui-scale follows CSS baseline changes without a scale setting chan
     const env = load();
     const q = env.hud.sandbox.global.QOL;
     const panels = {};
+    // The captured native tree has a WindowRoot above CitadelHud. Feature
+    // classes live on Hud, so querying the UI root selects the wrong baseline.
+    const uiRoot = env.doc.create("CitadelHudRoot", { id: "NativeWindow", classes: ["WindowRoot"] });
+    uiRoot.addChild(env.hud.root);
+    q.setCachedPanel("uiRoot", uiRoot);
     for (const id of ["items", "abilityPoints", "damageReport"]) {
         const element = q.presentation.elements.find(item => item.id === id);
         panels[id] = owner(env, element);
@@ -109,7 +114,8 @@ test("overall ui-scale follows CSS baseline changes without a scale setting chan
     const feature = q.core.FeatureRegistry.getManifest("ql_presentation_scale").create({
         id: "ql_presentation_scale", config: { view: () => cfg }
     });
-    const root = q.getUIRoot();
+    assert.equal(q.getUIRoot(), uiRoot);
+    const root = env.hud.root;
     feature.onEnable();
     assert.equal(panels.items.style.uiScale, "181.2%");
     assert.equal(panels.abilityPoints.style.uiScale, "151%");

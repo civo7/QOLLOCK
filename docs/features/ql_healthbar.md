@@ -27,10 +27,20 @@ bar. Do not generalize geometry or performance results from mode 0 to it.
 For native layout, hero switching and fill alignment, follow
 [client verification](../TESTING.md) after maintainer compile/repack.
 
-Shared overall scale uses `ui-scale`, multiplying the verified native CSS baseline
-for the current aspect-ratio mode. The default releases the inline override so
-native CSS owns the scale again. The shared owner does not replace rotations or
-variant-owned child animations. Reset and owner replacement release code styles.
+Shared overall scale uses `ui-scale` on the static `QOLHealthbarGeometry` canvas
+in `hud_health_container.xml`. Bars, regen/health numbers and Minecraft content
+are siblings inside that canvas. The layout root merges into the engine-owned
+health container; it must not be treated as an extra static panel. The outer
+container retains native CSS scale, variant dimensions and aspect-ratio rules.
+At nondefault scale, the shared owner fixes the canvas's logical dimensions from
+the outer container's actual layout size divided by its native cumulative UI
+scale. This keeps percentage-sized bar content and fixed-size number groups in
+the same coordinate space. Missing measurements defer scaling; changed native
+dimensions or a replaced canvas invalidate the style signature. Old loaded
+layouts without the canvas retain the outer-scale compatibility path.
+The default, Reset and teardown release canvas dimensions and scale. The shared
+owner does not replace rotations or variant-owned child animations. Customize
+measures the scaled canvas but moves the outer container.
 Client checks must cover the default bar and each variant at both scale limits,
 including health changes, barriers, regen and the aspect-ratio option. Verify
 alignment between tilted bar content and health numbers in the client; simulator

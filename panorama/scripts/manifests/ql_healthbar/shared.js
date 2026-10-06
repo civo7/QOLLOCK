@@ -24,6 +24,32 @@
     // -- Shared reset helpers --
 
     var clearStyle = QOL.utils.ClearStyleSafe;
+    var Panel = QOL.core.panel;
+    var scaleOwners = new Map();
+
+    // The XML root is the engine-owned CitadelHudHealthContainer, not a
+    // separate Panel. Keep its native canvas and CSS baseline unchanged.
+    QOL.healthbar.getPlayerScalePanel = function(panel) {
+        return Panel.findChild(panel, "QOLHealthbarGeometry");
+    };
+    QOL.healthbar.playerScaleGeometry = function(panel) {
+        var target = QOL.healthbar.getPlayerScalePanel(panel);
+        function logicalSize(axis, dimension) {
+            var actual = Number(panel && panel["actuallayout" + dimension]);
+            var scale = Number(panel && panel["actualuiscale_" + axis]);
+            return actual > 0 && scale > 0 ? Number((actual / scale).toFixed(2)) : 0;
+        }
+        return { target: target, width: logicalSize("x", "width"), height: logicalSize("y", "height") };
+    };
+    function clearScaleOwner(panel) {
+        var target = scaleOwners.get(panel);
+        if (Panel.isAlive(target)) {
+            clearStyle(target, "uiScale");
+            clearStyle(target, "width");
+            clearStyle(target, "height");
+        }
+        scaleOwners.delete(panel);
+    }
 
     QOL.healthbar.resetMinimalistOffsetRuntime = function(panel) {
         if (!panel || !panel.style) return;
@@ -39,6 +65,7 @@
     // container in over 1.5s on .GameStatePreGame, and a forced 1.00 skips it.
     QOL.healthbar.resetPlayerScaleOpacity = function(panel) {
         if (!panel || !panel.style) return;
+        clearScaleOwner(panel);
         clearStyle(panel, "preTransformScale2d");
         clearStyle(panel, "uiScale");
         clearStyle(panel, "opacity");
@@ -123,8 +150,14 @@
         // Inline ui-scale replaces CSS rather than multiplying it. Preserve
         // the native baseline and its aspect-ratio override (source styles).
         var basePct = 120;
-        var scaleRoot = (typeof QOL.getUIRoot === "function") ? QOL.getUIRoot() : null;
+        var scaleRoot = Panel.findHud();
         if (scaleRoot && scaleRoot.BHasClass("support_16_10_active")) basePct = 104;
+        if (scaleRoot && scaleRoot.BHasClass("minecraft_healthbar_active")) basePct = 130;
+        if (scaleRoot && scaleRoot.BHasClass("fg_healthbar_active")) basePct = 120;
+        if (scaleRoot && scaleRoot.BHasClass("support_16_10_active")) {
+            if (scaleRoot.BHasClass("klutz_healthbar_active")) basePct = 125;
+            if (scaleRoot.BHasClass("minimalist_healthbar_active") && scaleRoot.BHasClass("AspectRatio16x10")) basePct = 110;
+        }
         var scaleText = Math.round(basePct * playerScale / 100) + "%";
         var opacityText = playerOpacity.toFixed(2);
         var scaleActive = Math.abs(finalScale - 1.0) > 0.0001;
@@ -142,8 +175,9 @@
     // -- Shared style application --
 
     // Release defaults so native CSS transitions and aspect-ratio scales return.
-    QOL.healthbar.applyPlayerStyleToPanel = function(panel, runtimeState, includeOffsets) {
+    QOL.healthbar.applyPlayerStyleToPanel = function(panel, runtimeState, includeOffsets, geometry) {
         if (!panel || !panel.style || !runtimeState) return;
+        for (var owner of scaleOwners.keys()) if (!Panel.isAlive(owner)) scaleOwners.delete(owner);
         var applyOffsets = (includeOffsets !== false);
         if (applyOffsets) {
             if (runtimeState.finalOffsetX !== 0) panel.style.x = String(runtimeState.finalOffsetX) + "px";
@@ -152,8 +186,28 @@
             else clearStyle(panel, "y");
         }
         clearStyle(panel, "preTransformScale2d");
-        if (runtimeState.scaleActive) panel.style.uiScale = runtimeState.scaleText;
-        else clearStyle(panel, "uiScale");
+        geometry = geometry || QOL.healthbar.playerScaleGeometry(panel);
+        var target = geometry.target;
+        var previous = scaleOwners.get(panel);
+        if (previous && previous !== target) clearScaleOwner(panel);
+        if (Panel.isAlive(target)) {
+            clearStyle(panel, "uiScale");
+            if (runtimeState.scaleActive && geometry.width > 0 && geometry.height > 0) {
+                // Percentage-sized children and fixed-size number groups must
+                // share one unchanged logical canvas when ui-scale relayouts.
+                var width = geometry.width + "px";
+                var height = geometry.height + "px";
+                var text = Math.round(runtimeState.finalScale * 100) + "%";
+                if (target.style.width !== width) target.style.width = width;
+                if (target.style.height !== height) target.style.height = height;
+                if (target.style.uiScale !== text) target.style.uiScale = text;
+                scaleOwners.set(panel, target);
+            } else clearScaleOwner(panel);
+        } else {
+            // Compatibility with a health layout loaded before the new XML.
+            if (runtimeState.scaleActive) panel.style.uiScale = runtimeState.scaleText;
+            else clearStyle(panel, "uiScale");
+        }
         if (runtimeState.opacityActive) panel.style.opacity = runtimeState.opacityText;
         else clearStyle(panel, "opacity");
     };

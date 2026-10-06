@@ -88,6 +88,7 @@
         if (element.id === "stamina") {
             return union(QOL_UTILS.FindPanelsByClass(target, "charge_fg"), host) || box(target, host);
         }
+        if (element.id === "healthbar") return box(P.findChild(target, "QOLHealthbarGeometry") || target, host);
         return box(element.measureId ? P.findChild(target, element.measureId) : target, host);
     }
     function resizeValues(element, startValues, startBox, delta, host, corner = { x: 1, y: 1 }) {

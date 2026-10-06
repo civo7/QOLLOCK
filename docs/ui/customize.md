@@ -168,6 +168,11 @@ The preview indicator requires acknowledgment of the current payload, not just
 an earlier payload from the same session.
 Benchmark stress configuration blocks the preview layer.
 
+The player healthbar frame measures its shared scale canvas, while position and
+opacity remain on the native owner. See [healthbar contracts](../features/ql_healthbar.md).
+Other overall scales that compensate CSS baselines read feature classes from
+`CitadelHud`, not its separate native window root.
+
 The native souls, inventory, top bar and signature owners use an owned collapse
 style while their visibility setting is off. This cannot be outbid by native
 ID/state CSS rules as the generic `qol-hidden` class could. Enabling, replacement

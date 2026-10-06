@@ -112,7 +112,7 @@ test("healthbar: size multiplies the native CSS baseline", () => {
 
 test("healthbar: aspect-ratio changes select the current CSS scale baseline", () => {
     const h = boot();
-    h.sandbox.global.QOL.getUIRoot().AddClass("support_16_10_active");
+    h.sandbox.global.QOL.core.panel.findHud().AddClass("support_16_10_active");
     const panel = applyHealthbar(h, { PLAYER_HEALTHBAR_SCALE: 150 });
     assert.strictEqual(panel.last("uiScale"), "156%");
     assert.ok(!panel.forced("preTransformScale2d"));

@@ -38,83 +38,87 @@
 		<!-- END QOLLOCK CUSTOM                                        -->
 		<!-- ============================================================= -->
 		<GlobalClassListener id="healthbar_container" hittest="false" classes="gAbilityUpgradeMenu" />
-		<!-- ============================================================= -->
-		<!-- QOLLOCK CUSTOM: Minecraft Hearts & Hotbar HUD -->
-		<!-- ============================================================= -->
-		<Panel id="MinecraftHeartsRoot" class="MinecraftHeartsRoot">
-			<CitadelStatusEffect id="StatusEffects" display_location="healthbar" max_modifiers="6" />
-			<Panel id="MinecraftShieldHeartsContainer" class="MinecraftShieldHeartsContainer">
-				<Panel id="MinecraftShieldHearts" class="MinecraftShieldHearts" />
-			</Panel>
-			<Panel id="MinecraftHeartsContainer" class="MinecraftHeartsContainer">
-				<Panel id="MinecraftHeartsHealthNumbersContainer">
-					<Panel id="MinecraftHeartsHealthNumbers">
-						<Label id="currentHealthOverHearts" class="currentHealthLabel" text="{i:r:current_health}" />
-						<Label id="totalHealthOverHearts" class="totalHealthLabel" text="/ {i:r:total_health}" />
-						<Label id="MinecraftHealthPercent" class="minecraftHealthPercent" text="" />
+		<!-- ==== QOLLOCK: Shared healthbar scale canvas ==== -->
+		<Panel id="QOLHealthbarGeometry" hittest="false">
+			<!-- ============================================================= -->
+			<!-- QOLLOCK CUSTOM: Minecraft Hearts & Hotbar HUD -->
+			<!-- ============================================================= -->
+			<Panel id="MinecraftHeartsRoot" class="MinecraftHeartsRoot">
+				<CitadelStatusEffect id="StatusEffects" display_location="healthbar" max_modifiers="6" />
+				<Panel id="MinecraftShieldHeartsContainer" class="MinecraftShieldHeartsContainer">
+					<Panel id="MinecraftShieldHearts" class="MinecraftShieldHearts" />
+				</Panel>
+				<Panel id="MinecraftHeartsContainer" class="MinecraftHeartsContainer">
+					<Panel id="MinecraftHeartsHealthNumbersContainer">
+						<Panel id="MinecraftHeartsHealthNumbers">
+							<Label id="currentHealthOverHearts" class="currentHealthLabel" text="{i:r:current_health}" />
+							<Label id="totalHealthOverHearts" class="totalHealthLabel" text="/ {i:r:total_health}" />
+							<Label id="MinecraftHealthPercent" class="minecraftHealthPercent" text="" />
+						</Panel>
+					</Panel>
+					<Panel id="MinecraftHearts" class="MinecraftHearts" />
+					<Panel id="MinecraftFoodContainer" class="MinecraftFoodContainer">
+						<Image class="FoodIcon" src="s2r://panorama/images/minecraft/food_8x_png.vtex" />
+						<Image class="FoodIcon" src="s2r://panorama/images/minecraft/food_8x_png.vtex" />
+						<Image class="FoodIcon" src="s2r://panorama/images/minecraft/food_8x_png.vtex" />
+						<Image class="FoodIcon" src="s2r://panorama/images/minecraft/food_8x_png.vtex" />
+						<Image class="FoodIcon" src="s2r://panorama/images/minecraft/food_8x_png.vtex" />
+						<Image class="FoodIcon" src="s2r://panorama/images/minecraft/food_8x_png.vtex" />
+						<Image class="FoodIcon" src="s2r://panorama/images/minecraft/food_8x_png.vtex" />
+						<Image class="FoodIcon" src="s2r://panorama/images/minecraft/food_8x_png.vtex" />
+						<Image class="FoodIcon" src="s2r://panorama/images/minecraft/food_8x_png.vtex" />
+						<Image class="FoodIcon" src="s2r://panorama/images/minecraft/food_8x_png.vtex" />
 					</Panel>
 				</Panel>
-				<Panel id="MinecraftHearts" class="MinecraftHearts" />
-				<Panel id="MinecraftFoodContainer" class="MinecraftFoodContainer">
-					<Image class="FoodIcon" src="s2r://panorama/images/minecraft/food_8x_png.vtex" />
-					<Image class="FoodIcon" src="s2r://panorama/images/minecraft/food_8x_png.vtex" />
-					<Image class="FoodIcon" src="s2r://panorama/images/minecraft/food_8x_png.vtex" />
-					<Image class="FoodIcon" src="s2r://panorama/images/minecraft/food_8x_png.vtex" />
-					<Image class="FoodIcon" src="s2r://panorama/images/minecraft/food_8x_png.vtex" />
-					<Image class="FoodIcon" src="s2r://panorama/images/minecraft/food_8x_png.vtex" />
-					<Image class="FoodIcon" src="s2r://panorama/images/minecraft/food_8x_png.vtex" />
-					<Image class="FoodIcon" src="s2r://panorama/images/minecraft/food_8x_png.vtex" />
-					<Image class="FoodIcon" src="s2r://panorama/images/minecraft/food_8x_png.vtex" />
-					<Image class="FoodIcon" src="s2r://panorama/images/minecraft/food_8x_png.vtex" />
+				<Panel id="MinecraftXPBarContainer" class="MinecraftXPBarContainer">
+					<Panel id="MinecraftXPBarBackground" class="MinecraftXPBarBackground" />
+					<Panel id="MinecraftXPBarFill" class="MinecraftXPBarFill" />
+					<Label id="MinecraftXPLevelLabel" class="MinecraftXPLevelLabel" text="" hittest="false" />
+				</Panel>
+				<Panel id="MinecraftHotbarContainer" class="MinecraftHotbarContainer">
+					<Image id="MinecraftHotbar" class="MinecraftHotbar" src="s2r://panorama/images/minecraft/hotbar_8x_png.vtex" />
+					<Panel id="MinecraftTotemContainer" class="MinecraftTotemContainer">
+						<Image id="MinecraftTotem" class="MinecraftTotem" src="s2r://panorama/images/minecraft/totem_of_undying_8x_png.vtex" />
+					</Panel>
 				</Panel>
 			</Panel>
-			<Panel id="MinecraftXPBarContainer" class="MinecraftXPBarContainer">
-				<Panel id="MinecraftXPBarBackground" class="MinecraftXPBarBackground" />
-				<Panel id="MinecraftXPBarFill" class="MinecraftXPBarFill" />
-				<Label id="MinecraftXPLevelLabel" class="MinecraftXPLevelLabel" text="" hittest="false" />
+			<!-- ============================================================= -->
+			<Panel id="HealthBarContent">
+				<CitadelHudShieldsContainer id="HudShieldsContainer" />
+				<CitadelHudModifierIcons id="hud_modifier_icons" class="modifier_icons_only" />
+				<CitadelHudAbilities id="hud_held" class="abilities held" slots="ability_held" />
+				<CitadelHudHealth id="hud_health_bars" />
 			</Panel>
-			<Panel id="MinecraftHotbarContainer" class="MinecraftHotbarContainer">
-				<Image id="MinecraftHotbar" class="MinecraftHotbar" src="s2r://panorama/images/minecraft/hotbar_8x_png.vtex" />
-				<Panel id="MinecraftTotemContainer" class="MinecraftTotemContainer">
-					<Image id="MinecraftTotem" class="MinecraftTotem" src="s2r://panorama/images/minecraft/totem_of_undying_8x_png.vtex" />
+			<!-- ============================================================= -->
+			<!-- QOLLOCK CUSTOM: Move regen and total outside HealthBarContent -->
+			<!-- ============================================================= -->
+			<Panel id="HealthRegenAndTotal">
+				<Panel id="RecentHealContainer" class="recentHealCounters" />
+				<Panel id="RecentDamageContainer" class="recentDamageCounters" />
+				<Panel class="healthRegenContainer">
+					<Panel class="healtRegenArrows" />
+					<Label class="healthRegenLabel" text="{f:health_regen}/s" />
+				</Panel>
+				<Panel class="shieldNumbersContainer">
+					<Panel id="BulletShieldNumbers" class="shield_bar_numbers">
+						<Label class="progress_bar_current" text="{i:bullet_shield_current}" />
+						<Label class="progress_bar_max" text="/ {i:bullet_shield_max}" />
+					</Panel>
+					<Panel id="TechShieldNumbers" class="shield_bar_numbers">
+						<Label class="progress_bar_current" text="{i:tech_shield_current}" />
+						<Label class="progress_bar_max" text="/ {i:tech_shield_max}" />
+					</Panel>
+				</Panel>
+				<Panel class="healthContainer">
+					<Panel class="healthBacker" />
+					<Label class="currentHealthLabel" text="{i:r:current_health}" />
+					<Label class="totalHealthLabel" text="/ {i:r:total_health}" />
 				</Panel>
 			</Panel>
+			<!-- ============================================================= -->
+			<!-- END QOLLOCK CUSTOM                                        -->
+			<!-- ============================================================= -->
 		</Panel>
-		<!-- ============================================================= -->
-		<Panel id="HealthBarContent">
-			<CitadelHudShieldsContainer id="HudShieldsContainer" />
-			<CitadelHudModifierIcons id="hud_modifier_icons" class="modifier_icons_only" />
-			<CitadelHudAbilities id="hud_held" class="abilities held" slots="ability_held" />
-			<CitadelHudHealth id="hud_health_bars" />
-		</Panel>
-		<!-- ============================================================= -->
-		<!-- QOLLOCK CUSTOM: Move regen and total outside HealthBarContent -->
-		<!-- ============================================================= -->
-		<Panel id="HealthRegenAndTotal">
-			<Panel id="RecentHealContainer" class="recentHealCounters" />
-			<Panel id="RecentDamageContainer" class="recentDamageCounters" />
-			<Panel class="healthRegenContainer">
-				<Panel class="healtRegenArrows" />
-				<Label class="healthRegenLabel" text="{f:health_regen}/s" />
-			</Panel>
-			<Panel class="shieldNumbersContainer">
-				<Panel id="BulletShieldNumbers" class="shield_bar_numbers">
-					<Label class="progress_bar_current" text="{i:bullet_shield_current}" />
-					<Label class="progress_bar_max" text="/ {i:bullet_shield_max}" />
-				</Panel>
-				<Panel id="TechShieldNumbers" class="shield_bar_numbers">
-					<Label class="progress_bar_current" text="{i:tech_shield_current}" />
-					<Label class="progress_bar_max" text="/ {i:tech_shield_max}" />
-				</Panel>
-			</Panel>
-			<Panel class="healthContainer">
-				<Panel class="healthBacker" />
-				<Label class="currentHealthLabel" text="{i:r:current_health}" />
-				<Label class="totalHealthLabel" text="/ {i:r:total_health}" />
-			</Panel>
-		</Panel>
-		<!-- ============================================================= -->
-		<!-- END QOLLOCK CUSTOM                                        -->
-		<!-- ============================================================= -->
+		<!-- ==== END QOLLOCK: Shared healthbar scale canvas ==== -->
 	</Panel>
 </root>
