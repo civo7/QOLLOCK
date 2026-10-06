@@ -529,7 +529,8 @@ test("editor view toggles are localized, session-only and leave scale aliases ou
     activate(env, "QOLCustomizeSelect_ammo");
     assert.equal(env.em.FindChildTraverse("QOLCustomize_AMMO_PANEL_SCALE"), null);
     assert.ok(env.em.FindChildTraverse("QOLCustomize_AMMO_CURRENT_SCALE"));
-    assert.equal(env.em.FindChildTraverse("QOLCustomizeResize_ammo"), null);
+    assert.ok(env.em.FindChildTraverse("QOLCustomizeResize_ammo"));
+    assert.ok(env.em.FindChildTraverse("QOLCustomize_AMMO_HUD_SCALE"));
     activate(env, "QOLCustomizeCancel"); env.clock.advance(100);
     env.global.QOL.ui.customize.start();
     assert.equal(env.em.FindChildTraverse("QOLCustomizeEditor").BHasClass("ShowFrames"), false);

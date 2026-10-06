@@ -20,7 +20,7 @@ function owner(env, element) {
     return panel;
 }
 
-for (const id of ["souls", "items", "stamina", "playerStats", "speed"]) {
+for (const id of ["souls", "items", "stamina", "playerStats", "speed", "ammo", "abilityPoints", "damageReport"]) {
     test(`${id}: scoped scale previews, measures, restores replacements and round-trips`, () => {
         const env = load();
         const { global: g, clock } = env;
@@ -80,4 +80,11 @@ test("native HP scale leaves descendants' layout and animations under their exis
     assert.equal(numbers.style.preTransformScale2d, "1.08");
     q.healthbar.resetPlayerStyle(panel);
     assert.equal(panel.style.preTransformScale2d, undefined);
+});
+
+test("every independently editable HUD frame declares an overall resize capability", () => {
+    const env = load();
+    const presentation = env.global.QOL.presentation;
+    const missing = Array.from(presentation.elements).filter(element => presentation.hasFrame(element) && !presentation.resizeField(element));
+    assert.deepEqual(missing.map(element => element.id), []);
 });

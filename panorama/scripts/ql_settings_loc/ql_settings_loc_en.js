@@ -25,6 +25,7 @@
     "Drag to move.": "Drag to move.",
     "Pull the any corner to resize.": "Pull the any corner to resize.",
     "This element is edited with the controls below.": "This element is edited with the controls below.",
+    "Color is shared with Bottom Bar. Position follows the native parent.": "Color is shared with Bottom Bar. Position follows the native parent.",
     "Drag this corner to resize.": "Drag this corner to resize.",
     "Color is shared with Bottom Bar. This element has no placement settings yet.": "Color is shared with Bottom Bar. This element has no placement settings yet.",
     "Ability Suggestion": "Ability Suggestion",

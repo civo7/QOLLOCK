@@ -4,7 +4,7 @@
     "use strict";
     const Q = QOL;
     const P = Q.core.panel;
-    const owners = ["souls", "items", "stamina", "playerStats", "speed"];
+    const owners = ["souls", "items", "stamina", "playerStats", "speed", "ammo", "abilityPoints", "damageReport"];
     const elements = owners.map(id => Q.presentation.elements.find(element => element.id === id));
     const clear = panel => { if (P.isAlive(panel)) QOL_UTILS.ClearStyleSafe(panel, "preTransformScale2d"); };
     Q.core.FeatureRegistry.register({

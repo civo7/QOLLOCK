@@ -34,7 +34,7 @@
 "use strict";
 
 // Shared preset source-of-truth used by ql_settings.js and ql_core.js.
-var QOL_SCHEMA_SEMVER = "4.0.9";
+var QOL_SCHEMA_SEMVER = "4.0.10";
 var QOL_SCHEMA_WIRE_VERSION = 2;
 
 // ---- Shared storage keys ----
@@ -1818,6 +1818,15 @@ var QOL_COMPACT_SCHEMA_4_0_9 = QOL_COMPACT_SCHEMA_UTILS.AppendUniqueSchemaFields
     ]
 );
 
+var QOL_COMPACT_SCHEMA_4_0_10 = QOL_COMPACT_SCHEMA_UTILS.AppendUniqueSchemaFields(
+    QOL_COMPACT_SCHEMA_4_0_9,
+    [
+        { key: "AMMO_HUD_SCALE", min: 50, max: 200, step: 1 },
+        { key: "AP_SCALE", min: 50, max: 200, step: 1 },
+        { key: "DAMAGE_REPORT_SCALE", min: 50, max: 200, step: 1 }
+    ]
+);
+
 var QOL_LATEST_COMPACT_SEMVER = QOL_SCHEMA_SEMVER;
 
 // ==========================================================================
@@ -1859,6 +1868,7 @@ var QOL_LATEST_COMPACT_SEMVER = QOL_SCHEMA_SEMVER;
 // 4.0.7        Tagged RGB for the remaining existing presentation palettes.
 // 4.0.8        Screen-wide ammo/stat offsets; historical bounds remain unchanged.
 // 4.0.9        Independent overall scales for five existing HUD surfaces.
+// 4.0.10       Overall ammo, AP and damage-report scales, independent of text sizes.
 // ==========================================================================
 // Known issue: ENABLE_COLORED_HEALTHBAR appears twice in V24+ schemas
 // (once from V2 base, once from V24 concat). Harmless — the decode
@@ -2134,6 +2144,10 @@ var QOL_COMPACT_SCHEMA_REGISTRY = {
     "4.0.9": {
         wireVersion: QOL_COMPACT_WIRE_VERSION_2_0_1,
         schema: QOL_COMPACT_SCHEMA_4_0_9
+    },
+    "4.0.10": {
+        wireVersion: QOL_COMPACT_WIRE_VERSION_2_0_1,
+        schema: QOL_COMPACT_SCHEMA_4_0_10
     }
 };
 var QOL_COMPACT_SCHEMA_WIRE_TO_SEMVER = (typeof QOL_CODEC === "object" && QOL_CODEC && typeof QOL_CODEC.BuildWireToSemver === "function")
@@ -2540,6 +2554,9 @@ var QOL_DEFAULT_CONFIG = {
         CROSSHAIR_STATS_SHOW_REGEN: 1,
         CROSSHAIR_STATS_SHOW_BULLETEVASION: 1,
         ENABLE_STATS_POSITION: 1,
+        AMMO_HUD_SCALE: 100,
+        AP_SCALE: 100,
+        DAMAGE_REPORT_SCALE: 100,
         SOULS_SCALE: 100,
         ITEMS_SCALE: 100,
         STAMINA_SCALE: 100,

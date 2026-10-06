@@ -14,6 +14,9 @@ for (const fixture of fixtures.cases) {
         assert.equal(parsed.ok, true);
         assert.equal(parsed.schemaVersion, fixture.version);
         for (const [key, value] of Object.entries(fixture.expected)) assert.equal(parsed.candidateConfig[key], value, key);
+        for (const key of ["SOULS_SCALE", "ITEMS_SCALE", "STAMINA_SCALE", "STATS_POSITION_SCALE", "COMPASS_SPEED_SCALE", "AMMO_HUD_SCALE", "AP_SCALE", "DAMAGE_REPORT_SCALE"]) {
+            assert.equal(parsed.candidateConfig[key], 100, "legacy import preserves native size: " + key);
+        }
         g.QOL.persistence.applyParsedConfigWithDiagnostics(parsed.parsedConfig, parsed.schemaVersion);
         g.SaveAndSync();
         clock.advance(1200);

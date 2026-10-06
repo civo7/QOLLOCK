@@ -43,8 +43,9 @@ input-transparent proxy is the compositor's displayPanel, while native HUD panel
 selection frames and corners retain their parents. The proxy origin is sampled
 after native placement, so that the first compositor reparent cannot become a
 HUD offset. Proxy movement updates only the draft; the gameplay manifest owns
-the resulting HUD layout. Proxies are deleted on drop, canceled gesture or exit,
-including after reparenting outside the editor subtree.
+the resulting HUD layout. Proxies are deleted after move drops or resize
+settling, on canceled gestures and on exit, including after reparenting outside
+the editor subtree.
 Movable frames receive the verified native XML `draggable` attribute at creation;
 `SetDraggable` remains optional, as in the existing settings-header dragger.
 The earlier unconditional call could abort startup on a native API without that
@@ -71,8 +72,8 @@ Colors appear at the start of the inspector with preset swatches, a HEX entry,
 preview chip and native Default action. Numeric and HEX entries also submit on
 blur; malformed values remain marked rather than overwriting the accepted draft.
 The AP/infinity currency has its own selection frame under AbilitiesContainer.
-Its inspector exposes the existing shared bottom-bar color and explains that
-independent placement is not currently persisted.
+Its inspector exposes the existing shared bottom-bar color and an independent
+overall scale; placement continues to follow its native parent.
 
 Modern compact stats are measured through the active owner's HudStatBlock;
 expanded modifier rows do not enlarge the compact block's hit box. The coexisting legacy owner is
@@ -102,7 +103,7 @@ color entries use [tagged RGB](../core/custom_colors.md). Missing conditional
 panels keep their controls available and remain searchable by localized element
 and field names. Fixed assets and separate-context additions without existing
 settings have explanatory entries. Children without independent offsets inherit
-their parent's placement. Souls, items, stamina, compact stats and speed have
+their parent's placement. Souls, items, stamina, compact stats, speed, ammo, AP and damage report have
 independent overall scales, applied by `ql_presentation_scale` after native
 layout. It owns only the scale override and releases it at default, disable or
 owner replacement; content, rotations and visibility keep their existing owners.
@@ -126,7 +127,8 @@ Shop, reload, item cooldowns and base/Alt/Tab minimap corners reuse their existi
 scale/size fields.
 Ammo's legacy panel-scale key aliases current-ammo font size, so it remains
 accepted by the session but is hidden from the inspector; the current and total
-ammo controls remain available and do not get an overall resize corner.
+ammo controls remain available. Overall ammo resizing uses a separate scale for
+the complete group, including the magazine, without changing those text sizes.
 
 Dragging currently requires existing pixel offsets. Cooldown offsets retain
 their percentage units and use exact numeric entry; their native containing-block

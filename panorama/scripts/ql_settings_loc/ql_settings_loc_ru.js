@@ -25,6 +25,7 @@
     "Drag to move.": "Перетащите для перемещения.",
     "Pull the any corner to resize.": "Потяните любой угол для изменения размера.",
     "This element is edited with the controls below.": "Этот элемент настраивается с помощью полей ниже.",
+    "Color is shared with Bottom Bar. Position follows the native parent.": "Цвет общий с нижней панелью. Положение задаётся родительской панелью HUD.",
     "Drag this corner to resize.": "Потяните этот угол для изменения размера.",
     "Color is shared with Bottom Bar. This element has no placement settings yet.": "Цвет общий с нижней панелью. Настроек положения у этого элемента пока нет.",
     "Ability Suggestion": "Рекомендация способности",

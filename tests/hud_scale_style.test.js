@@ -1,12 +1,11 @@
 // tests/hud_scale_style.test.js
 // =============================================================================
-// The mod's scale sliders ride on ui-scale, and ui-scale belongs to CSS first.
+// Overall scaling preserves CSS baselines and independent opacity.
 // =============================================================================
-// Every scale in the mod goes through ui-scale rather than pre-transform-scale2d,
-// because ui-scale re-lays out (vector) where pre-transform-scale2d resamples
-// (raster). The catch is that an inline ui-scale REPLACES the CSS one instead of
-// multiplying with it, and Panorama will not report a computed value back — so
-// the runtime has to know the base it is overriding:
+// Healthbar scale transforms the completed group to preserve its composition.
+// The bottom bar still uses ui-scale; an inline value REPLACES its CSS baseline,
+// rather than multiplying it. Both paths must release defaults and retain
+// independent opacity behavior. Native CSS baselines:
 //
 //   #health_and_abilities_container  base/hud.css:422            120%
 //                                    .support_16_10_active       104%
@@ -19,7 +18,8 @@
 //      whichever CSS rule applies. This is what made "lower the opacity" resize
 //      the healthbar: the runtime only starts on the first non-default key, and
 //      it wrote a flat ui-scale: 100% the moment it did.
-//   2. A slider that has been moved writes base x slider, not slider.
+//   2. Bottom-bar scale multiplies its CSS baseline; healthbar scale leaves
+//      that baseline in CSS and transforms the completed group.
 // =============================================================================
 
 "use strict";

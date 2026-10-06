@@ -112,7 +112,7 @@ test("all gameplay entry buttons open their declared element and full Customize 
     const env = setup();
     const Q = env.global.QOL;
     const tabs = {
-        HUD: ["topBar", "bottomBar", "activeItems", "items", "souls", "unsecuredTimer", "unsecuredSouls", "chat", "damageReport", "playerStats"],
+        HUD: ["topBar", "bottomBar", "activeItems", "abilityPoints", "items", "souls", "unsecuredTimer", "unsecuredSouls", "chat", "damageReport", "playerStats"],
         Shop: ["recentPurchases", "purchaseNotifications", "shop"],
         Crosshair: ["cooldowns", "activeStats", "damageImpact", "stamina", "damageNumbers", "ammo", "reload", "targetShapes"],
         Healthbar: ["healthbar"], Minimap: ["minimap", "minimapAlt", "minimapTab"],

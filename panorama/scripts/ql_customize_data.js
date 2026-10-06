@@ -23,7 +23,7 @@
         { id: "bottomBar", name: "Bottom Bar", path: [...abilities, "hud_signature"], fields: [toggle("HUD_BOTTOM_BAR_ENABLED"), ...geometry("BOTTOM_BAR_", true), opacity("BOTTOM_BAR_"), { key: "BOTTOM_BAR_WASH_COLOR", label: "Color", type: "palette" }] },
         { id: "activeItems", name: "Active Items", path: [...abilities, "ActiveAbilitiesMenu"], fields: [...geometry("ACTIVE_ITEMS_", true)] },
         { id: "abilityPoints", name: "Ability Points (AP)", path: [...abilities, "APContainer"], frame: true,
-            note: "Color is shared with Bottom Bar. This element has no placement settings yet.",
+            note: "Color is shared with Bottom Bar. Position follows the native parent.",
             fields: [{ key: "BOTTOM_BAR_WASH_COLOR", label: "Color", type: "palette" }] },
         { id: "ammo", name: "Ammo", path: [...crosshair, "gun", "gun_data", "ammo_panel"], fields: [
             toggle("ENABLE_AMMO_STATUS"), { key: "ENABLE_HIDE_MAGAZINE", label: "Hide Magazine", type: "toggle" }, { key: "ENABLE_HIDE_AMMO_ALL", label: "Hide Ammo", type: "toggle" },
@@ -53,7 +53,7 @@
             elements.push(element);
         }
     }
-    for (const [id, prefix] of [["souls", "SOULS_"], ["items", "ITEMS_"], ["playerStats", "STATS_POSITION_"]]) {
+    for (const [id, prefix] of [["souls", "SOULS_"], ["items", "ITEMS_"], ["playerStats", "STATS_POSITION_"], ["ammo", "AMMO_HUD_"], ["abilityPoints", "AP_"]]) {
         const element = nativeElements.find(item => item.id === id);
         element.fields.push({ key: prefix + "SCALE", label: "Scale", resize: true });
         element.postScaleKey = prefix + "SCALE";

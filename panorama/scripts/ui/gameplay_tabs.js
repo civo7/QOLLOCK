@@ -280,6 +280,7 @@
                     createRow(sectionParent, "Color", "BOTTOM_BAR_WASH_COLOR", "palette", null, null, null, palette, "Choose a preset color wash for the bottom ability bar.");
                 }
                 createTitle(sectionParent, "Active Items", null, "activeItems");
+                createTitle(sectionParent, "Ability Points (AP)", null, "abilityPoints");
             });
         }
 
