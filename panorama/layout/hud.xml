@@ -147,6 +147,13 @@
 		</snippet>
 	</snippets>
 	<CitadelHud class="WindowRoot" hittest="false" disallowedstyleflags="hover,descendantfocus">
+		<!-- ============================================================= -->
+		<!-- QOLLOCK CUSTOM: Mirror shop state for HUD sibling layering    -->
+		<!-- ============================================================= -->
+		<GlobalClassListener classes="gShopOpen" />
+		<!-- ============================================================= -->
+		<!-- END QOLLOCK CUSTOM                                            -->
+		<!-- ============================================================= -->
 		<Panel class="HudCore" hittest="false" disallowedstyleflags="hover,descendantfocus">
 			<CitadelPingIndicator id="PingIndicator" hittest="false" />
 			<CitadelHudEventIndicatorsPanel id="HudEventIndicatorsPanel" />
