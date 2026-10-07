@@ -11,6 +11,11 @@ needs independent source identity, acquisition order and cooldown history;
 rescans must preserve valid identities and discard replaced panels. A ready
 item must not inherit another item's cooldown or completion flash.
 
+Presentation filters operate on the reconciled source set, so hiding a category
+does not discard its history. Native IDs are local to each inventory list;
+deduplication uses panel identity. A slot changing occupants invalidates rendered
+images, classes, masks and feedback signatures while preserving source history.
+
 The mirror prefers numeric native cooldown text, then estimates remaining
 time from radial movement. Missing text can appear later, so source replacement
 and retry paths must recover without searching every frame. The mirror follows

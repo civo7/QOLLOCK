@@ -23,6 +23,21 @@ declared units. Published compact schemas and release versions stay frozen.
 
 ## Maintainer client acceptance
 
+The source rework and offline regressions cover the implementation sequence.
+Independent AP/stamina placement uses the approved native-origin defaults.
+Stamina rotation remains relative to its native baseline, and ready/drained
+colors preserve native feedback. The Advanced item mirror retains main's source
+identity and slot/filter fixes while keeping the current gameplay visibility gate.
+
+Frozen fixtures encoded by local main at `6cda714` cover every healthbar variant
+combined with both minimap scale methods. Scoped edits and current exports
+preserve their imported visual values. Separate runtime regressions exercise
+healthbar canvases and Base/Alt/Tab minimap geometry, including fixed-icon mode.
+Historical compact fixtures and JSON imports remain part of the offline gate.
+
+Client acceptance below remains outstanding; source and simulator results cannot
+establish that native input/layout behaves correctly.
+
 After compiling and repacking, test in sandbox and a normal match at multiple
 resolutions/UI densities. Move every independent surface, including very small
 AP and stamina, and resize from all four corners. The opposite corner should

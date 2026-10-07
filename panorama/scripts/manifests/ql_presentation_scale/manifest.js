@@ -63,7 +63,6 @@
                     }
                     if (!Object.keys(styles).length) { applied.delete(element.id); continue; }
                     if (!record || JSON.stringify(record.styles) !== JSON.stringify(styles)) {
-                        if ("uiScale" in styles) QOL_UTILS.ClearStyleSafe(panel, "preTransformScale2d");
                         Object.assign(panel.style, styles);
                         applied.set(element.id, { panel, styles });
                     }

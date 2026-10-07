@@ -3,6 +3,31 @@ const test = require("node:test");
 const assert = require("node:assert/strict");
 const load = require("./load_settings_environment");
 const fixtures = require("./fixtures/legacy_customize_configs.json");
+const mainFixtures = require("./fixtures/main_customize_configs.json");
+
+for (const fixture of mainFixtures.cases) {
+    test(`frozen main ${fixture.name} retains customization through scoped edits and export`, () => {
+        const env = load();
+        const { global: g, clock } = env;
+        const imported = g.QOL.ui.modal.tryApplyImportStringWithDiagnostics(fixture.code);
+        assert.equal(imported.ok, true);
+        for (const [key, value] of Object.entries(fixture.expected)) assert.equal(imported.candidateConfig[key], value, key);
+        g.QOL.persistence.applyParsedConfigWithDiagnostics(imported.parsedConfig, imported.schemaVersion);
+        g.SaveAndSync(); clock.advance(1200);
+        g.QOL.ui.window.setOpen(true); clock.advance(500);
+        // Editing a different owner must not reset imported healthbar/map modes.
+        assert.equal(g.QOL.ui.customize.start(null, { elementId: "abilityPoints" }), true);
+        const input = env.em.FindChildTraverse("QOLCustomize_AP_X_OFFSET");
+        input.text = "123"; input._fire("oninputsubmit"); clock.advance(600);
+        g.QOL.core.storageBridge.saveSettings = (_config, callback) => callback(null);
+        env.em.FindChildTraverse("QOLCustomizeApply")._fire("onactivate"); clock.advance(1200);
+        const exported = g.QOL.ui.modal.tryApplyImportStringWithDiagnostics(g.QOL.ui.configTab.getCurrentExportSettingsString());
+        assert.equal(exported.ok, true);
+        assert.equal(exported.candidateConfig.AP_X_OFFSET, 123);
+        for (const [key, value] of Object.entries(fixture.expected)) assert.equal(exported.candidateConfig[key], value, key);
+        assert.deepEqual(env.doc.eventErrors, []); assert.deepEqual(clock.errors, []);
+    });
+}
 
 // Frozen codes were encoded with main's shared codec/schema at sourceCommit.
 // Re-encoding legacy input with the current writer would miss compatibility loss.

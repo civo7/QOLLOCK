@@ -214,6 +214,22 @@ test("late native resize layout stays in the gesture and pins the opposite corne
     clean(env);
 });
 
+test("overall presentation scale preserves native transforms and animation scale on apply and release", () => {
+    const env = setup("abilityPoints");
+    env.panel.style.preTransformScale2d = "1.03";
+    env.panel.style.transform = "translateX(2px)";
+    env.global.QOL.ui.customize.start(null, { elementId: "abilityPoints" });
+    const input = env.find("QOLCustomize_AP_SCALE");
+    input.text = "150"; input._fire("oninputsubmit"); env.clock.advance(700);
+    assert.equal(env.panel.style.uiScale, "150%");
+    assert.equal(env.panel.style.preTransformScale2d, "1.03");
+    assert.equal(env.panel.style.transform, "translateX(2px)");
+    clean(env);
+    assert.equal(env.panel.style.uiScale, undefined);
+    assert.equal(env.panel.style.preTransformScale2d, "1.03");
+    assert.equal(env.panel.style.transform, "translateX(2px)");
+});
+
 for (const [id, prefix] of [["abilityPoints", "AP_"], ["stamina", "STAMINA_"]]) {
     test(`${id}: independent placement previews, restores and survives envelope export without a version bump`, () => {
         const env = setup(id);

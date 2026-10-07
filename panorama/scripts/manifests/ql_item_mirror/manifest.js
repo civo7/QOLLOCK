@@ -134,7 +134,8 @@
 
     function _getPanelClassTokens(panel) {
         if (!panel || !panel.GetAttributeString) return [];
-        var classAttr = panel.GetAttributeString("class", "");
+        var classAttr = panel.GetClasses ? panel.GetClasses() : panel.GetAttributeString("class", "");
+        if (Array.isArray(classAttr)) return classAttr;
         if (!classAttr || classAttr.length === 0) return [];
         var split = classAttr.split(/\s+/);
         var out = [];
@@ -210,19 +211,29 @@
         return rounded.toFixed(1);
     }
 
+    const readyFlashTokens = new WeakMap();
+
+    function _clearReadyFlash(overlayPanel) {
+        if (!_isAlive(overlayPanel)) return;
+        readyFlashTokens.set(overlayPanel, (readyFlashTokens.get(overlayPanel) || 0) + 1);
+        if (overlayPanel.SetHasClass) overlayPanel.SetHasClass("ready_flash", false);
+    }
+
     function _triggerReadyFlash(overlayPanel) {
         if (!_isAlive(overlayPanel)) return;
+        _clearReadyFlash(overlayPanel);
+        const token = readyFlashTokens.get(overlayPanel);
         try {
             if (overlayPanel.SetHasClass) overlayPanel.SetHasClass("ready_flash", false);
             overlayPanel.style.visibility = "visible";
         } catch (e) {}
         $.Schedule(0.01, function () {
-            if (!_isAlive(overlayPanel)) return;
+            if (!_isAlive(overlayPanel) || readyFlashTokens.get(overlayPanel) !== token) return;
             try {
                 if (overlayPanel.SetHasClass) overlayPanel.SetHasClass("ready_flash", true);
             } catch (e1) {}
             $.Schedule((ITEM_MIRROR_READY_OVERLAY_FLASH_MS + 40) / 1000.0, function () {
-                if (!_isAlive(overlayPanel)) return;
+                if (!_isAlive(overlayPanel) || readyFlashTokens.get(overlayPanel) !== token) return;
                 try {
                     if (overlayPanel.SetHasClass) overlayPanel.SetHasClass("ready_flash", false);
                 } catch (e2) {}
@@ -279,9 +290,9 @@
         create: function(ctx) {
             var _loop = null, _overlay = null, _row = null;
             var _slots = [];
-            var _abilities = null, _abilitiesHud = null;
-            var _mirror = { sources: [], slotStates: {}, classCache: {}, runtimePanelIds: [], exceptionGroupAssignments: {}, nextSourceId: 0, nextAcquireOrder: 0 };
-            var _nextScanMs = 0, _lastSignature = '', _lastLayoutSig = '', _lastShopOpen = false;
+            var _abilities = null;
+            var _mirror = { sources: [], slotStates: {}, runtimePanelIds: [], exceptionGroupAssignments: {}, nextSourceId: 0, nextAcquireOrder: 0 };
+            var _nextScanMs = 0, _lastLayoutSig = '', _lastShopOpen = false;
             var ITEM_MIRROR_FLASH_DEBUG = false, ITEM_MIRROR_COOLDOWN_DEBUG = false;
             var ITEM_MIRROR_EXPRESS_DEBUG = false, ITEM_MIRROR_EXCEPTION_DEBUG = false;
             var ITEM_MIRROR_COOLDOWN_DEBUG_THROTTLE_MS = 350;
@@ -684,7 +695,6 @@
                     var entries = [];
                     var scannedCount = 0;
                     var seenOwnerIcons = [];
-                    var seenOwnerIds = [];
                     for (var mc = 0; mc < modsContainers.length; mc++) {
                         var modsContainer = modsContainers[mc];
                         if (!modsContainer) continue;
@@ -697,25 +707,17 @@
                             var ownerIcon = _findItemOwnerFromContainer(nested);
                             if (!ownerIcon || !ownerIcon.BHasClass || !ownerIcon.BHasClass("hasAbility")) continue;
             
-                            var ownerId = ownerIcon.id ? String(ownerIcon.id) : "";
+                            var ownerId = ownerIcon.id ? ownerIcon.id : "unknown";
             
-                            // Dedup: skip entries for the same owner icon (same item appearing
-                            // under multiple ModsContainers, e.g. Universal + Locked Universal panels).
-                            // Check by both panel identity AND ownerId string, since different
-                            // ModsContainers may produce distinct panel instances for the same item.
-                            // Dynamic CitadelModIcon panels can have no ID; an empty ID is not identity.
+                            // Focused roots overlap; deduplicate the same panel.
+                            // IDs such as ModIcon0 are local to each native list
+                            // and cannot identify an item across different owners.
                             var isDuplicateOwner = false;
                             for (var si = 0; si < seenOwnerIcons.length; si++) {
                                 if (seenOwnerIcons[si] === ownerIcon) { isDuplicateOwner = true; break; }
                             }
-                            if (!isDuplicateOwner && ownerId.length > 0) {
-                                for (var sj = 0; sj < seenOwnerIds.length; sj++) {
-                                    if (seenOwnerIds[sj] === ownerId) { isDuplicateOwner = true; break; }
-                                }
-                            }
                             if (isDuplicateOwner) continue;
                             seenOwnerIcons.push(ownerIcon);
-                            if (ownerId.length > 0) seenOwnerIds.push(ownerId);
                             var cooldownState = ownerIcon.BHasClass("OffCooldown") ? "off" : "on";
                             var sourceImage = nested.FindChildTraverse ? nested.FindChildTraverse("ModIconImage") : null;
                             if (!sourceImage && ownerIcon.FindChildTraverse) sourceImage = ownerIcon.FindChildTraverse("ModIconImage");
@@ -1186,7 +1188,8 @@
                             if (!prev) continue;
                             if (prev.ownerIcon === match.ownerIcon &&
                                 prev.iconContainer === match.iconContainer &&
-                                prev.itemClassName === match.itemClassName) {
+                                prev.itemClassName === match.itemClassName &&
+                                prev.targetIconSrc === match.targetIconSrc) {
                                 existing = prev;
                                 usedPrev[p] = true;
                                 break;
@@ -1218,6 +1221,7 @@
                                     var clsCandidate = clsBucket.shift();
                                     if (!clsCandidate) continue;
                                     if (usedPrev[clsCandidate.idx]) continue;
+                                    if (clsCandidate.src.targetIconSrc !== match.targetIconSrc) continue;
                                     existing = clsCandidate.src;
                                     usedPrev[clsCandidate.idx] = true;
                                     break;
@@ -1279,9 +1283,17 @@
                         String(source.targetIconSrc || "")
                     ].join("|");
                     if (slotState.staticSyncSig === sourceSig) return;
+                    if (!slotObj.classCache) slotObj.classCache = {};
+                    const classCache = slotObj.classCache;
+                    if (slotObj.itemClassName && slotObj.itemClassName !== sourceItemClassName) {
+                        for (const target of [mirrorSlot, slotObj.background, slotObj.iconInner, slotObj.image]) {
+                            if (target) target.SetHasClass(slotObj.itemClassName, false);
+                        }
+                    }
+                    slotObj.itemClassName = sourceItemClassName;
             
                     if (sourceMod) {
-                        _syncPanelClasses(sourceMod, mirrorSlot, _mirror.classCache, "itemMirrorSlotFromContainer:" + source.key, ["mod_icon_single_container"]);
+                        _syncPanelClasses(sourceMod, mirrorSlot, classCache, "container", ["mod_icon_single_container"]);
                     }
                     if (sourceItemClassName && sourceItemClassName.length > 0 && sourceMod && sourceMod.BHasClass) {
                         var hasItemClass = sourceMod.BHasClass(sourceItemClassName);
@@ -1291,8 +1303,8 @@
                         if (slotObj.image) slotObj.image.SetHasClass(sourceItemClassName, hasItemClass);
                     }
             
-                    _syncPanelClasses(sourceIcon, mirrorIcon, _mirror.classCache, "itemMirrorIconOwner:" + source.key, ["OnCooldown", "OffCooldown", "VerticalCooldown", "isWeapon", "isArmor", "isTech"]);
-                    _syncPanelClasses(sourceIcon, mirrorSlot, _mirror.classCache, "itemMirrorSlotFromOwner:" + source.key, ["OnCooldown", "OffCooldown", "VerticalCooldown", "isWeapon", "isArmor", "isTech"]);
+                    _syncPanelClasses(sourceIcon, mirrorIcon, classCache, "owner", ["OnCooldown", "OffCooldown", "VerticalCooldown", "isWeapon", "isArmor", "isTech"]);
+                    _syncPanelClasses(sourceIcon, mirrorSlot, classCache, "slotOwner", ["OnCooldown", "OffCooldown", "VerticalCooldown", "isWeapon", "isArmor", "isTech"]);
                     slotState.staticSyncSig = sourceSig;
                 }
             
@@ -1336,6 +1348,20 @@
                             rapidRetriggerSuppressUntilMs: 0
                         };
                         _mirror.slotStates[source.key] = slotState;
+                    }
+                    // Source history survives reordering, but rendered signatures
+                    // do not survive a different slot or another occupant.
+                    const renderSlotChanged = slotState.renderSlot !== slotObj || slotObj.renderedSourceKey !== source.key;
+                    if (renderSlotChanged) {
+                        _clearReadyFlash(mirrorReadyOverlay);
+                        slotState.renderSlot = slotObj;
+                        slotObj.renderedSourceKey = source.key;
+                        slotState.staticSyncSig = "";
+                        slotState.lastCooldownClassSig = "";
+                        slotState.lastSizeSig = "";
+                        slotState.lastMaskScaleSig = "";
+                        slotState.lastMirrorImagePanel = null;
+                        slotState.cooldownTextStyled = false;
                     }
                     // A semantic source key can survive replacement of the native panel.
                     if (slotState.probeSourceIcon !== sourceIcon) {
@@ -1494,11 +1520,11 @@
                     if (!maskVisibility && sourceMask) maskVisibility = _getInlineStyleProperty(sourceMask, "visibility");
             
                     if (maskClip && maskClip.length > 0) {
-                        if (slotState.lastClip !== maskClip) {
+                        if (slotState.lastClip !== maskClip || renderSlotChanged) {
                             try {
                                 mirrorMask.style.clip = maskClip;
                                 slotState.lastClip = maskClip;
-                            } catch(e1) { QOL.core.Logger.logWarn("core", "op failed: " + (e1 && e1.message ? e1.message : String(e1 || ""))); }
+                            } catch(e1) { slotState.renderSlot = null; QOL.core.Logger.logWarn("core", "op failed: " + (e1 && e1.message ? e1.message : String(e1 || ""))); }
                         }
                     } else if (slotState.lastClip && slotState.lastClip.length > 0) {
                         try {
@@ -1948,13 +1974,11 @@
                 _overlay = null;
                 _row = null;
                 _slots = [];
-                _mirror = { sources: [], slotStates: {}, classCache: {}, runtimePanelIds: [], exceptionGroupAssignments: {}, nextSourceId: 0, nextAcquireOrder: 0 };
+                _mirror = { sources: [], slotStates: {}, runtimePanelIds: [], exceptionGroupAssignments: {}, nextSourceId: 0, nextAcquireOrder: 0 };
                 _nextScanMs = 0;
-                _lastSignature = "";
                 _lastLayoutSig = "";
                 _lastShopOpen = false;
                 _abilities = null;
-                _abilitiesHud = null;
             }
             function _update(hud, cfg) {
                 var enabled = Number(cfg.ENABLE_PASSIVE_COOLDOWN) === 1 && Number(cfg.ENABLE_OLD_ITEM_COOLDOWNS) !== 1;
@@ -1969,11 +1993,10 @@
                     return;
                 }
                 var nowMs = _nowMs();
-                if (_abilitiesHud !== hud || !_isAlive(_abilities)) {
-                    _abilitiesHud = hud;
-                    _abilities = hud.FindChildTraverse('abilitiesContainer');
-                }
-                var shopOpen = !!(_abilities && _abilities.BHasClass('gShopOpen'));
+                // The extracted HUD uses capital A; state can live on an
+                // ancestor. Resolve replacements with the shared editor path.
+                _abilities = QOL.presentation.findPath(hud, QOL.presentation.paths.abilities) || hud.FindChildTraverse('AbilitiesContainer');
+                var shopOpen = !!(_abilities && QOL.utils.HasClassInHierarchy(_abilities, 'gShopOpen'));
                 var shopJustClosed = _lastShopOpen && !shopOpen;
                 _lastShopOpen = shopOpen;
                 if (shopOpen) {
@@ -1982,14 +2005,11 @@
                     return;
                 }
                 var sources = _mirror.sources;
-                var sourcesValid = sources.length > 0 && sources.every(function(s) { return _isAlive(s.ownerIcon) && _isAlive(s.iconContainer); });
-                var needsScan = shopJustClosed || (nowMs >= _nextScanMs);
+                var needsScan = shopJustClosed || (nowMs >= _nextScanMs) || sources.some(source => !_isAlive(source.ownerIcon) || !_isAlive(source.iconContainer));
                 if (needsScan) {
-                    var scan = _buildItemMirrorSourcesMulti(hud, cfg);
-                    var signature = 'modsContainers=' + scan.modsContainersCount + ';scan=' + scan.scannedCount + ';found=' + scan.matches.length + ';' + scan.structureSummary.join(';');
-                    var stable = signature === _lastSignature && sourcesValid && sources.length > 0 && scan.matches.length > 0;
-                    _nextScanMs = nowMs + (stable && !shopJustClosed ? 5270 : (scan.matches.length === 0 ? 1500 : ITEM_MIRROR_PROBE_SCAN_MS));
-                    _lastSignature = signature;
+                    // Inventory identity is independent of presentation filters.
+                    var scan = _buildItemMirrorSourcesMulti(hud, null);
+                    _nextScanMs = nowMs + (scan.matches.length === 0 ? 1500 : ITEM_MIRROR_PROBE_SCAN_MS);
                     sources = _reconcileItemMirrorSourcesMulti(scan.matches);
                 }
                 var root = _ensureOverlay(hud);
@@ -2013,20 +2033,21 @@
                     _mirror.visualOpacityText = opacity.toFixed(2);
                     _lastLayoutSig = layoutSig;
                 }
-                var rootVis = sources.length ? 'visible' : 'collapse';
+                const visibleSources = sources.filter(source => _ownerMatchesMirrorCategory(source.ownerIcon, ITEM_MIRROR_TARGETS[source.targetIndex], cfg));
+                var rootVis = visibleSources.length ? 'visible' : 'collapse';
                 if (root.style.visibility !== rootVis) root.style.visibility = rootVis;
                 var activeKeys = {};
-                for (var i = 0; i < sources.length; i++) {
+                for (const source of sources) activeKeys[source.key] = true;
+                for (var i = 0; i < visibleSources.length; i++) {
                     var slot = _ensureSlot(i);
                     if (!slot) continue;
                     if (slot.icon && slot.icon.style && slot.icon.style.visibility !== 'visible') {
                         slot.icon.style.visibility = 'visible';
                     }
-                    slot.sourceKey = sources[i].key;
-                    activeKeys[sources[i].key] = true;
-                    _syncMirrorItemFromSourceMulti(slot, sources[i]);
+                    slot.sourceKey = visibleSources[i].key;
+                    _syncMirrorItemFromSourceMulti(slot, visibleSources[i]);
                 }
-                for (var j = sources.length; j < _slots.length; j++) {
+                for (var j = visibleSources.length; j < _slots.length; j++) {
                     if (_isAlive(_slots[j].icon) && _slots[j].icon.style && _slots[j].icon.style.visibility !== 'collapse') {
                         _slots[j].icon.style.visibility = 'collapse';
                     }
