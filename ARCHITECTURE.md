@@ -260,8 +260,10 @@ settings controls or serialized schemas.
 5. Handle changes in every owning runtime and dependent feature. Preserve
    disable/reset behavior and root-class ownership. Do not add a second poller
    for configuration that already arrives through `onSettingsChanged`.
-6. If the value is shareable, extend the current versioned compact schema using
-   existing schema utilities; preserve old field order, bounds, steps and
+6. Add current control ranges to `QOL_SETTINGS_FIELDS`. Changing a versioned
+   compact schema requires explicit maintainer authorization; unpublished fields
+   use JSON-envelope token exports when the published layout cannot represent
+   their values. Preserve old field order, bounds, steps and
    historical defaults. Update relevant normalizers/migrations and export/import
    paths. Do not edit a historical schema in place or silently lose precision.
 7. Check reset, preset application, settings -> HUD propagation and a complete

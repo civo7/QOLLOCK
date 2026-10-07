@@ -126,6 +126,7 @@
         const semver = String(semverOverride || getLatestCompactSemver());
         const wireVersion = getWireVersion(semver);
         const schema = getSchema(semver);
+        if (!semverOverride && getCodec().RequiresSettingsEnvelope(config, schema)) return WrapConfigForStorage(config);
         const defaults = getDefaults();
         const codec = getCodec();
         const defaultHeroField = getCompactDefaultHeroField();
@@ -155,6 +156,7 @@
 
     const deserializeBuildPayloadCompact = (binaryStr, expectedSemver) => {
         const raw = String(binaryStr || "");
+        if (raw.charAt(0) === "{") return getCodec().ReadSettingsEnvelope(raw, expectedSemver);
         if (raw.length < 1) throw new Error("Compact string too short");
         const wireVersion = raw.charCodeAt(0) & 255;
         let semver = "";

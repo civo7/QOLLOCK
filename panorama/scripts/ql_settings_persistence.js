@@ -105,6 +105,7 @@ function SerializeCompactV2(config, semverOverride) {
     var semver = String(semverOverride || LATEST_COMPACT_SEMVER);
     var wireVersion = GetCompactWireVersion(semver);
     var schema = GetCompactSchema(semver);
+    if (!semverOverride && QOL_CODEC.RequiresSettingsEnvelope(config, schema)) return WrapConfigForStorage(config);
     var compactHeroField = GetCompactDefaultHeroField();
     var heroOptions = GetDefaultHeroOptions();
     var defConfig = GetDefaultConfig();
@@ -131,6 +132,7 @@ function SerializeCompactV2(config, semverOverride) {
 
 function DeserializeCompactV2(binaryStr, expectedSemver) {
     var raw = String(binaryStr || "");
+    if (raw.charAt(0) === "{") return QOL_CODEC.ReadSettingsEnvelope(raw, expectedSemver);
     if (raw.length < 1) throw new Error("Compact string too short");
     var wireVersion = raw.charCodeAt(0) & 255;
     var semver = "";
@@ -215,7 +217,7 @@ function BuildSchemaFieldMap(version) {
     var map = {};
     var schema = [];
     var schemaSemver = String(version || LATEST_COMPACT_SEMVER);
-    try { schema = GetCompactSchema(schemaSemver) || []; } catch (e0) { $.Msg("[QOLLock][WARN][schema] GetCompactSchema failed for v" + schemaSemver + ": " + (e0 && e0.message ? e0.message : String(e0 || ""))); schema = []; }
+    try { schema = schemaSemver === LATEST_COMPACT_SEMVER ? QOL.settingsFields : GetCompactSchema(schemaSemver) || []; } catch (e0) { $.Msg("[QOLLock][WARN][schema] GetCompactSchema failed for v" + schemaSemver + ": " + (e0 && e0.message ? e0.message : String(e0 || ""))); schema = []; }
     for (var i = 0; i < schema.length; i++) {
         var field = schema[i];
         if (!field || !field.key) continue;

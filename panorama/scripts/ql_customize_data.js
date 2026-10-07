@@ -42,7 +42,7 @@
         ] }
     ];
     const fieldMap = new Map();
-    const wireFields = new Map(QOL_COMPACT_SCHEMA_REGISTRY[QOL_SCHEMA_SEMVER].schema.map(field => [field.key, field]));
+    const wireFields = new Map(Q.settingsFields.map(field => [field.key, field]));
     function register(additions) {
         for (const element of additions) {
             if (elements.some(existing => existing.id === element.id)) throw new Error("Duplicate customization owner: " + element.id);

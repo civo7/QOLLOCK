@@ -207,7 +207,7 @@ test("ammo moves beyond its old box, resets its native baseline and round-trips 
     const parsed = g.QOL.ui.modal.tryApplyImportStringWithDiagnostics(g.QOL.ui.configTab.getCurrentExportSettingsString());
     assert.equal(parsed.ok, true); assert.equal(parsed.candidateConfig.AMMO_PANEL_X_OFFSET, -900);
     assert.equal(parsed.candidateConfig.AMMO_PANEL_Y_OFFSET, -350);
-    const historic = g.QOL_COMPACT_SCHEMA_REGISTRY["4.0.7"].schema.find(field => field.key === "AMMO_PANEL_X_OFFSET");
+    const historic = g.QOL_COMPACT_SCHEMA_REGISTRY["4.0.5"].schema.find(field => field.key === "AMMO_PANEL_X_OFFSET");
     assert.equal(historic.min, -200); assert.equal(historic.max, 200);
     g.QOL.ui.customize.start(); activate(env, "QOLCustomizeSelect_ammo"); activate(env, "QOLCustomizeReset"); env.clock.advance(1200);
     assert.equal(ammo.style.x, "0px"); assert.equal(ammo.style.y, "80px");

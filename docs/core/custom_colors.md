@@ -9,11 +9,12 @@ as an RGB payload in a reserved numeric band and resolve it back to a color.
 The tag distinguishes literal black from native/default. Invalid HEX input is
 rejected; it must not replace a previous value.
 
-Compact schema `4.0.6` introduced RGB for inventory, stamina and ammo text;
-`4.0.7` extends the remaining supported owners. Historical schemas keep their
-original bounds, order and palette meanings. Use the current schema when sharing
-custom colors; older clients cannot represent all of them. The JSON storage
-envelope continues to carry numeric values.
+Historical compact schemas retain their original bounds, order and palette
+meanings. Exports containing custom RGB use the JSON storage envelope inside
+the existing Base64Url token; they do not assign a new compact schema version.
+Both HUD and settings decoders recognize this envelope. Older clients without
+envelope-token support cannot import these exports. Storage continues to carry
+the tagged numeric values.
 
 The ordinary palette rows preserve an existing custom value when synchronizing.
 Choosing a swatch replaces it with that palette index; choosing Default uses the

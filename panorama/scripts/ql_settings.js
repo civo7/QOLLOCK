@@ -38,7 +38,7 @@ var STORAGE_KEY = (typeof STORAGE_KEY !== "undefined") ? STORAGE_KEY : ((typeof 
 var USER_EDIT_REV_ATTR = (typeof USER_EDIT_REV_ATTR !== "undefined") ? USER_EDIT_REV_ATTR : ((typeof QOL_USER_EDIT_REV_ATTR !== "undefined") ? QOL_USER_EDIT_REV_ATTR : "QOL_USER_EDIT_REV");
 var LATEST_COMPACT_SEMVER = QOL_LATEST_COMPACT_SEMVER;
 var DEFAULT_CONFIG = QOL_DEFAULT_CONFIG;
-const MOD_DISPLAY_VERSION = QOL_SCHEMA_SEMVER;
+const MOD_DISPLAY_VERSION = QOL.VERSION;
 var currentTab = "Support";
 var gCurrentSettingsSectionTitle = "";
 var currentSearchQuery = "";

@@ -69,7 +69,7 @@ test("historical palettes retain their bounds; current colors reject invalid val
         assert.equal(g.QOL_DEFAULT_CONFIG[key], 0);
     }
     for (const key of ["BOTTOM_BAR_WASH_COLOR", "KEYBOARD_OVERLAY_WASH_COLOR", "PLAYER_HEALTHBAR_ACCENT_COLOR", "MINIMAP_ICON_COLOR"]) {
-        assert.equal(g.QOL_COMPACT_SCHEMA_REGISTRY["4.0.6"].schema.find(field => field.key === key).max, 29);
+        assert.equal(g.QOL_COMPACT_SCHEMA_REGISTRY["4.0.5"].schema.find(field => field.key === key).max, 29);
         assert.equal(g.QOL_DEFAULT_CONFIG[key], 0);
     }
     const store = hud.sandbox.global.QOL.core.ConfigStore;

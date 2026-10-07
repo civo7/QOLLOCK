@@ -33,8 +33,10 @@ separate contracts. None automatically creates the others.
    current `ctx.config`. Keep enable predicates, disable cleanup and other owners
    consistent. Numeric modes are not necessarily boolean toggles. Do not add a
    second poller just to observe a setting already delivered through the hook.
-7. **Preserve storage compatibility.** For a shareable field, extend the current
-   compact schema with its real range/step using the existing schema utilities.
+7. **Preserve storage compatibility.** Add current control metadata to
+   `QOL_SETTINGS_FIELDS`. A new compact schema version requires explicit
+   maintainer authorization; until then the writers use a JSON envelope for
+   values the published binary layout cannot represent.
    Preserve historical schema field order, bounds, steps and defaults. Update
    relevant normalization/migration/import/export paths. Package version,
    schema version and public update marker are separate concepts.

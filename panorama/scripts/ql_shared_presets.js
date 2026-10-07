@@ -34,7 +34,7 @@
 "use strict";
 
 // Shared preset source-of-truth used by ql_settings.js and ql_core.js.
-var QOL_SCHEMA_SEMVER = "4.0.10";
+var QOL_SCHEMA_SEMVER = "4.0.5";
 var QOL_SCHEMA_WIRE_VERSION = 2;
 
 // ---- Shared storage keys ----
@@ -838,7 +838,7 @@ var NormalizeDefaultHeroConfig = QOL_SCHEMA_UTILS.NormalizeDefaultHeroConfig;
 // SCHEMA VERSIONING RULES:
 //   - Never silently change the meaning of a released schema version.
 //   - Add new fields by creating a new semver entry in the registry.
-//   - Bump QOL_SCHEMA_SEMVER when adding or reinterpreting fields.
+//   - Changing QOL_SCHEMA_SEMVER requires explicit maintainer authorization.
 //   - Run scripts/validate_compact_schema.js after any schema change.
 //
 // Current semver: see QOL_SCHEMA_SEMVER (top of file)
@@ -1793,34 +1793,26 @@ var QOL_COMPACT_SCHEMA_4_0_5 = QOL_COMPACT_SCHEMA_UTILS.AppendUniqueSchemaFields
 );
 
 
-// Extend only the current schema: historical codes retain their original bounds.
-var QOL_COMPACT_SCHEMA_4_0_6 = QOL_COMPACT_SCHEMA_4_0_5.map(field =>
-    ["ITEMS_WASH_COLOR", "STAMINA_CHARGE_COLOR", "AMMO_TEXT_COLOR"].includes(field.key)
-        ? Object.assign({}, field, { max: 0x1ffffff }) : field
-);
-var QOL_COMPACT_SCHEMA_4_0_7 = QOL_COMPACT_SCHEMA_4_0_6.map(field =>
-    ["BOTTOM_BAR_WASH_COLOR", "KEYBOARD_OVERLAY_WASH_COLOR", "PLAYER_HEALTHBAR_ACCENT_COLOR", "MINIMAP_ICON_COLOR"].includes(field.key)
-        ? Object.assign({}, field, { max: 0x1ffffff }) : field
-);
-var QOL_COMPACT_SCHEMA_4_0_8 = QOL_COMPACT_SCHEMA_4_0_7.map(field =>
-    ["AMMO_PANEL_X_OFFSET", "AMMO_PANEL_Y_OFFSET", "STATS_POSITION_X_OFFSET", "STATS_POSITION_Y_OFFSET"].includes(field.key)
-        ? Object.assign({}, field, { min: -2000, max: 2000 }) : field
-);
-
-var QOL_COMPACT_SCHEMA_4_0_9 = QOL_COMPACT_SCHEMA_UTILS.AppendUniqueSchemaFields(
-    QOL_COMPACT_SCHEMA_4_0_8,
+// Runtime control metadata is independent of the published binary layout.
+// Unreleased settings use the JSON storage envelope when a compact export
+// cannot represent them. A new compact schema requires maintainer approval.
+var QOL_SETTINGS_FIELDS = QOL_COMPACT_SCHEMA_UTILS.AppendUniqueSchemaFields(
+    QOL_COMPACT_SCHEMA_4_0_5.map(field => {
+        if (["ITEMS_WASH_COLOR", "STAMINA_CHARGE_COLOR", "AMMO_TEXT_COLOR", "BOTTOM_BAR_WASH_COLOR",
+            "KEYBOARD_OVERLAY_WASH_COLOR", "PLAYER_HEALTHBAR_ACCENT_COLOR", "MINIMAP_ICON_COLOR"].includes(field.key)) {
+            return Object.assign({}, field, { max: 0x1ffffff });
+        }
+        if (["AMMO_PANEL_X_OFFSET", "AMMO_PANEL_Y_OFFSET", "STATS_POSITION_X_OFFSET", "STATS_POSITION_Y_OFFSET"].includes(field.key)) {
+            return Object.assign({}, field, { min: -2000, max: 2000 });
+        }
+        return field;
+    }),
     [
         { key: "SOULS_SCALE", min: 50, max: 200, step: 1 },
         { key: "ITEMS_SCALE", min: 50, max: 200, step: 1 },
         { key: "STAMINA_SCALE", min: 50, max: 200, step: 1 },
         { key: "STATS_POSITION_SCALE", min: 50, max: 200, step: 1 },
-        { key: "COMPASS_SPEED_SCALE", min: 50, max: 200, step: 1 }
-    ]
-);
-
-var QOL_COMPACT_SCHEMA_4_0_10 = QOL_COMPACT_SCHEMA_UTILS.AppendUniqueSchemaFields(
-    QOL_COMPACT_SCHEMA_4_0_9,
-    [
+        { key: "COMPASS_SPEED_SCALE", min: 50, max: 200, step: 1 },
         { key: "AMMO_HUD_SCALE", min: 50, max: 200, step: 1 },
         { key: "AP_SCALE", min: 50, max: 200, step: 1 },
         { key: "DAMAGE_REPORT_SCALE", min: 50, max: 200, step: 1 }
@@ -1828,6 +1820,39 @@ var QOL_COMPACT_SCHEMA_4_0_10 = QOL_COMPACT_SCHEMA_UTILS.AppendUniqueSchemaField
 );
 
 var QOL_LATEST_COMPACT_SEMVER = QOL_SCHEMA_SEMVER;
+
+// Preserve settings outside the published compact layout without assigning
+// another schema version. Explicit historical encodes still use binary bytes.
+QOL_CODEC.RequiresSettingsEnvelope = function(config, schema) {
+    const fields = new Map(schema.map(field => [field.key, field]));
+    return QOL_SETTINGS_FIELDS.some(field => {
+        if (!config || !Object.prototype.hasOwnProperty.call(config, field.key)) return false;
+        const value = config[field.key];
+        const published = fields.get(field.key);
+        if (!published) return value !== QOL_DEFAULT_CONFIG[field.key];
+        if (typeof value !== "number") return false;
+        return value < published.min || value > published.max ||
+            Math.abs((value - published.min) / published.step - Math.round((value - published.min) / published.step)) > 0.000001;
+    });
+};
+QOL_CODEC.ReadSettingsEnvelope = function(raw, expectedSemver) {
+    const envelope = UnwrapConfigFromStorage(raw);
+    if (!envelope || !envelope.isEnveloped || envelope.schema !== QOL_SCHEMA_SEMVER ||
+        (expectedSemver && envelope.schema !== expectedSemver) || Array.isArray(envelope.config)) {
+        throw new Error("Invalid settings envelope");
+    }
+    const config = {};
+    for (const key of Object.keys(envelope.config)) {
+        if (!Object.prototype.hasOwnProperty.call(QOL_DEFAULT_CONFIG, key)) continue;
+        const value = envelope.config[key];
+        if (value === null || typeof value === "object" || (typeof value === "number" && !Number.isFinite(value))) {
+            throw new Error("Invalid settings envelope value");
+        }
+        config[key] = value;
+    }
+    if (!Object.keys(config).length) throw new Error("Empty settings envelope");
+    return config;
+};
 
 // ==========================================================================
 // Compact schema version history
@@ -1864,11 +1889,6 @@ var QOL_LATEST_COMPACT_SEMVER = QOL_SCHEMA_SEMVER;
 //              hide individual modifier rows (firerate, move speed, resists, lifesteal, ...).
 //              All default on.
 // 4.0.5        Active item slot scale and X/Y offsets.
-// 4.0.6        Tagged RGB colors for inventory, stamina and ammo text.
-// 4.0.7        Tagged RGB for the remaining existing presentation palettes.
-// 4.0.8        Screen-wide ammo/stat offsets; historical bounds remain unchanged.
-// 4.0.9        Independent overall scales for five existing HUD surfaces.
-// 4.0.10       Overall ammo, AP and damage-report scales, independent of text sizes.
 // ==========================================================================
 // Known issue: ENABLE_COLORED_HEALTHBAR appears twice in V24+ schemas
 // (once from V2 base, once from V24 concat). Harmless — the decode
@@ -2128,26 +2148,6 @@ var QOL_COMPACT_SCHEMA_REGISTRY = {
     "4.0.5": {
         wireVersion: QOL_COMPACT_WIRE_VERSION_2_0_1,
         schema: QOL_COMPACT_SCHEMA_4_0_5
-    },
-    "4.0.6": {
-        wireVersion: QOL_COMPACT_WIRE_VERSION_2_0_1,
-        schema: QOL_COMPACT_SCHEMA_4_0_6
-    },
-    "4.0.7": {
-        wireVersion: QOL_COMPACT_WIRE_VERSION_2_0_1,
-        schema: QOL_COMPACT_SCHEMA_4_0_7
-    },
-    "4.0.8": {
-        wireVersion: QOL_COMPACT_WIRE_VERSION_2_0_1,
-        schema: QOL_COMPACT_SCHEMA_4_0_8
-    },
-    "4.0.9": {
-        wireVersion: QOL_COMPACT_WIRE_VERSION_2_0_1,
-        schema: QOL_COMPACT_SCHEMA_4_0_9
-    },
-    "4.0.10": {
-        wireVersion: QOL_COMPACT_WIRE_VERSION_2_0_1,
-        schema: QOL_COMPACT_SCHEMA_4_0_10
     }
 };
 var QOL_COMPACT_SCHEMA_WIRE_TO_SEMVER = (typeof QOL_CODEC === "object" && QOL_CODEC && typeof QOL_CODEC.BuildWireToSemver === "function")
@@ -2288,6 +2288,7 @@ if (typeof QOL_UTILS !== "undefined") {
 if (typeof QOL_DEFAULT_CONFIG === "object") QOL.defaultConfig = QOL_DEFAULT_CONFIG;
 if (typeof QOL_PRESETS === "object") QOL.presets = QOL_PRESETS;
 if (typeof QOL_SCHEMA_SEMVER === "string") QOL.schemaSemver = QOL_SCHEMA_SEMVER;
+QOL.settingsFields = QOL_SETTINGS_FIELDS;
 if (typeof QOL_CODEC === "object") QOL.codec = QOL_CODEC;
 if (typeof QOL_DumpDiagnostics === "function") QOL.dumpDiagnostics = QOL_DumpDiagnostics;
 // Phase 6: Publish schema symbols for QOL.import() access by feature files.
