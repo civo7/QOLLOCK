@@ -1,5 +1,5 @@
 // ql_settings_loc_ko.js — QOLLOCK settings locale (ko)
-// Extracted from ql_settings.js, Phase 1
+// English source keys; maintained through scripts/import_locales_json.js or CSV import.
 (function() {
     'use strict';
     var _root = (typeof globalThis !== "undefined") ? globalThis : (typeof window !== "undefined") ? window : {};
@@ -695,7 +695,7 @@
     "Statistics": "통계",
     "Statlocker": "Statlocker",
     "Stats": "능력치",
-    "Streak:": "연속:",
+    "Streak:": "연속: ",
     "Stretch the compass horizontally.": "나침반을 가로로 늘립니다.",
     "Stretch the compass vertically.": "나침반을 세로로 늘립니다.",
     "Strings may sometimes break between mod versions.": "문자열은 모드 버전에 따라 작동하지 않을 수 있습니다.",
@@ -834,6 +834,40 @@
     "palette": "팔레트",
     "success": "성공",
     "warning": "경고",
-    "yoshii pls hire me": "요시님 저를 고용해줘요"
+    "yoshii pls hire me": "요시님 저를 고용해줘요",
+    "After recording, copy HUD transitions, callback timings, delivery delays and active task counts. This is not an FPS measurement.": "녹화 후 HUD 전환 효과, 호출 타이밍, 실행 딜레이 및 활성화된 작업 수를 복사합니다. FPS 측정 용도가 아닙니다.",
+    "After recording, copy the class transitions and scoreboard event observations.": "녹화 후 클래스 전환과 점수판 이벤트 관전을 복사합니다.",
+    "Back": "뒤로",
+    "Benchmark (Current Config)": "벤치마크 (현재 설정)",
+    "Buy items in game; inspect purchase history size, opacity and offsets.": "아이템 구매; 구매 기록 창의 크기, 투명도 및 위치",
+    "Check for new QOLLOCK releases when opening settings.": "설정을 열 때 QOLLOCK의 신규 버전 여부를 확인합니다.",
+    "Collect unsecured souls in game; inspect size and offsets.": "미확보 영혼 수집; 크기 및 위치",
+    "Compare A/B": "A/B 비교",
+    "Copy HUD state report": "HUD 상태 보고 복사",
+    "Copy failed; see the console log.": "복사 실패; 콘솔 기록을 확인하세요.",
+    "Deal damage in game; inspect size, opacity and offsets.": "입힌 피해; 크기 및 위치",
+    "Fixed Icon Size": "아이콘 크기 고정",
+    "HUD settings walkthrough": "HUD 설정 도우미",
+    "HUD state recording": "HUD 상태 녹화",
+    "HUD state report": "HUD 상태 보고",
+    "HUD state report copied.": "HUD 상태 보고 복사됨.",
+    "Inspect size, opacity and offsets during gameplay.": "게임 플레이 중 크기, 투명도 및 위치를 조정합니다.",
+    "Inspect size, opacity and offsets while buffs or debuffs are active.": "현재 버프와 디버프의 크기, 투명도 및 위치를 조정합니다.",
+    "Inspect the changed layout, size and offsets; test inputs in game.": "변경된 배치, 크기 및 위치 확인; 게임 중 입력 테스트",
+    "Inspect the changed layout, size and offsets; turn in game.": "변경된 배치, 크기 및 위치 확인; 게임 중 회전",
+    "Inspect the changed offsets; move in game.": "변경된 배치, 크기 및 위치 확인; 게임 중 이동",
+    "Inspect the changed size and offsets; use a zipline in game.": "변경된 배치, 크기 및 위치 확인; 게임 중 집라인 사용",
+    "Measure Scheduler polls and FindChildTraverse calls for 10 seconds with current settings. Native panel visits and FPS are unavailable.": "현재 설정으로 10초 간 Scheduler poll과 FindChildTraverse 호출을 측정합니다. 자연스러운 패널 방문과 FPS는 지원하지 않습니다.",
+    "Next": "다음",
+    "No completed HUD state recording yet.": "완료 상태의 HUD 상태 녹화가 없음.",
+    "Run Current (10s)": "현재 설정으로 측정(10초간)",
+    "Running": "측정 중",
+    "Settings restored": "설정 복구됨",
+    "Shop Display": "상점 창",
+    "Smaller, more transparent": "작고 투명하게",
+    "Start": "시작",
+    "Stop": "중지",
+    "Test in game": "인 게임 테스트",
+    "Update Checker": "업데이트 확인"
 };
 })();

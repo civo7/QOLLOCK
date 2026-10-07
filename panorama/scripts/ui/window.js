@@ -814,7 +814,7 @@
             const placeholder = createPanel("Label", container, "");
             if (placeholder) {
                 placeholder.AddClass("SettingRow");
-                placeholder.text = `${localize(getTabDisplayName(tabId))} — content ready.`;
+                placeholder.text = localize("{tab} — content ready.", true).replace("{tab}", localize(getTabDisplayName(tabId)));
             }
         }
     };

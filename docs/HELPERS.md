@@ -39,6 +39,12 @@ which numeric label, or which live HUD instance is authoritative.
 
 ## Load order and names
 
+Settings text belongs to `ui/theme.js`: `LocalizeSettingsText(text, force)`
+resolves an English source key; `QOL.ui.theme.FormatSettingsText(text, values)`
+localizes a whole sentence and replaces named `{name}` placeholders once.
+Both preserve Unicode display text. They are settings-context APIs, not HUD
+globals. See [Localization](LOCALIZATION.md) for exchange and formatting rules.
+
 `ql_utils.js` publishes `QOL_UTILS`; the shared preset bridge exposes the same
 object as `QOL.utils`. Panel helpers require that leaf module and the QOL
 namespace. The typed cache is loaded after utilities and state. Check the actual

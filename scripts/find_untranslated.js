@@ -1,113 +1,24 @@
-// find_untranslated.js — find user-facing settings strings that have no translation-map entry.
-//
-// Discovers the full set of strings the UI tries to localize (by instrumenting LocalizeSettingsText
-// and driving tab rendering across all tabs, plus harvesting description-override tables),
-// then compares them against in-code locale maps in panorama/scripts/ql_settings_loc/*.js.
-//
-// Usage: node scripts/find_untranslated.js [--json] [--lang=ru]
-
 "use strict";
-
-const { Sandbox, Clock, Document } = require("./simulator/index.js");
-const { settingsScripts } = require("./simulator/layout.js");
-const { loadLocaleMaps, LANGUAGES } = require("./locales_helper.js");
-
+const { scanSettings } = require("./settings_localization_audit");
+const { loadLocaleMaps } = require("./locales_helper");
+const { languageFor } = require("./translation_io");
+const { isIntentionalName } = require("./translation_exceptions");
 function main() {
-    const clock = new Clock();
-    const doc = new Document(clock);
-    const root = doc.root;
-    const escapeMenu = doc.create("Panel", { id: "EscapeMenu" });
-    root.addChild(escapeMenu);
-
-    const sandbox = new Sandbox({ clock, doc, name: "settings" });
-    sandbox.global.$.GetContextPanel = () => escapeMenu;
-
-    const { scripts, missing: missingIncludes } = settingsScripts();
-    if (missingIncludes.length) throw new Error("Missing settings includes: " + missingIncludes.join(", "));
-    for (const s of scripts) {
-        sandbox.load(s.absPath);
-    }
-    if (sandbox.loadErrors.length) throw new Error("Settings script loading failed; localization scan is incomplete");
-
-    const seen = new Set();
-
-    // Instrument LocalizeSettingsText
-    const origLocalize = sandbox.global.LocalizeSettingsText;
-    sandbox.global.LocalizeSettingsText = function(text, force) {
-        if (text && typeof text === "string" && text.trim() !== "") {
-            seen.add(text);
-        }
-        return origLocalize ? origLocalize.apply(this, arguments) : text;
-    };
-
-    // Instrument UI helpers if present
-    const Q = sandbox.global.QOL;
-    if (Q && Q.ui && Q.ui.theme && Q.ui.theme.LocalizeSettingsText) {
-        Q.ui.theme.LocalizeSettingsText = sandbox.global.LocalizeSettingsText;
-    }
-
-    // Drive rendering through tabs
-    const stub = sandbox.global.$.CreatePanel("Panel", escapeMenu, "SettingsListStub");
-    const tabs = [
-        "Support", "Config", "Presets", "Crosshair", "Healthbar",
-        "HUD", "UI", "Overlay", "Minimap", "Audio", "Arcade", "Console", "Dev"
-    ];
-
-    for (const tab of tabs) {
-        try {
-            if (Q && Q.ui && Q.ui.window && typeof Q.ui.window.renderTab === "function") {
-                Q.ui.window.renderTab(tab, stub);
-            } else if (typeof sandbox.global.RenderCurrentTabContent === "function") {
-                sandbox.global.currentTab = tab;
-                sandbox.global.RenderCurrentTabContent(stub);
-            }
-        } catch (error) { throw new Error(`Cannot render localization tab ${tab}: ${error.message}`); }
-
-        try {
-            if (typeof sandbox.global.GetSettingsTabDisplayName === "function") {
-                seen.add(String(sandbox.global.GetSettingsTabDisplayName(tab)));
-            }
-        } catch (_) {}
-        seen.add(tab);
-    }
-
-    // Harvest description overrides
-    function harvestValues(obj) {
-        if (!obj) return;
-        for (const k of Object.keys(obj)) {
-            const v = obj[k];
-            if (typeof v === "string" && v.trim() !== "") seen.add(v);
-        }
-    }
-
-    try { harvestValues(sandbox.global.SETTING_DESCRIPTION_OVERRIDE_BY_CONFIG); } catch (_) {}
-    try { harvestValues(sandbox.global.SETTING_DESCRIPTION_OVERRIDE_BY_CATEGORY_ROW); } catch (_) {}
-    try { harvestValues(sandbox.global.SECTION_DESCRIPTION_OVERRIDE_BY_TAB_TITLE); } catch (_) {}
-
+    const args = process.argv.slice(2);
+    for (const arg of args) if (arg !== "--json" && !arg.startsWith("--lang=")) throw new Error(`Unknown option: ${arg}`);
+    const language = args.find(arg => arg.startsWith("--lang="))?.slice(7);
+    const lang = language ? languageFor(language) : null;
+    if (language && !lang) throw new Error(`Unsupported language: ${language}`);
     const { maps } = loadLocaleMaps();
-    const knownUnion = new Set();
-    for (const lang of LANGUAGES) {
-        const m = maps[lang.code] || {};
-        for (const k of Object.keys(m)) knownUnion.add(k);
-    }
-
-    const seenArr = Array.from(seen);
-    const missing = seenArr.filter(s => !knownUnion.has(s)).sort((a, b) => a.toLowerCase() < b.toLowerCase() ? -1 : 1);
-
-    if (process.argv.includes("--json")) {
-        console.log(JSON.stringify(missing, null, 2));
-        return;
-    }
-
-    console.log(`[find] Localizable strings discovered: ${seenArr.length}`);
-    console.log(`[find] Already in maps (union):        ${knownUnion.size}`);
-    console.log(`[find] MISSING from all maps:          ${missing.length}`);
-    if (missing.length > 0) {
-        console.log("");
-        for (const s of missing) {
-            console.log("  • " + s);
-        }
+    const { seen, tabs } = scanSettings();
+    const sourceMissing = seen.filter(text => !Object.hasOwn(maps.en, text) && !isIntentionalName(text));
+    const intentional = seen.filter(isIntentionalName);
+    const translationMissing = lang ? seen.filter(text => Object.hasOwn(maps.en, text) && !maps[lang.code][text]?.trim()) : [];
+    if (args.includes("--json")) console.log(JSON.stringify({ tabs, sourceMissing, intentional, language: lang?.code || null, translationMissing }, null, 2));
+    else {
+        console.log(`[find] ${seen.length} strings across ${tabs.length} current tabs; ${sourceMissing.length} source keys missing`);
+        sourceMissing.forEach(text => console.log("  source: " + text));
+        if (lang) { console.log(`[find] ${translationMissing.length} missing ${lang.code} translations`); translationMissing.forEach(text => console.log("  translation: " + text)); }
     }
 }
-
-main();
+try { main(); } catch (error) { console.error(error.message); process.exitCode = 1; }

@@ -22,7 +22,7 @@
 
     const localize = Q.ui.renderer.localize;
 
-    const isRussian = Q.ui.renderer.isRussian;
+    const format = (text, values) => Q.ui.theme.FormatSettingsText(text, values);
 
     const getExportPrefix = () => {
         const semver = globalThis.QOL_SCHEMA_SEMVER ||
@@ -216,13 +216,13 @@
                     warnSection.AddClass("AutoDisableWarning");
                     const warnTitle = $.CreatePanel("Label", warnSection, "AutoDisableWarningTitle");
                     warnTitle.AddClass("ConfigFeedbackLabel");
-                    warnTitle.text = "Some QOLLOCK features were auto-disabled due to errors:";
+                    warnTitle.text = localize("Some QOLLOCK features were auto-disabled due to errors:", true);
                     const warnList = $.CreatePanel("Label", warnSection, "AutoDisableWarningList");
                     warnList.AddClass("ConfigFeedbackText");
                     warnList.text = filtered.join(", ");
                     const warnHint = $.CreatePanel("Label", warnSection, "AutoDisableWarningHint");
                     warnHint.AddClass("ConfigFeedbackText");
-                    warnHint.text = "Restart your game to re-enable these features.";
+                    warnHint.text = localize("Restart your game to re-enable these features.", true);
                 }
             } catch {}
         }
@@ -398,9 +398,9 @@
                     const schemaText = importResult.schemaVersion
                         ? (`[QOL-${String(importResult.schemaVersion).replace(/\./g, "-")}]`)
                         : "[unknown]";
-                    const detailsText = isRussian()
-                        ? (`Схема ${schemaText} | clamp=${String(importResult.clampedKeys)} | unknown=${String(importResult.unknownKeys)}`)
-                        : (`Schema ${schemaText} | clamped=${String(importResult.clampedKeys)} | unknown=${String(importResult.unknownKeys)}`);
+                    const detailsText = format("Schema {schema} | clamped={clamped} | unknown={unknown}", {
+                        schema: schemaText, clamped: importResult.clampedKeys, unknown: importResult.unknownKeys
+                    });
 
                     const openModalFn = Q.ui.modal?.openConfigDiffPreviewModal ||
                         globalThis.OpenConfigDiffPreviewModal;
@@ -408,7 +408,7 @@
 
                     openModalFn({
                         title: "Settings Changes",
-                        summary: `Changes: ${diffRows.length}`,
+                        summary: format("Changes: {count}", { count: diffRows.length }),
                         details: detailsText,
                         rows: diffRows,
                         applyText: "Confirm",
@@ -435,9 +435,9 @@
                                 }
                                 applyBtn.RemoveClass("FailureState");
                                 applyBtn.AddClass("SuccessState");
-                                const diagText = isRussian()
-                                    ? (`Импорт ${schemaText} применен. clamp=${String(appliedDiag.clampedKeys)} unknown=${String(appliedDiag.unknownKeys)}`)
-                                    : (`Import ${schemaText} applied. clamped=${String(appliedDiag.clampedKeys)} unknown=${String(appliedDiag.unknownKeys)}`);
+                                const diagText = format("Import {schema} applied. clamped={clamped} unknown={unknown}", {
+                                    schema: schemaText, clamped: appliedDiag.clampedKeys, unknown: appliedDiag.unknownKeys
+                                });
                                 const diagTone = (appliedDiag.unknownKeys > 0 || appliedDiag.clampedKeys > 0) ? "warning" : "success";
                                 setConfigFeedbackMessage(diagText, diagTone, 3000);
                                 if (!didRefreshLanguageUi && typeof globalThis.RequestSettingsListRefresh === "function") {

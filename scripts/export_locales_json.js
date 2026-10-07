@@ -4,13 +4,14 @@ const path = require("node:path");
 const crypto = require("node:crypto");
 const { spawnSync } = require("node:child_process");
 const { PROJECT_ROOT, LANGUAGES, loadLocaleMaps } = require("./locales_helper");
-const { readFlat, applyWrites } = require("./translation_io");
+const { readFlat, readIntegrationBaseline, applyWrites } = require("./translation_io");
 function main() {
     const args = process.argv.slice(2);
     const positions = args.filter(arg => !arg.startsWith("--"));
     if (positions.length > 1 || args.some(arg => arg.startsWith("--") && !["--replace", "--dry-run"].includes(arg))) throw new Error("Usage: export_locales_json.js [directory] [--replace] [--dry-run]");
     const root = path.resolve(positions[0] || path.join(PROJECT_ROOT, "translations/locales"));
     const { maps } = loadLocaleMaps();
+    const baseline = readIntegrationBaseline(path.join(PROJECT_ROOT, "translations/import-baseline.json"));
     const keys = Object.keys(maps.en).sort();
     const writes = [];
     for (const lang of LANGUAGES) {
@@ -24,7 +25,9 @@ function main() {
             for (const key of keys) {
                 const incoming = maps[lang.code][key];
                 // Blank community entries are missing, not reviewed translations.
-                if ((!Object.hasOwn(values, key) || !values[key].trim()) && incoming?.trim()) values[key] = incoming;
+                if ((!Object.hasOwn(values, key) || !values[key].trim() ||
+                    values[key] === baseline?.catalogs[lang.code]?.[key]) && incoming?.trim()) values[key] = incoming;
+                else if (incoming?.trim() && values[key] !== incoming) console.log(`[locales] ${lang.wbCode}: community correction preserved: ${JSON.stringify(key)}`);
             }
         }
         const count = keys.filter(key => values[key]?.trim()).length;
@@ -38,6 +41,7 @@ function main() {
         sourceRevision: rev.status === 0 ? rev.stdout.trim() : null,
         uncommittedSource: dirty.status === 0 ? !!dirty.stdout.trim() : null,
         sourceDigest: crypto.createHash("sha256").update(JSON.stringify(keys)).digest("hex"),
+        integratedPublicRevision: baseline?.revision || null,
         languages: LANGUAGES.map(lang => ({ runtime: lang.code, catalog: lang.wbCode }))
     }, null, 2) + "\n" });
     if (args.includes("--dry-run")) return;
@@ -45,4 +49,3 @@ function main() {
     applyWrites(writes);
 }
 try { main(); } catch (error) { console.error(`[locales] ${error.message}`); process.exitCode = 1; }
-

@@ -129,6 +129,7 @@ function createTestEnvironment() {
         "utf8"
     );
     require("./load_ui_helpers")(sandbox);
+    vm.runInNewContext(fs.readFileSync(path.resolve(__dirname, "../panorama/scripts/ui/theme.js"), "utf8"), sandbox);
     vm.runInNewContext(devTabCode, sandbox);
 
     return {

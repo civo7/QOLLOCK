@@ -5,14 +5,13 @@ name: Sync translations to public repo
 #
 # This is the private -> public half of the pipeline (the same job the local
 # export_locales.bat does by hand). It runs the overwrite-safe export, so it only
-# ADDS newly-appeared English/translation strings to the mirror and never reverts
-# community work already living there. The public -> private direction (merging
-# finished translations back into the maps) stays a manual step: pull the mirror
-# and run scripts/import_locales_json.js. See locales/WORKFLOW.md in the mirror.
+# adds missing strings and exports a runtime correction only while the mirror
+# still matches the recorded integrated ancestor. Newer community work survives.
+# The return path is reviewed scripts/sync_translations.js, not a hidden import.
 #
 # Required secret (in this repo, civo7/QOLLOCK):
 #   PUBLIC_REPO_PAT — a fine-grained PAT with Contents: read & write on
-#                     Predi-i/QOLLOCK-translations. See WORKFLOW.md for setup.
+#                     Predi-i/QOLLOCK-translations. See docs/LOCALIZATION.md.
 
 on:
   # Daily, at an off-peak odd minute so it does not pile onto the top of the hour.
@@ -28,6 +27,13 @@ on:
       - 'panorama/scripts/ql_settings_loc/**'
       - 'scripts/export_locales_json.js'
       - 'scripts/locales_helper.js'
+      - 'scripts/translation_io.js'
+      - 'scripts/export_translation_context.js'
+      - 'scripts/settings_localization_audit.js'
+      - 'scripts/simulator/**'
+      - 'panorama/scripts/ui/**'
+      - 'panorama/layout/hud_escape_menu.xml'
+      - 'translations/import-baseline.json'
       - '.github/workflows/sync-translations.yml'
 
 permissions:
@@ -61,6 +67,9 @@ jobs:
 
       - name: Export locales into the public mirror (overwrite-safe merge)
         run: node qollock/scripts/export_locales_json.js public/locales
+
+      - name: Export current settings context
+        run: node qollock/scripts/export_translation_context.js public/locales/qollock-context.json
 
       - name: Commit and push if changed
         run: |

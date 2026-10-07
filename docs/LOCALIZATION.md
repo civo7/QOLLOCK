@@ -1,118 +1,156 @@
-# Localization architecture and contributor contract
+# Localization and translation maintenance
 
-Read this file before adding or changing user-facing text. This applies to Dev
-and diagnostic screens as well as ordinary settings. English and translated
-copy belongs in the locale catalogs; do not embed bilingual captions or choose
-Russian/English with a conditional inside a UI module.
+Read this before changing visible text, including Dev and diagnostic screens.
+The shipped source inventory is the English identity map in
+`panorama/scripts/ql_settings_loc/ql_settings_loc_en.js`. Other runtime
+dictionaries may omit translations, but must not introduce source keys.
 
-## Actual runtime contract
+## Runtime text
 
-The 15 dictionaries live in `panorama/scripts/ql_settings_loc/ql_settings_loc_<lang>.js`
-and register on `globalThis.SETTINGS_LOCALE_TEXT`. English is an identity map:
-the English phrase itself is the key. Russian is `ru`; Brazilian Portuguese is
-`pt-br` at runtime, `pt_br` in the filename and `pt-BR` in JSON exports.
-Belarusian is `by` at runtime and `be` in JSON exports.
+`ui/theme.js` owns `LocalizeSettingsText(text, force)`. English phrases are
+opaque keys, including punctuation and whitespace. Missing or blank translations
+fall back to the original phrase. Translations retain Unicode accents and
+punctuation; ASCII normalization is not a display operation. Valve `#tokens`
+remain a separate mechanism.
 
-`LocalizeSettingsText(text, force)` in `ui/theme.js` returns the active
-language's exact-key match or the original English phrase. English returns the
-source phrase directly. The second argument is a boolean: true bypasses the
-Presets-tab localization exemption; it is not a language selector. It does not
-resolve #tokens, use QOL.ui.locales, fall back to Russian or call $.Localize.
-Those claims in the previous version of this document were incorrect. Native
-Valve #tokens are a separate localization mechanism.
+The boolean `force` bypasses the Presets-tab exemption. Use it for dynamic
+statuses, overlays and tools. `QOL.ui.theme.FormatSettingsText(source, values)`
+localizes a whole sentence, then substitutes named `{name}` placeholders once.
+It preserves unknown placeholders and does not reinterpret braces in inserted
+values. Use catalog sentences rather than Russian/English branches or grammatical
+fragments. Raw feature IDs, reports, player names and external content are data.
 
-## Adding UI text
+For new text, reuse an appropriate key or add its English identity and Russian
+translation. Other languages fall back to English until a reviewed translation
+exists. Do not fill gaps with copied English to inflate coverage. Pass source
+keys to factories that own localization; do not translate their arguments twice.
+Verify actual displayed English/Russian text and an incomplete-locale fallback.
 
-1. Reuse an existing English key where the meaning matches. Otherwise add the
-   English identity entry and Russian translation to their respective files.
-   Add reviewed translations to other dictionaries when available; do not fill
-   them with copied English merely to claim 100% coverage.
-2. Pass the source key through LocalizeSettingsText before assigning visible
-   text. For dynamically created overlays/status messages use force=true.
-   Keep translated sentences whole; append diagnostic values separately or use
-   a documented placeholder scheme. Do not concatenate translated fragments.
-3. Verify English and Russian rendering and fallback for an incomplete locale.
-   Tests must observe text actually displayed, not only count catalog entries.
-4. Update relevant English module documentation, run npm test, and export new
-   source entries through the translation workflow after the change is pushed.
+Arcade uses the injected settings localizer; its pre-init fallback delegates to
+the same theme owner. HUD and settings are separate contexts: this API is not
+available to gameplay manifests merely because it exists in the settings UI.
 
-A literal English phrase used as a lookup key is part of the existing format.
-Assigning that phrase directly to a dynamic label without localization is not.
-No blanket exemption exists for the Dev tab. Automated checks have limited
-coverage and do not excuse skipping these steps.
+## Repository boundary
 
-## Repositories and synchronization
+- QOLLOCK owns runtime dictionaries and the English source inventory.
+- `Predi-i/QOLLOCK-translations` holds public exchange JSON in
+  `locales/<code>/translation.json`.
+- `Predi-i/qollock-translate` saves drafts and submits public catalog PRs.
+  A website draft or merged PR does not change the installed mod.
+- Compilation, repacking and client verification belong to the maintainer.
 
-- QOLLOCK: runtime JS dictionaries, authoritative set of shipped source keys.
-- Predi-i/QOLLOCK-translations: JSON catalogs at locales/<code>/translation.json.
-- Predi-i/qollock-translate: translator website reading/writing that catalog
-  repository; it is not the mod's runtime locale source.
+Use `scripts/locales_helper.js` for code mapping. Chinese uses `zh` at runtime
+and `zh-CN` in exchange catalogs; the historical `zh` catalog remains readable.
+When both exist, the importer explicitly reports that `zh-CN` wins. Brazilian
+Portuguese uses runtime `pt-br`, filename suffix `pt_br`, and catalog `pt-BR`.
+Belarusian uses runtime `by` and catalog `be`. Unsupported website languages
+remain external, with a warning; importing them does not register a new language.
 
-`.github/workflows/sync-translations.yml` exports from QOLLOCK main daily,
-on manual dispatch, and on changes to dictionaries/export tooling. It needs
-PUBLIC_REPO_PAT with Contents write access to the public catalog repository.
-The corrected path filters cover the extracted dictionary directory. Staging
-locales before checking the diff includes new, previously untracked files.
+## Reviewed integration
 
-The default exporter adds missing entries and preserves community translations
-and orphan entries. It does not propagate corrections over existing non-English
-entries; coordinate those edits in the public catalog. Malformed merge inputs
-now abort before output writes. --replace explicitly discards that protection
-and must not be used by automatic sync. Coverage excludes orphan keys and uses
-one decimal place so 830/832 is not printed as 100%.
+Review and merge translation PRs in the public repository, then update that
+checkout explicitly. No translation command performs a hidden pull, push,
+commit, PR creation, deployment or game build.
 
-The reverse direction is still manual and reviewed:
+From QOLLOCK, preview a reviewed public checkout:
 
-1. Obtain the merged public catalogs (review repository changes first).
-2. Run `node scripts/import_locales_json.js D:/GitHub2/QOLLOCK-translations/locales`.
-3. Review the runtime dictionary diff, run npm test, then commit and repack as
-   maintainer. Do not assume exporting catalogs imports community translations.
+```text
+npm run translations:sync -- ../QOLLOCK-translations/locales --dry-run
+npm run translations:sync -- ../QOLLOCK-translations/locales --dry-run --json
+```
 
-The importer supports only languages registered in scripts/locales_helper.js.
-Adding a new language also needs runtime language options/IDs, XML includes,
-config compatibility and tests. A new catalog on the website alone is not
-runtime language support. Unknown catalogs are currently skipped with warnings.
-JSON export defaults to translations/locales; it does not auto-discover the
-sibling repo. CSV export defaults to translations. The .bat wrappers have
-additional sibling-directory behavior; they are not equivalent to plain npm
-commands. Import/export does not compile or repack the mod.
+With no path, sync uses the sibling `QOLLOCK-translations/locales` checkout.
 
-## Checks and known coverage limits
+The three-way plan compares the incoming catalog, current runtime text and the
+last integrated public snapshot. Incoming text unchanged from that snapshot
+cannot revert a local correction. Community changes apply when the local value
+still matches the ancestor; independent edits to both sides are conflicts.
+Conflicts block every write. After inspecting them, an explicit
+`--resolve=local` or `--resolve=incoming` resolves the reported conflicts.
+Use single-language input to narrow a resolution.
 
-- npm test checks dictionary loading, English identity values, English-key
-  markup and absence of orphan keys in non-English maps. It does not require
-  complete translations or validate every translated HTML value.
-- tests/ui_visual_check.test.js verifies every walkthrough caption/step goes
-  through the catalog and checks rendered Russian launch text.
-- tests/locale_export.test.js covers community text preservation, addition of
-  new entries and refusal to overwrite malformed merge inputs.
-- translations:missing instruments localization calls while rendering tabs;
-  translations:labels scans only label: literals. Neither proves absence of
-  hardcoded text, and identifiers/names can be legitimate untranslated values.
+Apply the reviewed plan with the same command without `--dry-run`, inspect
+the dictionary diff, run `npm test`, and commit. Repacking is a separate
+maintainer action. Repeating the same integration produces no dictionary changes.
 
-## Audit snapshot — 2026-09-26
+`translations/import-baseline.json` records the incoming catalog values and
+checkout revision for subsequent comparison. This is an exchange ancestor, not
+another runtime catalog. If no baseline exists, bootstrap uses the checked-in
+exchange snapshot and reports that no previous public revision is established.
+A baseline must be retained alongside dictionary changes.
 
-Before the walkthrough fix, English and Russian each had 832 catalog keys.
-Italian had 52/832; the other twelve non-English catalogs had 830/832. Identical
-English values include names and technical terms and are not automatically
-translation defects. These counts exclude visible text never entered in a map.
-The fix adds 18 English/Russian entries (850 total); other languages fall back
-to English for untranslated new text.
+Low-level JSON and CSV imports are explicit reviewed overrides:
+`translations:json:import` and `translations:import`. Both accept `--dry-run`
+and `--json`. Prefer three-way sync for routine public integration.
+All supported inputs are validated before any dictionary is written: flat string
+JSON, duplicate inputs/keys, English identity, CSV quoting/column counts, markup
+and placeholders. Retired English keys are reported and skipped; blank values
+preserve existing text. Values retain significant whitespace. Proposed JS is
+evaluated before replacement; I/O failures roll back touched files. A failing
+input exits nonzero instead of reporting partial success. Nested JSON is rejected:
+English punctuation keys must remain flat.
 
-The latest inspected sync run (36119754359, September 25) succeeded and reported
-no new strings. The old push filter still targeted ql_settings.js, so dictionary
-changes depended on daily/manual execution. This was a trigger gap, not evidence
-of a broken PAT. Local unpushed commits cannot reach that workflow.
+## Export and automation
 
-The live public repository also has German (649 entries) and Dutch (97), neither
-registered among the mod's 15 languages. Russian differs in one public catalog
-entry from the current runtime catalog; Italian has no additional translations
-there. No mass import, new language registration, remote push or deployment was
-performed during this fix. A broader UI audit is still needed before claiming
-full language coverage, especially for older Dev/status text.
+```text
+npm run translations:export
+npm run translations:json:export
+npm run translations:context
+```
 
-The expanded walkthrough adds English/Russian instructions for gameplay/reopen,
-shop and overlay scenarios in the runtime dictionaries. Other languages keep
-the normal English fallback; earlier catalog counts above are historical.
+CSV exports to `translations/qollock_settings_translations.csv`, with a UTF-8
+BOM. JSON exports to `translations/locales`, or to an explicit output directory.
+Only the English catalog supplies source keys. Coverage counts current nonblank
+keys, excludes retired keys, and prints one decimal place.
 
-HUD state recording and report-copy actions in the Dev tab use English source keys with English/Russian runtime catalog entries. The visual walkthrough description avoids a hardcoded step count.
+Normal JSON export preserves community changes and external retired keys. It
+fills missing/blank entries and propagates a runtime correction only if the
+community still matches the recorded integrated ancestor. A newer community
+value survives and is reported. `--replace` deliberately writes the runtime
+snapshot; use it only to regenerate the local exchange artifacts, never for an
+automatic public export. `source-manifest.json` records the source revision,
+dirty-source status, source digest, code mapping and integrated public revision.
+
+The BAT wrappers are thin adapters: export always exports; import uses three-way
+sync. With no argument they use the sibling public checkout, without pulling it.
+Their exit status is the actual operation's exit status.
+
+`.github/workflows/sync-translations.yml` exports main to the public repository
+on its configured source-change, daily and manual triggers. It needs
+`PUBLIC_REPO_PAT` with Contents write there. Local unpushed changes cannot
+reach this workflow. Automatic reverse integration is deliberately not enabled;
+the local command provides the reviewed return path.
+
+## Website context
+
+`scripts/export_translation_context.js` owns the context artifact, derived from
+actual settings XML includes, current tab definitions/registered renderers,
+rendered localization calls, delayed literal keys and metadata. It covers every
+English catalog key; unknown locations use a generic Settings breadcrumb.
+This is navigation assistance, not proof that every key remains visible.
+
+The website's context consumer accepts the complete QOLLOCK root or an exported
+context JSON. Its updater checks out one full main revision and calls the owned
+exporter. The consumer rejects empty/invalid context and an unexpected loss of
+previous keys before replacing its last good artifact. Review intentional source
+removals before using its explicit override. The old single-file
+`ql_settings.js` extraction is unsupported and must fail visibly.
+Website fixes must be pushed separately before its hosted updater changes.
+
+## Verification limits
+
+`npm test` covers catalog loading, identity/orphans, safe JSON/CSV import,
+three-way conflicts and repeat integration, failed-write rollback, punctuation
+keys, markup/placeholders and community-preserving export. Settings regressions
+observe rendered Dev text, dynamic status localization, Unicode display and
+fallback. These checks do not establish native font glyphs or layout.
+
+`translations:missing -- --lang=ru` reports missing English source and selected
+language translations separately, using current settings owners.
+`translations:labels` also scans nested UI directories. Explicit proper names
+are classified in `translations/intentional-names.json`; numbers/aspect ratios
+are data. Neither scanner is an exhaustive audit of dynamic user-facing copy.
+
+For client verification, compile/repack first, then check language switching,
+Dev actions, Config import feedback, arcade results, accented Latin text and an
+incomplete locale. No simulator result proves in-game rendering or persistence.

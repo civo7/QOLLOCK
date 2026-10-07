@@ -331,6 +331,8 @@ Current runtime codes and exported catalog codes differ in two places:
 Brazilian Portuguese is `pt-br` at runtime, `pt_br` in filenames, `pt-BR` in JSON;
 Belarusian is `by` at runtime and `be` in JSON. Use `scripts/locales_helper.js`
 rather than constructing names. A website-only locale is not a shipped locale.
+Chinese uses runtime `zh` and exchange `zh-CN`; historical `zh` JSON is readable,
+but the reviewed `zh-CN` catalog takes precedence when both are supplied.
 
 ### Translation workflow
 
@@ -347,12 +349,15 @@ npm run translations:export
 npm run translations:json:export
 npm run translations:missing
 npm run translations:labels
-node scripts/import_locales_json.js D:/GitHub2/QOLLOCK-translations/locales
+npm run translations:sync -- ../QOLLOCK-translations/locales --dry-run
+npm run translations:context
 ```
 
 Plain JSON export defaults to `translations/locales`; CSV to `translations`.
-The `.bat` wrappers have additional sibling-directory behavior. The normal JSON
-export merge preserves community translations and orphan entries; `--replace`
+The BAT wrappers default to a sibling public checkout without hidden Git actions.
+Three-way sync preserves local corrections and blocks independent edit conflicts;
+its recorded public ancestor also permits safe export of local corrections.
+Normal JSON export preserves newer community translations and orphan entries; `--replace`
 discards that protection. Export does not import community changes. Reverse sync
 is reviewed/manual, and does not compile/repack the mod. Missing-string tools
 have limited coverage; neither proves that all dynamic copy is localized.

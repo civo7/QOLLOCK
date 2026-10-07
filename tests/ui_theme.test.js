@@ -157,9 +157,9 @@ test("ui/theme: LocalizeSettingsText translates text using dictionaries", () => 
     ctx.MOD_CONFIG.LANGUAGE = 0;
     assert.strictEqual(localize("Settings"), "Settings");
 
-    // French normalizes latin text
+    // Shipped translations retain their accents and punctuation.
     ctx.MOD_CONFIG.LANGUAGE = 7;
-    assert.strictEqual(localize("Settings"), "Parametres");
+    assert.strictEqual(localize("Settings"), "Paramètres");
 });
 
 test("ui/theme: ApplySettingsThemeClasses applies theme class and logo", () => {

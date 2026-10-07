@@ -244,26 +244,9 @@ function ShouldLocalizeTabContent() {
 }
 
 function _Localize(text, force) {
-    if (text === undefined || text === null) return "";
-    var raw = String(text);
-    if (!force && !ShouldLocalizeTabContent()) return raw;
-
-    var lang = GetSettingsLanguage();
-    if (lang === SETTINGS_LANGUAGE_ENGLISH) return raw;
-
-    // Phase 1: Look up from external locale maps (ql_settings_loc/*.js).
-    var key = GetSettingsLanguageKey();
-    var maps = (typeof window !== "undefined" && window.SETTINGS_LOCALE_TEXT) ? window.SETTINGS_LOCALE_TEXT : {};
-    var map = maps[key] || null;
-    if (map && map.hasOwnProperty(raw)) {
-        var translated = map[raw];
-        // Latin-script languages need diacritic normalization for comparison matching.
-        if (key === "fr" || key === "it" || key === "tr" || key === "pt" || key === "pt-br" || key === "es") {
-            return NormalizeLatinSettingsText(translated);
-        }
-        return translated;
-    }
-    return raw;
+    return QOL.ui?.theme?.LocalizeSettingsText
+        ? QOL.ui.theme.LocalizeSettingsText(text, force)
+        : String(text === undefined || text === null ? "" : text);
 }
 
 const MINESWEEPER_ROWS = 9;
@@ -838,7 +821,7 @@ function HandleMinesweeperCellActivate(state, row, col) {
         state.gameOver = true;
         StopMinesweeperLoop();
         PlayMinesweeperWinSound();
-        UpdateMinesweeperStatus(state, _Localize("Cleared in", true) + " " + state.elapsedSeconds + _Localize("s.", true));
+        UpdateMinesweeperStatus(state, QOL.ui.theme.FormatSettingsText("Cleared in {seconds}s.", { seconds: state.elapsedSeconds }));
         return;
     }
 

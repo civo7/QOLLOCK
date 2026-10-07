@@ -8,6 +8,7 @@
 const fs = require("fs");
 const path = require("path");
 const { PROJECT_ROOT, loadLocaleMaps } = require("./locales_helper");
+const { isIntentionalName } = require("./translation_exceptions");
 
 function unq(s) {
     try {
@@ -19,7 +20,7 @@ function unq(s) {
 
 function main() {
     const uiDir = path.join(PROJECT_ROOT, "panorama", "scripts", "ui");
-    const files = fs.readdirSync(uiDir).filter(f => f.endsWith(".js"));
+    const files = fs.readdirSync(uiDir, { recursive: true }).filter(f => f.endsWith(".js") && fs.statSync(path.join(uiDir, f)).isFile());
 
     const labels = new Set();
     const re = /\blabel\s*:\s*"((?:\\.|[^"\\])*)"/g;
@@ -36,7 +37,7 @@ function main() {
     const { maps } = loadLocaleMaps();
     const enMap = maps.en || {};
 
-    const missing = [...labels].filter(l => !Object.prototype.hasOwnProperty.call(enMap, l)).sort();
+    const missing = [...labels].filter(l => !Object.prototype.hasOwnProperty.call(enMap, l) && !isIntentionalName(l)).sort();
 
     if (process.argv.includes("--json")) {
         console.log(JSON.stringify(missing, null, 2));
