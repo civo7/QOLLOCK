@@ -6,10 +6,14 @@
     const P = Q.core.panel;
     const owners = ["souls", "items", "stamina", "playerStats", "speed", "ammo", "abilityPoints", "damageReport"];
     const elements = owners.map(id => Q.presentation.elements.find(element => element.id === id));
-    const clear = panel => {
+    const positions = new Set(["abilityPoints", "stamina"]);
+    const clear = (panel, record) => {
         if (!P.isAlive(panel)) return;
-        QOL_UTILS.ClearStyleSafe(panel, "uiScale");
-        QOL_UTILS.ClearStyleSafe(panel, "preTransformScale2d");
+        for (const property of Object.keys(record.styles)) {
+            if (property === "x" || property === "y") panel.style[property] = "0px";
+            QOL_UTILS.ClearStyleSafe(panel, property);
+        }
+        if ("x" in record.styles || "y" in record.styles) QOL_UTILS.ClearStyleSafe(panel, "position");
     };
     function basePercent(element, root) {
         const has = name => !!root?.BHasClass(name);
@@ -23,7 +27,12 @@
     Q.core.FeatureRegistry.register({
         id: "ql_presentation_scale",
         enabledByDefault: true,
-        settings: elements.map(element => ({ key: element.scaleKey, type: "slider", min: 50, max: 200, step: 1, default: 100 })),
+        settings: elements.flatMap(element => [
+            { key: element.scaleKey, type: "slider", min: 50, max: 200, step: 1, default: 100 },
+            ...(positions.has(element.id) ? element.fields.filter(field => field.axis).map(field => ({
+                key: field.key, type: "slider", min: -2000, max: 2000, step: 1, default: 0
+            })) : [])
+        ]),
         create(ctx) {
             const applied = new Map();
             let loop = null;
@@ -35,20 +44,28 @@
                     const previous = applied.get(element.id);
                     const percent = Number(cfg[element.scaleKey]);
                     const value = Number.isFinite(percent) ? Math.max(50, Math.min(200, percent)) / 100 : 1;
-                    if (value === 1 && !previous) continue;
                     const owner = Q.presentation.resolve(element, root, cfg);
                     const panel = Q.presentation.scaleTarget(element, owner);
-                    if (previous && previous.panel !== panel) { clear(previous.panel); applied.delete(element.id); }
+                    if (previous && previous.panel !== panel) { clear(previous.panel, previous); applied.delete(element.id); }
                     if (!P.isAlive(panel)) continue;
-                    if (value === 1) {
-                        if (applied.has(element.id)) { clear(panel); applied.delete(element.id); }
-                    } else {
-                        const text = Number((basePercent(element, styleRoot) * value).toFixed(2)) + "%";
-                        if (!previous || previous.panel !== panel || previous.text !== text) {
-                            QOL_UTILS.ClearStyleSafe(panel, "preTransformScale2d");
-                            panel.style.uiScale = text;
-                            applied.set(element.id, { panel, text });
-                        }
+                    const styles = {};
+                    if (value !== 1) styles.uiScale = Number((basePercent(element, styleRoot) * value).toFixed(2)) + "%";
+                    if (positions.has(element.id)) for (const field of element.fields.filter(field => field.axis)) {
+                        const offset = Math.round(Math.max(-2000, Math.min(2000, Number(cfg[field.key]) || 0)));
+                        if (offset) styles[field.axis] = offset * (field.direction || 1) + "px";
+                    }
+                    const record = applied.get(element.id);
+                    if (record) for (const property of Object.keys(record.styles)) {
+                        if (property in styles) continue;
+                        if (property === "x" || property === "y") panel.style[property] = "0px";
+                        QOL_UTILS.ClearStyleSafe(panel, property);
+                        if (property === "x" || property === "y") QOL_UTILS.ClearStyleSafe(panel, "position");
+                    }
+                    if (!Object.keys(styles).length) { applied.delete(element.id); continue; }
+                    if (!record || JSON.stringify(record.styles) !== JSON.stringify(styles)) {
+                        if ("uiScale" in styles) QOL_UTILS.ClearStyleSafe(panel, "preTransformScale2d");
+                        Object.assign(panel.style, styles);
+                        applied.set(element.id, { panel, styles });
                     }
                 }
             }
@@ -61,7 +78,7 @@
                 onDisable() {
                     if (loop) loop.stop();
                     loop = null;
-                    for (const { panel } of applied.values()) clear(panel);
+                    for (const record of applied.values()) clear(record.panel, record);
                     applied.clear();
                 }
             };

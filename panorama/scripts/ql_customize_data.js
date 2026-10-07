@@ -23,8 +23,8 @@
         { id: "bottomBar", name: "Bottom Bar", path: [...abilities, "hud_signature"], fields: [toggle("HUD_BOTTOM_BAR_ENABLED"), ...geometry("BOTTOM_BAR_", true), opacity("BOTTOM_BAR_"), { key: "BOTTOM_BAR_WASH_COLOR", label: "Color", type: "palette" }] },
         { id: "activeItems", name: "Active Items", path: [...abilities, "ActiveAbilitiesMenu"], fields: [...geometry("ACTIVE_ITEMS_", true)] },
         { id: "abilityPoints", name: "Ability Points", path: [...abilities, "APContainer"], frame: true,
-            note: "Color is shared with Bottom Bar. Position follows the native parent.",
-            fields: [{ key: "BOTTOM_BAR_WASH_COLOR", label: "Color", type: "palette" }] },
+            note: "Color is shared with Bottom Bar.",
+            fields: [...geometry("AP_"), { key: "BOTTOM_BAR_WASH_COLOR", label: "Color", type: "palette" }] },
         { id: "ammo", name: "Ammo", path: [...crosshair, "gun", "gun_data", "ammo_panel"], fields: [
             { key: "ENABLE_AMMO_STATUS", label: "Magazine indicator", type: "toggle" }, { key: "ENABLE_HIDE_MAGAZINE", label: "Hide total ammo", type: "toggle" },
             { key: "ENABLE_HIDE_AMMO_ALL", label: "Hide current ammo", type: "toggle" },
@@ -32,7 +32,7 @@
             { key: "AMMO_TOTAL_SCALE", label: "Total Ammo" }, { key: "AMMO_CLIP_ANGLE", label: "Rotation" }, color("AMMO_TEXT_COLOR")
         ] },
         { id: "stamina", name: "Stamina", path: [...crosshair, "dash", "charges_container"], frame: true, fields: [
-            { key: "STAMINA_SCALE", label: "Scale", resize: true }, { key: "STAMINA_CHARGE_ANGLE", label: "Rotation" }, color("STAMINA_CHARGE_COLOR")
+            ...geometry("STAMINA_"), { key: "STAMINA_SCALE", label: "Scale", resize: true }, { key: "STAMINA_CHARGE_ANGLE", label: "Rotation" }, color("STAMINA_CHARGE_COLOR")
         ] },
         { id: "playerStats", name: "Player Stats", path: [...lower, "hudPlayerStats"], fallbackPath: [...core, "hudActivePlayerStats"],
             resolve(hud) { return chooseStatsPanel(findPath(hud, [...lower, "hudPlayerStats"]), findPath(hud, [...core, "hudActivePlayerStats"])); }, fields: [

@@ -1144,6 +1144,7 @@
     "Italian": "Italian",
     "Korean": "Korean",
     "Turkish": "Turkish",
-    "Cleared in {seconds}s.": "Cleared in {seconds}s."
+    "Cleared in {seconds}s.": "Cleared in {seconds}s.",
+    "Color is shared with Bottom Bar.": "Color is shared with Bottom Bar."
 };
 })();

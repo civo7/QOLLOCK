@@ -3,6 +3,8 @@
 The current offline entry point is `npm test` (see `package.json`). It runs HUD
 script loading, stylesheet source checks, the Node regression suite in `tests/`, compact-schema validation,
 API checks and ESLint. It does not run a separate build-storage fuzz command.
+The Node suite limits file concurrency to avoid exhausting memory when multiple
+settings/HUD VM environments run on a machine with many CPU cores.
 
 Some tests use the panel simulator. They can verify JavaScript behavior under
 that model, but cannot prove real client panel structure, rendering or FPS.

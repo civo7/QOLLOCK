@@ -8,7 +8,7 @@
     "lint:all": "eslint .",
     "check:api": "node scripts/validate_game_api_usage.js",
     "check:styles": "node scripts/validate_panorama_styles.js",
-    "test": "node panorama/scripts/tools/qollock_smoke_test.js && npm run check:styles && node --test tests/*.test.js && node scripts/validate_compact_schema.js && npm run check:api && npm run lint",
+    "test": "node panorama/scripts/tools/qollock_smoke_test.js && npm run check:styles && node --test --test-concurrency=4 tests/*.test.js && node scripts/validate_compact_schema.js && npm run check:api && npm run lint",
     "translations:export": "node scripts/export_translations.js",
     "translations:import": "node scripts/import_translations.js",
     "translations:json:export": "node scripts/export_locales_json.js",

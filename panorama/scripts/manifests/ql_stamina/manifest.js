@@ -17,6 +17,9 @@
     if (!FR) { $.Msg("[QOLLock] stamina: FeatureRegistry not found — aborting"); return; }
 
     function findChargesContainer(root) {
+        const element = QOL.presentation.elements.find(item => item.id === "stamina");
+        const direct = QOL.presentation.findPath(root, element.path);
+        if (direct) return direct;
         // Scope the shared id to Valve's stamina element, not ability icons.
         var elements = root.FindChildrenWithClassTraverse("ability_element_charges") || [];
         for (var i = 0; i < elements.length; i++) {
@@ -92,9 +95,22 @@
                 if (angle === 45 && colorIdx === 0 && !_anglePanel && !_colorPanels.length) return;
 
                 var cc = findChargesContainer($.GetContextPanel());
-                if (!cc) return;
+                if (_anglePanel && _anglePanel !== cc) {
+                    QOL_UTILS.ClearStyleSafe(_anglePanel, "transform");
+                    _anglePanel = null;
+                    _lastAngleSig = "";
+                }
+                if (!cc) {
+                    for (const panel of _colorPanels) QOL_UTILS.ClearStyleSafe(panel, "washColor");
+                    _colorPanels = [];
+                    return;
+                }
                 var angleSig = String(angle);
-                if (_anglePanel !== cc || _lastAngleSig !== angleSig) {
+                if (angle === 45) {
+                    if (_anglePanel) QOL_UTILS.ClearStyleSafe(_anglePanel, "transform");
+                    _anglePanel = null;
+                    _lastAngleSig = "";
+                } else if (_anglePanel !== cc || _lastAngleSig !== angleSig) {
                     cc.style.transform = "rotateZ(" + angle + "deg)";
                     _lastAngleSig = angleSig;
                     _anglePanel = cc;
@@ -105,7 +121,7 @@
                 else _colorPanels = [];
                 for (var p = 0; p < previous.length; p++) {
                     if (_colorPanels.indexOf(previous[p]) !== -1) continue;
-                    try { previous[p].style.washColor = "transparent"; } catch(e) {}
+                    QOL_UTILS.ClearStyleSafe(previous[p], "washColor");
                 }
 
                 var pal = QOL.washColorPalette || [];
@@ -116,10 +132,6 @@
                     // Native charge-state transitions can rewrite wash without
                     // replacing the pip, so selected colors are reasserted.
                     _colorPanels[i].style.washColor = wc;
-                }
-                if (angle === 45 && colorIdx === 0) {
-                    _anglePanel = null;
-                    _lastAngleSig = "";
                 }
             }
 
@@ -146,12 +158,12 @@
                     _lastAngleSig = "";
                     // Restore only the stamina ring that this instance changed.
                     try {
-                        if (_anglePanel) _anglePanel.style.transform = "rotateZ(45deg)";
+                        if (_anglePanel) QOL_UTILS.ClearStyleSafe(_anglePanel, "transform");
                     } catch(e) {}
                     _anglePanel = null;
                     // Clear wash from all cached panels.
                     for (var i = 0; i < _colorPanels.length; i++) {
-                        try { _colorPanels[i].style.washColor = "transparent"; } catch(e) {}
+                        QOL_UTILS.ClearStyleSafe(_colorPanels[i], "washColor");
                     }
                     _colorPanels = [];
                 },

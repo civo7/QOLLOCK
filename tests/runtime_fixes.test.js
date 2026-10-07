@@ -805,7 +805,7 @@ test("stamina tint follows current native charge states without a finished class
     charges[0].AddClass("draining");
     hud.clock.advance(600);
     assert.strictEqual(foregrounds[2].style.washColor, blue, "Recovered pip must not remain uncolored");
-    assert.strictEqual(foregrounds[0].style.washColor, "transparent", "Recharging pip must recover its native feedback colors");
+    assert.strictEqual(foregrounds[0].style.washColor, undefined, "Recharging pip must recover its native feedback colors");
 
     foregrounds[1].style.washColor = "transparent";
     hud.clock.advance(600);
@@ -823,8 +823,8 @@ test("stamina preset changes restore both native color and default rotation", ()
     apply({ STAMINA_CHARGE_COLOR: 4, STAMINA_CHARGE_ANGLE: 120 });
     for (const fg of foregrounds) assert.strictEqual(fg.style.washColor, Q.core.panel.resolvePaletteColor(4));
     apply({ STAMINA_CHARGE_COLOR: 0, STAMINA_CHARGE_ANGLE: 45 });
-    for (const fg of foregrounds) assert.strictEqual(fg.style.washColor, "transparent");
-    assert.strictEqual(container.style.transform, "rotateZ(45deg)");
+    for (const fg of foregrounds) assert.strictEqual(fg.style.washColor, undefined);
+    assert.strictEqual(container.style.transform, undefined, "default must release the owned transform, as on initial startup");
 });
 
 test("stamina reapplies settings to a recreated ring without styling ability icon charges", () => {

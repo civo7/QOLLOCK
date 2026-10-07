@@ -1144,6 +1144,7 @@
     "Italian": "Итальянский",
     "Korean": "Корейский",
     "Turkish": "Турецкий",
-    "Cleared in {seconds}s.": "Пройдено за {seconds} с."
+    "Cleared in {seconds}s.": "Пройдено за {seconds} с.",
+    "Color is shared with Bottom Bar.": "Цвет общий с нижней панелью."
 };
 })();

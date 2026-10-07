@@ -1815,6 +1815,10 @@ var QOL_SETTINGS_FIELDS = QOL_COMPACT_SCHEMA_UTILS.AppendUniqueSchemaFields(
         { key: "COMPASS_SPEED_SCALE", min: 50, max: 200, step: 1 },
         { key: "AMMO_HUD_SCALE", min: 50, max: 200, step: 1 },
         { key: "AP_SCALE", min: 50, max: 200, step: 1 },
+        { key: "AP_X_OFFSET", min: -2000, max: 2000, step: 1 },
+        { key: "AP_Y_OFFSET", min: -2000, max: 2000, step: 1 },
+        { key: "STAMINA_X_OFFSET", min: -2000, max: 2000, step: 1 },
+        { key: "STAMINA_Y_OFFSET", min: -2000, max: 2000, step: 1 },
         { key: "DAMAGE_REPORT_SCALE", min: 50, max: 200, step: 1 }
     ]
 );
@@ -2557,6 +2561,10 @@ var QOL_DEFAULT_CONFIG = {
         ENABLE_STATS_POSITION: 1,
         AMMO_HUD_SCALE: 100,
         AP_SCALE: 100,
+        AP_X_OFFSET: 0,
+        AP_Y_OFFSET: 0,
+        STAMINA_X_OFFSET: 0,
+        STAMINA_Y_OFFSET: 0,
         DAMAGE_REPORT_SCALE: 100,
         SOULS_SCALE: 100,
         ITEMS_SCALE: 100,

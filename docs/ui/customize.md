@@ -86,13 +86,18 @@ preview chip and native Default action. Numeric and HEX entries also submit on
 blur; malformed values remain marked rather than overwriting the accepted draft.
 The AP/infinity currency has its own selection frame under AbilitiesContainer.
 Its inspector exposes the existing shared bottom-bar color and an independent
-overall scale; placement continues to follow its native parent.
+overall scale and independent offsets. AP and stamina offsets are applied by
+`ql_presentation_scale`; their native parents stay unchanged. They use the
+existing settings envelope without changing any published compact schema.
 
 Modern compact stats are measured through the active owner's HudStatBlock;
 expanded modifier rows do not enlarge the compact block's hit box. The coexisting legacy owner is
 selected only when its content has layout; otherwise the active owner is used by
 both editor and gameplay manifest. Stamina frames measure the native foreground
 pips rather than an unrelated ability-charge widget.
+The stamina runtime first resolves the same named dash owner as the editor.
+Resetting rotation/color releases the owned native style overrides, matching
+initial default startup instead of leaving a forced transform or wash behind.
 
 The editor suppresses hero-testing controls and the native party/friends container
 while active. The session class releases both visibility overrides on exit.
