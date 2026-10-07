@@ -11,7 +11,8 @@
 }
 
 .QOLCustomizeActive #hud_hero_testing,
-.QOLCustomizeActive #CitadelPartyContainer
+/* The native .connectedToHideout.loaded rule otherwise wins in hideout. */
+#Hud.QOLCustomizeActive #CitadelPartyContainer
 {
     visibility: collapse;
 }

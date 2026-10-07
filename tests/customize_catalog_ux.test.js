@@ -68,7 +68,7 @@ test("Ammo controls distinguish current and total numbers from the magazine indi
 
 test("Customize hides the captured friends container with a session-scoped CSS rule", () => {
     const css = fs.readFileSync(path.join(__dirname, "../panorama/styles/qollock_global.css"), "utf8");
-    assert.match(css, /\.QOLCustomizeActive #CitadelPartyContainer\s*\{\s*visibility:\s*collapse;/);
+    assert.match(css, /#Hud\.QOLCustomizeActive #CitadelPartyContainer\s*\{\s*visibility:\s*collapse;/);
 });
 
 test("Cancel discards both accepted live typing and pending callbacks without saving placement", () => {
