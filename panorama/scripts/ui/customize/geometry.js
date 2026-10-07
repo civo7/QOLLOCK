@@ -89,7 +89,8 @@
             return union(QOL_UTILS.FindPanelsByClass(target, "charge_fg"), host) || box(target, host);
         }
         if (element.id === "healthbar") return box(P.findChild(target, "QOLHealthbarGeometry") || target, host);
-        return box(element.measureId ? P.findChild(target, element.measureId) : target, host);
+        const measured = element.measureId ? (P.findChild(target, element.measureId) || P.findTraverse(target, element.measureId)) : null;
+        return (measured ? box(measured, host) : null) || box(target, host);
     }
     function resizeValues(element, startValues, startBox, delta, host, corner = { x: 1, y: 1 }) {
         const field = Q.presentation.resizeField(element);
@@ -105,13 +106,20 @@
         const values = {};
         if (!startBox || !currentBox) return values;
         for (const field of element.fields) {
-            if (!field.axis || (field.unit && field.unit !== "px")) continue;
+            if (!field.axis) continue;
             const axis = field.axis;
             const size = axis === "x" ? "width" : "height";
             const opposite = corner[axis] < 0 ? 1 : 0;
             const correction = startBox[axis] + opposite * startBox[size] - currentBox[axis] - opposite * currentBox[size];
-            values[field.key] = Q.presentation.normalize(field.key, Number(currentValues[field.key]) +
-                correction * scale(host, axis) / scale(target.GetParent(), axis) * (field.direction || 1));
+            if (field.unit === "%") {
+                const parent = target.GetParent();
+                const dim = axis === "x" ? (parent?.actuallayoutwidth || 1920) : (parent?.actuallayoutheight || 1080);
+                const deltaPct = (correction * scale(host, axis) / scale(parent, axis) / dim) * 100;
+                values[field.key] = Q.presentation.normalize(field.key, Number(currentValues[field.key]) + deltaPct * (field.direction || 1));
+            } else {
+                values[field.key] = Q.presentation.normalize(field.key, Number(currentValues[field.key]) +
+                    correction * scale(host, axis) / scale(target.GetParent(), axis) * (field.direction || 1));
+            }
         }
         return values;
     }
@@ -120,8 +128,18 @@
         const values = {};
         for (const field of element.fields) {
             if (!field.axis) continue;
-            values[field.key] = Q.presentation.normalize(field.key,
-                Number(startValues[field.key]) + delta[field.axis] / scale(parent, field.axis) * (field.direction || 1));
+            const axis = field.axis;
+            const dir = field.direction || 1;
+            if (field.unit === "%") {
+                const dim = axis === "x" ? (parent?.actuallayoutwidth || 1920) : (parent?.actuallayoutheight || 1080);
+                const parentScale = scale(parent, axis);
+                const deltaPct = ((delta[axis] / parentScale) / dim) * 100;
+                values[field.key] = Q.presentation.normalize(field.key,
+                    Number(startValues[field.key]) + deltaPct * dir);
+            } else {
+                values[field.key] = Q.presentation.normalize(field.key,
+                    Number(startValues[field.key]) + delta[axis] / scale(parent, axis) * dir);
+            }
         }
         return values;
     }

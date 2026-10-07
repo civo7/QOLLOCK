@@ -24,6 +24,8 @@
         cleanup(() => owner.transaction.close());
         for (const timer of [owner.timer, owner.dragTimer]) if (timer !== null) cleanup(() => $.CancelScheduled(timer));
         cleanup(() => P.delete(owner.drag?.proxy));
+        cleanup(() => P.delete(owner.guideX));
+        cleanup(() => P.delete(owner.guideY));
         for (const panel of owner.hidden) cleanup(() => { if (P.isAlive(panel)) panel.RemoveClass("QOLCustomizeHidden"); });
         for (const panel of owner.active) cleanup(() => { if (P.isAlive(panel)) panel.RemoveClass("QOLCustomizeActive"); });
         for (const { frame, handles } of owner.frames.values()) {
@@ -84,6 +86,9 @@
         if (owner.dragTimer !== null) $.CancelScheduled(owner.dragTimer);
         owner.dragTimer = null;
         P.delete(proxy);
+        if (P.isAlive(owner.overlay)) owner.overlay.RemoveClass("Dragging");
+        if (owner.guideX && P.isAlive(owner.guideX)) owner.guideX.visible = false;
+        if (owner.guideY && P.isAlive(owner.guideY)) owner.guideY.visible = false;
         owner.transaction.endGesture(cancel);
         owner.drag = null;
         for (const item of owner.frames.values()) item.signature = null;
@@ -103,6 +108,38 @@
         drag.lastPoint = point;
         if (!drag.origin) drag.origin = point;
         const delta = { x: point.x - drag.origin.x, y: point.y - drag.origin.y };
+        if (!drag.resize && owner.snapEnabled !== false && P.isAlive(owner.overlay) && P.isAlive(drag.target)) {
+            const overlayWidth = Number(owner.overlay.actuallayoutwidth) || 1920;
+            const overlayHeight = Number(owner.overlay.actuallayoutheight) || 1080;
+            const hostScaleX = G.scale(owner.overlay, "x");
+            const hostScaleY = G.scale(owner.overlay, "y");
+            if (overlayWidth > 0 && hostScaleX > 0) {
+                const elemCenterX = drag.startBox.x + drag.startBox.width / 2 + delta.x / hostScaleX;
+                const screenCenterX = overlayWidth / 2 / hostScaleX;
+                if (Math.abs(elemCenterX - screenCenterX) < 8) {
+                    delta.x = (screenCenterX - (drag.startBox.x + drag.startBox.width / 2)) * hostScaleX;
+                    if (owner.guideX && P.isAlive(owner.guideX)) {
+                        owner.guideX.visible = true;
+                        owner.guideX.style.x = `${Math.round(screenCenterX)}px`;
+                    }
+                } else if (owner.guideX && P.isAlive(owner.guideX)) {
+                    owner.guideX.visible = false;
+                }
+            }
+            if (overlayHeight > 0 && hostScaleY > 0) {
+                const elemCenterY = drag.startBox.y + drag.startBox.height / 2 + delta.y / hostScaleY;
+                const screenCenterY = overlayHeight / 2 / hostScaleY;
+                if (Math.abs(elemCenterY - screenCenterY) < 8) {
+                    delta.y = (screenCenterY - (drag.startBox.y + drag.startBox.height / 2)) * hostScaleY;
+                    if (owner.guideY && P.isAlive(owner.guideY)) {
+                        owner.guideY.visible = true;
+                        owner.guideY.style.y = `${Math.round(screenCenterY)}px`;
+                    }
+                } else if (owner.guideY && P.isAlive(owner.guideY)) {
+                    owner.guideY.visible = false;
+                }
+            }
+        }
         const values = drag.resize ? G.resizeValues(drag.element, drag.startValues, drag.startBox, delta, owner.overlay, drag.resize)
             : G.dragValues(drag.element, drag.target, drag.startValues, delta);
         // Only compensate an acknowledged layout. Reusing a stale frame would
@@ -146,6 +183,7 @@
             event.displayPanel = proxy;
             event.removePositionBeforeDrop = false;
             $.DispatchEvent("UIHideTextTooltip", frame);
+            if (P.isAlive(owner.overlay)) owner.overlay.AddClass("Dragging");
             owner.dragTimer = $.Schedule(0, () => updateDrag(owner));
         });
         $.RegisterEventHandler("DragEnd", frame, (_panel, droppedPanel) => {
@@ -298,6 +336,24 @@
                 overlay.SetHasClass("ShowFrames", owner.showFrames);
                 frames.GetChild(0).text = localize(owner.showFrames ? "Hide frames" : "Show frames");
             });
+            const snap = I.button(view, "QOLCustomizeToggleSnap", "Snap to center", () => {
+                if (current !== owner) return;
+                owner.snapEnabled = owner.snapEnabled === false ? true : false;
+                I.setActive(snap, owner.snapEnabled !== false);
+            });
+            I.setActive(snap, true);
+            const guideX = P.create("Panel", overlay, "QOLCustomizeGuideX");
+            guideX.AddClass("QOLCustomizeGuideLine");
+            guideX.AddClass("Vertical");
+            guideX.hittest = false;
+            guideX.visible = false;
+            owner.guideX = guideX;
+            const guideY = P.create("Panel", overlay, "QOLCustomizeGuideY");
+            guideY.AddClass("QOLCustomizeGuideLine");
+            guideY.AddClass("Horizontal");
+            guideY.hittest = false;
+            guideY.visible = false;
+            owner.guideY = guideY;
             Q.ui.theme.ApplySettingsThemeClasses(window);
             for (const panel of [hud, context]) if (P.isAlive(panel) && !panel.BHasClass("QOLCustomizeActive")) {
                 panel.AddClass("QOLCustomizeActive"); owner.active.push(panel);
@@ -388,7 +444,7 @@
             }
             const actions = P.create("Panel", tools, "");
             actions.AddClass("QOLCustomizeActions");
-            owner.apply = I.button(actions, "QOLCustomizeApply", "Apply", () => {
+            owner.apply = I.button(actions, "QOLCustomizeApply", "Save", () => {
                 if (current !== owner || owner.saving) return;
                 if (owner.applied) { saveApplied(owner); return; }
                 if (!owner.inspector.commit()) {

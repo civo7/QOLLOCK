@@ -17,7 +17,7 @@
     const color = key => ({ key, label: "Color", type: "color" });
     const elements = [];
     const nativeElements = [
-        { id: "souls", name: "Souls", path: [...lower, "gold_and_ap_container"], fields: [toggle("HUD_SOULS_ENABLED"), ...geometry("SOULS_"), opacity("SOULS_")] },
+        { id: "souls", name: "Souls", path: [...lower, "gold_and_ap_container"], measureId: "CurrentGoldAmount", fields: [toggle("HUD_SOULS_ENABLED"), ...geometry("SOULS_"), opacity("SOULS_")] },
         { id: "items", name: "Items", path: [...lower, "ModsContainer"], fields: [toggle("HUD_ITEMS_ENABLED"), ...geometry("ITEMS_"), opacity("ITEMS_"), color("ITEMS_WASH_COLOR")] },
         { id: "topBar", name: "Top Bar", path: [...core, "TopBar"], fields: [toggle("HUD_TOP_BAR_ENABLED"), ...geometry("TOP_BAR_", true), opacity("TOP_BAR_")] },
         { id: "bottomBar", name: "Bottom Bar", path: [...abilities, "hud_signature"], fields: [toggle("HUD_BOTTOM_BAR_ENABLED"), ...geometry("BOTTOM_BAR_", true), opacity("BOTTOM_BAR_"), { key: "BOTTOM_BAR_WASH_COLOR", label: "Color", type: "palette" }] },
@@ -102,7 +102,7 @@
         return (path.length === 1 ? Q.core.panel.findTraverse(hud, leaf) : null) ||
             (element.fallbackPath ? findPath(hud, element.fallbackPath) : null);
     }
-    const canDrag = element => element.fields.some(field => field.axis) && element.fields.filter(field => field.axis).every(field => !field.unit || field.unit === "px");
+    const canDrag = element => element.fields.some(field => field.axis);
     function chooseStatsPanel(legacy, active) {
         const hasContent = panel => ["HudStatBlock", "StatList"].some(id => {
             const content = Q.core.panel.findChild(panel, id);

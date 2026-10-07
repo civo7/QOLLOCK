@@ -36,16 +36,9 @@ function csvCell(value) {
 function main() {
     const { maps } = loadLocaleMaps();
 
-    // Canonical English string set = union of every key across every language map.
-    const keySet = new Set();
-    if (maps.en) {
-        for (const k of Object.keys(maps.en)) keySet.add(k);
-    }
-    for (const lang of LANGUAGES) {
-        if (lang.code === "en") continue;
-        const m = maps[lang.code] || {};
-        for (const k of Object.keys(m)) keySet.add(k);
-    }
+    // English alone owns the source inventory. Orphan translations must never
+    // resurrect retired source strings during export.
+    const keySet = new Set(Object.keys(maps.en));
     for (const s of EXTRA_SOURCE_STRINGS) keySet.add(s);
 
     const nonEnLangs = LANGUAGES.filter(l => l.code !== "en");
@@ -99,7 +92,7 @@ function main() {
     for (const lang of LANGUAGES) {
         if (lang.code === "en") continue;
         const have = coverage[lang.header];
-        const pct = keys.length ? Math.round((have / keys.length) * 100) : 0;
+        const pct = keys.length ? (have / keys.length * 100).toFixed(1) : "0.0";
         const missing = keys.length - have;
         console.log(`  ${lang.header.padEnd(16)} ${String(have).padStart(4)} / ${keys.length}  (${String(pct).padStart(3)}%, ${String(missing).padStart(3)} missing)`);
     }

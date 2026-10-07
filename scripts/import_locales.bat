@@ -1,32 +1,12 @@
 @echo off
 setlocal
-REM Double-click  : pull the public mirror (QOLLOCK-translations) and import every language.
-REM Drag & drop   : drop a <lang> folder or translation.json to import just that one (no pull).
-
-set "SCRIPTS=%~dp0"
-set "MIRROR=%~dp0..\..\QOLLOCK-translations\locales"
-set "MIRROR_REPO=%~dp0..\..\QOLLOCK-translations"
-
+REM Three-way integration only. Review with --dry-run first; no hidden Git actions.
 if not "%~1"=="" (
-    node "%SCRIPTS%import_locales_json.js" %*
-    goto validate
+    node "%~dp0sync_translations.js" %*
+) else (
+    node "%~dp0sync_translations.js" "%~dp0..\..\QOLLOCK-translations\locales"
 )
+set "TASK_EXIT=%ERRORLEVEL%"
+if "%~1"=="" pause
+endlocal & exit /b %TASK_EXIT%
 
-if not exist "%MIRROR%" (
-    echo Public mirror not found: %MIRROR%
-    set EXIT_CODE=1
-    goto done
-)
-
-if exist "%MIRROR_REPO%\.git" git -C "%MIRROR_REPO%" pull --ff-only
-
-node "%SCRIPTS%import_locales_json.js" "%MIRROR%"
-
-:validate
-set EXIT_CODE=%ERRORLEVEL%
-if not "%EXIT_CODE%"=="0" goto done
-node --check "%SCRIPTS%..\panorama\scripts\ql_settings.js" && echo Syntax OK.
-
-:done
-pause
-endlocal & exit /b %EXIT_CODE%

@@ -21,73 +21,206 @@ CitadelHudEscapeMenu.QOLCustomizeActive { background-color: #0000; }
 .QOLCustomizeOverlay { width: 100%; height: 100%; z-index: 1000; }
 .QOLCustomizeTools
 {
-    width: 360px;
+    width: 290px;
     height: fit-children;
-    max-height: 90%;
+    max-height: 88%;
     overflow: squish squish;
     horizontal-align: right;
     vertical-align: top;
-    margin: 20px;
+    margin: 15px 20px 15px 0px;
     flow-children: down;
     z-index: 10;
+    transition-property: opacity;
+    transition-duration: 0.15s;
+}
+.QOLCustomizeTools.QOLUnifiedModalSurface,
+.QOLCustomizeCatalog.QOLUnifiedModalSurface
+{
+    padding: 14px 16px;
+    border-radius: 4px;
+    border: 1px solid rgba(210, 224, 216, 0.10);
+    background-color: gradient( linear, 0% 0%, 0% 100%, from( rgba(20, 24, 25, 0.90) ), to( rgba(11, 14, 15, 0.94) ) );
+    box-shadow: fill rgba(0, 0, 0, 0.50) 0px 8px 24px 0px, inset rgba(166, 246, 184, 0.04) 0px 1px 0px 0px;
+}
+.QOLCustomizeView.QOLUnifiedModalSurface
+{
+    padding: 6px 12px;
+    border-radius: 4px;
+    border: 1px solid rgba(210, 224, 216, 0.10);
+    background-color: gradient( linear, 0% 0%, 0% 100%, from( rgba(20, 24, 25, 0.90) ), to( rgba(11, 14, 15, 0.94) ) );
+    box-shadow: fill rgba(0, 0, 0, 0.40) 0px 4px 16px 0px;
+}
+.QOLCustomizeOverlay.Dragging .QOLCustomizeTools,
+.QOLCustomizeOverlay.Dragging .QOLCustomizeCatalog
+{
+    opacity: 0.15;
 }
 .QOLCustomizeTitle { margin-bottom: 6px; }
 .QOLCustomizeSelectionHeader { flow-children: right; width: 100%; margin-bottom: 2px; }
-.QOLCustomizeSelectionHeader > .QOLCustomizeTitle { width: fill-parent-flow(1); vertical-align: center; font-size: 20px; text-align: left; }
+.QOLCustomizeSelectionHeader > .QOLCustomizeTitle { width: fill-parent-flow(1); vertical-align: center; font-size: 18px; text-align: left; }
 .QOLCustomizeVisibility { vertical-align: center; margin-right: 0px; }
-.QOLCustomizeAvailability { width: 100%; height: fit-children; color: #cda871; }
-.QOLCustomizeHint { width: 100%; white-space: normal; height: fit-children; margin-bottom: 8px; opacity: 0.7; }
-.QOLCustomizeSection { width: 100%; flow-children: down; margin-top: 10px; border-top: 1px solid #ffffff12; }
+.QOLCustomizeAvailability { width: 100%; height: fit-children; color: #a8d9ec; }
+.QOLCustomizeHint { width: 100%; white-space: normal; height: fit-children; margin-bottom: 6px; opacity: 0.7; font-size: 13px; }
+.QOLCustomizeSection { width: 100%; flow-children: down; margin-top: 8px; border-top: 1px solid #ffffff12; }
 .QOLCustomizeSectionBody { width: 100%; flow-children: down; }
 .QOLCustomizeSectionBody > .ModalInstructions { width: 100%; white-space: normal; height: fit-children; }
-.QOLCustomizeSectionHeading { width: 100%; margin: 4px 0px 0px 0px; padding: 7px 8px; flow-children: right; }
-.QOLCustomizeSectionHeading > .QOLCustomizeButtonLabel { width: fill-parent-flow(1); text-align: left; }
+.QOLCustomizeSectionHeading { width: 100%; margin: 3px 0px 0px 0px; padding: 5px 8px; flow-children: right; }
+.QOLCustomizeSectionHeading > .QOLCustomizeButtonLabel { width: fill-parent-flow(1); text-align: left; font-size: 14px; }
 .QOLCustomizeDisclosure { width: 14px; text-align: center; vertical-align: center; opacity: 0.65; }
-.QOLCustomizeLock { margin: 4px 0px; }
+.QOLCustomizeLock { margin: 3px 0px; }
 .QOLCustomizeChoices, #QOLCustomizeFields { flow-children: down; width: 100%; }
-.QOLCustomizeCatalog { width: 240px; height: 56%; flow-children: down; margin: 20px; z-index: 10; }
+.QOLCustomizeCatalog {
+    width: 230px;
+    height: 58%;
+    flow-children: down;
+    margin: 15px 0px 15px 20px;
+    z-index: 10;
+    horizontal-align: left;
+    vertical-align: top;
+    transition-property: opacity;
+    transition-duration: 0.15s;
+}
 .QOLCustomizeOverlay.PanelsHidden .QOLCustomizeTools,
 .QOLCustomizeOverlay.PanelsHidden .QOLCustomizeCatalog { visibility: collapse; }
-.QOLCustomizeView { flow-children: right; align: right bottom; margin: 0px 20px 20px 0px; z-index: 10; }
+.QOLCustomizeView {
+    flow-children: right;
+    align: center top;
+    margin-top: 15px;
+    z-index: 10;
+}
 .QOLCustomizeChoices { height: fill-parent-flow(1); overflow: squish scroll; }
-#QOLCustomizeFields { height: fit-children; max-height: 510px; overflow: squish scroll; }
-.QOLCustomizeCatalog .QOLCustomizeSearch.ValueInput { width: 100%; height: 32px; margin-left: 0px; margin-bottom: 8px; }
-.QOLCustomizeField { flow-children: right-wrap; width: 100%; margin-top: 8px; }
-.QOLCustomizeField > Label { width: fill-parent-flow(1); vertical-align: center; }
+#QOLCustomizeFields { height: fit-children; max-height: 480px; overflow: squish scroll; }
+.QOLCustomizeCatalog .QOLCustomizeSearch.ValueInput { width: 100%; height: 28px; margin-left: 0px; margin-bottom: 6px; }
+.QOLCustomizeField { flow-children: right-wrap; width: 100%; margin-top: 6px; }
+.QOLCustomizeField > Label { width: fill-parent-flow(1); vertical-align: center; font-size: 14px; }
 .QOLCustomizeValueGroup { flow-children: right; vertical-align: center; }
-.QOLCustomizeUnit { vertical-align: center; margin: 0px 4px; min-width: 16px; opacity: 0.65; }
-.QOLCustomizeTools .QOLCustomizeStepper { width: 25px; height: 30px; padding: 2px 0px; margin: 0px 2px; }
+.QOLCustomizeUnit { vertical-align: center; margin: 0px 4px; min-width: 14px; opacity: 0.65; font-size: 13px; }
+.QOLCustomizeTools .QOLCustomizeStepper { width: 24px; height: 26px; padding: 1px 0px; margin: 0px 1px; }
 .QOLCustomizeStepper > Label { horizontal-align: center; vertical-align: center; }
-.QOLCustomizeField > .QOLCustomizeFieldError { width: 100%; color: #ed9898; margin: 4px 0px 0px 0px; }
+.QOLCustomizeField > .QOLCustomizeFieldError { width: 100%; color: #ed9898; margin: 3px 0px 0px 0px; font-size: 12px; }
 .QOLCustomizeFieldColor { flow-children: down; }
 .QOLCustomizeFieldColor > Label { width: 100%; }
-.QOLCustomizeActions { flow-children: right; margin-top: 10px; width: 100%; }
+.QOLCustomizeActions { flow-children: right; margin-top: 8px; width: 100%; }
 .QOLCustomizeEnum { flow-children: right-wrap; width: 100%; }
-.QOLCustomizeButton { padding: 6px 10px; margin: 3px; }
-.QOLCustomizeButton:disabled { opacity: 0.4; }
-.QOLCustomizeChoices .QOLCustomizeButton.Unavailable { opacity: 0.55; }
-.QOLCustomizeTools .QOLCustomizeInput.ValueInput { width: 68px; height: 30px; margin-left: 0px; text-align: center; }
-.QOLCustomizeTools .QOLCustomizeFieldColor .QOLCustomizeInput.ValueInput { width: 104px; text-align: left; }
+.QOLCustomizeButton { padding: 5px 9px; margin: 2px; }
+.QOLCustomizeButton:disabled { opacity: 0.35; }
+.QOLCustomizeChoices .QOLCustomizeButton.Unavailable { opacity: 0.50; }
+.QOLCustomizeTools .QOLCustomizeInput.ValueInput { width: 62px; height: 26px; margin-left: 0px; text-align: center; }
+.QOLCustomizeTools .QOLCustomizeFieldColor .QOLCustomizeInput.ValueInput { width: 95px; text-align: left; }
 .QOLCustomizeInput.Invalid { border: 1px solid #ed7070; }
-.QOLCustomizeSwatch { width: 24px; height: 24px; margin: 4px; border: 1px solid #fff4; }
-.QOLCustomizePalette { width: 100%; flow-children: right-wrap; margin-top: 6px; margin-bottom: 6px; }
-.QOLCustomizePaletteToggle { margin-left: 0px; margin-top: 6px; }
-.QOLCustomizeColorChoice { width: 24px; height: 24px; margin: 2px; border: 2px solid transparent; }
+.QOLCustomizeSwatch { width: 22px; height: 22px; margin: 3px; border: 1px solid #fff4; border-radius: 2px; }
+.QOLCustomizePalette { width: 100%; flow-children: right-wrap; margin-top: 4px; margin-bottom: 4px; }
+.QOLCustomizePaletteToggle { margin-left: 0px; margin-top: 4px; }
+.QOLCustomizeColorChoice { width: 22px; height: 22px; margin: 2px; border: 2px solid transparent; border-radius: 2px; }
 .QOLCustomizeColorChoice:hover,
 .QOLCustomizeColorChoice.Active { border: 2px solid white; }
 .QOLCustomizeChoices .QOLCustomizeButton { width: 100%; margin-left: 0px; margin-right: 0px; }
-.QOLCustomizeFrame { horizontal-align: left; vertical-align: top; border: 1px solid transparent; background-color: transparent; }
-.QOLCustomizeOverlay.ShowFrames .QOLCustomizeFrame { border: 1px solid #8bb9d444; }
-.QOLCustomizeOverlay .QOLCustomizeFrame:hover,
-.QOLCustomizeOverlay .QOLCustomizeFrame.Selected { border: 1px solid #a8d9ec; }
-.QOLCustomizeResize { align: right bottom; width: 20px; height: 20px; border-right: 3px solid #a8d9ec; border-bottom: 3px solid #a8d9ec; z-index: 4; background-color: #182020ee; }
-.QOLCustomizeResize:hover { background-color: #a8d9ec66; }
-.QOLCustomizeResize.TopLeft { align: left top; border-right: 0px; border-bottom: 0px; border-left: 3px solid #a8d9ec; border-top: 3px solid #a8d9ec; }
-.QOLCustomizeResize.TopRight { align: right top; border-bottom: 0px; border-top: 3px solid #a8d9ec; }
-.QOLCustomizeResize.BottomLeft { align: left bottom; border-right: 0px; border-left: 3px solid #a8d9ec; }
+.QOLCustomizeFrame {
+    horizontal-align: left;
+    vertical-align: top;
+    border: 1px dashed rgba(255, 255, 255, 0.22);
+    background-color: transparent;
+    transition-property: border;
+    transition-duration: 0.1s;
+}
+.QOLCustomizeOverlay.ShowFrames .QOLCustomizeFrame { border: 1px solid rgba(127, 229, 184, 0.35); }
+.QOLCustomizeOverlay .QOLCustomizeFrame:hover {
+    border: 1.5px solid rgba(127, 229, 184, 0.75);
+    background-color: transparent;
+    box-shadow: none;
+}
+.QOLCustomizeOverlay .QOLCustomizeFrame.Selected {
+    border: 2px solid #7fe5b8;
+    background-color: transparent;
+    box-shadow: none;
+}
+.QOLCustomizeTools .SliderValueGroup {
+    width: fill-parent-flow(1);
+    flow-children: right;
+    vertical-align: center;
+}
+.QOLCustomizeTools .SliderContainer {
+    width: fill-parent-flow(1);
+    vertical-align: center;
+    margin-right: 6px;
+    height: 24px;
+}
+.QOLCustomizeTools .HorizontalSlider {
+    width: 100%;
+    vertical-align: center;
+}
+.QOLCustomizeTools .HorizontalSlider #SliderTrack {
+    height: 4px;
+    background-color: rgba(255, 255, 255, 0.12);
+    border-radius: 2px;
+    vertical-align: center;
+}
+.QOLCustomizeTools .HorizontalSlider #SliderTrackProgress {
+    height: 4px;
+    background-color: #7fe5b8;
+    border-radius: 2px;
+    vertical-align: center;
+}
+.QOLCustomizeTools .HorizontalSlider .SliderThumb {
+    width: 10px;
+    height: 10px;
+    background-color: #ffffff;
+    border: 1px solid #7fe5b8;
+    border-radius: 50%;
+    vertical-align: center;
+    box-shadow: fill rgba(127, 229, 184, 0.4) 0px 0px 4px 0px;
+}
+.QOLCustomizeTools .HorizontalSlider:hover .SliderThumb {
+    box-shadow: fill rgba(127, 229, 184, 0.7) 0px 0px 6px 0px;
+}
+.QOLCustomizeTools .HorizontalSlider:active .SliderThumb {
+    background-color: #7fe5b8;
+    box-shadow: fill rgba(127, 229, 184, 0.9) 0px 0px 8px 0px;
+}
+.QOLCustomizeTools .QOLCustomizeInput.ValueInput {
+    width: 56px;
+    height: 24px;
+    vertical-align: center;
+    text-align: center;
+    font-size: 13px;
+    padding: 0px 2px;
+}
+.QOLCustomizeTools .QOLCustomizeUnit {
+    vertical-align: center;
+    margin-left: 2px;
+    font-size: 12px;
+    color: rgba(255, 255, 255, 0.6);
+}
+.QOLCustomizeResize {
+    align: right bottom;
+    width: 14px;
+    height: 14px;
+    border-right: 2.5px solid #7fe5b8;
+    border-bottom: 2.5px solid #7fe5b8;
+    z-index: 4;
+    background-color: #121816;
+}
+.QOLCustomizeResize:hover { background-color: #7fe5b8; }
+.QOLCustomizeResize.TopLeft { align: left top; border-right: 0px; border-bottom: 0px; border-left: 2.5px solid #7fe5b8; border-top: 2.5px solid #7fe5b8; }
+.QOLCustomizeResize.TopRight { align: right top; border-bottom: 0px; border-top: 2.5px solid #7fe5b8; }
+.QOLCustomizeResize.BottomLeft { align: left bottom; border-right: 0px; border-left: 2.5px solid #7fe5b8; }
 .QOLCustomizeTools > .ModalInstructions,
 #QOLCustomizeFields > .ModalInstructions { width: 100%; white-space: normal; height: fit-children; }
 .QOLCustomizeLaunch { flow-children: down; width: 100%; }
+
+.QOLCustomizeGuideLine {
+    background-color: rgba(127, 229, 184, 0.75);
+    box-shadow: 0px 0px 6px rgba(127, 229, 184, 0.5);
+    z-index: 8;
+}
+.QOLCustomizeGuideLine.Vertical {
+    width: 1px;
+    height: 100%;
+}
+.QOLCustomizeGuideLine.Horizontal {
+    height: 1px;
+    width: 100%;
+}
 
 /* Active Stats showcase (Crosshair tab): reuse the REAL crosshair-overlay styling so the preview
    rows are a 1:1 copy of the in-game overlay — same pill, accent border, property icon + value.

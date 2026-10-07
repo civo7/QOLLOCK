@@ -13,6 +13,7 @@
     "translations:import": "node scripts/import_translations.js",
     "translations:json:export": "node scripts/export_locales_json.js",
     "translations:json:import": "node scripts/import_locales_json.js",
+    "translations:sync": "node scripts/sync_translations.js",
     "translations:missing": "node scripts/find_untranslated.js",
     "translations:labels": "node scripts/find_untranslated_labels.js"
   },

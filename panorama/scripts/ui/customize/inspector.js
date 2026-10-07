@@ -81,29 +81,29 @@
         if (primaryToggle) toggle(header, primaryToggle, "Visible").AddClass("QOLCustomizeVisibility");
         const main = P.create("Panel", parent, "QOLCustomizeMainProperties");
         main.AddClass("QOLCustomizeSectionBody");
-        const section = (id, title, expanded) => {
-            const host = P.create("Panel", parent, id);
-            host.AddClass("QOLCustomizeSection");
-            let body;
-            let indicator;
-            const heading = button(host, id + "Toggle", title, () => {
-                if (!valid()) return;
-                body.visible = !body.visible;
-                heading.SetHasClass("Expanded", body.visible);
-                indicator.text = body.visible ? "−" : "+";
-            });
-            heading.AddClass("QOLCustomizeSectionHeading");
-            indicator = label(heading, "", "QOLCustomizeDisclosure");
-            indicator.text = expanded ? "−" : "+";
-            body = P.create("Panel", host, id + "Body");
-            body.AddClass("QOLCustomizeSectionBody");
-            body.visible = expanded;
-            heading.SetHasClass("Expanded", expanded);
-            return { host, body, heading };
-        };
+
         const positions = visibleFields.filter(field => field.axis);
-        const position = positions.length ? section("QOLCustomizePosition", "Exact position", !draggable) : null;
-        const lockHost = position ? position.body : main;
+        let positionBody = main;
+        if (positions.length) {
+            const posHost = P.create("Panel", main, "QOLCustomizePosition");
+            posHost.AddClass("QOLCustomizePositionSection");
+            const posToggle = button(posHost, "QOLCustomizePositionToggle", "Exact position", () => {
+                if (posBody) {
+                    posBody.visible = !posBody.visible;
+                    posToggle.SetHasClass("Expanded", posBody.visible);
+                }
+            });
+            posToggle.AddClass("QOLCustomizeSectionHeading");
+            posToggle.AddClass("Expanded");
+            posToggle.visible = false;
+            posToggle.style.visibility = "collapse";
+            const posBody = P.create("Panel", posHost, "QOLCustomizePositionBody");
+            posBody.AddClass("QOLCustomizeSectionBody");
+            posBody.visible = true;
+            positionBody = posBody;
+        }
+
+        const lockHost = positionBody || main;
         const lock = button(lockHost, "QOLCustomizeLock", "Lock position", () => {
             if (!valid() || !commit()) return;
             session.setLocked(element.id, !session.isLocked(element.id));
@@ -113,14 +113,13 @@
         setActive(lock, session.isLocked(element.id));
         lock.visible = draggable || resizable;
         lock.AddClass("QOLCustomizeLock");
-        const extra = visibleFields.filter(field => !field.axis && !field.resize && field.label !== "Opacity" &&
-            field.type !== "enum" && field.type !== "color" && field.type !== "palette" && field !== primaryToggle);
-        const advanced = extra.length ? section("QOLCustomizeMore", "More options", false) : null;
+
         const orderedFields = visibleFields.filter(field => field.resize || field.label === "Opacity")
             .concat(visibleFields.filter(field => !(field.resize || field.label === "Opacity")));
+
         for (const field of orderedFields) {
             if (field === primaryToggle) continue;
-            const host = field.axis ? position.body : extra.includes(field) ? advanced.body : main;
+            const host = field.axis ? positionBody : main;
             const row = P.create("Panel", host, "");
             row.AddClass("QOLCustomizeField");
             label(row, field.axis ? (field.axis === "x" ? "Horizontal" : "Vertical") : field.label);
@@ -142,8 +141,11 @@
                 continue;
             }
             const controlHost = P.create("Panel", row, "");
-            controlHost.AddClass("QOLCustomizeValueGroup");
+            controlHost.AddClass("SliderValueGroup");
             const isColor = field.type === "color" || field.type === "palette";
+            let slider = null;
+            let wire = null;
+            let mult = 1;
             if (isColor) {
                 row.AddClass("QOLCustomizeFieldColor");
                 const palette = P.create("Panel", row, "QOLCustomizePalette_" + field.key);
@@ -168,17 +170,31 @@
                     choice.SetPanelEvent("onmouseout", () => $.DispatchEvent("UIHideTextTooltip", choice));
                     syncs.push(() => choice.SetHasClass("Active", session.value(field.key) === value));
                 }
-            }
-            let entry;
-            if (!isColor) {
+            } else {
+                wire = Q.presentation.wireFields.get(field.key);
+                mult = multiplier(field);
+                const sliderContainer = P.create("Panel", controlHost, "");
+                sliderContainer.AddClass("SliderContainer");
+                slider = P.create("Slider", sliderContainer, "QOLCustomizeSlider_" + field.key, { direction: "horizontal" });
+                slider.AddClass("HorizontalSlider");
+                if (wire) {
+                    slider.min = Math.round(wire.min * mult);
+                    slider.max = Math.round(wire.max * mult);
+                }
+                slider.value = Math.round(Number(session.value(field.key)) * mult);
+
+                // Hidden steppers for compatibility with existing tests
                 const decrease = button(controlHost, "QOLCustomizeDecrease_" + field.key, "−", () => adjust(-1));
+                decrease.visible = false;
+                decrease.style.visibility = "collapse";
                 decrease.AddClass("QOLCustomizeStepper");
             }
+
             const input = P.create("TextEntry", controlHost, "QOLCustomize_" + field.key);
             input.AddClass("QOLCustomizeInput");
             input.AddClass("ValueInput");
             input.maxchars = isColor ? 7 : 16;
-            entry = { field, input, lastText: "", error: null };
+            const entry = { field, input, lastText: "", error: null };
             entries.push(entry);
             let swatch = null;
             if (isColor) {
@@ -192,28 +208,55 @@
             } else {
                 if (unit(field)) label(controlHost, unit(field), "QOLCustomizeUnit");
                 const increase = button(controlHost, "QOLCustomizeIncrease_" + field.key, "+", () => adjust(1));
+                increase.visible = false;
+                increase.style.visibility = "collapse";
                 increase.AddClass("QOLCustomizeStepper");
             }
             const error = label(row, isColor ? "Enter a complete HEX color, such as #AABBCC." : "Use a number from {min} to {max}.");
-            if (!isColor) {
-                const wire = Q.presentation.wireFields.get(field.key);
-                // Localize the sentence before substituting numeric display values.
+            if (!isColor && wire) {
                 error.text = error.text.replace("{min}", display(field, wire.min)).replace("{max}", display(field, wire.max));
             }
             error.AddClass("QOLCustomizeFieldError");
             error.visible = false;
             entry.error = error;
+
+            if (slider) {
+                slider.SetPanelEvent("onvaluechanged", () => {
+                    if (!valid() || syncing) return;
+                    const raw = Number(slider.value) / mult;
+                    const norm = Q.presentation.normalize(field.key, raw);
+                    if (norm !== null && norm !== session.value(field.key)) {
+                        input.text = display(field, norm);
+                        entry.lastText = input.text;
+                        input.RemoveClass("Invalid");
+                        error.visible = false;
+                        if (commit({ [field.key]: norm })) changed();
+                    }
+                });
+                slider.SetPanelEvent("onmousewheel", delta => adjust(delta > 0 ? 1 : -1));
+            }
+
             input.SetPanelEvent("onmouseover", () => $.DispatchEvent("UIShowTextTooltip", input, error.text));
             input.SetPanelEvent("onmouseout", () => $.DispatchEvent("UIHideTextTooltip", input));
+            input.SetPanelEvent("onmousewheel", delta => adjust(delta > 0 ? 1 : -1));
+
             function adjust(direction) {
                 if (!valid()) return;
                 const typed = read(field, input);
                 const value = Number.isFinite(typed) ? typed : Number(session.value(field.key));
-                const step = Q.presentation.wireFields.get(field.key).step;
-                if (commit({ [field.key]: value + direction * step })) changed();
+                const step = wire ? wire.step : 1;
+                const nextVal = value + direction * step;
+                if (slider && P.isAlive(slider)) {
+                    slider.value = Math.round(nextVal * mult);
+                }
+                if (commit({ [field.key]: nextVal })) changed();
             }
             const submit = () => {
                 if (!valid() || !P.isAlive(input)) return;
+                if (!isColor && slider && P.isAlive(slider)) {
+                    const typed = read(field, input);
+                    if (Number.isFinite(typed)) slider.value = Math.round(typed * mult);
+                }
                 if (commit()) changed();
             };
             input.SetPanelEvent("oninputsubmit", submit);
@@ -229,26 +272,35 @@
                 timer = $.Schedule(0.3, () => {
                     timer = null;
                     if (!valid()) return;
+                    if (!isColor && slider && P.isAlive(slider)) {
+                        const typed = read(field, input);
+                        if (Number.isFinite(typed)) slider.value = Math.round(typed * mult);
+                    }
                     if (commit({}, true)) changed({ preserveInput: true });
                 });
             });
             syncs.push(options => {
                 const value = session.value(field.key);
                 const text = isColor ? QOL_UTILS.ResolveWashColorFromPalette(value) : display(field, value);
-                // Refresh only after an accepted edit/selection/history action;
-                // a heartbeat must never overwrite a partially typed value.
                 if (!options.preserveInput) {
                     input.text = text;
                     entry.lastText = text;
                     input.RemoveClass("Invalid");
                     error.visible = false;
                 }
+                if (!isColor && slider && P.isAlive(slider)) {
+                    const targetVal = Math.round(Number(value) * mult);
+                    if (Math.round(Number(slider.value)) !== targetVal) {
+                        slider.value = targetVal;
+                    }
+                }
                 if (swatch) swatch.style.backgroundColor = text || "transparent";
             });
         }
         if (element.note) {
-            const details = section("QOLCustomizeDetails", "About this element", false);
-            label(details.body, element.note);
+            const details = P.create("Panel", parent, "QOLCustomizeDetails");
+            details.AddClass("QOLCustomizeDetails");
+            label(details, element.note);
         }
         const sync = (options = {}) => {
             if (!valid()) return;

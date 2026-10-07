@@ -44,7 +44,7 @@
         host.AddClass("QOLCustomizeLaunch");
         host.AddClass("QOLUnifiedModalSurface");
         I.label(host, "Customize", "ModalTitle").AddClass("QOLCustomizeTitle");
-        I.label(host, "Move HUD elements on screen and edit their colors. Apply keeps changes; Cancel discards the draft.");
+        I.label(host, "Move HUD elements on screen and edit their colors. Save keeps changes; Cancel discards the draft.");
         const status = I.label(host, "");
         status.text = Q.ui.customize.failureText();
         I.button(host, "QOLCustomizeOpen", "Open editor", () => {

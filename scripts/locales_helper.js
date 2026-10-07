@@ -5,6 +5,7 @@
 
 const fs = require("fs");
 const path = require("path");
+const vm = require("node:vm");
 
 const PROJECT_ROOT = path.resolve(__dirname, "..");
 const LOCALES_DIR = path.join(PROJECT_ROOT, "panorama", "scripts", "ql_settings_loc");
@@ -18,7 +19,7 @@ const LANGUAGES = [
     { header: "Belarusian", code: "by", fileSuffix: "by", file: "ql_settings_loc_by.js", wbCode: "be" },
     { header: "Japanese", code: "ja", fileSuffix: "ja", file: "ql_settings_loc_ja.js", wbCode: "ja" },
     { header: "Korean", code: "ko", fileSuffix: "ko", file: "ql_settings_loc_ko.js", wbCode: "ko" },
-    { header: "Chinese", code: "zh", fileSuffix: "zh", file: "ql_settings_loc_zh.js", wbCode: "zh" },
+    { header: "Chinese", code: "zh", fileSuffix: "zh", file: "ql_settings_loc_zh.js", wbCode: "zh-CN" },
     { header: "French", code: "fr", fileSuffix: "fr", file: "ql_settings_loc_fr.js", wbCode: "fr" },
     { header: "Italian", code: "it", fileSuffix: "it", file: "ql_settings_loc_it.js", wbCode: "it" },
     { header: "Turkish", code: "tr", fileSuffix: "tr", file: "ql_settings_loc_tr.js", wbCode: "tr" },
@@ -31,20 +32,18 @@ function jsString(s) {
     return JSON.stringify(String(s === undefined || s === null ? "" : s));
 }
 
-function loadLocaleMaps() {
+function loadLocaleMaps(localesDir = LOCALES_DIR) {
     const maps = {};
     const keyOrders = {};
     const sandbox = { globalThis: {}, window: {} };
 
     for (const lang of LANGUAGES) {
-        const filePath = path.join(LOCALES_DIR, lang.file);
+        const filePath = path.join(localesDir, lang.file);
         if (!fs.existsSync(filePath)) {
-            maps[lang.code] = {};
-            keyOrders[lang.code] = [];
-            continue;
+            throw new Error(`Missing runtime locale: ${filePath}`);
         }
         const content = fs.readFileSync(filePath, "utf8");
-        new Function("globalThis", "window", content)(sandbox.globalThis, sandbox.window);
+        vm.runInNewContext(content, sandbox, { filename: filePath, timeout: 1000 });
 
         // Also extract key order from file lines
         const order = [];
@@ -54,8 +53,9 @@ function loadLocaleMaps() {
             if (m) {
                 try {
                     const k = JSON.parse(m[1]);
-                    if (!order.includes(k)) order.push(k);
-                } catch (_) {}
+                    if (order.includes(k)) throw new Error(`Duplicate key in ${filePath}: ${k}`);
+                    order.push(k);
+                } catch (error) { throw new Error(`Invalid locale entry in ${filePath}: ${error.message}`); }
             }
         }
         keyOrders[lang.code] = order;
@@ -63,7 +63,19 @@ function loadLocaleMaps() {
 
     const dicts = sandbox.globalThis.SETTINGS_LOCALE_TEXT || {};
     for (const lang of LANGUAGES) {
-        maps[lang.code] = dicts[lang.code] || {};
+        maps[lang.code] = dicts[lang.code];
+        if (!maps[lang.code] || !Object.keys(maps[lang.code]).length) throw new Error(`Empty runtime locale: ${lang.code}`);
+        for (const [key, value] of Object.entries(maps[lang.code])) {
+            if (!key || typeof value !== "string") throw new Error(`Invalid runtime entry: ${lang.code}/${key}`);
+            if (lang.code === "en" && key !== value) throw new Error(`English must be an identity map: ${key}`);
+        }
+        if (keyOrders[lang.code].length !== Object.keys(maps[lang.code]).length) {
+            throw new Error(`Unrecognized locale entry syntax: ${lang.file}`);
+        }
+    }
+
+    for (const lang of LANGUAGES) for (const key of Object.keys(maps[lang.code])) {
+        if (!Object.hasOwn(maps.en, key)) throw new Error(`Orphan runtime key: ${lang.code}/${key}`);
     }
 
     return { maps, keyOrders };
@@ -72,7 +84,7 @@ function loadLocaleMaps() {
 function emitLocaleFile(langDef, order, values, eol = "\n") {
     const lines = [
         `// ${langDef.file} — QOLLOCK settings locale (${langDef.fileSuffix})`,
-        `// Extracted from ql_settings.js, Phase 1`,
+        `// English source keys; maintained through scripts/import_locales_json.js or CSV import.`,
         `(function() {`,
         `    'use strict';`,
         `    var _root = (typeof globalThis !== "undefined") ? globalThis : (typeof window !== "undefined") ? window : {};`,

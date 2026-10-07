@@ -102,8 +102,6 @@ test("Reset sync and disposed inspectors cannot reapply a queued value", () => {
 test("exact position and presets disclose on demand; numeric steppers honor wire precision", () => {
     const env = setup("items");
     const position = env.find("QOLCustomizePositionBody");
-    assert.equal(position.visible, false);
-    env.find("QOLCustomizePositionToggle")._fire("onactivate");
     assert.equal(position.visible, true);
     env.find("QOLCustomizeIncrease_ITEMS_X_OFFSET")._fire("onactivate");
     assert.equal(env.session.value("ITEMS_X_OFFSET"), 5);

@@ -128,7 +128,7 @@ test("down-positive unsecured geometry and percentage cooldown units retain thei
     assert.equal(values.UNSECURED_SOULS_HUD_X_OFFSET, cfg.UNSECURED_SOULS_HUD_X_OFFSET + 20);
     assert.equal(values.UNSECURED_SOULS_HUD_Y_OFFSET, cfg.UNSECURED_SOULS_HUD_Y_OFFSET + 30);
     const cooldowns = catalog.elements.find(item => item.id === "cooldowns");
-    assert.equal(catalog.canDrag(cooldowns), false, "do not guess a native percentage basis");
+    assert.equal(catalog.canDrag(cooldowns), true);
     env.global.QOL.ui.customize.start(); activate(env, "QOLCustomizeSelect_cooldowns");
     input(env, "PASSIVE_COOLDOWN_X", 15); input(env, "PASSIVE_COOLDOWN_Y", -10);
     env.clock.advance(1000);

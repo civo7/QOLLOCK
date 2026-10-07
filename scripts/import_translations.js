@@ -1,142 +1,71 @@
-// import_translations.js — write a filled translator CSV back into the locale files.
-//
-// Counterpart to scripts/export_translations.js. Reads a CSV with an "English" column plus one
-// column per language (Russian, Ukrainian, ...) and merges every non-empty cell into the matching
-// ql_settings_loc_<lang>.js file.
-//
-// Merge semantics (safe by default):
-//   - A non-empty cell sets/overrides that language's translation for the English key.
-//   - An empty cell leaves the existing in-code translation untouched (so a partial sheet never
-//     wipes existing work).
-//   - Existing key order is preserved; brand-new keys are appended at the end of the map.
-//
-// Usage:
-//   node scripts/import_translations.js [path/to/filled.csv]
-// Default CSV: translations/qollock_settings_translations.csv
-//
-// After importing, validate with:
-//   npm test
-
 "use strict";
-
-const fs = require("fs");
-const path = require("path");
-const { execSync } = require("child_process");
-const { PROJECT_ROOT, LOCALES_DIR, LANGUAGES, loadLocaleMaps, saveLocaleFile } = require("./locales_helper");
-
-const inPath = process.argv[2]
-    ? path.resolve(process.argv[2])
-    : path.join(PROJECT_ROOT, "translations", "qollock_settings_translations.csv");
-
-// ── RFC 4180 CSV parser (handles quoted fields, "" escapes, embedded commas/newlines, CRLF) ──
+const fs = require("node:fs");
+const path = require("node:path");
+const { PROJECT_ROOT, LANGUAGES, loadLocaleMaps } = require("./locales_helper");
+const { planImport, applyWrites, report } = require("./translation_io");
 function parseCsv(text) {
-    if (text.charCodeAt(0) === 0xFEFF) text = text.slice(1); // strip BOM
+    text = text.replace(/^\uFEFF/, "");
     const rows = [];
-    let row = [], field = "", inQuotes = false;
+    let row = [], field = "", quoted = false, closed = false;
     for (let i = 0; i < text.length; i++) {
         const c = text[i];
-        if (inQuotes) {
+        if (quoted) {
             if (c === '"') {
                 if (text[i + 1] === '"') { field += '"'; i++; }
-                else inQuotes = false;
+                else { quoted = false; closed = true; }
             } else field += c;
-        } else if (c === '"') {
-            inQuotes = true;
         } else if (c === ",") {
-            row.push(field); field = "";
-        } else if (c === "\n") {
-            row.push(field); field = ""; rows.push(row); row = [];
-        } else if (c === "\r") {
-            if (text[i + 1] !== "\n") { row.push(field); field = ""; rows.push(row); row = []; }
-        } else field += c;
+            row.push(field); field = ""; closed = false;
+        } else if (c === "\r" || c === "\n") {
+            if (c === "\r" && text[i + 1] === "\n") i++;
+            row.push(field); rows.push(row); row = []; field = ""; closed = false;
+        } else if (c === '"' && !field && !closed) quoted = true;
+        else if (closed || c === '"') throw new Error("Malformed CSV quoting");
+        else field += c;
     }
-    if (field !== "" || row.length) { row.push(field); rows.push(row); }
+    if (quoted) throw new Error("Unclosed CSV quote");
+    if (field || row.length || closed) { row.push(field); rows.push(row); }
     return rows;
 }
-
-function main() {
-    if (!fs.existsSync(inPath)) {
-        console.error("[translations] CSV not found: " + inPath);
-        process.exit(1);
+function readCsv(text) {
+    const rows = parseCsv(text);
+    if (rows.length < 2) throw new Error("CSV has no data rows");
+    const header = rows.shift().map(value => value.trim());
+    if (new Set(header.map(value => value.toLowerCase())).size !== header.length) throw new Error("Duplicate CSV headers");
+    const english = header.indexOf("English");
+    if (english < 0) throw new Error("Missing English header");
+    const columns = header.map(name => LANGUAGES.find(lang => lang.header.toLowerCase() === name.toLowerCase()));
+    const warnings = header.filter((name, i) => !columns[i]).map(name => `Unsupported column skipped: ${name}`);
+    const catalogs = Object.create(null), seen = new Set();
+    for (const row of rows) {
+        if (row.every(value => !value.trim())) continue;
+        if (row.length !== header.length) throw new Error("CSV row has wrong column count");
+        const key = row[english];
+        if (!key.trim()) throw new Error("Missing English key");
+        if (seen.has(key)) throw new Error(`Duplicate CSV key: ${key}`);
+        seen.add(key);
+        columns.forEach((lang, index) => {
+            if (!lang || lang.code === "en") return;
+            catalogs[lang.code] ||= Object.create(null);
+            catalogs[lang.code][key] = row[index];
+        });
     }
-
-    const csvText = fs.readFileSync(inPath, "utf8");
-    const rows = parseCsv(csvText);
-    if (rows.length < 2) {
-        console.error("[translations] CSV is empty or has no data rows");
-        process.exit(1);
-    }
-
-    const header = rows[0].map(h => h.trim());
-    const enIdx = header.indexOf("English");
-    if (enIdx === -1) {
-        console.error("[translations] CSV missing required 'English' header column");
-        process.exit(1);
-    }
-
-    // Map column index -> language definition
-    const colToLang = new Map();
-    for (let col = 0; col < header.length; col++) {
-        if (col === enIdx) continue;
-        const name = header[col];
-        const lang = LANGUAGES.find(l => l.header.toLowerCase() === name.toLowerCase());
-        if (lang) {
-            colToLang.set(col, lang);
-        } else {
-            console.warn(`[translations] Warning: unknown language column '${name}' in CSV — skipping`);
-        }
-    }
-
-    const { maps, keyOrders } = loadLocaleMaps();
-
-    // Data rows
-    const stats = {};
-    for (const lang of LANGUAGES) {
-        stats[lang.code] = { updated: 0, added: 0 };
-    }
-
-    for (let r = 1; r < rows.length; r++) {
-        const row = rows[r];
-        if (!row || row.length <= enIdx) continue;
-        const enKey = row[enIdx];
-        if (!enKey || !enKey.trim()) continue;
-
-        for (const [col, lang] of colToLang.entries()) {
-            const rawVal = row[col];
-            if (rawVal === undefined || rawVal === null) continue;
-            const val = String(rawVal).trim();
-            if (val === "") continue; // blanks are safe, never erase work
-
-            const map = maps[lang.code];
-            const order = keyOrders[lang.code];
-
-            if (Object.prototype.hasOwnProperty.call(map, enKey)) {
-                if (map[enKey] !== val) {
-                    map[enKey] = val;
-                    stats[lang.code].updated++;
-                }
-            } else {
-                map[enKey] = val;
-                order.push(enKey);
-                stats[lang.code].added++;
-            }
-        }
-    }
-
-    // Write updated maps back
-    for (const lang of LANGUAGES) {
-        if (lang.code === "en") continue;
-        const s = stats[lang.code];
-        if (s.updated > 0 || s.added > 0) {
-            saveLocaleFile(lang, keyOrders[lang.code], maps[lang.code]);
-            execSync(`node --check ${path.join(LOCALES_DIR, lang.file)}`);
-            console.log(`[translations] ${lang.header.padEnd(16)} updated: ${s.updated}, added: ${s.added}`);
-        } else {
-            console.log(`[translations] ${lang.header.padEnd(16)} unchanged`);
-        }
-    }
-
-    console.log("[translations] Import completed successfully.");
+    return { catalogs, warnings };
 }
+function main() {
+    const args = process.argv.slice(2);
+    if (args.some(arg => arg.startsWith("--") && !["--dry-run", "--json"].includes(arg))) throw new Error("Unknown CSV import option");
+    const positions = args.filter(arg => !arg.startsWith("--"));
+    if (positions.length > 1) throw new Error("Expected one CSV path");
+    const file = path.resolve(positions[0] || path.join(PROJECT_ROOT, "translations/qollock_settings_translations.csv"));
+    const { catalogs, warnings } = readCsv(fs.readFileSync(file, "utf8"));
+    const plan = planImport(loadLocaleMaps(), catalogs);
+    if (args.includes("--json")) console.log(JSON.stringify({ ...plan, writes: undefined, warnings }, null, 2));
+    else report(plan, warnings);
+    if (!args.includes("--dry-run")) applyWrites(plan.writes);
+}
+if (require.main === module) {
+    try { main(); } catch (error) { console.error(`[translations] ${error.message}`); process.exitCode = 1; }
+}
+module.exports = { parseCsv, readCsv };
 
-main();
