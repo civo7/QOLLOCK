@@ -271,7 +271,7 @@
         if (!P.isAlive(overlay)) return false;
         const owner = { context, hud, window, overlay, transaction: Q.ui.customizeSession.create(root, hud, window, element),
             elements: element ? [element] : Q.presentation.elements.filter(item => Q.presentation.hasFrame(item) && item.fields.length && !item.context),
-            hidden: [], active: [], frames: new Map(), headings: [], query: "", showAll: !hud,
+            hidden: [], active: [], frames: new Map(), headings: [], query: "", showAll: !hud, selectionPinned: false,
             timer: null, dragTimer: null, drag: null, inspector: null, onStop, applied: false, saving: false };
         current = owner;
         try {

@@ -128,6 +128,60 @@ test("Customize is in the actual navigation and launches from its registered ren
     clean(env);
 });
 
+for (const mode of ["HUD", "menu", "scoped"]) {
+    test(`Customize opens with strict native boolean properties (${mode})`, () => {
+        const env = setup();
+        const Q = env.global.QOL;
+        if (mode === "menu") {
+            env.hud.root.id = "MenuRoot";
+            env.hud.root.paneltype = "Panel";
+        } else if (mode === "HUD") {
+            target(env, "souls");
+        }
+        const before = JSON.stringify(env.global.MOD_CONFIG);
+        const create = env.global.$.CreatePanel;
+        let visibilityWrites = 0;
+        env.global.$.CreatePanel = (typeName, parent, id, properties) => {
+            const panel = create(typeName, parent, id, properties);
+            if (!id?.startsWith("QOLCustomize")) return panel;
+            // The ordinary simulator accepts undefined; the client's native
+            // bool conversion rejects it, including during the initial refresh.
+            for (const key of ["visible", "enabled"]) {
+                let value = panel[key];
+                Object.defineProperty(panel, key, {
+                    configurable: true,
+                    get: () => value,
+                    set: next => {
+                        assert.equal(typeof next, "boolean", `${id}.${key}`);
+                        if (key === "visible") visibilityWrites++;
+                        value = next;
+                    }
+                });
+            }
+            return panel;
+        };
+        Q.ui.window.setActiveTabAndRefresh("Customize");
+        env.clock.advance(200);
+        if (mode === "scoped") assert.equal(Q.ui.customize.start(null, { elementId: "compass" }), true, Q.ui.customize.failureText());
+        else activate(env, "QOLCustomizeOpen");
+        assert.equal(Q.ui.customize.isRunning(), true, Q.ui.customize.failureText());
+        assert.ok(visibilityWrites > 0);
+        assert.equal(env.em.FindChildTraverse("QOLCustomizeSelect_compass").visible, mode === "menu" || mode === "scoped");
+        env.clock.advance(500);
+        assert.equal(Q.ui.customize.isRunning(), true, Q.ui.customize.failureText());
+        if (mode === "HUD") {
+            activate(env, "QOLCustomizeAllElements");
+            assert.equal(env.em.FindChildTraverse("QOLCustomizeSelect_compass").visible, true);
+            activate(env, "QOLCustomizeAllElements");
+            assert.equal(env.em.FindChildTraverse("QOLCustomizeSelect_compass").visible, false);
+        }
+        activate(env, "QOLCustomizeCancel");
+        assert.equal(Q.ui.customize.isRunning(), false);
+        assert.equal(JSON.stringify(env.global.MOD_CONFIG), before);
+        clean(env);
+    });
+}
+
 for (const withoutHud of [false, true]) {
     test(`the real Customize launcher works when localeCompare throws the client ICU error (${withoutHud ? "menu" : "HUD"})`, () => {
         const env = setup();
