@@ -217,6 +217,14 @@
     z-index: 25;
 }
 
+/* Draw Over UI reparents the minimap outside #gameplay_hud, so the native
+   shop-open collapse no longer reaches it. The root listener restores that
+   state here without hiding the ability strip or active build editor. */
+CitadelHud.gShopOpen #minimap_persp
+{
+    visibility: collapse;
+}
+
 /* ── BHOP gamemode ── */
 
 .bhop_gamemode_active #StatsAndModsContainer,

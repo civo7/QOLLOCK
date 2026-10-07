@@ -30,6 +30,16 @@ test("the shop stacks below interactive abilities and the active build editor", 
         /<Panel id="AbilitiesContainer"[^>]*>\s*<GlobalClassListener classes="[^"]*\bgShopOpen\b[^"]*"/,
         "ability container must receive the open-shop state"
     );
+    assert.match(
+        hud,
+        /<CitadelHud\b[^>]*>\s*(?:<!--[^]*?-->\s*)*<GlobalClassListener classes="[^"]*\bgShopOpen\b[^"]*"/,
+        "HUD root must receive the open-shop state for sibling layering"
+    );
+    assert.match(
+        global,
+        /CitadelHud\.gShopOpen #minimap_persp\s*\{[^}]*visibility:\s*collapse;/s,
+        "a reparented draw-over-UI minimap must not cover the shop"
+    );
     assert.ok(shopLayer > topBarLayer, "open shop must cover the top bar");
     assert.ok(abilitiesLayer > shopLayer, "abilities must remain hoverable above the open shop");
     assert.ok(buildEditorLayer > abilitiesLayer, "active build editor must remain above the abilities");

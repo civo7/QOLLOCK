@@ -171,7 +171,7 @@
 @define yamatoColor: #625789;
 @define nurseColor: #f55e20;
 @define ratkingColor: #733033;
-@define babaColor: #2E865A;
+@define babaColor: #895672;
 @define artistColor: #653cbc;
 @define chessmasterColor: #AA9E7E;
 @define deadpackColor: #CE8D2A;
@@ -5090,6 +5090,18 @@ CitadelHTMLPanel TextTooltip
 	height: 32px;
 }
 
+.InlineCitadelIcon
+{
+	width: 20px;
+	height: 20px;
+}
+
+.InlineCitadelIcon.BaseSettings
+{
+	pre-transform-scale2d: 0.8;
+	wash-color: offWhite;
+}
+
 AsyncDataPanel > .AsyncContainer
 {
 	width: 100%;
@@ -5731,3 +5743,20 @@ CitadelButton:disabled:hover Label,CitadelButton.Disabled:hover Label
 	brightness: 1;
 }
 
+.highlight_brew_barrier
+{
+	color: #5ead9c;
+	font-weight: bold;
+}
+
+.highlight_brew_silence
+{
+	color: #f476ff;
+	font-weight: bold;
+}
+
+.highlight_brew_fire
+{
+	color: #dc3232;
+	font-weight: bold;
+}
