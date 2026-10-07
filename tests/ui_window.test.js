@@ -246,13 +246,15 @@ test("window: escape background click closes settings window first if open", () 
 });
 
 test("Escape menu root keeps the native cancel path while QOLLOCK settings handle their own cancel", () => {
-    const { windowApi, win, mockDollar } = createTestEnvironment();
+    const { windowApi, win, mockDollar, sandbox } = createTestEnvironment();
+    let nowMs = 1000;
+    sandbox.Date = { now: () => nowMs };
     const xml = fs.readFileSync(path.resolve(__dirname, "../panorama/layout/hud_escape_menu.xml"), "utf8");
     const handler = xml.match(/<CitadelHudEscapeMenu oncancel="([^"]+)"/);
     assert.ok(handler, "escape menu must declare a cancel handler");
-    assert.equal(handler[1], "CitadelResumePlaying()", "the focused escape-menu root must keep Deadlock's native cancel handler");
+    assert.match(handler[1], /CitadelResumePlaying\(\)/, "the root must retain Deadlock's native cancel fallback");
     let resumes = 0;
-    const cancel = () => vm.runInNewContext(handler[1], {
+    const cancel = () => vm.runInNewContext(handler[1].replace(/&amp;/g, "&"), {
         $: mockDollar,
         CitadelResumePlaying: () => { resumes++; }
     });
@@ -265,6 +267,9 @@ test("Escape menu root keeps the native cancel path while QOLLOCK settings handl
     win._fire("oncancel");
     assert.equal(windowApi.isOpen(), false);
     assert.equal(resumes, 1, "cancel on the focused settings window leaves the native menu open");
+    cancel();
+    assert.equal(resumes, 1, "the same MenuBack must not bubble through and resume");
+    nowMs += 150;
     cancel();
     assert.equal(resumes, 2, "next Escape should resume the native menu");
 
@@ -303,7 +308,7 @@ test("the native MenuBack binding remains the only EscapeButton", () => {
     const xml = fs.readFileSync(path.resolve(__dirname, "../panorama/layout/hud_escape_menu.xml"), "utf8");
     const buttons = xml.match(/\bid="EscapeButton"/g) || [];
     assert.equal(buttons.length, 1, "duplicate EscapeButton ids can intercept the native MenuBack action");
-    assert.match(xml, /<CitadelBindingButton\s+id="EscapeButton"\s+action="MenuBack"\s+onactivate="CitadelResumePlaying\(\)"/);
+    assert.match(xml, /<CitadelBindingButton\s+id="EscapeButton"\s+action="MenuBack"\s+onactivate="[^"]*CitadelResumePlaying\(\)/);
 });
 
 test("window: ensureDiscordTextureLogo and ensureDiscordFooterTextureLogo attach logo image", () => {

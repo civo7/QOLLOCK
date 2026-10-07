@@ -259,6 +259,9 @@
             overlay.hittestchildren = true;
             overlay.acceptsfocus = true;
             overlay.SetPanelEvent("onactivate", () => {});
+            overlay.SetPanelEvent("oncancel", () => {
+                if (current === owner) Q.ui.window.handleCustomizeCancel();
+            });
             const view = P.create("Panel", overlay, "QOLCustomizeView");
             view.AddClass("QOLCustomizeView");
             view.AddClass("QOLUnifiedModalSurface");

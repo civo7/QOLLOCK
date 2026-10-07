@@ -69,7 +69,11 @@ the selected inspector shows their availability without repeating a suffix on
 every catalog row.
 The canvas consumes activation, and EscapeBackground is guarded during an editor
 session. Missed clicks preserve the draft instead of resuming gameplay. Explicit
-Apply/Cancel and the native Escape path retain their existing lifecycle.
+Cancel and Escape discard the draft and return to the still-open settings
+window. The overlay's `oncancel`, focused settings window, native escape-menu
+root and existing MenuBack binding all route through the same cancellation
+guard. Duplicate delivery of one MenuBack cannot also close settings or resume
+gameplay; the next separate Escape retains ordinary settings/menu behavior.
 
 Colors appear at the start of the inspector with preset swatches, a HEX entry,
 preview chip and native Default action. Numeric and HEX entries also submit on
@@ -84,8 +88,10 @@ selected only when its content has layout; otherwise the active owner is used by
 both editor and gameplay manifest. Stamina frames measure the native foreground
 pips rather than an unrelated ability-charge widget.
 
-The editor suppresses hero-testing controls while active. It does not change
-the separate native ClientStatus window or its normal presentation.
+The editor suppresses hero-testing controls while active. The separate native
+ClientStatus overlay removes its default logo/early-build block through the
+`citadel_client_status.css` override. Its connection, version and matchmaking
+status entries retain native styles; they are not part of the hidden menu tree.
 
 Top-bar frames measure the union of native player detail cards, clock, score and
 objective content from the extracted top-bar layouts. They exclude the full-height
@@ -177,6 +183,8 @@ The native souls, inventory, top bar and signature owners use an owned collapse
 style while their visibility setting is off. This cannot be outbid by native
 ID/state CSS rules as the generic `qol-hidden` class could. Enabling, replacement
 and teardown release that override so native conditional visibility applies.
+Souls and healthbar offsets explicitly return layout coordinates to zero before
+releasing native `position`; a cleared JS x/y record alone is not a layout check.
 
 Apply commits pending valid input through MarkConfigDirty/FlushPendingSave, then
 uses storageBridge.saveSettings. The editor reports success only after the CEF

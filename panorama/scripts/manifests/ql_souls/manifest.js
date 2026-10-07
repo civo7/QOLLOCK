@@ -29,24 +29,36 @@
             var _loop = null;
             var _cachedPanel = null;
             var _visibilityOverride = false;
+            var _positionApplied = false;
             var PANEL_ID = "gold_and_ap_container";
 
             var _clearStyle = QOL.utils.ClearStyleSafe;
             var _isAlive = (QOL.core && QOL.core.panel && QOL.core.panel.isAlive) ? QOL.core.panel.isAlive : QOL.utils.IsPanelValid;
+
+            function _clearOffsets(panel) {
+                if (_positionApplied) {
+                    panel.style.x = "0px";
+                    panel.style.y = "0px";
+                    _clearStyle(panel, "position");
+                }
+                _clearStyle(panel, "x");
+                _clearStyle(panel, "y");
+                _positionApplied = false;
+            }
 
             function _getPanel() {
                 var root = (QOL.core && QOL.core.hud && QOL.core.hud.findHud) ? QOL.core.hud.findHud() : $.GetContextPanel();
                 var current = (root && root.FindChildTraverse) ? root.FindChildTraverse(PANEL_ID) : null;
                 if (current !== _cachedPanel) {
                     if (_isAlive(_cachedPanel)) {
-                        _clearStyle(_cachedPanel, "x");
-                        _clearStyle(_cachedPanel, "y");
+                        _clearOffsets(_cachedPanel);
                         _clearStyle(_cachedPanel, "opacity");
                         if (_visibilityOverride) _clearStyle(_cachedPanel, "visibility");
                         if (_cachedPanel.SetHasClass) _cachedPanel.SetHasClass("qol-hidden", false);
                     }
                     _cachedPanel = current;
                     _visibilityOverride = false;
+                    _positionApplied = false;
                     _lastSig = "";
                 }
                 return _cachedPanel;
@@ -81,12 +93,14 @@
                 else if (_visibilityOverride) { _clearStyle(panel, "visibility"); _visibilityOverride = false; }
 
                 if (active && enabled) {
-                    if (offsetX !== 0) panel.style.x = offsetX + "px"; else _clearStyle(panel, "x");
-                    if (offsetY !== 0) panel.style.y = (-offsetY) + "px"; else _clearStyle(panel, "y");
+                    if (offsetX !== 0 || offsetY !== 0) {
+                        panel.style.x = offsetX + "px";
+                        panel.style.y = (-offsetY) + "px";
+                        _positionApplied = true;
+                    } else _clearOffsets(panel);
                     if (Math.abs(opNum - 1.0) > 0.0001) panel.style.opacity = opacityText; else _clearStyle(panel, "opacity");
                 } else {
-                    _clearStyle(panel, "x");
-                    _clearStyle(panel, "y");
+                    _clearOffsets(panel);
                     _clearStyle(panel, "opacity");
                 }
                 return true;
@@ -121,8 +135,7 @@
                         if (p) {
                             var isSupposed = FR && FR.isFeatureSupposedToBeEnabled ? FR.isFeatureSupposedToBeEnabled("ql_souls") : false;
                             if (p.SetHasClass) p.SetHasClass("qol-hidden", !isSupposed);
-                            _clearStyle(p, "x");
-                            _clearStyle(p, "y");
+                            _clearOffsets(p);
                             _clearStyle(p, "opacity");
                             if (_visibilityOverride) _clearStyle(p, "visibility");
                         }

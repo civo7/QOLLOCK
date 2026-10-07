@@ -83,7 +83,9 @@
 		<include src="s2r://panorama/scripts/ql_settings.vjs_c" />
 	</scripts>
 	<!-- ============================================================= -->
-	<CitadelHudEscapeMenu oncancel="CitadelResumePlaying()">
+	<!-- ==== QOLLOCK: Cancel Customize before the native escape menu ==== -->
+	<CitadelHudEscapeMenu oncancel="if (!($.HandleCustomizeCancel &amp;&amp; $.HandleCustomizeCancel())) { CitadelResumePlaying(); }">
+	<!-- ==== END QOLLOCK: Cancel Customize before the native escape menu ==== -->
 		<!-- ============================================================= -->
 		<!-- QOLLOCK CUSTOM: Close settings on background activation    -->
 		<!-- ============================================================= -->
@@ -179,7 +181,9 @@
 			</Panel>
 		</Panel>
 		<CitadelPrivilegedFeatures id="PrivilegedFeatures" />
-		<CitadelBindingButton id="EscapeButton" action="MenuBack" onactivate="CitadelResumePlaying()" text="#menu_resume" />
+		<!-- ==== QOLLOCK: Consume MenuBack while Customize is active ==== -->
+		<CitadelBindingButton id="EscapeButton" action="MenuBack" onactivate="if (!($.HandleCustomizeCancel &amp;&amp; $.HandleCustomizeCancel())) { CitadelResumePlaying(); }" text="#menu_resume" />
+		<!-- ==== END QOLLOCK: Consume MenuBack while Customize is active ==== -->
 		<Panel id="RightSideBlur" hittest="false" />
 		<Panel id="RightSide" hittest="false">
 			<Panel id="PartySpacer" />

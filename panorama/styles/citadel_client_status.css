@@ -1,0 +1,8 @@
+/* ClientStatus is a separate native overlay context. Preserve its status
+   presentation, removing only the default logo, early-build text and number. */
+@import url("s2r://panorama/styles/base/citadel_client_status.vcss_c");
+
+CitadelClientStatus #DefaultStatus
+{
+    visibility: collapse;
+}

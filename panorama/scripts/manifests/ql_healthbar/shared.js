@@ -26,6 +26,7 @@
     var clearStyle = QOL.utils.ClearStyleSafe;
     var Panel = QOL.core.panel;
     var scaleOwners = new Map();
+    var positionOwners = new Set();
 
     // The XML root is the engine-owned CitadelHudHealthContainer, not a
     // separate Panel. Keep its native canvas and CSS baseline unchanged.
@@ -53,6 +54,14 @@
 
     QOL.healthbar.resetMinimalistOffsetRuntime = function(panel) {
         if (!panel || !panel.style) return;
+        if (positionOwners.has(panel)) {
+            // x/y are components of native position. Return the layout to its
+            // origin before releasing the composite property back to CSS.
+            panel.style.x = "0px";
+            panel.style.y = "0px";
+            clearStyle(panel, "position");
+            positionOwners.delete(panel);
+        }
         clearStyle(panel, "x");
         clearStyle(panel, "y");
     };
@@ -178,12 +187,16 @@
     QOL.healthbar.applyPlayerStyleToPanel = function(panel, runtimeState, includeOffsets, geometry) {
         if (!panel || !panel.style || !runtimeState) return;
         for (var owner of scaleOwners.keys()) if (!Panel.isAlive(owner)) scaleOwners.delete(owner);
+        for (var positionOwner of positionOwners) if (!Panel.isAlive(positionOwner)) positionOwners.delete(positionOwner);
         var applyOffsets = (includeOffsets !== false);
         if (applyOffsets) {
-            if (runtimeState.finalOffsetX !== 0) panel.style.x = String(runtimeState.finalOffsetX) + "px";
-            else clearStyle(panel, "x");
-            if (runtimeState.finalOffsetY !== 0) panel.style.y = String(runtimeState.finalOffsetY) + "px";
-            else clearStyle(panel, "y");
+            if (runtimeState.finalOffsetX !== 0 || runtimeState.finalOffsetY !== 0) {
+                var x = String(runtimeState.finalOffsetX) + "px";
+                var y = String(runtimeState.finalOffsetY) + "px";
+                if (panel.style.x !== x) panel.style.x = x;
+                if (panel.style.y !== y) panel.style.y = y;
+                positionOwners.add(panel);
+            } else QOL.healthbar.resetMinimalistOffsetRuntime(panel);
         }
         clearStyle(panel, "preTransformScale2d");
         geometry = geometry || QOL.healthbar.playerScaleGeometry(panel);

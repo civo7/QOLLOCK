@@ -1135,7 +1135,17 @@
         Q.events?.emit?.("ui:settings_closed");
     };
 
+    const handleCustomizeCancel = () => {
+        const now = getNowMs();
+        if (now < _cancelConsumedUntilMs) return true;
+        if (!Q.ui.customize?.isRunning()) return false;
+        _cancelConsumedUntilMs = now + 100;
+        Q.ui.customize.stop();
+        return true;
+    };
+
     const handleModSettingsCancel = () => {
+        if (handleCustomizeCancel()) return true;
         const now = getNowMs();
         if (now < _cancelConsumedUntilMs) return true;
         if (isOpen()) {
@@ -2326,6 +2336,7 @@
         toggleSettingsWindow,
         forceCloseModSettings,
         handleModSettingsCancel,
+        handleCustomizeCancel,
         closeOpenSettingsDropdowns,
         syncTabActiveStates,
         setActiveTabAndRefresh,
@@ -2343,6 +2354,7 @@
     $.ToggleSettingsWindow = () => windowApi.toggleSettingsWindow();
     $.ForceCloseModSettings = (ignoreGuard) => windowApi.forceCloseModSettings(ignoreGuard);
     $.HandleModSettingsCancel = () => windowApi.handleModSettingsCancel();
+    $.HandleCustomizeCancel = () => windowApi.handleCustomizeCancel();
     $.IsModSettingsOpen = () => windowApi.isOpen();
 
     globalThis.BuildUI = buildUI;

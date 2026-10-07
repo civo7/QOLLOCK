@@ -40,7 +40,10 @@ dimensions or a replaced canvas invalidate the style signature. Old loaded
 layouts without the canvas retain the outer-scale compatibility path.
 The default, Reset and teardown release canvas dimensions and scale. The shared
 owner does not replace rotations or variant-owned child animations. Customize
-measures the scaled canvas but moves the outer container.
+measures the scaled canvas but moves the outer container. Owned offsets are
+returned to zero before releasing the composite native `position` property;
+clearing only the JS x/y records must not be treated as proof of relayout.
+Cancel, Reset, history and teardown use the same shared restoration path.
 Client checks must cover the default bar and each variant at both scale limits,
 including health changes, barriers, regen and the aspect-ratio option. Verify
 alignment between tilted bar content and health numbers in the client; simulator
