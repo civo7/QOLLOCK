@@ -1,0 +1,68 @@
+{
+  "sourceRevision": "4779750694d81582aca8e4198db67484d758ae49",
+  "uncommittedSource": false,
+  "sourceDigest": "543f8215f223535d5103faf6ebf89b4d35c5302e3da5f55742c6facc73002ce2",
+  "integratedPublicRevision": "fceda002e6b14b286a9bae9594ff1ebae30af1d0",
+  "languages": [
+    {
+      "runtime": "en",
+      "catalog": "en"
+    },
+    {
+      "runtime": "ru",
+      "catalog": "ru"
+    },
+    {
+      "runtime": "uk",
+      "catalog": "uk"
+    },
+    {
+      "runtime": "pl",
+      "catalog": "pl"
+    },
+    {
+      "runtime": "bg",
+      "catalog": "bg"
+    },
+    {
+      "runtime": "by",
+      "catalog": "be"
+    },
+    {
+      "runtime": "ja",
+      "catalog": "ja"
+    },
+    {
+      "runtime": "ko",
+      "catalog": "ko"
+    },
+    {
+      "runtime": "zh",
+      "catalog": "zh-CN"
+    },
+    {
+      "runtime": "fr",
+      "catalog": "fr"
+    },
+    {
+      "runtime": "it",
+      "catalog": "it"
+    },
+    {
+      "runtime": "tr",
+      "catalog": "tr"
+    },
+    {
+      "runtime": "pt",
+      "catalog": "pt"
+    },
+    {
+      "runtime": "pt-br",
+      "catalog": "pt-BR"
+    },
+    {
+      "runtime": "es",
+      "catalog": "es"
+    }
+  ]
+}

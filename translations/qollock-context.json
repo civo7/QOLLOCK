@@ -1,0 +1,6842 @@
+{
+  " (incomplete)": {
+    "breadcrumb": "Settings",
+    "tab": "Settings",
+    "section": "",
+    "group": ""
+  },
+  "%": {
+    "breadcrumb": "Settings",
+    "tab": "Settings",
+    "section": "",
+    "group": ""
+  },
+  "+": {
+    "breadcrumb": "Settings",
+    "tab": "Settings",
+    "section": "",
+    "group": ""
+  },
+  "16:10 Support": {
+    "breadcrumb": "UI / UI Controls",
+    "tab": "UI",
+    "section": "UI Controls",
+    "group": ""
+  },
+  "1st": {
+    "breadcrumb": "Audio / Announcer",
+    "tab": "Audio",
+    "section": "Announcer",
+    "group": ""
+  },
+  "21:9 Stream Fix": {
+    "breadcrumb": "UI / UI Controls",
+    "tab": "UI",
+    "section": "UI Controls",
+    "group": ""
+  },
+  "25%": {
+    "breadcrumb": "Healthbar / Player",
+    "tab": "Healthbar",
+    "section": "Player",
+    "group": ""
+  },
+  "2nd": {
+    "breadcrumb": "Audio / Announcer",
+    "tab": "Audio",
+    "section": "Announcer",
+    "group": ""
+  },
+  "3rd": {
+    "breadcrumb": "Audio / Announcer",
+    "tab": "Audio",
+    "section": "Announcer",
+    "group": ""
+  },
+  "4:3 Support": {
+    "breadcrumb": "UI / UI Controls",
+    "tab": "UI",
+    "section": "UI Controls",
+    "group": ""
+  },
+  "65%": {
+    "breadcrumb": "Healthbar / Player",
+    "tab": "Healthbar",
+    "section": "Player",
+    "group": ""
+  },
+  "75%": {
+    "breadcrumb": "Healthbar / Player",
+    "tab": "Healthbar",
+    "section": "Player",
+    "group": ""
+  },
+  "<font color=\"#66cc99\">Free</font> updates for new features, <font color=\"#66cc99\">$5</font> for arbitrary changes": {
+    "breadcrumb": "Settings",
+    "tab": "Settings",
+    "section": "",
+    "group": ""
+  },
+  "ACTIVE STATS": {
+    "breadcrumb": "Settings",
+    "tab": "Settings",
+    "section": "",
+    "group": ""
+  },
+  "APPLIED": {
+    "breadcrumb": "Settings",
+    "tab": "Settings",
+    "section": "",
+    "group": ""
+  },
+  "APPLY": {
+    "breadcrumb": "Settings",
+    "tab": "Settings",
+    "section": "",
+    "group": ""
+  },
+  "Ability Cooldown %: --": {
+    "breadcrumb": "Settings",
+    "tab": "Settings",
+    "section": "",
+    "group": ""
+  },
+  "Ability Duration": {
+    "breadcrumb": "Crosshair",
+    "tab": "Crosshair",
+    "section": "",
+    "group": ""
+  },
+  "Ability Icons": {
+    "breadcrumb": "Settings",
+    "tab": "Settings",
+    "section": "",
+    "group": ""
+  },
+  "Ability Menu Open": {
+    "breadcrumb": "Settings",
+    "tab": "Settings",
+    "section": "",
+    "group": ""
+  },
+  "Ability Points": {
+    "breadcrumb": "Settings",
+    "tab": "Settings",
+    "section": "",
+    "group": ""
+  },
+  "Ability Points (AP)": {
+    "breadcrumb": "HUD / Ability Points (AP)",
+    "tab": "HUD",
+    "section": "Ability Points (AP)",
+    "group": ""
+  },
+  "Ability Range": {
+    "breadcrumb": "Crosshair",
+    "tab": "Crosshair",
+    "section": "",
+    "group": ""
+  },
+  "Ability Suggestion": {
+    "breadcrumb": "HUD / Bottom Bar",
+    "tab": "HUD",
+    "section": "Bottom Bar",
+    "group": ""
+  },
+  "About this element": {
+    "breadcrumb": "Settings",
+    "tab": "Settings",
+    "section": "",
+    "group": ""
+  },
+  "Accent Color": {
+    "breadcrumb": "Healthbar / Player",
+    "tab": "Healthbar",
+    "section": "Player",
+    "group": ""
+  },
+  "Accuracy:": {
+    "breadcrumb": "Settings",
+    "tab": "Settings",
+    "section": "",
+    "group": ""
+  },
+  "Active Item Horizontal Offset": {
+    "breadcrumb": "Settings",
+    "tab": "Settings",
+    "section": "",
+    "group": ""
+  },
+  "Active Item Scale": {
+    "breadcrumb": "Settings",
+    "tab": "Settings",
+    "section": "",
+    "group": ""
+  },
+  "Active Item Vertical Offset": {
+    "breadcrumb": "Settings",
+    "tab": "Settings",
+    "section": "",
+    "group": ""
+  },
+  "Active Items": {
+    "breadcrumb": "HUD / Active Items",
+    "tab": "HUD",
+    "section": "Active Items",
+    "group": ""
+  },
+  "Active Stats": {
+    "breadcrumb": "Crosshair",
+    "tab": "Crosshair",
+    "section": "",
+    "group": ""
+  },
+  "Addons": {
+    "breadcrumb": "Minimap / Addons",
+    "tab": "Minimap",
+    "section": "Addons",
+    "group": ""
+  },
+  "Adds a STAT button on profile rows that opens Statlocker for that account.": {
+    "breadcrumb": "UI / UI Controls",
+    "tab": "UI",
+    "section": "UI Controls",
+    "group": ""
+  },
+  "Adjust horizontal position of the in-game chat.": {
+    "breadcrumb": "UI / Player Stats",
+    "tab": "UI",
+    "section": "Player Stats",
+    "group": ""
+  },
+  "Adjust horizontal position of the player healthbar.": {
+    "breadcrumb": "Healthbar / Player",
+    "tab": "Healthbar",
+    "section": "Player",
+    "group": ""
+  },
+  "Adjust opacity of the player healthbar.": {
+    "breadcrumb": "UI / Player Stats",
+    "tab": "UI",
+    "section": "Player Stats",
+    "group": ""
+  },
+  "Adjust size of the in-game chat.": {
+    "breadcrumb": "UI / Player Stats",
+    "tab": "UI",
+    "section": "Player Stats",
+    "group": ""
+  },
+  "Adjust size of the player healthbar.": {
+    "breadcrumb": "UI / Player Stats",
+    "tab": "UI",
+    "section": "Player Stats",
+    "group": ""
+  },
+  "Adjust the in-game chat position and scale.": {
+    "breadcrumb": "UI",
+    "tab": "UI",
+    "section": "",
+    "group": ""
+  },
+  "Adjust vertical position of the in-game chat.": {
+    "breadcrumb": "UI / Player Stats",
+    "tab": "UI",
+    "section": "Player Stats",
+    "group": ""
+  },
+  "Adjust vertical position of the player healthbar.": {
+    "breadcrumb": "Healthbar / Player",
+    "tab": "Healthbar",
+    "section": "Player",
+    "group": ""
+  },
+  "Advanced": {
+    "breadcrumb": "Crosshair",
+    "tab": "Crosshair",
+    "section": "",
+    "group": ""
+  },
+  "Advanced Filter": {
+    "breadcrumb": "Crosshair / Item Cooldowns",
+    "tab": "Crosshair",
+    "section": "Item Cooldowns",
+    "group": ""
+  },
+  "Advanced Mode": {
+    "breadcrumb": "Crosshair / Item Cooldowns",
+    "tab": "Crosshair",
+    "section": "Item Cooldowns",
+    "group": ""
+  },
+  "After recording, copy HUD transitions, callback timings, delivery delays and active task counts. This is not an FPS measurement.": {
+    "breadcrumb": "Dev / Testing & Diagnostics",
+    "tab": "Dev",
+    "section": "Testing & Diagnostics",
+    "group": ""
+  },
+  "After recording, copy the class transitions and scoreboard event observations.": {
+    "breadcrumb": "Settings",
+    "tab": "Settings",
+    "section": "",
+    "group": ""
+  },
+  "Alert Threshold": {
+    "breadcrumb": "Dev / Performance",
+    "tab": "Dev",
+    "section": "Performance",
+    "group": ""
+  },
+  "All commissioned additions are released publicly and available to everyone.": {
+    "breadcrumb": "Settings",
+    "tab": "Settings",
+    "section": "",
+    "group": ""
+  },
+  "All elements": {
+    "breadcrumb": "Settings",
+    "tab": "Settings",
+    "section": "",
+    "group": ""
+  },
+  "Allows you to drag move some menus.": {
+    "breadcrumb": "Settings",
+    "tab": "Settings",
+    "section": "",
+    "group": ""
+  },
+  "Ally 25%": {
+    "breadcrumb": "Settings",
+    "tab": "Settings",
+    "section": "",
+    "group": ""
+  },
+  "Ally 65%": {
+    "breadcrumb": "Settings",
+    "tab": "Settings",
+    "section": "",
+    "group": ""
+  },
+  "Ally 75%": {
+    "breadcrumb": "Settings",
+    "tab": "Settings",
+    "section": "",
+    "group": ""
+  },
+  "Ally HP Warning": {
+    "breadcrumb": "HUD / Top Bar",
+    "tab": "HUD",
+    "section": "Top Bar",
+    "group": ""
+  },
+  "Already at default value.": {
+    "breadcrumb": "Settings",
+    "tab": "Settings",
+    "section": "",
+    "group": ""
+  },
+  "Alt Zoom": {
+    "breadcrumb": "Minimap",
+    "tab": "Minimap",
+    "section": "",
+    "group": ""
+  },
+  "Always Hidden": {
+    "breadcrumb": "Settings",
+    "tab": "Settings",
+    "section": "",
+    "group": ""
+  },
+  "Always Show Mid Boss": {
+    "breadcrumb": "Settings",
+    "tab": "Settings",
+    "section": "",
+    "group": ""
+  },
+  "Always Shown": {
+    "breadcrumb": "Settings",
+    "tab": "Settings",
+    "section": "",
+    "group": ""
+  },
+  "Always Visible Boost": {
+    "breadcrumb": "Settings",
+    "tab": "Settings",
+    "section": "",
+    "group": ""
+  },
+  "Always Visible Override": {
+    "breadcrumb": "Settings",
+    "tab": "Settings",
+    "section": "",
+    "group": ""
+  },
+  "Amber": {
+    "breadcrumb": "Settings",
+    "tab": "Settings",
+    "section": "",
+    "group": ""
+  },
+  "Ammo": {
+    "breadcrumb": "Crosshair / Ammo",
+    "tab": "Crosshair",
+    "section": "Ammo",
+    "group": ""
+  },
+  "Ammo Capacity": {
+    "breadcrumb": "Settings",
+    "tab": "Settings",
+    "section": "",
+    "group": ""
+  },
+  "An always visible zipline boost overlay.": {
+    "breadcrumb": "Overlay",
+    "tab": "Overlay",
+    "section": "",
+    "group": ""
+  },
+  "Angle and Speed": {
+    "breadcrumb": "Settings",
+    "tab": "Settings",
+    "section": "",
+    "group": ""
+  },
+  "Announcer": {
+    "breadcrumb": "Audio",
+    "tab": "Audio",
+    "section": "",
+    "group": ""
+  },
+  "Append the selected build title after the build ID.": {
+    "breadcrumb": "UI / UI Controls / Show Build ID",
+    "tab": "UI",
+    "section": "UI Controls",
+    "group": ""
+  },
+  "Apply": {
+    "breadcrumb": "Settings",
+    "tab": "Settings",
+    "section": "",
+    "group": ""
+  },
+  "Apply every preset and verify no features auto-disable. Click again to stop.": {
+    "breadcrumb": "Dev / Testing & Diagnostics",
+    "tab": "Dev",
+    "section": "Testing & Diagnostics",
+    "group": ""
+  },
+  "Arcade": {
+    "breadcrumb": "Arcade",
+    "tab": "Arcade",
+    "section": "",
+    "group": ""
+  },
+  "Arcade overlays use their own modal layout and appear after death. Screen dragging does not apply.": {
+    "breadcrumb": "Settings",
+    "tab": "Settings",
+    "section": "",
+    "group": ""
+  },
+  "Asmon": {
+    "breadcrumb": "Settings",
+    "tab": "Settings",
+    "section": "",
+    "group": ""
+  },
+  "Audio": {
+    "breadcrumb": "Audio",
+    "tab": "Audio",
+    "section": "",
+    "group": ""
+  },
+  "Audit not started: {error}": {
+    "breadcrumb": "Settings",
+    "tab": "Settings",
+    "section": "",
+    "group": ""
+  },
+  "Auditing...": {
+    "breadcrumb": "Settings",
+    "tab": "Settings",
+    "section": "",
+    "group": ""
+  },
+  "Author:": {
+    "breadcrumb": "Settings",
+    "tab": "Settings",
+    "section": "",
+    "group": ""
+  },
+  "Automatically selects 'With Party' in lane preference. Requires the party screen to be open.": {
+    "breadcrumb": "Settings",
+    "tab": "Settings",
+    "section": "",
+    "group": ""
+  },
+  "Automatically selects Lane Preference: With Party for matchmaking.": {
+    "breadcrumb": "UI / UI Controls",
+    "tab": "UI",
+    "section": "UI Controls",
+    "group": ""
+  },
+  "Available": {
+    "breadcrumb": "Settings",
+    "tab": "Settings",
+    "section": "",
+    "group": ""
+  },
+  "BHOP UI": {
+    "breadcrumb": "MOG / Gamemodes",
+    "tab": "MOG",
+    "section": "Gamemodes",
+    "group": ""
+  },
+  "BR Portuguese": {
+    "breadcrumb": "Settings",
+    "tab": "Settings",
+    "section": "",
+    "group": ""
+  },
+  "Back": {
+    "breadcrumb": "Settings",
+    "tab": "Settings",
+    "section": "",
+    "group": ""
+  },
+  "Backup & Restore": {
+    "breadcrumb": "Settings",
+    "tab": "Settings",
+    "section": "",
+    "group": ""
+  },
+  "Base": {
+    "breadcrumb": "Minimap / Base",
+    "tab": "Minimap",
+    "section": "Base",
+    "group": ""
+  },
+  "Base Minimap": {
+    "breadcrumb": "Settings",
+    "tab": "Settings",
+    "section": "",
+    "group": ""
+  },
+  "Basic Mode": {
+    "breadcrumb": "Settings",
+    "tab": "Settings",
+    "section": "",
+    "group": ""
+  },
+  "Be conscious of the features you are using and read carefully.": {
+    "breadcrumb": "Support",
+    "tab": "Support",
+    "section": "",
+    "group": ""
+  },
+  "Bebop Sweeper": {
+    "breadcrumb": "Arcade / Games",
+    "tab": "Arcade",
+    "section": "Games",
+    "group": ""
+  },
+  "Beep": {
+    "breadcrumb": "Settings",
+    "tab": "Settings",
+    "section": "",
+    "group": ""
+  },
+  "Behavior Summary": {
+    "breadcrumb": "UI / UI Controls",
+    "tab": "UI",
+    "section": "UI Controls",
+    "group": ""
+  },
+  "Belarusian": {
+    "breadcrumb": "Settings",
+    "tab": "Settings",
+    "section": "",
+    "group": ""
+  },
+  "Benchmark (Current Config)": {
+    "breadcrumb": "Dev / In-Game Benchmarks",
+    "tab": "Dev",
+    "section": "In-Game Benchmarks",
+    "group": ""
+  },
+  "Benchmark (Expanded Config)": {
+    "breadcrumb": "Dev / In-Game Benchmarks",
+    "tab": "Dev",
+    "section": "In-Game Benchmarks",
+    "group": ""
+  },
+  "Benchmark timeout": {
+    "breadcrumb": "Settings",
+    "tab": "Settings",
+    "section": "",
+    "group": ""
+  },
+  "Benchmarking: {seconds}s left...": {
+    "breadcrumb": "Settings",
+    "tab": "Settings",
+    "section": "",
+    "group": ""
+  },
+  "Best:": {
+    "breadcrumb": "Settings",
+    "tab": "Settings",
+    "section": "",
+    "group": ""
+  },
+  "Better Item Cooldowns": {
+    "breadcrumb": "Settings",
+    "tab": "Settings",
+    "section": "",
+    "group": ""
+  },
+  "Better Unsecured": {
+    "breadcrumb": "Settings",
+    "tab": "Settings",
+    "section": "",
+    "group": ""
+  },
+  "Better Unsecured Souls": {
+    "breadcrumb": "Settings",
+    "tab": "Settings",
+    "section": "",
+    "group": ""
+  },
+  "Big Camps + Sinners": {
+    "breadcrumb": "Audio / Announcer",
+    "tab": "Audio",
+    "section": "Announcer",
+    "group": ""
+  },
+  "Big Number": {
+    "breadcrumb": "Settings",
+    "tab": "Settings",
+    "section": "",
+    "group": ""
+  },
+  "Big Numbers": {
+    "breadcrumb": "Crosshair / Damage Numbers",
+    "tab": "Crosshair",
+    "section": "Damage Numbers",
+    "group": ""
+  },
+  "Big Red": {
+    "breadcrumb": "Settings",
+    "tab": "Settings",
+    "section": "",
+    "group": ""
+  },
+  "Black": {
+    "breadcrumb": "Settings",
+    "tab": "Settings",
+    "section": "",
+    "group": ""
+  },
+  "Blackjack": {
+    "breadcrumb": "Settings",
+    "tab": "Settings",
+    "section": "",
+    "group": ""
+  },
+  "Blackjack - You win.": {
+    "breadcrumb": "Settings",
+    "tab": "Settings",
+    "section": "",
+    "group": ""
+  },
+  "Blue": {
+    "breadcrumb": "Settings",
+    "tab": "Settings",
+    "section": "",
+    "group": ""
+  },
+  "Blur": {
+    "breadcrumb": "HUD / Shop",
+    "tab": "HUD",
+    "section": "Shop",
+    "group": ""
+  },
+  "Boom. Press New Game.": {
+    "breadcrumb": "Settings",
+    "tab": "Settings",
+    "section": "",
+    "group": ""
+  },
+  "Bottom Bar": {
+    "breadcrumb": "HUD",
+    "tab": "HUD",
+    "section": "",
+    "group": ""
+  },
+  "Bridge Buff": {
+    "breadcrumb": "Settings",
+    "tab": "Settings",
+    "section": "",
+    "group": ""
+  },
+  "Bridge Buff Delay": {
+    "breadcrumb": "Settings",
+    "tab": "Settings",
+    "section": "",
+    "group": ""
+  },
+  "Bridge Buff Timer": {
+    "breadcrumb": "Minimap / Minimap",
+    "tab": "Minimap",
+    "section": "Minimap",
+    "group": ""
+  },
+  "Bridge Buffs": {
+    "breadcrumb": "Settings",
+    "tab": "Settings",
+    "section": "",
+    "group": ""
+  },
+  "Brown": {
+    "breadcrumb": "Settings",
+    "tab": "Settings",
+    "section": "",
+    "group": ""
+  },
+  "Budhud": {
+    "breadcrumb": "Healthbar / Player",
+    "tab": "Healthbar",
+    "section": "Player",
+    "group": ""
+  },
+  "Buff": {
+    "breadcrumb": "Audio / Announcer",
+    "tab": "Audio",
+    "section": "Announcer",
+    "group": ""
+  },
+  "Buff Delay": {
+    "breadcrumb": "Audio / Announcer",
+    "tab": "Audio",
+    "section": "Announcer",
+    "group": ""
+  },
+  "Buff Filter": {
+    "breadcrumb": "Audio / Announcer",
+    "tab": "Audio",
+    "section": "Announcer",
+    "group": ""
+  },
+  "Buff HUD": {
+    "breadcrumb": "Settings",
+    "tab": "Settings",
+    "section": "",
+    "group": ""
+  },
+  "Buff Reminder": {
+    "breadcrumb": "Settings",
+    "tab": "Settings",
+    "section": "",
+    "group": ""
+  },
+  "Buff Timer": {
+    "breadcrumb": "Settings",
+    "tab": "Settings",
+    "section": "",
+    "group": ""
+  },
+  "Buffs": {
+    "breadcrumb": "Settings",
+    "tab": "Settings",
+    "section": "",
+    "group": ""
+  },
+  "Buffs and Rejuvenator": {
+    "breadcrumb": "Settings",
+    "tab": "Settings",
+    "section": "",
+    "group": ""
+  },
+  "Build ID": {
+    "breadcrumb": "Settings",
+    "tab": "Settings",
+    "section": "",
+    "group": ""
+  },
+  "Build Storage Dry Run": {
+    "breadcrumb": "Dev / Testing & Diagnostics",
+    "tab": "Dev",
+    "section": "Testing & Diagnostics",
+    "group": ""
+  },
+  "Build Title": {
+    "breadcrumb": "Settings",
+    "tab": "Settings",
+    "section": "",
+    "group": ""
+  },
+  "Bulgarian": {
+    "breadcrumb": "Settings",
+    "tab": "Settings",
+    "section": "",
+    "group": ""
+  },
+  "Bullet Evasion": {
+    "breadcrumb": "Crosshair",
+    "tab": "Crosshair",
+    "section": "",
+    "group": ""
+  },
+  "Bullet Lifesteal": {
+    "breadcrumb": "Crosshair",
+    "tab": "Crosshair",
+    "section": "",
+    "group": ""
+  },
+  "Bullet Resist": {
+    "breadcrumb": "Crosshair",
+    "tab": "Crosshair",
+    "section": "",
+    "group": ""
+  },
+  "Bust - Dealer wins.": {
+    "breadcrumb": "Settings",
+    "tab": "Settings",
+    "section": "",
+    "group": ""
+  },
+  "Buy items in game; inspect purchase history size, opacity and offsets.": {
+    "breadcrumb": "Settings",
+    "tab": "Settings",
+    "section": "",
+    "group": ""
+  },
+  "By default everything is disabled and has nearly zero performance cost.": {
+    "breadcrumb": "Support",
+    "tab": "Support",
+    "section": "",
+    "group": ""
+  },
+  "CHANGE LOG": {
+    "breadcrumb": "Settings",
+    "tab": "Settings",
+    "section": "",
+    "group": ""
+  },
+  "CLEAR": {
+    "breadcrumb": "Settings",
+    "tab": "Settings",
+    "section": "",
+    "group": ""
+  },
+  "CLEARED": {
+    "breadcrumb": "Settings",
+    "tab": "Settings",
+    "section": "",
+    "group": ""
+  },
+  "COPIED": {
+    "breadcrumb": "Settings",
+    "tab": "Settings",
+    "section": "",
+    "group": ""
+  },
+  "COPY": {
+    "breadcrumb": "Settings",
+    "tab": "Settings",
+    "section": "",
+    "group": ""
+  },
+  "Cancel": {
+    "breadcrumb": "Settings",
+    "tab": "Settings",
+    "section": "",
+    "group": ""
+  },
+  "Cancelled": {
+    "breadcrumb": "Settings",
+    "tab": "Settings",
+    "section": "",
+    "group": ""
+  },
+  "Captions": {
+    "breadcrumb": "Audio / Announcer",
+    "tab": "Audio",
+    "section": "Announcer",
+    "group": ""
+  },
+  "Captions require the corresponding reminders. The caption renderer owns its layout.": {
+    "breadcrumb": "Settings",
+    "tab": "Settings",
+    "section": "",
+    "group": ""
+  },
+  "Centered ESC Menu": {
+    "breadcrumb": "UI / UI Controls",
+    "tab": "UI",
+    "section": "UI Controls",
+    "group": ""
+  },
+  "Centered Friends List": {
+    "breadcrumb": "UI / UI Controls",
+    "tab": "UI",
+    "section": "UI Controls",
+    "group": ""
+  },
+  "Centers ESC menu elements to make them easier to access.": {
+    "breadcrumb": "UI / UI Controls",
+    "tab": "UI",
+    "section": "UI Controls",
+    "group": ""
+  },
+  "Centers friends list area in ESC menu.": {
+    "breadcrumb": "Config / Game & Interface",
+    "tab": "Config",
+    "section": "Game & Interface",
+    "group": ""
+  },
+  "Centers the friends list area within the ESC menu.": {
+    "breadcrumb": "UI / UI Controls",
+    "tab": "UI",
+    "section": "UI Controls",
+    "group": ""
+  },
+  "Change Log": {
+    "breadcrumb": "Support",
+    "tab": "Support",
+    "section": "",
+    "group": ""
+  },
+  "Changes the element's transparency.": {
+    "breadcrumb": "Settings",
+    "tab": "Settings",
+    "section": "",
+    "group": ""
+  },
+  "Changes the visual theme used by the settings menu, modals, loader, and save menus.": {
+    "breadcrumb": "Config / General",
+    "tab": "Config",
+    "section": "General",
+    "group": ""
+  },
+  "Changes urn color to know which side is favored, green for your team, red for the enemy.": {
+    "breadcrumb": "Minimap / Minimap",
+    "tab": "Minimap",
+    "section": "Minimap",
+    "group": ""
+  },
+  "Changes:": {
+    "breadcrumb": "Settings",
+    "tab": "Settings",
+    "section": "",
+    "group": ""
+  },
+  "Changes: {count}": {
+    "breadcrumb": "Settings",
+    "tab": "Settings",
+    "section": "",
+    "group": ""
+  },
+  "Charcoal": {
+    "breadcrumb": "Settings",
+    "tab": "Settings",
+    "section": "",
+    "group": ""
+  },
+  "Chat": {
+    "breadcrumb": "UI",
+    "tab": "UI",
+    "section": "",
+    "group": ""
+  },
+  "Check for new QOLLOCK releases when opening settings.": {
+    "breadcrumb": "Config / Meta Settings",
+    "tab": "Config",
+    "section": "Meta Settings",
+    "group": ""
+  },
+  "Check out our site to join": {
+    "breadcrumb": "MOG",
+    "tab": "MOG",
+    "section": "",
+    "group": ""
+  },
+  "Chinese": {
+    "breadcrumb": "Settings",
+    "tab": "Settings",
+    "section": "",
+    "group": ""
+  },
+  "Choose a preset accent color for the player healthbar frame.": {
+    "breadcrumb": "Healthbar / Player",
+    "tab": "Healthbar",
+    "section": "Player",
+    "group": ""
+  },
+  "Choose a preset border color for stamina charge indicators.": {
+    "breadcrumb": "Crosshair / Stamina",
+    "tab": "Crosshair",
+    "section": "Stamina",
+    "group": ""
+  },
+  "Choose a preset color wash for minimap icons.": {
+    "breadcrumb": "Minimap / Base",
+    "tab": "Minimap",
+    "section": "Base",
+    "group": ""
+  },
+  "Choose a preset color wash for the bottom ability bar.": {
+    "breadcrumb": "HUD",
+    "tab": "HUD",
+    "section": "",
+    "group": ""
+  },
+  "Choose a preset color wash for the item bar.": {
+    "breadcrumb": "HUD / Ability Points (AP)",
+    "tab": "HUD",
+    "section": "Ability Points (AP)",
+    "group": ""
+  },
+  "Choose a preset color wash for the keyboard overlay.": {
+    "breadcrumb": "Overlay",
+    "tab": "Overlay",
+    "section": "",
+    "group": ""
+  },
+  "Choose a preset text color for the ammo display.": {
+    "breadcrumb": "Crosshair / Ammo",
+    "tab": "Crosshair",
+    "section": "Ammo",
+    "group": ""
+  },
+  "Choose which bridge buff sound variants can play.": {
+    "breadcrumb": "Audio / Announcer",
+    "tab": "Audio",
+    "section": "Announcer",
+    "group": ""
+  },
+  "Circle": {
+    "breadcrumb": "Crosshair / Reloading",
+    "tab": "Crosshair",
+    "section": "Reloading",
+    "group": ""
+  },
+  "Clean Damage Indicators": {
+    "breadcrumb": "Settings",
+    "tab": "Settings",
+    "section": "",
+    "group": ""
+  },
+  "Clean Indicators": {
+    "breadcrumb": "Crosshair / Damage Numbers",
+    "tab": "Crosshair",
+    "section": "Damage Numbers",
+    "group": ""
+  },
+  "Clean Stacks": {
+    "breadcrumb": "HUD / Bottom Bar",
+    "tab": "HUD",
+    "section": "Bottom Bar",
+    "group": ""
+  },
+  "Cleaner Items": {
+    "breadcrumb": "Settings",
+    "tab": "Settings",
+    "section": "",
+    "group": ""
+  },
+  "Cleaner Skills": {
+    "breadcrumb": "Settings",
+    "tab": "Settings",
+    "section": "",
+    "group": ""
+  },
+  "Cleans up the styling of reticle hints.": {
+    "breadcrumb": "Crosshair / Item Target Reticle",
+    "tab": "Crosshair",
+    "section": "Item Target Reticle",
+    "group": ""
+  },
+  "Cleans up the visuals of the shop stats display without changing the rest of the shop.": {
+    "breadcrumb": "UI / Player Stats",
+    "tab": "UI",
+    "section": "Player Stats",
+    "group": ""
+  },
+  "Cleans up visuals of abilities significantly to reduce clutter.": {
+    "breadcrumb": "HUD / Bottom Bar",
+    "tab": "HUD",
+    "section": "Bottom Bar",
+    "group": ""
+  },
+  "Cleans up visuals of the item bar significantly to reduce clutter.": {
+    "breadcrumb": "HUD / Bottom Bar",
+    "tab": "HUD",
+    "section": "Bottom Bar",
+    "group": ""
+  },
+  "Cleans up visuals of the minimap significantly to reduce clutter.": {
+    "breadcrumb": "Minimap / Minimap",
+    "tab": "Minimap",
+    "section": "Minimap",
+    "group": ""
+  },
+  "Cleans up visuals of the shop menu significantly to reduce clutter.": {
+    "breadcrumb": "HUD / Shop",
+    "tab": "HUD",
+    "section": "Shop",
+    "group": ""
+  },
+  "Clear completed.": {
+    "breadcrumb": "Settings",
+    "tab": "Settings",
+    "section": "",
+    "group": ""
+  },
+  "Clear failed.": {
+    "breadcrumb": "Settings",
+    "tab": "Settings",
+    "section": "",
+    "group": ""
+  },
+  "Clear in progress...": {
+    "breadcrumb": "Settings",
+    "tab": "Settings",
+    "section": "",
+    "group": ""
+  },
+  "Clear timed out. Try again.": {
+    "breadcrumb": "Settings",
+    "tab": "Settings",
+    "section": "",
+    "group": ""
+  },
+  "Cleared in": {
+    "breadcrumb": "Settings",
+    "tab": "Settings",
+    "section": "",
+    "group": ""
+  },
+  "Cleared in {seconds}s.": {
+    "breadcrumb": "Settings",
+    "tab": "Settings",
+    "section": "",
+    "group": ""
+  },
+  "Clearing builds...": {
+    "breadcrumb": "Settings",
+    "tab": "Settings",
+    "section": "",
+    "group": ""
+  },
+  "Click Radius": {
+    "breadcrumb": "Console / Minimap",
+    "tab": "Console",
+    "section": "Minimap",
+    "group": ""
+  },
+  "Click to Notify": {
+    "breadcrumb": "Shop / Quick Buy",
+    "tab": "Shop",
+    "section": "Quick Buy",
+    "group": ""
+  },
+  "Clip Size": {
+    "breadcrumb": "Crosshair",
+    "tab": "Crosshair",
+    "section": "",
+    "group": ""
+  },
+  "Clip Size % Increase: --": {
+    "breadcrumb": "Settings",
+    "tab": "Settings",
+    "section": "",
+    "group": ""
+  },
+  "Clipboard copy failed.": {
+    "breadcrumb": "Settings",
+    "tab": "Settings",
+    "section": "",
+    "group": ""
+  },
+  "Close": {
+    "breadcrumb": "Settings",
+    "tab": "Settings",
+    "section": "",
+    "group": ""
+  },
+  "Collect HUD observations, named manifest checks and recorded errors once. Copies the report; does not prove all features work.": {
+    "breadcrumb": "Dev / Testing & Diagnostics",
+    "tab": "Dev",
+    "section": "Testing & Diagnostics",
+    "group": ""
+  },
+  "Collect unsecured souls in game; inspect size and offsets.": {
+    "breadcrumb": "Settings",
+    "tab": "Settings",
+    "section": "",
+    "group": ""
+  },
+  "Color": {
+    "breadcrumb": "Crosshair / Stamina",
+    "tab": "Crosshair",
+    "section": "Stamina",
+    "group": ""
+  },
+  "Color Warning": {
+    "breadcrumb": "Healthbar / Player",
+    "tab": "Healthbar",
+    "section": "Player",
+    "group": ""
+  },
+  "Color is shared with Bottom Bar. Position follows the native parent.": {
+    "breadcrumb": "Settings",
+    "tab": "Settings",
+    "section": "",
+    "group": ""
+  },
+  "Color is shared with Bottom Bar. This element has no placement settings yet.": {
+    "breadcrumb": "Settings",
+    "tab": "Settings",
+    "section": "",
+    "group": ""
+  },
+  "Color presets": {
+    "breadcrumb": "Settings",
+    "tab": "Settings",
+    "section": "",
+    "group": ""
+  },
+  "Colored Health": {
+    "breadcrumb": "Healthbar / Enemy",
+    "tab": "Healthbar",
+    "section": "Enemy",
+    "group": ""
+  },
+  "Colored Healthbar": {
+    "breadcrumb": "Settings",
+    "tab": "Settings",
+    "section": "",
+    "group": ""
+  },
+  "Colored ally top-bar health warnings when at significant thresholds.": {
+    "breadcrumb": "HUD / Top Bar",
+    "tab": "HUD",
+    "section": "Top Bar",
+    "group": ""
+  },
+  "Colored enemy healthbar warnings when at significant thresholds.": {
+    "breadcrumb": "Healthbar / Enemy",
+    "tab": "Healthbar",
+    "section": "Enemy",
+    "group": ""
+  },
+  "Colored enemy top-bar health warnings when at significant thresholds.": {
+    "breadcrumb": "HUD / Top Bar",
+    "tab": "HUD",
+    "section": "Top Bar",
+    "group": ""
+  },
+  "Colored healthbar warnings when at significant thresholds.": {
+    "breadcrumb": "Healthbar / Player",
+    "tab": "Healthbar",
+    "section": "Player",
+    "group": ""
+  },
+  "Combat Indicator": {
+    "breadcrumb": "Healthbar / Player",
+    "tab": "Healthbar",
+    "section": "Player",
+    "group": ""
+  },
+  "Combat Status": {
+    "breadcrumb": "Crosshair",
+    "tab": "Crosshair",
+    "section": "",
+    "group": ""
+  },
+  "Commission": {
+    "breadcrumb": "Support",
+    "tab": "Support",
+    "section": "",
+    "group": ""
+  },
+  "Community acknowledgements": {
+    "breadcrumb": "Settings",
+    "tab": "Settings",
+    "section": "",
+    "group": ""
+  },
+  "Compact Layout": {
+    "breadcrumb": "Settings",
+    "tab": "Settings",
+    "section": "",
+    "group": ""
+  },
+  "Compare A/B": {
+    "breadcrumb": "Settings",
+    "tab": "Settings",
+    "section": "",
+    "group": ""
+  },
+  "Compass": {
+    "breadcrumb": "Overlay",
+    "tab": "Overlay",
+    "section": "",
+    "group": ""
+  },
+  "Compass & Speed": {
+    "breadcrumb": "Settings",
+    "tab": "Settings",
+    "section": "",
+    "group": ""
+  },
+  "Config": {
+    "breadcrumb": "Settings",
+    "tab": "Settings",
+    "section": "",
+    "group": ""
+  },
+  "Confirm": {
+    "breadcrumb": "Settings",
+    "tab": "Settings",
+    "section": "",
+    "group": ""
+  },
+  "Confirming Skyrunner for clear...": {
+    "breadcrumb": "Settings",
+    "tab": "Settings",
+    "section": "",
+    "group": ""
+  },
+  "Console": {
+    "breadcrumb": "Console",
+    "tab": "Console",
+    "section": "",
+    "group": ""
+  },
+  "Console Notes": {
+    "breadcrumb": "Console",
+    "tab": "Console",
+    "section": "",
+    "group": ""
+  },
+  "Console alert when any feature exceeds this ms threshold.": {
+    "breadcrumb": "Dev / Performance",
+    "tab": "Dev",
+    "section": "Performance",
+    "group": ""
+  },
+  "Contact": {
+    "breadcrumb": "Settings",
+    "tab": "Settings",
+    "section": "",
+    "group": ""
+  },
+  "Contributors": {
+    "breadcrumb": "Support",
+    "tab": "Support",
+    "section": "",
+    "group": ""
+  },
+  "Controls how many enhanced quickbuy preview items are shown.": {
+    "breadcrumb": "Shop / Quick Buy",
+    "tab": "Shop",
+    "section": "Quick Buy",
+    "group": ""
+  },
+  "Copied! {milliseconds}ms callbacks (Check ~)": {
+    "breadcrumb": "Settings",
+    "tab": "Settings",
+    "section": "",
+    "group": ""
+  },
+  "Copy HUD state report": {
+    "breadcrumb": "Dev / Testing & Diagnostics",
+    "tab": "Dev",
+    "section": "Testing & Diagnostics",
+    "group": ""
+  },
+  "Copy Logs": {
+    "breadcrumb": "Dev / Testing & Diagnostics",
+    "tab": "Dev",
+    "section": "Testing & Diagnostics",
+    "group": ""
+  },
+  "Copy Manifest Report": {
+    "breadcrumb": "Dev / Testing & Diagnostics",
+    "tab": "Dev",
+    "section": "Testing & Diagnostics",
+    "group": ""
+  },
+  "Copy QOLLock diagnostic logs to clipboard.": {
+    "breadcrumb": "Dev / Testing & Diagnostics",
+    "tab": "Dev",
+    "section": "Testing & Diagnostics",
+    "group": ""
+  },
+  "Copy failed; see the console log.": {
+    "breadcrumb": "Settings",
+    "tab": "Settings",
+    "section": "",
+    "group": ""
+  },
+  "Coral": {
+    "breadcrumb": "Settings",
+    "tab": "Settings",
+    "section": "",
+    "group": ""
+  },
+  "Cosmetic Ability": {
+    "breadcrumb": "HUD / Bottom Bar",
+    "tab": "HUD",
+    "section": "Bottom Bar",
+    "group": ""
+  },
+  "Crashed. Click playfield to restart.": {
+    "breadcrumb": "Settings",
+    "tab": "Settings",
+    "section": "",
+    "group": ""
+  },
+  "Crate Overlay": {
+    "breadcrumb": "Minimap / Addons",
+    "tab": "Minimap",
+    "section": "Addons",
+    "group": ""
+  },
+  "Crates": {
+    "breadcrumb": "Settings",
+    "tab": "Settings",
+    "section": "",
+    "group": ""
+  },
+  "Created By": {
+    "breadcrumb": "Settings",
+    "tab": "Settings",
+    "section": "",
+    "group": ""
+  },
+  "Created By:": {
+    "breadcrumb": "Settings",
+    "tab": "Settings",
+    "section": "",
+    "group": ""
+  },
+  "Credits": {
+    "breadcrumb": "Support",
+    "tab": "Support",
+    "section": "",
+    "group": ""
+  },
+  "Crimson": {
+    "breadcrumb": "Settings",
+    "tab": "Settings",
+    "section": "",
+    "group": ""
+  },
+  "Crosshair": {
+    "breadcrumb": "Crosshair",
+    "tab": "Crosshair",
+    "section": "",
+    "group": ""
+  },
+  "Cumulative Damage": {
+    "breadcrumb": "Settings",
+    "tab": "Settings",
+    "section": "",
+    "group": ""
+  },
+  "Current": {
+    "breadcrumb": "Crosshair / Ammo",
+    "tab": "Crosshair",
+    "section": "Ammo",
+    "group": ""
+  },
+  "Current Ammo": {
+    "breadcrumb": "Settings",
+    "tab": "Settings",
+    "section": "",
+    "group": ""
+  },
+  "Current Size": {
+    "breadcrumb": "Crosshair / Ammo",
+    "tab": "Crosshair",
+    "section": "Ammo",
+    "group": ""
+  },
+  "Current ammo inside of your magazine.": {
+    "breadcrumb": "Crosshair / Ammo",
+    "tab": "Crosshair",
+    "section": "Ammo",
+    "group": ""
+  },
+  "Cursor, signature press flash, fixed icons and shared styles belong to their original owners. No independent position or color setting exists for these assets.": {
+    "breadcrumb": "Settings",
+    "tab": "Settings",
+    "section": "",
+    "group": ""
+  },
+  "Custom": {
+    "breadcrumb": "Settings",
+    "tab": "Settings",
+    "section": "",
+    "group": ""
+  },
+  "Custom Preset Commission: <font color=\"#66cc99\">$25</font>": {
+    "breadcrumb": "Settings",
+    "tab": "Settings",
+    "section": "",
+    "group": ""
+  },
+  "Custom position": {
+    "breadcrumb": "Settings",
+    "tab": "Settings",
+    "section": "",
+    "group": ""
+  },
+  "Customizable Unsecured Souls": {
+    "breadcrumb": "Settings",
+    "tab": "Settings",
+    "section": "",
+    "group": ""
+  },
+  "Customize": {
+    "breadcrumb": "Customize",
+    "tab": "Customize",
+    "section": "",
+    "group": ""
+  },
+  "Customize the position of the Player Stats panel, or hide it completely.": {
+    "breadcrumb": "HUD",
+    "tab": "HUD",
+    "section": "",
+    "group": ""
+  },
+  "Customize the styling of damage numbers.": {
+    "breadcrumb": "Crosshair",
+    "tab": "Crosshair",
+    "section": "",
+    "group": ""
+  },
+  "Customize the visuals of the incoming damage panel.": {
+    "breadcrumb": "HUD",
+    "tab": "HUD",
+    "section": "",
+    "group": ""
+  },
+  "Customize unsecured souls visuals.": {
+    "breadcrumb": "Overlay",
+    "tab": "Overlay",
+    "section": "",
+    "group": ""
+  },
+  "Customize visibility of target reticle when abilities or items visually show on allies and enemies.": {
+    "breadcrumb": "Crosshair",
+    "tab": "Crosshair",
+    "section": "",
+    "group": ""
+  },
+  "Customized healthbars for better visibility or flair.": {
+    "breadcrumb": "Healthbar / Player",
+    "tab": "Healthbar",
+    "section": "Player",
+    "group": ""
+  },
+  "Cyan": {
+    "breadcrumb": "Settings",
+    "tab": "Settings",
+    "section": "",
+    "group": ""
+  },
+  "Cycle Presets": {
+    "breadcrumb": "Dev / Testing & Diagnostics",
+    "tab": "Dev",
+    "section": "Testing & Diagnostics",
+    "group": ""
+  },
+  "DAMAGE REPORT": {
+    "breadcrumb": "Settings",
+    "tab": "Settings",
+    "section": "",
+    "group": ""
+  },
+  "DISCORD": {
+    "breadcrumb": "Settings",
+    "tab": "Settings",
+    "section": "",
+    "group": ""
+  },
+  "DO NOT PRESS ANY KEYS UNTIL COMPLETE UNLESS PROMPTED": {
+    "breadcrumb": "Settings",
+    "tab": "Settings",
+    "section": "",
+    "group": ""
+  },
+  "Damage Amp": {
+    "breadcrumb": "Crosshair",
+    "tab": "Crosshair",
+    "section": "",
+    "group": ""
+  },
+  "Damage Amplification": {
+    "breadcrumb": "Settings",
+    "tab": "Settings",
+    "section": "",
+    "group": ""
+  },
+  "Damage Fountain": {
+    "breadcrumb": "Crosshair / Damage Numbers",
+    "tab": "Crosshair",
+    "section": "Damage Numbers",
+    "group": ""
+  },
+  "Damage Impact": {
+    "breadcrumb": "Crosshair",
+    "tab": "Crosshair",
+    "section": "",
+    "group": ""
+  },
+  "Damage Numbers": {
+    "breadcrumb": "Crosshair",
+    "tab": "Crosshair",
+    "section": "",
+    "group": ""
+  },
+  "Damage Report": {
+    "breadcrumb": "HUD",
+    "tab": "HUD",
+    "section": "",
+    "group": ""
+  },
+  "Dashboard cards and links have fixed layouts and no persistent customization settings.": {
+    "breadcrumb": "Settings",
+    "tab": "Settings",
+    "section": "",
+    "group": ""
+  },
+  "Deal damage in game; inspect size, opacity and offsets.": {
+    "breadcrumb": "Settings",
+    "tab": "Settings",
+    "section": "",
+    "group": ""
+  },
+  "Dealer": {
+    "breadcrumb": "Settings",
+    "tab": "Settings",
+    "section": "",
+    "group": ""
+  },
+  "Dealer blackjack.": {
+    "breadcrumb": "Settings",
+    "tab": "Settings",
+    "section": "",
+    "group": ""
+  },
+  "Dealer busts - You win.": {
+    "breadcrumb": "Settings",
+    "tab": "Settings",
+    "section": "",
+    "group": ""
+  },
+  "Dealer wins.": {
+    "breadcrumb": "Settings",
+    "tab": "Settings",
+    "section": "",
+    "group": ""
+  },
+  "Debuffs": {
+    "breadcrumb": "Settings",
+    "tab": "Settings",
+    "section": "",
+    "group": ""
+  },
+  "Decide what style of item to display the cooldown of.": {
+    "breadcrumb": "Crosshair / Item Cooldowns",
+    "tab": "Crosshair",
+    "section": "Item Cooldowns",
+    "group": ""
+  },
+  "Deck:": {
+    "breadcrumb": "Settings",
+    "tab": "Settings",
+    "section": "",
+    "group": ""
+  },
+  "Default": {
+    "breadcrumb": "Config / General",
+    "tab": "Config",
+    "section": "General",
+    "group": ""
+  },
+  "Default 18": {
+    "breadcrumb": "Settings",
+    "tab": "Settings",
+    "section": "",
+    "group": ""
+  },
+  "Default 400": {
+    "breadcrumb": "Settings",
+    "tab": "Settings",
+    "section": "",
+    "group": ""
+  },
+  "Default Hero": {
+    "breadcrumb": "Config / Meta Settings",
+    "tab": "Config",
+    "section": "Meta Settings",
+    "group": ""
+  },
+  "Default difficulty when opening games.": {
+    "breadcrumb": "Arcade / Game Settings",
+    "tab": "Arcade",
+    "section": "Game Settings",
+    "group": ""
+  },
+  "Defensive Active": {
+    "breadcrumb": "Settings",
+    "tab": "Settings",
+    "section": "",
+    "group": ""
+  },
+  "Defensive Passive": {
+    "breadcrumb": "Settings",
+    "tab": "Settings",
+    "section": "",
+    "group": ""
+  },
+  "Depending on complexity and work involved": {
+    "breadcrumb": "Settings",
+    "tab": "Settings",
+    "section": "",
+    "group": ""
+  },
+  "Depending on complexity and work involved, contact me on": {
+    "breadcrumb": "Settings",
+    "tab": "Settings",
+    "section": "",
+    "group": ""
+  },
+  "Detailed Console": {
+    "breadcrumb": "Dev / Performance",
+    "tab": "Dev",
+    "section": "Performance",
+    "group": ""
+  },
+  "Dev": {
+    "breadcrumb": "Dev",
+    "tab": "Dev",
+    "section": "",
+    "group": ""
+  },
+  "Diagnostics": {
+    "breadcrumb": "Dev / Testing & Diagnostics",
+    "tab": "Dev",
+    "section": "Testing & Diagnostics",
+    "group": ""
+  },
+  "Difficulty": {
+    "breadcrumb": "Arcade / Game Settings",
+    "tab": "Arcade",
+    "section": "Game Settings",
+    "group": ""
+  },
+  "Ding to Check Minimap": {
+    "breadcrumb": "Settings",
+    "tab": "Settings",
+    "section": "",
+    "group": ""
+  },
+  "Disable Quick Buy": {
+    "breadcrumb": "Settings",
+    "tab": "Settings",
+    "section": "",
+    "group": ""
+  },
+  "Disable Shop Blue": {
+    "breadcrumb": "Settings",
+    "tab": "Settings",
+    "section": "",
+    "group": ""
+  },
+  "Disabled": {
+    "breadcrumb": "Settings",
+    "tab": "Settings",
+    "section": "",
+    "group": ""
+  },
+  "Discord": {
+    "breadcrumb": "Support",
+    "tab": "Support",
+    "section": "",
+    "group": ""
+  },
+  "Discord: <font color=\"#66cc99\">civocivocivo</font>": {
+    "breadcrumb": "Settings",
+    "tab": "Settings",
+    "section": "",
+    "group": ""
+  },
+  "Display & Resolution": {
+    "breadcrumb": "Config / Display & Resolution",
+    "tab": "Config",
+    "section": "Display & Resolution",
+    "group": ""
+  },
+  "Display & Screen": {
+    "breadcrumb": "Settings",
+    "tab": "Settings",
+    "section": "",
+    "group": ""
+  },
+  "Display Duration": {
+    "breadcrumb": "Settings",
+    "tab": "Settings",
+    "section": "",
+    "group": ""
+  },
+  "Display Hero": {
+    "breadcrumb": "Settings",
+    "tab": "Settings",
+    "section": "",
+    "group": ""
+  },
+  "Display Stats": {
+    "breadcrumb": "Settings",
+    "tab": "Settings",
+    "section": "",
+    "group": ""
+  },
+  "Done: {milliseconds}ms callbacks (Check ~)": {
+    "breadcrumb": "Settings",
+    "tab": "Settings",
+    "section": "",
+    "group": ""
+  },
+  "Done: {passed} passed, {failed} failed": {
+    "breadcrumb": "Settings",
+    "tab": "Settings",
+    "section": "",
+    "group": ""
+  },
+  "Done: {passed} passed, {failed} failed, {skipped} skipped": {
+    "breadcrumb": "Settings",
+    "tab": "Settings",
+    "section": "",
+    "group": ""
+  },
+  "Download": {
+    "breadcrumb": "Settings",
+    "tab": "Settings",
+    "section": "",
+    "group": ""
+  },
+  "Drag": {
+    "breadcrumb": "Settings",
+    "tab": "Settings",
+    "section": "",
+    "group": ""
+  },
+  "Drag an element to move it. Drag its corner to resize.": {
+    "breadcrumb": "Settings",
+    "tab": "Settings",
+    "section": "",
+    "group": ""
+  },
+  "Drag any corner to resize.": {
+    "breadcrumb": "Settings",
+    "tab": "Settings",
+    "section": "",
+    "group": ""
+  },
+  "Drag this corner to resize.": {
+    "breadcrumb": "Settings",
+    "tab": "Settings",
+    "section": "",
+    "group": ""
+  },
+  "Drag to move.": {
+    "breadcrumb": "Settings",
+    "tab": "Settings",
+    "section": "",
+    "group": ""
+  },
+  "Drag to move. Drag any corner to resize.": {
+    "breadcrumb": "Settings",
+    "tab": "Settings",
+    "section": "",
+    "group": ""
+  },
+  "Drag to move. Pull the any corner to resize.": {
+    "breadcrumb": "Settings",
+    "tab": "Settings",
+    "section": "",
+    "group": ""
+  },
+  "Draggable UI": {
+    "breadcrumb": "Settings",
+    "tab": "Settings",
+    "section": "",
+    "group": ""
+  },
+  "Draw Over UI": {
+    "breadcrumb": "Minimap / Tab Zoom",
+    "tab": "Minimap",
+    "section": "Tab Zoom",
+    "group": ""
+  },
+  "Draws the minimap over all other UI elements for improved visibility.": {
+    "breadcrumb": "Minimap / Tab Zoom",
+    "tab": "Minimap",
+    "section": "Tab Zoom",
+    "group": ""
+  },
+  "Dry run started": {
+    "breadcrumb": "Settings",
+    "tab": "Settings",
+    "section": "",
+    "group": ""
+  },
+  "Dump Tree": {
+    "breadcrumb": "Dev / Testing & Diagnostics",
+    "tab": "Dev",
+    "section": "Testing & Diagnostics",
+    "group": ""
+  },
+  "Dump the live panel tree to the console log for the offline profiler. Requires HUD context; save your console log afterwards.": {
+    "breadcrumb": "Dev / Testing & Diagnostics",
+    "tab": "Dev",
+    "section": "Testing & Diagnostics",
+    "group": ""
+  },
+  "Dumped to console log": {
+    "breadcrumb": "Settings",
+    "tab": "Settings",
+    "section": "",
+    "group": ""
+  },
+  "Duration": {
+    "breadcrumb": "Shop / Quick Buy",
+    "tab": "Shop",
+    "section": "Quick Buy",
+    "group": ""
+  },
+  "ERROR: Invalid String": {
+    "breadcrumb": "Settings",
+    "tab": "Settings",
+    "section": "",
+    "group": ""
+  },
+  "Easier Access": {
+    "breadcrumb": "Settings",
+    "tab": "Settings",
+    "section": "",
+    "group": ""
+  },
+  "Easy": {
+    "breadcrumb": "Arcade / Game Settings",
+    "tab": "Arcade",
+    "section": "Game Settings",
+    "group": ""
+  },
+  "Edit settings here; live HUD frames appear in a match or sandbox.": {
+    "breadcrumb": "Settings",
+    "tab": "Settings",
+    "section": "",
+    "group": ""
+  },
+  "Editor error:": {
+    "breadcrumb": "Settings",
+    "tab": "Settings",
+    "section": "",
+    "group": ""
+  },
+  "Elevation Markers": {
+    "breadcrumb": "Minimap / Addons",
+    "tab": "Minimap",
+    "section": "Addons",
+    "group": ""
+  },
+  "Enable": {
+    "breadcrumb": "Settings",
+    "tab": "Settings",
+    "section": "",
+    "group": ""
+  },
+  "Enable performance tracking (required for overlay).": {
+    "breadcrumb": "Dev / Performance",
+    "tab": "Dev",
+    "section": "Performance",
+    "group": ""
+  },
+  "Enable sounds in arcade games.": {
+    "breadcrumb": "Arcade / Game Settings",
+    "tab": "Arcade",
+    "section": "Game Settings",
+    "group": ""
+  },
+  "Enabled": {
+    "breadcrumb": "Settings",
+    "tab": "Settings",
+    "section": "",
+    "group": ""
+  },
+  "Enemy": {
+    "breadcrumb": "Healthbar",
+    "tab": "Healthbar",
+    "section": "",
+    "group": ""
+  },
+  "Enemy 25%": {
+    "breadcrumb": "Settings",
+    "tab": "Settings",
+    "section": "",
+    "group": ""
+  },
+  "Enemy 65%": {
+    "breadcrumb": "Settings",
+    "tab": "Settings",
+    "section": "",
+    "group": ""
+  },
+  "Enemy 75%": {
+    "breadcrumb": "Settings",
+    "tab": "Settings",
+    "section": "",
+    "group": ""
+  },
+  "Enemy HP Warning": {
+    "breadcrumb": "HUD / Top Bar",
+    "tab": "HUD",
+    "section": "Top Bar",
+    "group": ""
+  },
+  "Enemy V2": {
+    "breadcrumb": "Healthbar",
+    "tab": "Healthbar",
+    "section": "",
+    "group": ""
+  },
+  "Enemy healthbar enhancements.": {
+    "breadcrumb": "Healthbar",
+    "tab": "Healthbar",
+    "section": "",
+    "group": ""
+  },
+  "English": {
+    "breadcrumb": "Settings",
+    "tab": "Settings",
+    "section": "",
+    "group": ""
+  },
+  "Enhanced": {
+    "breadcrumb": "Healthbar / Enemy V2",
+    "tab": "Healthbar",
+    "section": "Enemy V2",
+    "group": ""
+  },
+  "Enhanced Count": {
+    "breadcrumb": "Shop / Quick Buy",
+    "tab": "Shop",
+    "section": "Quick Buy",
+    "group": ""
+  },
+  "Enhanced V2 enemy healthbar visuals and readability.": {
+    "breadcrumb": "Healthbar / Enemy V2",
+    "tab": "Healthbar",
+    "section": "Enemy V2",
+    "group": ""
+  },
+  "Enter a complete HEX color, such as #AABBCC.": {
+    "breadcrumb": "Settings",
+    "tab": "Settings",
+    "section": "",
+    "group": ""
+  },
+  "Enter a valid number or #RRGGBB color.": {
+    "breadcrumb": "Settings",
+    "tab": "Settings",
+    "section": "",
+    "group": ""
+  },
+  "Estimated Active Reload Timer": {
+    "breadcrumb": "Settings",
+    "tab": "Settings",
+    "section": "",
+    "group": ""
+  },
+  "Estimated ult cooldowns under top-bar ult icons": {
+    "breadcrumb": "Settings",
+    "tab": "Settings",
+    "section": "",
+    "group": ""
+  },
+  "Exact position": {
+    "breadcrumb": "Settings",
+    "tab": "Settings",
+    "section": "",
+    "group": ""
+  },
+  "Export Settings": {
+    "breadcrumb": "Config / Export Settings",
+    "tab": "Config",
+    "section": "Export Settings",
+    "group": ""
+  },
+  "Export String": {
+    "breadcrumb": "Settings",
+    "tab": "Settings",
+    "section": "",
+    "group": ""
+  },
+  "Export string copied.": {
+    "breadcrumb": "Settings",
+    "tab": "Settings",
+    "section": "",
+    "group": ""
+  },
+  "F": {
+    "breadcrumb": "Settings",
+    "tab": "Settings",
+    "section": "",
+    "group": ""
+  },
+  "FAIL: {features}": {
+    "breadcrumb": "Settings",
+    "tab": "Settings",
+    "section": "",
+    "group": ""
+  },
+  "FAILED": {
+    "breadcrumb": "Settings",
+    "tab": "Settings",
+    "section": "",
+    "group": ""
+  },
+  "FPS Impact:": {
+    "breadcrumb": "Settings",
+    "tab": "Settings",
+    "section": "",
+    "group": ""
+  },
+  "Failed Hint": {
+    "breadcrumb": "HUD / Bottom Bar",
+    "tab": "HUD",
+    "section": "Bottom Bar",
+    "group": ""
+  },
+  "Failed to queue save request.": {
+    "breadcrumb": "Settings",
+    "tab": "Settings",
+    "section": "",
+    "group": ""
+  },
+  "Failed to switch hero.": {
+    "breadcrumb": "Settings",
+    "tab": "Settings",
+    "section": "",
+    "group": ""
+  },
+  "Feature Test": {
+    "breadcrumb": "Dev / Testing & Diagnostics",
+    "tab": "Dev",
+    "section": "Testing & Diagnostics",
+    "group": ""
+  },
+  "Fighting Game": {
+    "breadcrumb": "Healthbar / Player",
+    "tab": "Healthbar",
+    "section": "Player",
+    "group": ""
+  },
+  "Filters": {
+    "breadcrumb": "Crosshair",
+    "tab": "Crosshair",
+    "section": "",
+    "group": ""
+  },
+  "Finalizing report...": {
+    "breadcrumb": "Settings",
+    "tab": "Settings",
+    "section": "",
+    "group": ""
+  },
+  "Find all safe tiles. Right-click to flag.": {
+    "breadcrumb": "Settings",
+    "tab": "Settings",
+    "section": "",
+    "group": ""
+  },
+  "Fire Rate": {
+    "breadcrumb": "Crosshair",
+    "tab": "Crosshair",
+    "section": "",
+    "group": ""
+  },
+  "Fire Rate: --": {
+    "breadcrumb": "Settings",
+    "tab": "Settings",
+    "section": "",
+    "group": ""
+  },
+  "First Spawns": {
+    "breadcrumb": "Settings",
+    "tab": "Settings",
+    "section": "",
+    "group": ""
+  },
+  "Fixed HUD Visuals": {
+    "breadcrumb": "Settings",
+    "tab": "Settings",
+    "section": "",
+    "group": ""
+  },
+  "Fixed Icon Size": {
+    "breadcrumb": "Minimap / Base",
+    "tab": "Minimap",
+    "section": "Base",
+    "group": ""
+  },
+  "Flags:": {
+    "breadcrumb": "Settings",
+    "tab": "Settings",
+    "section": "",
+    "group": ""
+  },
+  "Flappy Bat": {
+    "breadcrumb": "Arcade / Games",
+    "tab": "Arcade",
+    "section": "Games",
+    "group": ""
+  },
+  "Flip": {
+    "breadcrumb": "Minimap / Minimap",
+    "tab": "Minimap",
+    "section": "Minimap",
+    "group": ""
+  },
+  "For custom BHop gamemode UI changes.": {
+    "breadcrumb": "MOG / Gamemodes",
+    "tab": "MOG",
+    "section": "Gamemodes",
+    "group": ""
+  },
+  "Force Testing Tools": {
+    "breadcrumb": "Settings",
+    "tab": "Settings",
+    "section": "",
+    "group": ""
+  },
+  "Forcibly hides testing tools at all times.": {
+    "breadcrumb": "UI / UI Controls",
+    "tab": "UI",
+    "section": "UI Controls",
+    "group": ""
+  },
+  "Forcibly shows testing tools at all times.": {
+    "breadcrumb": "UI / UI Controls",
+    "tab": "UI",
+    "section": "UI Controls",
+    "group": ""
+  },
+  "Fountain-style damage number animation.": {
+    "breadcrumb": "Settings",
+    "tab": "Settings",
+    "section": "",
+    "group": ""
+  },
+  "French": {
+    "breadcrumb": "Settings",
+    "tab": "Settings",
+    "section": "",
+    "group": ""
+  },
+  "Friend Search": {
+    "breadcrumb": "Settings",
+    "tab": "Settings",
+    "section": "",
+    "group": ""
+  },
+  "Friend search belongs to the friends pane and has no independent appearance settings.": {
+    "breadcrumb": "Settings",
+    "tab": "Settings",
+    "section": "",
+    "group": ""
+  },
+  "Full Keybinds": {
+    "breadcrumb": "Settings",
+    "tab": "Settings",
+    "section": "",
+    "group": ""
+  },
+  "Full Keyboard": {
+    "breadcrumb": "Settings",
+    "tab": "Settings",
+    "section": "",
+    "group": ""
+  },
+  "Full Keys": {
+    "breadcrumb": "Overlay / Keyboard",
+    "tab": "Overlay",
+    "section": "Keyboard",
+    "group": ""
+  },
+  "Game & Interface": {
+    "breadcrumb": "Config / Game & Interface",
+    "tab": "Config",
+    "section": "Game & Interface",
+    "group": ""
+  },
+  "Game Audio": {
+    "breadcrumb": "Arcade / Game Settings",
+    "tab": "Arcade",
+    "section": "Game Settings",
+    "group": ""
+  },
+  "Game Settings": {
+    "breadcrumb": "Arcade / Game Settings",
+    "tab": "Arcade",
+    "section": "Game Settings",
+    "group": ""
+  },
+  "Gamemodes": {
+    "breadcrumb": "MOG / Gamemodes",
+    "tab": "MOG",
+    "section": "Gamemodes",
+    "group": ""
+  },
+  "Games": {
+    "breadcrumb": "Arcade / Games",
+    "tab": "Arcade",
+    "section": "Games",
+    "group": ""
+  },
+  "General": {
+    "breadcrumb": "Config / General",
+    "tab": "Config",
+    "section": "General",
+    "group": ""
+  },
+  "Get Filter": {
+    "breadcrumb": "Crosshair",
+    "tab": "Crosshair",
+    "section": "",
+    "group": ""
+  },
+  "Get Filter File Only": {
+    "breadcrumb": "Settings",
+    "tab": "Settings",
+    "section": "",
+    "group": ""
+  },
+  "Gold": {
+    "breadcrumb": "Settings",
+    "tab": "Settings",
+    "section": "",
+    "group": ""
+  },
+  "Graves Trainer": {
+    "breadcrumb": "Arcade / Games",
+    "tab": "Arcade",
+    "section": "Games",
+    "group": ""
+  },
+  "Green": {
+    "breadcrumb": "Settings",
+    "tab": "Settings",
+    "section": "",
+    "group": ""
+  },
+  "Greys out heros in the top bar when missing on the map.": {
+    "breadcrumb": "HUD / Top Bar",
+    "tab": "HUD",
+    "section": "Top Bar",
+    "group": ""
+  },
+  "HEX (#RRGGBB)": {
+    "breadcrumb": "Settings",
+    "tab": "Settings",
+    "section": "",
+    "group": ""
+  },
+  "HIGH FPS IMPACT WARNING!": {
+    "breadcrumb": "Settings",
+    "tab": "Settings",
+    "section": "",
+    "group": ""
+  },
+  "HP Warning": {
+    "breadcrumb": "Settings",
+    "tab": "Settings",
+    "section": "",
+    "group": ""
+  },
+  "HUD": {
+    "breadcrumb": "HUD",
+    "tab": "HUD",
+    "section": "",
+    "group": ""
+  },
+  "HUD Controls": {
+    "breadcrumb": "Settings",
+    "tab": "Settings",
+    "section": "",
+    "group": ""
+  },
+  "HUD Elements": {
+    "breadcrumb": "Settings",
+    "tab": "Settings",
+    "section": "",
+    "group": ""
+  },
+  "HUD changes applied, but saving failed. Retry save or close.": {
+    "breadcrumb": "Settings",
+    "tab": "Settings",
+    "section": "",
+    "group": ""
+  },
+  "HUD changes saved.": {
+    "breadcrumb": "Settings",
+    "tab": "Settings",
+    "section": "",
+    "group": ""
+  },
+  "HUD profile links use this toggle. Profile and profile-card additions have their own context and no editable geometry.": {
+    "breadcrumb": "Settings",
+    "tab": "Settings",
+    "section": "",
+    "group": ""
+  },
+  "HUD settings walkthrough": {
+    "breadcrumb": "Dev / Testing & Diagnostics",
+    "tab": "Dev",
+    "section": "Testing & Diagnostics",
+    "group": ""
+  },
+  "HUD state recording": {
+    "breadcrumb": "Dev / Testing & Diagnostics",
+    "tab": "Dev",
+    "section": "Testing & Diagnostics",
+    "group": ""
+  },
+  "HUD state report": {
+    "breadcrumb": "Dev / Testing & Diagnostics",
+    "tab": "Dev",
+    "section": "Testing & Diagnostics",
+    "group": ""
+  },
+  "HUD state report copied.": {
+    "breadcrumb": "Settings",
+    "tab": "Settings",
+    "section": "",
+    "group": ""
+  },
+  "Hard": {
+    "breadcrumb": "Arcade / Game Settings",
+    "tab": "Arcade",
+    "section": "Game Settings",
+    "group": ""
+  },
+  "Healing Amp": {
+    "breadcrumb": "Crosshair",
+    "tab": "Crosshair",
+    "section": "",
+    "group": ""
+  },
+  "Healing Amplification": {
+    "breadcrumb": "Settings",
+    "tab": "Settings",
+    "section": "",
+    "group": ""
+  },
+  "Health Numbers": {
+    "breadcrumb": "Healthbar / Player",
+    "tab": "Healthbar",
+    "section": "Player",
+    "group": ""
+  },
+  "Health Regen": {
+    "breadcrumb": "Crosshair",
+    "tab": "Crosshair",
+    "section": "",
+    "group": ""
+  },
+  "Health Warnings": {
+    "breadcrumb": "Settings",
+    "tab": "Settings",
+    "section": "",
+    "group": ""
+  },
+  "Healthbar": {
+    "breadcrumb": "Healthbar",
+    "tab": "Healthbar",
+    "section": "",
+    "group": ""
+  },
+  "Height": {
+    "breadcrumb": "Settings",
+    "tab": "Settings",
+    "section": "",
+    "group": ""
+  },
+  "Help and feedback": {
+    "breadcrumb": "Settings",
+    "tab": "Settings",
+    "section": "",
+    "group": ""
+  },
+  "Help fund continued development": {
+    "breadcrumb": "Support",
+    "tab": "Support",
+    "section": "",
+    "group": ""
+  },
+  "Help, Contact & Support": {
+    "breadcrumb": "Support",
+    "tab": "Support",
+    "section": "",
+    "group": ""
+  },
+  "Help, feedback, and community": {
+    "breadcrumb": "Support",
+    "tab": "Support",
+    "section": "",
+    "group": ""
+  },
+  "Hero": {
+    "breadcrumb": "HUD / Shop",
+    "tab": "HUD",
+    "section": "Shop",
+    "group": ""
+  },
+  "Hero Icon Size": {
+    "breadcrumb": "Console / Minimap",
+    "tab": "Console",
+    "section": "Minimap",
+    "group": ""
+  },
+  "Hero Purchase Popups": {
+    "breadcrumb": "Settings",
+    "tab": "Settings",
+    "section": "",
+    "group": ""
+  },
+  "Hero on Load or Save": {
+    "breadcrumb": "Settings",
+    "tab": "Settings",
+    "section": "",
+    "group": ""
+  },
+  "Hidden": {
+    "breadcrumb": "Settings",
+    "tab": "Settings",
+    "section": "",
+    "group": ""
+  },
+  "Hide": {
+    "breadcrumb": "Settings",
+    "tab": "Settings",
+    "section": "",
+    "group": ""
+  },
+  "Hide (Normal)": {
+    "breadcrumb": "Settings",
+    "tab": "Settings",
+    "section": "",
+    "group": ""
+  },
+  "Hide (Scoreboard)": {
+    "breadcrumb": "Settings",
+    "tab": "Settings",
+    "section": "",
+    "group": ""
+  },
+  "Hide Ability Suggestion": {
+    "breadcrumb": "Settings",
+    "tab": "Settings",
+    "section": "",
+    "group": ""
+  },
+  "Hide All": {
+    "breadcrumb": "Settings",
+    "tab": "Settings",
+    "section": "",
+    "group": ""
+  },
+  "Hide Ammo": {
+    "breadcrumb": "Settings",
+    "tab": "Settings",
+    "section": "",
+    "group": ""
+  },
+  "Hide Behavior Summary": {
+    "breadcrumb": "Settings",
+    "tab": "Settings",
+    "section": "",
+    "group": ""
+  },
+  "Hide Big Number": {
+    "breadcrumb": "Settings",
+    "tab": "Settings",
+    "section": "",
+    "group": ""
+  },
+  "Hide Blur": {
+    "breadcrumb": "Settings",
+    "tab": "Settings",
+    "section": "",
+    "group": ""
+  },
+  "Hide Circle": {
+    "breadcrumb": "Settings",
+    "tab": "Settings",
+    "section": "",
+    "group": ""
+  },
+  "Hide Cosmetic Abilities": {
+    "breadcrumb": "Settings",
+    "tab": "Settings",
+    "section": "",
+    "group": ""
+  },
+  "Hide Cosmetic Ability": {
+    "breadcrumb": "Settings",
+    "tab": "Settings",
+    "section": "",
+    "group": ""
+  },
+  "Hide Current": {
+    "breadcrumb": "Settings",
+    "tab": "Settings",
+    "section": "",
+    "group": ""
+  },
+  "Hide Damage Report": {
+    "breadcrumb": "Settings",
+    "tab": "Settings",
+    "section": "",
+    "group": ""
+  },
+  "Hide Failed Cast Hint": {
+    "breadcrumb": "Settings",
+    "tab": "Settings",
+    "section": "",
+    "group": ""
+  },
+  "Hide Failed Hint": {
+    "breadcrumb": "Settings",
+    "tab": "Settings",
+    "section": "",
+    "group": ""
+  },
+  "Hide Icon": {
+    "breadcrumb": "Settings",
+    "tab": "Settings",
+    "section": "",
+    "group": ""
+  },
+  "Hide Magazine": {
+    "breadcrumb": "Settings",
+    "tab": "Settings",
+    "section": "",
+    "group": ""
+  },
+  "Hide Quick Buy": {
+    "breadcrumb": "Settings",
+    "tab": "Settings",
+    "section": "",
+    "group": ""
+  },
+  "Hide Reload Circle": {
+    "breadcrumb": "Settings",
+    "tab": "Settings",
+    "section": "",
+    "group": ""
+  },
+  "Hide Reload Icon": {
+    "breadcrumb": "Settings",
+    "tab": "Settings",
+    "section": "",
+    "group": ""
+  },
+  "Hide Small Numbers": {
+    "breadcrumb": "Settings",
+    "tab": "Settings",
+    "section": "",
+    "group": ""
+  },
+  "Hide Testing Tools": {
+    "breadcrumb": "UI / UI Controls",
+    "tab": "UI",
+    "section": "UI Controls",
+    "group": ""
+  },
+  "Hide Top Bar Background": {
+    "breadcrumb": "Settings",
+    "tab": "Settings",
+    "section": "",
+    "group": ""
+  },
+  "Hide Total": {
+    "breadcrumb": "Settings",
+    "tab": "Settings",
+    "section": "",
+    "group": ""
+  },
+  "Hide Trooper Damage": {
+    "breadcrumb": "Settings",
+    "tab": "Settings",
+    "section": "",
+    "group": ""
+  },
+  "Hide current ammo": {
+    "breadcrumb": "Settings",
+    "tab": "Settings",
+    "section": "",
+    "group": ""
+  },
+  "Hide frames": {
+    "breadcrumb": "Settings",
+    "tab": "Settings",
+    "section": "",
+    "group": ""
+  },
+  "Hide in normal view": {
+    "breadcrumb": "HUD / Player Stats",
+    "tab": "HUD",
+    "section": "Player Stats",
+    "group": ""
+  },
+  "Hide on scoreboard (TAB)": {
+    "breadcrumb": "HUD / Player Stats",
+    "tab": "HUD",
+    "section": "Player Stats",
+    "group": ""
+  },
+  "Hide panels": {
+    "breadcrumb": "Settings",
+    "tab": "Settings",
+    "section": "",
+    "group": ""
+  },
+  "Hide the bottom-left active stats block during normal play. It stays in the HUD (just made invisible), so the Crosshair Active Stats mirror keeps working.": {
+    "breadcrumb": "HUD / Player Stats",
+    "tab": "HUD",
+    "section": "Player Stats",
+    "group": ""
+  },
+  "Hide the detailed stats list that appears while the scoreboard / TAB is held.": {
+    "breadcrumb": "HUD / Player Stats",
+    "tab": "HUD",
+    "section": "Player Stats",
+    "group": ""
+  },
+  "Hide total ammo": {
+    "breadcrumb": "Settings",
+    "tab": "Settings",
+    "section": "",
+    "group": ""
+  },
+  "High": {
+    "breadcrumb": "Settings",
+    "tab": "Settings",
+    "section": "",
+    "group": ""
+  },
+  "Highlight Mode": {
+    "breadcrumb": "Crosshair / Item Target Reticle",
+    "tab": "Crosshair",
+    "section": "Item Target Reticle",
+    "group": ""
+  },
+  "Highlight regeneration in red for when in combat.": {
+    "breadcrumb": "Healthbar / Player",
+    "tab": "Healthbar",
+    "section": "Player",
+    "group": ""
+  },
+  "Highlighted abilities showing you what you should upgrade depending on build.": {
+    "breadcrumb": "HUD / Bottom Bar",
+    "tab": "HUD",
+    "section": "Bottom Bar",
+    "group": ""
+  },
+  "Hint Size": {
+    "breadcrumb": "Settings",
+    "tab": "Settings",
+    "section": "",
+    "group": ""
+  },
+  "Hit": {
+    "breadcrumb": "Settings",
+    "tab": "Settings",
+    "section": "",
+    "group": ""
+  },
+  "Hitmarkers": {
+    "breadcrumb": "Console / General",
+    "tab": "Console",
+    "section": "General",
+    "group": ""
+  },
+  "Hits:": {
+    "breadcrumb": "Settings",
+    "tab": "Settings",
+    "section": "",
+    "group": ""
+  },
+  "Hooks: {passed}/{total} OK, {failed} failed, {errors} errors, {unchecked} unchecked{incomplete}": {
+    "breadcrumb": "Settings",
+    "tab": "Settings",
+    "section": "",
+    "group": ""
+  },
+  "Horizontal": {
+    "breadcrumb": "Settings",
+    "tab": "Settings",
+    "section": "",
+    "group": ""
+  },
+  "Horizontal Offset": {
+    "breadcrumb": "Healthbar / Player",
+    "tab": "Healthbar",
+    "section": "Player",
+    "group": ""
+  },
+  "Horizontal Offset (%)": {
+    "breadcrumb": "Settings",
+    "tab": "Settings",
+    "section": "",
+    "group": ""
+  },
+  "Horizontal Stretch": {
+    "breadcrumb": "Overlay / Compass",
+    "tab": "Overlay",
+    "section": "Compass",
+    "group": ""
+  },
+  "How fast the minimap refreshes.": {
+    "breadcrumb": "Console / Minimap",
+    "tab": "Console",
+    "section": "Minimap",
+    "group": ""
+  },
+  "How much icons will shrink when overlapping with others.": {
+    "breadcrumb": "Console / Minimap",
+    "tab": "Console",
+    "section": "Minimap",
+    "group": ""
+  },
+  "How to Save Settings": {
+    "breadcrumb": "Settings",
+    "tab": "Settings",
+    "section": "",
+    "group": ""
+  },
+  "Hud Shift": {
+    "breadcrumb": "Settings",
+    "tab": "Settings",
+    "section": "",
+    "group": ""
+  },
+  "Hud panel not found": {
+    "breadcrumb": "Settings",
+    "tab": "Settings",
+    "section": "",
+    "group": ""
+  },
+  "I am open to all feedback, suggestions, and ideas!": {
+    "breadcrumb": "Settings",
+    "tab": "Settings",
+    "section": "",
+    "group": ""
+  },
+  "IN COMBAT": {
+    "breadcrumb": "Settings",
+    "tab": "Settings",
+    "section": "",
+    "group": ""
+  },
+  "Ice": {
+    "breadcrumb": "Settings",
+    "tab": "Settings",
+    "section": "",
+    "group": ""
+  },
+  "Icon": {
+    "breadcrumb": "Overlay / Unsecured Plus",
+    "tab": "Overlay",
+    "section": "Unsecured Plus",
+    "group": ""
+  },
+  "Icon Shrink": {
+    "breadcrumb": "Console / Minimap",
+    "tab": "Console",
+    "section": "Minimap",
+    "group": ""
+  },
+  "Icon Text": {
+    "breadcrumb": "Settings",
+    "tab": "Settings",
+    "section": "",
+    "group": ""
+  },
+  "Icons": {
+    "breadcrumb": "Minimap / Base",
+    "tab": "Minimap",
+    "section": "Base",
+    "group": ""
+  },
+  "Idle": {
+    "breadcrumb": "Dev / In-Game Benchmarks",
+    "tab": "Dev",
+    "section": "In-Game Benchmarks",
+    "group": ""
+  },
+  "If saving stalls, open your shop.": {
+    "breadcrumb": "Settings",
+    "tab": "Settings",
+    "section": "",
+    "group": ""
+  },
+  "If you encounter issues please join the Discord": {
+    "breadcrumb": "Settings",
+    "tab": "Settings",
+    "section": "",
+    "group": ""
+  },
+  "If you encounter issues, need help, or have any feedback join the Discord.": {
+    "breadcrumb": "Settings",
+    "tab": "Settings",
+    "section": "",
+    "group": ""
+  },
+  "Images In Chat": {
+    "breadcrumb": "Settings",
+    "tab": "Settings",
+    "section": "",
+    "group": ""
+  },
+  "Images in Chat": {
+    "breadcrumb": "HUD / Ability Points (AP)",
+    "tab": "HUD",
+    "section": "Ability Points (AP)",
+    "group": ""
+  },
+  "Import Settings": {
+    "breadcrumb": "Config / Import Settings",
+    "tab": "Config",
+    "section": "Import Settings",
+    "group": ""
+  },
+  "Import String": {
+    "breadcrumb": "Settings",
+    "tab": "Settings",
+    "section": "",
+    "group": ""
+  },
+  "Import failed.": {
+    "breadcrumb": "Settings",
+    "tab": "Settings",
+    "section": "",
+    "group": ""
+  },
+  "Import {schema} applied. clamped={clamped} unknown={unknown}": {
+    "breadcrumb": "Settings",
+    "tab": "Settings",
+    "section": "",
+    "group": ""
+  },
+  "Import: applying settings...": {
+    "breadcrumb": "Settings",
+    "tab": "Settings",
+    "section": "",
+    "group": ""
+  },
+  "Import: parsing string...": {
+    "breadcrumb": "Settings",
+    "tab": "Settings",
+    "section": "",
+    "group": ""
+  },
+  "Import: refreshing UI...": {
+    "breadcrumb": "Settings",
+    "tab": "Settings",
+    "section": "",
+    "group": ""
+  },
+  "Improve Ability Stacks": {
+    "breadcrumb": "UI / Player Stats",
+    "tab": "UI",
+    "section": "Player Stats",
+    "group": ""
+  },
+  "Improved Hint": {
+    "breadcrumb": "Crosshair / Item Target Reticle",
+    "tab": "Crosshair",
+    "section": "Item Target Reticle",
+    "group": ""
+  },
+  "In Seconds": {
+    "breadcrumb": "Settings",
+    "tab": "Settings",
+    "section": "",
+    "group": ""
+  },
+  "In-Game Benchmarks": {
+    "breadcrumb": "Dev / In-Game Benchmarks",
+    "tab": "Dev",
+    "section": "In-Game Benchmarks",
+    "group": ""
+  },
+  "In-Game Engine Audit": {
+    "breadcrumb": "Dev / Testing & Diagnostics",
+    "tab": "Dev",
+    "section": "Testing & Diagnostics",
+    "group": ""
+  },
+  "Inactive Visuals": {
+    "breadcrumb": "Settings",
+    "tab": "Settings",
+    "section": "",
+    "group": ""
+  },
+  "Indigo": {
+    "breadcrumb": "Settings",
+    "tab": "Settings",
+    "section": "",
+    "group": ""
+  },
+  "Inspect size, opacity and offsets during gameplay.": {
+    "breadcrumb": "Settings",
+    "tab": "Settings",
+    "section": "",
+    "group": ""
+  },
+  "Inspect size, opacity and offsets while buffs or debuffs are active.": {
+    "breadcrumb": "Settings",
+    "tab": "Settings",
+    "section": "",
+    "group": ""
+  },
+  "Inspect the changed layout, size and offsets; test inputs in game.": {
+    "breadcrumb": "Settings",
+    "tab": "Settings",
+    "section": "",
+    "group": ""
+  },
+  "Inspect the changed layout, size and offsets; turn in game.": {
+    "breadcrumb": "Settings",
+    "tab": "Settings",
+    "section": "",
+    "group": ""
+  },
+  "Inspect the changed offsets; move in game.": {
+    "breadcrumb": "Settings",
+    "tab": "Settings",
+    "section": "",
+    "group": ""
+  },
+  "Inspect the changed size and offsets; use a zipline in game.": {
+    "breadcrumb": "Settings",
+    "tab": "Settings",
+    "section": "",
+    "group": ""
+  },
+  "Invalid import string.": {
+    "breadcrumb": "Settings",
+    "tab": "Settings",
+    "section": "",
+    "group": ""
+  },
+  "Issues, Feedback and Ideas": {
+    "breadcrumb": "Settings",
+    "tab": "Settings",
+    "section": "",
+    "group": ""
+  },
+  "Italian": {
+    "breadcrumb": "Settings",
+    "tab": "Settings",
+    "section": "",
+    "group": ""
+  },
+  "Item Buy Notifications": {
+    "breadcrumb": "HUD / Shop",
+    "tab": "HUD",
+    "section": "Shop",
+    "group": ""
+  },
+  "Item Cooldowns": {
+    "breadcrumb": "Crosshair",
+    "tab": "Crosshair",
+    "section": "",
+    "group": ""
+  },
+  "Item Notifications": {
+    "breadcrumb": "Settings",
+    "tab": "Settings",
+    "section": "",
+    "group": ""
+  },
+  "Item Target Reticle": {
+    "breadcrumb": "Crosshair",
+    "tab": "Crosshair",
+    "section": "",
+    "group": ""
+  },
+  "Items": {
+    "breadcrumb": "HUD / Ability Points (AP)",
+    "tab": "HUD",
+    "section": "Ability Points (AP)",
+    "group": ""
+  },
+  "Japanese": {
+    "breadcrumb": "Settings",
+    "tab": "Settings",
+    "section": "",
+    "group": ""
+  },
+  "Keyboard": {
+    "breadcrumb": "Overlay",
+    "tab": "Overlay",
+    "section": "",
+    "group": ""
+  },
+  "Keyboard Overlay": {
+    "breadcrumb": "Settings",
+    "tab": "Settings",
+    "section": "",
+    "group": ""
+  },
+  "Klutz's Bar": {
+    "breadcrumb": "Healthbar / Player",
+    "tab": "Healthbar",
+    "section": "Player",
+    "group": ""
+  },
+  "Korean": {
+    "breadcrumb": "Settings",
+    "tab": "Settings",
+    "section": "",
+    "group": ""
+  },
+  "Lane Guardian Weak": {
+    "breadcrumb": "Audio / Announcer",
+    "tab": "Audio",
+    "section": "Announcer",
+    "group": ""
+  },
+  "Lane with Party": {
+    "breadcrumb": "UI / UI Controls",
+    "tab": "UI",
+    "section": "UI Controls",
+    "group": ""
+  },
+  "Language": {
+    "breadcrumb": "Config / Meta Settings",
+    "tab": "Config",
+    "section": "Meta Settings",
+    "group": ""
+  },
+  "Latest updates and version notes": {
+    "breadcrumb": "Support",
+    "tab": "Support",
+    "section": "",
+    "group": ""
+  },
+  "Lavender": {
+    "breadcrumb": "Settings",
+    "tab": "Settings",
+    "section": "",
+    "group": ""
+  },
+  "Left": {
+    "breadcrumb": "HUD / Player Stats",
+    "tab": "HUD",
+    "section": "Player Stats",
+    "group": ""
+  },
+  "Legacy Durations": {
+    "breadcrumb": "HUD",
+    "tab": "HUD",
+    "section": "",
+    "group": ""
+  },
+  "Legacy souls-per-minute, unspent-souls and fortitude widgets are inactive. The editor does not enable unfinished renderers.": {
+    "breadcrumb": "Settings",
+    "tab": "Settings",
+    "section": "",
+    "group": ""
+  },
+  "Level": {
+    "breadcrumb": "Healthbar / Enemy V2",
+    "tab": "Healthbar",
+    "section": "Enemy V2",
+    "group": ""
+  },
+  "Light Item Cooldowns": {
+    "breadcrumb": "Settings",
+    "tab": "Settings",
+    "section": "",
+    "group": ""
+  },
+  "Lime": {
+    "breadcrumb": "Settings",
+    "tab": "Settings",
+    "section": "",
+    "group": ""
+  },
+  "Local settings loaded.": {
+    "breadcrumb": "Settings",
+    "tab": "Settings",
+    "section": "",
+    "group": ""
+  },
+  "Lock dragging": {
+    "breadcrumb": "Settings",
+    "tab": "Settings",
+    "section": "",
+    "group": ""
+  },
+  "Lock position": {
+    "breadcrumb": "Settings",
+    "tab": "Settings",
+    "section": "",
+    "group": ""
+  },
+  "Loud": {
+    "breadcrumb": "Settings",
+    "tab": "Settings",
+    "section": "",
+    "group": ""
+  },
+  "Low": {
+    "breadcrumb": "Config / Display & Resolution",
+    "tab": "Config",
+    "section": "Display & Resolution",
+    "group": ""
+  },
+  "Low Stamina Popup": {
+    "breadcrumb": "Settings",
+    "tab": "Settings",
+    "section": "",
+    "group": ""
+  },
+  "MOG": {
+    "breadcrumb": "Settings",
+    "tab": "Settings",
+    "section": "",
+    "group": ""
+  },
+  "MOG is Deadlock's first custom gamemode community server network.": {
+    "breadcrumb": "MOG",
+    "tab": "MOG",
+    "section": "",
+    "group": ""
+  },
+  "MOGLOCK": {
+    "breadcrumb": "MOG",
+    "tab": "MOG",
+    "section": "",
+    "group": ""
+  },
+  "Magazine indicator": {
+    "breadcrumb": "Settings",
+    "tab": "Settings",
+    "section": "",
+    "group": ""
+  },
+  "Magenta": {
+    "breadcrumb": "Settings",
+    "tab": "Settings",
+    "section": "",
+    "group": ""
+  },
+  "Main Menu Cards": {
+    "breadcrumb": "Settings",
+    "tab": "Settings",
+    "section": "",
+    "group": ""
+  },
+  "Makes the minimap rotate with player view, this is just for fun.": {
+    "breadcrumb": "Minimap / Minimap",
+    "tab": "Minimap",
+    "section": "Minimap",
+    "group": ""
+  },
+  "Manifest Report": {
+    "breadcrumb": "Dev / Testing & Diagnostics",
+    "tab": "Dev",
+    "section": "Testing & Diagnostics",
+    "group": ""
+  },
+  "Manifest Tests": {
+    "breadcrumb": "Dev / Testing & Diagnostics",
+    "tab": "Dev",
+    "section": "Testing & Diagnostics",
+    "group": ""
+  },
+  "Max Health: --": {
+    "breadcrumb": "Settings",
+    "tab": "Settings",
+    "section": "",
+    "group": ""
+  },
+  "Max Notifications": {
+    "breadcrumb": "Shop / Quick Buy",
+    "tab": "Shop",
+    "section": "Quick Buy",
+    "group": ""
+  },
+  "Maximum Items": {
+    "breadcrumb": "Settings",
+    "tab": "Settings",
+    "section": "",
+    "group": ""
+  },
+  "Measure Scheduler polls and FindChildTraverse calls for 10 seconds with current settings. Native panel visits and FPS are unavailable.": {
+    "breadcrumb": "Dev / In-Game Benchmarks",
+    "tab": "Dev",
+    "section": "In-Game Benchmarks",
+    "group": ""
+  },
+  "Medium": {
+    "breadcrumb": "Arcade / Game Settings",
+    "tab": "Arcade",
+    "section": "Game Settings",
+    "group": ""
+  },
+  "Medium Camps": {
+    "breadcrumb": "Audio / Announcer",
+    "tab": "Audio",
+    "section": "Announcer",
+    "group": ""
+  },
+  "Menu Layout": {
+    "breadcrumb": "Settings",
+    "tab": "Settings",
+    "section": "",
+    "group": ""
+  },
+  "Menu changes are visible when the editor closes. Their existing controls do not define independent screen offsets.": {
+    "breadcrumb": "Settings",
+    "tab": "Settings",
+    "section": "",
+    "group": ""
+  },
+  "Menu when you receive a punishment for breaking game rules.": {
+    "breadcrumb": "UI / UI Controls",
+    "tab": "UI",
+    "section": "UI Controls",
+    "group": ""
+  },
+  "Meta Settings": {
+    "breadcrumb": "Settings",
+    "tab": "Settings",
+    "section": "",
+    "group": ""
+  },
+  "Metro Button": {
+    "breadcrumb": "Settings",
+    "tab": "Settings",
+    "section": "",
+    "group": ""
+  },
+  "Mid Boss Timer": {
+    "breadcrumb": "Minimap / Minimap",
+    "tab": "Minimap",
+    "section": "Minimap",
+    "group": ""
+  },
+  "Midtown-only crate markers on the minimap.": {
+    "breadcrumb": "Settings",
+    "tab": "Settings",
+    "section": "",
+    "group": ""
+  },
+  "Minecraft": {
+    "breadcrumb": "Healthbar / Player",
+    "tab": "Healthbar",
+    "section": "Player",
+    "group": ""
+  },
+  "Mines:": {
+    "breadcrumb": "Settings",
+    "tab": "Settings",
+    "section": "",
+    "group": ""
+  },
+  "Minesweeper": {
+    "breadcrumb": "Settings",
+    "tab": "Settings",
+    "section": "",
+    "group": ""
+  },
+  "Minimalist": {
+    "breadcrumb": "Overlay / Compass",
+    "tab": "Overlay",
+    "section": "Compass",
+    "group": ""
+  },
+  "Minimalist Abilities": {
+    "breadcrumb": "HUD / Bottom Bar",
+    "tab": "HUD",
+    "section": "Bottom Bar",
+    "group": ""
+  },
+  "Minimalist Healthbar": {
+    "breadcrumb": "Settings",
+    "tab": "Settings",
+    "section": "",
+    "group": ""
+  },
+  "Minimalist Item Bar": {
+    "breadcrumb": "HUD / Bottom Bar",
+    "tab": "HUD",
+    "section": "Bottom Bar",
+    "group": ""
+  },
+  "Minimalist Minimap": {
+    "breadcrumb": "Settings",
+    "tab": "Settings",
+    "section": "",
+    "group": ""
+  },
+  "Minimalist Opacity": {
+    "breadcrumb": "Minimap / Minimap",
+    "tab": "Minimap",
+    "section": "Minimap",
+    "group": ""
+  },
+  "Minimalistic Pause": {
+    "breadcrumb": "UI / UI Controls",
+    "tab": "UI",
+    "section": "UI Controls",
+    "group": ""
+  },
+  "Minimap": {
+    "breadcrumb": "Console",
+    "tab": "Console",
+    "section": "",
+    "group": ""
+  },
+  "Minimap Reminder": {
+    "breadcrumb": "Audio",
+    "tab": "Audio",
+    "section": "",
+    "group": ""
+  },
+  "Minimap Timers": {
+    "breadcrumb": "Settings",
+    "tab": "Settings",
+    "section": "",
+    "group": ""
+  },
+  "Minimap: Alt": {
+    "breadcrumb": "Settings",
+    "tab": "Settings",
+    "section": "",
+    "group": ""
+  },
+  "Minimap: Tab": {
+    "breadcrumb": "Settings",
+    "tab": "Settings",
+    "section": "",
+    "group": ""
+  },
+  "Mint": {
+    "breadcrumb": "Settings",
+    "tab": "Settings",
+    "section": "",
+    "group": ""
+  },
+  "Mirror active buffs/debuffs vertically next to the crosshair so they are visible mid-fight.": {
+    "breadcrumb": "Crosshair",
+    "tab": "Crosshair",
+    "section": "",
+    "group": ""
+  },
+  "Mirror unsecured gold number": {
+    "breadcrumb": "Settings",
+    "tab": "Settings",
+    "section": "",
+    "group": ""
+  },
+  "Misses:": {
+    "breadcrumb": "Settings",
+    "tab": "Settings",
+    "section": "",
+    "group": ""
+  },
+  "Missing Hero Opaque": {
+    "breadcrumb": "HUD / Top Bar",
+    "tab": "HUD",
+    "section": "Top Bar",
+    "group": ""
+  },
+  "Modify damage numbers for a cleaner style and animation to be more out of the way": {
+    "breadcrumb": "Crosshair / Damage Numbers",
+    "tab": "Crosshair",
+    "section": "Damage Numbers",
+    "group": ""
+  },
+  "More options": {
+    "breadcrumb": "Settings",
+    "tab": "Settings",
+    "section": "",
+    "group": ""
+  },
+  "Move HUD elements on screen and edit their colors. Save keeps changes; Cancel discards the draft.": {
+    "breadcrumb": "Customize",
+    "tab": "Customize",
+    "section": "",
+    "group": ""
+  },
+  "Move Speed": {
+    "breadcrumb": "Crosshair",
+    "tab": "Crosshair",
+    "section": "",
+    "group": ""
+  },
+  "Move ability stacks to bottom-center of ability icon": {
+    "breadcrumb": "Settings",
+    "tab": "Settings",
+    "section": "",
+    "group": ""
+  },
+  "Move ability stacks to bottom-center of ability icon.": {
+    "breadcrumb": "HUD / Bottom Bar",
+    "tab": "HUD",
+    "section": "Bottom Bar",
+    "group": ""
+  },
+  "Move notifications around Rejuvenator and Scoreboard UI.": {
+    "breadcrumb": "Shop / Quick Buy",
+    "tab": "Shop",
+    "section": "Quick Buy",
+    "group": ""
+  },
+  "Moves the Bridge Buff timer onto the bridge with two smaller centered copies.": {
+    "breadcrumb": "Minimap / Addons / Bridge Buff Timer",
+    "tab": "Minimap",
+    "section": "Addons",
+    "group": ""
+  },
+  "Moves the Mid Boss timer onto the bridge area of the minimap.": {
+    "breadcrumb": "Minimap / Addons / Mid Boss Timer",
+    "tab": "Minimap",
+    "section": "Addons",
+    "group": ""
+  },
+  "Moves the element horizontally.": {
+    "breadcrumb": "Settings",
+    "tab": "Settings",
+    "section": "",
+    "group": ""
+  },
+  "Moves the element vertically.": {
+    "breadcrumb": "Settings",
+    "tab": "Settings",
+    "section": "",
+    "group": ""
+  },
+  "N/A": {
+    "breadcrumb": "Settings",
+    "tab": "Settings",
+    "section": "",
+    "group": ""
+  },
+  "Neutral Camps": {
+    "breadcrumb": "Settings",
+    "tab": "Settings",
+    "section": "",
+    "group": ""
+  },
+  "New Feature Commission: <font color=\"#66cc99\">$10</font> to <font color=\"#66cc99\">$100</font>": {
+    "breadcrumb": "Settings",
+    "tab": "Settings",
+    "section": "",
+    "group": ""
+  },
+  "New Game": {
+    "breadcrumb": "Settings",
+    "tab": "Settings",
+    "section": "",
+    "group": ""
+  },
+  "New Hand": {
+    "breadcrumb": "Settings",
+    "tab": "Settings",
+    "section": "",
+    "group": ""
+  },
+  "New Run": {
+    "breadcrumb": "Settings",
+    "tab": "Settings",
+    "section": "",
+    "group": ""
+  },
+  "Next": {
+    "breadcrumb": "Settings",
+    "tab": "Settings",
+    "section": "",
+    "group": ""
+  },
+  "Nicknames": {
+    "breadcrumb": "HUD / Top Bar",
+    "tab": "HUD",
+    "section": "Top Bar",
+    "group": ""
+  },
+  "No color wash": {
+    "breadcrumb": "Settings",
+    "tab": "Settings",
+    "section": "",
+    "group": ""
+  },
+  "No completed HUD state recording yet.": {
+    "breadcrumb": "Settings",
+    "tab": "Settings",
+    "section": "",
+    "group": ""
+  },
+  "No filter settings but better FPS.": {
+    "breadcrumb": "Settings",
+    "tab": "Settings",
+    "section": "",
+    "group": ""
+  },
+  "No presets found.": {
+    "breadcrumb": "Settings",
+    "tab": "Settings",
+    "section": "",
+    "group": ""
+  },
+  "No results found": {
+    "breadcrumb": "Settings",
+    "tab": "Settings",
+    "section": "",
+    "group": ""
+  },
+  "No setting changes detected.": {
+    "breadcrumb": "Settings",
+    "tab": "Settings",
+    "section": "",
+    "group": ""
+  },
+  "No toggle keys found": {
+    "breadcrumb": "Settings",
+    "tab": "Settings",
+    "section": "",
+    "group": ""
+  },
+  "No visible elements": {
+    "breadcrumb": "Settings",
+    "tab": "Settings",
+    "section": "",
+    "group": ""
+  },
+  "None": {
+    "breadcrumb": "Config / General",
+    "tab": "Config",
+    "section": "General",
+    "group": ""
+  },
+  "Normal": {
+    "breadcrumb": "Settings",
+    "tab": "Settings",
+    "section": "",
+    "group": ""
+  },
+  "Notify your teammates in chat about how close you are to a quickbuy purchase.": {
+    "breadcrumb": "Shop / Quick Buy",
+    "tab": "Shop",
+    "section": "Quick Buy",
+    "group": ""
+  },
+  "Objective Damage": {
+    "breadcrumb": "HUD / Top Bar",
+    "tab": "HUD",
+    "section": "Top Bar",
+    "group": ""
+  },
+  "Objective Map": {
+    "breadcrumb": "HUD / Top Bar",
+    "tab": "HUD",
+    "section": "Top Bar",
+    "group": ""
+  },
+  "Objectives": {
+    "breadcrumb": "Settings",
+    "tab": "Settings",
+    "section": "",
+    "group": ""
+  },
+  "Observe the HUD; this is not an automatic pass.": {
+    "breadcrumb": "Settings",
+    "tab": "Settings",
+    "section": "",
+    "group": ""
+  },
+  "Off": {
+    "breadcrumb": "Console",
+    "tab": "Console",
+    "section": "",
+    "group": ""
+  },
+  "Offensive Active": {
+    "breadcrumb": "Settings",
+    "tab": "Settings",
+    "section": "",
+    "group": ""
+  },
+  "Offensive Passive": {
+    "breadcrumb": "Settings",
+    "tab": "Settings",
+    "section": "",
+    "group": ""
+  },
+  "On": {
+    "breadcrumb": "Console",
+    "tab": "Console",
+    "section": "",
+    "group": ""
+  },
+  "On Ability Upgrade": {
+    "breadcrumb": "Settings",
+    "tab": "Settings",
+    "section": "",
+    "group": ""
+  },
+  "On Bridge": {
+    "breadcrumb": "Minimap / Addons / Bridge Buff Timer",
+    "tab": "Minimap",
+    "section": "Addons",
+    "group": ""
+  },
+  "On Death": {
+    "breadcrumb": "Arcade / Game Settings",
+    "tab": "Arcade",
+    "section": "Game Settings",
+    "group": ""
+  },
+  "On Death Games": {
+    "breadcrumb": "Settings",
+    "tab": "Settings",
+    "section": "",
+    "group": ""
+  },
+  "On Mid Boss": {
+    "breadcrumb": "Minimap / Addons / Mid Boss Timer",
+    "tab": "Minimap",
+    "section": "Addons",
+    "group": ""
+  },
+  "On-death Games": {
+    "breadcrumb": "Settings",
+    "tab": "Settings",
+    "section": "",
+    "group": ""
+  },
+  "Only download the filter file of the filter you want, nothing else.": {
+    "breadcrumb": "Crosshair / Item Cooldowns",
+    "tab": "Crosshair",
+    "section": "Item Cooldowns",
+    "group": ""
+  },
+  "Only simplifies the shop stats display.": {
+    "breadcrumb": "Settings",
+    "tab": "Settings",
+    "section": "",
+    "group": ""
+  },
+  "Only this element can be edited. Other HUD elements stay locked.": {
+    "breadcrumb": "Settings",
+    "tab": "Settings",
+    "section": "",
+    "group": ""
+  },
+  "Opacity": {
+    "breadcrumb": "Settings",
+    "tab": "Settings",
+    "section": "",
+    "group": ""
+  },
+  "Opacity of the background of Minimalist Minimap.": {
+    "breadcrumb": "Minimap / Minimap",
+    "tab": "Minimap",
+    "section": "Minimap",
+    "group": ""
+  },
+  "Opacity of the performance overlay panel.": {
+    "breadcrumb": "Dev / Performance",
+    "tab": "Dev",
+    "section": "Performance",
+    "group": ""
+  },
+  "Opacity of the underground tunnel overlay while Alt Zoom is active.": {
+    "breadcrumb": "UI / Player Stats",
+    "tab": "UI",
+    "section": "Player Stats",
+    "group": ""
+  },
+  "Opacity of the underground tunnel overlay while Tab Zoom is active.": {
+    "breadcrumb": "UI / Player Stats",
+    "tab": "UI",
+    "section": "Player Stats",
+    "group": ""
+  },
+  "Opacity of the underground tunnel overlay.": {
+    "breadcrumb": "UI / Player Stats",
+    "tab": "UI",
+    "section": "Player Stats",
+    "group": ""
+  },
+  "Open": {
+    "breadcrumb": "Settings",
+    "tab": "Settings",
+    "section": "",
+    "group": ""
+  },
+  "Open Config": {
+    "breadcrumb": "Settings",
+    "tab": "Settings",
+    "section": "",
+    "group": ""
+  },
+  "Open Settings": {
+    "breadcrumb": "Settings",
+    "tab": "Settings",
+    "section": "",
+    "group": ""
+  },
+  "Open chat in game; inspect size and offsets.": {
+    "breadcrumb": "Settings",
+    "tab": "Settings",
+    "section": "",
+    "group": ""
+  },
+  "Open editor": {
+    "breadcrumb": "Customize",
+    "tab": "Customize",
+    "section": "",
+    "group": ""
+  },
+  "Open in a match or sandbox. Compare HUD changes and test gameplay. Stop restores settings without saving the test values.": {
+    "breadcrumb": "Dev / Testing & Diagnostics",
+    "tab": "Dev",
+    "section": "Testing & Diagnostics",
+    "group": ""
+  },
+  "Open in a match or sandbox. Step through 12 HUD changes. Stop restores settings without saving the test values.": {
+    "breadcrumb": "Settings",
+    "tab": "Settings",
+    "section": "",
+    "group": ""
+  },
+  "Open random game when dead": {
+    "breadcrumb": "Settings",
+    "tab": "Settings",
+    "section": "",
+    "group": ""
+  },
+  "Open settings with a live HUD": {
+    "breadcrumb": "Settings",
+    "tab": "Settings",
+    "section": "",
+    "group": ""
+  },
+  "Open shop to continue clear.": {
+    "breadcrumb": "Settings",
+    "tab": "Settings",
+    "section": "",
+    "group": ""
+  },
+  "Open shop to continue save.": {
+    "breadcrumb": "Settings",
+    "tab": "Settings",
+    "section": "",
+    "group": ""
+  },
+  "Open the shop in game; inspect size, opacity and offsets.": {
+    "breadcrumb": "Settings",
+    "tab": "Settings",
+    "section": "",
+    "group": ""
+  },
+  "Optimize Filters": {
+    "breadcrumb": "Crosshair / Item Cooldowns",
+    "tab": "Crosshair",
+    "section": "Item Cooldowns",
+    "group": ""
+  },
+  "Optimize Mode": {
+    "breadcrumb": "Settings",
+    "tab": "Settings",
+    "section": "",
+    "group": ""
+  },
+  "Orange": {
+    "breadcrumb": "Settings",
+    "tab": "Settings",
+    "section": "",
+    "group": ""
+  },
+  "Other Screens": {
+    "breadcrumb": "Settings",
+    "tab": "Settings",
+    "section": "",
+    "group": ""
+  },
+  "Overlay": {
+    "breadcrumb": "Overlay",
+    "tab": "Overlay",
+    "section": "",
+    "group": ""
+  },
+  "Overlay Opacity": {
+    "breadcrumb": "Dev / Performance",
+    "tab": "Dev",
+    "section": "Performance",
+    "group": ""
+  },
+  "Panel Tree Dump": {
+    "breadcrumb": "Dev / Testing & Diagnostics",
+    "tab": "Dev",
+    "section": "Testing & Diagnostics",
+    "group": ""
+  },
+  "Paste and apply an exported settings string": {
+    "breadcrumb": "Settings",
+    "tab": "Settings",
+    "section": "",
+    "group": ""
+  },
+  "Per-Hero Popups": {
+    "breadcrumb": "Shop / Quick Buy",
+    "tab": "Shop",
+    "section": "Quick Buy",
+    "group": ""
+  },
+  "Perf Debug": {
+    "breadcrumb": "Dev / Performance",
+    "tab": "Dev",
+    "section": "Performance",
+    "group": ""
+  },
+  "Perform a dry run of the build storage pipeline (switch hero, open shop, open popup) and dump tree to console. Requires HUD context.": {
+    "breadcrumb": "Dev / Testing & Diagnostics",
+    "tab": "Dev",
+    "section": "Testing & Diagnostics",
+    "group": ""
+  },
+  "Performance": {
+    "breadcrumb": "Dev / Performance",
+    "tab": "Dev",
+    "section": "Performance",
+    "group": ""
+  },
+  "Performance Overlay": {
+    "breadcrumb": "Settings",
+    "tab": "Settings",
+    "section": "",
+    "group": ""
+  },
+  "Pin the stats panel to the left (default, like vanilla) or right side of the screen.": {
+    "breadcrumb": "UI / Player Stats",
+    "tab": "UI",
+    "section": "Player Stats",
+    "group": ""
+  },
+  "Pink": {
+    "breadcrumb": "Settings",
+    "tab": "Settings",
+    "section": "",
+    "group": ""
+  },
+  "Play": {
+    "breadcrumb": "Arcade / Games",
+    "tab": "Arcade",
+    "section": "Games",
+    "group": ""
+  },
+  "Play Sound": {
+    "breadcrumb": "Audio / Announcer",
+    "tab": "Audio",
+    "section": "Announcer",
+    "group": ""
+  },
+  "Play When On Death Enabled": {
+    "breadcrumb": "Arcade / Games",
+    "tab": "Arcade",
+    "section": "Games",
+    "group": ""
+  },
+  "Play an audio reminder to remember to look at the minimap.": {
+    "breadcrumb": "Audio",
+    "tab": "Audio",
+    "section": "",
+    "group": ""
+  },
+  "Play current announcer voice and volume.": {
+    "breadcrumb": "Settings",
+    "tab": "Settings",
+    "section": "",
+    "group": ""
+  },
+  "Play current announcer voice.": {
+    "breadcrumb": "Audio / Announcer",
+    "tab": "Audio",
+    "section": "Announcer",
+    "group": ""
+  },
+  "Player": {
+    "breadcrumb": "Healthbar / Player",
+    "tab": "Healthbar",
+    "section": "Player",
+    "group": ""
+  },
+  "Player Icon Size": {
+    "breadcrumb": "Console / Minimap",
+    "tab": "Console",
+    "section": "Minimap",
+    "group": ""
+  },
+  "Player Stats": {
+    "breadcrumb": "HUD",
+    "tab": "HUD",
+    "section": "",
+    "group": ""
+  },
+  "Poison": {
+    "breadcrumb": "Settings",
+    "tab": "Settings",
+    "section": "",
+    "group": ""
+  },
+  "Polish": {
+    "breadcrumb": "Settings",
+    "tab": "Settings",
+    "section": "",
+    "group": ""
+  },
+  "Portuguese": {
+    "breadcrumb": "Settings",
+    "tab": "Settings",
+    "section": "",
+    "group": ""
+  },
+  "Position and Velocity real time statistics.": {
+    "breadcrumb": "Console / Statistics",
+    "tab": "Console",
+    "section": "Statistics",
+    "group": ""
+  },
+  "Position uses percentages. Dragging is unavailable for this element; enter exact values.": {
+    "breadcrumb": "Settings",
+    "tab": "Settings",
+    "section": "",
+    "group": ""
+  },
+  "Preset Cycle": {
+    "breadcrumb": "Dev / Testing & Diagnostics",
+    "tab": "Dev",
+    "section": "Testing & Diagnostics",
+    "group": ""
+  },
+  "Preset apply failed.": {
+    "breadcrumb": "Settings",
+    "tab": "Settings",
+    "section": "",
+    "group": ""
+  },
+  "Presets": {
+    "breadcrumb": "Presets",
+    "tab": "Presets",
+    "section": "",
+    "group": ""
+  },
+  "Press Enter to preview a typed value.": {
+    "breadcrumb": "Settings",
+    "tab": "Settings",
+    "section": "",
+    "group": ""
+  },
+  "Preview": {
+    "breadcrumb": "Config / Meta Settings",
+    "tab": "Config",
+    "section": "Meta Settings",
+    "group": ""
+  },
+  "Preview Announcer": {
+    "breadcrumb": "Settings",
+    "tab": "Settings",
+    "section": "",
+    "group": ""
+  },
+  "Preview Changes": {
+    "breadcrumb": "Config / General",
+    "tab": "Config",
+    "section": "General",
+    "group": ""
+  },
+  "Preview active": {
+    "breadcrumb": "Settings",
+    "tab": "Settings",
+    "section": "",
+    "group": ""
+  },
+  "Preview realtime changes to settings when modifying them.": {
+    "breadcrumb": "Config / Meta Settings",
+    "tab": "Config",
+    "section": "Meta Settings",
+    "group": ""
+  },
+  "Preview setting changes in realtime.": {
+    "breadcrumb": "Settings",
+    "tab": "Settings",
+    "section": "",
+    "group": ""
+  },
+  "Profile and Profile Card": {
+    "breadcrumb": "Settings",
+    "tab": "Settings",
+    "section": "",
+    "group": ""
+  },
+  "Profile links, rank badges and profile controls run in separate native contexts. They currently have no persistent customization settings.": {
+    "breadcrumb": "Settings",
+    "tab": "Settings",
+    "section": "",
+    "group": ""
+  },
+  "Pull the any corner to resize.": {
+    "breadcrumb": "Settings",
+    "tab": "Settings",
+    "section": "",
+    "group": ""
+  },
+  "Purple": {
+    "breadcrumb": "Settings",
+    "tab": "Settings",
+    "section": "",
+    "group": ""
+  },
+  "Push - Both have blackjack.": {
+    "breadcrumb": "Settings",
+    "tab": "Settings",
+    "section": "",
+    "group": ""
+  },
+  "Push.": {
+    "breadcrumb": "Settings",
+    "tab": "Settings",
+    "section": "",
+    "group": ""
+  },
+  "Q": {
+    "breadcrumb": "Settings",
+    "tab": "Settings",
+    "section": "",
+    "group": ""
+  },
+  "QOL": {
+    "breadcrumb": "Settings",
+    "tab": "Settings",
+    "section": "",
+    "group": ""
+  },
+  "QOL Settings Clearer": {
+    "breadcrumb": "Settings",
+    "tab": "Settings",
+    "section": "",
+    "group": ""
+  },
+  "QOL Settings Loader": {
+    "breadcrumb": "Settings",
+    "tab": "Settings",
+    "section": "",
+    "group": ""
+  },
+  "QOL Settings Saver": {
+    "breadcrumb": "Settings",
+    "tab": "Settings",
+    "section": "",
+    "group": ""
+  },
+  "Quick Buy": {
+    "breadcrumb": "HUD / Shop",
+    "tab": "HUD",
+    "section": "Shop",
+    "group": ""
+  },
+  "Quickbuy Total Summary": {
+    "breadcrumb": "Settings",
+    "tab": "Settings",
+    "section": "",
+    "group": ""
+  },
+  "Quiet": {
+    "breadcrumb": "Settings",
+    "tab": "Settings",
+    "section": "",
+    "group": ""
+  },
+  "RAM and GPU Memory real time usage statistics.": {
+    "breadcrumb": "Console / Statistics",
+    "tab": "Console",
+    "section": "Statistics",
+    "group": ""
+  },
+  "Ragnarok Online damage visuals with improved fancy styling.": {
+    "breadcrumb": "Crosshair / Damage Numbers",
+    "tab": "Crosshair",
+    "section": "Damage Numbers",
+    "group": ""
+  },
+  "Randomly opens an enabled arcade game while dead.": {
+    "breadcrumb": "Arcade / Game Settings",
+    "tab": "Arcade",
+    "section": "Game Settings",
+    "group": ""
+  },
+  "Range": {
+    "breadcrumb": "Settings",
+    "tab": "Settings",
+    "section": "",
+    "group": ""
+  },
+  "Ranks": {
+    "breadcrumb": "Settings",
+    "tab": "Settings",
+    "section": "",
+    "group": ""
+  },
+  "Read registered manifest checks in the current HUD. Reports skips and failures; does not verify rendering or gameplay.": {
+    "breadcrumb": "Dev / Testing & Diagnostics",
+    "tab": "Dev",
+    "section": "Testing & Diagnostics",
+    "group": ""
+  },
+  "Ready": {
+    "breadcrumb": "Settings",
+    "tab": "Settings",
+    "section": "",
+    "group": ""
+  },
+  "Ready.": {
+    "breadcrumb": "Settings",
+    "tab": "Settings",
+    "section": "",
+    "group": ""
+  },
+  "Real time key input visual.": {
+    "breadcrumb": "Overlay",
+    "tab": "Overlay",
+    "section": "",
+    "group": ""
+  },
+  "Realtime Changes": {
+    "breadcrumb": "Config / General",
+    "tab": "Config",
+    "section": "General",
+    "group": ""
+  },
+  "Realtime Drain Countdown": {
+    "breadcrumb": "Settings",
+    "tab": "Settings",
+    "section": "",
+    "group": ""
+  },
+  "Realtime Key Inputs": {
+    "breadcrumb": "Settings",
+    "tab": "Settings",
+    "section": "",
+    "group": ""
+  },
+  "Realtime Settings Changes": {
+    "breadcrumb": "Settings",
+    "tab": "Settings",
+    "section": "",
+    "group": ""
+  },
+  "Recent Purchases": {
+    "breadcrumb": "HUD / Shop",
+    "tab": "HUD",
+    "section": "Shop",
+    "group": ""
+  },
+  "Recommended for 4:3": {
+    "breadcrumb": "Settings",
+    "tab": "Settings",
+    "section": "",
+    "group": ""
+  },
+  "Record HUD states": {
+    "breadcrumb": "Dev / Testing & Diagnostics",
+    "tab": "Dev",
+    "section": "Testing & Diagnostics",
+    "group": ""
+  },
+  "Record HUD states and managed callback activity for 60 seconds. Reproduce the stutter or return to hideout. Settings are unchanged.": {
+    "breadcrumb": "Dev / Testing & Diagnostics",
+    "tab": "Dev",
+    "section": "Testing & Diagnostics",
+    "group": ""
+  },
+  "Record for 60 seconds while playing: open and close the scoreboard, die and respawn. Settings are unchanged.": {
+    "breadcrumb": "Settings",
+    "tab": "Settings",
+    "section": "",
+    "group": ""
+  },
+  "Red": {
+    "breadcrumb": "Settings",
+    "tab": "Settings",
+    "section": "",
+    "group": ""
+  },
+  "Red Diamond": {
+    "breadcrumb": "Settings",
+    "tab": "Settings",
+    "section": "",
+    "group": ""
+  },
+  "Redo": {
+    "breadcrumb": "Settings",
+    "tab": "Settings",
+    "section": "",
+    "group": ""
+  },
+  "Reference position and size": {
+    "breadcrumb": "Settings",
+    "tab": "Settings",
+    "section": "",
+    "group": ""
+  },
+  "Refresh Rate": {
+    "breadcrumb": "Console / Minimap",
+    "tab": "Console",
+    "section": "Minimap",
+    "group": ""
+  },
+  "Rejuvenator": {
+    "breadcrumb": "Shop / Quick Buy",
+    "tab": "Shop",
+    "section": "Quick Buy",
+    "group": ""
+  },
+  "Rejuvenator HUD": {
+    "breadcrumb": "Settings",
+    "tab": "Settings",
+    "section": "",
+    "group": ""
+  },
+  "Rejuvenator Timer": {
+    "breadcrumb": "Settings",
+    "tab": "Settings",
+    "section": "",
+    "group": ""
+  },
+  "Reload Cooldown": {
+    "breadcrumb": "Crosshair",
+    "tab": "Crosshair",
+    "section": "",
+    "group": ""
+  },
+  "Reload in game; inspect size, opacity and offsets.": {
+    "breadcrumb": "Settings",
+    "tab": "Settings",
+    "section": "",
+    "group": ""
+  },
+  "Reloading": {
+    "breadcrumb": "Crosshair / Reloading",
+    "tab": "Crosshair",
+    "section": "Reloading",
+    "group": ""
+  },
+  "Rem Tunnels": {
+    "breadcrumb": "Minimap / Addons",
+    "tab": "Minimap",
+    "section": "Addons",
+    "group": ""
+  },
+  "Rem Tunnels Opacity": {
+    "breadcrumb": "Settings",
+    "tab": "Settings",
+    "section": "",
+    "group": ""
+  },
+  "Remind when big camps and Sinner's Sacrifice are spawning.": {
+    "breadcrumb": "Audio / Announcer",
+    "tab": "Audio",
+    "section": "Announcer",
+    "group": ""
+  },
+  "Remind when bridge buffs and melee troopers are spawning.": {
+    "breadcrumb": "Audio / Announcer",
+    "tab": "Audio",
+    "section": "Announcer",
+    "group": ""
+  },
+  "Remind when bridge buffs are spawning.": {
+    "breadcrumb": "Audio / Announcer",
+    "tab": "Audio",
+    "section": "Announcer",
+    "group": ""
+  },
+  "Remind when bridge buffs spawn and gold statue buffs are maxed.": {
+    "breadcrumb": "Audio / Announcer",
+    "tab": "Audio",
+    "section": "Announcer",
+    "group": ""
+  },
+  "Remind when bridge buffs spawn and troopers improve again.": {
+    "breadcrumb": "Audio / Announcer",
+    "tab": "Audio",
+    "section": "Announcer",
+    "group": ""
+  },
+  "Remind when bridge buffs spawn and troopers speed up.": {
+    "breadcrumb": "Audio / Announcer",
+    "tab": "Audio",
+    "section": "Announcer",
+    "group": ""
+  },
+  "Remind when lane guardian resistance is reduced.": {
+    "breadcrumb": "Audio / Announcer",
+    "tab": "Audio",
+    "section": "Announcer",
+    "group": ""
+  },
+  "Remind when medium camps are spawning.": {
+    "breadcrumb": "Audio / Announcer",
+    "tab": "Audio",
+    "section": "Announcer",
+    "group": ""
+  },
+  "Remind when midboss, urn, bridge buffs, and gold statue upgrades are spawning.": {
+    "breadcrumb": "Settings",
+    "tab": "Settings",
+    "section": "",
+    "group": ""
+  },
+  "Remind when small camps, boxes, and statues are spawning.": {
+    "breadcrumb": "Audio / Announcer",
+    "tab": "Audio",
+    "section": "Announcer",
+    "group": ""
+  },
+  "Remind when urn, bridge buffs, and gold statue upgrades are spawning.": {
+    "breadcrumb": "Audio / Announcer",
+    "tab": "Audio",
+    "section": "Announcer",
+    "group": ""
+  },
+  "Remind when walker resistance is reduced.": {
+    "breadcrumb": "Audio / Announcer",
+    "tab": "Audio",
+    "section": "Announcer",
+    "group": ""
+  },
+  "Reminder Captions": {
+    "breadcrumb": "Settings",
+    "tab": "Settings",
+    "section": "",
+    "group": ""
+  },
+  "Render image URLs as images.": {
+    "breadcrumb": "HUD / Ability Points (AP)",
+    "tab": "HUD",
+    "section": "Ability Points (AP)",
+    "group": ""
+  },
+  "Replaces quickbuy with the Enhanced Quickbuy standalone layout and queue summaries.": {
+    "breadcrumb": "UI / Player Stats",
+    "tab": "UI",
+    "section": "Player Stats",
+    "group": ""
+  },
+  "Reposition": {
+    "breadcrumb": "Shop / Quick Buy",
+    "tab": "Shop",
+    "section": "Quick Buy",
+    "group": ""
+  },
+  "Request a community preset": {
+    "breadcrumb": "Settings",
+    "tab": "Settings",
+    "section": "",
+    "group": ""
+  },
+  "Request a custom feature or preset": {
+    "breadcrumb": "Support",
+    "tab": "Support",
+    "section": "",
+    "group": ""
+  },
+  "Request failed": {
+    "breadcrumb": "Settings",
+    "tab": "Settings",
+    "section": "",
+    "group": ""
+  },
+  "Reset": {
+    "breadcrumb": "Settings",
+    "tab": "Settings",
+    "section": "",
+    "group": ""
+  },
+  "Reset row to defaults": {
+    "breadcrumb": "Settings",
+    "tab": "Settings",
+    "section": "",
+    "group": ""
+  },
+  "Reset section runtime options": {
+    "breadcrumb": "Settings",
+    "tab": "Settings",
+    "section": "",
+    "group": ""
+  },
+  "Reset section to defaults": {
+    "breadcrumb": "Settings",
+    "tab": "Settings",
+    "section": "",
+    "group": ""
+  },
+  "Reset settings:": {
+    "breadcrumb": "Settings",
+    "tab": "Settings",
+    "section": "",
+    "group": ""
+  },
+  "Reset the selected element to defaults.": {
+    "breadcrumb": "Settings",
+    "tab": "Settings",
+    "section": "",
+    "group": ""
+  },
+  "Reset to default value": {
+    "breadcrumb": "Settings",
+    "tab": "Settings",
+    "section": "",
+    "group": ""
+  },
+  "Reset to default value.": {
+    "breadcrumb": "Settings",
+    "tab": "Settings",
+    "section": "",
+    "group": ""
+  },
+  "Resizes the minimap using width and height instead of scaling the whole HUD. Applies to Base, Alt and Tab views.": {
+    "breadcrumb": "Minimap / Base",
+    "tab": "Minimap",
+    "section": "Base",
+    "group": ""
+  },
+  "Restart your game to re-enable these features.": {
+    "breadcrumb": "Settings",
+    "tab": "Settings",
+    "section": "",
+    "group": ""
+  },
+  "Restore the change canceled by Undo.": {
+    "breadcrumb": "Settings",
+    "tab": "Settings",
+    "section": "",
+    "group": ""
+  },
+  "Restores the legacy removed duration bars for abilities.": {
+    "breadcrumb": "HUD",
+    "tab": "HUD",
+    "section": "",
+    "group": ""
+  },
+  "Retheme the settings menu, modals, loader, and save menus with a shared aesthetic.": {
+    "breadcrumb": "Config / Meta Settings",
+    "tab": "Config",
+    "section": "Meta Settings",
+    "group": ""
+  },
+  "Retry save": {
+    "breadcrumb": "Settings",
+    "tab": "Settings",
+    "section": "",
+    "group": ""
+  },
+  "Rift Timer": {
+    "breadcrumb": "HUD",
+    "tab": "HUD",
+    "section": "",
+    "group": ""
+  },
+  "Right": {
+    "breadcrumb": "HUD / Player Stats",
+    "tab": "HUD",
+    "section": "Player Stats",
+    "group": ""
+  },
+  "Right and down, smaller": {
+    "breadcrumb": "Settings",
+    "tab": "Settings",
+    "section": "",
+    "group": ""
+  },
+  "Right and down, smaller and more transparent": {
+    "breadcrumb": "Settings",
+    "tab": "Settings",
+    "section": "",
+    "group": ""
+  },
+  "Right and up, larger": {
+    "breadcrumb": "Settings",
+    "tab": "Settings",
+    "section": "",
+    "group": ""
+  },
+  "Right and up, more transparent": {
+    "breadcrumb": "Settings",
+    "tab": "Settings",
+    "section": "",
+    "group": ""
+  },
+  "Right and up, more transparent; equip items first": {
+    "breadcrumb": "Settings",
+    "tab": "Settings",
+    "section": "",
+    "group": ""
+  },
+  "Right and up, smaller": {
+    "breadcrumb": "Settings",
+    "tab": "Settings",
+    "section": "",
+    "group": ""
+  },
+  "Right and up, smaller and more transparent": {
+    "breadcrumb": "Settings",
+    "tab": "Settings",
+    "section": "",
+    "group": ""
+  },
+  "Rose": {
+    "breadcrumb": "Settings",
+    "tab": "Settings",
+    "section": "",
+    "group": ""
+  },
+  "Rotate": {
+    "breadcrumb": "Crosshair / Stamina",
+    "tab": "Crosshair",
+    "section": "Stamina",
+    "group": ""
+  },
+  "Rotate Magazine": {
+    "breadcrumb": "Crosshair / Ammo",
+    "tab": "Crosshair",
+    "section": "Ammo",
+    "group": ""
+  },
+  "Rotate the ammo magazine visualiser.": {
+    "breadcrumb": "Crosshair / Ammo",
+    "tab": "Crosshair",
+    "section": "Ammo",
+    "group": ""
+  },
+  "Rotate the stamina charge indicator.": {
+    "breadcrumb": "Crosshair / Stamina",
+    "tab": "Crosshair",
+    "section": "Stamina",
+    "group": ""
+  },
+  "Rotates the static minimap 180 degrees.": {
+    "breadcrumb": "Minimap / Minimap",
+    "tab": "Minimap",
+    "section": "Minimap",
+    "group": ""
+  },
+  "Rotation": {
+    "breadcrumb": "Settings",
+    "tab": "Settings",
+    "section": "",
+    "group": ""
+  },
+  "Row already at defaults.": {
+    "breadcrumb": "Settings",
+    "tab": "Settings",
+    "section": "",
+    "group": ""
+  },
+  "Row reset (": {
+    "breadcrumb": "Settings",
+    "tab": "Settings",
+    "section": "",
+    "group": ""
+  },
+  "Run Current (10s)": {
+    "breadcrumb": "Dev / In-Game Benchmarks",
+    "tab": "Dev",
+    "section": "In-Game Benchmarks",
+    "group": ""
+  },
+  "Run Engine Audit": {
+    "breadcrumb": "Dev / Testing & Diagnostics",
+    "tab": "Dev",
+    "section": "Testing & Diagnostics",
+    "group": ""
+  },
+  "Run Feature Test": {
+    "breadcrumb": "Dev / Testing & Diagnostics",
+    "tab": "Dev",
+    "section": "Testing & Diagnostics",
+    "group": ""
+  },
+  "Run Manifest Tests": {
+    "breadcrumb": "Dev / Testing & Diagnostics",
+    "tab": "Dev",
+    "section": "Testing & Diagnostics",
+    "group": ""
+  },
+  "Run Storage Test": {
+    "breadcrumb": "Dev / Testing & Diagnostics",
+    "tab": "Dev",
+    "section": "Testing & Diagnostics",
+    "group": ""
+  },
+  "Run Stress Test (10s)": {
+    "breadcrumb": "Dev / In-Game Benchmarks",
+    "tab": "Dev",
+    "section": "In-Game Benchmarks",
+    "group": ""
+  },
+  "Run complete. Press New Run.": {
+    "breadcrumb": "Settings",
+    "tab": "Settings",
+    "section": "",
+    "group": ""
+  },
+  "Run manifest checks and copy their observations, skips and errors. Rendering and gameplay remain unverified.": {
+    "breadcrumb": "Dev / Testing & Diagnostics",
+    "tab": "Dev",
+    "section": "Testing & Diagnostics",
+    "group": ""
+  },
+  "Rune + Fast Troopers": {
+    "breadcrumb": "Audio / Announcer",
+    "tab": "Audio",
+    "section": "Announcer",
+    "group": ""
+  },
+  "Rune + Gold Buffs": {
+    "breadcrumb": "Audio / Announcer",
+    "tab": "Audio",
+    "section": "Announcer",
+    "group": ""
+  },
+  "Rune + Melee Troopers": {
+    "breadcrumb": "Audio / Announcer",
+    "tab": "Audio",
+    "section": "Announcer",
+    "group": ""
+  },
+  "Rune + Troopers 20s HP": {
+    "breadcrumb": "Audio / Announcer",
+    "tab": "Audio",
+    "section": "Announcer",
+    "group": ""
+  },
+  "Running": {
+    "breadcrumb": "Settings",
+    "tab": "Settings",
+    "section": "",
+    "group": ""
+  },
+  "Running...": {
+    "breadcrumb": "Settings",
+    "tab": "Settings",
+    "section": "",
+    "group": ""
+  },
+  "Russian": {
+    "breadcrumb": "Settings",
+    "tab": "Settings",
+    "section": "",
+    "group": ""
+  },
+  "SAVE": {
+    "breadcrumb": "Settings",
+    "tab": "Settings",
+    "section": "",
+    "group": ""
+  },
+  "SAVED": {
+    "breadcrumb": "Settings",
+    "tab": "Settings",
+    "section": "",
+    "group": ""
+  },
+  "SAVING": {
+    "breadcrumb": "Settings",
+    "tab": "Settings",
+    "section": "",
+    "group": ""
+  },
+  "SUCCESS": {
+    "breadcrumb": "Settings",
+    "tab": "Settings",
+    "section": "",
+    "group": ""
+  },
+  "SUPPORT THE MOD": {
+    "breadcrumb": "Settings",
+    "tab": "Settings",
+    "section": "",
+    "group": ""
+  },
+  "Save": {
+    "breadcrumb": "Settings",
+    "tab": "Settings",
+    "section": "",
+    "group": ""
+  },
+  "Save completed.": {
+    "breadcrumb": "Settings",
+    "tab": "Settings",
+    "section": "",
+    "group": ""
+  },
+  "Save failed.": {
+    "breadcrumb": "Settings",
+    "tab": "Settings",
+    "section": "",
+    "group": ""
+  },
+  "Save in progress...": {
+    "breadcrumb": "Settings",
+    "tab": "Settings",
+    "section": "",
+    "group": ""
+  },
+  "Save queued.": {
+    "breadcrumb": "Settings",
+    "tab": "Settings",
+    "section": "",
+    "group": ""
+  },
+  "Save timed out. Try again.": {
+    "breadcrumb": "Settings",
+    "tab": "Settings",
+    "section": "",
+    "group": ""
+  },
+  "Save works only in hideout.": {
+    "breadcrumb": "Settings",
+    "tab": "Settings",
+    "section": "",
+    "group": ""
+  },
+  "Saving HUD changes...": {
+    "breadcrumb": "Settings",
+    "tab": "Settings",
+    "section": "",
+    "group": ""
+  },
+  "Scale": {
+    "breadcrumb": "Settings",
+    "tab": "Settings",
+    "section": "",
+    "group": ""
+  },
+  "Scales the element.": {
+    "breadcrumb": "Settings",
+    "tab": "Settings",
+    "section": "",
+    "group": ""
+  },
+  "Schema {schema} | clamped={clamped} | unknown={unknown}": {
+    "breadcrumb": "Settings",
+    "tab": "Settings",
+    "section": "",
+    "group": ""
+  },
+  "Score:": {
+    "breadcrumb": "Settings",
+    "tab": "Settings",
+    "section": "",
+    "group": ""
+  },
+  "Scoreboard": {
+    "breadcrumb": "Shop / Quick Buy",
+    "tab": "Shop",
+    "section": "Quick Buy",
+    "group": ""
+  },
+  "Scoreboard Open": {
+    "breadcrumb": "Settings",
+    "tab": "Settings",
+    "section": "",
+    "group": ""
+  },
+  "Search Results": {
+    "breadcrumb": "Settings",
+    "tab": "Settings",
+    "section": "",
+    "group": ""
+  },
+  "Search elements": {
+    "breadcrumb": "Settings",
+    "tab": "Settings",
+    "section": "",
+    "group": ""
+  },
+  "Seconds Before Spawn": {
+    "breadcrumb": "Settings",
+    "tab": "Settings",
+    "section": "",
+    "group": ""
+  },
+  "Seconds each notification stays visible.": {
+    "breadcrumb": "Shop / Quick Buy",
+    "tab": "Shop",
+    "section": "Quick Buy",
+    "group": ""
+  },
+  "Section already at defaults.": {
+    "breadcrumb": "Settings",
+    "tab": "Settings",
+    "section": "",
+    "group": ""
+  },
+  "Section reset (": {
+    "breadcrumb": "Settings",
+    "tab": "Settings",
+    "section": "",
+    "group": ""
+  },
+  "See the recent purchases made in the game.": {
+    "breadcrumb": "UI / Player Stats",
+    "tab": "UI",
+    "section": "Player Stats",
+    "group": ""
+  },
+  "See your view angle and speed.": {
+    "breadcrumb": "Overlay",
+    "tab": "Overlay",
+    "section": "",
+    "group": ""
+  },
+  "See your view angle.": {
+    "breadcrumb": "Settings",
+    "tab": "Settings",
+    "section": "",
+    "group": ""
+  },
+  "Select an element on the HUD or in the list.": {
+    "breadcrumb": "Settings",
+    "tab": "Settings",
+    "section": "",
+    "group": ""
+  },
+  "Select an element, drag its frame, or enter exact values.": {
+    "breadcrumb": "Settings",
+    "tab": "Settings",
+    "section": "",
+    "group": ""
+  },
+  "Settings": {
+    "breadcrumb": "Config",
+    "tab": "Config",
+    "section": "",
+    "group": ""
+  },
+  "Settings Changes": {
+    "breadcrumb": "Settings",
+    "tab": "Settings",
+    "section": "",
+    "group": ""
+  },
+  "Settings Interface": {
+    "breadcrumb": "Settings",
+    "tab": "Settings",
+    "section": "",
+    "group": ""
+  },
+  "Settings UI Language": {
+    "breadcrumb": "Settings",
+    "tab": "Settings",
+    "section": "",
+    "group": ""
+  },
+  "Settings now load from your saved build string": {
+    "breadcrumb": "Settings",
+    "tab": "Settings",
+    "section": "",
+    "group": ""
+  },
+  "Settings restored": {
+    "breadcrumb": "Settings",
+    "tab": "Settings",
+    "section": "",
+    "group": ""
+  },
+  "Settings, previews, tooltips and developer dialogs use the settings theme. Change the theme in Settings.": {
+    "breadcrumb": "Settings",
+    "tab": "Settings",
+    "section": "",
+    "group": ""
+  },
+  "Share or save your settings configuration!": {
+    "breadcrumb": "Settings",
+    "tab": "Settings",
+    "section": "",
+    "group": ""
+  },
+  "Share your settings string": {
+    "breadcrumb": "Settings",
+    "tab": "Settings",
+    "section": "",
+    "group": ""
+  },
+  "Shifts the HUD for better visual support for 16:10 resolutions.": {
+    "breadcrumb": "UI / UI Controls",
+    "tab": "UI",
+    "section": "UI Controls",
+    "group": ""
+  },
+  "Shifts the HUD for better visual support for 4:3 resolutions.": {
+    "breadcrumb": "UI / UI Controls",
+    "tab": "UI",
+    "section": "UI Controls",
+    "group": ""
+  },
+  "Shop": {
+    "breadcrumb": "Shop",
+    "tab": "Shop",
+    "section": "",
+    "group": ""
+  },
+  "Shop Display": {
+    "breadcrumb": "Shop / Shop Display",
+    "tab": "Shop",
+    "section": "Shop Display",
+    "group": ""
+  },
+  "Shop Stats": {
+    "breadcrumb": "Settings",
+    "tab": "Settings",
+    "section": "",
+    "group": ""
+  },
+  "Show Buffs": {
+    "breadcrumb": "Crosshair / Active Stats",
+    "tab": "Crosshair",
+    "section": "Active Stats",
+    "group": ""
+  },
+  "Show Build ID": {
+    "breadcrumb": "UI / UI Controls",
+    "tab": "UI",
+    "section": "UI Controls",
+    "group": ""
+  },
+  "Show Compass": {
+    "breadcrumb": "Settings",
+    "tab": "Settings",
+    "section": "",
+    "group": ""
+  },
+  "Show Debuffs": {
+    "breadcrumb": "Crosshair / Active Stats",
+    "tab": "Crosshair",
+    "section": "Active Stats",
+    "group": ""
+  },
+  "Show FPS": {
+    "breadcrumb": "Console / Statistics",
+    "tab": "Console",
+    "section": "Statistics",
+    "group": ""
+  },
+  "Show Filters": {
+    "breadcrumb": "Settings",
+    "tab": "Settings",
+    "section": "",
+    "group": ""
+  },
+  "Show Frame": {
+    "breadcrumb": "Console / Statistics",
+    "tab": "Console",
+    "section": "Statistics",
+    "group": ""
+  },
+  "Show Icon": {
+    "breadcrumb": "Settings",
+    "tab": "Settings",
+    "section": "",
+    "group": ""
+  },
+  "Show Memory": {
+    "breadcrumb": "Console / Statistics",
+    "tab": "Console",
+    "section": "Statistics",
+    "group": ""
+  },
+  "Show Overlay": {
+    "breadcrumb": "Dev / Performance",
+    "tab": "Dev",
+    "section": "Performance",
+    "group": ""
+  },
+  "Show Player Ranks": {
+    "breadcrumb": "HUD",
+    "tab": "HUD",
+    "section": "",
+    "group": ""
+  },
+  "Show Position": {
+    "breadcrumb": "Console / Statistics",
+    "tab": "Console",
+    "section": "Statistics",
+    "group": ""
+  },
+  "Show Rank": {
+    "breadcrumb": "Settings",
+    "tab": "Settings",
+    "section": "",
+    "group": ""
+  },
+  "Show Rank in Top Bar": {
+    "breadcrumb": "Settings",
+    "tab": "Settings",
+    "section": "",
+    "group": ""
+  },
+  "Show Speed": {
+    "breadcrumb": "Settings",
+    "tab": "Settings",
+    "section": "",
+    "group": ""
+  },
+  "Show Support": {
+    "breadcrumb": "Settings",
+    "tab": "Settings",
+    "section": "",
+    "group": ""
+  },
+  "Show Testing Tools": {
+    "breadcrumb": "UI / UI Controls",
+    "tab": "UI",
+    "section": "UI Controls",
+    "group": ""
+  },
+  "Show Text": {
+    "breadcrumb": "Settings",
+    "tab": "Settings",
+    "section": "",
+    "group": ""
+  },
+  "Show Tick": {
+    "breadcrumb": "Console / Statistics",
+    "tab": "Console",
+    "section": "Statistics",
+    "group": ""
+  },
+  "Show Title": {
+    "breadcrumb": "UI / UI Controls / Show Build ID",
+    "tab": "UI",
+    "section": "UI Controls",
+    "group": ""
+  },
+  "Show a short caption when Deadlock For Dummies reminders play.": {
+    "breadcrumb": "Audio / Announcer",
+    "tab": "Audio",
+    "section": "Announcer",
+    "group": ""
+  },
+  "Show a visual indicator in the top bar of the current Guardians, Walkers, and Base.": {
+    "breadcrumb": "HUD / Top Bar",
+    "tab": "HUD",
+    "section": "Top Bar",
+    "group": ""
+  },
+  "Show active buffs/debuffs (firerate, slow, antiheal...) vertically next to the crosshair": {
+    "breadcrumb": "Settings",
+    "tab": "Settings",
+    "section": "",
+    "group": ""
+  },
+  "Show an overlay of the underground tunnels.": {
+    "breadcrumb": "Minimap / Addons",
+    "tab": "Minimap",
+    "section": "Addons",
+    "group": ""
+  },
+  "Show current / max HP numbers over the Minecraft hearts.": {
+    "breadcrumb": "Healthbar / Player",
+    "tab": "Healthbar",
+    "section": "Player",
+    "group": ""
+  },
+  "Show frames": {
+    "breadcrumb": "Settings",
+    "tab": "Settings",
+    "section": "",
+    "group": ""
+  },
+  "Show full feature breakdown in console every 5s.": {
+    "breadcrumb": "Dev / Performance",
+    "tab": "Dev",
+    "section": "Performance",
+    "group": ""
+  },
+  "Show if you are in combat or not.": {
+    "breadcrumb": "Crosshair",
+    "tab": "Crosshair",
+    "section": "",
+    "group": ""
+  },
+  "Show level text on V2 enemy healthbars.": {
+    "breadcrumb": "Healthbar / Enemy V2",
+    "tab": "Healthbar",
+    "section": "Enemy V2",
+    "group": ""
+  },
+  "Show negative modifiers (slow, antiheal, fire rate reduction...) next to the crosshair.": {
+    "breadcrumb": "Crosshair / Active Stats",
+    "tab": "Crosshair",
+    "section": "Active Stats",
+    "group": ""
+  },
+  "Show panels": {
+    "breadcrumb": "Settings",
+    "tab": "Settings",
+    "section": "",
+    "group": ""
+  },
+  "Show player ultimate indicators on V1 healthbars.": {
+    "breadcrumb": "Settings",
+    "tab": "Settings",
+    "section": "",
+    "group": ""
+  },
+  "Show positive modifiers (resistances, fire rate, lifesteal...) next to the crosshair.": {
+    "breadcrumb": "Crosshair / Active Stats",
+    "tab": "Crosshair",
+    "section": "Active Stats",
+    "group": ""
+  },
+  "Show purchase notifications under each hero's portrait instead of in the center.": {
+    "breadcrumb": "Shop / Quick Buy",
+    "tab": "Shop",
+    "section": "Quick Buy",
+    "group": ""
+  },
+  "Show rank prediction badges on top bar and escape menu player list.": {
+    "breadcrumb": "HUD",
+    "tab": "HUD",
+    "section": "",
+    "group": ""
+  },
+  "Show rank prediction badges on top bar player panels (requires Show Player Ranks).": {
+    "breadcrumb": "Settings",
+    "tab": "Settings",
+    "section": "",
+    "group": ""
+  },
+  "Show standalone movement speed.": {
+    "breadcrumb": "Settings",
+    "tab": "Settings",
+    "section": "",
+    "group": ""
+  },
+  "Show the UnitInfo panel on V2 enemy healthbars.": {
+    "breadcrumb": "Healthbar / Enemy V2",
+    "tab": "Healthbar",
+    "section": "Enemy V2",
+    "group": ""
+  },
+  "Show the estimated time for unsecured souls to dissapear.": {
+    "breadcrumb": "Overlay",
+    "tab": "Overlay",
+    "section": "",
+    "group": ""
+  },
+  "Show the in-game chat panel.": {
+    "breadcrumb": "UI / Player Stats",
+    "tab": "UI",
+    "section": "Player Stats",
+    "group": ""
+  },
+  "Show the performance overlay HUD in-game.": {
+    "breadcrumb": "Dev / Performance",
+    "tab": "Dev",
+    "section": "Performance",
+    "group": ""
+  },
+  "Show the ultimate indicator for V1 healthbars.": {
+    "breadcrumb": "Healthbar / Enemy",
+    "tab": "Healthbar",
+    "section": "Enemy",
+    "group": ""
+  },
+  "Show the underground tunnel overlay while Alt Zoom is active.": {
+    "breadcrumb": "Minimap / Addons",
+    "tab": "Minimap",
+    "section": "Addons",
+    "group": ""
+  },
+  "Show the underground tunnel overlay while Tab Zoom is active.": {
+    "breadcrumb": "Minimap / Addons",
+    "tab": "Minimap",
+    "section": "Addons",
+    "group": ""
+  },
+  "Showing:": {
+    "breadcrumb": "Settings",
+    "tab": "Settings",
+    "section": "",
+    "group": ""
+  },
+  "Shown Items": {
+    "breadcrumb": "Settings",
+    "tab": "Settings",
+    "section": "",
+    "group": ""
+  },
+  "Shows Midtown crate markers in the minimap.": {
+    "breadcrumb": "Minimap / Addons",
+    "tab": "Minimap",
+    "section": "Addons",
+    "group": ""
+  },
+  "Shows a countdown timer in the top bar for the next urn spawn or relocation.": {
+    "breadcrumb": "HUD",
+    "tab": "HUD",
+    "section": "",
+    "group": ""
+  },
+  "Shows a visual indicator in the minimap of when Bridge Buffs will spawn.": {
+    "breadcrumb": "Minimap / Minimap",
+    "tab": "Minimap",
+    "section": "Minimap",
+    "group": ""
+  },
+  "Shows a visual indicator in the minimap of when Mid Boss will spawn.": {
+    "breadcrumb": "Minimap / Minimap",
+    "tab": "Minimap",
+    "section": "Minimap",
+    "group": ""
+  },
+  "Shows a visual indicator in the top bar of the percentage difference of souls between teams.": {
+    "breadcrumb": "HUD / Top Bar",
+    "tab": "HUD",
+    "section": "Top Bar",
+    "group": ""
+  },
+  "Shows a visual indicator in the top bar of when Bridge Buffs will spawn.": {
+    "breadcrumb": "HUD / Top Bar",
+    "tab": "HUD",
+    "section": "Top Bar",
+    "group": ""
+  },
+  "Shows a visual indicator in the top bar of when Mid Boss will spawn.": {
+    "breadcrumb": "HUD / Top Bar",
+    "tab": "HUD",
+    "section": "Top Bar",
+    "group": ""
+  },
+  "Shows all of your keybinds.": {
+    "breadcrumb": "Overlay / Keyboard",
+    "tab": "Overlay",
+    "section": "Keyboard",
+    "group": ""
+  },
+  "Shows all of your player stats within the shop menu.": {
+    "breadcrumb": "HUD / Shop",
+    "tab": "HUD",
+    "section": "Shop",
+    "group": ""
+  },
+  "Shows current frame count, mostly useless.": {
+    "breadcrumb": "Console / Statistics",
+    "tab": "Console",
+    "section": "Statistics",
+    "group": ""
+  },
+  "Shows item buy notifications from recent purchases.": {
+    "breadcrumb": "UI / Player Stats",
+    "tab": "UI",
+    "section": "Player Stats",
+    "group": ""
+  },
+  "Shows item cooldowns near crosshair for easier readability.": {
+    "breadcrumb": "Crosshair",
+    "tab": "Crosshair",
+    "section": "",
+    "group": ""
+  },
+  "Shows nicknames of all players in the game within the top bar.": {
+    "breadcrumb": "HUD / Top Bar",
+    "tab": "HUD",
+    "section": "Top Bar",
+    "group": ""
+  },
+  "Shows raw FPS count.": {
+    "breadcrumb": "Console / Statistics",
+    "tab": "Console",
+    "section": "Statistics",
+    "group": ""
+  },
+  "Shows real time tick information, mostly useless.": {
+    "breadcrumb": "Console / Statistics",
+    "tab": "Console",
+    "section": "Statistics",
+    "group": ""
+  },
+  "Shows relative elevation difference between you and players.": {
+    "breadcrumb": "Minimap / Addons",
+    "tab": "Minimap",
+    "section": "Addons",
+    "group": ""
+  },
+  "Shows the angle degrees and ticks.": {
+    "breadcrumb": "Settings",
+    "tab": "Settings",
+    "section": "",
+    "group": ""
+  },
+  "Shows the individual player souls per minute on scoreboard and the team in the top bar.": {
+    "breadcrumb": "Settings",
+    "tab": "Settings",
+    "section": "",
+    "group": ""
+  },
+  "Shows the individual player's objective damage in the top bar.": {
+    "breadcrumb": "HUD / Top Bar",
+    "tab": "HUD",
+    "section": "Top Bar",
+    "group": ""
+  },
+  "Shows the individual player's unspent souls in the top bar.": {
+    "breadcrumb": "Settings",
+    "tab": "Settings",
+    "section": "",
+    "group": ""
+  },
+  "Shows your build information always for content creators": {
+    "breadcrumb": "UI / UI Controls",
+    "tab": "UI",
+    "section": "UI Controls",
+    "group": ""
+  },
+  "Shows your character in the shop menu.": {
+    "breadcrumb": "HUD / Shop",
+    "tab": "HUD",
+    "section": "Shop",
+    "group": ""
+  },
+  "Shrink Distance": {
+    "breadcrumb": "Console / Minimap",
+    "tab": "Console",
+    "section": "Minimap",
+    "group": ""
+  },
+  "Side": {
+    "breadcrumb": "UI / Player Stats",
+    "tab": "UI",
+    "section": "Player Stats",
+    "group": ""
+  },
+  "Significantly improve visibility of target reticle and highlight for execute ranges (Shiv).": {
+    "breadcrumb": "Crosshair / Item Target Reticle",
+    "tab": "Crosshair",
+    "section": "Item Target Reticle",
+    "group": ""
+  },
+  "Silver": {
+    "breadcrumb": "Settings",
+    "tab": "Settings",
+    "section": "",
+    "group": ""
+  },
+  "Simplified Minimap": {
+    "breadcrumb": "Settings",
+    "tab": "Settings",
+    "section": "",
+    "group": ""
+  },
+  "Simplifies the Compass overlay to its bare elements.": {
+    "breadcrumb": "Overlay / Compass",
+    "tab": "Overlay",
+    "section": "Compass",
+    "group": ""
+  },
+  "Simplify": {
+    "breadcrumb": "Settings",
+    "tab": "Settings",
+    "section": "",
+    "group": ""
+  },
+  "Simplify Ability Icons": {
+    "breadcrumb": "Settings",
+    "tab": "Settings",
+    "section": "",
+    "group": ""
+  },
+  "Simplify Items": {
+    "breadcrumb": "Settings",
+    "tab": "Settings",
+    "section": "",
+    "group": ""
+  },
+  "Simplify Shop": {
+    "breadcrumb": "Settings",
+    "tab": "Settings",
+    "section": "",
+    "group": ""
+  },
+  "Simplify Shop Stats": {
+    "breadcrumb": "Settings",
+    "tab": "Settings",
+    "section": "",
+    "group": ""
+  },
+  "Size": {
+    "breadcrumb": "Settings",
+    "tab": "Settings",
+    "section": "",
+    "group": ""
+  },
+  "Size of your current ammo.": {
+    "breadcrumb": "Crosshair / Ammo",
+    "tab": "Crosshair",
+    "section": "Ammo",
+    "group": ""
+  },
+  "Size of your total ammo.": {
+    "breadcrumb": "Crosshair / Ammo",
+    "tab": "Crosshair",
+    "section": "Ammo",
+    "group": ""
+  },
+  "Sky": {
+    "breadcrumb": "Settings",
+    "tab": "Settings",
+    "section": "",
+    "group": ""
+  },
+  "Skyrunner switch sent.": {
+    "breadcrumb": "Settings",
+    "tab": "Settings",
+    "section": "",
+    "group": ""
+  },
+  "Slight adjustments to the HUD for better streaming output.": {
+    "breadcrumb": "UI / UI Controls",
+    "tab": "UI",
+    "section": "UI Controls",
+    "group": ""
+  },
+  "Small Camps + Boxes": {
+    "breadcrumb": "Audio / Announcer",
+    "tab": "Audio",
+    "section": "Announcer",
+    "group": ""
+  },
+  "Small Numbers": {
+    "breadcrumb": "Crosshair / Damage Numbers",
+    "tab": "Crosshair",
+    "section": "Damage Numbers",
+    "group": ""
+  },
+  "Smaller, more transparent": {
+    "breadcrumb": "Settings",
+    "tab": "Settings",
+    "section": "",
+    "group": ""
+  },
+  "Snap to center": {
+    "breadcrumb": "Settings",
+    "tab": "Settings",
+    "section": "",
+    "group": ""
+  },
+  "Snowball or Poster": {
+    "breadcrumb": "Settings",
+    "tab": "Settings",
+    "section": "",
+    "group": ""
+  },
+  "Some QOLLOCK features were auto-disabled due to errors:": {
+    "breadcrumb": "Settings",
+    "tab": "Settings",
+    "section": "",
+    "group": ""
+  },
+  "Souls": {
+    "breadcrumb": "HUD / Ability Points (AP)",
+    "tab": "HUD",
+    "section": "Ability Points (AP)",
+    "group": ""
+  },
+  "Souls Per Minute": {
+    "breadcrumb": "Settings",
+    "tab": "Settings",
+    "section": "",
+    "group": ""
+  },
+  "Souls Timer": {
+    "breadcrumb": "Settings",
+    "tab": "Settings",
+    "section": "",
+    "group": ""
+  },
+  "Spanish": {
+    "breadcrumb": "Settings",
+    "tab": "Settings",
+    "section": "",
+    "group": ""
+  },
+  "Special Thanks": {
+    "breadcrumb": "Settings",
+    "tab": "Settings",
+    "section": "",
+    "group": ""
+  },
+  "Speed": {
+    "breadcrumb": "Overlay / Compass",
+    "tab": "Overlay",
+    "section": "Compass",
+    "group": ""
+  },
+  "Speed number tracker.": {
+    "breadcrumb": "Overlay / Compass",
+    "tab": "Overlay",
+    "section": "Compass",
+    "group": ""
+  },
+  "Spinny Map": {
+    "breadcrumb": "Settings",
+    "tab": "Settings",
+    "section": "",
+    "group": ""
+  },
+  "Spinny Mode": {
+    "breadcrumb": "Minimap / Minimap",
+    "tab": "Minimap",
+    "section": "Minimap",
+    "group": ""
+  },
+  "Spirit Lifesteal": {
+    "breadcrumb": "Crosshair",
+    "tab": "Crosshair",
+    "section": "",
+    "group": ""
+  },
+  "Spirit Power": {
+    "breadcrumb": "Crosshair",
+    "tab": "Crosshair",
+    "section": "",
+    "group": ""
+  },
+  "Spirit Power: --": {
+    "breadcrumb": "Settings",
+    "tab": "Settings",
+    "section": "",
+    "group": ""
+  },
+  "Spirit Resist": {
+    "breadcrumb": "Crosshair",
+    "tab": "Crosshair",
+    "section": "",
+    "group": ""
+  },
+  "Stamina": {
+    "breadcrumb": "Crosshair / Stamina",
+    "tab": "Crosshair",
+    "section": "Stamina",
+    "group": ""
+  },
+  "Stand": {
+    "breadcrumb": "Settings",
+    "tab": "Settings",
+    "section": "",
+    "group": ""
+  },
+  "Start": {
+    "breadcrumb": "Dev / Testing & Diagnostics",
+    "tab": "Dev",
+    "section": "Testing & Diagnostics",
+    "group": ""
+  },
+  "Starting...": {
+    "breadcrumb": "Settings",
+    "tab": "Settings",
+    "section": "",
+    "group": ""
+  },
+  "Stat Bonuses": {
+    "breadcrumb": "Settings",
+    "tab": "Settings",
+    "section": "",
+    "group": ""
+  },
+  "Statistics": {
+    "breadcrumb": "Console",
+    "tab": "Console",
+    "section": "",
+    "group": ""
+  },
+  "Statlocker": {
+    "breadcrumb": "UI / UI Controls",
+    "tab": "UI",
+    "section": "UI Controls",
+    "group": ""
+  },
+  "Stats": {
+    "breadcrumb": "HUD / Shop",
+    "tab": "HUD",
+    "section": "Shop",
+    "group": ""
+  },
+  "Stop": {
+    "breadcrumb": "Settings",
+    "tab": "Settings",
+    "section": "",
+    "group": ""
+  },
+  "Stopped": {
+    "breadcrumb": "Settings",
+    "tab": "Settings",
+    "section": "",
+    "group": ""
+  },
+  "Stopped ({done} of {total})": {
+    "breadcrumb": "Settings",
+    "tab": "Settings",
+    "section": "",
+    "group": ""
+  },
+  "Streak:": {
+    "breadcrumb": "Settings",
+    "tab": "Settings",
+    "section": "",
+    "group": ""
+  },
+  "Stretch the compass horizontally.": {
+    "breadcrumb": "Overlay / Compass",
+    "tab": "Overlay",
+    "section": "Compass",
+    "group": ""
+  },
+  "Stretch the compass vertically.": {
+    "breadcrumb": "Overlay / Compass",
+    "tab": "Overlay",
+    "section": "Compass",
+    "group": ""
+  },
+  "Strings may sometimes break between mod versions.": {
+    "breadcrumb": "Settings",
+    "tab": "Settings",
+    "section": "",
+    "group": ""
+  },
+  "Support": {
+    "breadcrumb": "Support",
+    "tab": "Support",
+    "section": "",
+    "group": ""
+  },
+  "Support development": {
+    "breadcrumb": "Settings",
+    "tab": "Settings",
+    "section": "",
+    "group": ""
+  },
+  "Support development by commissioning features or presets.": {
+    "breadcrumb": "Settings",
+    "tab": "Settings",
+    "section": "",
+    "group": ""
+  },
+  "Support the mod - donate via Ko-fi (kofi) to help fund continued development": {
+    "breadcrumb": "Settings",
+    "tab": "Settings",
+    "section": "",
+    "group": ""
+  },
+  "Supporting and Feature Requests": {
+    "breadcrumb": "Settings",
+    "tab": "Settings",
+    "section": "",
+    "group": ""
+  },
+  "Swap": {
+    "breadcrumb": "Settings",
+    "tab": "Settings",
+    "section": "",
+    "group": ""
+  },
+  "Switch to the advanced item cooldown mode with in-menu filters.": {
+    "breadcrumb": "Crosshair / Item Cooldowns",
+    "tab": "Crosshair",
+    "section": "Item Cooldowns",
+    "group": ""
+  },
+  "Switching to Skyrunner...": {
+    "breadcrumb": "Settings",
+    "tab": "Settings",
+    "section": "",
+    "group": ""
+  },
+  "TIMEOUT": {
+    "breadcrumb": "Settings",
+    "tab": "Settings",
+    "section": "",
+    "group": ""
+  },
+  "Tab Zoom": {
+    "breadcrumb": "Minimap",
+    "tab": "Minimap",
+    "section": "",
+    "group": ""
+  },
+  "Target Shapes": {
+    "breadcrumb": "Settings",
+    "tab": "Settings",
+    "section": "",
+    "group": ""
+  },
+  "Teal": {
+    "breadcrumb": "Settings",
+    "tab": "Settings",
+    "section": "",
+    "group": ""
+  },
+  "Temporarily enables additional toggles for 10s, measures Scheduler poll callbacks, then restores config. Does not exercise every feature or measure FPS.": {
+    "breadcrumb": "Dev / In-Game Benchmarks",
+    "tab": "Dev",
+    "section": "In-Game Benchmarks",
+    "group": ""
+  },
+  "Test": {
+    "breadcrumb": "Settings",
+    "tab": "Settings",
+    "section": "",
+    "group": ""
+  },
+  "Test Announcer": {
+    "breadcrumb": "Settings",
+    "tab": "Settings",
+    "section": "",
+    "group": ""
+  },
+  "Test each feature individually (enable → verify → disable).": {
+    "breadcrumb": "Dev / Testing & Diagnostics",
+    "tab": "Dev",
+    "section": "Testing & Diagnostics",
+    "group": ""
+  },
+  "Test in game": {
+    "breadcrumb": "Settings",
+    "tab": "Settings",
+    "section": "",
+    "group": ""
+  },
+  "Test in game, then reopen QOLLOCK settings to continue this step.": {
+    "breadcrumb": "Settings",
+    "tab": "Settings",
+    "section": "",
+    "group": ""
+  },
+  "Testing & Diagnostics": {
+    "breadcrumb": "Dev / Testing & Diagnostics",
+    "tab": "Dev",
+    "section": "Testing & Diagnostics",
+    "group": ""
+  },
+  "Testing Tools": {
+    "breadcrumb": "Settings",
+    "tab": "Settings",
+    "section": "",
+    "group": ""
+  },
+  "Testing tools appear in hero testing. Their visibility is configurable; their native layout has no position settings.": {
+    "breadcrumb": "Settings",
+    "tab": "Settings",
+    "section": "",
+    "group": ""
+  },
+  "Text": {
+    "breadcrumb": "Overlay / Unsecured Plus",
+    "tab": "Overlay",
+    "section": "Unsecured Plus",
+    "group": ""
+  },
+  "The circle countdown for when you are reloading.": {
+    "breadcrumb": "Crosshair / Reloading",
+    "tab": "Crosshair",
+    "section": "Reloading",
+    "group": ""
+  },
+  "The click hitbox of your pings or clicks, this can help make pings more accurate.": {
+    "breadcrumb": "Console / Minimap",
+    "tab": "Console",
+    "section": "Minimap",
+    "group": ""
+  },
+  "The cosmetic ability on your default 5 key, like posters and snowballs.": {
+    "breadcrumb": "HUD / Bottom Bar",
+    "tab": "HUD",
+    "section": "Bottom Bar",
+    "group": ""
+  },
+  "The damage dealt to Trooper minions.": {
+    "breadcrumb": "Crosshair / Damage Numbers",
+    "tab": "Crosshair",
+    "section": "Damage Numbers",
+    "group": ""
+  },
+  "The displayed language of the settings menu.": {
+    "breadcrumb": "Config / Meta Settings",
+    "tab": "Config",
+    "section": "Meta Settings",
+    "group": ""
+  },
+  "The distance threshold in which icons will start shrinking. Lower is more accurate positions, higher is easier visibility.": {
+    "breadcrumb": "Console / Minimap",
+    "tab": "Console",
+    "section": "Minimap",
+    "group": ""
+  },
+  "The editor could not open. Close other visual tools and try again.": {
+    "breadcrumb": "Settings",
+    "tab": "Settings",
+    "section": "",
+    "group": ""
+  },
+  "The hero you automatically switch to on launch or after saving..": {
+    "breadcrumb": "Config / Meta Settings",
+    "tab": "Config",
+    "section": "Meta Settings",
+    "group": ""
+  },
+  "The icon that replaces your crosshair when reloading.": {
+    "breadcrumb": "Crosshair / Reloading",
+    "tab": "Crosshair",
+    "section": "Reloading",
+    "group": ""
+  },
+  "The interval in which the sound plays in seconds.": {
+    "breadcrumb": "Audio / Minimap Reminder",
+    "tab": "Audio",
+    "section": "Minimap Reminder",
+    "group": ""
+  },
+  "The item buying auto queue system in the shop menu.": {
+    "breadcrumb": "HUD / Shop",
+    "tab": "HUD",
+    "section": "Shop",
+    "group": ""
+  },
+  "The large cumulative damage number.": {
+    "breadcrumb": "Crosshair / Damage Numbers",
+    "tab": "Crosshair",
+    "section": "Damage Numbers",
+    "group": ""
+  },
+  "The line has been reset (": {
+    "breadcrumb": "Settings",
+    "tab": "Settings",
+    "section": "",
+    "group": ""
+  },
+  "The majority of issues are caused by improper installation or conflicting mods.": {
+    "breadcrumb": "Support",
+    "tab": "Support",
+    "section": "",
+    "group": ""
+  },
+  "The mod is <font color=\"#66cc99\">fully functional</font> and <font color=\"#66cc99\">free</font> for all users.": {
+    "breadcrumb": "Settings",
+    "tab": "Settings",
+    "section": "",
+    "group": ""
+  },
+  "The popup signifying you are too low on stamina to cast another movement input.": {
+    "breadcrumb": "HUD / Bottom Bar",
+    "tab": "HUD",
+    "section": "Bottom Bar",
+    "group": ""
+  },
+  "The popups that appear when getting a kill or CCing an enemy or healing an ally": {
+    "breadcrumb": "UI / Player Stats",
+    "tab": "UI",
+    "section": "Player Stats",
+    "group": ""
+  },
+  "The quickbuy summary uses the active quickbuy script and its parent layout. It has no separate persistent customization settings.": {
+    "breadcrumb": "Settings",
+    "tab": "Settings",
+    "section": "",
+    "group": ""
+  },
+  "The size of other players on the minimap.": {
+    "breadcrumb": "Console / Minimap",
+    "tab": "Console",
+    "section": "Minimap",
+    "group": ""
+  },
+  "The size of yourself on the minimap.": {
+    "breadcrumb": "Console / Minimap",
+    "tab": "Console",
+    "section": "Minimap",
+    "group": ""
+  },
+  "The small incremental damage numbers.": {
+    "breadcrumb": "Crosshair / Damage Numbers",
+    "tab": "Crosshair",
+    "section": "Damage Numbers",
+    "group": ""
+  },
+  "The small visual icon.": {
+    "breadcrumb": "Overlay / Unsecured Plus",
+    "tab": "Overlay",
+    "section": "Unsecured Plus",
+    "group": ""
+  },
+  "The thickness of the Zipline lines across the map.": {
+    "breadcrumb": "Console / Minimap",
+    "tab": "Console",
+    "section": "Minimap",
+    "group": ""
+  },
+  "The unsecured text.": {
+    "breadcrumb": "Overlay / Unsecured Plus",
+    "tab": "Overlay",
+    "section": "Unsecured Plus",
+    "group": ""
+  },
+  "The world background blur effect behind the shop menu.": {
+    "breadcrumb": "HUD / Shop",
+    "tab": "HUD",
+    "section": "Shop",
+    "group": ""
+  },
+  "The world blur and backing strip behind player names in the top bar.": {
+    "breadcrumb": "HUD / Top Bar",
+    "tab": "HUD",
+    "section": "Top Bar",
+    "group": ""
+  },
+  "The world blur behind player names in the top bar.": {
+    "breadcrumb": "UI / Player Stats",
+    "tab": "UI",
+    "section": "Player Stats",
+    "group": ""
+  },
+  "Theme": {
+    "breadcrumb": "Config / Meta Settings",
+    "tab": "Config",
+    "section": "Meta Settings",
+    "group": ""
+  },
+  "These are easy access to common console commands and are not included in QOL settings.": {
+    "breadcrumb": "Console",
+    "tab": "Console",
+    "section": "",
+    "group": ""
+  },
+  "These controls adjust several HUD owners together. Recheck frames after changing display support.": {
+    "breadcrumb": "Settings",
+    "tab": "Settings",
+    "section": "",
+    "group": ""
+  },
+  "These visuals follow world targets. Size and visibility remain configurable; screen dragging does not apply.": {
+    "breadcrumb": "Settings",
+    "tab": "Settings",
+    "section": "",
+    "group": ""
+  },
+  "This element is edited with the controls below.": {
+    "breadcrumb": "Settings",
+    "tab": "Settings",
+    "section": "",
+    "group": ""
+  },
+  "This is a lightweight version with significant FPS improvements but requires a seperate file for filters.": {
+    "breadcrumb": "UI / Player Stats",
+    "tab": "UI",
+    "section": "Player Stats",
+    "group": ""
+  },
+  "This is a mod designed to give you complete freedom over your game.": {
+    "breadcrumb": "Support",
+    "tab": "Support",
+    "section": "",
+    "group": ""
+  },
+  "This is a way for me to give something back to the supporters.": {
+    "breadcrumb": "Settings",
+    "tab": "Settings",
+    "section": "",
+    "group": ""
+  },
+  "This is to switch to the Skyrunner hero (looks like Paradox), your settings are saved in the shop builds. To troubleshoot you can delete these and do a fresh save to fix any settings saving issues.": {
+    "breadcrumb": "Settings",
+    "tab": "Settings",
+    "section": "",
+    "group": ""
+  },
+  "This line is already on by default.": {
+    "breadcrumb": "Settings",
+    "tab": "Settings",
+    "section": "",
+    "group": ""
+  },
+  "This section is already on by default.": {
+    "breadcrumb": "Settings",
+    "tab": "Settings",
+    "section": "",
+    "group": ""
+  },
+  "Tier 1": {
+    "breadcrumb": "Audio / Announcer",
+    "tab": "Audio",
+    "section": "Announcer",
+    "group": ""
+  },
+  "Tier 2": {
+    "breadcrumb": "Audio / Announcer",
+    "tab": "Audio",
+    "section": "Announcer",
+    "group": ""
+  },
+  "Tier 3": {
+    "breadcrumb": "Audio / Announcer",
+    "tab": "Audio",
+    "section": "Announcer",
+    "group": ""
+  },
+  "Time before the announcement happens in seconds.": {
+    "breadcrumb": "Audio / Announcer",
+    "tab": "Audio",
+    "section": "Announcer",
+    "group": ""
+  },
+  "Time:": {
+    "breadcrumb": "Settings",
+    "tab": "Settings",
+    "section": "",
+    "group": ""
+  },
+  "Timed audio reminders from Deadlock For Dummies.": {
+    "breadcrumb": "UI / Player Stats",
+    "tab": "UI",
+    "section": "Player Stats",
+    "group": ""
+  },
+  "Timeout (8s)": {
+    "breadcrumb": "Settings",
+    "tab": "Settings",
+    "section": "",
+    "group": ""
+  },
+  "Timeout — no HUD report within 6s": {
+    "breadcrumb": "Settings",
+    "tab": "Settings",
+    "section": "",
+    "group": ""
+  },
+  "Timeout — no result within 6s": {
+    "breadcrumb": "Settings",
+    "tab": "Settings",
+    "section": "",
+    "group": ""
+  },
+  "Timer": {
+    "breadcrumb": "Audio / Minimap Reminder",
+    "tab": "Audio",
+    "section": "Minimap Reminder",
+    "group": ""
+  },
+  "Toggle the hitmarkers when attacking enemies.": {
+    "breadcrumb": "Console / General",
+    "tab": "Console",
+    "section": "General",
+    "group": ""
+  },
+  "Tools for showing and sharing item purchase notifications.": {
+    "breadcrumb": "HUD / Shop",
+    "tab": "HUD",
+    "section": "Shop",
+    "group": ""
+  },
+  "Tools for tracking recent item purchases.": {
+    "breadcrumb": "HUD / Shop",
+    "tab": "HUD",
+    "section": "Shop",
+    "group": ""
+  },
+  "Top Bar": {
+    "breadcrumb": "HUD",
+    "tab": "HUD",
+    "section": "",
+    "group": ""
+  },
+  "Top Bar Background": {
+    "breadcrumb": "HUD / Top Bar",
+    "tab": "HUD",
+    "section": "Top Bar",
+    "group": ""
+  },
+  "Top Bar HP Warnings": {
+    "breadcrumb": "Settings",
+    "tab": "Settings",
+    "section": "",
+    "group": ""
+  },
+  "Top Bar Plus": {
+    "breadcrumb": "Settings",
+    "tab": "Settings",
+    "section": "",
+    "group": ""
+  },
+  "Total": {
+    "breadcrumb": "Crosshair / Ammo",
+    "tab": "Crosshair",
+    "section": "Ammo",
+    "group": ""
+  },
+  "Total Ammo": {
+    "breadcrumb": "Settings",
+    "tab": "Settings",
+    "section": "",
+    "group": ""
+  },
+  "Total Size": {
+    "breadcrumb": "Crosshair / Ammo",
+    "tab": "Crosshair",
+    "section": "Ammo",
+    "group": ""
+  },
+  "Total ammo amount.": {
+    "breadcrumb": "Crosshair / Ammo",
+    "tab": "Crosshair",
+    "section": "Ammo",
+    "group": ""
+  },
+  "Total:": {
+    "breadcrumb": "Settings",
+    "tab": "Settings",
+    "section": "",
+    "group": ""
+  },
+  "Total: --": {
+    "breadcrumb": "Settings",
+    "tab": "Settings",
+    "section": "",
+    "group": ""
+  },
+  "Tracked cooldowns near crosshair": {
+    "breadcrumb": "Settings",
+    "tab": "Settings",
+    "section": "",
+    "group": ""
+  },
+  "Translators": {
+    "breadcrumb": "Support",
+    "tab": "Support",
+    "section": "",
+    "group": ""
+  },
+  "Trigger a new purchase notification in game; compare center and per-hero placement.": {
+    "breadcrumb": "Settings",
+    "tab": "Settings",
+    "section": "",
+    "group": ""
+  },
+  "Trigger a new purchase notification in game; inspect size, opacity and offsets.": {
+    "breadcrumb": "Settings",
+    "tab": "Settings",
+    "section": "",
+    "group": ""
+  },
+  "Trooper Damage": {
+    "breadcrumb": "Crosshair / Damage Numbers",
+    "tab": "Crosshair",
+    "section": "Damage Numbers",
+    "group": ""
+  },
+  "Troubleshoot": {
+    "breadcrumb": "Settings",
+    "tab": "Settings",
+    "section": "",
+    "group": ""
+  },
+  "Tunnel Opacity": {
+    "breadcrumb": "Settings",
+    "tab": "Settings",
+    "section": "",
+    "group": ""
+  },
+  "Turkish": {
+    "breadcrumb": "Settings",
+    "tab": "Settings",
+    "section": "",
+    "group": ""
+  },
+  "Type": {
+    "breadcrumb": "Healthbar / Player",
+    "tab": "Healthbar",
+    "section": "Player",
+    "group": ""
+  },
+  "UI": {
+    "breadcrumb": "UI",
+    "tab": "UI",
+    "section": "",
+    "group": ""
+  },
+  "UI Controls": {
+    "breadcrumb": "UI / UI Controls",
+    "tab": "UI",
+    "section": "UI Controls",
+    "group": ""
+  },
+  "Ukrainian": {
+    "breadcrumb": "Settings",
+    "tab": "Settings",
+    "section": "",
+    "group": ""
+  },
+  "Ult Cooldowns": {
+    "breadcrumb": "Overlay",
+    "tab": "Overlay",
+    "section": "",
+    "group": ""
+  },
+  "Ult Indicator": {
+    "breadcrumb": "Healthbar / Enemy V2",
+    "tab": "Healthbar",
+    "section": "Enemy V2",
+    "group": ""
+  },
+  "Ultimate Cooldowns": {
+    "breadcrumb": "Settings",
+    "tab": "Settings",
+    "section": "",
+    "group": ""
+  },
+  "Unavailable now": {
+    "breadcrumb": "Settings",
+    "tab": "Settings",
+    "section": "",
+    "group": ""
+  },
+  "Undo": {
+    "breadcrumb": "Settings",
+    "tab": "Settings",
+    "section": "",
+    "group": ""
+  },
+  "Undo the last change.": {
+    "breadcrumb": "Settings",
+    "tab": "Settings",
+    "section": "",
+    "group": ""
+  },
+  "Unknown HUD element.": {
+    "breadcrumb": "Settings",
+    "tab": "Settings",
+    "section": "",
+    "group": ""
+  },
+  "Unsecured Plus": {
+    "breadcrumb": "Overlay",
+    "tab": "Overlay",
+    "section": "",
+    "group": ""
+  },
+  "Unsecured Souls": {
+    "breadcrumb": "Settings",
+    "tab": "Settings",
+    "section": "",
+    "group": ""
+  },
+  "Unsecured Souls Timer": {
+    "breadcrumb": "Settings",
+    "tab": "Settings",
+    "section": "",
+    "group": ""
+  },
+  "Unsecured Timer": {
+    "breadcrumb": "Overlay",
+    "tab": "Overlay",
+    "section": "",
+    "group": ""
+  },
+  "Unspent Souls": {
+    "breadcrumb": "Settings",
+    "tab": "Settings",
+    "section": "",
+    "group": ""
+  },
+  "Update Checker": {
+    "breadcrumb": "Config / Meta Settings",
+    "tab": "Config",
+    "section": "Meta Settings",
+    "group": ""
+  },
+  "Urn": {
+    "breadcrumb": "Settings",
+    "tab": "Settings",
+    "section": "",
+    "group": ""
+  },
+  "Urn + Gold Rune": {
+    "breadcrumb": "Audio / Announcer",
+    "tab": "Audio",
+    "section": "Announcer",
+    "group": ""
+  },
+  "Urn Colors": {
+    "breadcrumb": "Minimap / Minimap",
+    "tab": "Minimap",
+    "section": "Minimap",
+    "group": ""
+  },
+  "Urn Difference": {
+    "breadcrumb": "HUD / Top Bar",
+    "tab": "HUD",
+    "section": "Top Bar",
+    "group": ""
+  },
+  "Urn Timer": {
+    "breadcrumb": "Settings",
+    "tab": "Settings",
+    "section": "",
+    "group": ""
+  },
+  "Use a number from {min} to {max}.": {
+    "breadcrumb": "Settings",
+    "tab": "Settings",
+    "section": "",
+    "group": ""
+  },
+  "Use autoexec or other methods to load these automatically.": {
+    "breadcrumb": "Console",
+    "tab": "Console",
+    "section": "",
+    "group": ""
+  },
+  "Use the compact minimalistic pause screen instead of the default large one.": {
+    "breadcrumb": "UI / UI Controls",
+    "tab": "UI",
+    "section": "UI Controls",
+    "group": ""
+  },
+  "V2 enemy healthbar enhancements.": {
+    "breadcrumb": "Healthbar",
+    "tab": "Healthbar",
+    "section": "",
+    "group": ""
+  },
+  "Vertical": {
+    "breadcrumb": "Settings",
+    "tab": "Settings",
+    "section": "",
+    "group": ""
+  },
+  "Vertical Offset": {
+    "breadcrumb": "Healthbar / Player",
+    "tab": "Healthbar",
+    "section": "Player",
+    "group": ""
+  },
+  "Vertical Offset (%)": {
+    "breadcrumb": "Settings",
+    "tab": "Settings",
+    "section": "",
+    "group": ""
+  },
+  "Vertical Stretch": {
+    "breadcrumb": "Overlay / Compass",
+    "tab": "Overlay",
+    "section": "Compass",
+    "group": ""
+  },
+  "View a cooldown timer for reloading time.": {
+    "breadcrumb": "Crosshair",
+    "tab": "Crosshair",
+    "section": "",
+    "group": ""
+  },
+  "View an enhanced minimap on opening ability menu.": {
+    "breadcrumb": "Minimap",
+    "tab": "Minimap",
+    "section": "",
+    "group": ""
+  },
+  "View an enhanced minimap on opening scoreboard menu.": {
+    "breadcrumb": "Minimap",
+    "tab": "Minimap",
+    "section": "",
+    "group": ""
+  },
+  "View the cooldown time of player ultimates.": {
+    "breadcrumb": "Overlay",
+    "tab": "Overlay",
+    "section": "",
+    "group": ""
+  },
+  "View updates": {
+    "breadcrumb": "Settings",
+    "tab": "Settings",
+    "section": "",
+    "group": ""
+  },
+  "Violet": {
+    "breadcrumb": "Settings",
+    "tab": "Settings",
+    "section": "",
+    "group": ""
+  },
+  "Visible": {
+    "breadcrumb": "Settings",
+    "tab": "Settings",
+    "section": "",
+    "group": ""
+  },
+  "Visible Stats": {
+    "breadcrumb": "Crosshair",
+    "tab": "Crosshair",
+    "section": "",
+    "group": ""
+  },
+  "Visual": {
+    "breadcrumb": "Crosshair / Ammo",
+    "tab": "Crosshair",
+    "section": "Ammo",
+    "group": ""
+  },
+  "Visual indicator of your current ammo.": {
+    "breadcrumb": "Crosshair / Ammo",
+    "tab": "Crosshair",
+    "section": "Ammo",
+    "group": ""
+  },
+  "Voice": {
+    "breadcrumb": "Audio / Announcer",
+    "tab": "Audio",
+    "section": "Announcer",
+    "group": ""
+  },
+  "Voice Actor:": {
+    "breadcrumb": "Settings",
+    "tab": "Settings",
+    "section": "",
+    "group": ""
+  },
+  "Void": {
+    "breadcrumb": "Settings",
+    "tab": "Settings",
+    "section": "",
+    "group": ""
+  },
+  "Volume": {
+    "breadcrumb": "Audio / Announcer",
+    "tab": "Audio",
+    "section": "Announcer",
+    "group": ""
+  },
+  "Volume for Deadlock For Dummies reminder audio.": {
+    "breadcrumb": "Audio / Announcer",
+    "tab": "Audio",
+    "section": "Announcer",
+    "group": ""
+  },
+  "Waiting for HUD preview": {
+    "breadcrumb": "Settings",
+    "tab": "Settings",
+    "section": "",
+    "group": ""
+  },
+  "Walker Weak": {
+    "breadcrumb": "Audio / Announcer",
+    "tab": "Audio",
+    "section": "Announcer",
+    "group": ""
+  },
+  "Weapon Damage": {
+    "breadcrumb": "Settings",
+    "tab": "Settings",
+    "section": "",
+    "group": ""
+  },
+  "Weapon Damage %: --": {
+    "breadcrumb": "Settings",
+    "tab": "Settings",
+    "section": "",
+    "group": ""
+  },
+  "Weapon Power": {
+    "breadcrumb": "Crosshair",
+    "tab": "Crosshair",
+    "section": "",
+    "group": ""
+  },
+  "Welcome to QOL Lock": {
+    "breadcrumb": "Support",
+    "tab": "Support",
+    "section": "",
+    "group": ""
+  },
+  "Whack a Rem": {
+    "breadcrumb": "Arcade / Games",
+    "tab": "Arcade",
+    "section": "Games",
+    "group": ""
+  },
+  "Whack-a-Rem": {
+    "breadcrumb": "Settings",
+    "tab": "Settings",
+    "section": "",
+    "group": ""
+  },
+  "Which events cause a sound to play. Camps are one time, Buff is every 5 minutes.": {
+    "breadcrumb": "Audio / Announcer",
+    "tab": "Audio",
+    "section": "Announcer",
+    "group": ""
+  },
+  "White": {
+    "breadcrumb": "Settings",
+    "tab": "Settings",
+    "section": "",
+    "group": ""
+  },
+  "Width": {
+    "breadcrumb": "Settings",
+    "tab": "Settings",
+    "section": "",
+    "group": ""
+  },
+  "Without them QOL Lock would not be possible.": {
+    "breadcrumb": "Settings",
+    "tab": "Settings",
+    "section": "",
+    "group": ""
+  },
+  "Wraithjack": {
+    "breadcrumb": "Arcade / Games",
+    "tab": "Arcade",
+    "section": "Games",
+    "group": ""
+  },
+  "Writing settings string to build...": {
+    "breadcrumb": "Settings",
+    "tab": "Settings",
+    "section": "",
+    "group": ""
+  },
+  "XQC": {
+    "breadcrumb": "Settings",
+    "tab": "Settings",
+    "section": "",
+    "group": ""
+  },
+  "Yellow": {
+    "breadcrumb": "Settings",
+    "tab": "Settings",
+    "section": "",
+    "group": ""
+  },
+  "You can download custom announcer packs, just download the correct one for the slot you want to replace.": {
+    "breadcrumb": "Audio",
+    "tab": "Audio",
+    "section": "",
+    "group": ""
+  },
+  "You can support development by commissioning features or presets.": {
+    "breadcrumb": "Settings",
+    "tab": "Settings",
+    "section": "",
+    "group": ""
+  },
+  "You win.": {
+    "breadcrumb": "Settings",
+    "tab": "Settings",
+    "section": "",
+    "group": ""
+  },
+  "ZIP BOOST": {
+    "breadcrumb": "Settings",
+    "tab": "Settings",
+    "section": "",
+    "group": ""
+  },
+  "Zerggy Mania": {
+    "breadcrumb": "Arcade / Games",
+    "tab": "Arcade",
+    "section": "Games",
+    "group": ""
+  },
+  "Zip Boost": {
+    "breadcrumb": "Settings",
+    "tab": "Settings",
+    "section": "",
+    "group": ""
+  },
+  "Zip Thickness": {
+    "breadcrumb": "Console / Minimap",
+    "tab": "Console",
+    "section": "Minimap",
+    "group": ""
+  },
+  "Zipline Boost": {
+    "breadcrumb": "Overlay",
+    "tab": "Overlay",
+    "section": "",
+    "group": ""
+  },
+  "actionbutton": {
+    "breadcrumb": "Settings",
+    "tab": "Settings",
+    "section": "",
+    "group": ""
+  },
+  "by": {
+    "breadcrumb": "Settings",
+    "tab": "Settings",
+    "section": "",
+    "group": ""
+  },
+  "click here": {
+    "breadcrumb": "Settings",
+    "tab": "Settings",
+    "section": "",
+    "group": ""
+  },
+  "copied": {
+    "breadcrumb": "Settings",
+    "tab": "Settings",
+    "section": "",
+    "group": ""
+  },
+  "copy failed": {
+    "breadcrumb": "Settings",
+    "tab": "Settings",
+    "section": "",
+    "group": ""
+  },
+  "copy failed; check ~": {
+    "breadcrumb": "Settings",
+    "tab": "Settings",
+    "section": "",
+    "group": ""
+  },
+  "dropdown": {
+    "breadcrumb": "Settings",
+    "tab": "Settings",
+    "section": "",
+    "group": ""
+  },
+  "en": {
+    "breadcrumb": "Settings",
+    "tab": "Settings",
+    "section": "",
+    "group": ""
+  },
+  "error": {
+    "breadcrumb": "Settings",
+    "tab": "Settings",
+    "section": "",
+    "group": ""
+  },
+  "info": {
+    "breadcrumb": "Settings",
+    "tab": "Settings",
+    "section": "",
+    "group": ""
+  },
+  "moglock.gg": {
+    "breadcrumb": "Settings",
+    "tab": "Settings",
+    "section": "",
+    "group": ""
+  },
+  "multitoggle": {
+    "breadcrumb": "Settings",
+    "tab": "Settings",
+    "section": "",
+    "group": ""
+  },
+  "palette": {
+    "breadcrumb": "Settings",
+    "tab": "Settings",
+    "section": "",
+    "group": ""
+  },
+  "px": {
+    "breadcrumb": "Settings",
+    "tab": "Settings",
+    "section": "",
+    "group": ""
+  },
+  "success": {
+    "breadcrumb": "Settings",
+    "tab": "Settings",
+    "section": "",
+    "group": ""
+  },
+  "warning": {
+    "breadcrumb": "Settings",
+    "tab": "Settings",
+    "section": "",
+    "group": ""
+  },
+  "yoshii pls hire me": {
+    "breadcrumb": "Settings",
+    "tab": "Settings",
+    "section": "",
+    "group": ""
+  },
+  "{label} — EXCEPTION": {
+    "breadcrumb": "Settings",
+    "tab": "Settings",
+    "section": "",
+    "group": ""
+  },
+  "{label} — TIMEOUT": {
+    "breadcrumb": "Settings",
+    "tab": "Settings",
+    "section": "",
+    "group": ""
+  },
+  "{status} ({copy})": {
+    "breadcrumb": "Settings",
+    "tab": "Settings",
+    "section": "",
+    "group": ""
+  },
+  "{tab} — content ready.": {
+    "breadcrumb": "Settings",
+    "tab": "Settings",
+    "section": "",
+    "group": ""
+  },
+  "°": {
+    "breadcrumb": "Settings",
+    "tab": "Settings",
+    "section": "",
+    "group": ""
+  },
+  "−": {
+    "breadcrumb": "Settings",
+    "tab": "Settings",
+    "section": "",
+    "group": ""
+  }
+}
