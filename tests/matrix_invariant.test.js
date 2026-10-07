@@ -219,7 +219,7 @@ test("INVARIANT 3: production settings tabs render, bind known keys, and selecte
             entry._fire("onactivate");
             const input = em.FindChildTraverse("QOLCustomize_" + key);
             assert.ok(input, `${key} has a precise editor input`);
-            input.text = tab === "HUD" ? "1.23" : "150";
+            input.text = tab === "HUD" ? "123" : "150";
             g.QOL.core.storageBridge.saveSettings = (_cfg, callback) => callback(null);
             em.FindChildTraverse("QOLCustomizeApply")._fire("onactivate");
             assert.equal(g.MOD_CONFIG[key], tab === "HUD" ? 1.25 : 150);

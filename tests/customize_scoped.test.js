@@ -152,9 +152,9 @@ test("unknown scope leaves settings visible and never starts an unrestricted edi
 
 test("scoped entry and instructions use English, Russian and incomplete-locale fallback", () => {
     for (const [language, caption, instructions] of [
-        [0, "Customize", "Only this element can be edited. Other HUD elements stay locked."],
-        [1, "Настроить HUD", "Можно изменить только этот элемент. Остальные элементы HUD заблокированы."],
-        [13, "Customize", "Only this element can be edited. Other HUD elements stay locked."]
+        [0, "Customize", "Drag to move. Drag any corner to resize."],
+        [1, "Настроить HUD", "Перетащите для перемещения. Тяните за любой угол для изменения размера."],
+        [13, "Customize", "Drag to move. Drag any corner to resize."]
     ]) {
         const env = setup();
         env.global.MOD_CONFIG.LANGUAGE = language;

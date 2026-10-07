@@ -30,9 +30,8 @@ test("catalog covers current visual manifest controls, with explicit compatibili
     }
     assert.ok(catalog.elements.some(item => item.id === "profileScreens" && item.context && !item.fields.length));
     assert.ok(catalog.elements.some(item => item.id === "mainMenu" && item.context && !item.fields.length));
-    env.global.QOL.ui.customize.start();
     for (const element of catalog.elements) {
-        activate(env, "QOLCustomizeSelect_" + element.id);
+        env.global.QOL.ui.customize.start(null, { elementId: element.id });
         for (const field of element.fields) {
             assert.ok(field.key in env.global.QOL_DEFAULT_CONFIG);
             assert.notEqual(catalog.normalize(field.key, env.global.QOL_DEFAULT_CONFIG[field.key]), null);
@@ -40,8 +39,9 @@ test("catalog covers current visual manifest controls, with explicit compatibili
             const suffix = field.type === "enum" ? "_" + field.options[0][0] : "";
             assert.ok(env.em.FindChildTraverse("QOLCustomize_" + field.key + suffix), `missing inspector for ${field.key}`);
         }
+        activate(env, "QOLCustomizeCancel");
+        env.clock.advance(500);
     }
-    activate(env, "QOLCustomizeCancel");
     assert.deepEqual(env.doc.eventErrors, []);
     assert.deepEqual(env.clock.errors, []);
 });
@@ -50,6 +50,7 @@ test("search retains absent conditional features and matches localized field nam
     const env = setup();
     env.global.MOD_CONFIG.LANGUAGE = env.global.QOL.ui.theme.SETTINGS_LANGUAGE_RUSSIAN;
     env.global.QOL.ui.customize.start();
+    activate(env, "QOLCustomizeAllElements");
     const search = env.em.FindChildTraverse("QOLCustomizeSearch");
     search.text = "fire rate";
     search._fire("ontextentrychange");
@@ -70,11 +71,10 @@ test("legacy root styles, threshold aliases and target-shape runtime receive dra
     const chat = add(env, core, "Chat");
     const report = add(env, core, "CitadelHudDamageReport");
     const shape = add(env, core, "", ["target_shape"]);
-    g.QOL.ui.customize.start();
-    activate(env, "QOLCustomizeSelect_chat"); input(env, "CHAT_X_OFFSET", 175); input(env, "CHAT_Y_OFFSET", 80);
-    activate(env, "QOLCustomizeSelect_damageReport"); input(env, "DAMAGE_REPORT_X_OFFSET", 125);
-    activate(env, "QOLCustomizeSelect_healthWarnings"); activate(env, "QOLCustomize_ENABLE_COLOR_WARNING_25");
-    activate(env, "QOLCustomizeSelect_targetShapes"); activate(env, "QOLCustomize_ENABLE_RED_DIAMOND"); input(env, "UNIT_TARGET_OPACITY", 0.4);
+    const session = g.QOL.ui.customizeSession.create(g.QOL.core.persistence.getUIRoot(), hud.root, env.em.FindChildTraverse("SettingsWindow"));
+    hud.root.AddClass("QOLCustomizeActive");
+    session.edit({ CHAT_X_OFFSET: 175, CHAT_Y_OFFSET: 80, DAMAGE_REPORT_X_OFFSET: 125,
+        ENABLE_COLOR_WARNING_25: 1, ENABLE_RED_DIAMOND: 1, UNIT_TARGET_OPACITY: 0.4 });
     clock.advance(2000);
     assert.equal(chat.style.x, "175px"); assert.equal(chat.style.y, "-80px");
     assert.equal(report.style.x, "125px");
@@ -83,9 +83,9 @@ test("legacy root styles, threshold aliases and target-shape runtime receive dra
     assert.equal(hud.sandbox.global.QOL.core.ConfigStore.get("ql_color_warnings", "ENABLE_COLORED_HEALTHBAR"), true);
     assert.equal(g.MOD_CONFIG.ENABLE_COLOR_WARNING_25, 0);
     assert.equal(hud.sandbox.global.State.lastConfig.CHAT_X_OFFSET, 0);
-    clock.advance(2200); // Periodic class synchronization must keep the draft.
+    for (let tick = 0; tick < 3; tick++) { session.publish(); clock.advance(800); } // Keep the editor lease alive across periodic class synchronization.
     assert.equal(hud.root.BHasClass("red_diamond_active"), true);
-    activate(env, "QOLCustomizeCancel"); clock.advance(2000);
+    session.close(); hud.root.RemoveClass("QOLCustomizeActive"); clock.advance(2000);
     assert.equal(chat.style.x, "0px"); assert.equal(report.style.x, "0px");
     assert.equal(Number(shape.style.opacity), 1);
     assert.equal(hud.root.BHasClass("red_diamond_active"), false);

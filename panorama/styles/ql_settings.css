@@ -21,8 +21,9 @@ CitadelHudEscapeMenu.QOLCustomizeActive { background-color: #0000; }
 .QOLCustomizeOverlay { width: 100%; height: 100%; z-index: 1000; }
 .QOLCustomizeTools
 {
-    width: 320px;
-    height: 74%;
+    width: 360px;
+    height: fit-children;
+    max-height: 90%;
     overflow: squish squish;
     horizontal-align: right;
     vertical-align: top;
@@ -30,27 +31,47 @@ CitadelHudEscapeMenu.QOLCustomizeActive { background-color: #0000; }
     flow-children: down;
     z-index: 10;
 }
-.QOLCustomizeTitle { margin-bottom: 8px; }
+.QOLCustomizeTitle { margin-bottom: 6px; }
+.QOLCustomizeSelectionHeader { flow-children: right; width: 100%; margin-bottom: 2px; }
+.QOLCustomizeSelectionHeader > .QOLCustomizeTitle { width: fill-parent-flow(1); vertical-align: center; font-size: 20px; text-align: left; }
+.QOLCustomizeVisibility { vertical-align: center; margin-right: 0px; }
+.QOLCustomizeAvailability { width: 100%; height: fit-children; color: #cda871; }
+.QOLCustomizeHint { width: 100%; white-space: normal; height: fit-children; margin-bottom: 8px; opacity: 0.7; }
+.QOLCustomizeSection { width: 100%; flow-children: down; margin-top: 10px; border-top: 1px solid #ffffff12; }
+.QOLCustomizeSectionBody { width: 100%; flow-children: down; }
+.QOLCustomizeSectionBody > .ModalInstructions { width: 100%; white-space: normal; height: fit-children; }
+.QOLCustomizeSectionHeading { width: 100%; margin: 4px 0px 0px 0px; padding: 7px 8px; flow-children: right; }
+.QOLCustomizeSectionHeading > .QOLCustomizeButtonLabel { width: fill-parent-flow(1); text-align: left; }
+.QOLCustomizeDisclosure { width: 14px; text-align: center; vertical-align: center; opacity: 0.65; }
+.QOLCustomizeLock { margin: 4px 0px; }
 .QOLCustomizeChoices, #QOLCustomizeFields { flow-children: down; width: 100%; }
 .QOLCustomizeCatalog { width: 240px; height: 56%; flow-children: down; margin: 20px; z-index: 10; }
 .QOLCustomizeOverlay.PanelsHidden .QOLCustomizeTools,
 .QOLCustomizeOverlay.PanelsHidden .QOLCustomizeCatalog { visibility: collapse; }
 .QOLCustomizeView { flow-children: right; align: right bottom; margin: 0px 20px 20px 0px; z-index: 10; }
-.QOLCustomizeChoices, #QOLCustomizeFields { height: fill-parent-flow(1); overflow: squish scroll; }
+.QOLCustomizeChoices { height: fill-parent-flow(1); overflow: squish scroll; }
+#QOLCustomizeFields { height: fit-children; max-height: 510px; overflow: squish scroll; }
 .QOLCustomizeCatalog .QOLCustomizeSearch.ValueInput { width: 100%; height: 32px; margin-left: 0px; margin-bottom: 8px; }
-.QOLCustomizeField { flow-children: right; width: 100%; margin-top: 8px; }
-.QOLCustomizeField > Label { width: 140px; vertical-align: center; }
+.QOLCustomizeField { flow-children: right-wrap; width: 100%; margin-top: 8px; }
+.QOLCustomizeField > Label { width: fill-parent-flow(1); vertical-align: center; }
+.QOLCustomizeValueGroup { flow-children: right; vertical-align: center; }
+.QOLCustomizeUnit { vertical-align: center; margin: 0px 4px; min-width: 16px; opacity: 0.65; }
+.QOLCustomizeTools .QOLCustomizeStepper { width: 25px; height: 30px; padding: 2px 0px; margin: 0px 2px; }
+.QOLCustomizeStepper > Label { horizontal-align: center; vertical-align: center; }
+.QOLCustomizeField > .QOLCustomizeFieldError { width: 100%; color: #ed9898; margin: 4px 0px 0px 0px; }
 .QOLCustomizeFieldColor { flow-children: down; }
 .QOLCustomizeFieldColor > Label { width: 100%; }
-.QOLCustomizeActions { flow-children: right; margin-top: 12px; }
+.QOLCustomizeActions { flow-children: right; margin-top: 10px; width: 100%; }
 .QOLCustomizeEnum { flow-children: right-wrap; width: 100%; }
 .QOLCustomizeButton { padding: 6px 10px; margin: 3px; }
 .QOLCustomizeButton:disabled { opacity: 0.4; }
 .QOLCustomizeChoices .QOLCustomizeButton.Unavailable { opacity: 0.55; }
-.QOLCustomizeTools .QOLCustomizeInput.ValueInput { width: 90px; height: 32px; margin-left: 0px; }
+.QOLCustomizeTools .QOLCustomizeInput.ValueInput { width: 68px; height: 30px; margin-left: 0px; text-align: center; }
+.QOLCustomizeTools .QOLCustomizeFieldColor .QOLCustomizeInput.ValueInput { width: 104px; text-align: left; }
 .QOLCustomizeInput.Invalid { border: 1px solid #ed7070; }
 .QOLCustomizeSwatch { width: 24px; height: 24px; margin: 4px; border: 1px solid #fff4; }
 .QOLCustomizePalette { width: 100%; flow-children: right-wrap; margin-top: 6px; margin-bottom: 6px; }
+.QOLCustomizePaletteToggle { margin-left: 0px; margin-top: 6px; }
 .QOLCustomizeColorChoice { width: 24px; height: 24px; margin: 2px; border: 2px solid transparent; }
 .QOLCustomizeColorChoice:hover,
 .QOLCustomizeColorChoice.Active { border: 2px solid white; }

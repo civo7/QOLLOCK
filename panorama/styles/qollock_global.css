@@ -10,7 +10,8 @@
     opacity: 1.0;
 }
 
-.QOLCustomizeActive #hud_hero_testing
+.QOLCustomizeActive #hud_hero_testing,
+.QOLCustomizeActive #CitadelPartyContainer
 {
     visibility: collapse;
 }

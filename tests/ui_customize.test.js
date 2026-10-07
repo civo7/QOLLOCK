@@ -153,7 +153,7 @@ for (const withoutHud of [false, true]) {
         const catalog = env.em.FindChildTraverse("QOLCustomizeCatalog");
         const choices = catalog.Children().find(panel => panel.BHasClass("QOLCustomizeChoices"));
         const buttons = choices.Children().filter(panel => panel.id.startsWith("QOLCustomizeSelect_"));
-        assert.equal(buttons.length, Q.presentation.elements.length);
+        assert.equal(buttons.length, Q.presentation.elements.filter(element => Q.presentation.hasFrame(element) && element.fields.length && !element.context).length);
         const groups = buttons.map(panel => Q.presentation.elements.find(element => panel.id === "QOLCustomizeSelect_" + element.id).group || "HUD");
         assert.deepEqual(groups, groups.slice().sort());
         activate(env, "QOLCustomizeSelect_souls");
@@ -188,7 +188,7 @@ test("opening does not require the optional SetDraggable method; native creation
     assert.equal(g.QOL.ui.customize.start(), true);
     env.clock.advance(500);
     assert.equal(g.QOL.ui.customize.isRunning(), true);
-    assert.equal(frames.length, g.QOL.presentation.elements.length);
+    assert.equal(frames.length, g.QOL.presentation.elements.filter(element => g.QOL.presentation.hasFrame(element) && element.fields.length && !element.context).length);
     const frame = env.em.FindChildTraverse("QOLCustomizeFrame_souls");
     const drag = {};
     g.$.DispatchEvent("DragStart", frame, drag);
@@ -651,9 +651,9 @@ test("all rendered editor text uses English/Russian catalogs and survives select
         return "translated:" + text;
     };
     assert.equal(env.global.QOL.ui.customize.start(), true);
-    for (const element of env.global.QOL.presentation.elements) activate(env, "QOLCustomizeSelect_" + element.id);
+    for (const element of env.global.QOL.presentation.elements.filter(element => env.global.QOL.presentation.hasFrame(element) && element.fields.length && !element.context)) activate(env, "QOLCustomizeSelect_" + element.id);
     assert.ok(seen.has("Player Stats"));
-    assert.ok(seen.has("Lock dragging"));
+    assert.ok(seen.has("Lock position"));
     assert.ok(seen.has("Unavailable now"));
     activate(env, "QOLCustomizeCancel");
     clean(env);

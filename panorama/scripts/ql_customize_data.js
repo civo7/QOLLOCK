@@ -22,11 +22,12 @@
         { id: "topBar", name: "Top Bar", path: [...core, "TopBar"], fields: [toggle("HUD_TOP_BAR_ENABLED"), ...geometry("TOP_BAR_", true), opacity("TOP_BAR_")] },
         { id: "bottomBar", name: "Bottom Bar", path: [...abilities, "hud_signature"], fields: [toggle("HUD_BOTTOM_BAR_ENABLED"), ...geometry("BOTTOM_BAR_", true), opacity("BOTTOM_BAR_"), { key: "BOTTOM_BAR_WASH_COLOR", label: "Color", type: "palette" }] },
         { id: "activeItems", name: "Active Items", path: [...abilities, "ActiveAbilitiesMenu"], fields: [...geometry("ACTIVE_ITEMS_", true)] },
-        { id: "abilityPoints", name: "Ability Points (AP)", path: [...abilities, "APContainer"], frame: true,
+        { id: "abilityPoints", name: "Ability Points", path: [...abilities, "APContainer"], frame: true,
             note: "Color is shared with Bottom Bar. Position follows the native parent.",
             fields: [{ key: "BOTTOM_BAR_WASH_COLOR", label: "Color", type: "palette" }] },
         { id: "ammo", name: "Ammo", path: [...crosshair, "gun", "gun_data", "ammo_panel"], fields: [
-            toggle("ENABLE_AMMO_STATUS"), { key: "ENABLE_HIDE_MAGAZINE", label: "Hide Magazine", type: "toggle" }, { key: "ENABLE_HIDE_AMMO_ALL", label: "Hide Ammo", type: "toggle" },
+            { key: "ENABLE_AMMO_STATUS", label: "Magazine indicator", type: "toggle" }, { key: "ENABLE_HIDE_MAGAZINE", label: "Hide total ammo", type: "toggle" },
+            { key: "ENABLE_HIDE_AMMO_ALL", label: "Hide current ammo", type: "toggle" },
             ...geometry("AMMO_PANEL_"), { key: "AMMO_PANEL_SCALE", label: "Current Ammo", hidden: true }, { key: "AMMO_CURRENT_SCALE", label: "Current Ammo" },
             { key: "AMMO_TOTAL_SCALE", label: "Total Ammo" }, { key: "AMMO_CLIP_ANGLE", label: "Rotation" }, color("AMMO_TEXT_COLOR")
         ] },
@@ -35,7 +36,7 @@
         ] },
         { id: "playerStats", name: "Player Stats", path: [...lower, "hudPlayerStats"], fallbackPath: [...core, "hudActivePlayerStats"],
             resolve(hud) { return chooseStatsPanel(findPath(hud, [...lower, "hudPlayerStats"]), findPath(hud, [...core, "hudActivePlayerStats"])); }, fields: [
-            toggle("ENABLE_STATS_POSITION"), ...geometry("STATS_POSITION_"),
+            { key: "ENABLE_STATS_POSITION", label: "Custom position", type: "toggle" }, ...geometry("STATS_POSITION_"),
             { key: "STATS_POSITION_SIDE", label: "Side", type: "side" },
             { key: "STATS_POSITION_HIDE_NORMAL", label: "Hide (Normal)", type: "toggle" },
             { key: "STATS_POSITION_HIDE_SCOREBOARD", label: "Hide (Scoreboard)", type: "toggle" }

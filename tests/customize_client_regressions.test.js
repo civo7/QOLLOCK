@@ -74,14 +74,13 @@ test("settings-only owners cannot cover healthbar, top bar or left-side HUD with
     env.global.QOL.ui.customize.start();
     for (const id of ["healthWarnings", "quickbuy", "objectives", "nicknames", "ranks", "ultimates", "topBarWarnings", "urn", "buffTimers", "abilities"]) {
         const frame = env.em.FindChildTraverse("QOLCustomizeFrame_" + id);
-        assert.equal(frame.visible, false, id + " must not intercept input");
-        assert.equal(frame.draggable, false, id + " has no native drag capability");
-        const event = {}; env.global.$.DispatchEvent("DragStart", frame, event);
-        assert.equal(event.displayPanel, undefined);
+        assert.equal(frame, null, id + " must not intercept input");
+        assert.equal(env.em.FindChildTraverse("QOLCustomizeSelect_" + id), null, id + " belongs in its own settings section");
     }
     assert.equal(env.em.FindChildTraverse("QOLCustomizeFrame_healthbar").visible, true);
-    activate(env, "QOLCustomizeSelect_healthWarnings");
-    assert.ok(env.em.FindChildTraverse("QOLCustomize_ENABLE_COLOR_WARNING_25"), "controls remain available from the list");
+    activate(env, "QOLCustomizeCancel"); env.clock.advance(500);
+    env.global.QOL.ui.customize.start(null, { elementId: "healthWarnings" });
+    assert.ok(env.em.FindChildTraverse("QOLCustomize_ENABLE_COLOR_WARNING_25"), "controls remain available from scoped settings");
     activate(env, "QOLCustomizeCancel"); clean(env);
 });
 

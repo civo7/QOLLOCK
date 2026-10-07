@@ -20,6 +20,7 @@
         const cleanup = action => {
             try { action(); } catch (error) { $.Msg("[QOLLock][Customize] cleanup: " + error.message); }
         };
+        cleanup(() => owner.inspector?.dispose());
         cleanup(() => owner.transaction.close());
         for (const timer of [owner.timer, owner.dragTimer]) if (timer !== null) cleanup(() => $.CancelScheduled(timer));
         cleanup(() => P.delete(owner.drag?.proxy));
@@ -34,10 +35,10 @@
         cleanup(() => Q.ui.window.requestSettingsListSoftRefresh?.(0));
         cleanup(() => owner.onStop?.(feedback));
     }
-    function refreshFields(owner) {
+    function refreshFields(owner, options) {
         if (current !== owner) return;
         owner.feedback = null;
-        owner.inspector?.sync();
+        owner.inspector?.sync(options);
         refreshHistory(owner);
         refreshFrames(owner);
     }
@@ -56,19 +57,24 @@
         if (redo) owner.transaction.redo(); else owner.transaction.undo();
         refreshFields(owner);
     }
-    function select(owner, element) {
+    function select(owner, element, pin = true) {
         if (current !== owner || owner.drag || owner.applied || !owner.transaction.canEditElement(element.id)) return false;
         if (owner.inspector && !owner.inspector.commit()) {
             owner.feedback = "Enter a valid number or #RRGGBB color.";
             owner.status.text = localize(owner.feedback);
             return false;
         }
+        owner.inspector?.dispose();
         owner.selected = element;
+        owner.selectionPinned = pin;
         for (const [id, item] of owner.frames) {
             item.frame.SetHasClass("Selected", id === element.id);
             I.setActive(item.button, id === element.id);
         }
-        owner.inspector = I.build(owner.fields, element, owner.transaction, () => refreshFields(owner));
+        owner.inspector = I.build(owner.fields, element, owner.transaction, options => {
+            owner.selectionPinned = true;
+            refreshFields(owner, options);
+        });
         refreshFields(owner);
         return true;
     }
@@ -169,6 +175,7 @@
             // quickbuy), but must not place another input surface over it.
             const box = Q.presentation.hasFrame(element) ? measured : null;
             const visible = !!box;
+            item.available = !!measured;
             if (item.frame.visible !== visible) item.frame.visible = visible;
             const unavailable = !measured && !element.context && !!element.path;
             const caption = localize(element.name);
@@ -199,6 +206,19 @@
                 if (handle.visible !== canResize) handle.visible = canResize;
             }
         }
+        refreshCatalog(owner);
+    }
+    function refreshCatalog(owner) {
+        let count = 0;
+        for (const element of owner.elements) {
+            const item = owner.frames.get(element.id);
+            const matches = !owner.query || [element.name, element.group || "HUD", ...element.fields.map(field => field.label)]
+                .some(text => (text + " " + localize(text)).toLowerCase().includes(owner.query));
+            item.button.visible = matches && (owner.showAll || item.available || (owner.selectionPinned && owner.selected === element));
+            if (item.button.visible) count++;
+        }
+        for (const { heading, ids } of owner.headings) heading.visible = !owner.query && ids.some(id => owner.frames.get(id).button.visible);
+        owner.empty.visible = !count;
     }
     function watch(owner) {
         if (current !== owner) return;
@@ -250,8 +270,9 @@
         const overlay = P.create("Panel", context, "QOLCustomizeEditor");
         if (!P.isAlive(overlay)) return false;
         const owner = { context, hud, window, overlay, transaction: Q.ui.customizeSession.create(root, hud, window, element),
-            elements: element ? [element] : Q.presentation.elements,
-            hidden: [], active: [], frames: new Map(), timer: null, dragTimer: null, drag: null, inspector: null, onStop, applied: false, saving: false };
+            elements: element ? [element] : Q.presentation.elements.filter(item => Q.presentation.hasFrame(item) && item.fields.length && !item.context),
+            hidden: [], active: [], frames: new Map(), headings: [], query: "", showAll: !hud,
+            timer: null, dragTimer: null, drag: null, inspector: null, onStop, applied: false, saving: false };
         current = owner;
         try {
             overlay.AddClass("QOLCustomizeOverlay");
@@ -289,10 +310,6 @@
             tools.AddClass("QOLCustomizeTools");
             tools.AddClass("QOLUnifiedModalSurface");
             tools.hittest = true;
-            I.label(tools, "Customize", "ModalTitle").AddClass("QOLCustomizeTitle");
-            I.label(tools, element ? "Only this element can be edited. Other HUD elements stay locked."
-                : "Select an element on the HUD or in the list.");
-            I.label(tools, "Press Enter to preview a typed value.");
             const catalog = P.create("Panel", overlay, "QOLCustomizeCatalog");
             catalog.AddClass("QOLCustomizeCatalog");
             catalog.AddClass("QOLUnifiedModalSurface");
@@ -302,6 +319,13 @@
             const search = P.create("TextEntry", catalog, "QOLCustomizeSearch");
             search.AddClass("QOLCustomizeSearch");
             search.AddClass("ValueInput");
+            const allElements = I.button(catalog, "QOLCustomizeAllElements", "All elements", () => {
+                if (current !== owner) return;
+                owner.showAll = !owner.showAll;
+                I.setActive(allElements, owner.showAll);
+                refreshCatalog(owner);
+            });
+            I.setActive(allElements, owner.showAll);
             const choices = P.create("Panel", catalog, "");
             owner.choices = choices;
             choices.AddClass("QOLCustomizeChoices");
@@ -311,10 +335,10 @@
                 const left = a.group || "HUD", right = b.group || "HUD";
                 return left < right ? -1 : left > right ? 1 : 0;
             });
-            const headings = [];
             for (const element of ordered) {
                 const nextGroup = element.group || "HUD";
-                if (group !== nextGroup) { group = nextGroup; headings.push(I.label(choices, group)); }
+                if (group !== nextGroup) { group = nextGroup; owner.headings.push({ heading: I.label(choices, group), ids: [] }); }
+                owner.headings[owner.headings.length - 1].ids.push(element.id);
                 const frame = P.create("Button", overlay, "QOLCustomizeFrame_" + element.id, { draggable: Q.presentation.canDrag(element) ? "true" : "false" });
                 frame.AddClass("QOLCustomizeFrame");
                 frame.hittest = true;
@@ -344,12 +368,10 @@
             }
             search.SetPanelEvent("ontextentrychange", () => {
                 if (current !== owner) return;
-                const query = String(search.text || "").trim().toLowerCase();
-                for (const element of owner.elements) owner.frames.get(element.id).button.visible = !query ||
-                    [element.name, element.group || "HUD", ...element.fields.map(field => field.label)]
-                        .some(text => (text + " " + localize(text)).toLowerCase().includes(query));
-                for (const heading of headings) heading.visible = !query;
+                owner.query = String(search.text || "").trim().toLowerCase();
+                refreshCatalog(owner);
             });
+            owner.empty = I.label(choices, "No visible elements");
             owner.fields = P.create("Panel", tools, "QOLCustomizeFields");
             const history = P.create("Panel", tools, "");
             history.AddClass("QOLCustomizeActions");
@@ -389,7 +411,8 @@
             owner.status = I.label(tools, "Waiting for HUD preview");
             Q.preview?.hideAll?.();
             Q.tooltip?.hideRowTooltip?.();
-            select(owner, owner.elements[0]);
+            refreshFrames(owner);
+            select(owner, element || owner.elements.find(item => owner.frames.get(item.id).available) || owner.elements[0], !!element);
             watch(owner);
             overlay.SetFocus();
             return current === owner;

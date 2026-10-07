@@ -8,7 +8,13 @@ entries call the same editor with `start(onStop, {elementId})`. A scoped session
 creates only that element's frame and inspector and hides the full catalog. Its
 key whitelist rejects edits and resets belonging to other elements; lock controls
 cannot expand the scope. Unknown IDs fail before opening or changing HUD state.
-The standalone Customize tab retains full-catalog editing. Scope and locks are
+The standalone Customize tab lists editable HUD surfaces with independent frames.
+It shows available surfaces by default; All elements also reveals hidden or
+conditional surfaces. The current selection remains listed when hidden so it can
+be re-enabled. Search filters this list, including localized field names. Empty
+reference entries, separate-context screens and settings-only children do not
+appear in the canvas catalog; their settings section retains its scoped action.
+Scope and locks are
 session-only and add no persistent settings or defaults.
 
 Section entry bindings live in `ui/gameplay_tabs.js`; `ui/controls.js` only hosts
@@ -88,7 +94,9 @@ selected only when its content has layout; otherwise the active owner is used by
 both editor and gameplay manifest. Stamina frames measure the native foreground
 pips rather than an unrelated ability-charge widget.
 
-The editor suppresses hero-testing controls while active. The separate native
+The editor suppresses hero-testing controls and the native party/friends container
+while active. The session class releases both visibility overrides on exit.
+The separate native
 ClientStatus overlay removes its default logo/early-build block through the
 `citadel_client_status.css` override. Its connection, version and matchmaking
 status entries retain native styles; they are not part of the hidden menu tree.
@@ -113,11 +121,20 @@ Redo restores the edit reversed by Undo until a new edit replaces that branch.
 History actions accept valid pending entries first. Toggle, enum and palette
 actions accept pending entries in other fields together with their own change.
 Button captions do not intercept input intended for their button.
-Numeric entries use the wire grid; supported
+The inspector previews valid numeric and HEX input after a short typing pause;
+Enter and blur also accept it. Incomplete input stays in its field and does not
+overwrite the preview. Accepted typing preserves the caret until blur; history,
+reset, selection changes and closing cancel pending callbacks. Opacity and
+multiplier scales display percentages while retaining their original stored
+units. Exact position, additional feature options and color presets can be
+expanded separately. Visibility controls distinguish hiding a panel from
+enabling custom layout or a magazine indicator.
+Range feedback localizes the complete `Use a number from {min} to {max}.`
+source key before substituting the displayed numeric limits.
+Numeric entries use current field metadata; supported
 color entries use [tagged RGB](../core/custom_colors.md). Missing conditional
-panels keep their controls available and remain searchable by localized element
-and field names. Fixed assets and separate-context additions without existing
-settings have explanatory entries. Children without independent offsets inherit
+panels keep their controls available through All elements or a scoped action.
+Children without independent offsets inherit
 their parent's placement. Souls, items, stamina, compact stats, speed, ammo, AP and damage report have
 independent overall scales, applied by `ql_presentation_scale` through `ui-scale`.
 It multiplies the verified CSS baseline for the current mode and releases its
