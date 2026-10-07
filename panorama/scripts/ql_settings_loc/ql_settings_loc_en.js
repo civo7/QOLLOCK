@@ -1145,6 +1145,14 @@
     "Korean": "Korean",
     "Turkish": "Turkish",
     "Cleared in {seconds}s.": "Cleared in {seconds}s.",
-    "Color is shared with Bottom Bar.": "Color is shared with Bottom Bar."
+    "Color is shared with Bottom Bar.": "Color is shared with Bottom Bar.",
+    "Magnets": "Magnets",
+    "Properties": "Properties",
+    "Align left": "Align left",
+    "Center horizontally": "Center horizontally",
+    "Align right": "Align right",
+    "Align top": "Align top",
+    "Center vertically": "Center vertically",
+    "Align bottom": "Align bottom"
 };
 })();

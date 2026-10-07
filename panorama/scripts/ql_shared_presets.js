@@ -1805,6 +1805,12 @@ var QOL_SETTINGS_FIELDS = QOL_COMPACT_SCHEMA_UTILS.AppendUniqueSchemaFields(
         if (["AMMO_PANEL_X_OFFSET", "AMMO_PANEL_Y_OFFSET", "STATS_POSITION_X_OFFSET", "STATS_POSITION_Y_OFFSET"].includes(field.key)) {
             return Object.assign({}, field, { min: -2000, max: 2000 });
         }
+        if (/^(?:TOP_BAR|BOTTOM_BAR|ACTIVE_ITEMS|SOULS|ITEMS)_[XY]_OFFSET$/.test(field.key)) {
+            return Object.assign({}, field, { min: -2000, max: 2000, step: 1 });
+        }
+        if (/(?:X_OFFSET|Y_OFFSET)(?:_(?:ALT|TAB))?$/.test(field.key) || /^SHOP_OFFSET_[XY]$/.test(field.key)) {
+            return Object.assign({}, field, { step: 1 });
+        }
         return field;
     }),
     [

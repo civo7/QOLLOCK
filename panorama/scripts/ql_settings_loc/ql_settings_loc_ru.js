@@ -1145,6 +1145,14 @@
     "Korean": "Корейский",
     "Turkish": "Турецкий",
     "Cleared in {seconds}s.": "Пройдено за {seconds} с.",
-    "Color is shared with Bottom Bar.": "Цвет общий с нижней панелью."
+    "Color is shared with Bottom Bar.": "Цвет общий с нижней панелью.",
+    "Magnets": "Магниты",
+    "Properties": "Свойства",
+    "Align left": "По левому краю",
+    "Center horizontally": "По центру X",
+    "Align right": "По правому краю",
+    "Align top": "По верхнему краю",
+    "Center vertically": "По центру Y",
+    "Align bottom": "По нижнему краю"
 };
 })();

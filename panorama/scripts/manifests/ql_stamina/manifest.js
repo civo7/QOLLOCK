@@ -1,182 +1,104 @@
-// features/ql_stamina/manifest.js
-// =============================================================================
-// QOLLOCK — Stamina Charge Color + Rotation
-// =============================================================================
-// OWNS:        Stamina charge ring rotation + charge pip wash color
-// DOES NOT OWN: Charge mechanics, pip creation/destruction
-// DEPENDS ON:  QOL.core.FeatureRegistry, QOL.core.Scheduler, QOL.washColorPalette
-// CONFIG KEYS: STAMINA_CHARGE_ANGLE, STAMINA_CHARGE_COLOR
-// PANEL ID:    charges_container
-// PATTERN:     Polled at 500ms — stamina charges gain/lose the "finished" CSS
-//              class at runtime, so panels must be rescanned mid-match.
-// =============================================================================
-
-(function() {
+// Relative stamina rotation and ready/drained pip border color.
+// Preserve main's native baseline and feedback contract (11e0434).
+// Source: element_charges.xml; captured crosshair > dash > charges_container.
+(() => {
     "use strict";
-    var FR = QOL.core.FeatureRegistry;
-    if (!FR) { $.Msg("[QOLLock] stamina: FeatureRegistry not found — aborting"); return; }
-
-    function findChargesContainer(root) {
-        const element = QOL.presentation.elements.find(item => item.id === "stamina");
-        const direct = QOL.presentation.findPath(root, element.path);
+    const Q = QOL;
+    const P = Q.core.panel;
+    const element = Q.presentation.elements.find(item => item.id === "stamina");
+    function findCharges(root) {
+        const direct = Q.presentation.resolve(element, root);
         if (direct) return direct;
-        // Scope the shared id to Valve's stamina element, not ability icons.
-        var elements = root.FindChildrenWithClassTraverse("ability_element_charges") || [];
-        for (var i = 0; i < elements.length; i++) {
-            var cc = elements[i].FindChildTraverse("charges_container");
-            // element_roll.xml shares the wrapper class, but has no drained pips.
-            if (cc && cc.FindChildrenWithClassTraverse("charge_drained").length) return cc;
+        // Compatibility with a native stamina wrapper outside the named path;
+        // active-ability/roll charge containers have no drained stamina pips.
+        for (const wrapper of QOL_UTILS.FindPanelsByClass(root, "ability_element_charges")) {
+            const candidate = P.findTraverse(wrapper, "charges_container");
+            if (QOL_UTILS.FindPanelsByClass(candidate, "charge_drained").length) return candidate;
         }
         return null;
     }
-
-    FR.register({
-        id: "ql_stamina",
-        enabledByDefault: true,
+    Q.core.FeatureRegistry.register({
+        id: "ql_stamina", enabledByDefault: true,
         settings: [
             { key: "STAMINA_CHARGE_ANGLE", type: "slider", min: 0, max: 360, step: 1, default: 45 },
             { key: "STAMINA_CHARGE_COLOR", type: "palette", default: 0 }
         ],
-        create: function(ctx) {
-            var _lastAngleSig = "";
-            var _colorPanels = [];
-            var _anglePanel = null;
-            var _loop = null;
-
-
-            function _normalizeAngle(cfg) {
-                var angle = Math.round(Number(cfg.STAMINA_CHARGE_ANGLE));
-                if (!isFinite(angle)) angle = 45;
-                if (typeof QOL_UTILS !== "undefined" && QOL_UTILS.NormalizeDegrees360) {
-                    return QOL_UTILS.NormalizeDegrees360(angle);
+        create(ctx) {
+            const colored = new Map();
+            let panel = null, signature = null, model = null, loop = null;
+            let nativeTransform = "", rotationApplied = false;
+            function releaseRotation() {
+                if (rotationApplied && P.isAlive(panel)) {
+                    if (nativeTransform) panel.style.transform = nativeTransform;
+                    else QOL_UTILS.ClearStyleSafe(panel, "transform");
                 }
-                if (angle < 0) angle = 0;
-                if (angle > 360) angle = 360;
-                return angle;
+                rotationApplied = false;
+                signature = null;
             }
-
-            function _normalizeColorIndex(cfg) {
-                if (typeof QOL !== "undefined" && QOL.core && QOL.core.panel && QOL.core.panel.normalizePaletteIndex) {
-                    return QOL.core.panel.normalizePaletteIndex(cfg.STAMINA_CHARGE_COLOR);
-                }
-                var idx = Math.round(Number(cfg.STAMINA_CHARGE_COLOR));
-                if (!isFinite(idx)) idx = 0;
-                if (idx < 0) idx = 0;
-                // Match old NormalizePaletteColorIndex: ≥ palette length → 0 (no color).
-                // Palette has 30 entries (indices 0-29).
-                if (idx >= 30) idx = 0;
-                return idx;
+            function release() {
+                for (const target of colored.keys()) QOL_UTILS.ClearStyleSafe(target, "borderColor");
+                colored.clear();
+                releaseRotation();
+                panel = null;
+                nativeTransform = "";
             }
-
-            function _refreshColorPanels(cc) {
-                _colorPanels = [];
-                try {
-                    // Current native pips do not receive the former `finished`
-                    // class. Treat pips without an active feedback state as full.
-                    var allFg = cc.FindChildrenWithClassTraverse("charge_fg") || [];
-                    for (var i = 0; i < allFg.length; i++) {
-                        var fg = allFg[i];
-                        var charge = fg && fg.GetParent ? fg.GetParent() : null;
-                        var hasFeedback = charge && charge.BHasClass &&
-                            (charge.BHasClass("charging") || charge.BHasClass("draining") || charge.BHasClass("disabled"));
-                        if (fg && !hasFeedback) _colorPanels.push(fg);
+            function renderColor() {
+                const targets = new Set();
+                if (model.color) {
+                    for (const target of QOL_UTILS.FindPanelsByClass(panel, "charge_fg")) {
+                        const charge = target.GetParent();
+                        if (P.hasClassToken(charge, "has_charge") &&
+                            !["charging", "draining", "disabled", "drained"].some(state => P.hasClassToken(charge, state))) targets.add(target);
                     }
-                    var drained = cc.FindChildrenWithClassTraverse("charge_drained") || [];
-                    for (var j = 0; j < drained.length; j++) {
-                        if (drained[j]) _colorPanels.push(drained[j]);
+                    for (const target of QOL_UTILS.FindPanelsByClass(panel, "charge_drained")) targets.add(target);
+                }
+                for (const target of colored.keys()) {
+                    if (!targets.has(target)) { QOL_UTILS.ClearStyleSafe(target, "borderColor"); colored.delete(target); }
+                }
+                for (const target of targets) {
+                    // Native state changes can replace a code-written border.
+                    const previous = target.style.borderColor === model.color ? colored.get(target) : null;
+                    colored.set(target, P.syncStyles(target, { borderColor: model.color }, previous).sig);
+                }
+            }
+            function update() {
+                if (!model.active) { release(); return; }
+                const current = findCharges($.GetContextPanel());
+                if (current !== panel) {
+                    release(); panel = current;
+                    if (panel) {
+                        const value = String(panel.style.transform || "");
+                        nativeTransform = value === "none" ? "" : value;
                     }
-                } catch(e) {}
+                }
+                if (!P.isAlive(panel)) return;
+                if (!model.rotation) releaseRotation();
+                else {
+                    const transform = (nativeTransform ? nativeTransform + " " : "") + "rotateZ(" + model.rotation + "deg)";
+                    rotationApplied = true;
+                    signature = P.syncStyles(panel, { transform }, signature).sig;
+                }
+                renderColor();
             }
-
-            function _apply(cfg) {
-                var angle = _normalizeAngle(cfg);
-                var colorIdx = _normalizeColorIndex(cfg);
-                // Defaults are a no-op only after previous overrides are restored.
-                if (angle === 45 && colorIdx === 0 && !_anglePanel && !_colorPanels.length) return;
-
-                var cc = findChargesContainer($.GetContextPanel());
-                if (_anglePanel && _anglePanel !== cc) {
-                    QOL_UTILS.ClearStyleSafe(_anglePanel, "transform");
-                    _anglePanel = null;
-                    _lastAngleSig = "";
-                }
-                if (!cc) {
-                    for (const panel of _colorPanels) QOL_UTILS.ClearStyleSafe(panel, "washColor");
-                    _colorPanels = [];
-                    return;
-                }
-                var angleSig = String(angle);
-                if (angle === 45) {
-                    if (_anglePanel) QOL_UTILS.ClearStyleSafe(_anglePanel, "transform");
-                    _anglePanel = null;
-                    _lastAngleSig = "";
-                } else if (_anglePanel !== cc || _lastAngleSig !== angleSig) {
-                    cc.style.transform = "rotateZ(" + angle + "deg)";
-                    _lastAngleSig = angleSig;
-                    _anglePanel = cc;
-                }
-
-                var previous = _colorPanels;
-                if (colorIdx > 0) _refreshColorPanels(cc);
-                else _colorPanels = [];
-                for (var p = 0; p < previous.length; p++) {
-                    if (_colorPanels.indexOf(previous[p]) !== -1) continue;
-                    QOL_UTILS.ClearStyleSafe(previous[p], "washColor");
-                }
-
-                var pal = QOL.washColorPalette || [];
-                var wc = QOL.core.panel && QOL.core.panel.resolvePaletteColor
-                    ? QOL.core.panel.resolvePaletteColor(colorIdx)
-                    : pal[colorIdx];
-                for (var i = 0; i < _colorPanels.length; i++) {
-                    // Native charge-state transitions can rewrite wash without
-                    // replacing the pip, so selected colors are reasserted.
-                    _colorPanels[i].style.washColor = wc;
-                }
+            function refreshSettings() {
+                const cfg = ctx.config.view();
+                const raw = Math.round(Number(cfg.STAMINA_CHARGE_ANGLE));
+                const angle = QOL_UTILS.NormalizeDegrees360(Number.isFinite(raw) ? raw : 45);
+                const color = P.resolvePaletteColor(cfg.STAMINA_CHARGE_COLOR);
+                model = { active: angle !== 45 || !!color, color, rotation: angle - 45 };
+                signature = null;
+                update();
             }
-
-            function _tick() {
-                try { _apply(ctx.config.all()); } catch(e) {
-                    if (typeof QOL !== "undefined" && QOL.core && QOL.core.Logger) {
-                        QOL.core.Logger.logError("ql_stamina", "_tick: " + (e.message || e));
-                    }
-                    throw e;
-                }
-            }
-
             return {
-                onEnable: function() {
-                    _apply(ctx.config.all());
-                    var S = QOL.core.Scheduler;
-                    // 500ms matches old feature's cache TTL (ql_feat_stamina.js:65).
-                    _loop = S && S.createPollLoop ? S.createPollLoop(_tick, 0.5, "ql_stamina") : null;
-                },
-                onDisable: function() {
-                    if (_loop) { _loop.stop(); _loop = null; }
-                    var S = QOL.core.Scheduler;
-                    if (S) S.cancelAllForFeature("ql_stamina");
-                    _lastAngleSig = "";
-                    // Restore only the stamina ring that this instance changed.
-                    try {
-                        if (_anglePanel) QOL_UTILS.ClearStyleSafe(_anglePanel, "transform");
-                    } catch(e) {}
-                    _anglePanel = null;
-                    // Clear wash from all cached panels.
-                    for (var i = 0; i < _colorPanels.length; i++) {
-                        QOL_UTILS.ClearStyleSafe(_colorPanels[i], "washColor");
-                    }
-                    _colorPanels = [];
-                },
-                onSettingsChanged: function() { _apply(ctx.config.all()); }
+                onEnable() { refreshSettings(); loop = Q.core.Scheduler.createPollLoop(update, 0.5, ctx.id); },
+                onSettingsChanged: refreshSettings,
+                onDisable() { if (loop) loop.stop(); loop = null; release(); model = null; }
             };
         },
-        test: function(ctx) {
-            try {
-                var root = $.GetContextPanel();
-                var panel = root ? findChargesContainer(root) : null;
-                if (!panel) return null;
-                return { passed: true, name: "Stamina charges panel exists", message: "", assertions: [{ passed: true, name: "charges_container panel exists" }] };
-            } catch(e) { return { passed: false, name: "Stamina panel check", message: (e && e.message ? e.message : String(e)) }; }
+        test() {
+            const panel = findCharges($.GetContextPanel());
+            return panel ? { passed: true, name: "Stamina charges panel exists", message: "",
+                assertions: [{ passed: true, name: "charges_container panel exists" }] } : null;
         }
     });
 })();

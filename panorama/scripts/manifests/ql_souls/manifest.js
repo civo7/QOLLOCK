@@ -21,8 +21,8 @@
         settings: [
             { key: "HUD_SOULS_ENABLED", type: "toggle", default: true },
             { key: "SOULS_OPACITY", type: "slider", min: 0, max: 1, step: 0.05, default: 1.0 },
-            { key: "SOULS_X_OFFSET", type: "slider", min: -1500, max: 1500, step: 5, default: 0 },
-            { key: "SOULS_Y_OFFSET", type: "slider", min: -500, max: 500, step: 5, default: 0 }
+            { key: "SOULS_X_OFFSET", type: "slider", min: -2000, max: 2000, step: 1, default: 0 },
+            { key: "SOULS_Y_OFFSET", type: "slider", min: -2000, max: 2000, step: 1, default: 0 }
         ],
         create: function(ctx) {
             var _lastSig = "";

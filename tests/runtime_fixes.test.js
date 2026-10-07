@@ -781,6 +781,7 @@ function createStaminaRing(hud) {
     for (let i = 1; i <= 3; i++) {
         const charge = $.CreatePanel("Panel", container, "charge" + i);
         charge.AddClass("charge");
+        charge.AddClass("has_charge");
         charges.push(charge);
         const fg = $.CreatePanel("Panel", charge, "");
         fg.AddClass("charge_fg");
@@ -798,18 +799,18 @@ test("stamina tint follows current native charge states without a finished class
     charges[2].AddClass("charging");
     Q.core.ConfigAdapter.loadFromFlat({ STAMINA_CHARGE_COLOR: 13 });
     const blue = Q.core.panel.resolvePaletteColor(13);
-    assert.strictEqual(foregrounds[0].style.washColor, blue);
-    assert.strictEqual(foregrounds[1].style.washColor, blue);
+    assert.strictEqual(foregrounds[0].style.borderColor, blue);
+    assert.strictEqual(foregrounds[1].style.borderColor, blue);
 
     charges[2].RemoveClass("charging");
     charges[0].AddClass("draining");
     hud.clock.advance(600);
-    assert.strictEqual(foregrounds[2].style.washColor, blue, "Recovered pip must not remain uncolored");
-    assert.strictEqual(foregrounds[0].style.washColor, undefined, "Recharging pip must recover its native feedback colors");
+    assert.strictEqual(foregrounds[2].style.borderColor, blue, "Recovered pip must not remain uncolored");
+    assert.strictEqual(foregrounds[0].style.borderColor, undefined, "Recharging pip must recover its native feedback colors");
 
-    foregrounds[1].style.washColor = "transparent";
+    foregrounds[1].style.borderColor = "transparent";
     hud.clock.advance(600);
-    assert.strictEqual(foregrounds[1].style.washColor, blue, "Native updates must not permanently replace the selected tint");
+    assert.strictEqual(foregrounds[1].style.borderColor, blue, "Native updates must not permanently replace the selected border color");
 });
 
 test("stamina preset changes restore both native color and default rotation", () => {
@@ -819,12 +820,35 @@ test("stamina preset changes restore both native color and default rotation", ()
     const { container, foregrounds } = createStaminaRing(hud);
     const apply = cfg => Q.core.ConfigAdapter.loadFromFlat(cfg);
     apply({ STAMINA_CHARGE_COLOR: 13, STAMINA_CHARGE_ANGLE: 90 });
-    assert.strictEqual(container.style.transform, "rotateZ(90deg)");
+    assert.strictEqual(container.style.transform, "rotateZ(45deg)");
     apply({ STAMINA_CHARGE_COLOR: 4, STAMINA_CHARGE_ANGLE: 120 });
-    for (const fg of foregrounds) assert.strictEqual(fg.style.washColor, Q.core.panel.resolvePaletteColor(4));
+    for (const fg of foregrounds) assert.strictEqual(fg.style.borderColor, Q.core.panel.resolvePaletteColor(4));
     apply({ STAMINA_CHARGE_COLOR: 0, STAMINA_CHARGE_ANGLE: 45 });
-    for (const fg of foregrounds) assert.strictEqual(fg.style.washColor, undefined);
+    for (const fg of foregrounds) assert.strictEqual(fg.style.borderColor, undefined);
     assert.strictEqual(container.style.transform, undefined, "default must release the owned transform, as on initial startup");
+});
+
+test("stamina composes relative rotation with native transform and leaves feedback colors to the game", () => {
+    const hud = sim.createHud({ inHideout: false });
+    hud.assertLoaded();
+    const Q = hud.sandbox.global.QOL;
+    const { container, charges, foregrounds } = createStaminaRing(hud);
+    container.style.transform = "translateX(3px)";
+    const apply = cfg => Q.core.ConfigAdapter.loadFromFlat(cfg);
+    apply({ STAMINA_CHARGE_COLOR: 13 });
+    assert.equal(container.style.transform, "translateX(3px)", "color alone cannot rotate the ring");
+    apply({ STAMINA_CHARGE_COLOR: 13, STAMINA_CHARGE_ANGLE: 0 });
+    assert.equal(container.style.transform, "translateX(3px) rotateZ(-45deg)");
+    for (const state of ["charging", "draining", "disabled", "drained"]) {
+        charges[0].AddClass(state); hud.clock.advance(600);
+        assert.equal(foregrounds[0].style.borderColor, undefined, state);
+        charges[0].RemoveClass(state);
+    }
+    charges[0].RemoveClass("has_charge"); hud.clock.advance(600);
+    assert.equal(foregrounds[0].style.borderColor, undefined, "an empty pip is not ready");
+    Q.core.FeatureRegistry.disable("ql_stamina");
+    assert.equal(container.style.transform, "translateX(3px)");
+    for (const panel of container.FindChildrenWithClassTraverse("charge_drained")) assert.equal(panel.style.borderColor, undefined);
 });
 
 test("stamina reapplies settings to a recreated ring without styling ability icon charges", () => {
@@ -835,14 +859,14 @@ test("stamina reapplies settings to a recreated ring without styling ability ico
     const abilityCharges = hud.sandbox.global.$.CreatePanel("Panel", hud.root, "charges_container");
     let ring = createStaminaRing(hud);
     Q.core.ConfigAdapter.loadFromFlat({ STAMINA_CHARGE_COLOR: 13, STAMINA_CHARGE_ANGLE: 90 });
-    assert.strictEqual(ring.container.style.transform, "rotateZ(90deg)");
+    assert.strictEqual(ring.container.style.transform, "rotateZ(45deg)");
     assert.strictEqual(abilityCharges.style.transform || "", "");
     ring.element.DeleteAsync(0);
     hud.clock.advance(0);
     ring = createStaminaRing(hud);
     hud.clock.advance(600);
-    assert.strictEqual(ring.container.style.transform, "rotateZ(90deg)");
-    for (const fg of ring.foregrounds) assert.strictEqual(fg.style.washColor, Q.core.panel.resolvePaletteColor(13));
+    assert.strictEqual(ring.container.style.transform, "rotateZ(45deg)");
+    for (const fg of ring.foregrounds) assert.strictEqual(fg.style.borderColor, Q.core.panel.resolvePaletteColor(13));
 });
 
 function createItemsContainer(hud) {

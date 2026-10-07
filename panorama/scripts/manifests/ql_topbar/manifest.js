@@ -51,8 +51,8 @@
             { key: "ENABLE_URN_DIFF", type: "toggle", default: false },
             { key: "TOP_BAR_OPACITY", type: "slider", min: 0, max: 1, step: 0.05, default: 1.0 },
             { key: "TOP_BAR_SCALE", type: "slider", min: 0.5, max: 1.5, step: 0.05, default: 1.0 },
-            { key: "TOP_BAR_X_OFFSET", type: "slider", min: -1500, max: 1500, step: 5, default: 0 },
-            { key: "TOP_BAR_Y_OFFSET", type: "slider", min: -500, max: 500, step: 5, default: 0 }
+            { key: "TOP_BAR_X_OFFSET", type: "slider", min: -2000, max: 2000, step: 1, default: 0 },
+            { key: "TOP_BAR_Y_OFFSET", type: "slider", min: -2000, max: 2000, step: 1, default: 0 }
         ],
         create: function(ctx) {
             var _lastSig = "";
@@ -110,8 +110,8 @@
 
                 var active = _hasNonDefault(cfg);
                 var enabled = (cfg.HUD_TOP_BAR_ENABLED === undefined || cfg.HUD_TOP_BAR_ENABLED === true || Number(cfg.HUD_TOP_BAR_ENABLED) === 1);
-                var ox = Math.round(_clamp(active ? cfg.TOP_BAR_X_OFFSET : 0, -1500, 1500));
-                var oy = Math.round(_clamp(active ? cfg.TOP_BAR_Y_OFFSET : 0, -500, 500));
+                var ox = Math.round(_clamp(active ? cfg.TOP_BAR_X_OFFSET : 0, -2000, 2000));
+                var oy = Math.round(_clamp(active ? cfg.TOP_BAR_Y_OFFSET : 0, -2000, 2000));
                 var opNum = active ? Number(cfg.TOP_BAR_OPACITY !== undefined ? cfg.TOP_BAR_OPACITY : 1.0) : 1.0;
                 if (!isFinite(opNum)) opNum = 1.0;
                 var scNum = active ? Number(cfg.TOP_BAR_SCALE !== undefined ? cfg.TOP_BAR_SCALE : 1.0) : 1.0;

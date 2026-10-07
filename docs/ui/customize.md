@@ -39,11 +39,12 @@ instead of transferring it to a different gameplay tree.
 
 `ql_customize_data.js` and the data modules in `scripts/customize/` are shared by
 HUD and settings. They define scoped owner paths, existing editable fields and
-normalization against the current compact schema. The catalog includes native
+normalization against current settings metadata. Published compact schemas stay
+frozen; unsupported current values use the existing JSON envelope. The catalog includes native
 HUD families, overlays, map/shop states and additions in other script contexts;
 see [the visual surface inventory](../CUSTOMIZE_SURFACE_INVENTORY.md). The
 settings-only modules in `ui/customize/` separate the session, measured geometry,
-inspector, overlay and tab. Native HUD owners remain under their original parents.
+inspector, window chrome, overlay and tab. Native HUD owners remain under their original parents.
 Frames use the existing Panorama DragStart/DragEnd contract. A temporary,
 input-transparent proxy is the compositor's displayPanel, while native HUD panels,
 selection frames and corners retain their parents. The proxy origin is sampled
@@ -68,8 +69,16 @@ entries that inherit an owner's geometry (health warnings, top-bar details,
 quickbuy) remain in the catalog without a competing hit-test frame. Their native
 owners can still be measured for availability. Hover identifies the element by localized
 tooltip. Smaller surfaces have input priority within larger family frames;
-editor chrome remains above all frames. Show frames exposes the outlines together. Hide panels
+editor chrome remains above all frames. Small elements receive a padded input
+area with a separate outline of the actual measured content. Corners use the
+padded area so the center remains available for moving.
+Show frames exposes the outlines together. Hide panels
 temporarily collapses the catalog and inspector while retaining the view controls.
+These controls update actual panel visibility/outline styles as well as classes.
+Catalog, inspector and toolbar have dedicated draggable headers; their positions
+are session-only and bounded to the measured viewport. Interactive children do
+not act as window drag handles. Viewport and selection changes re-clamp moved
+windows without transferring them to the compositor.
 These view choices are session-only. Missing elements are dimmed in the catalog;
 the selected inspector shows their availability without repeating a suffix on
 every catalog row.
@@ -81,7 +90,7 @@ root and existing MenuBack binding all route through the same cancellation
 guard. Duplicate delivery of one MenuBack cannot also close settings or resume
 gameplay; the next separate Escape retains ordinary settings/menu behavior.
 
-Colors appear at the start of the inspector with preset swatches, a HEX entry,
+Colors appear in the inspector with preset swatches, a HEX entry,
 preview chip and native Default action. Numeric and HEX entries also submit on
 blur; malformed values remain marked rather than overwriting the accepted draft.
 The AP/infinity currency has its own selection frame under AbilitiesContainer.
@@ -153,13 +162,15 @@ Measurements account for menu origin, scroll offsets and native UI scale; the
 simulator cannot establish native layout or input behavior.
 
 Selected surfaces with a declared overall scale or size expose a draggable
-handle at each of the four corners. Every handle is aligned inside the measured frame;
+handle at each of the four corners. Every handle is aligned inside the input frame;
 it is never a separately positioned drag visual. The selected inspector explains
 the element's actual move/resize capabilities. Corner movement projects onto the
-signed starting frame diagonal and edits the existing scale/size on its wire grid, preserving its bounds and making one history
+signed starting input-frame diagonal and edits the existing scale/size on its current settings grid, preserving its bounds and making one history
 entry per gesture. It changes uniform scale/size rather than independent dimensions. Where pixel
 offsets exist, the opposite corner is held using acknowledged native layout
-measurements. Compensation waits for a fresh preview and layout; end-of-drag
+measurements. A preview acknowledgment alone is insufficient: compensation
+waits for dimensions to reflect the requested scale and remain stable across
+samples. A new scale supersedes the old anchor measurement. End-of-drag
 settling remains part of the same undo entry. Elements without independent
 pixel offsets retain their native placement. Geometry controls precede palettes.
 Shop, reload, item cooldowns and base/Alt/Tab minimap corners reuse their existing
@@ -169,9 +180,24 @@ accepted by the session but is hidden from the inspector; the current and total
 ammo controls remain available. Overall ammo resizing uses a separate scale for
 the complete group, including the magazine, without changing those text sizes.
 
-Dragging currently requires existing pixel offsets. Cooldown offsets retain
-their percentage units and use exact numeric entry; their native containing-block
-geometry still needs verification before drag conversion. Minimap base/Alt/Tab
+Magnets align viewport/neighbor edges and centers in canvas units. Guides appear
+only when acknowledged native bounds meet the proposed alignment; clamped or
+delayed offsets do not produce a false guide. Six explicit alignment actions use
+the measured viewport and the same offset conversion as dragging. Actions after
+typed edits wait for their preview and the measured offset/size change before
+calculating a delta; an unavailable layout times out without applying a stale
+alignment. History, Reset and selection changes cancel a queued action. Magnets are
+session-only and independent of persistent offsets.
+
+Current pixel offsets use finer settings precision independently of historical
+compact schemas. Native souls/items/top-bar/signature/active-item offset bounds
+agree between current metadata and gameplay consumers. The existing envelope
+preserves values outside the frozen binary layout.
+
+Dragging requires declared offsets. Cooldown offsets retain their percentage
+units and convert against the measured parent's physical dimensions; missing
+measurements prevent an edit instead of assuming a screen resolution. Verify
+both Basic and Advanced containing blocks in the client. Minimap base/Alt/Tab
 entries measure the content but move the native host, with Alt priority when both
 zoom states apply. World-bound targets and damage numbers use their existing
 size/visibility controls, without screen-position frames.

@@ -111,7 +111,7 @@ test("minimap and shop corners edit existing size/scale fields without moving th
         const frame = handle.GetParent();
         const proxy = startDrag(env, handle);
         proxy.actualxoffset += 80; proxy.actualyoffset += 80;
-        env.global.$.DispatchEvent("DragEnd", handle, proxy); env.clock.advance(1200);
+        env.global.$.DispatchEvent("DragEnd", handle, proxy); env.clock.advance(3000);
         const catalog = env.global.QOL.presentation;
         assert.equal(env.hud.sandbox.global.QOL.core.ConfigStore.get(feature, key), catalog.normalize(key, initial * 1.2), mode);
         assert.equal(target.GetParent(), parent);
@@ -146,7 +146,8 @@ test("AP infinity has its own selectable surface and previews the existing share
     env.global.QOL.ui.customize.start();
     const frame = env.em.FindChildTraverse("QOLCustomizeFrame_abilityPoints");
     assert.equal(frame.visible, true);
-    assert.equal(frame.style.width, "54px");
+    assert.equal(frame.style.width, "64px", "tiny AP gets a usable hit target");
+    assert.equal(frame.Children().find(child => child.BHasClass("QOLCustomizeOutline")).style.width, "54px", "outline keeps measured geometry");
     activate(env, "QOLCustomizeFrame_abilityPoints");
     activate(env, "QOLCustomizeColor_BOTTOM_BAR_WASH_COLOR_13"); env.clock.advance(1200);
     assert.equal(icon.style.washColor, env.global.QOL_UTILS.ResolveWashColorFromPalette(13));

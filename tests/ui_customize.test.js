@@ -323,8 +323,8 @@ test("preview changes the HUD isolate while canonical config, storage and export
     type(env, "SOULS_Y_OFFSET", 48);
     clock.advance(800);
     const store = hud.sandbox.global.QOL.core.ConfigStore;
-    assert.equal(store.get("ql_souls", "SOULS_X_OFFSET"), 135);
-    assert.equal(store.get("ql_souls", "SOULS_Y_OFFSET"), 50);
+    assert.equal(store.get("ql_souls", "SOULS_X_OFFSET"), 133);
+    assert.equal(store.get("ql_souls", "SOULS_Y_OFFSET"), 48);
     assert.equal(hud.sandbox.global.State.lastConfig.SOULS_X_OFFSET, 0);
     assert.equal(JSON.stringify(g.MOD_CONFIG), before);
     assert.equal(hud.root.GetAttributeString("Deadlock_Mod_Settings_v1", ""), storage);
@@ -441,9 +441,12 @@ test("frame measurements account for a distinct menu origin and nonuniform UI sc
     env.clock.advance(300);
     const frame = env.em.FindChildTraverse("QOLCustomizeFrame_souls");
     assert.equal(frame.style.x, "110px");
-    assert.equal(frame.style.y, "80px");
+    assert.equal(frame.style.y, "72px");
     assert.equal(frame.style.width, "80px");
-    assert.equal(frame.style.height, "40px");
+    assert.equal(frame.style.height, "56px");
+    const outline = frame.Children().find(child => child.BHasClass("QOLCustomizeOutline"));
+    assert.equal(outline.style.height, "40px");
+    assert.equal(outline.style.y, "8px");
     activate(env, "QOLCustomizeCancel");
     clean(env);
 });
@@ -517,11 +520,13 @@ for (const density of [1, 2]) test(`corner resize uses uniform scale at UI densi
     assert.equal(handle.GetParent(), frame, "corner belongs to the measured frame");
     const proxy = startDrag(env, handle);
     assert.equal(handle.GetParent(), frame);
-    proxy.actualxoffset += 16; proxy.actualyoffset += 6;
+    proxy.actualxoffset += parseFloat(frame.style.width) * density * 0.1;
+    proxy.actualyoffset += parseFloat(frame.style.height) * density * 1.5 * 0.1;
     env.clock.advance(100);
-    proxy.actualxoffset += 16; proxy.actualyoffset += 6;
+    proxy.actualxoffset += parseFloat(frame.style.width) * density * 0.1;
+    proxy.actualyoffset += parseFloat(frame.style.height) * density * 1.5 * 0.1;
     env.global.$.DispatchEvent("DragEnd", handle, handle);
-    env.clock.advance(500);
+    env.clock.advance(3000); // No CSS relayout is modeled: settle reaches its bounded deadline.
     const store = env.hud.sandbox.global.QOL.core.ConfigStore;
     assert.equal(store.get("ql_bottom_bar", "BOTTOM_BAR_SCALE"), 1.2);
     assert.equal(panel.style.uiScale, "108%");
@@ -549,7 +554,7 @@ test("resize clamps existing ranges, cancels on native replacement and cleans up
     const handle = env.em.FindChildTraverse("QOLCustomizeResize_bottomBar");
     let proxy = startDrag(env, handle);
     proxy.actualxoffset += 1600; env.clock.advance(100);
-    env.global.$.DispatchEvent("DragEnd", handle, handle); env.clock.advance(500);
+    env.global.$.DispatchEvent("DragEnd", handle, handle); env.clock.advance(3000);
     const store = env.hud.sandbox.global.QOL.core.ConfigStore;
     assert.equal(store.get("ql_bottom_bar", "BOTTOM_BAR_SCALE"), 1.5);
     proxy = startDrag(env, handle);

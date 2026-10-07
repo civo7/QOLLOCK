@@ -72,6 +72,7 @@
 		<include src="s2r://panorama/scripts/ui/customize/session.vjs_c" />
 		<include src="s2r://panorama/scripts/ui/customize/geometry.vjs_c" />
 		<include src="s2r://panorama/scripts/ui/customize/inspector.vjs_c" />
+		<include src="s2r://panorama/scripts/ui/customize/chrome.vjs_c" />
 		<include src="s2r://panorama/scripts/ui/customize/editor.vjs_c" />
 		<include src="s2r://panorama/scripts/ui/customize/tab.vjs_c" />
 		<!-- ==== End QOLLOCK customization editor ==== -->

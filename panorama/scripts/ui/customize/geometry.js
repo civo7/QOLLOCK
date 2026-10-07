@@ -39,6 +39,57 @@
             width: width / scale(host, "x"), height: height / scale(host, "y"), origin
         };
     }
+    function viewport(host) {
+        if (!alive(host)) return null;
+        const width = Number(host.actuallayoutwidth) / scale(host, "x");
+        const height = Number(host.actuallayoutheight) / scale(host, "y");
+        return width > 0 && height > 0 ? { x: 0, y: 0, width, height } : null;
+    }
+    const canvasDelta = (delta, host) => ({ x: delta.x / scale(host, "x"), y: delta.y / scale(host, "y") });
+    const screenDelta = (delta, host) => ({ x: delta.x * scale(host, "x"), y: delta.y * scale(host, "y") });
+    function hitBox(bounds, view) {
+        const width = Math.max(64, bounds.width), height = Math.max(56, bounds.height);
+        const x = bounds.x - (width - bounds.width) / 2, y = bounds.y - (height - bounds.height) / 2;
+        return { x: view ? Math.max(0, Math.min(view.width - width, x)) : x,
+            y: view ? Math.max(0, Math.min(view.height - height, y)) : y, width, height };
+    }
+    const points = (bounds, axis) => {
+        const size = axis === "x" ? bounds.width : bounds.height;
+        return [bounds[axis], bounds[axis] + size / 2, bounds[axis] + size];
+    };
+    // Pure canvas math. Consumers decide whether native layout has acknowledged
+    // the resulting draft before displaying a guide.
+    function snap(bounds, delta, view, neighbors, axes = ["x", "y"], threshold = 8) {
+        const adjusted = { ...delta }, guides = {};
+        for (const axis of axes) {
+            const moving = points(bounds, axis).map(value => value + delta[axis]);
+            const candidates = [];
+            if (view) points(view, axis).forEach((value, index) => candidates.push({ value, indices: index === 1 ? [1] : [0, 2] }));
+            for (const neighbor of neighbors) points(neighbor, axis).forEach((value, index) => candidates.push({
+                value, indices: index === 1 ? [1] : [0, 2]
+            }));
+            let nearest = null;
+            for (const candidate of candidates) for (const index of candidate.indices) {
+                const distance = candidate.value - moving[index];
+                if (Math.abs(distance) <= threshold && (!nearest || Math.abs(distance) < Math.abs(nearest.distance))) {
+                    nearest = { ...candidate, index, distance };
+                }
+            }
+            if (nearest) {
+                adjusted[axis] += nearest.distance;
+                guides[axis] = { value: nearest.value, index: nearest.index };
+            }
+        }
+        return { delta: adjusted, guides };
+    }
+    function alignDelta(bounds, view, action) {
+        if (!bounds || !view) return null;
+        const actions = { left: ["x", 0], center: ["x", 1], right: ["x", 2], top: ["y", 0], middle: ["y", 1], bottom: ["y", 2] };
+        const selected = actions[action];
+        if (!selected) return null;
+        const [axis, index] = selected;
+        return { x: 0, y: 0, [axis]: points(view, axis)[index] - points(bounds, axis)[index] };
+    }
     function isShown(panel) {
         let node = panel;
         let depth = 0;
@@ -86,7 +137,15 @@
                 (target.id === "hudPlayerStats" && !alive(block) ? box(target, host) : null);
         }
         if (element.id === "stamina") {
-            return union(QOL_UTILS.FindPanelsByClass(target, "charge_fg"), host) || box(target, host);
+            // The visible pips are clipped arcs inside concentric circles. A
+            // rotateZ on their shared owner must not rotate a rectangular hit
+            // box's origin; measure the unrotated circles around that center.
+            const foregrounds = QOL_UTILS.FindPanelsByClass(target, "charge_fg");
+            if (!foregrounds.length) for (const child of target.Children()) {
+                const progress = P.findChild(child, "progress");
+                if (progress) foregrounds.push(progress);
+            }
+            return union(foregrounds, host) || box(target, host);
         }
         if (element.id === "healthbar") return box(P.findChild(target, "QOLHealthbarGeometry") || target, host);
         const measured = element.measureId ? (P.findChild(target, element.measureId) || P.findTraverse(target, element.measureId)) : null;
@@ -113,8 +172,9 @@
             const correction = startBox[axis] + opposite * startBox[size] - currentBox[axis] - opposite * currentBox[size];
             if (field.unit === "%") {
                 const parent = target.GetParent();
-                const dim = axis === "x" ? (parent?.actuallayoutwidth || 1920) : (parent?.actuallayoutheight || 1080);
-                const deltaPct = (correction * scale(host, axis) / scale(parent, axis) / dim) * 100;
+                const dim = Number(axis === "x" ? parent?.actuallayoutwidth : parent?.actuallayoutheight);
+                if (!(dim > 0)) continue;
+                const deltaPct = (correction * scale(host, axis) / dim) * 100;
                 values[field.key] = Q.presentation.normalize(field.key, Number(currentValues[field.key]) + deltaPct * (field.direction || 1));
             } else {
                 values[field.key] = Q.presentation.normalize(field.key, Number(currentValues[field.key]) +
@@ -131,9 +191,11 @@
             const axis = field.axis;
             const dir = field.direction || 1;
             if (field.unit === "%") {
-                const dim = axis === "x" ? (parent?.actuallayoutwidth || 1920) : (parent?.actuallayoutheight || 1080);
-                const parentScale = scale(parent, axis);
-                const deltaPct = ((delta[axis] / parentScale) / dim) * 100;
+                const dim = Number(axis === "x" ? parent?.actuallayoutwidth : parent?.actuallayoutheight);
+                if (!(dim > 0)) continue;
+                // Both reported parent dimensions and cursor deltas are physical
+                // pixels; dividing by parent UI scale again halves the movement.
+                const deltaPct = (delta[axis] / dim) * 100;
                 values[field.key] = Q.presentation.normalize(field.key,
                     Number(startValues[field.key]) + deltaPct * dir);
             } else {
@@ -143,5 +205,6 @@
         }
         return values;
     }
-    Q.ui.customizeGeometry = { scale, absolute, box, frameBox, dragValues, resizeValues, anchorValues, isShown };
+    Q.ui.customizeGeometry = { scale, absolute, box, frameBox, dragValues, resizeValues, anchorValues, isShown,
+        viewport, canvasDelta, screenDelta, hitBox, points, snap, alignDelta };
 })();

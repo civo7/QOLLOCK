@@ -94,12 +94,9 @@
                 }
             });
             posToggle.AddClass("QOLCustomizeSectionHeading");
-            posToggle.AddClass("Expanded");
-            posToggle.visible = false;
-            posToggle.style.visibility = "collapse";
             const posBody = P.create("Panel", posHost, "QOLCustomizePositionBody");
             posBody.AddClass("QOLCustomizeSectionBody");
-            posBody.visible = true;
+            posBody.visible = false;
             positionBody = posBody;
         }
 
@@ -141,7 +138,7 @@
                 continue;
             }
             const controlHost = P.create("Panel", row, "");
-            controlHost.AddClass("SliderValueGroup");
+            controlHost.AddClass("QOLCustomizeValueGroup");
             const isColor = field.type === "color" || field.type === "palette";
             let slider = null;
             let wire = null;
@@ -183,10 +180,7 @@
                 }
                 slider.value = Math.round(Number(session.value(field.key)) * mult);
 
-                // Hidden steppers for compatibility with existing tests
                 const decrease = button(controlHost, "QOLCustomizeDecrease_" + field.key, "−", () => adjust(-1));
-                decrease.visible = false;
-                decrease.style.visibility = "collapse";
                 decrease.AddClass("QOLCustomizeStepper");
             }
 
@@ -208,8 +202,6 @@
             } else {
                 if (unit(field)) label(controlHost, unit(field), "QOLCustomizeUnit");
                 const increase = button(controlHost, "QOLCustomizeIncrease_" + field.key, "+", () => adjust(1));
-                increase.visible = false;
-                increase.style.visibility = "collapse";
                 increase.AddClass("QOLCustomizeStepper");
             }
             const error = label(row, isColor ? "Enter a complete HEX color, such as #AABBCC." : "Use a number from {min} to {max}.");

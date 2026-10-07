@@ -75,11 +75,11 @@ test("opacity and ratio scales display percentages while retaining source units"
 
 test("live rounding preserves editing text until blur formats the accepted wire value", () => {
     const env = setup();
-    const input = env.type("SOULS_X_OFFSET", "123"); env.clock.advance(301);
-    assert.equal(env.session.value("SOULS_X_OFFSET"), 125);
-    assert.equal(input.text, "123", "preview does not replace the active text or caret");
+    const input = env.type("SOULS_X_OFFSET", "123.4"); env.clock.advance(301);
+    assert.equal(env.session.value("SOULS_X_OFFSET"), 123);
+    assert.equal(input.text, "123.4", "preview does not replace the active text or caret");
     input._fire("onblur");
-    assert.equal(input.text, "125");
+    assert.equal(input.text, "123");
     assert.equal(env.session.undo(), true);
     assert.equal(env.session.canUndo(), false, "formatting creates no duplicate history entry");
     clean(env);
@@ -102,9 +102,11 @@ test("Reset sync and disposed inspectors cannot reapply a queued value", () => {
 test("exact position and presets disclose on demand; numeric steppers honor wire precision", () => {
     const env = setup("items");
     const position = env.find("QOLCustomizePositionBody");
+    assert.equal(position.visible, false);
+    env.find("QOLCustomizePositionToggle")._fire("onactivate");
     assert.equal(position.visible, true);
     env.find("QOLCustomizeIncrease_ITEMS_X_OFFSET")._fire("onactivate");
-    assert.equal(env.session.value("ITEMS_X_OFFSET"), 5);
+    assert.equal(env.session.value("ITEMS_X_OFFSET"), 1);
     env.find("QOLCustomizeDecrease_ITEMS_SCALE")._fire("onactivate");
     assert.equal(env.session.value("ITEMS_SCALE"), 99);
     const palette = env.find("QOLCustomizePalette_ITEMS_WASH_COLOR");

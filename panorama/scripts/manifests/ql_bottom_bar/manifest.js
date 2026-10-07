@@ -24,12 +24,12 @@
             { key: "HUD_BOTTOM_BAR_ENABLED", type: "toggle", default: true },
             { key: "BOTTOM_BAR_OPACITY", type: "slider", min: 0, max: 1, step: 0.05, default: 1.0 },
             { key: "BOTTOM_BAR_SCALE", type: "slider", min: 0.5, max: 1.5, step: 0.05, default: 1.0 },
-            { key: "BOTTOM_BAR_X_OFFSET", type: "slider", min: -1500, max: 1500, step: 5, default: 0 },
-            { key: "BOTTOM_BAR_Y_OFFSET", type: "slider", min: -500, max: 500, step: 5, default: 0 },
+            { key: "BOTTOM_BAR_X_OFFSET", type: "slider", min: -2000, max: 2000, step: 1, default: 0 },
+            { key: "BOTTOM_BAR_Y_OFFSET", type: "slider", min: -2000, max: 2000, step: 1, default: 0 },
             { key: "BOTTOM_BAR_WASH_COLOR", type: "palette", default: 0 },
             { key: "ACTIVE_ITEMS_SCALE", type: "slider", min: 50, max: 250, step: 1, default: 100 },
-            { key: "ACTIVE_ITEMS_X_OFFSET", type: "slider", min: -1500, max: 1500, step: 1, default: 0 },
-            { key: "ACTIVE_ITEMS_Y_OFFSET", type: "slider", min: -500, max: 500, step: 1, default: 0 }
+            { key: "ACTIVE_ITEMS_X_OFFSET", type: "slider", min: -2000, max: 2000, step: 1, default: 0 },
+            { key: "ACTIVE_ITEMS_Y_OFFSET", type: "slider", min: -2000, max: 2000, step: 1, default: 0 }
         ],
         create: function(ctx) {
             var _lastSig = "";
@@ -149,10 +149,10 @@
                 if (scale > 250) scale = 250;
                 var ox = Math.round(Number(cfg.ACTIVE_ITEMS_X_OFFSET || 0)) || 0;
                 var oy = Math.round(Number(cfg.ACTIVE_ITEMS_Y_OFFSET || 0)) || 0;
-                if (ox < -1500) ox = -1500;
-                if (ox > 1500) ox = 1500;
-                if (oy < -500) oy = -500;
-                if (oy > 500) oy = 500;
+                if (ox < -2000) ox = -2000;
+                if (ox > 2000) ox = 2000;
+                if (oy < -2000) oy = -2000;
+                if (oy > 2000) oy = 2000;
 
                 var sig = scale + "|" + ox + "|" + oy;
                 if (_lastActiveItemsSig === sig) return;
