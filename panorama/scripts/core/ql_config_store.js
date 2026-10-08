@@ -29,7 +29,35 @@
 
     const schemas = {};
     const values = {};
+    const persistentOwners = new Map();
+    const persistentDefinitions = new Map();
+    const persistentValues = new Map();
     const VALID_TYPES = ["toggle", "slider", "dropdown", "text", "palette", "action", "number", "buttongroup", "multitoggle"];
+    let catalogSource = null;
+    let catalog = new Map();
+    const canonicalSetting = setting => {
+        if (catalogSource !== Q.settingsFields) {
+            catalogSource = Q.settingsFields;
+            catalog = new Map((catalogSource || []).map(field => [field.key, field]));
+        }
+        const result = { ...setting };
+        const defaults = typeof QOL_DEFAULT_CONFIG === "object" ? QOL_DEFAULT_CONFIG : {};
+        if (Object.prototype.hasOwnProperty.call(defaults, setting.key)) {
+            result.default = setting.type === "toggle" ? defaults[setting.key] === 1 || defaults[setting.key] === true : defaults[setting.key];
+        }
+        const field = catalog.get(setting.key);
+        if (field && (setting.type === "slider" || setting.type === "number")) {
+            result.type = "slider";
+            for (const key of ["min", "max", "step"]) result[key] = field[key];
+            const fraction = String(field.step).split(".")[1];
+            result.decimals = fraction ? fraction.length : 0;
+        }
+        if (setting.type === "multitoggle" && Array.isArray(setting.options)) {
+            result.options = setting.options.map(option => ({ ...option,
+                default: Object.prototype.hasOwnProperty.call(defaults, option.key) ? defaults[option.key] === 1 || defaults[option.key] === true : !!option.default }));
+        }
+        return result;
+    };
 
     const validateSetting = (schemaEntry) => {
         if (!schemaEntry || typeof schemaEntry.key !== "string") return "key must be a string";
@@ -61,7 +89,7 @@
                 return (typeof value === "boolean" || value === 0 || value === 1) ? null : "must be boolean";
             case "slider":
             case "number":
-                if (typeof value !== "number" || isNaN(value)) return "must be number";
+                if (typeof value !== "number" || !Number.isFinite(value)) return "must be finite number";
                 if (schemaEntry.type === "slider" && (value < schemaEntry.min || value > schemaEntry.max)) {
                     return `must be between ${schemaEntry.min} and ${schemaEntry.max}`;
                 }
@@ -78,7 +106,7 @@
             case "text":
                 return (typeof value === "string") ? null : "must be string";
             case "palette":
-                if (typeof value !== "number" || isNaN(value)) return "must be number";
+                if (typeof value !== "number" || !Number.isInteger(value)) return "must be integer";
                 if (QOL_UTILS.SupportsCustomColor(schemaEntry.key) && QOL_UTILS.IsCustomColor(value)) return null;
                 if (value < 0 || value > 29) return "must be 0-29";
                 return null;
@@ -93,32 +121,54 @@
     const ensureBucket = (featureId) => {
         if (!values[featureId]) values[featureId] = {};
     };
+    const normalizeValue = (setting, value) => {
+        if (setting.type === "toggle") return value === true || value === 1;
+        if (setting.type === "slider") return Number(value.toFixed(setting.decimals ?? 2));
+        return value;
+    };
+    const definitions = schema => {
+        const fields = new Map();
+        for (const setting of schema.settings) {
+            fields.set(setting.key, setting);
+            if (setting.type === "multitoggle") for (const option of setting.options) {
+                fields.set(option.key, { ...option, type: "toggle" });
+            }
+        }
+        return fields;
+    };
+    const isPersistent = key => typeof QOL_DEFAULT_CONFIG === "object" && Object.prototype.hasOwnProperty.call(QOL_DEFAULT_CONFIG, key);
+    const contractsMatch = (a, b) => ["type", "default", "min", "max", "step", "decimals"].every(key => Object.is(a[key], b[key])) &&
+        (a.type !== "dropdown" || JSON.stringify(a.options) === JSON.stringify(b.options));
 
     // -- Public API --
     const registerSchema = (featureId, schema) => {
         if (typeof featureId !== "string" || !featureId) return false;
         if (Object.prototype.hasOwnProperty.call(schemas, featureId)) return false;
         if (!schema || !Array.isArray(schema.settings)) return false;
-        for (let i = 0; i < schema.settings.length; i++) {
-            if (validateSetting(schema.settings[i]) !== null) return false;
-        }
-        schemas[featureId] = schema;
-        ensureBucket(featureId);
-        for (let j = 0; j < schema.settings.length; j++) {
-            const s = schema.settings[j];
-            if (s.type === "multitoggle" && Array.isArray(s.options)) {
-                if (!Object.prototype.hasOwnProperty.call(values[featureId], s.key)) {
-                    values[featureId][s.key] = s.default !== undefined ? s.default : false;
-                }
-                for (let k = 0; k < s.options.length; k++) {
-                    const opt = s.options[k];
-                    if (opt && opt.key && !Object.prototype.hasOwnProperty.call(values[featureId], opt.key)) {
-                        values[featureId][opt.key] = false;
-                    }
-                }
-            } else if (!Object.prototype.hasOwnProperty.call(values[featureId], s.key)) {
-                values[featureId][s.key] = s.default;
+        const settings = schema.settings.map(canonicalSetting);
+        for (const setting of settings) if (validateSetting(setting) !== null) return false;
+        const fields = definitions({ settings });
+        for (const [key, setting] of fields) {
+            if (!isPersistent(key) || !persistentDefinitions.has(key)) continue;
+            if (!contractsMatch(persistentDefinitions.get(key), setting)) {
+                $.Msg(`[QOLLock][WARN][ConfigStore] incompatible shared setting '${key}' in '${featureId}'`);
+                return false;
             }
+        }
+        schemas[featureId] = { ...schema, settings, fields };
+        ensureBucket(featureId);
+        for (const [key, setting] of fields) {
+            let initial = setting.default ?? false;
+            if (isPersistent(key)) {
+                if (!persistentOwners.has(key)) {
+                    persistentOwners.set(key, new Set());
+                    persistentDefinitions.set(key, setting);
+                    persistentValues.set(key, initial);
+                }
+                persistentOwners.get(key).add(featureId);
+                initial = persistentValues.get(key);
+            }
+            values[featureId][key] = initial;
         }
         return true;
     };
@@ -131,38 +181,14 @@
     const set = (featureId, key, value) => {
         const schema = schemas[featureId];
         if (!schema) return false;
-        let def = null;
-        for (let i = 0; i < schema.settings.length; i++) {
-            const s = schema.settings[i];
-            if (s.key === key) {
-                def = s;
-                break;
-            }
-            if (s.type === "multitoggle" && Array.isArray(s.options)) {
-                for (let k = 0; k < s.options.length; k++) {
-                    if (s.options[k] && s.options[k].key === key) {
-                        def = { key: key, type: "toggle", default: false };
-                        break;
-                    }
-                }
-                if (def) break;
-            }
-        }
+        const def = schema.fields.get(key);
         if (!def) return false;
         const err = validateValue(def, value);
         if (err) {
             $.Msg(`[QOLLock][WARN][ConfigStore] ${featureId}.${key}: ${err}`);
             return false;
         }
-        let stored = value;
-        if (def.type === "toggle" && typeof value === "number") {
-            stored = value === 1;
-        } else if (def.type === "slider") {
-            const decimals = (typeof def.decimals === "number") ? def.decimals : 2;
-            stored = Number(Number(value).toFixed(decimals));
-        }
-        values[featureId][key] = stored;
-        EventBus.emit("config:changed", { featureId, key, value: stored });
+        load({ [featureId]: { [key]: value } });
         return true;
     };
 
@@ -187,61 +213,63 @@
     const hasSchema = (featureId) => Object.prototype.hasOwnProperty.call(schemas, featureId);
 
     const load = (data) => {
-        if (!data || typeof data !== "object") return;
+        if (!data || typeof data !== "object") return 0;
+        const shared = new Map();
+        const conflicts = new Set();
+        const local = new Map();
+        const changed = new Map();
         for (const featureId in data) {
             if (!Object.prototype.hasOwnProperty.call(data, featureId) || !Object.prototype.hasOwnProperty.call(schemas, featureId)) continue;
             ensureBucket(featureId);
             const featureData = data[featureId];
             const schema = schemas[featureId];
+            if (!featureData || typeof featureData !== "object") continue;
             for (const key in featureData) {
                 if (!Object.prototype.hasOwnProperty.call(featureData, key)) continue;
-                for (let i = 0; i < schema.settings.length; i++) {
-                    const s = schema.settings[i];
-                    let matchedDef = null;
-                    if (s.key === key) {
-                        matchedDef = s;
-                    } else if (s.type === "multitoggle" && Array.isArray(s.options)) {
-                        for (let k = 0; k < s.options.length; k++) {
-                            if (s.options[k] && s.options[k].key === key) {
-                                matchedDef = { key: key, type: "toggle", default: false };
-                                break;
-                            }
-                        }
-                    }
-                    if (matchedDef && validateValue(matchedDef, featureData[key]) === null) {
-                        const oldVal = values[featureId][key];
-                        let newVal = featureData[key];
-                        if (matchedDef.type === "toggle" && typeof newVal === "number") {
-                            newVal = newVal === 1;
-                        }
-                        values[featureId][key] = newVal;
-                        if (oldVal !== newVal) {
-                            EventBus.emit("config:changed", { featureId, key, value: newVal });
-                        }
-                        break;
-                    }
+                const setting = schema.fields.get(key);
+                if (!setting) continue;
+                if (validateValue(setting, featureData[key])) {
+                    if (isPersistent(key)) conflicts.add(key);
+                    continue;
+                }
+                const value = normalizeValue(setting, featureData[key]);
+                if (isPersistent(key)) {
+                    if (shared.has(key) && !Object.is(shared.get(key), value)) conflicts.add(key);
+                    shared.set(key, value);
+                } else {
+                    if (!local.has(featureId)) local.set(featureId, {});
+                    local.get(featureId)[key] = value;
                 }
             }
         }
+        const assign = (featureId, key, value) => {
+            if (Object.is(values[featureId][key], value)) return;
+            values[featureId][key] = value;
+            if (!changed.has(featureId)) changed.set(featureId, {});
+            changed.get(featureId)[key] = value;
+        };
+        for (const [featureId, entries] of local) for (const [key, value] of Object.entries(entries)) assign(featureId, key, value);
+        for (const [key, value] of shared) {
+            if (conflicts.has(key)) continue;
+            persistentValues.set(key, value);
+            for (const owner of persistentOwners.get(key)) assign(owner, key, value);
+        }
+        // All owners see the same complete configuration before any hook runs.
+        let count = 0;
+        for (const [featureId, changes] of changed) {
+            const key = Object.keys(changes)[0];
+            count += Object.keys(changes).length;
+            EventBus.emit("config:changed", { featureId, key, value: changes[key], changes });
+        }
+        return count;
     };
 
     const syncFromExternal = (data) => {
-        if (!data || typeof data !== "object") return 0;
-        let changeCount = 0;
-        for (const featureId in data) {
-            if (!Object.prototype.hasOwnProperty.call(data, featureId) || !Object.prototype.hasOwnProperty.call(schemas, featureId)) continue;
-            ensureBucket(featureId);
-            for (const key in data[featureId]) {
-                if (!Object.prototype.hasOwnProperty.call(data[featureId], key)) continue;
-                if (values[featureId][key] !== data[featureId][key]) {
-                    if (set(featureId, key, data[featureId][key])) changeCount++;
-                }
-            }
-        }
-        return changeCount;
+        return load(data);
     };
 
     Q.core.ConfigStore = {
+        canonicalSetting,
         registerSchema,
         get,
         set,

@@ -165,7 +165,7 @@
         if (target.BHasClass(className)) return true;
         const gameplayHud = resolveCachedPanel(target, "gameplayHud", "gameplay_hud");
         if (gameplayHud?.BHasClass(className)) return true;
-        const abilities = resolveCachedPanel(target, "abilitiesContainer", "abilitiesContainer");
+        const abilities = resolveAbilitiesContainer(target);
         return !!abilities?.BHasClass(className);
     };
 
@@ -381,6 +381,36 @@
             }
         }
         return isAlive(p) ? p : null;
+    };
+
+    let abilitiesResolver = null;
+    let abilitiesFallbacks = null;
+    const resolveAbilitiesContainer = (root) => {
+        const target = root || findHud();
+        if (!isAlive(target)) return null;
+        let panel = null;
+        // PanelCache loads after core HUD; create owned resolvers only on use.
+        if (Q.panelCache?.createIdResolver) {
+            if (!abilitiesResolver) abilitiesResolver = Q.panelCache.createIdResolver("AbilitiesContainer", {
+                ownerPath: [{ id: "Hud", optional: true }, { className: "HudCore" }]
+            });
+            panel = abilitiesResolver.resolve(target);
+            if (!panel) {
+                if (!abilitiesFallbacks) abilitiesFallbacks = ["CitadelHudAbilitiesContainer", "abilitiesContainer", "abilities_container"]
+                    .map(id => Q.panelCache.createIdResolver(id));
+                for (const resolver of abilitiesFallbacks) {
+                    panel = resolver.resolve(target);
+                    if (panel) break;
+                }
+            }
+        } else {
+            panel = _panelHelpers.findTraverse(target, "AbilitiesContainer") ||
+                resolveCachedPanel(target, "abilitiesContainer", "abilitiesContainer");
+        }
+        // Preserve the shared lookup alias while keeping current root/ancestry
+        // validation with its core owner, rather than relying on audio to seed it.
+        if (getCachedPanel("abilitiesContainer") !== panel) setCachedPanel("abilitiesContainer", panel);
+        return panel;
     };
 
     const ensureMinimapOverlayAnchor = (root) => {
@@ -608,65 +638,6 @@
         st.chatStyleSig = styleSig;
         st.chatStyleApplied = true;
         st.chatStylePanel = chatPanel;
-    };
-
-    const resetDamageReportOffsetRuntime = (panel) => {
-        if (!isAlive(panel)) return;
-        try { panel.style.x = "0px"; } catch (_) {}
-        try { panel.style.y = "0px"; } catch (_) {}
-    };
-
-    const needsDamageReportOffsetWork = (cfg) => {
-        if (!cfg) return false;
-        let offsetX = Number(cfg.DAMAGE_REPORT_X_OFFSET);
-        let offsetY = Number(cfg.DAMAGE_REPORT_Y_OFFSET);
-        if (!Number.isFinite(offsetX)) offsetX = 0;
-        if (!Number.isFinite(offsetY)) offsetY = 0;
-        if (Math.round(offsetX) !== 0 || Math.round(offsetY) !== 0) return true;
-        const st = getState();
-        return Boolean(st.damageReportOffsetApplied || st.damageReportOffsetSig || isAlive(st.damageReportOffsetPanel));
-    };
-
-    const updateDamageReportOffsets = (root, cfg) => {
-        const livePanel = root?.FindChildTraverse ? root.FindChildTraverse("CitadelHudDamageReport") : null;
-        const damageReportPanel = isAlive(livePanel) ? livePanel : getCachedPanel("damageReportPanel");
-        if (damageReportPanel !== getCachedPanel("damageReportPanel")) {
-            setCachedPanel("damageReportPanel", damageReportPanel);
-        }
-
-        const st = getState();
-        const previousPanel = isAlive(st.damageReportOffsetPanel) ? st.damageReportOffsetPanel : null;
-        if (previousPanel && previousPanel !== damageReportPanel) {
-            resetDamageReportOffsetRuntime(previousPanel);
-        }
-
-        if (!damageReportPanel) {
-            st.damageReportOffsetSig = "";
-            st.damageReportOffsetApplied = false;
-            st.damageReportOffsetPanel = null;
-            return;
-        }
-
-        let offsetX = (cfg?.DAMAGE_REPORT_X_OFFSET == null) ? 0 : Math.round(Number(cfg?.DAMAGE_REPORT_X_OFFSET));
-        let offsetY = (cfg?.DAMAGE_REPORT_Y_OFFSET == null) ? 0 : Math.round(Number(cfg?.DAMAGE_REPORT_Y_OFFSET));
-        if (!Number.isFinite(offsetX)) offsetX = 0;
-        if (!Number.isFinite(offsetY)) offsetY = 0;
-        if (offsetX < -1500) offsetX = -1500;
-        if (offsetX > 1500) offsetX = 1500;
-        if (offsetY < -500) offsetY = -500;
-        if (offsetY > 500) offsetY = 500;
-
-        const offsetSig = `${offsetX}|${offsetY}`;
-        if (st.damageReportOffsetApplied && st.damageReportOffsetPanel === damageReportPanel && st.damageReportOffsetSig === offsetSig) {
-            return;
-        }
-
-        damageReportPanel.style.x = `${offsetX}px`;
-        damageReportPanel.style.y = `${-offsetY}px`;
-
-        st.damageReportOffsetSig = offsetSig;
-        st.damageReportOffsetApplied = true;
-        st.damageReportOffsetPanel = damageReportPanel;
     };
 
     const getPanelClassTokens = (panel) => {
@@ -1060,8 +1031,6 @@
             }
         }
 
-        const passiveCooldownMode = resolvePassiveCooldownMode(cfg);
-
         const staticSig = [
             hideoutConnected ? 1 : 0,
             cfg?.ENABLE_AMMO_STATUS,
@@ -1099,7 +1068,6 @@
             cleanStacksEnabled ? 1 : 0,
             compassEnabled ? 1 : 0,
             cfg?.ENABLE_SIMPLIFY_COMPASS,
-            passiveCooldownMode,
             cfg?.ENABLE_ULT_COOLDOWNS,
             cfg?.ENABLE_KEYBOARD_OVERLAY,
             cfg?.ENABLE_FULL_KEYBOARD_LAYOUT,
@@ -1317,51 +1285,20 @@
             }
         }
 
-        let abilitiesContainer = getCachedPanel("abilitiesContainer");
-        if (shouldApplyStaticClasses || abilitiesContainer) {
-            if (!abilitiesContainer) {
-                abilitiesContainer = root.FindChildTraverse ? root.FindChildTraverse("CitadelHudAbilitiesContainer") : null;
-                setCachedPanel("abilitiesContainer", abilitiesContainer);
-            }
+        const abilitiesContainer = resolveAbilitiesContainer(root);
+        const previousAbilities = state.abilitiesClassCache?.panel;
+        if (previousAbilities !== abilitiesContainer && isAlive(previousAbilities)) {
+            setPanelClassIfChanged(previousAbilities, "clean_stacks_active", false);
+            setPanelClassIfChanged(previousAbilities, "clean_stacks_inactive", false);
         }
-        if (abilitiesContainer && shouldApplyStaticClasses) {
+        if (abilitiesContainer && (shouldApplyStaticClasses || previousAbilities !== abilitiesContainer)) {
             if (!state.abilitiesClassCache) state.abilitiesClassCache = { panel: abilitiesContainer, values: {} };
             setPanelClassCached(abilitiesContainer, state.abilitiesClassCache, "clean_stacks_active", cleanStacksEnabled && !minecraftHealthbarEnabled);
             setPanelClassCached(abilitiesContainer, state.abilitiesClassCache, "clean_stacks_inactive", false);
         }
 
-        if (
-            shouldApplyStaticClasses ||
-            state.passiveCooldownModeApplied !== passiveCooldownMode ||
-            (passiveCooldownMode !== "default" && !getCachedPanel("passiveHud")) ||
-            state.oldItemCooldownRuntimeWasActive
-        ) {
-            let passiveHud = getCachedPanel("passiveHud");
-            if (!passiveHud) {
-                passiveHud = root.FindChildTraverse ? root.FindChildTraverse("hud_passive_items") : null;
-                setCachedPanel("passiveHud", passiveHud);
-            }
-            if (cfg?.QOLLOCK_DEV_CORE_ROOT_TEST_MODE !== 1) {
-                const basicModeActive = passiveCooldownMode === "basic";
-                const advancedModeActive = passiveCooldownMode === "advanced";
-                setPanelClassCached(root, state.rootClassCache, "passive_cooldown_basic_active", basicModeActive);
-                setPanelClassCached(root, state.rootClassCache, "passive_cooldown_advanced_active", advancedModeActive);
-                setPanelClassCached(root, state.rootClassCache, "old_item_cooldowns_active", false);
-                setPanelClassCached(root, state.rootClassCache, "passive_cooldown_custom_active", false);
-                if (passiveHud) {
-                    if (!state.passiveHudClassCache) state.passiveHudClassCache = { panel: passiveHud, values: {} };
-                    setPanelClassCached(passiveHud, state.passiveHudClassCache, "passive_cooldown_basic_active", basicModeActive);
-                    setPanelClassCached(passiveHud, state.passiveHudClassCache, "old_item_cooldowns_active", false);
-                }
-                state.passiveCooldownModeApplied = passiveCooldownMode;
-            }
-        }
-
         if (hasNonDefaultChatRuntimeConfig(cfg) || state.chatStyleApplied) {
             updateChatRuntime(root, cfg);
-        }
-        if (needsDamageReportOffsetWork(cfg)) {
-            updateDamageReportOffsets(root, cfg);
         }
         if (needsUrnTrackerRuntimeWork(cfg)) {
             updateUrnTrackerOverlay(root, cfg, nowMsLoop);
@@ -1388,9 +1325,10 @@
         updateChatRuntime,
         hasNonDefaultChatRuntimeConfig,
         resetChatRuntime,
-        updateDamageReportOffsets,
-        needsDamageReportOffsetWork,
-        resetDamageReportOffsetRuntime,
+        refreshRootClasses: (root) => {
+            const target = root || findHud();
+            return applyRootClasses(target, Q.core.ConfigAdapter.exportToFlat(), QOL_UTILS.PerfNowMs(), isInHideout(target));
+        },
         getPanelClassTokens,
         panelHasClassToken,
         getHighestRejuvChargeTokenOnPanel,
@@ -1447,9 +1385,6 @@
     Q.updateChatRuntime = updateChatRuntime;
     Q.hasNonDefaultChatRuntimeConfig = hasNonDefaultChatRuntimeConfig;
     Q.resetChatRuntime = resetChatRuntime;
-    Q.updateDamageReportOffsets = updateDamageReportOffsets;
-    Q.needsDamageReportOffsetWork = needsDamageReportOffsetWork;
-    Q.resetDamageReportOffsetRuntime = resetDamageReportOffsetRuntime;
     Q.getPanelClassTokens = getPanelClassTokens;
     Q.panelHasClassToken = panelHasClassToken;
     Q.getHighestRejuvChargeTokenOnPanel = getHighestRejuvChargeTokenOnPanel;

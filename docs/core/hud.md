@@ -13,7 +13,13 @@ Provides Deadlock-specific HUD element discovery, match mode detection (Hideout,
 - `isGameplayHudShown(root)`: Reports native combat-HUD presentation evidence; requires a real Hud, joined-team state and a visible native `gameplay_hud` ancestry.
 - `isStreetBrawl(root)`: Checks if active match is in Street Brawl mode (`gamemode_streetbrawl`).
 - `isClassActive(className)`: Checks if a given class token is active on the HUD root.
-- `applyRootClasses(root, config, timestamp, force)`: Synchronizes feature CSS classes onto the root container based on active configuration settings.
+- `applyRootClasses(root, config, timestamp, hideoutConnected)`: Synchronizes feature CSS classes onto the root container based on the complete active configuration and live HUD evidence.
+- `refreshRootClasses(root)`: Projects the complete current flat config from ConfigAdapter. Feature hooks use this entry point; passing a local settings slice to `applyRootClasses` would reset unrelated classes.
+
+The core projector owns shared root class decisions. Basic cooldown classes and
+native item layout belong solely to the passive-cooldown manifest; damage-report
+offsets belong solely to the damage-report manifest. These native owners release
+their code properties independently of shared root-class projection.
 
 Use `QOL.core.hud.isInHideout(root)` for the shared two-class predicate.
 Compass, cursor, zipboost, urn timer, Rejuvenator, minimap timers, legacy passive

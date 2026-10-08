@@ -110,6 +110,92 @@
             return panel;
         },
 
+        // Feature-owned ID resolver. Discover the native parent rather than
+        // assuming an XML path; check that parent directly between full refreshes.
+        createIdResolver: function(traverseId, options) {
+            options = options || {};
+            const refreshMs = options.refreshMs === undefined ? 5000 : Math.max(0, Number(options.refreshMs) || 0);
+            const retryMs = options.retryMs === undefined ? 1000 : Math.max(0, Number(options.retryMs) || 0);
+            const ownerPath = options.ownerPath || [];
+            let root = null, parent = null, panel = null;
+            let nextFullSearchMs = 0, nextRetryMs = 0;
+
+            function reset() {
+                root = null; parent = null; panel = null;
+                nextFullSearchMs = 0; nextRetryMs = 0;
+            }
+
+            function belongsToRoot(candidate, target) {
+                try {
+                    for (let depth = 0; depth < 64 && IsPanelValid(candidate); depth++) {
+                        if (candidate === target) return true;
+                        candidate = candidate.GetParent();
+                    }
+                } catch (_) {}
+                return false;
+            }
+
+            // Verified breadcrumbs take precedence over generic discovery. Each step
+            // checks direct children, so replacement is observed without a tree walk.
+            function resolvePath(searchRoot) {
+                if (!ownerPath.length) return null;
+                try {
+                    let owner = searchRoot;
+                    for (const step of ownerPath) {
+                        const id = typeof step === "string" ? step : step.id;
+                        if (id && owner.id === id) continue;
+                        let child = null;
+                        if (id) child = owner.FindChild(id);
+                        else if (step.className) {
+                            for (let i = 0; i < owner.GetChildCount(); i++) {
+                                const candidate = owner.GetChild(i);
+                                if (IsPanelValid(candidate) && candidate.BHasClass(step.className)) { child = candidate; break; }
+                            }
+                        }
+                        if (!IsPanelValid(child)) {
+                            if (step.optional) continue;
+                            return null;
+                        }
+                        owner = child;
+                    }
+                    const current = owner.FindChild(traverseId);
+                    return IsPanelValid(current) ? current : null;
+                } catch (_) { return null; }
+            }
+
+            function resolve(searchRoot, force) {
+                if (!IsPanelValid(searchRoot)) { reset(); return null; }
+                if (root !== searchRoot) { reset(); root = searchRoot; }
+                const nowMs = Date.now();
+                const preferred = resolvePath(root);
+                if (preferred) {
+                    panel = preferred;
+                    try { parent = panel.GetParent(); } catch (_) { parent = null; }
+                    nextFullSearchMs = nowMs + refreshMs;
+                    nextRetryMs = 0;
+                    return panel;
+                }
+                if (!force && panel && nowMs < nextFullSearchMs && belongsToRoot(parent, root)) {
+                    try {
+                        const current = parent.FindChild(traverseId);
+                        if (IsPanelValid(current)) { panel = current; return panel; }
+                    } catch (_) {}
+                }
+                // Losing/reparenting a known panel bypasses a previous miss deadline.
+                if (!force && !panel && nowMs < nextRetryMs) return null;
+                try {
+                    panel = root.FindChildTraverse(traverseId);
+                    if (!IsPanelValid(panel)) panel = null;
+                    parent = panel ? panel.GetParent() : null;
+                } catch (_) { panel = null; parent = null; }
+                nextFullSearchMs = nowMs + refreshMs;
+                nextRetryMs = panel ? 0 : nowMs + retryMs;
+                return panel;
+            }
+
+            return { resolve: resolve, reset: reset };
+        },
+
         // ── Reset a single key across all typed caches (used by SetCachedPanel null/undefined) ──
         _clearKey: function(key) {
             delete _resolved[key];
@@ -153,6 +239,7 @@
         if (typeof PanelCache.sweep !== "function") throw new Error("PanelCache.sweep is not a function");
         if (typeof PanelCache.clear !== "function") throw new Error("PanelCache.clear is not a function");
         if (typeof PanelCache.resolve !== "function") throw new Error("PanelCache.resolve is not a function");
+        if (typeof PanelCache.createIdResolver !== "function") throw new Error("PanelCache.createIdResolver is not a function");
         if (typeof PanelCache._clearKey !== "function") throw new Error("PanelCache._clearKey is not a function");
         if (typeof PanelCache._internal !== "function") throw new Error("PanelCache._internal is not a function");
 

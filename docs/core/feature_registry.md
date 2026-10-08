@@ -9,6 +9,10 @@ coordination, not a security sandbox or shared settings-context registry.
 
 `register(manifest)` requires a valid ID and synchronous `create(ctx)` factory.
 It registers manifest settings plus the synthetic `enabled` toggle in ConfigStore.
+Persisted defaults and slider metadata come from the shared configuration catalog,
+so overlapping owners receive the same units, bounds and initial values. Invalid
+schemas fail registration without leaving a manifest behind. See the
+[implementation pattern](../MANIFEST_STYLE.md) for native owner structure.
 The instance owns `onEnable()`, `onDisable()` and optional
 `onSettingsChanged(payload)`/read-only `test()` behavior.
 
@@ -22,11 +26,18 @@ New defaults still require the maintainer's decision.
 `createContext(id)` provides `ctx.id`, `ctx.config.get/getBool/set/all/view`, and
 `ctx.events.on/off/emit`. `all()` allocates a shallow copy; `view()` is live and
 read-only by convention. `emit("event", data)` prefixes the feature ID, but
-`on` and `off` take the complete event name without adding a prefix.
+`on` and `off` take the complete event name without adding a prefix. Subscriptions
+are scoped to the instance generation; `off(event)` removes only that context's
+listeners. Disable or failed enable retires them before feature cleanup, including
+callbacks already present in an EventBus dispatch snapshot.
+Retired contexts cannot emit events, install listeners or write settings through
+`ctx.config.set`; read access remains available for cleanup.
 
 `onSettingsChanged` receives one payload, including `{featureId, key, value,
 changes: {[key]: value}}`, not `(key, value, allSettings)` or `(keys, config)`.
-Read the current slice through `ctx.config` where needed.
+Batch payloads can contain several changed keys; `key`/`value` identify only the
+first. Read the current slice through `ctx.config` where needed. Flat loads commit
+all owner buckets before any settings hook runs.
 
 ## Public lifecycle and inspection
 
@@ -38,10 +49,10 @@ Read the current slice through `ctx.config` where needed.
 - `isEnabled`, `isRegistered`, `getRegisteredIds`, `getEnabledIds`, `getManifest`,
   `getInstance`, and `getErrorCounts` expose current registry state.
 
-Disable invokes feature cleanup and then cancels Scheduler loops registered to
-that ID. Features must still undo owned UI/styles/classes, unsubscribe their own
-events, cancel raw/native callbacks and invalidate owned caches. Context event
-subscriptions are not automatically tracked for removal.
+Disable retires context events, invokes feature cleanup, then cancels Scheduler
+work registered to that ID. Features must still undo owned UI/styles/classes,
+cancel raw/native callbacks and invalidate owned caches. Events installed outside
+`ctx.events` remain the feature's cleanup responsibility.
 
 ## Error semantics
 
@@ -59,5 +70,7 @@ See [testing](../TESTING.md).
 
 Failed `onEnable` calls, both during `boot` and explicit `enable`, invoke the
 partially created instance's `onDisable` and cancel managed schedules for that ID.
-Cleanup failures do not replace the original error. A factory that throws before
-returning an instance must clean up its own non-Scheduler side effects.
+Cleanup failures do not replace the original error. Context subscriptions are
+also released when a factory throws before returning an instance. Factories must
+be side-effect free; other non-Scheduler side effects cannot be recovered without
+a returned instance's cleanup hook.

@@ -1,28 +1,25 @@
-// features/ql_legacy_audio_passive/manifest.js
+// manifests/ql_legacy_audio_passive/manifest.js
 // =============================================================================
-// QOLLOCK — Legacy Audio Announcements + DL4D Reminders + Passive Cooldown HUD
+// QOLLOCK — Legacy Audio Announcements + DL4D Reminders
 // =============================================================================
 // OWNS:        Announcer voice buff reminders (interval + one-time triggers),
-//              DL4D game-event reminders with captions + audio,
-//              passive cooldown HUD styling (basic mode)
-// DOES NOT OWN: game clock, announcer voice assets, game events, passive cooldown
-//              advanced mode (see ql_passive_cooldown)
+//              DL4D game-event reminders with captions + audio
+// DOES NOT OWN: game clock, announcer assets/events, Basic layout (ql_passive_cooldown)
+//              or Advanced item mirror (ql_item_mirror)
 // DEPENDS ON:  QOL.core.FeatureRegistry, QOL.core.Scheduler
 // CONFIG KEYS: ENABLE_LEGACY_COOLDOWNS, ENABLE_INTERVAL, ENABLE_ONE_TIME,
 //              ENABLE_ONE_TIME_TIER1/2/3, ENABLE_MINIMAP_REMINDER,
 //              ENABLE_BUFF_SOUND_1/2/3, VOICE_TYPE, VOICE_VOLUME,
 //              BRIDGE_BUFF_START, ENABLE_DL4D_REMINDERS, ENABLE_DL4D_CAPTIONS,
-//              DL4D_VOLUME, + 11 DL4D event toggles,
-//              PASSIVE_COOLDOWN_SIZE/X/Y/OPACITY
-// PATTERN:     Polling (0.5Hz). Reads game clock, triggers timed audio
+//              DL4D_VOLUME, + 11 DL4D event toggles
+// PATTERN:     Polling every 0.5s when active. Reads game clock, triggers timed audio
 //              announcements + DL4D captions.
-// CONFIG SRC:  State.lastConfig (no enableKey → ConfigStore bucket is empty)
-// PORTED FROM: features/ql_feat_legacyaudiopassive.js (438 lines)
+// CONFIG SRC:  ctx.config.view(); retained shared schema entries preserve mapping
 // =============================================================================
 
-(function() {
+(() => {
     "use strict";
-    var FR = QOL.core.FeatureRegistry;
+    const FR = QOL.core.FeatureRegistry;
     if (!FR) { $.Msg("[QOLLock] legacy_audio_passive: FeatureRegistry not found — aborting"); return; }
 
     FR.register({
@@ -60,70 +57,44 @@
             { key: "PASSIVE_COOLDOWN_SIZE", type: "slider", min: 30, max: 60, step: 1, default: 40 },
             { key: "PASSIVE_COOLDOWN_X", type: "slider", min: -50, max: 50, step: 1, default: 0 },
             { key: "PASSIVE_COOLDOWN_Y", type: "slider", min: -50, max: 50, step: 1, default: 0 },
-            { key: "PASSIVE_COOLDOWN_OPACITY", type: "slider", min: 0, max: 100, step: 5, default: 50 },
-            { key: "ENABLE_PASSIVE_COOLDOWN", type: "toggle", default: true },
+            { key: "PASSIVE_COOLDOWN_OPACITY", type: "slider", min: 0, max: 1, step: 0.05, default: 0.5 },
+            { key: "ENABLE_PASSIVE_COOLDOWN", type: "toggle", default: false },
             { key: "ENABLE_OLD_ITEM_COOLDOWNS", type: "toggle", default: false },
             { key: "ITEM_FILTER_DEF_PASSIVE", type: "toggle", default: true },
             { key: "ITEM_FILTER_OFF_PASSIVE", type: "toggle", default: true },
             { key: "ITEM_FILTER_DEF_ACTIVE", type: "toggle", default: false },
             { key: "ITEM_FILTER_OFF_ACTIVE", type: "toggle", default: false }
         ],
-        create: function(ctx) {
-            var Panel = (QOL.core && QOL.core.panel) ? QOL.core.panel : {};
-            var State = QOL.state || (typeof globalThis !== "undefined" && globalThis.State) || {};
-            var Utils = QOL.utils;
-            var IsCfgEnabled = QOL.utils.IsCfgEnabled;
-            var SetStyleSafe = QOL.utils.SetStyleSafe;
-            var SetPanelOpacitySafe = QOL.utils.SetPanelOpacitySafe;
-            var GetCachedPanel = QOL.getCachedPanel;
-            var SetCachedPanel = QOL.setCachedPanel;
-            var ResolvePassiveCooldownMode = function(cfg) {
-                if (typeof QOL.resolvePassiveCooldownMode === "function") return QOL.resolvePassiveCooldownMode(cfg);
-                var masterEnabled = IsCfgEnabled(cfg, "ENABLE_PASSIVE_COOLDOWN");
-                if (!masterEnabled) return "default";
-                var advancedModeEnabled = Number(cfg && cfg.ENABLE_OLD_ITEM_COOLDOWNS) !== 1;
-                return advancedModeEnabled ? "advanced" : "basic";
-            };
-            var IsStreetBrawlModeActive = function(r) { return QOL.isStreetBrawlModeActive ? QOL.isStreetBrawlModeActive(r) : false; };
-            var IsPassiveCooldownBasicMode = function(mode) {
-                if (typeof QOL.isPassiveCooldownBasicMode === "function") return QOL.isPassiveCooldownBasicMode(mode);
-                return mode === "basic";
-            };
-            var IsColorWarningEnabled = function(cfg) { return QOL.isColorWarningEnabled ? QOL.isColorWarningEnabled(cfg) : false; };
+        create(ctx) {
+            const Panel = (QOL.core && QOL.core.panel) ? QOL.core.panel : {};
+            const State = QOL.state || (typeof globalThis !== "undefined" && globalThis.State) || {};
+            const IsCfgEnabled = QOL.utils.IsCfgEnabled;
+            const GetCachedPanel = QOL.getCachedPanel;
+            const SetCachedPanel = QOL.setCachedPanel;
+            const IsStreetBrawlModeActive = function(r) { return QOL.isStreetBrawlModeActive ? QOL.isStreetBrawlModeActive(r) : false; };
+            const IsColorWarningEnabled = function(cfg) { return QOL.isColorWarningEnabled ? QOL.isColorWarningEnabled(cfg) : false; };
 
-            function _ensureCachedByIds(root, cacheKey, ids) {
-                if (State && State.cachedPanels && State.cachedPanels[cacheKey] && Utils && Utils.IsPanelValid && Utils.IsPanelValid(State.cachedPanels[cacheKey])) {
-                    return State.cachedPanels[cacheKey];
+            const clockResolvers = ["HudGameTime", "GameTime"].map(id => QOL.panelCache.createIdResolver(id));
+            function EnsureGameTimePanelCache(root) {
+                for (const resolver of clockResolvers) {
+                    const panel = resolver.resolve(root);
+                    if (panel) return panel;
                 }
-                if (!root || !root.FindChildTraverse) return null;
-                var panel = null;
-                for (var i = 0; i < ids.length; i++) {
-                    panel = root.FindChildTraverse(ids[i]);
-                    if (panel) break;
-                }
-                if (State && State.cachedPanels) State.cachedPanels[cacheKey] = panel || null;
-                return panel || null;
+                return null;
             }
-            var EnsureAbilitiesContainerPanelCache = function(root) {
-                return _ensureCachedByIds(root, "abilitiesContainer", ["abilities_container", "AbilitiesContainer"]);
-            };
-            var EnsureGameTimePanelCache = function(root) {
-                return _ensureCachedByIds(root, "gameTime", ["HudGameTime", "GameTime"]);
-            };
-            var EnsurePassiveHudPanelCache = function(root) {
-                return _ensureCachedByIds(root, "passiveHud", ["hud_passive_items"]);
-            };
-            var NormalizeVoiceTypeValue = function(v) { return QOL.normalizeVoiceTypeValue ? QOL.normalizeVoiceTypeValue(v) : v; };
-            var NormalizeVoiceVolumeValue = function(v) { return QOL.normalizeVoiceVolumeValue ? QOL.normalizeVoiceVolumeValue(v) : v; };
-            var GetSharedSchemaUtils = function() { return QOL.getSharedSchemaUtils ? QOL.getSharedSchemaUtils() : null; };
-            var SetPanelClassCached = QOL.setPanelClassCached || function(p, c, cls, val) { if (p && p.SetHasClass) p.SetHasClass(cls, !!val); };
-            var isConnectedToHideout = QOL.core.hud.isInHideout;
+            const NormalizeVoiceTypeValue = function(v) { return QOL.normalizeVoiceTypeValue ? QOL.normalizeVoiceTypeValue(v) : v; };
+            const NormalizeVoiceVolumeValue = function(v) { return QOL.normalizeVoiceVolumeValue ? QOL.normalizeVoiceVolumeValue(v) : v; };
+            const GetSharedSchemaUtils = function() { return QOL.getSharedSchemaUtils ? QOL.getSharedSchemaUtils() : null; };
+            const isConnectedToHideout = QOL.core.hud.isInHideout;
 
-            var _loop = null;
-            var _root = null;
+            let _loop = null;
+            let _root = null;
+            let _captionHideTask = null;
+            let _captionPanel = null;
+            let _config = null;
 
             // ── Constants (verbatim from old feature) ──
-            var INTERNAL_CONFIG = {
+            const INTERNAL_CONFIG = {
                 FIRST_ALERT: 300,
                 INTERVAL: 300,
                 ALERT_WINDOW: 2,
@@ -133,7 +104,7 @@
                     { time: 480, sound: "BuffReminder.Tier3", tierKey: "ENABLE_ONE_TIME_TIER3" }
                 ]
             };
-            var DL4D_REMINDER_EVENTS = [
+            const DL4D_REMINDER_EVENTS = [
                 { time: 105, key: "ENABLE_DL4D_SMALL_CAMPS_BOXES", eventBase: "QOL.DL4D.SmallCampsBoxes", caption: "Small camps, boxes, and statues spawning soon.", duration: 2.8 },
                 { time: 285, key: "ENABLE_DL4D_RUNE_MELEE_TROOPERS", eventBase: "QOL.DL4D.RuneMeleeTroopers", caption: "Bridge buffs and melee troopers spawning soon.", duration: 2.3 },
                 { time: 290, key: "ENABLE_DL4D_MEDIUM_CAMPS", eventBase: "QOL.DL4D.MediumCamps", caption: "Medium camps are spawning soon.", duration: 1.7 },
@@ -155,24 +126,12 @@
 
             // ── Private helpers (verbatim from old feature) ──
 
-            function ResetPassiveCooldownRuntimeStyles(panel) {
-                if (!panel || !panel.style) return;
-                SetStyleSafe(panel, "visibility", "");
-                SetStyleSafe(panel, "uiScale", "");
-                SetStyleSafe(panel, "x", "");
-                SetStyleSafe(panel, "y", "");
-                SetStyleSafe(panel, "marginLeft", "");
-                SetStyleSafe(panel, "marginTop", "");
-                SetStyleSafe(panel, "opacity", "");
-                State.oldItemCooldownStyleSig = "";
-            }
-
             function GetAnnouncerVoiceToken(rawVoiceType) {
-                var utils = GetSharedSchemaUtils();
+                const utils = GetSharedSchemaUtils();
                 if (utils && typeof utils.GetAnnouncerVoiceToken === "function") {
                     return utils.GetAnnouncerVoiceToken(rawVoiceType);
                 }
-                var voiceIdx = NormalizeVoiceTypeValue(rawVoiceType);
+                const voiceIdx = NormalizeVoiceTypeValue(rawVoiceType);
                 if (voiceIdx === 4) return "Beep";
                 if (voiceIdx === 5) return "Custom_Slot2";
                 if (voiceIdx === 6) return "Custom_Slot3";
@@ -182,7 +141,7 @@
             }
 
             function GetEnabledBridgeVariantList(cfg) {
-                var out = [];
+                const out = [];
                 if (cfg && IsCfgEnabled(cfg, "ENABLE_BUFF_SOUND_1")) out.push(1);
                 if (cfg && IsCfgEnabled(cfg, "ENABLE_BUFF_SOUND_2")) out.push(2);
                 if (cfg && IsCfgEnabled(cfg, "ENABLE_BUFF_SOUND_3")) out.push(3);
@@ -191,16 +150,16 @@
             }
 
             function GetRandomBridgeVariant(cfg) {
-                var variants = GetEnabledBridgeVariantList(cfg);
-                var idx = Math.floor(Math.random() * variants.length);
+                const variants = GetEnabledBridgeVariantList(cfg);
+                let idx = Math.floor(Math.random() * variants.length);
                 if (!isFinite(idx) || idx < 0 || idx >= variants.length) idx = 0;
                 return variants[idx];
             }
 
             function ResolveAnnouncerEventForVolume(baseEventName, cfg) {
-                var baseName = String(baseEventName || "");
+                const baseName = String(baseEventName || "");
                 if (!baseName) return "";
-                var voiceVolume = NormalizeVoiceVolumeValue(cfg && cfg.VOICE_VOLUME);
+                const voiceVolume = NormalizeVoiceVolumeValue(cfg && cfg.VOICE_VOLUME);
                 return baseName + "_V" + String(voiceVolume);
             }
 
@@ -209,14 +168,15 @@
             }
 
             function ResolveDl4dReminderEventForVolume(baseEventName, cfg) {
-                var baseName = String(baseEventName || "");
+                const baseName = String(baseEventName || "");
                 if (!baseName) return "";
-                var reminderVolume = NormalizeVoiceVolumeValue(cfg && cfg.DL4D_VOLUME);
+                const reminderVolume = NormalizeVoiceVolumeValue(cfg && cfg.DL4D_VOLUME);
                 return baseName + "_V" + String(reminderVolume);
             }
 
             function EnsureDl4dCaptionPanel(root) {
-                var panel = GetCachedPanel("dl4dCaptionPanel");
+                let panel = Panel.isAlive(_captionPanel) && _captionPanel.GetParent() === root ? _captionPanel : null;
+                if (!panel && _captionPanel) { Panel.delete(_captionPanel); _captionPanel = null; }
                 if (!panel && root && root.FindChildTraverse) {
                     panel = root.FindChildTraverse("QOLDL4DCaption") || null;
                 }
@@ -227,6 +187,7 @@
                     });
                 }
                 if (!panel) return null;
+                _captionPanel = panel;
                 SetCachedPanel("dl4dCaptionPanel", panel);
                 panel.style.horizontalAlign = "center";
                 panel.style.verticalAlign = "top";
@@ -247,7 +208,8 @@
             }
 
             function HideDl4dCaption() {
-                var panel = GetCachedPanel("dl4dCaptionPanel");
+                if (_captionHideTask) { _captionHideTask.stop(); _captionHideTask = null; }
+                const panel = Panel.isAlive(_captionPanel) ? _captionPanel : GetCachedPanel("dl4dCaptionPanel");
                 if (panel) {
                     panel.text = "";
                     panel.style.opacity = "0";
@@ -259,26 +221,22 @@
 
             function ShowDl4dCaption(root, cfg, text, durationSec) {
                 if (!cfg || Number(cfg.ENABLE_DL4D_CAPTIONS) !== 1) return;
-                var panel = EnsureDl4dCaptionPanel(root);
+                const panel = EnsureDl4dCaptionPanel(root);
                 if (!panel) return;
                 panel.text = String(text || "");
                 if (panel.SetHasClass) panel.SetHasClass("qol-hidden", false); else panel.style.visibility = "visible";
                 panel.style.opacity = "0.85";
                 State.dl4dCaptionVisible = true;
                 State.dl4dCaptionToken++;
-                var token = State.dl4dCaptionToken;
-                var delay = Number(durationSec);
+                const token = State.dl4dCaptionToken;
+                let delay = Number(durationSec);
                 if (!isFinite(delay) || delay <= 0) delay = 3.0;
-                $.Schedule(delay, function() {
+                if (_captionHideTask) _captionHideTask.stop();
+                _captionHideTask = QOL.core.Scheduler.scheduleOnce(function() {
+                    _captionHideTask = null;
                     if (token !== State.dl4dCaptionToken) return;
                     HideDl4dCaption();
-                });
-            }
-
-            function ResetDl4dReminderRuntime() {
-                State.dl4dLastTime = -1;
-                State.dl4dTriggeredTimes = {};
-                HideDl4dCaption();
+                }, delay, ctx.id);
             }
 
             function UpdateDl4dReminderRuntime(root, cfg, currentTime, suppressAudio) {
@@ -294,16 +252,16 @@
                 if (State.dl4dLastTime > 30 && currentTime < State.dl4dLastTime - 30) {
                     State.dl4dTriggeredTimes = {};
                 }
-                for (var i = 0; i < DL4D_REMINDER_EVENTS.length; i++) {
-                    var reminder = DL4D_REMINDER_EVENTS[i];
+                for (let i = 0; i < DL4D_REMINDER_EVENTS.length; i++) {
+                    const reminder = DL4D_REMINDER_EVENTS[i];
                     if (!reminder || !isFinite(reminder.time)) continue;
-                    var fireKey = String(reminder.time);
+                    const fireKey = String(reminder.time);
                     if (State.dl4dTriggeredTimes[fireKey]) continue;
                     if (currentTime >= reminder.time && currentTime < (reminder.time + INTERNAL_CONFIG.ALERT_WINDOW)) {
                         State.dl4dTriggeredTimes[fireKey] = true;
                         if (Number(cfg[reminder.key]) !== 1) continue;
                         ShowDl4dCaption(root, cfg, reminder.caption, reminder.duration);
-                        var eventName = ResolveDl4dReminderEventForVolume(reminder.eventBase, cfg);
+                        const eventName = ResolveDl4dReminderEventForVolume(reminder.eventBase, cfg);
                         if (eventName) $.DispatchEvent("PlaySoundEffect", eventName);
                     }
                 }
@@ -321,68 +279,25 @@
                 );
             }
 
-            // ── Passive cooldown HUD layout/styles (verbatim from old feature) ──
-            function ApplyPassiveCooldownRuntimeStyles(root, cfg, passiveHud, basicModeActive) {
-                if (!basicModeActive) {
-                    ResetPassiveCooldownRuntimeStyles(passiveHud);
-                    State.oldItemCooldownStylePanel = null;
-                } else if (State.oldItemCooldownStylePanel !== passiveHud) {
-                    if (State.oldItemCooldownStylePanel && State.oldItemCooldownStylePanel !== passiveHud) {
-                        ResetPassiveCooldownRuntimeStyles(State.oldItemCooldownStylePanel);
-                    }
-                    State.oldItemCooldownStylePanel = passiveHud;
-                    State.oldItemCooldownStyleSig = "";
-                }
-                if (basicModeActive) {
-                    var abilitiesContainerForOldMode = EnsureAbilitiesContainerPanelCache(root);
-                    var oldModeInShop = abilitiesContainerForOldMode && abilitiesContainerForOldMode.BHasClass && abilitiesContainerForOldMode.BHasClass("gShopOpen");
-                    if (passiveHud.SetHasClass) passiveHud.SetHasClass("qol-hidden", oldModeInShop); else passiveHud.style.visibility = oldModeInShop ? "collapse" : "visible";
-
-                    var passiveSize = Utils.ClampConfigNumber(cfg.PASSIVE_COOLDOWN_SIZE, 40, 30, 60, false);
-                    var oldScale = Utils.ClampConfigNumber((passiveSize / 40) * 110, 110, 50, 200, true);
-
-                    var passiveOffsetX = Utils.ClampConfigNumber(cfg.PASSIVE_COOLDOWN_X, 0, -50, 50, false);
-                    var passiveOffsetY = Utils.ClampConfigNumber(cfg.PASSIVE_COOLDOWN_Y, 0, -50, 50, false);
-                    var oldOffsetXPercent = passiveOffsetX;
-                    var oldOffsetYPercent = -6 - passiveOffsetY;
-
-                    var sharedOpacity = Utils.ClampConfigNumber(cfg.PASSIVE_COOLDOWN_OPACITY, 0.5, 0, 1, false);
-                    SetPanelOpacitySafe(passiveHud, sharedOpacity, 1.0);
-
-                    var oldStyleSig =
-                        String(oldScale) + "|" +
-                        oldOffsetXPercent.toFixed(2) + "|" +
-                        oldOffsetYPercent.toFixed(2) + "|" +
-                        sharedOpacity.toFixed(2) + "|" +
-                        (oldModeInShop ? "1" : "0");
-                    if (State.oldItemCooldownStyleSig !== oldStyleSig) {
-                        passiveHud.style.uiScale = String(oldScale) + "%";
-                        passiveHud.style.x = "11px";
-                        passiveHud.style.y = "30px";
-                        passiveHud.style.marginLeft = oldOffsetXPercent.toFixed(2) + "%";
-                        passiveHud.style.marginTop = oldOffsetYPercent.toFixed(2) + "%";
-                        State.oldItemCooldownStyleSig = oldStyleSig;
-                    }
-                } else {
-                    ResetPassiveCooldownRuntimeStyles(passiveHud);
-                    State.oldItemCooldownStylePanel = null;
-                }
-            }
-
             // ── Main tick (adapted from UpdateLegacyAudioAndPassiveHudRuntime) ──
             function _tick() {
-                var root = _root || $.GetContextPanel(); if (root && !_root) _root = root;
-                var cfg = (ctx.config && ctx.config.view) ? ctx.config.view() : (_lastFeatureConfig || {});
+                const root = $.GetContextPanel();
+                if (root !== _root) {
+                    HideDl4dCaption();
+                    if (_captionPanel) Panel.delete(_captionPanel);
+                    _captionPanel = null;
+                    SetCachedPanel("dl4dCaptionPanel", null);
+                    for (const resolver of clockResolvers) resolver.reset();
+                    _root = root;
+                }
+                const cfg = _config;
 
-                var passiveCooldownMode = ResolvePassiveCooldownMode(cfg);
-                var basicModeActive = IsPassiveCooldownBasicMode(passiveCooldownMode);
-                var needsPassiveRuntime = basicModeActive || State.oldItemCooldownRuntimeWasActive;
-                var reminderTypesEnabled = IsAnyAnnouncerReminderTypeEnabled(cfg);
-                var dl4dReminderEnabled = IsDl4dReminderRuntimeActive(cfg);
+                const reminderTypesEnabled = IsAnyAnnouncerReminderTypeEnabled(cfg);
+                const dl4dReminderEnabled = IsDl4dReminderRuntimeActive(cfg);
 
                 // A hidden reusable label does not require more cleanup work.
-                var hasReminderCleanup = !!State.dl4dCaptionVisible;
-                if (!needsPassiveRuntime && !reminderTypesEnabled && !dl4dReminderEnabled && !hasReminderCleanup) {
+                const hasReminderCleanup = !!State.dl4dCaptionVisible;
+                if (!reminderTypesEnabled && !dl4dReminderEnabled && !hasReminderCleanup) {
                     // Stay below the two-second announcer alert window so a
                     // newly enabled reminder cannot miss its first boundary.
                     if (_loop) _loop.reschedule(1.0);
@@ -391,20 +306,9 @@
                 if (_loop) _loop.reschedule(0.5);
 
                 // Hideout check — internalized from old dispatch parameter
-                var hideoutConnected = false;
+                let hideoutConnected = false;
                 try { hideoutConnected = isConnectedToHideout(root); } catch(e) {}
-                var needsReminderRuntime = ((reminderTypesEnabled || dl4dReminderEnabled) && !hideoutConnected) || hasReminderCleanup;
-
-                if (!needsPassiveRuntime && !needsReminderRuntime) return;
-
-                var passiveHud = needsPassiveRuntime ? EnsurePassiveHudPanelCache(root) : GetCachedPanel("passiveHud");
-                if (needsPassiveRuntime && passiveHud) {
-                    ApplyPassiveCooldownRuntimeStyles(root, cfg, passiveHud, basicModeActive);
-                } else if (!basicModeActive && State.oldItemCooldownStylePanel) {
-                    ResetPassiveCooldownRuntimeStyles(State.oldItemCooldownStylePanel);
-                    State.oldItemCooldownStylePanel = null;
-                }
-                State.oldItemCooldownRuntimeWasActive = basicModeActive;
+                const needsReminderRuntime = ((reminderTypesEnabled || dl4dReminderEnabled) && !hideoutConnected) || hasReminderCleanup;
 
                 if (!needsReminderRuntime) return;
                 if (hideoutConnected || !dl4dReminderEnabled) {
@@ -414,11 +318,11 @@
                 // still-valid game clock retained across the hideout transition.
                 if (hideoutConnected || (!reminderTypesEnabled && !dl4dReminderEnabled)) return;
 
-                var clock = EnsureGameTimePanelCache(root);
+                const clock = EnsureGameTimePanelCache(root);
                 if (!(clock && clock.text && clock.text.indexOf(":") > -1)) return;
 
-                var parts = clock.text.split(':');
-                var currentTime = (parseInt(parts[0], 10) * 60) + parseInt(parts[1], 10);
+                const parts = clock.text.split(':');
+                const currentTime = (parseInt(parts[0], 10) * 60) + parseInt(parts[1], 10);
                 if (currentTime < State.lastTime) {
                     State.lastIntervalAlert = 0;
                     State.lastMinimapAlert = 0;
@@ -426,7 +330,7 @@
                 }
 
                 // Street brawl check — suppress reminder audio during practice mode
-                var suppressReminderAudio = false;
+                let suppressReminderAudio = false;
                 try { suppressReminderAudio = IsStreetBrawlModeActive(root); } catch(e) {}
                 if (suppressReminderAudio) {
                     UpdateDl4dReminderRuntime(root, cfg, currentTime, true);
@@ -436,15 +340,15 @@
 
                 UpdateDl4dReminderRuntime(root, cfg, currentTime, false);
 
-                var voiceSelection = GetAnnouncerVoiceToken(cfg.VOICE_TYPE);
-                var suffix = "_" + voiceSelection;
+                const voiceSelection = GetAnnouncerVoiceToken(cfg.VOICE_TYPE);
+                const suffix = "_" + voiceSelection;
 
                 if (IsCfgEnabled(cfg, "ENABLE_MINIMAP_REMINDER")) {
-                    var mInterval = cfg.MINIMAP_REMINDER_INTERVAL || 15;
-                    var mTarget = Math.floor(currentTime / mInterval) * mInterval;
+                    const mInterval = cfg.MINIMAP_REMINDER_INTERVAL || 15;
+                    const mTarget = Math.floor(currentTime / mInterval) * mInterval;
                     if (currentTime >= mTarget && currentTime < (mTarget + INTERNAL_CONFIG.ALERT_WINDOW)) {
                         if (State.lastMinimapAlert < mTarget) {
-                            var minimapEvent = ResolveAnnouncerEventForVolume("BuffReminder.Minimap", cfg);
+                            const minimapEvent = ResolveAnnouncerEventForVolume("BuffReminder.Minimap", cfg);
                             $.DispatchEvent("PlaySoundEffect", minimapEvent);
                             State.lastMinimapAlert = mTarget;
                         }
@@ -456,12 +360,12 @@
                     IsCfgEnabled(cfg, "ENABLE_ONE_TIME_TIER3")
                 ) {
                     INTERNAL_CONFIG.ONE_TIME_ALERTS.forEach(function(alert) {
-                        var tierKey = String(alert && alert.tierKey ? alert.tierKey : "");
-                        var tierEnabled = tierKey ? (Number(cfg[tierKey]) === 1) : (IsCfgEnabled(cfg, "ENABLE_ONE_TIME"));
+                        const tierKey = String(alert && alert.tierKey ? alert.tierKey : "");
+                        const tierEnabled = tierKey ? (Number(cfg[tierKey]) === 1) : (IsCfgEnabled(cfg, "ENABLE_ONE_TIME"));
                         if (!tierEnabled) return;
                         if (currentTime >= alert.time && currentTime < (alert.time + INTERNAL_CONFIG.ALERT_WINDOW)) {
                             if (!State.triggeredOneTimers[alert.time]) {
-                                var oneTimeEvent = (voiceSelection === "Beep")
+                                let oneTimeEvent = (voiceSelection === "Beep")
                                     ? "BuffReminder.Beep"
                                     : (alert.sound + suffix);
                                 oneTimeEvent = ResolveAnnouncerEventForVolume(oneTimeEvent, cfg);
@@ -472,17 +376,17 @@
                     });
                 }
                 if (IsCfgEnabled(cfg, "ENABLE_INTERVAL")) {
-                    var bridgeLeadSec = Number(cfg.BRIDGE_BUFF_START);
+                    let bridgeLeadSec = Number(cfg.BRIDGE_BUFF_START);
                     if (cfg.BRIDGE_BUFF_START === undefined || cfg.BRIDGE_BUFF_START === null || !isFinite(bridgeLeadSec)) bridgeLeadSec = 30;
-                    var dynamicFirstAlert = INTERNAL_CONFIG.FIRST_ALERT - bridgeLeadSec;
-                    var targetTime = dynamicFirstAlert + (Math.floor((currentTime - dynamicFirstAlert) / INTERNAL_CONFIG.INTERVAL) * INTERNAL_CONFIG.INTERVAL);
+                    const dynamicFirstAlert = INTERNAL_CONFIG.FIRST_ALERT - bridgeLeadSec;
+                    const targetTime = dynamicFirstAlert + (Math.floor((currentTime - dynamicFirstAlert) / INTERNAL_CONFIG.INTERVAL) * INTERNAL_CONFIG.INTERVAL);
                     if (currentTime >= targetTime && currentTime < (targetTime + INTERNAL_CONFIG.ALERT_WINDOW)) {
                         if (State.lastIntervalAlert < targetTime) {
-                            var intervalEvent = "";
+                            let intervalEvent = "";
                             if (voiceSelection === "Beep") {
                                 intervalEvent = "BuffReminder.Beep";
                             } else {
-                                var bridgeVariant = GetRandomBridgeVariant(cfg);
+                                const bridgeVariant = GetRandomBridgeVariant(cfg);
                                 intervalEvent = "BuffReminder.Bridge" + String(bridgeVariant) + suffix;
                             }
                             intervalEvent = ResolveAnnouncerEventForVolume(intervalEvent, cfg);
@@ -494,43 +398,42 @@
                 State.lastTime = currentTime;
             }
 
-            var _lastFeatureConfig = {};
-
             return {
-                onEnable: function() {
-                    _lastFeatureConfig = (ctx.config && ctx.config.all) ? ctx.config.all() : (globalThis.MOD_CONFIG || {});
-                    var S = QOL.core.Scheduler;
+                onEnable() {
+                    _config = ctx.config.view();
+                    _root = $.GetContextPanel();
+                    const S = QOL.core.Scheduler;
                     _loop = S && S.createPollLoop ? S.createPollLoop(_tick, 0.5, "ql_legacy_audio_passive") : null;
                 },
-                onDisable: function() {
+                onDisable() {
                     if (_loop) { _loop.stop(); _loop = null; }
-                    var S = QOL.core.Scheduler; if (S) S.cancelAllForFeature("ql_legacy_audio_passive");
+                    const S = QOL.core.Scheduler; if (S) S.cancelAllForFeature("ql_legacy_audio_passive");
                     HideDl4dCaption();
                     State.dl4dCaptionToken = (State.dl4dCaptionToken || 0) + 1;
                     State.lastTime = -1; State.lastIntervalAlert = 0; State.lastMinimapAlert = 0; State.triggeredOneTimers = {};
                     State.dl4dLastTime = -1; State.dl4dTriggeredTimes = {};
-                    State.oldItemCooldownRuntimeWasActive = false;
-                    State.oldItemCooldownStyleSig = "";
-                    State.oldItemCooldownStylePanel = null;
-                    SetCachedPanel("dl4dCaptionPanel", null); SetCachedPanel("passiveHud", null); SetCachedPanel("gameTime", null); SetCachedPanel("abilitiesContainer", null);
+                    if (_captionPanel) Panel.delete(_captionPanel);
+                    _captionPanel = null;
+                    for (const resolver of clockResolvers) resolver.reset();
+                    SetCachedPanel("dl4dCaptionPanel", null); SetCachedPanel("gameTime", null);
                     _root = null;
+                    _config = null;
                 },
-                onSettingsChanged: function() {
-                    _lastFeatureConfig = (ctx.config && ctx.config.all) ? ctx.config.all() : (globalThis.MOD_CONFIG || {});
+                onSettingsChanged() {
+                    _config = ctx.config.view();
+                    _tick();
                 }
             };
         },
-        test: function(ctx) {
+        test() {
             try {
-                var root = $.GetContextPanel();
-                var abilitiesContainer = root ? root.FindChildTraverse("AbilitiesContainer") : null;
-                var gameTime = root ? root.FindChildTraverse("GameTime") : null;
+                const root = $.GetContextPanel();
+                const gameTime = root ? root.FindChildTraverse("GameTime") : null;
                 return {
-                    passed: !!(abilitiesContainer && gameTime),
-                    name: "Audio passive panels exist",
-                    message: (!abilitiesContainer ? "abilities_container not found" : "") + (!gameTime ? (abilitiesContainer ? "" : "") + "GameTime not found" : ""),
+                    passed: !!gameTime,
+                    name: "Audio reminder clock exists",
+                    message: gameTime ? "" : "GameTime not found",
                     assertions: [
-                        { passed: !!abilitiesContainer, name: "abilities_container exists (cooldown HUD)" },
                         { passed: !!gameTime, name: "GameTime exists (DL4D triggers)" }
                     ]
                 };

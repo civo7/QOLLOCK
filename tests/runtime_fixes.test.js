@@ -159,7 +159,7 @@ test("Combat signal, passive cooldown mode, and account lookup functions exporte
     // 5. ConfigStore has ql_legacy_audio_passive schema for item filters
     const ConfigStore = Q.core.ConfigStore;
     assert.ok(ConfigStore.hasSchema("ql_legacy_audio_passive"));
-    assert.strictEqual(ConfigStore.get("ql_legacy_audio_passive", "ENABLE_PASSIVE_COOLDOWN"), true);
+    assert.strictEqual(ConfigStore.get("ql_legacy_audio_passive", "ENABLE_PASSIVE_COOLDOWN"), false, "shared declarations use canonical flat defaults");
     assert.strictEqual(ConfigStore.get("ql_legacy_audio_passive", "ITEM_FILTER_DEF_PASSIVE"), true);
 });
 

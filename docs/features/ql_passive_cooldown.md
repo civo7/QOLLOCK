@@ -3,9 +3,11 @@
 The [manifest](../../panorama/scripts/manifests/ql_passive_cooldown/manifest.js)
 selects Basic or Advanced mode using HUD classes. Basic styles the native
 `hud_passive_items` panel; Advanced delegates item matching and overlay panels
-to [ql_item_mirror](ql_item_mirror.md). The
-[legacy audio manifest](ql_legacy_audio_passive.md) also works on Basic layout.
-Inspect all owners when changing their shared settings.
+to [ql_item_mirror](ql_item_mirror.md). This manifest is the sole owner of Basic
+geometry, opacity, mode classes and shop visibility. Core root synchronization
+and the [legacy audio manifest](ql_legacy_audio_passive.md) do not write that
+presentation. Shared setting declarations route configuration to interested
+features; they do not grant additional style ownership.
 
 Mode switches and disable must remove owned classes and inline overrides so
 native CSS can take over. Basic cooldown labels are visible only while their

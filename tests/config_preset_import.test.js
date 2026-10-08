@@ -292,7 +292,7 @@ test("enabling ENABLE_PERF_DEBUG_DETAIL alone activates ql_perf manifest and ena
     assert.strictEqual(State.perfDetailed, true, "State.perfDetailed should be true");
 });
 
-test("legacy configs with DEFAULT_HERO strip DEFAULT_HERO on merge, adapter load, and token decode", () => {
+test("legacy DEFAULT_HERO is ignored by merge, adapter export, and token decode without mutating input", () => {
     const hud = sim.createHud();
     hud.assertLoaded();
     const QOL = hud.sandbox.global.QOL;
@@ -304,10 +304,11 @@ test("legacy configs with DEFAULT_HERO strip DEFAULT_HERO on merge, adapter load
     assert.strictEqual(Object.prototype.hasOwnProperty.call(merged, "DEFAULT_HERO"), false, "merged config must not have DEFAULT_HERO");
     assert.strictEqual(merged.DEFAULT_HERO, undefined);
 
-    // 2. ConfigAdapter strips DEFAULT_HERO from flat and legacy bucket
+    // 2. ConfigAdapter ignores DEFAULT_HERO without changing the supplied snapshot.
     const flatCfg = { DEFAULT_HERO: "hero_frank", ENABLE_AMMO_STATUS: 1 };
     QOL.core.ConfigAdapter.loadFromFlat(flatCfg);
-    assert.strictEqual(flatCfg.DEFAULT_HERO, undefined);
+    assert.strictEqual(flatCfg.DEFAULT_HERO, "hero_frank");
+    assert.strictEqual(QOL.core.ConfigAdapter.exportToFlat().DEFAULT_HERO, undefined);
 
     // 3. User compact export tokens decode and strip DEFAULT_HERO
     const tokens = [

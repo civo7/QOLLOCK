@@ -1,29 +1,9 @@
-// features/ql_passive_cooldown/manifest.js
-// =============================================================================
-// QOLLOCK — Passive Cooldown HUD (Basic & Advanced Mode Switcher + Styling)
-// =============================================================================
-// OWNS:        CSS class toggles and inline styles for basic passive cooldown HUD
-//              (#hud_passive_items positioning, scaling, and opacity).
-// DOES NOT OWN: Advanced item mirror overlay (ql_item_mirror)
-// DEPENDS ON:  QOL.core.FeatureRegistry
-// CONFIG KEYS: ENABLE_PASSIVE_COOLDOWN, ENABLE_OLD_ITEM_COOLDOWNS,
-//              PASSIVE_COOLDOWN_SIZE, PASSIVE_COOLDOWN_X, PASSIVE_COOLDOWN_Y,
-//              PASSIVE_COOLDOWN_OPACITY
-// CSS:         styles/features/ql_feat_passive_cooldown.css
-// =============================================================================
-
-(function() {
+// OWNS: Passive cooldown mode classes and Basic native layout/shop visibility.
+// DOES NOT OWN: Advanced item mirror panels, audio reminders or native cooldown values.
+// Source: hud.xml (Hud > .HudCore > AbilitiesContainer > hud_passive_items).
+(() => {
     "use strict";
-    var FR = QOL.core && QOL.core.FeatureRegistry;
-    if (!FR) { $.Msg("[QOLLock] passive_cooldown: FeatureRegistry not found — aborting"); return; }
-
-    function _clamp(val, def, min, max) {
-        var n = Number(val);
-        if (!isFinite(n)) n = def;
-        return Math.max(min, Math.min(max, n));
-    }
-
-    FR.register({
+    QOL.core.FeatureRegistry.register({
         id: "ql_passive_cooldown",
         enableKey: "ENABLE_PASSIVE_COOLDOWN",
         enabledByDefault: false,
@@ -35,98 +15,118 @@
             { key: "PASSIVE_COOLDOWN_X", type: "slider", min: -50, max: 50, step: 1, default: 0 },
             { key: "PASSIVE_COOLDOWN_OPACITY", type: "slider", min: 0, max: 1, step: 0.05, default: 0.5 }
         ],
-        create: function(ctx) {
-            var _cachedPassiveHud = null;
+        create(ctx) {
+            const panelAPI = QOL.core.panel;
+            const resolver = QOL.panelCache.createIdResolver("hud_passive_items", {
+                retryMs: 500,
+                ownerPath: [{ id: "Hud", optional: true }, { className: "HudCore" }, "AbilitiesContainer"]
+            });
+            const properties = ["uiScale", "x", "y", "marginLeft", "marginTop", "opacity", "visibility"];
+            const applied = new Set();
+            let root = null;
+            let panel = null;
+            let signature = null;
+            let model = null;
+            let loop = null;
 
-            var _findHud = QOL.core.panel.findHud;
-
-            function _findPassiveHud(hud) {
-                if (QOL_UTILS.IsPanelValid(_cachedPassiveHud)) {
-                    return _cachedPassiveHud;
-                }
-                var root = hud || _findHud();
-                if (!root || !root.FindChildTraverse) return null;
-                _cachedPassiveHud = root.FindChildTraverse("hud_passive_items");
-                return _cachedPassiveHud;
+            function readModel() {
+                const cfg = ctx.config.view();
+                const mode = QOL.core.hud.resolvePassiveCooldownMode(cfg);
+                const clamp = QOL.utils.ClampConfigNumber;
+                const size = clamp(cfg.PASSIVE_COOLDOWN_SIZE, 40, 30, 60, false);
+                const scale = clamp(size / 40 * 110, 110, 50, 200, true);
+                const x = clamp(cfg.PASSIVE_COOLDOWN_X, 0, -50, 50, false);
+                const y = clamp(cfg.PASSIVE_COOLDOWN_Y, 0, -50, 50, false);
+                const opacity = clamp(cfg.PASSIVE_COOLDOWN_OPACITY, 0.5, 0, 1, false);
+                return { mode, styles: {
+                    uiScale: scale + "%", x: "11px", y: "30px",
+                    marginLeft: x.toFixed(2) + "%", marginTop: (-6 - y).toFixed(2) + "%",
+                    opacity: String(opacity)
+                } };
             }
 
-            function _resetStyles(passiveHud) {
-                if (!QOL_UTILS.IsPanelValid(passiveHud) || !passiveHud.style) return;
-                try {
-                    passiveHud.style.uiScale = null;
-                    passiveHud.style.x = null;
-                    passiveHud.style.y = null;
-                    passiveHud.style.marginLeft = null;
-                    passiveHud.style.marginTop = null;
-                    passiveHud.style.opacity = null;
-                    passiveHud.style.visibility = null;
-                    if (passiveHud.RemoveClass) passiveHud.RemoveClass("qol-hidden");
-                } catch (_) {}
+            function releaseRoot(target) {
+                panelAPI.setClass(target, "passive_cooldown_basic_active", false);
+                panelAPI.setClass(target, "passive_cooldown_advanced_active", false);
             }
 
-            function _apply(cfg) {
-                var h = _findHud();
-                if (!h) return;
+            function releasePanel(target) {
+                if (!panelAPI.isAlive(target)) { applied.clear(); return; }
+                for (const property of applied) QOL.utils.ClearStyleSafe(target, property);
+                applied.clear();
+                panelAPI.setClass(target, "passive_cooldown_basic_active", false);
+                panelAPI.setClass(target, "qol-hidden", false);
+            }
 
-                var isMasterEnabled = Number(cfg.ENABLE_PASSIVE_COOLDOWN) === 1;
-                var isBasicMode = isMasterEnabled && (Number(cfg.ENABLE_OLD_ITEM_COOLDOWNS) === 1);
-                var isAdvancedMode = isMasterEnabled && !isBasicMode;
-
-                if (h.SetHasClass) {
-                    h.SetHasClass("passive_cooldown_basic_active", isBasicMode);
-                    h.SetHasClass("passive_cooldown_advanced_active", isAdvancedMode);
-                } else {
-                    isBasicMode ? h.AddClass("passive_cooldown_basic_active") : h.RemoveClass("passive_cooldown_basic_active");
-                    isAdvancedMode ? h.AddClass("passive_cooldown_advanced_active") : h.RemoveClass("passive_cooldown_advanced_active");
+            function update() {
+                const currentRoot = QOL.core.hud.findHud();
+                if (currentRoot !== root) {
+                    releaseRoot(root);
+                    root = currentRoot;
                 }
-
-                var passiveHud = _findPassiveHud(h);
-                if (!passiveHud) return;
-
-                if (isBasicMode) {
-                    var passiveSize = _clamp(cfg.PASSIVE_COOLDOWN_SIZE, 40, 30, 60);
-                    var scale = _clamp(Math.round((passiveSize / 40) * 110), 110, 50, 200);
-                    var offX = _clamp(cfg.PASSIVE_COOLDOWN_X, 0, -50, 50);
-                    var offY = _clamp(cfg.PASSIVE_COOLDOWN_Y, 0, -50, 50);
-                    var opacity = _clamp(cfg.PASSIVE_COOLDOWN_OPACITY, 0.5, 0, 1);
-
-                    try {
-                        passiveHud.style.uiScale = scale + "%";
-                        passiveHud.style.x = "11px";
-                        passiveHud.style.y = "30px";
-                        passiveHud.style.marginLeft = offX.toFixed(2) + "%";
-                        passiveHud.style.marginTop = (-6 - offY).toFixed(2) + "%";
-                        passiveHud.style.opacity = String(opacity);
-                    } catch (_) {}
-                } else {
-                    _resetStyles(passiveHud);
+                const basic = model.mode === "basic";
+                panelAPI.setClass(root, "passive_cooldown_basic_active", basic);
+                panelAPI.setClass(root, "passive_cooldown_advanced_active", model.mode === "advanced");
+                const current = resolver.resolve(root);
+                if (current !== panel) {
+                    releasePanel(panel);
+                    panel = current;
+                    signature = null;
                 }
+                if (!panel) return;
+                panelAPI.setClass(panel, "passive_cooldown_basic_active", basic);
+                // Native shop listeners live on AbilitiesContainer. Read the
+                // current ancestry so replacements do not inherit a stale gate.
+                const shopHidden = basic && QOL.utils.HasClassInHierarchy(panel, "gShopOpen");
+                panelAPI.setClass(panel, "qol-hidden", shopHidden);
+                if (shopHidden) {
+                    applied.add("visibility");
+                    QOL.utils.SetStyleIfChanged(panel, "visibility", "collapse");
+                } else if (applied.has("visibility")) {
+                    QOL.utils.ClearStyleSafe(panel, "visibility");
+                    applied.delete("visibility");
+                }
+                if (signature !== null) return;
+                if (basic) {
+                    for (const property of Object.keys(model.styles)) applied.add(property);
+                    signature = panelAPI.syncStyles(panel, model.styles, signature).sig;
+                } else {
+                    for (const property of properties) if (applied.has(property)) QOL.utils.ClearStyleSafe(panel, property);
+                    applied.clear();
+                    signature = "native";
+                }
+            }
+
+            function refreshSettings() {
+                model = readModel();
+                signature = null;
+                resolver.reset();
+                update();
             }
 
             return {
-                onEnable: function() {
-                    _apply(ctx.config.all ? ctx.config.all() : (globalThis.MOD_CONFIG || {}));
+                onEnable() {
+                    refreshSettings();
+                    loop = QOL.core.Scheduler.createPollLoop(update, 0.5, ctx.id);
                 },
-                onDisable: function() {
-                    var h = _findHud();
-                    if (h) {
-                        h.RemoveClass("passive_cooldown_basic_active");
-                        h.RemoveClass("passive_cooldown_advanced_active");
-                    }
-                    _resetStyles(_findPassiveHud(h));
-                    _cachedPassiveHud = null;
-                },
-                onSettingsChanged: function() {
-                    _apply(ctx.config.all ? ctx.config.all() : (globalThis.MOD_CONFIG || {}));
+                onSettingsChanged: refreshSettings,
+                onDisable() {
+                    if (loop) { loop.stop(); loop = null; }
+                    QOL.core.Scheduler.cancelAllForFeature(ctx.id);
+                    releaseRoot(root);
+                    releasePanel(panel);
+                    root = panel = model = null;
+                    signature = null;
+                    resolver.reset();
                 }
             };
         },
-        test: function(ctx) {
+        test() {
             try {
-                var hud = (typeof QOL !== "undefined" && QOL.core?.panel?.findHud) ? QOL.core.panel.findHud() : null;
-                if (!hud) return null;  // Skip — not in a match context
+                const hud = QOL.core.hud.findHud();
+                if (!hud) return null;
                 return { passed: true, name: "Passive cooldown Hud panel exists", message: "", assertions: [{ passed: true, name: "Hud panel exists" }] };
-            } catch(e) { return { passed: false, name: "Passive cooldown panel check", message: (e && e.message ? e.message : String(e)) }; }
+            } catch (e) { return { passed: false, name: "Passive cooldown panel check", message: (e && e.message ? e.message : String(e)) }; }
         }
     });
 })();

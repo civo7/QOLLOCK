@@ -27,6 +27,7 @@ which numeric label, or which live HUD instance is authoritative.
 | Resolve a palette color | `QOL.core.panel.normalizePaletteIndex(value)` / `QOL.core.panel.resolvePaletteColor(value)` | Both delegate to `QOL_UTILS`; read the palette from the leaf utility. |
 | Cache a handle / list | `QOL.panelCache.getPanel(key)` / `QOL.panelCache.setPanel(key, panel)` / `QOL.panelCache.getList(key)` / `QOL.panelCache.setList(key, list)` | `ql_panelcache.js`; getters reject invalid handles/lists. |
 | Resolve cached ID | `QOL.panelCache.resolve(parent, cacheKey, traverseId)` | Keys resolution by parent and ID, validates live ancestry, and re-resolves after reparenting. |
+| Own a native ID resolver | `QOL.panelCache.createIdResolver(id, options)` | Instance-local `resolve(root, force?)` / `reset()`, verified direct-child owner paths, ancestry validation, bounded miss retries and periodic discovery refresh. See [panel cache](core/panel_cache.md). |
 | Cache non-panel state | `QOL.panelCache.getData(key)` / `QOL.panelCache.setData(key, value)` | No panel validation. Do not mix data and handle categories. |
 | Check an enabled config key | `QOL_UTILS.IsCfgEnabled(cfg, key)` | Uses numeric `1`, not general JavaScript truthiness. |
 | Clamp a config number | `QOL_UTILS.ClampConfigNumber(value, fallback, min, max, shouldRound)` | Optional rounding before clamp, not schema-step snapping. |
@@ -58,6 +59,11 @@ against the callable references in this decision map.
 For HUD mode/class detection use [core HUD state](core/hud.md); for hero evidence
 use [heroProbe](core/hero_probe.md). Both report observations, not authoritative
 local-player identity.
+
+Feature settings hooks project shared root classes with
+`QOL.core.hud.refreshRootClasses(root)`, which reads the complete current config
+and live time/hideout evidence. A local bucket cannot safely project unrelated
+root flags. Native style ownership remains with its feature manifest.
 
 ## Cache and lifecycle contract
 

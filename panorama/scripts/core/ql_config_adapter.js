@@ -207,8 +207,7 @@
     const loadFromFlat = (flatConfig, enableKeyMap) => {
         if (!flatConfig || typeof flatConfig !== "object") return;
 
-        flatConfig.ENABLE_MIN_SOULS = 0;
-        flatConfig.ENABLE_UNSPENT_SOULS = 0;
+        flatConfig = { ...flatConfig, ENABLE_MIN_SOULS: 0, ENABLE_UNSPENT_SOULS: 0 };
         delete flatConfig.DEFAULT_HERO;
 
         const keyMap = buildKeyToFeatureMap();
@@ -270,13 +269,8 @@
             delete processed["_legacy"]["DEFAULT_HERO"];
         }
 
-        let bucketCount = 0;
-        for (const featureId in processed) {
-            if (Object.prototype.hasOwnProperty.call(processed, featureId)) {
-                ConfigStore.load({ [featureId]: processed[featureId] });
-                bucketCount++;
-            }
-        }
+        ConfigStore.load(processed);
+        const bucketCount = Object.keys(processed).length;
 
         $.Msg(`[QOLLock] ConfigAdapter: loaded ${totalKeys} keys into ${bucketCount} feature buckets`);
     };
@@ -301,6 +295,7 @@
                 }
             }
         }
+        delete flat.DEFAULT_HERO;
         return flat;
     };
 

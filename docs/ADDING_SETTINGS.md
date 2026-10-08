@@ -13,6 +13,10 @@ separate contracts. None automatically creates the others.
    (`QOL_DEFAULT_CONFIG`). Add matching schema entries to every owning
    `panorama/scripts/manifests/<id>/manifest.js`. Settings-only preferences need
    not have a gameplay manifest. Shared keys can have multiple feature owners.
+   Registration resolves existing defaults and numeric metadata from the shared
+   catalog, while ConfigStore maintains one accepted value for every subscriber.
+   Keep each declaration's type/meaning consistent; a local copy is not a second
+   persistent setting.
 3. **Edit the real tab renderer.** Most tabs register a renderer through
    `QOL.ui.window.registerTabRenderer` and build rows with `QOL.ui.controls`.
    Read an adjacent row in `ui/gameplay_tabs.js`, `config_tab.js`, `audio.js` or
@@ -59,6 +63,9 @@ This signature illustration is not a feature implementation. Follow the owning
 manifest's existing reaction path. `ctx.config.view()` is live and read-only by
 convention; `all()` allocates a shallow copy. The HUD receives settings through
 cross-context publication and polling, so hooks do not guarantee zero latency.
+Batch payloads contain every changed owner key in `changes`; `key`/`value`
+describe only the first. All shared subscribers already hold the accepted values
+before hooks run.
 
 ## Numeric and enable-state boundaries
 

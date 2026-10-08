@@ -171,8 +171,14 @@ Active gameplay implementations register in
 and [FeatureRegistry](docs/core/feature_registry.md) before adding one. Registration
 metadata and the `create(ctx)` factory are separate from the returned instance's
 `onEnable`, `onDisable`, `onSettingsChanged` and optional read-only `test` hooks.
+Use the current [manifest implementation pattern](docs/MANIFEST_STYLE.md) and
+scaffold; native discovery/model/rendering/release remain feature-owned.
 
 The registry registers settings and a synthetic `enabled` key in ConfigStore.
+Existing persisted defaults and slider metadata are resolved from the shared
+catalog at registration, so overlapping owners agree on units and initial values.
+ConfigStore maintains one logical value per persisted key and atomically updates
+every declaring owner; synthetic `enabled` and local keys remain scoped.
 Enable policy can use `isEnabled(cfg)`, `enableKey`, OR-combined `enableKeys`, or
 default/always-on behavior. Custom predicates take precedence; an `enableKey`
 name alone does not describe a manifest with an additional predicate. Numeric
@@ -192,6 +198,10 @@ not automatically a persisted setting or an exposed control.
 `(key, value, allSettings)`. Read current values through `ctx.config`. React to
 configuration in the hook; poll only observations that require polling. A HUD
 hook is downstream of cross-context publication/polling, not a zero-latency path.
+For batch loads, `changes` includes every changed setting in that owner and all
+owner buckets are committed before hooks run. `key` identifies only the first
+changed setting. Shared HUD classes use `core.hud.refreshRootClasses(root)`;
+never pass a feature bucket to the whole-HUD projector.
 
 Use `QOL.core.Scheduler.createPollLoop(callback, seconds, ctx.id)` for recurring
 feature work. It returns `{stop(), reschedule(seconds)}`. `Scheduler.schedule`
@@ -202,8 +212,9 @@ See [scheduler](docs/core/scheduler.md) for error/timing behavior.
 
 On disable, undo owned classes/styles/panels, unregister your event handlers,
 cancel raw scheduled callbacks and clear owned caches. The registry cancels
-managed loops after cleanup, but does not automatically unsubscribe `ctx.events`
-listeners or cancel unrelated `$.Schedule` handles. Zero can be a valid native
+managed work after cleanup and retires `ctx.events` listeners before cleanup,
+including partial factory/enable failures. It does not cancel unrelated raw
+`$.Schedule` handles or events registered outside the context. Zero can be a valid native
 schedule handle: use explicit null-state tracking where you own cancellation.
 Token-guard delayed callbacks when cancellation alone cannot prevent stale work.
 
@@ -536,7 +547,7 @@ is navigation, not evidence of tested gameplay behavior.
   dispatcher. `HEALTHBAR_TYPE` is numeric 0–5, not string theme names. Shared
   accent/position cleanup can run even when a specific replacement style is off.
   Never profile only the default style and generalize the result to Minecraft.
-- **Passive cooldowns:** Basic native-panel styling, legacy audio/layout work,
+- **Passive cooldowns:** Basic native-panel styling, reminder audio,
   Advanced item mirrors and signature press flashes share some keys but have
   different responsibilities. Preserve category/exception matching and source
   identity; do not replace them with one generic class search.
