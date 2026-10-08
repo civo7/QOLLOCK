@@ -9,6 +9,11 @@ and the [legacy audio manifest](ql_legacy_audio_passive.md) do not write that
 presentation. Shared setting declarations route configuration to interested
 features; they do not grant additional style ownership.
 
+Advanced mode also observes transient item-mirror availability. A retired or
+failed mirror releases the Advanced mode class immediately through the registry
+presentation event; re-enable restores it from the accepted mode. Basic remains
+independent. Stored mode settings are unchanged.
+
 Mode switches and disable must remove owned classes and inline overrides so
 native CSS can take over. Basic cooldown labels are visible only while their
 native item ancestor has `cooling_down`; retained dialog text alone is not

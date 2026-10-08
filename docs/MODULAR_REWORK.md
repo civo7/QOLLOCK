@@ -28,6 +28,8 @@ behavior until its owning implementation has been audited.
   rules, retired input callbacks and tracked poll/chat/focus/drag work.
 - Account-gated translation owner with private native message generations,
   bounded retry/cache state and readable source text when the helper is absent.
+- Transient registry presentation availability reconciles central CSS with
+  disabled/failed content owners without rewriting accepted configuration.
 
 Frozen main-config fixtures preserve all healthbar variants and both minimap
 scale methods. Published versions, compact layouts and persistent defaults stay
@@ -40,13 +42,10 @@ unchanged, apart from the already approved native-origin AP/stamina offsets.
 2. Audit already modernized owners for remaining shared mutable bookkeeping,
    duplicate native style writers and missing release paths. Remove obsolete
    global state only after identifying all real consumers.
-3. Reconcile centrally projected CSS with explicitly disabled content owners.
-   Synthetic registry disable must not leave a custom-only layout with its
-   content removed; root-class policy remains owned by core.
-4. Audit core services and the settings, profile/card, quickbuy and hero-testing
+3. Audit core services and the settings, profile/card, quickbuy and hero-testing
    companions against the same lifetime/settings contracts. Keep verified
    native APIs and cross-context bridges; remove unreachable migration layers.
-5. Run the complete offline gate before each logical commit and retain the
+4. Run the complete offline gate before each logical commit and retain the
    frozen compatibility fixtures. After maintainer compilation/repacking,
    perform the native visual/input, gameplay-transition and restart checks.
 

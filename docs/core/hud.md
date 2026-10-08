@@ -29,6 +29,13 @@ values equal the previous generation. Failed writes/retirement remain retryable,
 and the root quickbuy count is published before a conditional native queue exists.
 These presentation/retirement records are private to the core owner.
 
+Complete-config CSS projection also observes transient registry presentation
+availability. Explicit disable, failed enable and auto-disable release the
+affected central presentation rules to native/CSS policy while retaining the
+accepted config. A successful enable restores those rules before/after the new
+owner hook. The release map belongs to core; features do not fight the projector
+with a second writer or reset persistent values to make cleanup work.
+
 Use `QOL.core.hud.isInHideout(root)` for the shared two-class predicate.
 Compass, cursor, zipboost, urn timer, Rejuvenator, minimap timers, legacy passive
 audio, item mirror, stat bonuses, stats position and recent purchases call this

@@ -36,6 +36,10 @@
     const contextCleanups = new WeakMap();
     const disabling = new Set();
     const enabledMap = {};
+    // Explicitly retired or failed owners cannot leave custom-only CSS active.
+    // Unknown/pre-boot owners remain neutral; this is not persisted enable state.
+    const unavailablePresentation = new Set();
+    let shuttingDown = false;
     const enablingInProgress = {};  // reentry guard: prevents recursion during onEnable/boot
     const errorStreaks = {};
     let configChangedHandler = null;
@@ -103,11 +107,22 @@
         contexts.delete(id);
     };
 
+    const setPresentationAvailable = (id, available) => {
+        const changed = !unavailablePresentation.has(id) !== available;
+        if (available) unavailablePresentation.delete(id);
+        else unavailablePresentation.add(id);
+        return changed;
+    };
+    const publishPresentation = (id, available) => {
+        if (!shuttingDown) EventBus.emit("feature:presentation_changed", { featureId: id, available });
+    };
+
     const safeEnableFeature = (id) => {
         if (Object.prototype.hasOwnProperty.call(instances, id)) return; // already enabled
         if (enablingInProgress[id] || disabling.has(id)) return;          // reentry guard
         const manifest = manifests[id];
         if (!manifest) return;
+        const presentationChanged = setPresentationAvailable(id, true);
         enablingInProgress[id] = true;
         let instance = null;
         try {
@@ -124,10 +139,12 @@
             enabledMap[id] = true;
             errorStreaks[id] = 0;                                       // start tracking errors
             delete enablingInProgress[id];
+            if (presentationChanged) publishPresentation(id, true);
             return true;
         } catch (e) {
             // A failed onEnable may already own listeners, panels and schedules.
             // Unwind its partial setup before allowing a later enable retry.
+            setPresentationAvailable(id, false);
             releaseContext(id);
             try { instance?.onDisable?.(); } catch (_) { /* preserve original failure */ }
             try { Q.core.Scheduler?.cancelAllForFeature?.(id); } catch (_) { /* best-effort */ }
@@ -135,11 +152,17 @@
             errorStreaks[id] = (errorStreaks[id] || 0) + 1;
         }
         delete enablingInProgress[id];
+        publishPresentation(id, false);
     };
 
     const safeDisableFeature = (id) => {
         const instance = instances[id];
-        if (!instance || disabling.has(id)) return;
+        if (disabling.has(id)) return;
+        if (!instance) {
+            if (manifests[id] && setPresentationAvailable(id, false)) publishPresentation(id, false);
+            return;
+        }
+        setPresentationAvailable(id, false);
         disabling.add(id);
         releaseContext(id);
         try {
@@ -158,6 +181,7 @@
         delete instances[id];
         enabledMap[id] = false;
         disabling.delete(id);
+        publishPresentation(id, false);
     };
 
     const isFeatureSupposedToBeEnabled = (id, configSlice) => {
@@ -317,6 +341,7 @@
     };
 
     const shutdown = () => {
+        shuttingDown = true;
         try {
             if (Q.core?.ManifestTests?.cancel) {
                 Q.core.ManifestTests.cancel();
@@ -343,6 +368,11 @@
 
         for (const k of Object.keys(instances)) delete instances[k];
         for (const k of Object.keys(enabledMap)) delete enabledMap[k];
+        // Project the retired session once, then return standalone/pre-boot
+        // consumers to neutral policy without reapplying the stored CSS here.
+        EventBus.emit("feature:presentation_changed", { featureId: null, available: false, shutdown: true });
+        unavailablePresentation.clear();
+        shuttingDown = false;
     };
 
     const isEnabled = (featureId) => !!enabledMap[featureId];
@@ -364,6 +394,7 @@
         shutdown,
         createContext,
         isEnabled,
+        isPresentationAvailable: id => !unavailablePresentation.has(id),
         isRegistered,
         isFeatureSupposedToBeEnabled,
         getRegisteredIds,

@@ -1062,11 +1062,50 @@
         );
     };
 
-    /**
-     * Root CSS classes synchronizer for HUD.
-     */
+    // Runtime release values for centrally projected feature presentation.
+    // These are transient native/CSS fallbacks, never setting defaults or config writes.
+    const presentationRelease = [
+        ["ql_healthbar", { HEALTHBAR_TYPE: 0 }],
+        ["ql_recent_purchases", { ENABLE_SHOP_RECENT_PURCHASES: 0, ENABLE_SHOP_ITEM_NOTIFICATIONS: 0, ENABLE_HERO_PURCHASE_POPUPS: 0 }],
+        ["ql_rejuv_hud", { ENABLE_REJUV_HUD: 0, ENABLE_BUFF_HUD: 0 }],
+        ["ql_minimap_timers", { ENABLE_MINIMAP_BUFF_TIMER: 0, ENABLE_MINIMAP_REJUV_TIMER: 0 }],
+        ["ql_zipboost", { ENABLE_ZIP_BOOST: 0 }],
+        ["ql_unsecured_souls_timer", { ENABLE_UNSECURED_SOUL_TIMER: 0 }],
+        ["ql_stat_bonuses", { ENABLE_STAT_BONUSES: 0 }],
+        ["ql_compass", { ENABLE_COMPASS: 0, ENABLE_COMPASS_SPEED: 0, ENABLE_SIMPLIFY_COMPASS: 0 }],
+        ["ql_ult_cooldowns", { ENABLE_ULT_COOLDOWNS: 0 }],
+        ["ql_keyboard", { ENABLE_KEYBOARD_OVERLAY: 0, ENABLE_FULL_KEYBOARD_LAYOUT: 0 }],
+        ["ql_better_unsecured_hud", { ENABLE_BETTER_UNSECURED: 0 }],
+        ["ql_color_warnings", { ENABLE_COLORED_HEALTHBAR: 0, ENABLE_COLOR_WARNING_25: 0, ENABLE_COLOR_WARNING_65: 0, ENABLE_COLOR_WARNING_75: 0 }],
+        ["ql_combat_status", { ENABLE_COMBAT_INDICATOR: 0 }],
+        ["ql_heroshop", { ENABLE_HERO_SCENE_PANEL: 0, ENABLE_SHOP_STATS: 1, ENABLE_SIMPLIFY_SHOP: 0,
+            ENABLE_ENHANCED_QUICKBUY: 0, ENABLE_QUICKBUY_CLICK_TO_NOTIFY: 0, DISABLE_QUICK_BUY: 0 }],
+        ["ql_target_shapes", { ENABLE_RED_DIAMOND: 0, ENABLE_IMPROVED_HINT: 0 }],
+        ["ql_damage_report", { DISABLE_DAMAGE_REPORT: 0 }],
+        ["ql_ability_icons", { ENABLE_CLEAN_STACKS: 0, ENABLE_HIDE_ABILITY_SUGGESTION: 0, ENABLE_HIDE_COSMETIC_ABILITY: 0, ENABLE_SIMPLIFY_ABILITY_ICONS: 0 }],
+        ["ql_cast_failed_hint", { ENABLE_HIDE_FAILED_HINT: 0 }],
+        ["ql_nicknames", { ENABLE_NICKNAMES: 0 }],
+        ["ql_minimap_runtime", { MINIMAL_MINIMAP: 0, ENABLE_MINIMAP_ELEVATION_MARKERS: 0 }],
+        ["ql_ui_controls", { SUPPORT_16_10: 0, SUPPORT_4_3: 0, ENABLE_HUD_SHIFT: 0,
+            ENABLE_CENTER_ESC: 0, ENABLE_CENTER_FRIENDS_LIST: 0, ENABLE_FORCE_TESTING_TOOLS: 0,
+            ENABLE_HIDE_TESTING_TOOLS: 0, ENABLE_HIDE_BEHAVIOR_SUMMARY: 0, ENABLE_LEGACY_COOLDOWNS: 0 }]
+    ];
+    const presentationConfig = cfg => {
+        const registry = Q.core.FeatureRegistry;
+        if (!registry?.isPresentationAvailable) return cfg;
+        let result = cfg;
+        for (const [id, release] of presentationRelease) {
+            if (registry.isPresentationAvailable(id)) continue;
+            if (result === cfg) result = { ...cfg };
+            Object.assign(result, release);
+        }
+        return result;
+    };
+
+    /** Root CSS synchronization uses accepted config plus transient owner availability. */
     const applyRootClasses = (root, cfg, nowMsLoop, hideoutConnected) => {
         if (!root) return false;
+        cfg = presentationConfig(cfg);
         const state = getState();
         if (!state.rootClassCache) state.rootClassCache = { panel: root, values: {} };
 
@@ -1426,6 +1465,8 @@
     Q.hideUrnTrackerOverlay = hideUrnTrackerOverlay;
     Q.panelIdTopBar = PANEL_ID_TOP_BAR;
     Q.panelIdGoldApContainer = PANEL_ID_GOLD_AP_CONTAINER;
+
+    Q.core.EventBus?.on("feature:presentation_changed", () => Q.core.hud.refreshRootClasses());
 
     $.Msg("[QOLLock] core/ql_hud: attached to QOL.core.hud");
 })();

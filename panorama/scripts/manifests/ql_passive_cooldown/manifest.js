@@ -29,6 +29,10 @@
             let model = null;
             let loop = null;
 
+            function presentationMode() {
+                return model.mode === "advanced" && !QOL.core.FeatureRegistry.isPresentationAvailable("ql_item_mirror") ? "default" : model.mode;
+            }
+
             function readModel() {
                 const cfg = ctx.config.view();
                 const mode = QOL.core.hud.resolvePassiveCooldownMode(cfg);
@@ -64,9 +68,10 @@
                     releaseRoot(root);
                     root = currentRoot;
                 }
-                const basic = model.mode === "basic";
+                const mode = presentationMode();
+                const basic = mode === "basic";
                 panelAPI.setClass(root, "passive_cooldown_basic_active", basic);
-                panelAPI.setClass(root, "passive_cooldown_advanced_active", model.mode === "advanced");
+                panelAPI.setClass(root, "passive_cooldown_advanced_active", mode === "advanced");
                 const current = resolver.resolve(root);
                 if (current !== panel) {
                     releasePanel(panel);
@@ -103,14 +108,19 @@
                 resolver.reset();
                 update();
             }
+            function presentationChanged(payload) {
+                if (payload?.featureId === "ql_item_mirror" && model) update();
+            }
 
             return {
                 onEnable() {
+                    ctx.events?.on("feature:presentation_changed", presentationChanged);
                     refreshSettings();
                     loop = QOL.core.Scheduler.createPollLoop(update, 0.5, ctx.id);
                 },
                 onSettingsChanged: refreshSettings,
                 onDisable() {
+                    ctx.events?.off("feature:presentation_changed", presentationChanged);
                     if (loop) { loop.stop(); loop = null; }
                     QOL.core.Scheduler.cancelAllForFeature(ctx.id);
                     releaseRoot(root);

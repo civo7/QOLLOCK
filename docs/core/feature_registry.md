@@ -48,6 +48,19 @@ all owner buckets before any settings hook runs.
   It does not promise reverse dependency order.
 - `isEnabled`, `isRegistered`, `getRegisteredIds`, `getEnabledIds`, `getManifest`,
   `getInstance`, and `getErrorCounts` expose current registry state.
+- `isPresentationAvailable(id)` reports transient presentation policy. A failed
+  or explicitly disabled owner is unavailable before cleanup starts; re-enable
+  restores availability before its hook, including enable-in-progress projection.
+  Unknown/pre-boot owners are neutral. This does not prove native content exists
+  and never changes stored configuration or synthetic `enabled` settings.
+
+The internal `feature:presentation_changed` event publishes completed enable,
+disable and failed-enable transitions. Core reprojects its complete-config CSS
+with transient release policy, so a custom-only layout cannot remain active
+after its content owner retires. Passive cooldown observes mirror availability
+through the same event while retaining its own mode-class ownership. Shutdown
+projects retirement once, then clears session policy for standalone/pre-boot
+consumers; reboot uses the same accepted settings.
 
 Disable retires context events, invokes feature cleanup, then cancels Scheduler
 work registered to that ID. Features must still undo owned UI/styles/classes,

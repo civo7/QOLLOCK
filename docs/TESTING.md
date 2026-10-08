@@ -84,6 +84,11 @@ evidence, independent native message selection, bounded cache and lifecycle
 cleanup. Native text remains readable through modeled failed helper requests;
 localhost image loading and native chat layout require client verification.
 
+`presentation_lifecycle.test.js` exercises explicit disable, partial enable
+failure, Scheduler auto-disable and shutdown/reboot through the production
+registry. It verifies custom-only CSS release, retained config, independent
+observers and restored presentation on enable, including Advanced/Basic mode.
+
 `tests/customize_config_compat.test.js` imports frozen legacy compact codes
 generated with the main codec/schema recorded in the fixture, then checks
 Customize cancellation, Apply and current-format export. It also checks legacy
