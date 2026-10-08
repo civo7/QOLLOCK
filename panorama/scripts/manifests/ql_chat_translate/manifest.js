@@ -60,25 +60,7 @@
                 return account ? commitOwner(account === OWNER_ACCOUNT) : null;
             }
 
-            function messageLabel(message) {
-                const named = P.findTraverse(message, "MessageText");
-                if (P.isAlive(named)) return named;
-                const contents = P.findTraverse(message, "MessageContents");
-                if (!P.isAlive(contents)) return null;
-                // Keep older direct-label layouts, and the current native
-                // ChatMessageContents_Text snippet's .Text > Label binding.
-                for (let i = 0; i < contents.GetChildCount(); i++) {
-                    const child = contents.GetChild(i);
-                    if (!P.isAlive(child)) continue;
-                    if (child.paneltype === "Label") return child;
-                    if (!child.BHasClass("Text")) continue;
-                    for (let j = 0; j < child.GetChildCount(); j++) {
-                        const label = child.GetChild(j);
-                        if (P.isAlive(label) && label.paneltype === "Label") return label;
-                    }
-                }
-                return null;
-            }
+            const messageLabel = QOL.core.chatMessages.findLabel;
             function readText(label) { return P.isAlive(label) ? String(label.text || "").trim() : ""; }
             function approximateBytes(text) {
                 let bytes = 0;

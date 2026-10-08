@@ -18,6 +18,7 @@ which numeric label, or which live HUD instance is authoritative.
 | Find a parent-chain match | `QOL_UTILS.FindAncestorWithClass(panel, className)` / `QOL_UTILS.HasClassInHierarchy(panel, className)` | Includes starting panel; catches native class/parent access failures, but the walk is uncapped. |
 | Resolve context root / HUD | `QOL.core.panel.findRoot(panel?)` / `QOL.core.panel.findHud(preferredRoot)` | See [panel API](core/panel_helpers.md); root fallback does not establish gameplay state. |
 | Read first descendant text | `QOL.core.panel.readTextDeep(panel, maxDepth)` | Bounded search, unsuitable when another nonempty label can precede the desired one. |
+| Read a native chat message's text label | `QOL.core.chatMessages.findLabel(message)` | HUD-only `core/ql_chat_messages.js`; verified top `MessageText`, earlier direct labels and current bottom `.Text > Label`. Consumers own source selection and lifetime. |
 | Read / write a panel attribute | `QOL_UTILS.SafeGetAttribute(panel, key, fallback)` / `QOL_UTILS.SafeSetAttribute(panel, key, value)` | Generic string access, not revision-aware config publication. |
 | Change one style if different | `QOL_UTILS.SetStyleIfChanged(panel, property, value)` | Only when native read-back semantics suit comparison. |
 | Reassert one style | `QOL_UTILS.SetStyleSafe(panel, property, value)` | Use when a native owner may overwrite the value; do not make deliberate reassertion conditional. |

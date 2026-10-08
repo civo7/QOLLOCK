@@ -22,7 +22,8 @@ tables, CSS values, test history or general verification caveats into it.
 | [ql_ability_icons](../../panorama/scripts/manifests/ql_ability_icons/manifest.js) | Ability simplification, cosmetic borders, suggestions and stack classes. |
 | [ql_damage_report](../../panorama/scripts/manifests/ql_damage_report/manifest.js) | Damage-report visibility/offsets; no DAMAGE_REPORT_SCALE schema field. |
 | [ql_passive_cooldown](../../panorama/scripts/manifests/ql_passive_cooldown/manifest.js) | Passive cooldown mode classes and Basic native-panel layout. |
-| [ql_chat_images](../../panorama/scripts/manifests/ql_chat_images/manifest.js) | Chat image embedding and chat geometry; external image requests are not local-only. |
+| [ql_chat_geometry](../../panorama/scripts/manifests/ql_chat_geometry/manifest.js) | Native chat visibility/offset/scale with independent lifecycle; does not depend on embedding. |
+| [ql_chat_images](../../panorama/scripts/manifests/ql_chat_images/manifest.js) | URL image embedding beside native source text; external image requests retain their existing proxy. |
 | [ql_chat_translate](../../panorama/scripts/manifests/ql_chat_translate/manifest.js) | Account-gated translation experiment; no public `ENABLE_CHAT_TRANSLATE` setting. The optional service is separate. |
 | [ql_lane_with_party](../../panorama/scripts/manifests/ql_lane_with_party/manifest.js) | Automatic party lane preference selection; key is ENABLE_LANE_WITH_PARTY. |
 | [ql_ui_controls](../../panorama/scripts/manifests/ql_ui_controls/manifest.js) | Global layout/support classes and UI settings metadata; not the control factory module. |

@@ -21,6 +21,10 @@ native item layout belong solely to the passive-cooldown manifest; damage-report
 offsets belong solely to the damage-report manifest. These native owners release
 their code properties independently of shared root-class projection.
 
+Native chat visibility/geometry belongs to the independent `ql_chat_geometry`
+manifest. Core does not apply/reset chat transforms; image and translation
+owners share only the read-only native label selector in `ql_chat_messages.js`.
+
 Core also owns native quickbuy mode/count projection and the self-warning bridge
 attribute. Their scoped resolvers follow current verified hosts; a living retired
 host releases QOLLOCK classes/attributes without changing native content or

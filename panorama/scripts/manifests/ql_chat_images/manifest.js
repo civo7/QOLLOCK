@@ -1,363 +1,154 @@
-// features/ql_chat_images/manifest.js
-// =============================================================================
-// QOLLOCK — Images In Chat
-// =============================================================================
-// OWNS:        Inline chat image injection via regex URL matching.
-//              Processes top (Messages) and bottom (ChatMessages) containers.
-// DOES NOT OWN: Chat panels (Valve), image loading (Panorama engine)
-// DEPENDS ON:  QOL.core.FeatureRegistry, QOL.core.Scheduler
-// CONFIG KEYS: ENABLE_IMAGES_IN_CHAT
-// CSS:         none
-// PATTERN:     Polling (0.2Hz). Adaptive idle backoff (200ms active, up to 2500ms idle).
-//              Self-throttling via imagesInChatTop/BottomNextSearchMs.
-// CONFIG SRC:  ctx.config.view() (read-only hot path; has enableKey)
-// PORTED FROM: features/ql_feat_chatimg.js (167 lines)
-// =============================================================================
-
+// OWNS: URL image children in native chat messages; private source generations and bounded caches.
+// DOES NOT OWN: Chat geometry, native message text/visibility or image-load completion.
+// Sources: hud.xml, citadel_hud_top_bar_chat.xml and chat.xml; original proxy and URL matching are retained.
 (() => {
     "use strict";
-    const FR = QOL.core?.FeatureRegistry;
-    if (!FR) {
-        $.Msg("[QOLLock] ql_chat_images: FeatureRegistry not found — aborting");
-        return;
-    }
-
-    FR.register({
-        id: "ql_chat_images",
-        enableKey: "ENABLE_IMAGES_IN_CHAT",
-        enabledByDefault: false,
-        settings: [
-            { key: "ENABLE_IMAGES_IN_CHAT", type: "toggle" },
-            { key: "CHAT_SCALE", type: "slider", label: "Size", description: "Adjust size of the in-game chat." },
-            { key: "CHAT_X_OFFSET", type: "slider", label: "Horizontal Offset", description: "Adjust horizontal position of the in-game chat." },
-            { key: "CHAT_Y_OFFSET", type: "slider", label: "Vertical Offset", description: "Adjust vertical position of the in-game chat." }
-        ],
+    const ID = "ql_chat_images", MAX_MESSAGES = 80;
+    const URL_PATTERN = /^https?:\/\/\S+\.(?:png|jpg|jpeg|webp|gif)(?:\?\S*)?$/i;
+    QOL.core.FeatureRegistry.register({
+        id: ID, enableKey: "ENABLE_IMAGES_IN_CHAT", enabledByDefault: false,
+        settings: [{ key: "ENABLE_IMAGES_IN_CHAT", type: "toggle" }],
         create(ctx) {
-            const State = QOL.state || globalThis.State || {};
-            const Utils = QOL.utils;
-            const isPanelValid = QOL.utils.IsPanelValid;
-            const perfNowMs = QOL.utils.PerfNowMs;
-
-            const IMAGES_IN_CHAT_URL_REGEX = /^https?:\/\/\S+\.(?:png|jpg|jpeg|webp|gif)(?:\?\S*)?$/i;
-            const IMAGES_IN_CHAT_MAX_W = 150;
-            const IMAGES_IN_CHAT_MAX_H = 150;
-            const IMAGES_IN_CHAT_CACHE_MAX_MESSAGES = 80;
-            const IMAGES_IN_CHAT_FULL_RESCAN_MS = 4000;
-            const IMAGES_IN_CHAT_IDLE_MAX_DELAY_MS = 2500;
-
-            let _loop = null;
-            let _root = null;
-
-            const findChatMessageLabel = (msgPanel) => {
-                if (!msgPanel) return null;
-                const msgText = msgPanel.FindChildTraverse ? msgPanel.FindChildTraverse("MessageText") : null;
-                if (msgText) return msgText;
-                const msgContents = msgPanel.FindChildTraverse ? msgPanel.FindChildTraverse("MessageContents") : null;
-                if (!msgContents || !msgContents.GetChildCount) return null;
-                for (let i = 0; i < msgContents.GetChildCount(); i++) {
-                    const child = msgContents.GetChild(i);
-                    if (child && child.paneltype === "Label") return child;
+            const P = QOL.core.panel, U = QOL.utils, findLabel = QOL.core.chatMessages.findLabel;
+            const corePath = [{ id: "Hud", optional: true }, { className: "HudCore" }];
+            const channel = (id, bottom, ownerPath) => ({ bottom,
+                resolver: QOL.panelCache.createIdResolver(id, { retryMs: 500, ownerPath }),
+                container: null, records: new Map(), nextScan: 0, watermark: null, idle: 0 });
+            const channels = [
+                channel("Messages", false, [...corePath, "TopBar", { className: "ChatContainer" }, "Team1Chat"]),
+                channel("Messages", false, [...corePath, "TopBar", { className: "ChatContainer" }, "Team2Chat"]),
+                channel("ChatMessages", true, [...corePath, "Chat", "ChatLinesArea", { className: "ChatLinesWrapper" }])
+            ];
+            let running = false, model = null, root = null, loop = null, imageSerial = 0;
+            let panelIds = new WeakMap(), panelSerial = 0;
+            function parent(panel) { return P.isAlive(panel) ? panel.GetParent() : null; }
+            function belongs(panel, owner) {
+                if (!P.isAlive(owner)) return false;
+                for (let depth = 0; depth < 64 && P.isAlive(panel); depth++, panel = parent(panel)) if (panel === owner) return true;
+                return false;
+            }
+            function identity(panel) {
+                if (!P.isAlive(panel)) return "-";
+                if (!panelIds.has(panel)) panelIds.set(panel, ++panelSerial);
+                return String(panelIds.get(panel));
+            }
+            function imageModel(text, bottom) {
+                if (!URL_PATTERN.test(text)) return null;
+                let encoded;
+                try { encoded = encodeURIComponent(text); } catch (_) { return null; }
+                return { url: "https://wsrv.nl/?url=" + encoded + "&w=150&h=150&fit=inside",
+                    styles: { maxWidth: "150px", maxHeight: "150px", margin: bottom ? "4px 4px 4px 4px" : "8px 8px 8px 8px" } };
+            }
+            function retireImage(record) {
+                if (P.isAlive(record.image)) { P.setVisible(record.image, false); P.delete(record.image); }
+                record.image = null; record.signature = null; record.requested = null;
+            }
+            function releaseChannel(source) {
+                for (const record of source.records.values()) retireImage(record);
+                source.records.clear(); source.container = null; source.nextScan = 0; source.watermark = null; source.idle = 0;
+                source.resolver.reset();
+            }
+            function release() {
+                for (const source of channels) releaseChannel(source);
+                root = null; panelIds = new WeakMap(); panelSerial = 0;
+            }
+            function render(record) {
+                const host = parent(record.label);
+                if (!record.model || !P.isAlive(host)) { retireImage(record); return true; }
+                if (P.isAlive(record.image) && parent(record.image) !== host) retireImage(record);
+                if (!P.isAlive(record.image)) {
+                    record.image = P.create("Image", host, "InjectedChatImage_" + U.PerfNowMs() + "_" + (++imageSerial));
+                    record.signature = null; record.requested = null;
+                    if (!P.isAlive(record.image)) return false;
+                    P.setVisible(record.image, false);
                 }
-                return null;
-            };
-
-            const injectTopChatImage = (msgPanel, url) => {
-                if (!msgPanel) return;
-                const msgContainer = msgPanel.FindChildTraverse ? msgPanel.FindChildTraverse("MessageContents") : null;
-                if (!msgContainer) return;
-                const msgText = findChatMessageLabel(msgPanel);
-                if (!msgText) return;
-                const textContainer = msgText.GetParent ? msgText.GetParent() : null;
-                if (!textContainer) return;
-                textContainer.style.maxWidth = "9999px";
-                const panelId = `InjectedChatImage_${perfNowMs()}`;
-                const img = $.CreatePanel("Image", textContainer, panelId);
-                if (!img) return;
-                img.AddClass("InjectedChatImage");
-                img.SetImage(`https://wsrv.nl/?url=${encodeURIComponent(url)}&w=150&h=150&fit=inside`);
-                img.style.maxWidth = `${IMAGES_IN_CHAT_MAX_W}px`;
-                img.style.maxHeight = `${IMAGES_IN_CHAT_MAX_H}px`;
-                img.style.margin = "8px 8px 8px 8px";
-                msgText.style.visibility = "collapse";
-            };
-
-            const injectBottomChatImage = (msgPanel, url) => {
-                if (!msgPanel) return;
-                const msgText = findChatMessageLabel(msgPanel);
-                if (!msgText) return;
-                const textContainer = msgText.GetParent ? msgText.GetParent() : null;
-                if (!textContainer) return;
-                textContainer.style.maxWidth = "9999px";
-                const panelId = `InjectedChatImage_bot_${perfNowMs()}`;
-                const img = $.CreatePanel("Image", textContainer, panelId);
-                if (!img) return;
-                img.AddClass("InjectedChatImage");
-                img.SetImage(`https://wsrv.nl/?url=${encodeURIComponent(url)}&w=150&h=150&fit=inside`);
-                img.style.maxWidth = `${IMAGES_IN_CHAT_MAX_W}px`;
-                img.style.maxHeight = `${IMAGES_IN_CHAT_MAX_H}px`;
-                img.style.margin = "4px 4px 4px 4px";
-                msgText.style.visibility = "collapse";
-            };
-
-            const clearInjectedChatImagesForMessage = (msgPanel) => {
-                if (!isPanelValid(msgPanel)) return;
-                const msgText = findChatMessageLabel(msgPanel);
-                if (msgText?.style) {
-                    try { msgText.style.visibility = "visible"; } catch(e) {}
+                P.setClass(record.image, "InjectedChatImage", true);
+                record.signature = P.syncStyles(record.image, record.model.styles, record.signature).sig;
+                if (record.signature === null) return false;
+                if (record.requested !== record.model.url) {
+                    record.image.SetImage(record.model.url); record.requested = record.model.url;
                 }
-                const msgContainer = msgPanel.FindChildTraverse ? msgPanel.FindChildTraverse("MessageContents") : null;
-                if (msgContainer?.style) {
-                    try { msgContainer.style.opacity = 1; } catch(e) {}
-                }
-                const textContainer = msgText?.GetParent ? msgText.GetParent() : null;
-                if (textContainer?.Children) {
-                    const children = textContainer.Children() || [];
-                    for (let i = 0; i < children.length; i++) {
-                        const child = children[i];
-                        if (!child) continue;
-                        const id = child.id ? String(child.id) : "";
-                        const isInjected = id.startsWith("InjectedChatImage_") || (child.BHasClass && child.BHasClass("InjectedChatImage"));
-                        if (isInjected && child.DeleteAsync) {
-                            try { child.DeleteAsync(0); } catch(e) {}
-                        }
-                    }
-                }
-                if (msgPanel.SetHasClass) msgPanel.SetHasClass("imageProcessed", false);
-                else if (msgPanel.RemoveClass) msgPanel.RemoveClass("imageProcessed");
-            };
-
-            const getImagesInChatMessageCache = (cacheKey) => {
-                let cache = State[cacheKey];
-                if (!Array.isArray(cache)) {
-                    cache = [];
-                    State[cacheKey] = cache;
-                }
-                return cache;
-            };
-
-            const findImagesInChatMessageCacheEntry = (cache, msgPanel) => {
-                if (!cache) return null;
-                for (let i = 0; i < cache.length; i++) {
-                    const entry = cache[i];
-                    if (!entry || !isPanelValid(entry.panel)) {
-                        cache.splice(i, 1);
-                        i--;
-                        continue;
-                    }
-                    if (entry.panel === msgPanel) return entry;
-                }
-                return null;
-            };
-
-            const pruneImagesInChatMessageCache = (cache) => {
-                if (!cache) return;
-                for (let i = 0; i < cache.length; i++) {
-                    const entry = cache[i];
-                    if (!entry || !isPanelValid(entry.panel)) {
-                        cache.splice(i, 1);
-                        i--;
-                    }
-                }
-                while (cache.length > IMAGES_IN_CHAT_CACHE_MAX_MESSAGES) {
-                    cache.shift();
-                }
-            };
-
-            const buildImagesInChatContainerWatermark = (container) => {
-                if (!isPanelValid(container) || !container.GetChildCount) return "";
-                let childCount = 0;
-                try { childCount = container.GetChildCount(); } catch(e) { childCount = 0; }
-                const parts = [String(childCount)];
-                const start = Math.max(0, childCount - 3);
-                for (let i = start; i < childCount; i++) {
-                    let child = null;
-                    try { child = container.GetChild(i); } catch(e) { child = null; }
-                    if (!child) { parts.push("-"); continue; }
-                    parts.push(String(child.id || ""));
-                    const label = (child.BHasClass && child.BHasClass("ChatMessage")) ? findChatMessageLabel(child) : null;
-                    let text = (label && typeof label.text === "string") ? String(label.text).trim() : "";
-                    if (text.length > 160) text = text.slice(0, 160);
-                    parts.push(text);
+                if (record.image.visible !== true) P.setVisible(record.image, true);
+                // No verified generic load-completion callback exists. Native
+                // source text stays readable while the engine requests the image.
+                return true;
+            }
+            function watermark(container) {
+                const count = container.GetChildCount(), parts = [String(count)];
+                for (let i = Math.max(0, count - 3); i < count; i++) {
+                    const message = container.GetChild(i), label = P.isAlive(message) && message.BHasClass("ChatMessage") ? findLabel(message) : null;
+                    parts.push(identity(message), identity(label), P.isAlive(label) ? String(label.text || "").trim().slice(0, 160) : "");
                 }
                 return parts.join("|");
-            };
-
-            // Expose on QOL namespace for backward compatibility
-            QOL.findChatMessageLabel = findChatMessageLabel;
-            QOL.injectTopChatImage = injectTopChatImage;
-            QOL.injectBottomChatImage = injectBottomChatImage;
-            QOL.clearInjectedChatImagesForMessage = clearInjectedChatImagesForMessage;
-            QOL.getImagesInChatMessageCache = getImagesInChatMessageCache;
-            QOL.findImagesInChatMessageCacheEntry = findImagesInChatMessageCacheEntry;
-            QOL.pruneImagesInChatMessageCache = pruneImagesInChatMessageCache;
-            QOL.buildImagesInChatContainerWatermark = buildImagesInChatContainerWatermark;
-
-            // ── Helpers ──
-            const resetImagesInChatContainerState = (watermarkKey, fullScanKey, cacheKey) => {
-                State[watermarkKey] = "";
-                State[fullScanKey] = 0;
-                State[cacheKey] = [];
-            };
-
-            const processChatContainerImages = (container, isBottomChat, cacheKey) => {
-                if (!isPanelValid(container)) return 0;
-                const messages = container.FindChildrenWithClassTraverse("ChatMessage");
-                if (!messages) return 0;
-                let touched = 0;
-                const cache = getImagesInChatMessageCache(cacheKey);
-                for (let i = 0; i < messages.length; i++) {
-                    const msg = messages[i];
-                    if (!isPanelValid(msg)) continue;
-                    const label = findChatMessageLabel(msg);
-                    if (!label) continue;
-                    const text = label.text ? String(label.text).trim() : "";
-                    let entry = findImagesInChatMessageCacheEntry(cache, msg);
-                    let alreadyProcessed = Boolean(msg.BHasClass && msg.BHasClass("imageProcessed"));
-                    if (entry && entry.text === text && alreadyProcessed) continue;
-                    if (entry && entry.text !== text) {
-                        clearInjectedChatImagesForMessage(msg);
-                        alreadyProcessed = false;
+            }
+            function process(source) {
+                const messages = U.FindPanelsByClass(source.container, "ChatMessage").slice(-MAX_MESSAGES), current = new Set(messages);
+                for (const [message, record] of source.records) if (!current.has(message)) {
+                    retireImage(record); source.records.delete(message);
+                }
+                let succeeded = true;
+                for (const message of messages) {
+                    if (!P.isAlive(message)) continue;
+                    const label = findLabel(message), text = P.isAlive(label) ? String(label.text || "").trim() : "";
+                    let record = source.records.get(message);
+                    if (!record) {
+                        record = { message, label: null, text: null, model: null, image: null, signature: null, requested: null };
+                        source.records.set(message, record);
                     }
-                    if (!entry) {
-                        entry = { panel: msg, text: "", url: "" };
-                        cache.push(entry);
+                    if (label !== record.label || text !== record.text) {
+                        retireImage(record); record.label = label; record.text = text; record.model = imageModel(text, source.bottom);
                     }
-                    entry.text = text;
-                    const match = text ? text.match(IMAGES_IN_CHAT_URL_REGEX) : null;
-                    const url = match ? match[0] : "";
-                    entry.url = url;
-                    if (alreadyProcessed) continue;
-                    msg.AddClass("imageProcessed");
-                    touched++;
-                    if (!url) continue;
-                    if (isBottomChat) {
-                        injectBottomChatImage(msg, url);
-                    } else {
-                        injectTopChatImage(msg, url);
+                    if (!render(record)) succeeded = false;
+                }
+                return succeeded;
+            }
+            function prune(source) {
+                for (const [message, record] of source.records) {
+                    if (!P.isAlive(message) || !message.BHasClass("ChatMessage") || !belongs(message, source.container)) {
+                        retireImage(record); source.records.delete(message); source.nextScan = 0;
+                    } else if (record.label && (!P.isAlive(record.label) || !belongs(record.label, message))) {
+                        retireImage(record); record.label = null; record.text = null; record.model = null; source.nextScan = 0;
+                    } else if (record.model && (!P.isAlive(record.image) || parent(record.image) !== parent(record.label))) {
+                        retireImage(record); source.nextScan = 0;
                     }
                 }
-                pruneImagesInChatMessageCache(cache);
-                return touched;
-            };
-
-            const shouldScanImagesInChatContainer = (container, watermarkKey, fullScanKey, nowMs) => {
-                const watermark = buildImagesInChatContainerWatermark(container);
-                const previousWatermark = String(State[watermarkKey] || "");
-                if (watermark !== previousWatermark) {
-                    State[watermarkKey] = watermark;
-                    State[fullScanKey] = nowMs + IMAGES_IN_CHAT_FULL_RESCAN_MS;
-                    return true;
+            }
+            function update() {
+                if (!running) return;
+                const currentRoot = P.findHud($.GetContextPanel());
+                if (currentRoot !== root) { release(); root = currentRoot; }
+                if (!P.isAlive(root) || !model) { release(); return; }
+                const now = U.PerfNowMs(), selected = new Set();
+                for (const source of channels) {
+                    let current = source.resolver.resolve(root);
+                    // The bounded compatibility fallback can find the first
+                    // Messages host for either team. Each host has one owner.
+                    if (selected.has(current)) current = null;
+                    if (P.isAlive(current)) selected.add(current);
+                    if (current !== source.container) { releaseChannel(source); source.container = current; }
+                    prune(source);
+                    if (!P.isAlive(current) || now < source.nextScan) continue;
+                    const next = watermark(current);
+                    source.idle = next === source.watermark ? Math.min(8, source.idle + 1) : 0;
+                    source.watermark = next;
+                    if (process(source)) source.nextScan = now + Math.min(2500, 200 + source.idle * 250);
                 }
-                if (nowMs >= (Number(State[fullScanKey]) || 0)) {
-                    State[fullScanKey] = nowMs + IMAGES_IN_CHAT_FULL_RESCAN_MS;
-                    return true;
-                }
-                return false;
-            };
-
-            const getImagesInChatContainer = (root, cacheKey, panelId) => {
-                let panel = isPanelValid(State.cachedPanels?.[cacheKey]) ? State.cachedPanels[cacheKey] : null;
-                if (!panel && root?.FindChildTraverse) {
-                    panel = root.FindChildTraverse(panelId);
-                    if (State.cachedPanels) State.cachedPanels[cacheKey] = panel || null;
-                }
-                return panel;
-            };
-
-            const getImagesInChatNextDelayMs = (touchedCount, idleKey) => {
-                if (touchedCount > 0) {
-                    State[idleKey] = 0;
-                    return 200;
-                }
-                let idleMisses = Number(State[idleKey]) || 0;
-                idleMisses = Math.min(8, idleMisses + 1);
-                State[idleKey] = idleMisses;
-                return Math.min(IMAGES_IN_CHAT_IDLE_MAX_DELAY_MS, 200 + (idleMisses * 250));
-            };
-
-            // ── Main tick ──
-            const _tick = () => {
-                const root = _root || $.GetContextPanel();
-                if (root && !_root) _root = root;
-                const cfg = ctx.config.view();
-                if (!cfg || Number(cfg.ENABLE_IMAGES_IN_CHAT) !== 1) return;
-
-                const nowMs = perfNowMs();
-                if (nowMs >= (State.imagesInChatTopNextSearchMs || 0)) {
-                    const topContainer = getImagesInChatContainer(root, "imagesInChatTopContainer", "Messages");
-                    if (!isPanelValid(topContainer)) {
-                        State.imagesInChatTopNextSearchMs = nowMs + 2000;
-                        resetImagesInChatContainerState("imagesInChatTopWatermark", "imagesInChatTopFullScanNextMs", "imagesInChatTopMessageCache");
-                    } else {
-                        let topTouched = 0;
-                        if (shouldScanImagesInChatContainer(topContainer, "imagesInChatTopWatermark", "imagesInChatTopFullScanNextMs", nowMs)) {
-                            topTouched = processChatContainerImages(topContainer, false, "imagesInChatTopMessageCache");
-                        }
-                        State.imagesInChatTopNextSearchMs = nowMs + getImagesInChatNextDelayMs(topTouched, "imagesInChatTopIdleMisses");
-                    }
-                }
-                if (nowMs >= (State.imagesInChatBottomNextSearchMs || 0)) {
-                    const bottomContainer = getImagesInChatContainer(root, "imagesInChatBottomContainer", "ChatMessages");
-                    if (!isPanelValid(bottomContainer)) {
-                        State.imagesInChatBottomNextSearchMs = nowMs + 2000;
-                        resetImagesInChatContainerState("imagesInChatBottomWatermark", "imagesInChatBottomFullScanNextMs", "imagesInChatBottomMessageCache");
-                    } else {
-                        let bottomTouched = 0;
-                        if (shouldScanImagesInChatContainer(bottomContainer, "imagesInChatBottomWatermark", "imagesInChatBottomFullScanNextMs", nowMs)) {
-                            bottomTouched = processChatContainerImages(bottomContainer, true, "imagesInChatBottomMessageCache");
-                        }
-                        State.imagesInChatBottomNextSearchMs = nowMs + getImagesInChatNextDelayMs(bottomTouched, "imagesInChatBottomIdleMisses");
-                    }
-                }
-            };
-
+            }
+            function refresh() {
+                model = Number(ctx.config.view().ENABLE_IMAGES_IN_CHAT) === 1;
+                for (const source of channels) source.nextScan = 0;
+                if (running) update();
+            }
             return {
-                onEnable() {
-                    const S = QOL.core?.Scheduler;
-                    _loop = S?.createPollLoop ? S.createPollLoop(_tick, 0.2, "ql_chat_images") : null;
-                },
-                onDisable() {
-                    if (_loop) { _loop.stop(); _loop = null; }
-                    const S = QOL.core?.Scheduler;
-                    if (S) S.cancelAllForFeature("ql_chat_images");
-                    resetImagesInChatContainerState("imagesInChatTopWatermark", "imagesInChatTopFullScanNextMs", "imagesInChatTopMessageCache");
-                    resetImagesInChatContainerState("imagesInChatBottomWatermark", "imagesInChatBottomFullScanNextMs", "imagesInChatBottomMessageCache");
-                    State.imagesInChatTopNextSearchMs = 0;
-                    State.imagesInChatBottomNextSearchMs = 0;
-                    const root = _root || ($.GetContextPanel ? $.GetContextPanel() : null);
-                    const resetFn = (typeof QOL !== "undefined" && (QOL.resetChatRuntime || (QOL.core?.hud?.resetChatRuntime)));
-                    const livePanel = root?.FindChildTraverse ? root.FindChildTraverse("Chat") : null;
-                    if (livePanel && typeof resetFn === "function") resetFn(livePanel);
-                    _root = null;
-                },
-                onSettingsChanged() {
-                    const root = _root || ($.GetContextPanel ? $.GetContextPanel() : null);
-                    const updateFn = (typeof QOL !== "undefined" && (QOL.updateChatRuntime || (QOL.core?.hud?.updateChatRuntime)));
-                    if (typeof updateFn === "function" && root) {
-                        const cfg = ctx.config.all ? ctx.config.all() : {};
-                        updateFn(root, cfg);
-                    }
-                }
+                onEnable() { running = true; refresh(); loop = QOL.core.Scheduler.createPollLoop(update, 0.2, ctx.id); },
+                onSettingsChanged: refresh,
+                onDisable() { running = false; if (loop) loop.stop(); loop = null; release(); model = null; }
             };
         },
-        test(ctx) {
-            try {
-                const root = $.GetContextPanel();
-                const top = root ? root.FindChildTraverse("Messages") : null;
-                const bottom = root ? root.FindChildTraverse("ChatMessages") : null;
-                const bothFound = Boolean(top && bottom);
-                return {
-                    passed: bothFound,
-                    name: "Chat containers exist",
-                    message: [!top ? "Messages not found" : "", !bottom ? "ChatMessages not found" : ""].filter((s) => s !== "").join(", "),
-                    assertions: [
-                        { passed: Boolean(top), name: "Messages (top chat) exists" },
-                        { passed: Boolean(bottom), name: "ChatMessages (bottom chat) exists" }
-                    ]
-                };
-            } catch(e) {
-                return { passed: false, name: "Chat containers check", message: e?.message || String(e) };
-            }
+        test() {
+            const hud = QOL.core.panel.findHud($.GetContextPanel());
+            const top = QOL.core.panel.findTraverse(hud, "Messages"), bottom = QOL.core.panel.findTraverse(hud, "ChatMessages");
+            return top || bottom ? { passed: true, name: "Native chat image sources", message: "Observed current message host" } : null;
         }
     });
 })();

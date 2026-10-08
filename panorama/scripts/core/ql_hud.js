@@ -636,78 +636,6 @@
         setPanelClassCached(root, state.rootClassCache, "hide_reload_circle_exception_active", exceptionActive);
     };
 
-    const resetChatRuntime = (panel) => {
-        if (!isAlive(panel)) return;
-        try { panel.style.x = "0px"; } catch (_) {}
-        try { panel.style.y = "0px"; } catch (_) {}
-        try { panel.style.preTransformScale2d = "1.00, 1.00"; } catch (_) {}
-        try { panel.style.uiScale = "100%"; } catch (_) {}
-        try { panel.style.visibility = "visible"; } catch (_) {}
-    };
-
-    const hasNonDefaultChatRuntimeConfig = (cfg) => {
-        if (!cfg) return false;
-        let enabled = (cfg.ENABLE_CHAT == null) ? 1 : Math.round(Number(cfg.ENABLE_CHAT));
-        let scale = (cfg.CHAT_SCALE == null) ? 100 : Math.round(Number(cfg.CHAT_SCALE));
-        let offsetX = (cfg.CHAT_X_OFFSET == null) ? 0 : Math.round(Number(cfg.CHAT_X_OFFSET));
-        let offsetY = (cfg.CHAT_Y_OFFSET == null) ? 0 : Math.round(Number(cfg.CHAT_Y_OFFSET));
-        if (!Number.isFinite(enabled)) enabled = 1;
-        if (!Number.isFinite(scale)) scale = 100;
-        if (!Number.isFinite(offsetX)) offsetX = 0;
-        if (!Number.isFinite(offsetY)) offsetY = 0;
-        return enabled !== 1 || scale !== 100 || offsetX !== 0 || offsetY !== 0;
-    };
-
-    const updateChatRuntime = (root, cfg) => {
-        let chatPanel = getCachedPanel("chatPanel");
-        if (!isAlive(chatPanel)) {
-            chatPanel = resolveCachedPanel(root, "chatPanel", "Chat");
-        }
-
-        const st = getState();
-        const previousPanel = isAlive(st.chatStylePanel) ? st.chatStylePanel : null;
-        if (previousPanel && previousPanel !== chatPanel) {
-            resetChatRuntime(previousPanel);
-        }
-
-        if (!chatPanel) {
-            st.chatStyleSig = "";
-            st.chatStyleApplied = false;
-            st.chatStylePanel = null;
-            return;
-        }
-
-        let scale = (cfg.CHAT_SCALE == null) ? 100 : Math.round(Number(cfg.CHAT_SCALE));
-        let enabled = (cfg.ENABLE_CHAT == null) ? 1 : Math.round(Number(cfg.ENABLE_CHAT));
-        let offsetX = (cfg.CHAT_X_OFFSET == null) ? 0 : Math.round(Number(cfg.CHAT_X_OFFSET));
-        let offsetY = (cfg.CHAT_Y_OFFSET == null) ? 0 : Math.round(Number(cfg.CHAT_Y_OFFSET));
-        if (!Number.isFinite(enabled)) enabled = 1;
-        if (!Number.isFinite(scale)) scale = 100;
-        if (!Number.isFinite(offsetX)) offsetX = 0;
-        if (!Number.isFinite(offsetY)) offsetY = 0;
-        if (scale < 50) scale = 50;
-        if (scale > 200) scale = 200;
-        if (offsetX < -1500) offsetX = -1500;
-        if (offsetX > 1500) offsetX = 1500;
-        if (offsetY < -250) offsetY = -250;
-        if (offsetY > 800) offsetY = 800;
-
-        const scaleText = `${scale}%`;
-        const styleSig = `${enabled}|${scaleText}|${offsetX}|${offsetY}`;
-        if (st.chatStyleApplied && st.chatStylePanel === chatPanel && st.chatStyleSig === styleSig) {
-            return;
-        }
-
-        chatPanel.style.visibility = enabled === 1 ? "visible" : "collapse";
-        chatPanel.style.x = `${offsetX}px`;
-        chatPanel.style.y = `${-offsetY}px`;
-        chatPanel.style.preTransformScale2d = "1.00, 1.00";
-        chatPanel.style.uiScale = scaleText;
-
-        st.chatStyleSig = styleSig;
-        st.chatStyleApplied = true;
-        st.chatStylePanel = chatPanel;
-    };
 
     const getPanelClassTokens = (panel) => {
         if (!isAlive(panel)) return [];
@@ -1356,9 +1284,6 @@
             setPanelClassCached(abilitiesContainer, state.abilitiesClassCache, "clean_stacks_inactive", false);
         }
 
-        if (hasNonDefaultChatRuntimeConfig(cfg) || state.chatStyleApplied) {
-            updateChatRuntime(root, cfg);
-        }
         if (needsUrnTrackerRuntimeWork(cfg)) {
             updateUrnTrackerOverlay(root, cfg, nowMsLoop);
         }
@@ -1381,9 +1306,6 @@
         isCombatSignalActive,
         syncCombatIndicatorHealthbarClasses,
         applyRootClasses,
-        updateChatRuntime,
-        hasNonDefaultChatRuntimeConfig,
-        resetChatRuntime,
         refreshRootClasses: (root) => {
             const target = root || findHud();
             return applyRootClasses(target, Q.core.ConfigAdapter.exportToFlat(), QOL_UTILS.PerfNowMs(), isInHideout(target));
@@ -1441,9 +1363,6 @@
     Q.setPanelClassCached = setPanelClassCached;
     Q.setPanelClassIfChanged = setPanelClassIfChanged;
     Q.updateReloadCircleExceptionState = updateReloadCircleExceptionState;
-    Q.updateChatRuntime = updateChatRuntime;
-    Q.hasNonDefaultChatRuntimeConfig = hasNonDefaultChatRuntimeConfig;
-    Q.resetChatRuntime = resetChatRuntime;
     Q.getPanelClassTokens = getPanelClassTokens;
     Q.panelHasClassToken = panelHasClassToken;
     Q.getHighestRejuvChargeTokenOnPanel = getHighestRejuvChargeTokenOnPanel;

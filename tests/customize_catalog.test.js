@@ -71,6 +71,11 @@ test("legacy root styles, threshold aliases and target-shape runtime receive dra
     const { global: g, hud, clock } = env;
     const core = add(env, hud.root, "", ["HudCore"]);
     const chat = add(env, core, "Chat");
+    let resolvedChatX = "0px";
+    chat.style = new Proxy(chat.style, { set(target, key, value) {
+        if (key === "x") resolvedChatX = value;
+        target[key] = value; return true;
+    } });
     const report = add(env, core, "CitadelHudDamageReport");
     const shape = add(env, core, "", ["target_shape"]);
     const session = g.QOL.ui.customizeSession.create(g.QOL.core.persistence.getUIRoot(), hud.root, env.em.FindChildTraverse("SettingsWindow"));
@@ -88,7 +93,9 @@ test("legacy root styles, threshold aliases and target-shape runtime receive dra
     for (let tick = 0; tick < 3; tick++) { session.publish(); clock.advance(800); } // Keep the editor lease alive across periodic class synchronization.
     assert.equal(hud.root.BHasClass("red_diamond_active"), true);
     session.close(); hud.root.RemoveClass("QOLCustomizeActive"); clock.advance(2000);
-    assert.equal(chat.style.x, "0px"); assert.equal(report.style.x, undefined);
+    assert.equal(chat.style.x, undefined, "cancel releases chat code geometry to native styling");
+    assert.equal(resolvedChatX, "0px", "the resolved native offset is reset before releasing the override");
+    assert.equal(report.style.x, undefined);
     assert.equal(shape.style.opacity, undefined, "cancel releases the owned opacity to native target styling");
     assert.equal(hud.root.BHasClass("red_diamond_active"), false);
     assert.deepEqual(env.clock.errors, []);

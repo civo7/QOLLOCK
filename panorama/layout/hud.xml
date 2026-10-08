@@ -25,6 +25,9 @@
 		<include src="s2r://panorama/scripts/core/ql_event_bus.vjs_c" />
 		<include src="s2r://panorama/scripts/core/ql_scheduler.vjs_c" />
 		<include src="s2r://panorama/scripts/core/ql_panel_helpers.vjs_c" />
+		<!-- ==== QOLLOCK shared native chat-label reader ==== -->
+		<include src="s2r://panorama/scripts/core/ql_chat_messages.vjs_c" />
+		<!-- ==== End QOLLOCK shared native chat-label reader ==== -->
 		<include src="s2r://panorama/scripts/core/ql_hud.vjs_c" />
 		<include src="s2r://panorama/scripts/core/ql_time.vjs_c" />
 		<include src="s2r://panorama/scripts/core/ql_config_store.vjs_c" />
@@ -61,7 +64,10 @@
 		<include src="s2r://panorama/scripts/manifests/ql_ability_icons/manifest.vjs_c" />
 		<include src="s2r://panorama/scripts/manifests/ql_damage_report/manifest.vjs_c" />
 		<include src="s2r://panorama/scripts/manifests/ql_passive_cooldown/manifest.vjs_c" />
+		<!-- ==== QOLLOCK independent chat geometry and image owners ==== -->
+		<include src="s2r://panorama/scripts/manifests/ql_chat_geometry/manifest.vjs_c" />
 		<include src="s2r://panorama/scripts/manifests/ql_chat_images/manifest.vjs_c" />
+		<!-- ==== End QOLLOCK independent chat geometry and image owners ==== -->
 		<include src="s2r://panorama/scripts/manifests/ql_chat_translate/manifest.vjs_c" />
 		<include src="s2r://panorama/scripts/manifests/ql_lane_with_party/manifest.vjs_c" />
 		<include src="s2r://panorama/scripts/manifests/ql_ui_controls/manifest.vjs_c" />

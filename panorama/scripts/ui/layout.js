@@ -160,7 +160,7 @@
                 },
                 {
                     title: "Chat & Panels",
-                    features: ["ql_chat_images", "ql_damage_report", "ql_stats_position"]
+                    features: ["ql_chat_geometry", "ql_chat_images", "ql_damage_report", "ql_stats_position"]
                 }
             ]
         },

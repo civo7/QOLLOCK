@@ -33,6 +33,9 @@ behavior until its owning implementation has been audited.
 - Advanced item mirror separates authoritative data, native sources, slot rendering
   and lifetime coordination; current generations, estimator reset, partial-write
   retries and managed ready feedback preserve matching/filter/purchase behavior.
+- Native chat geometry has one independent owner. Image embedding and translation
+  share a read-only native label selector while retaining separate private caches,
+  source generations and cleanup; disabling images preserves chat geometry.
 
 Frozen main-config fixtures preserve all healthbar variants and both minimap
 scale methods. Published versions, compact layouts and persistent defaults stay
