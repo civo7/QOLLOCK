@@ -1,96 +1,19 @@
-// manifests/ql_minimap_runtime/manifest.js
-// =============================================================================
-// QOLLOCK — Minimap Runtime (Zoom, Sizing, Overlays, Customization)
-// =============================================================================
-// OWNS:        Minimap sizing/offset, Alt/Tab zoom, draw-over-UI stacking,
-//              crate overlay markers, tunnel overlay, minimalist map opacity,
-//              and icon canvas wash color.
-// DOES NOT OWN: Native minimap renderer or CitadelMinimap engine component.
-// DEPENDS ON:  QOL.core.FeatureRegistry, QOL.core.Scheduler, QOL.core.Hud
-// CONFIG KEYS: ENABLE_ALT_ZOOM, ENABLE_TAB_ZOOM, MINIMAP_BASE_OPACITY,
-//              MINIMAL_MINIMAP, MINIMAL_MINIMAP_OPACITY, MINIMAP_SMALL_SIZE,
-//              MINIMAP_X_OFFSET, MINIMAP_Y_OFFSET, MINIMAP_LARGE_SIZE_ALT,
-//              MINIMAP_LARGE_SIZE_TAB, ZOOM_X_OFFSET_ALT, ZOOM_Y_OFFSET_ALT,
-//              ZOOM_X_OFFSET_TAB, ZOOM_Y_OFFSET_TAB, ALT_ZOOM_OPACITY,
-//              TAB_ZOOM_OPACITY, ALT_ZOOM_DRAW_OVER_UI, TAB_ZOOM_DRAW_OVER_UI,
-//              ENABLE_MINIMAP_CRATE_OVERLAY, ENABLE_MINIMAP_REM_TUNNELS,
-//              MINIMAP_REM_TUNNELS_OPACITY, ENABLE_ALT_ZOOM_REM_TUNNELS,
-//              ALT_ZOOM_REM_TUNNELS_OPACITY, ENABLE_TAB_ZOOM_REM_TUNNELS,
-//              TAB_ZOOM_REM_TUNNELS_OPACITY, MINIMAP_ICON_COLOR
-// CSS:         minimalist_minimap_active, tunnel_locked_on
-// PATTERN:     Polling (20Hz, 0.05s). Self-scheduling via Scheduler.
-// =============================================================================
-
-(function() {
+// Minimap content owns native decoration and overlays; geometry owns viewport presentation.
+(() => {
     "use strict";
-
-    var FR = QOL.core.FeatureRegistry;
-    if (!FR) {
-        $.Msg("[QOLLock] ql_minimap_runtime: FeatureRegistry not found — aborting");
-        return;
-    }
-
-    if (typeof QOL !== "undefined" && QOL) {
-        QOL.ensureMinimapOverlayAnchor = function(root) {
-            if (!root || !root.FindChildTraverse) return null;
-            return root.FindChildTraverse("minimap_container") || root.FindChildTraverse("minimap_persp") || null;
-        };
-    }
-
-    var PANEL_ID_MINIMAP = "hud_minimap";
-    var MINIMAP_CAST_RANGE_BASE_SIZE = 400.0;
-    var MINIMAP_LAYOUT_BASE_SIZE_PX = 400;
-    var MINIMAP_CRATE_OVERLAY_MARKER_BORDER_OPACITY = 0.45;
-    var MINIMAP_CRATE_OVERLAY_MARKER_OPACITY = 0.75;
-    var MINIMAP_CRATE_OVERLAY_MARKER_SIZE_PX = 2;
-
-    var isPanelValid = QOL.utils.IsPanelValid;
-
-    function setPanelOpacitySafe(panel, opacityText, fallback) {
-        if (!isPanelValid(panel)) return;
-        var val = (opacityText !== undefined && opacityText !== null && opacityText !== "") ? opacityText : fallback;
-        try { panel.style.opacity = String(val); } catch(e) {}
-    }
-
-    function hasClassInHierarchy(panel, className) {
-        var current = panel;
-        while (current) {
-            if (current.BHasClass && current.BHasClass(className)) return true;
-            current = current.GetParent ? current.GetParent() : null;
+    const Q = globalThis.QOL;
+    const P = Q.core.panel;
+    const U = Q.utils;
+    const id = "ql_minimap_runtime";
+    function hasClass(panel, className) {
+        for (let depth = 0; depth < 32 && P.isAlive(panel); depth++) {
+            if (panel.BHasClass(className)) return true;
+            panel = panel.GetParent?.();
         }
         return false;
     }
-
-    function normalizePaletteColorIndex(value) {
-        return QOL_UTILS.NormalizePaletteColorIndex(value);
-    }
-
-    function resolveWashColorFromPalette(value) {
-        return QOL_UTILS.ResolveWashColorFromPalette(value);
-    }
-
-    function setWashColorSafe(panel, color) {
-        if (!isPanelValid(panel)) return;
-        try {
-            if (color) {
-                panel.style.washColor = String(color);
-            } else {
-                panel.style.washColor = "none";
-            }
-        } catch(e) {}
-    }
-
-    function readMinimapIconColorIndex(cfg) {
-        return normalizePaletteColorIndex(cfg && cfg.MINIMAP_ICON_COLOR);
-    }
-
-    function resolveMinimapCrateOverlayMapKey() {
-        // Game.GetMapInfo confirmed absent — minimap crate map detection disabled.
-        return "";
-    }
-
-    FR.register({
-        id: "ql_minimap_runtime",
+    Q.core.FeatureRegistry.register({
+        id,
         enabledByDefault: true,
         settings: [
             { key: "ENABLE_ALT_ZOOM", type: "toggle" },
@@ -124,614 +47,224 @@
             { key: "MINIMAP_ROTATE_WITH_PLAYER", type: "toggle", label: "Spinny Mode", description: "Makes the minimap rotate with player view, this is just for fun." },
             { key: "ENABLE_MINIMAP_ELEVATION_MARKERS", type: "toggle", label: "Elevation Markers", description: "Shows relative elevation difference between you and players." }
         ],
-        create: function(ctx) {
-            var _loop = null;
-            const geometry = QOL.features.minimapGeometry.create();
+        create(ctx) {
+            const geometry = Q.features.minimapGeometry.create();
+            const canvasResolver = Q.panelCache.createIdResolver("canvas");
+            const renderResolver = Q.panelCache.createIdResolver("map_render");
+            const owned = new Map();
+            const fields = new Map(Q.settingsFields.map(field => [field.key, field]));
+            let loop = null;
+            let currentRate = 0;
+            let anchor = null, renderer = null, canvas = null, mapRender = null;
+            let tunnel = null, crates = null, markers = null;
+            let crateData = null;
+            let crateCoordinates = [];
+            let crateReady = false;
+            let markerPanels = [];
+            let rangePanels = [];
 
-            // Runtime state
-            var _cachedPanels = [];
-            var _lastZoomState = null;
-            var _minimapRuntimeSig = "";
-            var _configDirty = true;
-            var _minimapMinimalistOpacityApplied = false;
-            var _minimapCastRangeScaleApplied = false;
-            var _minimapIconColorStyleSig = "";
-            var _cachedMinimapTunnelHidden = false;
-            var _cachedMinimapCrateHidden = false;
-            var _minimapCrateOverlayBuildSig = "";
-
-
-            // Cached panel references
-            var _tunnelOverlay = null;
-            var _crateOverlay = null;
-            var _crateMarkers = null;
-            var _overlayAnchor = null;
-            var _minimapCanvas = null;
-            var _hudMinimapPanel = null;
-            var _mapRenderPanel = null;
-            var _nextFallbackCastRangeScanMs = 0;
-
-            function _ensureMinimapOverlayAnchor(root) {
-                if (isPanelValid(_overlayAnchor)) return _overlayAnchor;
-                var anchor = _cachedPanels.find(panel => panel.id === "minimap_container") ||
-                    _cachedPanels.find(panel => panel.id === "minimap_persp");
-                _overlayAnchor = anchor || null;
-                return _overlayAnchor;
+            function readModel() {
+                const cfg = ctx.config.view();
+                const enabled = key => U.IsCfgEnabled(cfg, key);
+                const number = (key, fallback, legacy) => {
+                    const value = cfg[key] ?? cfg[legacy] ?? fallback;
+                    const field = fields.get(key);
+                    return U.ClampConfigNumber(value, fallback, field?.min, field?.max, false);
+                };
+                const view = (mode) => {
+                    const suffix = mode ? "_" + mode : "";
+                    const sizeKey = mode ? "MINIMAP_LARGE_SIZE" + suffix : "MINIMAP_SMALL_SIZE";
+                    const size = number(sizeKey, Number(cfg.MINIMAP_SMALL_SIZE) || 400, mode ? "MINIMAP_LARGE_SIZE" : undefined);
+                    const x = number(mode ? "ZOOM_X_OFFSET" + suffix : "MINIMAP_X_OFFSET", 0, mode ? "ZOOM_X_OFFSET" : undefined);
+                    const y = number(mode ? "ZOOM_Y_OFFSET" + suffix : "MINIMAP_Y_OFFSET", 0, mode ? "ZOOM_Y_OFFSET" : undefined);
+                    const opacity = Math.max(0, Math.min(1, number(mode ? mode + "_ZOOM_OPACITY" : "MINIMAP_BASE_OPACITY", 1)));
+                    const tunnels = enabled(mode ? "ENABLE_" + mode + "_ZOOM_REM_TUNNELS" : "ENABLE_MINIMAP_REM_TUNNELS");
+                    const tunnelOpacity = Math.max(0, Math.min(1, number(mode ? mode + "_ZOOM_REM_TUNNELS_OPACITY" : "MINIMAP_REM_TUNNELS_OPACITY", 0.75)));
+                    return { size, x, y, opacity, tunnels, tunnelOpacity, zoomed: Boolean(mode), drawOverUi: mode && enabled(mode + "_ZOOM_DRAW_OVER_UI") };
+                };
+                return { alt: enabled("ENABLE_ALT_ZOOM"), tab: enabled("ENABLE_TAB_ZOOM"), fixedIcons: enabled("MINIMAP_FIXED_ICON_SIZE"),
+                    minimalist: enabled("MINIMAL_MINIMAP"), minimalOpacity: Math.max(0, Math.min(1, number("MINIMAL_MINIMAP_OPACITY", 0.9))),
+                    crates: enabled("ENABLE_MINIMAP_CRATE_OVERLAY"), iconColor: P.resolvePaletteColor(cfg.MINIMAP_ICON_COLOR),
+                    base: view(""), altView: view("ALT"), tabView: view("TAB") };
             }
 
-            function _ensureMinimapTunnelOverlay(root) {
-                var anchor = _ensureMinimapOverlayAnchor(root);
-                if (!anchor) return null;
-                var overlay = _tunnelOverlay;
-                if (!isPanelValid(overlay)) {
-                    overlay = anchor.FindChildTraverse ? (anchor.FindChildTraverse("tunnel_overlay") || null) : null;
-                    if (!overlay) {
-                        overlay = $.CreatePanel("Panel", anchor, "tunnel_overlay", {
-                            hittest: "false",
-                            hittestchildren: "false"
-                        });
-                    }
-                } else if (overlay.GetParent && overlay.GetParent() !== anchor && overlay.SetParent) {
-                    overlay.SetParent(anchor);
-                }
-                if (!overlay) return null;
-                overlay.hittest = false;
-                overlay.hittestchildren = false;
-                if (!overlay._tunnelStyleInitialized) {
-                    overlay.style.backgroundImage = 'url("s2r://panorama/images/minimap/base/mm_tunnel_overlay_png_png.vtex")';
-                    overlay.style.backgroundSize = "100% 100%";
-                    overlay.style.backgroundRepeat = "no-repeat";
-                    overlay.style.backgroundPosition = "center";
-                    overlay._tunnelStyleInitialized = true;
-                }
-                _tunnelOverlay = overlay;
-                return overlay;
+            function releasePanel(panel) {
+                const record = owned.get(panel);
+                if (record && P.isAlive(panel)) for (const property of Object.keys(record.styles)) U.ClearStyleSafe(panel, property);
+                owned.delete(panel);
             }
 
-            function _hideMinimapTunnelOverlay(root) {
-                var overlay = isPanelValid(_tunnelOverlay) ? _tunnelOverlay : (root && root.FindChildTraverse ? root.FindChildTraverse("tunnel_overlay") : null);
-                if (!overlay) return;
-                if (overlay.RemoveClass) overlay.RemoveClass("tunnel_locked_on");
-                if (overlay.SetHasClass) overlay.SetHasClass("qol-hidden", true);
-                else overlay.style.visibility = "collapse";
-                if (overlay.style.opacity !== "0.75") overlay.style.opacity = "0.75";
+            function style(panel, styles) {
+                if (!P.isAlive(panel)) return false;
+                const previous = owned.get(panel);
+                if (previous) for (const property of Object.keys(previous.styles)) {
+                    if (!Object.prototype.hasOwnProperty.call(styles, property)) U.ClearStyleSafe(panel, property);
+                }
+                const sig = P.syncStyles(panel, styles, previous?.sig).sig;
+                owned.set(panel, { styles, sig });
+                return sig !== null;
             }
 
-            function _updateMinimapTunnelOverlay(root, cfg, activeZoomMode) {
-                var mode = String(activeZoomMode || "");
-                var enabled = Number(cfg.ENABLE_MINIMAP_REM_TUNNELS) === 1;
-                var opacityValue = cfg && cfg.MINIMAP_REM_TUNNELS_OPACITY;
-                if (mode === "ALT") {
-                    enabled = Number(cfg.ENABLE_ALT_ZOOM_REM_TUNNELS) === 1;
-                    opacityValue = cfg && cfg.ALT_ZOOM_REM_TUNNELS_OPACITY;
-                } else if (mode === "TAB") {
-                    enabled = Number(cfg.ENABLE_TAB_ZOOM_REM_TUNNELS) === 1;
-                    opacityValue = cfg && cfg.TAB_ZOOM_REM_TUNNELS_OPACITY;
-                }
-
-                if (!enabled) {
-                    if (_cachedMinimapTunnelHidden) return;
-                    _cachedMinimapTunnelHidden = true;
-                    _hideMinimapTunnelOverlay(root);
-                    return;
-                }
-                _cachedMinimapTunnelHidden = false;
-                var overlay = _ensureMinimapTunnelOverlay(root);
-                if (!overlay) return;
-                var opacity = Number(opacityValue);
-                if (!isFinite(opacity)) opacity = 0.75;
-                if (opacity < 0) opacity = 0;
-                if (opacity > 1) opacity = 1;
-                if (overlay.AddClass) overlay.AddClass("tunnel_locked_on");
-                var opText = opacity.toFixed(2);
-                if (overlay.style.opacity !== opText) overlay.style.opacity = opText;
-                if (overlay.SetHasClass) overlay.SetHasClass("qol-hidden", false);
-                else overlay.style.visibility = "visible";
+            function show(panel, visible) {
+                P.setClass(panel, "qol-hidden", !visible);
+                if (P.isAlive(panel)) U.SetStyleIfChanged(panel, "visibility", visible ? "visible" : "collapse");
             }
 
-            function _ensureMinimapCrateOverlay(root) {
-                var anchor = _ensureMinimapOverlayAnchor(root);
-                if (!anchor) return null;
-                var overlay = _crateOverlay;
-                var markers = _crateMarkers;
-                if (!isPanelValid(overlay)) {
-                    overlay = anchor.FindChildTraverse ? (anchor.FindChildTraverse("minimap_overlay_root") || null) : null;
-                    if (!overlay) {
-                        overlay = $.CreatePanel("Panel", anchor, "minimap_overlay_root", {
-                            hittest: "false",
-                            hittestchildren: "false"
-                        });
-                    }
-                } else if (overlay.GetParent && overlay.GetParent() !== anchor && overlay.SetParent) {
-                    overlay.SetParent(anchor);
-                }
-                if (!overlay) return null;
-                overlay.hittest = false;
-                overlay.hittestchildren = false;
-
-                if (!isPanelValid(markers)) {
-                    markers = overlay.FindChildTraverse ? (overlay.FindChildTraverse("minimap_markers") || null) : null;
-                    if (!markers) {
-                        markers = $.CreatePanel("Panel", overlay, "minimap_markers", {
-                            hittest: "false",
-                            hittestchildren: "false"
-                        });
-                    }
-                }
-                if (!markers) return null;
-                markers.hittest = false;
-                markers.hittestchildren = false;
-
-                _crateOverlay = overlay;
-                _crateMarkers = markers;
-                return { root: overlay, markers: markers };
+            function releaseOverlays() {
+                for (const panel of [tunnel, crates]) if (P.isAlive(panel)) P.delete(panel);
+                for (const panel of [tunnel, crates, markers, ...markerPanels]) owned.delete(panel);
+                tunnel = crates = markers = null;
+                markerPanels = [];
+                crateData = null;
+                crateCoordinates = [];
+                crateReady = false;
             }
 
-            function _clearMinimapCrateOverlayMarkers(markers) {
-                if (markers && markers.RemoveAndDeleteChildren) {
+            function discover(root) {
+                const found = geometry.resolve(root);
+                const nextAnchor = found.panels.find(panel => panel.id === "minimap_container") || found.host;
+                if (anchor !== nextAnchor) releaseOverlays();
+                if (renderer !== found.renderer) {
+                    P.setClass(renderer, "minimalist_minimap_active", false);
+                    releasePanel(renderer);
+                    for (const panel of rangePanels) releasePanel(panel);
+                    rangePanels = [];
+                }
+                anchor = nextAnchor;
+                renderer = found.renderer;
+                const nextCanvas = canvasResolver.resolve(renderer);
+                const nextRender = renderResolver.resolve(renderer);
+                if (canvas !== nextCanvas) releasePanel(canvas);
+                if (mapRender !== nextRender) releasePanel(mapRender);
+                canvas = nextCanvas;
+                mapRender = nextRender;
+                return found.host;
+            }
+
+            function ensure(parent, panelId, previous) {
+                const current = P.findChild(parent, panelId);
+                if (previous !== current && P.isAlive(previous)) { owned.delete(previous); P.delete(previous); }
+                const panel = current || P.create("Panel", parent, panelId);
+                if (P.isAlive(panel)) { panel.hittest = false; panel.hittestchildren = false; }
+                return panel;
+            }
+
+            function renderTunnel(view) {
+                if (!view.tunnels) { P.setClass(tunnel, "tunnel_locked_on", false); show(tunnel, false); return; }
+                tunnel = ensure(anchor, "tunnel_overlay", tunnel);
+                style(tunnel, { backgroundImage: 'url("s2r://panorama/images/minimap/base/mm_tunnel_overlay_png_png.vtex")',
+                    backgroundSize: "100% 100%", backgroundRepeat: "no-repeat", backgroundPosition: "center", opacity: view.tunnelOpacity.toFixed(2) });
+                P.setClass(tunnel, "tunnel_locked_on", true);
+                show(tunnel, true);
+            }
+
+            function renderCrates(model) {
+                if (!model.crates) { show(crates, false); return; }
+                const next = ensure(anchor, "minimap_overlay_root", crates);
+                if (next !== crates) { crates = next; markers = null; crateData = null; }
+                const nextMarkers = ensure(crates, "minimap_markers", markers);
+                if (nextMarkers !== markers) { markers = nextMarkers; crateData = null; }
+                if (!P.isAlive(markers)) return;
+                // Map API remains unverified; retain the shipped Midtown table.
+                const data = Q.minimapCrateData || (typeof CRATE_DATA === "object" ? CRATE_DATA : null);
+                const points = data?.dl_midtown?.crates || (Array.isArray(data?.dl_midtown) ? data.dl_midtown : []);
+                if (crateData !== points) crateCoordinates = points.map(point => [Number(Array.isArray(point) ? point[0] : point.u), Number(Array.isArray(point) ? point[1] : point.v)])
+                    .filter(point => point.every(Number.isFinite));
+                const coordinates = crateCoordinates;
+                if (crateData !== points || markerPanels.length !== coordinates.length || markerPanels.some(panel => !P.isAlive(panel) || panel.GetParent?.() !== markers)) {
+                    for (const panel of markerPanels) owned.delete(panel);
                     markers.RemoveAndDeleteChildren();
+                    markerPanels = coordinates.map(() => P.create("Panel", markers, "", { class: "minimap_marker", hittest: false, hittestchildren: false }));
+                    crateData = points;
+                    crateReady = false;
+                }
+                if (!crateReady) {
+                    crateReady = true;
+                    coordinates.forEach(([x, y], index) => {
+                        crateReady = style(markerPanels[index], {
+                            position: x * 100 + "% " + y * 100 + "% 0", width: "2px", height: "2px", transform: "translateX(-1px) translateY(-1px)",
+                            opacity: "1.0", backgroundColor: "rgba(255, 213, 74, 0.75)", border: "1px solid rgba(42, 33, 0, 0.45)"
+                        }) && crateReady;
+                    });
+                }
+                show(crates, true);
+            }
+
+            function renderRange(size) {
+                const active = Math.abs(size - 400) >= 0.5;
+                let next = [];
+                if (active && P.isAlive(renderer)) {
+                    const doors = renderer.FindChildrenWithClassTraverse?.("doorman_doorway") || [];
+                    const sources = doors.length ? doors : renderer.FindChildrenWithClassTraverse?.("ability_castrange") || [];
+                    next = sources.map(panel => P.findTraverse(panel, "CastRange")).filter(P.isAlive);
+                }
+                for (const panel of rangePanels) if (!next.includes(panel)) releasePanel(panel);
+                rangePanels = next;
+                for (const panel of next) {
+                    const styles = { uiScale: "100%", preTransformScale2d: "1.00, 1.00" };
+                    // Native cast-range animation may reassert these values between samples.
+                    owned.set(panel, { styles, sig: null });
+                    for (const property of Object.keys(styles)) U.SetStyleIfChanged(panel, property, styles[property]);
                 }
             }
 
-            function _buildMinimapCrateOverlay(root, mapName) {
-                var panels = _ensureMinimapCrateOverlay(root);
-                if (!panels || !panels.root || !panels.markers) return null;
-                var overlay = panels.root;
-                var markers = panels.markers;
-
-                var dataRoot = null;
-                if (typeof QOL !== "undefined" && QOL.minimapCrateData) dataRoot = QOL.minimapCrateData;
-                else if (typeof CRATE_DATA === "object" && CRATE_DATA) dataRoot = CRATE_DATA;
-                else if (typeof MINIMAP_CRATE_DATA === "object" && MINIMAP_CRATE_DATA) dataRoot = MINIMAP_CRATE_DATA;
-
-                var mapData = dataRoot && mapName ? dataRoot[mapName] : null;
-                var points = null;
-                if (mapData && Array.isArray(mapData.crates)) points = mapData.crates;
-                else if (Array.isArray(mapData)) points = mapData;
-
-                if (!Array.isArray(points) || points.length <= 0) {
-                    _clearMinimapCrateOverlayMarkers(markers);
-                    _minimapCrateOverlayBuildSig = "";
-                    return overlay;
-                }
-
-                var buildSig = String(mapName) + "|" + String(points.length);
-                if (_minimapCrateOverlayBuildSig === buildSig && markers.GetChildCount && Number(markers.GetChildCount()) === points.length) {
-                    return overlay;
-                }
-
-                _clearMinimapCrateOverlayMarkers(markers);
-                for (var i = 0; i < points.length; i++) {
-                    var point = points[i];
-                    var u = Array.isArray(point) ? Number(point[0]) : Number(point && point.u);
-                    var v = Array.isArray(point) ? Number(point[1]) : Number(point && point.v);
-                    if (!isFinite(u) || !isFinite(v)) continue;
-                    var marker = $.CreatePanel("Panel", markers, "");
-                    marker.AddClass("minimap_marker");
-                    marker.style.position = (u * 100) + "% " + (v * 100) + "% 0";
-                    marker.style.width = MINIMAP_CRATE_OVERLAY_MARKER_SIZE_PX + "px";
-                    marker.style.height = MINIMAP_CRATE_OVERLAY_MARKER_SIZE_PX + "px";
-                    marker.style.transform = "translateX(" + (-MINIMAP_CRATE_OVERLAY_MARKER_SIZE_PX / 2) + "px) translateY(" + (-MINIMAP_CRATE_OVERLAY_MARKER_SIZE_PX / 2) + "px)";
-                    marker.style.opacity = "1.0";
-                    marker.style.backgroundColor = "rgba(255, 213, 74, " + MINIMAP_CRATE_OVERLAY_MARKER_OPACITY.toFixed(2) + ")";
-                    marker.style.border = "1px solid rgba(42, 33, 0, " + MINIMAP_CRATE_OVERLAY_MARKER_BORDER_OPACITY.toFixed(2) + ")";
-                }
-                _minimapCrateOverlayBuildSig = buildSig;
-                return overlay;
+            function render(model, view) {
+                geometry.setDrawOverUi(Boolean(view.drawOverUi));
+                geometry.apply({ ...view, fixedIcons: model.fixedIcons });
+                const minimalist = !view.zoomed && model.minimalist;
+                P.setClass(renderer, "minimalist_minimap_active", minimalist);
+                style(renderer, minimalist ? { backgroundColor: "rgba(0, 0, 0, 0)" } : {});
+                style(mapRender, minimalist ? { opacity: String(model.minimalOpacity), brightness: "1.0", washColor: "none" } : {});
+                style(canvas, model.iconColor ? { washColor: model.iconColor } : {});
+                renderRange(view.size);
+                renderTunnel(view);
+                renderCrates(model);
             }
 
-            function _hideMinimapCrateOverlay(root) {
-                var overlay = isPanelValid(_crateOverlay) ? _crateOverlay : (root && root.FindChildTraverse ? root.FindChildTraverse("minimap_overlay_root") : null);
-                if (overlay) {
-                    if (overlay.SetHasClass) overlay.SetHasClass("qol-hidden", true);
-                    else overlay.style.visibility = "collapse";
-                }
+            function update() {
+                const root = $.GetContextPanel();
+                if (!P.isAlive(root)) return;
+                const host = discover(root);
+                if (!P.isAlive(host)) { show(tunnel, false); show(crates, false); return; }
+                const model = readModel();
+                const alt = model.alt && (hasClass(host, "gDetailView") || Q.core.hud.isClassActive("gDetailView"));
+                const tab = model.tab && Q.core.hud.isScoreboardOpen(root, host);
+                render(model, alt ? model.altView : tab ? model.tabView : model.base);
             }
 
-            function _updateMinimapCrateOverlay(root, cfg) {
-                var enabled = Number(cfg.ENABLE_MINIMAP_CRATE_OVERLAY) === 1;
-                if (!enabled) {
-                    if (_cachedMinimapCrateHidden) return;
-                    _cachedMinimapCrateHidden = true;
-                    _hideMinimapCrateOverlay(root);
-                    return;
-                }
-                _cachedMinimapCrateHidden = false;
-                var mapKey = resolveMinimapCrateOverlayMapKey();
-                var renderMapKey = mapKey || "dl_midtown";
-                var overlay = _buildMinimapCrateOverlay(root, renderMapKey);
-                if (!overlay) return;
-                if (overlay.SetHasClass) overlay.SetHasClass("qol-hidden", false);
-                else overlay.style.visibility = "visible";
+            function syncLoop() {
+                const model = readModel();
+                // rate-exempt: native doorway ranges and Alt view require smooth refresh.
+                const rate = model.alt || Math.abs(model.base.size - 400) >= 0.5 ? 0.05 : 0.5;
+                if (loop && currentRate !== rate) { loop.stop(); loop = null; }
+                if (!loop) { currentRate = rate; loop = Q.core.Scheduler.createPollLoop(update, rate, id); }
             }
 
-            function _updateMinimapIconColor(root, cfg) {
-                var color = resolveWashColorFromPalette(readMinimapIconColorIndex(cfg));
-                var canvas = _minimapCanvas;
-                if (!isPanelValid(canvas) && root && root.FindChildTraverse) {
-                    var hudMinimap = isPanelValid(_hudMinimapPanel) ? _hudMinimapPanel : root.FindChildTraverse(PANEL_ID_MINIMAP);
-                    if (hudMinimap) {
-                        _hudMinimapPanel = hudMinimap;
-                        canvas = hudMinimap.FindChildTraverse ? hudMinimap.FindChildTraverse("canvas") : null;
-                    }
-                    _minimapCanvas = canvas;
-                }
-                if (!canvas) {
-                    _minimapIconColorStyleSig = "";
-                    return;
-                }
+            function scoreboardRefresh() { Q.core.Scheduler.scheduleOnce(update, 0, ctx.id || id); }
 
-                var styleSig = color || "default";
-                if (_minimapIconColorStyleSig === styleSig) return;
-                setWashColorSafe(canvas, color);
-                _minimapIconColorStyleSig = styleSig;
-            }
-
-            function _updateMinimapCastRangeScale(root, targetSize) {
-                var size = Number(targetSize);
-                if (!isFinite(size) || size <= 0) size = MINIMAP_CAST_RANGE_BASE_SIZE;
-
-                // At base 400px geometry, native Deadlock minimap renders cast ranges without distortion.
-                if (Math.abs(size - MINIMAP_CAST_RANGE_BASE_SIZE) < 0.5) {
-                    if (!_minimapCastRangeScaleApplied) return;
-                    _minimapCastRangeScaleApplied = false;
-                    return;
-                }
-
-                var hudMinimap = isPanelValid(_hudMinimapPanel) ? _hudMinimapPanel : (root && root.FindChildTraverse ? root.FindChildTraverse(PANEL_ID_MINIMAP) : null);
-                if (hudMinimap) _hudMinimapPanel = hudMinimap;
-                if (!hudMinimap) return;
-
-                var mapButtons = (hudMinimap && hudMinimap.FindChildrenWithClassTraverse)
-                    ? (hudMinimap.FindChildrenWithClassTraverse("doorman_doorway") || [])
-                    : [];
-                if (mapButtons.length === 0 && hudMinimap && hudMinimap.FindChildrenWithClassTraverse) {
-                    mapButtons = hudMinimap.FindChildrenWithClassTraverse("ability_castrange") || [];
-                }
-
-                var rangePanels = [];
-                for (var i = 0; i < mapButtons.length; i++) {
-                    var castRange = mapButtons[i] && mapButtons[i].FindChildTraverse ? mapButtons[i].FindChildTraverse("CastRange") : null;
-                    if (castRange) rangePanels.push(castRange);
-                }
-
-                if (rangePanels.length <= 0 && _minimapCastRangeScaleApplied && root && root.FindChildTraverse) {
-                    var nowMs = (typeof QOL_UTILS !== "undefined" && QOL_UTILS.PerfNowMs) ? QOL_UTILS.PerfNowMs() : Date.now();
-                    if (nowMs >= _nextFallbackCastRangeScanMs) {
-                        _nextFallbackCastRangeScanMs = nowMs + 1000;
-                        var fallbackCastRange = root.FindChildTraverse("CastRange");
-                        if (fallbackCastRange) rangePanels.push(fallbackCastRange);
-                    }
-                }
-
-                for (var j = 0; j < rangePanels.length; j++) {
-                    var panel = rangePanels[j];
-                    if (!panel || !panel.style) continue;
-                    if (panel.style.uiScale !== "100%") {
-                        panel.style.uiScale = "100%";
-                    }
-                    if (panel.style.preTransformScale2d !== "1.00, 1.00") {
-                        panel.style.preTransformScale2d = "1.00, 1.00";
-                    }
-                }
-                _minimapCastRangeScaleApplied = rangePanels.length > 0;
-            }
-
-            function _buildMinimapRuntimeSignature(cfg) {
-                if (!cfg) return "";
-                return [
-                    Number(cfg.ENABLE_ALT_ZOOM) === 1 ? "1" : "0",
-                    Number(cfg.ENABLE_TAB_ZOOM) === 1 ? "1" : "0",
-                    Number(cfg.MINIMAL_MINIMAP) === 1 ? "1" : "0",
-                    String(Math.round(Number(cfg.MINIMAP_SMALL_SIZE) || 400)),
-                    Number(cfg.MINIMAP_FIXED_ICON_SIZE) === 1 ? "1" : "0",
-                    String(isFinite(Number(cfg.MINIMAP_BASE_OPACITY)) ? Number(cfg.MINIMAP_BASE_OPACITY) : 1),
-                    String(Math.round(Number(cfg.MINIMAP_X_OFFSET) || 0)),
-                    String(Math.round(Number(cfg.MINIMAP_Y_OFFSET) || 0)),
-                    String(Number(cfg.MINIMAP_LARGE_SIZE_ALT) || Number(cfg.MINIMAP_LARGE_SIZE) || 0),
-                    String(Number(cfg.MINIMAP_LARGE_SIZE_TAB) || Number(cfg.MINIMAP_LARGE_SIZE) || 0),
-                    String(Number(cfg.ZOOM_X_OFFSET_ALT) || Number(cfg.ZOOM_X_OFFSET) || 0),
-                    String(Number(cfg.ZOOM_Y_OFFSET_ALT) || Number(cfg.ZOOM_Y_OFFSET) || 0),
-                    String(Number(cfg.ZOOM_X_OFFSET_TAB) || Number(cfg.ZOOM_X_OFFSET) || 0),
-                    String(Number(cfg.ZOOM_Y_OFFSET_TAB) || Number(cfg.ZOOM_Y_OFFSET) || 0),
-                    String(isFinite(Number(cfg.ALT_ZOOM_OPACITY)) ? Number(cfg.ALT_ZOOM_OPACITY) : 1),
-                    String(isFinite(Number(cfg.TAB_ZOOM_OPACITY)) ? Number(cfg.TAB_ZOOM_OPACITY) : 1),
-                    String(Number(cfg.MINIMAL_MINIMAP_OPACITY) || 0.9),
-                    Number(cfg.ALT_ZOOM_DRAW_OVER_UI) === 1 ? "1" : "0",
-                    Number(cfg.TAB_ZOOM_DRAW_OVER_UI) === 1 ? "1" : "0",
-                    Number(cfg.ENABLE_MINIMAP_CRATE_OVERLAY) === 1 ? "1" : "0",
-                    Number(cfg.ENABLE_MINIMAP_REM_TUNNELS) === 1 ? "1" : "0",
-                    String(isFinite(Number(cfg.MINIMAP_REM_TUNNELS_OPACITY)) ? Number(cfg.MINIMAP_REM_TUNNELS_OPACITY) : 0.75),
-                    Number(cfg.ENABLE_ALT_ZOOM_REM_TUNNELS) === 1 ? "1" : "0",
-                    String(isFinite(Number(cfg.ALT_ZOOM_REM_TUNNELS_OPACITY)) ? Number(cfg.ALT_ZOOM_REM_TUNNELS_OPACITY) : 0.75),
-                    Number(cfg.ENABLE_TAB_ZOOM_REM_TUNNELS) === 1 ? "1" : "0",
-                    String(isFinite(Number(cfg.TAB_ZOOM_REM_TUNNELS_OPACITY)) ? Number(cfg.TAB_ZOOM_REM_TUNNELS_OPACITY) : 0.75),
-                    String(readMinimapIconColorIndex(cfg)),
-                    resolveMinimapCrateOverlayMapKey()
-                ].join("|");
-            }
-
-            function _getZoomValue(cfg, newKey, legacyKey, fallbackVal) {
-                var val = cfg[newKey];
-                if (val === undefined || val === null || !isFinite(Number(val))) {
-                    val = cfg[legacyKey];
-                }
-                if (val === undefined || val === null || !isFinite(Number(val))) {
-                    val = fallbackVal;
-                }
-                return Number(val);
-            }
-
-            function _isHudOrHierarchyClassActive(root, panel, className) {
-                if (root && root.BHasClass && root.BHasClass(className)) return true;
-                if (panel && hasClassInHierarchy(panel, className)) return true;
-                var hudMinimap = isPanelValid(_hudMinimapPanel) ? _hudMinimapPanel : (root && root.FindChildTraverse ? root.FindChildTraverse(PANEL_ID_MINIMAP) : null);
-                if (isPanelValid(hudMinimap)) {
-                    _hudMinimapPanel = hudMinimap;
-                    if (hudMinimap.BHasClass && hudMinimap.BHasClass(className)) return true;
-                }
-                if (typeof QOL !== "undefined") {
-                    if (QOL.core && QOL.core.hud && typeof QOL.core.hud.isClassActive === "function" && QOL.core.hud.isClassActive(className)) return true;
-                    if (typeof QOL.isHudClassActive === "function" && QOL.isHudClassActive(root, className)) return true;
-                }
-                return false;
-            }
-
-            function _onScoreboardToggle() {
-                QOL.core.Scheduler.scheduleOnce(_tick, 0, ctx.id);
-            }
-
-            function _determineOptimalRate(cfg) {
-                var hasAltZoom = (Number(cfg.ENABLE_ALT_ZOOM) === 1);
-                var smallSize = Number(cfg.MINIMAP_SMALL_SIZE);
-                var isCustomSize = isFinite(smallSize) && Math.abs(smallSize - MINIMAP_LAYOUT_BASE_SIZE_PX) >= 0.5;
-
-                // rate-exempt: 20Hz (0.05s) when Alt zoom is active or custom minimap size has active doorway scaling
-                if (hasAltZoom || isCustomSize) {
-                    return 0.05;
-                }
-                return 0.5; // 2Hz idle when minimap is base 400px geometry (Tab zoom is reactive via engine:scoreboard_toggle)
-            }
-
-            var _currentRate = 0;
-
-            function _syncLoop(cfg) {
-                var targetRate = _determineOptimalRate(cfg);
-                if (_loop && _currentRate !== targetRate) {
-                    _loop.stop();
-                    _loop = null;
-                }
-                if (!_loop) {
-                    var S = QOL.core.Scheduler;
-                    _currentRate = targetRate;
-                    // rate-exempt: dynamically managed (10Hz when Alt zoom active, 2Hz idle / reactive Tab zoom)
-                    _loop = (S && S.createPollLoop) ? S.createPollLoop(_tick, targetRate, "ql_minimap_runtime") : null;
-                }
-            }
-
-            function _tick() {
-                var root = $.GetContextPanel();
-                if (!root) return;
-
-                const resolved = geometry.resolve(root);
-                _cachedPanels = resolved.panels;
-                if (resolved.changed) {
-                    if (isPanelValid(_minimapCanvas) && _minimapIconColorStyleSig) QOL.utils.ClearStyleSafe(_minimapCanvas, "washColor");
-                    _configDirty = true;
-                    _minimapRuntimeSig = "";
-                    _overlayAnchor = null;
-                    _minimapCanvas = null;
-                    _hudMinimapPanel = resolved.renderer;
-                    _mapRenderPanel = null;
-                    _minimapIconColorStyleSig = "";
-                    _minimapCrateOverlayBuildSig = "";
-                    _cachedMinimapTunnelHidden = false;
-                    _cachedMinimapCrateHidden = false;
-                }
-                if (!isPanelValid(resolved.host)) {
-                    if (resolved.changed) {
-                        _hideMinimapTunnelOverlay(root);
-                        _hideMinimapCrateOverlay(root);
-                    }
-                    return;
-                }
-                var master = resolved.host;
-
-                var cfg = ctx.config.view();
-
-                var zoomAltEnabled = (Number(cfg.ENABLE_ALT_ZOOM) === 1);
-                var zoomTabEnabled = (Number(cfg.ENABLE_TAB_ZOOM) === 1);
-
-                var isAlt = zoomAltEnabled && _isHudOrHierarchyClassActive(root, master, "gDetailView");
-                var isTab = zoomTabEnabled && QOL.core.hud.isScoreboardOpen(root, master);
-                var currentZoomKey = (isAlt ? "A" : "") + (isTab ? "T" : "");
-                var zoomChanged = (currentZoomKey !== _lastZoomState);
-
-                var zoomAlt = isAlt;
-                var zoomTab = isTab;
-                var shouldZoom = zoomAlt || zoomTab;
-                var activeZoomMode = zoomAlt ? "ALT" : (zoomTab ? "TAB" : "");
-                var activeZoomModeForTunnels = activeZoomMode;
-                geometry.setDrawOverUi((zoomAlt && Number(cfg.ALT_ZOOM_DRAW_OVER_UI) === 1) ||
-                    (zoomTab && Number(cfg.TAB_ZOOM_DRAW_OVER_UI) === 1));
-
-                var smallSize = Number(cfg.MINIMAP_SMALL_SIZE);
-                if (!isFinite(smallSize) || smallSize <= 0) smallSize = MINIMAP_LAYOUT_BASE_SIZE_PX;
-                var isBaseSize = Math.abs(smallSize - MINIMAP_LAYOUT_BASE_SIZE_PX) < 0.5;
-
-                var zoomTargetSize = (activeZoomMode === "TAB")
-                    ? _getZoomValue(cfg, "MINIMAP_LARGE_SIZE_TAB", "MINIMAP_LARGE_SIZE", cfg.MINIMAP_SMALL_SIZE)
-                    : _getZoomValue(cfg, "MINIMAP_LARGE_SIZE_ALT", "MINIMAP_LARGE_SIZE", cfg.MINIMAP_SMALL_SIZE);
-                var activeTargetSize = shouldZoom ? zoomTargetSize : smallSize;
-                activeTargetSize = Number(activeTargetSize);
-                if (!isFinite(activeTargetSize) || activeTargetSize <= 0) activeTargetSize = MINIMAP_LAYOUT_BASE_SIZE_PX;
-                if (activeTargetSize < 50) activeTargetSize = 50;
-                if (activeTargetSize > 1400) activeTargetSize = 1400;
-
-                // Fast path: if zoom state hasn't changed, config is not dirty, and signature is initialized
-                if (!zoomChanged && !_configDirty && _minimapRuntimeSig) {
-                    if (!isBaseSize || shouldZoom) {
-                        _updateMinimapCastRangeScale(root, activeTargetSize);
-                    }
-                    return;
-                }
-
-                _configDirty = false;
-                var runtimeSig = _buildMinimapRuntimeSignature(cfg);
-
-
-                _updateMinimapCastRangeScale(root, activeTargetSize);
-                _updateMinimapIconColor(root, cfg);
-
-                if (runtimeSig !== _minimapRuntimeSig || zoomChanged) {
-                    var zoomOffsetX = (activeZoomMode === "TAB")
-                        ? _getZoomValue(cfg, "ZOOM_X_OFFSET_TAB", "ZOOM_X_OFFSET", 0)
-                        : _getZoomValue(cfg, "ZOOM_X_OFFSET_ALT", "ZOOM_X_OFFSET", 0);
-                    var zoomOffsetY = (activeZoomMode === "TAB")
-                        ? _getZoomValue(cfg, "ZOOM_Y_OFFSET_TAB", "ZOOM_Y_OFFSET", 0)
-                        : _getZoomValue(cfg, "ZOOM_Y_OFFSET_ALT", "ZOOM_Y_OFFSET", 0);
-
-                    var fixedIconSize = Number(cfg.MINIMAP_FIXED_ICON_SIZE) === 1;
-
-                    var op = 1.0;
-                    if (zoomAlt) {
-                        op = cfg.ALT_ZOOM_OPACITY;
-                    } else if (zoomTab) {
-                        op = cfg.TAB_ZOOM_OPACITY;
-                    } else {
-                        op = cfg.MINIMAP_BASE_OPACITY;
-                    }
-                    op = Number(op);
-                    if (!isFinite(op)) op = 1.0;
-                    if (op < 0) op = 0;
-                    if (op > 1) op = 1;
-
-                    geometry.apply({ size: activeTargetSize, fixedIcons: fixedIconSize, zoomed: shouldZoom,
-                        x: shouldZoom ? zoomOffsetX : Number(cfg.MINIMAP_X_OFFSET) || 0,
-                        y: shouldZoom ? zoomOffsetY : Number(cfg.MINIMAP_Y_OFFSET) || 0, opacity: op });
-
-                    var mapRenderPanel = isPanelValid(_mapRenderPanel) ? _mapRenderPanel :
-                        (_hudMinimapPanel && _hudMinimapPanel.FindChildTraverse ? _hudMinimapPanel.FindChildTraverse("map_render") : null);
-                    if (mapRenderPanel) {
-                        _mapRenderPanel = mapRenderPanel;
-                        var minimalistEnabled = (!zoomAlt && !zoomTab && Number(cfg.MINIMAL_MINIMAP) === 1);
-                        if (minimalistEnabled) {
-                            var minimalistOpacity = Number(cfg.MINIMAL_MINIMAP_OPACITY);
-                            if (!isFinite(minimalistOpacity)) minimalistOpacity = 0.9;
-                            if (minimalistOpacity < 0) minimalistOpacity = 0;
-                            if (minimalistOpacity > 1) minimalistOpacity = 1;
-                            setPanelOpacitySafe(mapRenderPanel, minimalistOpacity, 1.0);
-                            mapRenderPanel.style.brightness = "1.0";
-                            mapRenderPanel.style.washColor = "none";
-                            var hudMinimap = isPanelValid(_hudMinimapPanel) ? _hudMinimapPanel : root.FindChildTraverse(PANEL_ID_MINIMAP);
-                            if (hudMinimap) {
-                                _hudMinimapPanel = hudMinimap;
-                                if (hudMinimap.AddClass) hudMinimap.AddClass("minimalist_minimap_active");
-                                hudMinimap.style.backgroundColor = "rgba(0, 0, 0, 0)";
-                            }
-                            _minimapMinimalistOpacityApplied = true;
-                        } else if (_minimapMinimalistOpacityApplied) {
-                            setPanelOpacitySafe(mapRenderPanel, 1.0, 1.0);
-                            mapRenderPanel.style.brightness = "1.0";
-                            mapRenderPanel.style.washColor = "none";
-                            var resetMinimap = isPanelValid(_hudMinimapPanel) ? _hudMinimapPanel : root.FindChildTraverse(PANEL_ID_MINIMAP);
-                            if (resetMinimap) {
-                                if (resetMinimap.RemoveClass) resetMinimap.RemoveClass("minimalist_minimap_active");
-                                resetMinimap.style.backgroundColor = "rgba(0, 0, 0, 0)";
-                            }
-                            _minimapMinimalistOpacityApplied = false;
-                        }
-                    }
-
-                    _lastZoomState = currentZoomKey;
-                    _minimapRuntimeSig = runtimeSig;
-                }
-
-                _updateMinimapTunnelOverlay(root, cfg, activeZoomModeForTunnels);
-                _updateMinimapCrateOverlay(root, cfg);
+            function release() {
+                ctx.events?.off("engine:scoreboard_toggle", scoreboardRefresh);
+                if (loop) { loop.stop(); loop = null; }
+                currentRate = 0;
+                Q.core.Scheduler.cancelAllForFeature(id);
+                geometry.release();
+                P.setClass(renderer, "minimalist_minimap_active", false);
+                for (const panel of owned.keys()) releasePanel(panel);
+                releaseOverlays();
+                rangePanels = [];
+                anchor = renderer = canvas = mapRender = null;
+                canvasResolver.reset(); renderResolver.reset();
             }
 
             return {
-                onEnable: function() {
-                    if (ctx && ctx.events && typeof ctx.events.on === "function") {
-                        ctx.events.on("engine:scoreboard_toggle", _onScoreboardToggle);
-                    }
-                    _configDirty = true;
-                    _minimapRuntimeSig = "";
-                    var cfg = ctx.config.view ? ctx.config.view() : (ctx.config.all ? ctx.config.all() : {});
-                    _syncLoop(cfg);
-                    _tick();
-                },
-                onDisable: function() {
-                    if (ctx && ctx.events && typeof ctx.events.off === "function") {
-                        ctx.events.off("engine:scoreboard_toggle", _onScoreboardToggle);
-                    }
-                    if (_loop) {
-                        _loop.stop();
-                        _loop = null;
-                    }
-                    var S = QOL.core.Scheduler;
-                    if (S) S.cancelAllForFeature("ql_minimap_runtime");
-
-                    var root = $.GetContextPanel();
-                    geometry.release();
-
-                    _hideMinimapTunnelOverlay(root);
-                    _hideMinimapCrateOverlay(root);
-
-                    if (isPanelValid(_tunnelOverlay)) {
-                        try { _tunnelOverlay.DeleteAsync(0); } catch(e) {}
-                        _tunnelOverlay = null;
-                    }
-                    if (isPanelValid(_crateOverlay)) {
-                        try { _crateOverlay.DeleteAsync(0); } catch(e) {}
-                        _crateOverlay = null;
-                        _crateMarkers = null;
-                    }
-
-                    _cachedPanels = [];
-                    _lastZoomState = null;
-                    _minimapRuntimeSig = "";
-                    _minimapMinimalistOpacityApplied = false;
-                    _minimapCastRangeScaleApplied = false;
-                    _minimapIconColorStyleSig = "";
-                    _cachedMinimapTunnelHidden = false;
-                    _cachedMinimapCrateHidden = false;
-                    _minimapCrateOverlayBuildSig = "";
-                    _overlayAnchor = null;
-                    _minimapCanvas = null;
-                    _hudMinimapPanel = null;
-                    _mapRenderPanel = null;
-                    _configDirty = true;
-                    _currentRate = 0;
-                },
-                onSettingsChanged: function() {
-                    _configDirty = true;
-                    _minimapRuntimeSig = "";
-                    geometry.resetDiscovery();
-                    var cfg = ctx.config.view ? ctx.config.view() : (ctx.config.all ? ctx.config.all() : {});
-                    _syncLoop(cfg);
-                    _tick();
-                }
+                onEnable() { ctx.events?.on("engine:scoreboard_toggle", scoreboardRefresh); syncLoop(); update(); },
+                onDisable: release,
+                onSettingsChanged() { geometry.resetDiscovery(); canvasResolver.reset(); renderResolver.reset(); syncLoop(); update(); }
             };
         },
-        test: function(ctx) {
-            try {
-                var root = $.GetContextPanel();
-                var minimap = root ? root.FindChildTraverse("hud_minimap") : null;
-                return {
-                    passed: !!minimap,
-                    name: "Minimap runtime panel exists",
-                    message: minimap ? "" : "hud_minimap not found",
-                    assertions: [{ passed: !!minimap, name: "hud_minimap panel exists" }]
-                };
-            } catch(e) {
-                return {
-                    passed: false,
-                    name: "Minimap runtime panel check",
-                    message: (e && e.message ? e.message : String(e))
-                };
-            }
+        test() {
+            const minimap = P.findTraverse($.GetContextPanel(), "hud_minimap");
+            return { passed: Boolean(minimap), name: "Minimap runtime panel exists", message: minimap ? "" : "hud_minimap not found in HUD tree" };
         }
     });
 })();

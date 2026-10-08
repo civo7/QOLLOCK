@@ -1020,17 +1020,6 @@
         const compassEnabled = Number(cfg?.ENABLE_COMPASS) === 1;
         const compassSpeedEnabled = Number(cfg?.ENABLE_COMPASS_SPEED) === 1;
 
-        if (!compassEnabled && !compassSpeedEnabled) {
-            const compassRoot = getCachedPanel("compassRoot");
-            if (compassRoot?.style) {
-                try { compassRoot.style.visibility = "collapse"; } catch (_) {}
-            }
-            const speedRoot = getCachedPanel("speedRoot");
-            if (speedRoot?.style) {
-                try { speedRoot.style.visibility = "collapse"; } catch (_) {}
-            }
-        }
-
         const staticSig = [
             hideoutConnected ? 1 : 0,
             cfg?.ENABLE_AMMO_STATUS,

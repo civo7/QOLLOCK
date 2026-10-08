@@ -13,70 +13,69 @@
 // PATTERN:     Adaptive Polling (20Hz active / 2Hz idle). Self-scheduling via Scheduler.
 // =============================================================================
 
-(function () {
+(() => {
     "use strict";
 
-    var FR = QOL.core && QOL.core.FeatureRegistry;
+    const FR = QOL.core && QOL.core.FeatureRegistry;
     if (!FR) {
         $.Msg("[QOLLock] ql_compass: FeatureRegistry not found — aborting");
         return;
     }
 
-    var FEATURE_ID = "ql_compass";
-    var PANEL_ID_MINIMAP = "hud_minimap";
+    const FEATURE_ID = "ql_compass";
 
     // Timing & sampling constants
     // rate-exempt: 20Hz (0.05s) required for smooth heading compass rotation
-    var COMPASS_INTERVAL_SEC = 0.05;
-    var COMPASS_INTERVAL_IDLE_SEC = 0.50;
-    var COMPASS_TICK_STEP_DEG = 22.5;
-    var COMPASS_TICK_SPACING_PX = 12.5;
-    var COMPASS_TICK_COUNT = 17;
-    var COMPASS_SPEED_SCALE = 2.12;
-    var COMPASS_SPEED_QUANT = 2;
-    var COMPASS_SPEED_SAMPLE_MS = 40;
-    var COMPASS_SPEED_WINDOW_MS = 260;
-    var COMPASS_SPEED_MIN_SPAN_MS = 90;
-    var COMPASS_SPEED_EMA_TAU_SEC = 0.11;
-    var COMPASS_SPEED_DEADBAND_FRAC = 0.07;
+    const COMPASS_INTERVAL_SEC = 0.05;
+    const COMPASS_INTERVAL_IDLE_SEC = 0.50;
+    const COMPASS_TICK_STEP_DEG = 22.5;
+    const COMPASS_TICK_SPACING_PX = 12.5;
+    const COMPASS_TICK_COUNT = 17;
+    const COMPASS_SPEED_SCALE = 2.12;
+    const COMPASS_SPEED_QUANT = 2;
+    const COMPASS_SPEED_SAMPLE_MS = 40;
+    const COMPASS_SPEED_WINDOW_MS = 260;
+    const COMPASS_SPEED_MIN_SPAN_MS = 90;
+    const COMPASS_SPEED_EMA_TAU_SEC = 0.11;
+    const COMPASS_SPEED_DEADBAND_FRAC = 0.07;
 
     // Minimap rotation constants
-    var MINIMAP_ROTATE_NORTH_OFFSET_DEG = 90.0;
-    var MINIMAP_ROTATE_DEADZONE_BASE_DEG = 0.45;
-    var MINIMAP_ROTATE_DEADZONE_MOVING_DEG = 0.18;
-    var MINIMAP_ROTATE_TAU_FAST_SEC = 0.06;
-    var MINIMAP_ROTATE_TAU_SLOW_SEC = 0.13;
-    var MINIMAP_ROTATE_FAST_DELTA_DEG = 22.0;
-    var MINIMAP_ROTATE_MAX_SPEED_DEG_PER_SEC = 540.0;
-    var MINIMAP_ROTATE_HEADING_HOLD_MS = 180;
-    var MINIMAP_ROTATE_PREDICT_SEC = 0.045;
-    var MINIMAP_ROTATE_PREDICT_MAX_DEG = 14.0;
-    var MINIMAP_ROTATE_VEL_FILTER_ALPHA = 0.35;
-    var MINIMAP_LOCAL_PLAYER_SCAN_COOLDOWN_MS = 250;
-    var MINIMAP_LOCAL_PLAYER_SCAN_COOLDOWN_FAST_MS = 90;
-    var MINIMAP_LOCAL_PLAYER_SCAN_COOLDOWN_MAX_MS = 1000;
+    const MINIMAP_ROTATE_NORTH_OFFSET_DEG = 90.0;
+    const MINIMAP_ROTATE_DEADZONE_BASE_DEG = 0.45;
+    const MINIMAP_ROTATE_DEADZONE_MOVING_DEG = 0.18;
+    const MINIMAP_ROTATE_TAU_FAST_SEC = 0.06;
+    const MINIMAP_ROTATE_TAU_SLOW_SEC = 0.13;
+    const MINIMAP_ROTATE_FAST_DELTA_DEG = 22.0;
+    const MINIMAP_ROTATE_MAX_SPEED_DEG_PER_SEC = 540.0;
+    const MINIMAP_ROTATE_HEADING_HOLD_MS = 180;
+    const MINIMAP_ROTATE_PREDICT_SEC = 0.045;
+    const MINIMAP_ROTATE_PREDICT_MAX_DEG = 14.0;
+    const MINIMAP_ROTATE_VEL_FILTER_ALPHA = 0.35;
+    const MINIMAP_LOCAL_PLAYER_SCAN_COOLDOWN_MS = 250;
+    const MINIMAP_LOCAL_PLAYER_SCAN_COOLDOWN_FAST_MS = 90;
+    const MINIMAP_LOCAL_PLAYER_SCAN_COOLDOWN_MAX_MS = 1000;
 
     // Regex for parsing transforms
-    var _RE_ROTATE3D = /rotate3d\s*\(\s*([+\-]?\d*\.?\d+)\s*,\s*([+\-]?\d*\.?\d+)\s*,\s*([+\-]?\d*\.?\d+)\s*,\s*([+\-]?\d*\.?\d+)\s*deg\s*\)/i;
-    var _RE_ROTATE2D = /rotate(?:z|y)?\s*\(\s*([+\-]?\d*\.?\d+)\s*deg\s*\)/i;
-    var _RE_ROTATE_LEGACY = /rotate3d\s*\(\s*[^,]+,\s*([+\-]?\d+(?:\.\d+)?)\s*deg\s*,/i;
-    var _RE_DEG_GENERIC = /([+\-]?\d+(?:\.\d+)?)\s*deg/i;
-    var _RE_POSITION_XY = /([+\-]?\d+(?:\.\d+)?)%\s*(?:,|\s+)\s*([+\-]?\d+(?:\.\d+)?)%/i;
+    const _RE_ROTATE3D = /rotate3d\s*\(\s*([+\-]?\d*\.?\d+)\s*,\s*([+\-]?\d*\.?\d+)\s*,\s*([+\-]?\d*\.?\d+)\s*,\s*([+\-]?\d*\.?\d+)\s*deg\s*\)/i;
+    const _RE_ROTATE2D = /rotate(?:z|y)?\s*\(\s*([+\-]?\d*\.?\d+)\s*deg\s*\)/i;
+    const _RE_ROTATE_LEGACY = /rotate3d\s*\(\s*[^,]+,\s*([+\-]?\d+(?:\.\d+)?)\s*deg\s*,/i;
+    const _RE_DEG_GENERIC = /([+\-]?\d+(?:\.\d+)?)\s*deg/i;
+    const _RE_POSITION_XY = /([+\-]?\d+(?:\.\d+)?)%\s*(?:,|\s+)\s*([+\-]?\d+(?:\.\d+)?)%/i;
 
-    var _nowMs = QOL.utils.PerfNowMs;
+    const _nowMs = QOL.utils.PerfNowMs;
 
-    var _isAlive = QOL.utils.IsPanelValid;
+    const _isAlive = QOL.utils.IsPanelValid;
 
-    var _norm360 = QOL.utils.NormalizeDegrees360;
+    const _norm360 = QOL.utils.NormalizeDegrees360;
 
     function _norm180(deg) {
-        var out = _norm360(deg);
+        let out = _norm360(deg);
         if (out > 180) out -= 360;
         return out;
     }
 
     function _shortestDelta(fromDeg, toDeg) {
-        var delta = _norm180(toDeg) - _norm180(fromDeg);
+        let delta = _norm180(toDeg) - _norm180(fromDeg);
         if (delta > 180) delta -= 360;
         if (delta < -180) delta += 360;
         return delta;
@@ -84,26 +83,26 @@
 
     function _parseRotateTransformDegrees(transformText) {
         if (!transformText || transformText.length === 0) return null;
-        var text = String(transformText);
+        const text = String(transformText);
 
-        var m3d = _RE_ROTATE3D.exec(text);
+        const m3d = _RE_ROTATE3D.exec(text);
         if (m3d && m3d.length >= 5) {
-            var a3d = parseFloat(m3d[4]);
+            const a3d = parseFloat(m3d[4]);
             if (isFinite(a3d)) return a3d;
         }
-        var m2d = _RE_ROTATE2D.exec(text);
+        const m2d = _RE_ROTATE2D.exec(text);
         if (m2d && m2d.length >= 2) {
-            var a2d = parseFloat(m2d[1]);
+            const a2d = parseFloat(m2d[1]);
             if (isFinite(a2d)) return a2d;
         }
-        var mLeg = _RE_ROTATE_LEGACY.exec(text);
+        const mLeg = _RE_ROTATE_LEGACY.exec(text);
         if (mLeg && mLeg.length >= 2) {
-            var aLeg = parseFloat(mLeg[1]);
+            const aLeg = parseFloat(mLeg[1]);
             if (isFinite(aLeg)) return aLeg;
         }
-        var mGen = _RE_DEG_GENERIC.exec(text);
+        const mGen = _RE_DEG_GENERIC.exec(text);
         if (mGen && mGen.length >= 2) {
-            var aGen = parseFloat(mGen[1]);
+            const aGen = parseFloat(mGen[1]);
             if (isFinite(aGen)) return aGen;
         }
         return null;
@@ -111,34 +110,34 @@
 
     function _parsePlainRotateDegrees(rotateText) {
         if (!rotateText || rotateText.length === 0) return null;
-        var match = _RE_DEG_GENERIC.exec(String(rotateText));
+        const match = _RE_DEG_GENERIC.exec(String(rotateText));
         if (!match || match.length < 2) return null;
-        var val = parseFloat(match[1]);
+        const val = parseFloat(match[1]);
         return isFinite(val) ? val : null;
     }
 
     function _readPanelHeadingDegrees(panel) {
         if (!_isAlive(panel)) return null;
-        var preRotate = "";
+        let preRotate = "";
         try {
             if (panel.style && typeof panel.style.preTransformRotate2d === "string") {
                 preRotate = panel.style.preTransformRotate2d;
             }
         } catch (e) {}
-        var preVal = _parsePlainRotateDegrees(preRotate);
+        const preVal = _parsePlainRotateDegrees(preRotate);
         if (preVal !== null) return _norm360(preVal);
 
-        var transformText = "";
+        let transformText = "";
         try {
             if (panel.style && typeof panel.style.transform === "string") {
                 transformText = panel.style.transform;
             }
         } catch (e2) {}
-        var tVal = _parseRotateTransformDegrees(transformText);
+        let tVal = _parseRotateTransformDegrees(transformText);
         if (tVal !== null) return _norm360(tVal);
 
         if (panel.GetAttributeString) {
-            var styleAttr = "";
+            let styleAttr = "";
             try { styleAttr = panel.GetAttributeString("style", ""); } catch (e3) {}
             tVal = _parseRotateTransformDegrees(styleAttr);
             if (tVal !== null) return _norm360(tVal);
@@ -146,36 +145,11 @@
         return null;
     }
 
-    var _scratchPos = { x: 0, y: 0 };
     function _parsePositionXYPercent(positionText) {
-        if (!positionText || positionText.length === 0) return null;
-        var match = _RE_POSITION_XY.exec(positionText);
-        if (!match || match.length < 3) return null;
-        var x = parseFloat(match[1]);
-        var y = parseFloat(match[2]);
-        if (!isFinite(x) || !isFinite(y)) return null;
-        _scratchPos.x = x;
-        _scratchPos.y = y;
-        return _scratchPos;
-    }
-
-    function _panelHasAllClasses(panel, classList) {
-        if (!_isAlive(panel) || !panel.BHasClass) return false;
-        for (var i = 0; i < classList.length; i++) {
-            if (!panel.BHasClass(classList[i])) return false;
-        }
-        return true;
-    }
-
-    function _hasClassInHierarchy(panel, className) {
-        var cur = panel;
-        var depth = 0;
-        while (_isAlive(cur) && depth < 32) {
-            if (cur.BHasClass && cur.BHasClass(className)) return true;
-            cur = cur.GetParent ? cur.GetParent() : null;
-            depth++;
-        }
-        return false;
+        const match = _RE_POSITION_XY.exec(String(positionText || ""));
+        if (!match) return null;
+        const x = Number(match[1]), y = Number(match[2]);
+        return Number.isFinite(x) && Number.isFinite(y) ? { x, y } : null;
     }
 
     function _setStyleIfChanged(panel, prop, val) {
@@ -203,262 +177,221 @@
             { key: "MINIMAP_FLIP", type: "toggle", label: "Flip", description: "Rotates the static minimap 180 degrees." },
             { key: "MINIMAP_ROTATE_WITH_PLAYER", type: "toggle", label: "Spinny Mode", description: "Makes the minimap rotate with player view, this is just for fun." }
         ],
-        create: function (ctx) {
-            var _loop = null;
-            var _inHideout = false;
-            var _overlayHidden = true;
+        create(ctx) {
+            const P = QOL.core.panel;
+            const ownerPath = [{ id: "Hud", optional: true }, { className: "HudCore" }, "gameplay_hud", { className: "clamp_width" }];
+            const hostResolver = QOL.panelCache.createIdResolver("minimap_persp", { ownerPath });
+            const containerResolver = QOL.panelCache.createIdResolver("minimap_container");
+            const rendererResolver = QOL.panelCache.createIdResolver("hud_minimap");
+            const fallbackRenderResolver = QOL.panelCache.createIdResolver("map_render");
+            const gameplayResolver = QOL.panelCache.createIdResolver("gameplay_hud", { ownerPath: ownerPath.slice(0, 2) });
+            const hudResolver = QOL.panelCache.createIdResolver("Hud");
+            const imageResolver = QOL.panelCache.createIdResolver("MainImage");
+            const settingsFields = new Map(QOL.settingsFields.map(field => [field.key, field]));
+            const layoutStyles = new Map();
+            let minimapScope = null;
+            let rotationOwned = false;
+            let _loop = null;
+
+            function readModel() {
+                const cfg = ctx.config.view();
+                const number = key => {
+                    const field = settingsFields.get(key);
+                    const value = Number(cfg[key] ?? QOL_DEFAULT_CONFIG[key]);
+                    return QOL.utils.ClampConfigNumber(value, QOL_DEFAULT_CONFIG[key], field.min, field.max, false);
+                };
+                const scale = number("COMPASS_SCALE"), stretchX = number("COMPASS_STRETCH_X"), stretchY = number("COMPASS_STRETCH_Y");
+                const x = number("COMPASS_X_OFFSET"), y = number("COMPASS_Y_OFFSET");
+                return { compass: Number(cfg.ENABLE_COMPASS) === 1, speed: Number(cfg.ENABLE_COMPASS_SPEED) === 1,
+                    spin: Number(cfg.MINIMAP_ROTATE_WITH_PLAYER) === 1, flip: Number(cfg.MINIMAP_FLIP) === 1,
+                    scale, stretchX, stretchY, x, y, speedX: number("COMPASS_SPEED_X_OFFSET"), speedY: number("COMPASS_SPEED_Y_OFFSET"),
+                    appliedY: 240 - y, width: Math.round(200 * stretchX / 100), height: Math.round(50 * stretchY / 100) };
+            }
+
+            function belongsTo(panel, root) {
+                for (let depth = 0; depth < 32 && _isAlive(panel); depth++) {
+                    if (panel === root) return true;
+                    panel = panel.GetParent?.();
+                }
+                return false;
+            }
+
+            function sync(panel, styles) {
+                if (!_isAlive(panel)) return false;
+                const result = P.syncStyles(panel, styles, layoutStyles.get(panel));
+                layoutStyles.set(panel, result.sig);
+                return result.sig !== null;
+            }
+
+            function resetSamples() {
+                _minimapLocalPlayerPanel = _minimapLocalMainImage = null;
+                _headingSnapshotMs = -1;
+                _headingSnapshotHeading = null;
+                _nextSpeedSampleMs = 0;
+                _lastPosTimeMs = 0;
+                _speedSmoothed = null;
+                _speedSamples = [];
+                _lastSpeedValueText = "--";
+                _localPlayerPanelNextScanMs = 0;
+                _localPlayerPanelScanBackoffMs = 0;
+                _minimapRotateLastValidHeadingDeg = null;
+                _minimapRotateLastValidHeadingMs = 0;
+                _minimapRotateLastHeadingDeg = null;
+                _minimapRotateLastHeadingMs = 0;
+                _minimapRotateHeadingVelDegPerSec = 0;
+                imageResolver.reset();
+            }
+
+            function discover(hud) {
+                const host = hostResolver.resolve(hud);
+                const container = P.findChild(host, "minimap_container") || containerResolver.resolve(host || hud);
+                const nativeContainer = P.findChild(container, "HudMinimapContainer");
+                const renderer = P.findChild(nativeContainer, "hud_minimap") || P.findChild(container, "hud_minimap") || rendererResolver.resolve(container || host || hud);
+                const nextRotate = renderer || container || host || fallbackRenderResolver.resolve(hud);
+                const nextFlip = renderer || nativeContainer || nextRotate;
+                if (_minimapRotateTarget !== nextRotate) {
+                    if (rotationOwned && _isAlive(_minimapRotateTarget)) _clearStyle(_minimapRotateTarget, "preTransformRotate2d");
+                    rotationOwned = false;
+                    _minimapRotateLastDeg = _minimapRotateSmoothedDeg = null;
+                }
+                for (const panel of [_minimapFlipClassTarget, _minimapContainer]) {
+                    if (panel !== nextFlip && panel !== container) P.setClass(panel, "qol_minimap_flip_active", false);
+                }
+                const nextScope = container || nextRotate;
+                if (nextScope !== minimapScope) resetSamples();
+                minimapScope = nextScope;
+                _minimapRotateTarget = nextRotate;
+                _minimapFlipClassTarget = nextFlip;
+                _minimapContainer = container;
+            }
+
+            let _inHideout = false;
+            let _overlayHidden = true;
 
             // Cached DOM references
-            var _compassRoot = null;
-            var _compassBox = null;
-            var _compassTicksContainer = null;
-            var _compassNeedle = null;
-            var _compassFadeLeft = null;
-            var _compassFadeRight = null;
-            var _compassReadout = null;
-            var _compassDegree = null;
-            var _speedRoot = null;
-            var _speedLabel = null;
-            var _compassTicks = [];
-            var _minimapRotateTarget = null;
-            var _minimapFlipClassTarget = null;
-            var _minimapLocalPlayerPanel = null;
-            var _minimapLocalMainImage = null;
+            let _compassRoot = null;
+            let _compassBox = null;
+            let _compassTicksContainer = null;
+            let _compassNeedle = null;
+            let _compassFadeLeft = null;
+            let _compassFadeRight = null;
+            let _compassReadout = null;
+            let _compassDegree = null;
+            let _speedRoot = null;
+            let _speedLabel = null;
+            let _compassTicks = [];
+            let _minimapRotateTarget = null;
+            let _minimapFlipClassTarget = null;
+            let _minimapLocalPlayerPanel = null;
+            let _minimapLocalMainImage = null;
 
             // Runtime state
-            var _tickClassSigs = [];
-            var _tickXTexts = [];
-            var _lastDegreeText = "";
-            var _layoutSig = "";
-            var _speedOffsetSig = "";
-            var _nextSpeedSampleMs = 0;
-            var _lastSpeedValueText = "--";
-            var _lastPosTimeMs = 0;
-            var _speedSmoothed = null;
-            var _speedSamples = [];
+            let _nextSpeedSampleMs = 0;
+            let _lastSpeedValueText = "--";
+            let _lastPosTimeMs = 0;
+            let _speedSmoothed = null;
+            let _speedSamples = [];
 
             // Minimap rotation state
-            var _minimapRotateLastDeg = null;
-            var _minimapRotateSmoothedDeg = null;
-            var _minimapRotateLastUpdateMs = 0;
-            var _minimapRotateLastHeadingDeg = null;
-            var _minimapRotateLastHeadingMs = 0;
-            var _minimapRotateHeadingVelDegPerSec = 0;
-            var _minimapRotateLastValidHeadingDeg = null;
-            var _minimapRotateLastValidHeadingMs = 0;
+            let _minimapRotateLastDeg = null;
+            let _minimapRotateSmoothedDeg = null;
+            let _minimapRotateLastUpdateMs = 0;
+            let _minimapRotateLastHeadingDeg = null;
+            let _minimapRotateLastHeadingMs = 0;
+            let _minimapRotateHeadingVelDegPerSec = 0;
+            let _minimapRotateLastValidHeadingDeg = null;
+            let _minimapRotateLastValidHeadingMs = 0;
 
             // Heading snapshot
-            var _headingSnapshotMs = 0;
-            var _headingSnapshotAggressive = false;
-            var _headingSnapshotHeading = null;
+            let _headingSnapshotMs = 0;
+            let _headingSnapshotAggressive = false;
+            let _headingSnapshotHeading = null;
 
             // Scan throttling
-            var _localMainImageNextScanMs = 0;
-            var _localMainImageScanBackoffMs = 0;
-            var _localPlayerPanelNextScanMs = 0;
-            var _localPlayerPanelScanBackoffMs = 0;
+            let _localPlayerPanelNextScanMs = 0;
+            let _localPlayerPanelScanBackoffMs = 0;
 
             function _getHud() {
-                return QOL.core?.panel?.findHud ? QOL.core.panel.findHud() : (QOL.core?.hud?.findHud ? QOL.core.hud.findHud() : null);
+                const context = $.GetContextPanel();
+                if (context?.id === "Hud" || context?.paneltype === "CitadelHud") return context;
+                return hudResolver.resolve(context) || P.findHud(context);
             }
 
             function _getGameplayHud(hud) {
-                if (!_isAlive(hud)) return null;
-                return hud.FindChildTraverse ? (hud.FindChildTraverse("gameplay_hud") || hud) : hud;
+                return gameplayResolver.resolve(hud) || hud;
             }
 
-            var _isInHideout = QOL.core.hud.isInHideout;
+            const _isInHideout = QOL.core.hud.isInHideout;
 
             function _ensureCompassOverlay(hud) {
-                if (!_isAlive(_compassRoot)) {
-                    var parent = _getGameplayHud(hud);
-                    if (!parent) return null;
-                    _compassRoot = parent.FindChildTraverse("QOLCompassRoot");
-                    if (!_compassRoot) {
-                        _compassRoot = $.CreatePanel("Panel", parent, "QOLCompassRoot");
+                const parent = _getGameplayHud(hud);
+                if (!_isAlive(parent)) return null;
+                const ensure = (owner, type, id, previous) => {
+                    const current = P.findChild(owner, id);
+                    if (current !== previous) {
+                        if (_isAlive(previous)) P.delete(previous);
+                        layoutStyles.delete(previous);
+                        _lastRenderedHeadingDeg = null;
                     }
+                    return current || P.create(type, owner, id);
+                };
+                _compassRoot = ensure(parent, "Panel", "QOLCompassRoot", _compassRoot);
+                _compassBox = ensure(_compassRoot, "Panel", "QOLCompassBox", _compassBox);
+                _compassTicksContainer = ensure(_compassBox, "Panel", "QOLCompassTicks", _compassTicksContainer);
+                _compassNeedle = ensure(_compassBox, "Panel", "QOLCompassNeedle", _compassNeedle);
+                _compassFadeLeft = ensure(_compassBox, "Panel", "QOLCompassFadeLeft", _compassFadeLeft);
+                _compassFadeRight = ensure(_compassBox, "Panel", "QOLCompassFadeRight", _compassFadeRight);
+                _compassReadout = ensure(_compassRoot, "Panel", "QOLCompassReadout", _compassReadout);
+                _compassDegree = ensure(_compassReadout, "Label", "QOLCompassDegree", _compassDegree);
+                _speedRoot = ensure(parent, "Panel", "QOLSpeedRoot", _speedRoot);
+                _speedLabel = ensure(_speedRoot, "Label", "QOLSpeedLabel", _speedLabel);
+                const ticks = [];
+                for (let i = 0; i < COMPASS_TICK_COUNT; i++) {
+                    const tick = ensure(_compassTicksContainer, "Panel", "QOLCompassTick" + i, _compassTicks[i]);
+                    P.setClass(tick, "QOLCompassTick", true);
+                    ticks.push(tick);
                 }
-                if (!_compassRoot) return null;
-
-                if (!_isAlive(_compassBox)) {
-                    _compassBox = _compassRoot.FindChildTraverse("QOLCompassBox");
-                    if (!_compassBox) {
-                        _compassBox = $.CreatePanel("Panel", _compassRoot, "QOLCompassBox");
-                    }
-                }
-
-                if (!_isAlive(_compassTicksContainer) && _compassBox) {
-                    _compassTicksContainer = _compassBox.FindChildTraverse("QOLCompassTicks");
-                    if (!_compassTicksContainer) {
-                        _compassTicksContainer = $.CreatePanel("Panel", _compassBox, "QOLCompassTicks");
-                    }
-                }
-
-                if (!_isAlive(_compassNeedle) && _compassBox) {
-                    _compassNeedle = _compassBox.FindChildTraverse("QOLCompassNeedle");
-                    if (!_compassNeedle) {
-                        _compassNeedle = $.CreatePanel("Panel", _compassBox, "QOLCompassNeedle");
-                    }
-                }
-
-                if (!_isAlive(_compassFadeLeft) && _compassBox) {
-                    _compassFadeLeft = _compassBox.FindChildTraverse("QOLCompassFadeLeft");
-                    if (!_compassFadeLeft) {
-                        _compassFadeLeft = $.CreatePanel("Panel", _compassBox, "QOLCompassFadeLeft");
-                    }
-                }
-
-                if (!_isAlive(_compassFadeRight) && _compassBox) {
-                    _compassFadeRight = _compassBox.FindChildTraverse("QOLCompassFadeRight");
-                    if (!_compassFadeRight) {
-                        _compassFadeRight = $.CreatePanel("Panel", _compassBox, "QOLCompassFadeRight");
-                    }
-                }
-
-                if (!_isAlive(_compassReadout)) {
-                    _compassReadout = _compassRoot.FindChildTraverse("QOLCompassReadout");
-                    if (!_compassReadout) {
-                        _compassReadout = $.CreatePanel("Panel", _compassRoot, "QOLCompassReadout");
-                    }
-                }
-
-                if (!_isAlive(_compassDegree) && _compassReadout) {
-                    _compassDegree = _compassReadout.FindChildTraverse("QOLCompassDegree");
-                    if (!_compassDegree) {
-                        _compassDegree = $.CreatePanel("Label", _compassReadout, "QOLCompassDegree");
-                    }
-                }
-
-                // Standalone speed root sibling
-                if (!_isAlive(_speedRoot)) {
-                    var gHud = _getGameplayHud(hud);
-                    if (gHud) {
-                        _speedRoot = gHud.FindChildTraverse("QOLSpeedRoot");
-                        if (!_speedRoot) {
-                            _speedRoot = $.CreatePanel("Panel", gHud, "QOLSpeedRoot");
-                        }
-                    }
-                }
-                if (_speedRoot && !_isAlive(_speedLabel)) {
-                    _speedLabel = _speedRoot.FindChildTraverse("QOLSpeedLabel");
-                    if (!_speedLabel) {
-                        _speedLabel = $.CreatePanel("Label", _speedRoot, "QOLSpeedLabel");
-                    }
-                }
-
-                // Build / ensure ticks
-                var rebuildTicks = (!_compassTicks || _compassTicks.length !== COMPASS_TICK_COUNT);
-                if (!rebuildTicks) {
-                    for (var t = 0; t < _compassTicks.length; t++) {
-                        if (!_isAlive(_compassTicks[t])) { rebuildTicks = true; break; }
-                    }
-                }
-                if (rebuildTicks && _compassTicksContainer) {
-                    _compassTicks = [];
-                    for (var i = 0; i < COMPASS_TICK_COUNT; i++) {
-                        var tickId = "QOLCompassTick" + i;
-                        var tick = _compassTicksContainer.FindChildTraverse(tickId);
-                        if (!tick) {
-                            tick = $.CreatePanel("Panel", _compassTicksContainer, tickId);
-                            tick.AddClass("QOLCompassTick");
-                        }
-                        _compassTicks.push(tick);
-                    }
-                    _tickClassSigs = [];
-                    _tickXTexts = [];
-                    _lastRenderedHeadingDeg = null;
-                }
-
+                _compassTicks = ticks;
                 return _compassRoot;
             }
 
             function _nextScanBackoff(currentBackoff, baseCooldownMs) {
-                var next = (currentBackoff > 0) ? currentBackoff * 2 : baseCooldownMs;
+                let next = (currentBackoff > 0) ? currentBackoff * 2 : baseCooldownMs;
                 return (next > MINIMAP_LOCAL_PLAYER_SCAN_COOLDOWN_MAX_MS) ? MINIMAP_LOCAL_PLAYER_SCAN_COOLDOWN_MAX_MS : next;
             }
 
             function _findLocalMinimapPlayerPanel(hud, nowMs, aggressiveScan) {
-                if (_isAlive(_minimapLocalPlayerPanel)) {
-                    return _minimapLocalPlayerPanel;
-                }
-
-                var scanCooldown = aggressiveScan ? MINIMAP_LOCAL_PLAYER_SCAN_COOLDOWN_FAST_MS : MINIMAP_LOCAL_PLAYER_SCAN_COOLDOWN_MS;
-                if (nowMs < _localPlayerPanelNextScanMs) return null;
-
-                var searchScope = _findMinimapContainer(hud) || _findMinimapRotateTarget(hud) || hud;
-                var cones = searchScope && searchScope.FindChildrenWithClassTraverse ? (searchScope.FindChildrenWithClassTraverse("client_cone_fov") || []) : [];
-                for (var i = 0; i < cones.length; i++) {
-                    var cp = cones[i];
-                    if (!cp) continue;
-                    if (_panelHasAllClasses(cp, ["active", "player", "client_cone_fov", "enemy"]) ||
-                        _panelHasAllClasses(cp, ["active", "player", "client_cone_fov"])) {
-                        _minimapLocalPlayerPanel = cp;
-                        _localPlayerPanelNextScanMs = 0;
-                        _localPlayerPanelScanBackoffMs = 0;
-                        return cp;
-                    }
-                }
-
-                var locals = searchScope && searchScope.FindChildrenWithClassTraverse ? (searchScope.FindChildrenWithClassTraverse("localplayer") || []) : [];
-                for (var k = 0; k < locals.length; k++) {
-                    var p = locals[k];
-                    if (p && p.BHasClass && p.BHasClass("player")) {
-                        _minimapLocalPlayerPanel = p;
-                        _localPlayerPanelNextScanMs = 0;
-                        _localPlayerPanelScanBackoffMs = 0;
-                        return p;
-                    }
-                }
-
-                _minimapLocalPlayerPanel = null;
-                _localPlayerPanelScanBackoffMs = _nextScanBackoff(_localPlayerPanelScanBackoffMs, scanCooldown);
-                _localPlayerPanelNextScanMs = nowMs + _localPlayerPanelScanBackoffMs;
-                return null;
+                const matches = panel => _isAlive(panel) && panel.BHasClass("player") &&
+                    (panel.BHasClass("localplayer") || panel.BHasClass("active") && panel.BHasClass("client_cone_fov"));
+                if (matches(_minimapLocalPlayerPanel) && belongsTo(_minimapLocalPlayerPanel, minimapScope) && nowMs < _localPlayerPanelNextScanMs) return _minimapLocalPlayerPanel;
+                const cooldown = aggressiveScan ? MINIMAP_LOCAL_PLAYER_SCAN_COOLDOWN_FAST_MS : MINIMAP_LOCAL_PLAYER_SCAN_COOLDOWN_MS;
+                if (!_minimapLocalPlayerPanel && nowMs < _localPlayerPanelNextScanMs) return null;
+                const cones = minimapScope?.FindChildrenWithClassTraverse?.("client_cone_fov") || [];
+                const locals = minimapScope?.FindChildrenWithClassTraverse?.("localplayer") || [];
+                const next = cones.find(panel => matches(panel) && panel.BHasClass("active")) || locals.find(matches) || null;
+                if (_minimapLocalPlayerPanel !== next) resetSamples();
+                _minimapLocalPlayerPanel = next;
+                _localPlayerPanelScanBackoffMs = next ? 0 : _nextScanBackoff(_localPlayerPanelScanBackoffMs, cooldown);
+                _localPlayerPanelNextScanMs = nowMs + (next ? cooldown : _localPlayerPanelScanBackoffMs);
+                return next;
             }
 
             function _findLocalMinimapMainImage(hud, nowMs, aggressiveScan) {
-                if (_isAlive(_minimapLocalMainImage)) {
-                    return _minimapLocalMainImage;
+                const player = _findLocalMinimapPlayerPanel(hud, nowMs, aggressiveScan);
+                const image = P.findChild(player, "MainImage") || imageResolver.resolve(player);
+                if (_minimapLocalMainImage !== image) {
+                    _minimapLocalMainImage = image;
+                    _headingSnapshotMs = -1;
                 }
-
-                var scanCooldown = aggressiveScan ? MINIMAP_LOCAL_PLAYER_SCAN_COOLDOWN_FAST_MS : MINIMAP_LOCAL_PLAYER_SCAN_COOLDOWN_MS;
-                if (nowMs < _localMainImageNextScanMs) return null;
-
-                var preferredPlayer = _findLocalMinimapPlayerPanel(hud, nowMs, aggressiveScan);
-                if (preferredPlayer) {
-                    var preferredImage = preferredPlayer.FindChildTraverse ? preferredPlayer.FindChildTraverse("MainImage") : null;
-                    if (preferredImage) {
-                        _minimapLocalMainImage = preferredImage;
-                        _localMainImageNextScanMs = 0;
-                        _localMainImageScanBackoffMs = 0;
-                        return preferredImage;
-                    }
-                }
-
-                var searchScope = _findMinimapContainer(hud) || _findMinimapRotateTarget(hud) || hud;
-                var locals = searchScope && searchScope.FindChildrenWithClassTraverse ? (searchScope.FindChildrenWithClassTraverse("localplayer") || []) : [];
-                for (var i = 0; i < locals.length; i++) {
-                    var img = locals[i].FindChildTraverse ? locals[i].FindChildTraverse("MainImage") : null;
-                    if (img) {
-                        _minimapLocalMainImage = img;
-                        _localMainImageNextScanMs = 0;
-                        _localMainImageScanBackoffMs = 0;
-                        return img;
-                    }
-                }
-
-                _minimapLocalMainImage = null;
-                _localMainImageScanBackoffMs = _nextScanBackoff(_localMainImageScanBackoffMs, scanCooldown);
-                _localMainImageNextScanMs = nowMs + _localMainImageScanBackoffMs;
-                return null;
+                return image;
             }
 
             function _getLocalPlayerHeadingDegrees(hud, nowMs, aggressiveScan) {
                 if (_headingSnapshotMs === nowMs && (_headingSnapshotAggressive || !aggressiveScan)) {
                     return _headingSnapshotHeading;
                 }
-                var mainImage = _findLocalMinimapMainImage(hud, nowMs, aggressiveScan === true);
-                var heading = _readPanelHeadingDegrees(mainImage);
+                let mainImage = _findLocalMinimapMainImage(hud, nowMs, aggressiveScan === true);
+                let heading = _readPanelHeadingDegrees(mainImage);
                 if (heading !== null) {
                     _headingSnapshotMs = nowMs;
                     _headingSnapshotAggressive = aggressiveScan === true;
@@ -466,7 +399,7 @@
                     return heading;
                 }
 
-                var playerPanel = _findLocalMinimapPlayerPanel(hud, nowMs, aggressiveScan === true);
+                let playerPanel = _findLocalMinimapPlayerPanel(hud, nowMs, aggressiveScan === true);
                 heading = _readPanelHeadingDegrees(playerPanel);
                 if (heading !== null) {
                     _headingSnapshotMs = nowMs;
@@ -481,53 +414,26 @@
                 return null;
             }
 
-            function _findMinimapRotateTarget(hud) {
-                if (_isAlive(_minimapRotateTarget)) return _minimapRotateTarget;
-                _minimapRotateTarget = null;
-                if (!hud || !hud.FindChildTraverse) return null;
-                _minimapRotateTarget = hud.FindChildTraverse(PANEL_ID_MINIMAP) ||
-                                       hud.FindChildTraverse("minimap_container") ||
-                                       hud.FindChildTraverse("minimap_persp") ||
-                                       hud.FindChildTraverse("map_render");
-                return _minimapRotateTarget;
-            }
+            function _findMinimapRotateTarget() { return _minimapRotateTarget; }
+            let _minimapContainer = null;
+            function _findMinimapContainer() { return _minimapContainer; }
+            function _findMinimapFlipClassTarget() { return _minimapFlipClassTarget; }
 
-            var _minimapContainer = null;
-            function _findMinimapContainer(hud) {
-                if (_isAlive(_minimapContainer)) return _minimapContainer;
-                _minimapContainer = null;
-                if (!hud || !hud.FindChildTraverse) return null;
-                _minimapContainer = hud.FindChildTraverse("minimap_container") || null;
-                return _minimapContainer;
-            }
-
-            function _findMinimapFlipClassTarget(hud) {
-                if (_isAlive(_minimapFlipClassTarget)) return _minimapFlipClassTarget;
-                var rotateTarget = _findMinimapRotateTarget(hud);
-                if (_isAlive(rotateTarget)) {
-                    if (rotateTarget.id === PANEL_ID_MINIMAP) _minimapFlipClassTarget = rotateTarget;
-                    else if (rotateTarget.FindChildTraverse) _minimapFlipClassTarget = rotateTarget.FindChildTraverse(PANEL_ID_MINIMAP);
-                }
-                if (!_isAlive(_minimapFlipClassTarget) && hud && hud.FindChildTraverse) {
-                    _minimapFlipClassTarget = hud.FindChildTraverse("HudMinimapContainer");
-                }
-                if (!_isAlive(_minimapFlipClassTarget)) _minimapFlipClassTarget = rotateTarget;
-                return _minimapFlipClassTarget;
-            }
-
-            var _clearStyle = QOL.utils.ClearStyleSafe;
+            let _clearStyle = QOL.utils.ClearStyleSafe;
 
             function _applyStaticMinimapRotation(hud, nowMs, targetDeg) {
-                var target = _findMinimapRotateTarget(hud);
+                let target = _findMinimapRotateTarget(hud);
                 if (!_isAlive(target)) return;
-                var resolvedDeg = Number(targetDeg);
+                let resolvedDeg = Number(targetDeg);
                 if (!isFinite(resolvedDeg)) resolvedDeg = 0;
-                var roundedDeg = Math.round(resolvedDeg * 100) / 100;
+                let roundedDeg = Math.round(resolvedDeg * 100) / 100;
                 if (_minimapRotateLastDeg !== roundedDeg) {
                     if (Math.abs(roundedDeg) < 0.001) {
-                        _clearStyle(target, "preTransformRotate2d");
+                        if (rotationOwned) _clearStyle(target, "preTransformRotate2d");
+                        rotationOwned = false;
                     } else {
-                        target.style.preTransformRotate2d = roundedDeg.toFixed(2) + "deg";
+                        rotationOwned = true;
+                        if (!sync(target, { preTransformRotate2d: roundedDeg.toFixed(2) + "deg" })) return;
                     }
                 }
                 _minimapRotateLastDeg = roundedDeg;
@@ -541,10 +447,10 @@
             }
 
             function _updateMinimapRotate(hud, cfg, nowMs) {
-                var enabled = !!cfg.MINIMAP_ROTATE_WITH_PLAYER;
-                var staticFlipEnabled = !!cfg.MINIMAP_FLIP;
-                var flipClassTarget = _findMinimapFlipClassTarget(hud);
-                var container = _findMinimapContainer(hud);
+                const enabled = cfg.spin;
+                const staticFlipEnabled = cfg.flip;
+                let flipClassTarget = _findMinimapFlipClassTarget(hud);
+                let container = _findMinimapContainer(hud);
 
                 if (!enabled) {
                     _applyStaticMinimapRotation(hud, nowMs, 0);
@@ -564,14 +470,14 @@
                     container.SetHasClass("qol_minimap_flip_active", false);
                 }
 
-                var target = _findMinimapRotateTarget(hud);
+                let target = _findMinimapRotateTarget(hud);
                 if (!_isAlive(target)) return;
 
-                var heading360 = _getLocalPlayerHeadingDegrees(hud, nowMs, true);
-                var headingIsLive = true;
+                let heading360 = _getLocalPlayerHeadingDegrees(hud, nowMs, true);
+                let headingIsLive = true;
                 if (heading360 === null) {
-                    var heldHeading = Number(_minimapRotateLastValidHeadingDeg);
-                    var heldAtMs = Number(_minimapRotateLastValidHeadingMs) || 0;
+                    let heldHeading = Number(_minimapRotateLastValidHeadingDeg);
+                    let heldAtMs = Number(_minimapRotateLastValidHeadingMs) || 0;
                     if (isFinite(heldHeading) && (nowMs - heldAtMs) <= MINIMAP_ROTATE_HEADING_HOLD_MS) {
                         heading360 = _norm360(heldHeading);
                         headingIsLive = false;
@@ -584,16 +490,16 @@
                     _minimapRotateLastValidHeadingMs = nowMs;
                 }
 
-                var headingVelDegPerSec = Number(_minimapRotateHeadingVelDegPerSec);
+                let headingVelDegPerSec = Number(_minimapRotateHeadingVelDegPerSec);
                 if (!isFinite(headingVelDegPerSec)) headingVelDegPerSec = 0;
                 if (headingIsLive) {
-                    var prevHeading = _minimapRotateLastHeadingDeg;
-                    var prevHeadingMs = Number(_minimapRotateLastHeadingMs) || 0;
+                    let prevHeading = _minimapRotateLastHeadingDeg;
+                    let prevHeadingMs = Number(_minimapRotateLastHeadingMs) || 0;
                     if (isFinite(prevHeading) && prevHeadingMs > 0) {
-                        var dtHeadingSec = (nowMs - prevHeadingMs) / 1000.0;
+                        let dtHeadingSec = (nowMs - prevHeadingMs) / 1000.0;
                         if (isFinite(dtHeadingSec) && dtHeadingSec > 0.001 && dtHeadingSec < 0.5) {
-                            var headingDelta = _shortestDelta(prevHeading, heading360);
-                            var headingVelInstant = headingDelta / dtHeadingSec;
+                            let headingDelta = _shortestDelta(prevHeading, heading360);
+                            let headingVelInstant = headingDelta / dtHeadingSec;
                             if (!isFinite(headingVelDegPerSec) || Math.abs(headingVelDegPerSec) < 0.001) {
                                 headingVelDegPerSec = headingVelInstant;
                             } else {
@@ -609,38 +515,38 @@
                 }
                 _minimapRotateHeadingVelDegPerSec = headingVelDegPerSec;
 
-                var headingPrediction = headingVelDegPerSec * MINIMAP_ROTATE_PREDICT_SEC;
+                let headingPrediction = headingVelDegPerSec * MINIMAP_ROTATE_PREDICT_SEC;
                 if (!isFinite(headingPrediction)) headingPrediction = 0;
                 if (headingPrediction > MINIMAP_ROTATE_PREDICT_MAX_DEG) headingPrediction = MINIMAP_ROTATE_PREDICT_MAX_DEG;
                 if (headingPrediction < -MINIMAP_ROTATE_PREDICT_MAX_DEG) headingPrediction = -MINIMAP_ROTATE_PREDICT_MAX_DEG;
-                var predictedHeading = _norm360(heading360 + headingPrediction);
-                var flipOffset = staticFlipEnabled ? 180 : 0;
-                var targetDeg = _norm180(-(predictedHeading + MINIMAP_ROTATE_NORTH_OFFSET_DEG) + flipOffset);
+                let predictedHeading = _norm360(heading360 + headingPrediction);
+                let flipOffset = staticFlipEnabled ? 180 : 0;
+                let targetDeg = _norm180(-(predictedHeading + MINIMAP_ROTATE_NORTH_OFFSET_DEG) + flipOffset);
                 if (_minimapRotateSmoothedDeg === null || !isFinite(_minimapRotateSmoothedDeg)) {
                     _minimapRotateSmoothedDeg = targetDeg;
                     _minimapRotateLastUpdateMs = nowMs;
                 } else {
-                    var dtSec = (nowMs - _minimapRotateLastUpdateMs) / 1000.0;
+                    let dtSec = (nowMs - _minimapRotateLastUpdateMs) / 1000.0;
                     if (!isFinite(dtSec) || dtSec <= 0) dtSec = COMPASS_INTERVAL_SEC;
                     if (dtSec > 0.25) dtSec = 0.25;
                     if (dtSec < 0.001) dtSec = 0.001;
 
-                    var delta = _shortestDelta(_minimapRotateSmoothedDeg, targetDeg);
-                    var absDelta = Math.abs(delta);
-                    var absVel = Math.abs(headingVelDegPerSec);
-                    var deadzoneDeg = (absVel > 120.0) ? MINIMAP_ROTATE_DEADZONE_MOVING_DEG : MINIMAP_ROTATE_DEADZONE_BASE_DEG;
+                    let delta = _shortestDelta(_minimapRotateSmoothedDeg, targetDeg);
+                    let absDelta = Math.abs(delta);
+                    let absVel = Math.abs(headingVelDegPerSec);
+                    let deadzoneDeg = (absVel > 120.0) ? MINIMAP_ROTATE_DEADZONE_MOVING_DEG : MINIMAP_ROTATE_DEADZONE_BASE_DEG;
                     if (absDelta <= deadzoneDeg) {
                         _minimapRotateSmoothedDeg = targetDeg;
                     } else {
-                        var tauSec = (absDelta >= MINIMAP_ROTATE_FAST_DELTA_DEG || absVel > 220.0)
+                        let tauSec = (absDelta >= MINIMAP_ROTATE_FAST_DELTA_DEG || absVel > 220.0)
                             ? MINIMAP_ROTATE_TAU_FAST_SEC
                             : MINIMAP_ROTATE_TAU_SLOW_SEC;
-                        var alpha = 1.0 - Math.exp(-dtSec / tauSec);
+                        let alpha = 1.0 - Math.exp(-dtSec / tauSec);
                         if (!isFinite(alpha) || alpha <= 0) alpha = 0.05;
                         if (alpha > 1.0) alpha = 1.0;
 
-                        var step = delta * alpha;
-                        var maxStep = MINIMAP_ROTATE_MAX_SPEED_DEG_PER_SEC * dtSec;
+                        let step = delta * alpha;
+                        let maxStep = MINIMAP_ROTATE_MAX_SPEED_DEG_PER_SEC * dtSec;
                         if (!isFinite(maxStep) || maxStep <= 0) maxStep = MINIMAP_ROTATE_MAX_SPEED_DEG_PER_SEC * COMPASS_INTERVAL_SEC;
                         if (Math.abs(step) > maxStep) step = (step > 0) ? maxStep : -maxStep;
                         if (Math.abs(step) > absDelta) step = delta;
@@ -649,85 +555,51 @@
                     _minimapRotateLastUpdateMs = nowMs;
                 }
 
-                var roundedDeg = Math.round(_minimapRotateSmoothedDeg * 100) / 100;
+                let roundedDeg = Math.round(_minimapRotateSmoothedDeg * 100) / 100;
                 if (_minimapRotateLastDeg === roundedDeg) return;
-                target.style.preTransformRotate2d = roundedDeg.toFixed(2) + "deg";
+                rotationOwned = true;
+                if (!sync(target, { preTransformRotate2d: roundedDeg.toFixed(2) + "deg" })) return;
                 _minimapRotateLastDeg = roundedDeg;
             }
 
-            var _lastRenderedHeadingDeg = null;
-            var _lastRenderedBoxWidth = 0;
-            var _lastRenderedStretchX = 0;
-            var _lastRenderedStretchY = 0;
+            let _lastRenderedHeadingDeg = null;
+            let _lastRenderedBoxWidth = 0;
+            let _lastRenderedStretchX = 0;
+            let _lastRenderedStretchY = 0;
 
-            function _updateCompassTicks(heading360, boxWidthPx, stretchXFactor, stretchYFactor) {
-                if (!_compassTicks || _compassTicks.length === 0) return;
-                var boxWidth = Number(boxWidthPx) || 200;
-                var stretchX = Number(stretchXFactor) || 1.0;
-                var stretchY = Number(stretchYFactor) || 1.0;
-
-                if (_lastRenderedHeadingDeg !== null &&
-                    Math.abs(_shortestDelta(_lastRenderedHeadingDeg, heading360)) < 0.15 &&
-                    boxWidth === _lastRenderedBoxWidth &&
-                    stretchX === _lastRenderedStretchX &&
-                    stretchY === _lastRenderedStretchY) {
-                    return;
-                }
-                _lastRenderedHeadingDeg = heading360;
-                _lastRenderedBoxWidth = boxWidth;
-                _lastRenderedStretchX = stretchX;
-                _lastRenderedStretchY = stretchY;
-
-                var stepsPerTurn = Math.round(360 / COMPASS_TICK_STEP_DEG);
-                var centerIndex = Math.floor(COMPASS_TICK_COUNT / 2);
-                var unit = heading360 / COMPASS_TICK_STEP_DEG;
-                var base = Math.floor(unit);
-                var frac = unit - base;
-
-                var halfWidth = boxWidth * 0.5;
-                var spacing = COMPASS_TICK_SPACING_PX * stretchX;
-
-                for (var i = 0; i < _compassTicks.length; i++) {
-                    var tick = _compassTicks[i];
-                    if (!_isAlive(tick)) continue;
-
-                    var rel = i - centerIndex;
-                    var tickUnit = base + rel;
-                    var tickStepIndex = ((tickUnit % stepsPerTurn) + stepsPerTurn) % stepsPerTurn;
-                    var isMajor45 = (tickStepIndex % 2) === 0;
-                    var isCardinal = (tickStepIndex % 4) === 0;
-
-                    var tickWidth = isCardinal ? 3 : 2;
-                    var baseTickHeight = isCardinal ? 34 : (isMajor45 ? 24 : 16);
-                    var tickHeight = Math.max(4, Math.round(baseTickHeight * stretchY));
-                    var classSig = (isMajor45 ? "1" : "0") + "|" + (isCardinal ? "1" : "0") + "|" + String(tickHeight);
-                    if (_tickClassSigs[i] !== classSig) {
-                        tick.SetHasClass("Major", isMajor45);
-                        tick.SetHasClass("Cardinal", isCardinal);
-                        tick.style.height = tickHeight + "px";
-                        _tickClassSigs[i] = classSig;
-                    }
-
-                    var x = (halfWidth - (tickWidth * 0.5)) + ((rel - frac) * spacing);
-                    var xText = x.toFixed(2) + "px";
-                    if (_tickXTexts[i] !== xText) {
-                        tick.style.x = xText;
-                        _tickXTexts[i] = xText;
-                    }
+            function _updateCompassTicks(heading360, boxWidth, stretchX, stretchY) {
+                if (_lastRenderedHeadingDeg !== null && Math.abs(_shortestDelta(_lastRenderedHeadingDeg, heading360)) < 0.15 &&
+                    boxWidth === _lastRenderedBoxWidth && stretchX === _lastRenderedStretchX && stretchY === _lastRenderedStretchY) return;
+                const steps = Math.round(360 / COMPASS_TICK_STEP_DEG);
+                const center = Math.floor(COMPASS_TICK_COUNT / 2);
+                const unit = heading360 / COMPASS_TICK_STEP_DEG;
+                const base = Math.floor(unit), fraction = unit - base;
+                let complete = true;
+                _compassTicks.forEach((tick, i) => {
+                    const relative = i - center;
+                    const step = ((base + relative) % steps + steps) % steps;
+                    const major = step % 2 === 0, cardinal = step % 4 === 0;
+                    P.setClass(tick, "Major", major);
+                    P.setClass(tick, "Cardinal", cardinal);
+                    const width = cardinal ? 3 : 2;
+                    const height = Math.max(4, Math.round((cardinal ? 34 : major ? 24 : 16) * stretchY));
+                    const x = boxWidth * 0.5 - width * 0.5 + (relative - fraction) * COMPASS_TICK_SPACING_PX * stretchX;
+                    complete = sync(tick, { height: height + "px", x: x.toFixed(2) + "px" }) && complete;
+                });
+                if (complete) {
+                    _lastRenderedHeadingDeg = heading360;
+                    _lastRenderedBoxWidth = boxWidth;
+                    _lastRenderedStretchX = stretchX;
+                    _lastRenderedStretchY = stretchY;
                 }
             }
 
             function _resetCompassRuntimeState() {
-                _lastDegreeText = "";
-                _layoutSig = "";
-                _speedOffsetSig = "";
                 _nextSpeedSampleMs = 0;
                 _lastSpeedValueText = "--";
                 _lastPosTimeMs = 0;
                 _speedSmoothed = null;
                 _speedSamples = [];
-                _tickClassSigs = [];
-                _tickXTexts = [];
                 _lastRenderedHeadingDeg = null;
                 _lastRenderedBoxWidth = 0;
                 _lastRenderedStretchX = 0;
@@ -737,21 +609,25 @@
             function _hideCompassOverlay() {
                 if (_isAlive(_compassRoot)) _setStyleIfChanged(_compassRoot, "visibility", "collapse");
                 if (_isAlive(_speedRoot)) _setStyleIfChanged(_speedRoot, "visibility", "collapse");
-                if (!_overlayHidden) _resetCompassRuntimeState();
+                if (!_overlayHidden) { _resetCompassRuntimeState(); layoutStyles.clear(); }
                 _overlayHidden = true;
             }
 
             function _releaseMinimapRuntime() {
                 // Cleanup must not discover panels: on match exit the minimap
                 // can be absent while the HUD root remains alive.
-                if (_isAlive(_minimapRotateTarget) && _minimapRotateLastDeg !== null) {
+                if (_isAlive(_minimapRotateTarget) && rotationOwned) {
                     _clearStyle(_minimapRotateTarget, "preTransformRotate2d");
                 }
+                layoutStyles.delete(_minimapRotateTarget);
                 [_minimapFlipClassTarget, _minimapContainer].forEach(function(panel) {
                     if (_isAlive(panel) && panel.BHasClass("qol_minimap_flip_active")) {
                         panel.SetHasClass("qol_minimap_flip_active", false);
                     }
                 });
+                rotationOwned = false;
+                minimapScope = null;
+                hostResolver.reset(); containerResolver.reset(); rendererResolver.reset(); fallbackRenderResolver.reset();
                 _minimapRotateTarget = null;
                 _minimapFlipClassTarget = null;
                 _minimapContainer = null;
@@ -767,118 +643,37 @@
                 _minimapRotateLastValidHeadingMs = 0;
                 _headingSnapshotMs = 0;
                 _headingSnapshotHeading = null;
-                _localMainImageNextScanMs = 0;
-                _localMainImageScanBackoffMs = 0;
                 _localPlayerPanelNextScanMs = 0;
                 _localPlayerPanelScanBackoffMs = 0;
             }
 
+            function renderLayout(model) {
+                const visible = model.compass ? "visible" : "collapse";
+                sync(_compassRoot, { visibility: visible, marginTop: Math.round(model.appliedY) + "px", marginLeft: Math.round(model.x) + "px",
+                    preTransformScale2d: "1.00, 1.00", uiScale: model.scale + "%", width: model.width + "px", height: "fit-children", overflow: "noclip" });
+                sync(_compassBox, { width: model.width + "px", height: model.height + "px", visibility: visible });
+                sync(_compassReadout, { width: "100%", height: "40px", flowChildren: "none" });
+                sync(_compassDegree, { width: model.speed ? "50%" : "100%", textAlign: model.speed ? "left" : "center",
+                    horizontalAlign: "left", verticalAlign: "center", visibility: visible });
+                sync(_speedLabel, { width: model.compass ? "50%" : "100%", textAlign: model.compass ? "right" : "center",
+                    horizontalAlign: model.compass ? "right" : "center", verticalAlign: "center" });
+                const speedBaseX = model.compass ? model.x : 0;
+                const speedBaseY = model.compass ? model.appliedY + model.height + 14 : 120;
+                sync(_speedRoot, { visibility: model.speed ? "visible" : "collapse", width: (model.compass ? model.width : 200) + "px",
+                    marginLeft: Math.round(speedBaseX + model.speedX) + "px", marginTop: Math.round(speedBaseY - model.speedY) + "px" });
+            }
+
             function _updateCompass(hud, cfg, nowMs) {
-                var showCompass = !!cfg.ENABLE_COMPASS;
-                var showSpeed = !!cfg.ENABLE_COMPASS_SPEED;
-
-                if (!showCompass && !showSpeed) {
-                    _hideCompassOverlay();
-                    return;
-                }
-
-                var root = _ensureCompassOverlay(hud);
+                const showCompass = cfg.compass, showSpeed = cfg.speed;
+                if (!showCompass && !showSpeed) { _hideCompassOverlay(); return; }
+                const root = _ensureCompassOverlay(hud);
                 if (!root) return;
                 _overlayHidden = false;
-
-                var vis = showCompass ? "visible" : "collapse";
-                if (root.style.visibility !== vis) root.style.visibility = vis;
-                if (_compassBox) _setStyleIfChanged(_compassBox, "visibility", vis);
-
-                var scale = Number(cfg.COMPASS_SCALE) || 100;
-                if (scale < 50) scale = 50; if (scale > 200) scale = 200;
-                var stretchX = Number(cfg.COMPASS_STRETCH_X) || 100;
-                if (stretchX < 50) stretchX = 50; if (stretchX > 200) stretchX = 200;
-                var stretchY = Number(cfg.COMPASS_STRETCH_Y) || 100;
-                if (stretchY < 50) stretchY = 50; if (stretchY > 200) stretchY = 200;
-                var offsetX = Number(cfg.COMPASS_X_OFFSET) || 0;
-                if (offsetX < -2000) offsetX = -2000; if (offsetX > 2000) offsetX = 2000;
-                var offsetY = (cfg.COMPASS_Y_OFFSET !== undefined && cfg.COMPASS_Y_OFFSET !== null) ? Number(cfg.COMPASS_Y_OFFSET) : 120;
-                if (!isFinite(offsetY)) offsetY = 120;
-                if (offsetY < -1000) offsetY = -1000; if (offsetY > 300) offsetY = 300;
-
-                var appliedOffsetY = (2 * 120) - offsetY;
-                var marginTopText = Math.round(appliedOffsetY) + "px";
-                var marginLeftText = Math.round(offsetX) + "px";
-                var scaleText = String(scale) + "%";
-                var boxWidth = Math.round(200 * (stretchX / 100));
-                var boxHeight = Math.round(50 * (stretchY / 100));
-                if (boxWidth < 100) boxWidth = 100;
-                if (boxHeight < 25) boxHeight = 25;
-                var boxWidthText = boxWidth + "px";
-                var boxHeightText = boxHeight + "px";
-
-                var layoutSig = marginTopText + "|" + marginLeftText + "|" + scaleText + "|" +
-                    boxWidthText + "|" + boxHeightText + "|" + (showCompass ? "1" : "0") + "|" + (showSpeed ? "1" : "0");
-
-                if (layoutSig !== _layoutSig) {
-                    if (root.style.marginTop !== marginTopText) root.style.marginTop = marginTopText;
-                    if (root.style.marginLeft !== marginLeftText) root.style.marginLeft = marginLeftText;
-                    if (root.style.preTransformScale2d !== "1.00, 1.00") root.style.preTransformScale2d = "1.00, 1.00";
-                    if (root.style.uiScale !== scaleText) root.style.uiScale = scaleText;
-                    if (root.style.width !== boxWidthText) root.style.width = boxWidthText;
-                    _setStyleIfChanged(root, "height", "fit-children");
-                    _setStyleIfChanged(root, "overflow", "noclip");
-
-                    if (_compassBox) {
-                        if (_compassBox.style.width !== boxWidthText) _compassBox.style.width = boxWidthText;
-                        if (_compassBox.style.height !== boxHeightText) _compassBox.style.height = boxHeightText;
-                        _setStyleIfChanged(_compassBox, "visibility", showCompass ? "visible" : "collapse");
-                    }
-                    if (_compassReadout) {
-                        _setStyleIfChanged(_compassReadout, "width", "100%");
-                        _setStyleIfChanged(_compassReadout, "height", "40px");
-                        _setStyleIfChanged(_compassReadout, "flowChildren", "none");
-                    }
-                    if (_compassDegree) {
-                        _setStyleIfChanged(_compassDegree, "width", showSpeed ? "50%" : "100%");
-                        _setStyleIfChanged(_compassDegree, "textAlign", showSpeed ? "left" : "center");
-                        _setStyleIfChanged(_compassDegree, "horizontalAlign", "left");
-                        _setStyleIfChanged(_compassDegree, "verticalAlign", "center");
-                        _setStyleIfChanged(_compassDegree, "visibility", showCompass ? "visible" : "collapse");
-                    }
-                    if (_speedLabel) {
-                        _setStyleIfChanged(_speedLabel, "width", showCompass ? "50%" : "100%");
-                        _setStyleIfChanged(_speedLabel, "textAlign", showCompass ? "right" : "center");
-                        _setStyleIfChanged(_speedLabel, "horizontalAlign", showCompass ? "right" : "center");
-                        _setStyleIfChanged(_speedLabel, "verticalAlign", "center");
-                    }
-                    _layoutSig = layoutSig;
-                }
-
-                var speedVis = showSpeed ? "visible" : "collapse";
-                if (_speedRoot && _speedRoot.style.visibility !== speedVis) _speedRoot.style.visibility = speedVis;
-
-                var speedOffsetX = Number(cfg.COMPASS_SPEED_X_OFFSET) || 0;
-                if (speedOffsetX < -2000) speedOffsetX = -2000; if (speedOffsetX > 2000) speedOffsetX = 2000;
-                var speedOffsetY = Number(cfg.COMPASS_SPEED_Y_OFFSET) || 0;
-                if (speedOffsetY < -2000) speedOffsetY = -2000; if (speedOffsetY > 2000) speedOffsetY = 2000;
-
-                if (_speedRoot) {
-                    var speedRootWidth = (showCompass ? boxWidth : 200) + "px";
-                    var speedBaseX = showCompass ? offsetX : 0;
-                    var speedBaseY = showCompass ? (appliedOffsetY + boxHeight + 14) : 120;
-                    var speedMarginLeft = Math.round(speedBaseX + speedOffsetX) + "px";
-                    var speedMarginTop = Math.round(speedBaseY - speedOffsetY) + "px";
-
-                    var speedLayoutSig = Math.round(speedOffsetX) + "|" + Math.round(speedOffsetY) + "|" +
-                        (showCompass ? "1" : "0") + "|" + Math.round(speedBaseX) + "|" + Math.round(speedBaseY) + "|" + speedRootWidth;
-
-                    if (_speedOffsetSig !== speedLayoutSig) {
-                        if (_speedRoot.style.width !== speedRootWidth) _speedRoot.style.width = speedRootWidth;
-                        if (_speedRoot.style.marginLeft !== speedMarginLeft) _speedRoot.style.marginLeft = speedMarginLeft;
-                        if (_speedRoot.style.marginTop !== speedMarginTop) _speedRoot.style.marginTop = speedMarginTop;
-                        _speedOffsetSig = speedLayoutSig;
-                    }
-                }
+                renderLayout(cfg);
+                const boxWidth = cfg.width, stretchX = cfg.stretchX, stretchY = cfg.stretchY;
                 if (!showSpeed && _speedLabel && _speedLabel.text !== "") _speedLabel.text = "";
 
-                var heading360 = _getLocalPlayerHeadingDegrees(hud, nowMs);
+                let heading360 = _getLocalPlayerHeadingDegrees(hud, nowMs);
 
                 if (showCompass) {
                     if (heading360 === null) {
@@ -886,10 +681,9 @@
                     } else {
                         _updateCompassTicks(heading360, boxWidth, (stretchX / 100), (stretchY / 100));
                         if (_compassDegree) {
-                            var degreeText = String(Math.round(heading360)) + "\u00B0";
-                            if (degreeText !== _lastDegreeText) {
+                            let degreeText = String(Math.round(heading360)) + "\u00B0";
+                            if (_compassDegree.text !== degreeText) {
                                 _compassDegree.text = degreeText;
-                                _lastDegreeText = degreeText;
                             }
                         }
                     }
@@ -897,50 +691,50 @@
 
                 if (!showSpeed) return;
 
-                var speedValueText = _lastSpeedValueText || "--";
+                let speedValueText = _lastSpeedValueText || "--";
                 if (nowMs >= _nextSpeedSampleMs) {
                     speedValueText = "--";
-                    var playerPanel = _findLocalMinimapPlayerPanel(hud, nowMs);
+                    let playerPanel = _findLocalMinimapPlayerPanel(hud, nowMs);
                     if (playerPanel) {
-                        var posText = "";
+                        let posText = "";
                         if (playerPanel.style && typeof playerPanel.style.position === "string") {
                             posText = playerPanel.style.position;
                         } else if (playerPanel.GetAttributeString) {
                             posText = playerPanel.GetAttributeString("style", "");
                         }
-                        var pos = _parsePositionXYPercent(posText);
+                        let pos = _parsePositionXYPercent(posText);
                         if (pos) {
                             _speedSamples.push(nowMs, pos.x, pos.y);
-                            var cutoff = nowMs - COMPASS_SPEED_WINDOW_MS;
-                            var drop = 0;
+                            let cutoff = nowMs - COMPASS_SPEED_WINDOW_MS;
+                            let drop = 0;
                             while (drop + 3 < _speedSamples.length && _speedSamples[drop] < cutoff) drop += 3;
                             if (drop > 0) _speedSamples.splice(0, drop);
 
-                            var n = _speedSamples.length / 3;
+                            let n = _speedSamples.length / 3;
                             if (n >= 2) {
-                                var t0 = _speedSamples[0];
-                                var sumT = 0, sumX = 0, sumY = 0, sumTT = 0, sumTX = 0, sumTY = 0;
-                                for (var si = 0; si < _speedSamples.length; si += 3) {
-                                    var tt = (_speedSamples[si] - t0) / 1000.0;
-                                    var xx = _speedSamples[si + 1];
-                                    var yy = _speedSamples[si + 2];
+                                let t0 = _speedSamples[0];
+                                let sumT = 0, sumX = 0, sumY = 0, sumTT = 0, sumTX = 0, sumTY = 0;
+                                for (let si = 0; si < _speedSamples.length; si += 3) {
+                                    let tt = (_speedSamples[si] - t0) / 1000.0;
+                                    let xx = _speedSamples[si + 1];
+                                    let yy = _speedSamples[si + 2];
                                     sumT += tt; sumX += xx; sumY += yy;
                                     sumTT += tt * tt; sumTX += tt * xx; sumTY += tt * yy;
                                 }
-                                var spanSec = (_speedSamples[_speedSamples.length - 3] - t0) / 1000.0;
-                                var denom = (n * sumTT) - (sumT * sumT);
+                                let spanSec = (_speedSamples[_speedSamples.length - 3] - t0) / 1000.0;
+                                let denom = (n * sumTT) - (sumT * sumT);
                                 if (spanSec >= (COMPASS_SPEED_MIN_SPAN_MS / 1000.0) && denom > 1e-9) {
-                                    var vx = ((n * sumTX) - (sumT * sumX)) / denom;
-                                    var vy = ((n * sumTY) - (sumT * sumY)) / denom;
-                                    var speedInstant = Math.sqrt((vx * vx) + (vy * vy)) * 100.0;
+                                    let vx = ((n * sumTX) - (sumT * sumX)) / denom;
+                                    let vy = ((n * sumTY) - (sumT * sumY)) / denom;
+                                    let speedInstant = Math.sqrt((vx * vx) + (vy * vy)) * 100.0;
                                     if (isFinite(speedInstant) && speedInstant >= 0 && speedInstant < 10000) {
-                                        var dtSmoothSec = (_lastPosTimeMs > 0) ? (nowMs - _lastPosTimeMs) / 1000.0 : (COMPASS_SPEED_SAMPLE_MS / 1000.0);
+                                        let dtSmoothSec = (_lastPosTimeMs > 0) ? (nowMs - _lastPosTimeMs) / 1000.0 : (COMPASS_SPEED_SAMPLE_MS / 1000.0);
                                         if (!(dtSmoothSec > 0) || dtSmoothSec > 1.0) dtSmoothSec = COMPASS_SPEED_SAMPLE_MS / 1000.0;
                                         if (_speedSmoothed === null || !isFinite(_speedSmoothed)) {
                                             _speedSmoothed = speedInstant;
                                         } else {
-                                            var alpha = 1.0 - Math.exp(-dtSmoothSec / COMPASS_SPEED_EMA_TAU_SEC);
-                                            var sdelta = speedInstant - _speedSmoothed;
+                                            let alpha = 1.0 - Math.exp(-dtSmoothSec / COMPASS_SPEED_EMA_TAU_SEC);
+                                            let sdelta = speedInstant - _speedSmoothed;
                                             if (Math.abs(sdelta) < _speedSmoothed * COMPASS_SPEED_DEADBAND_FRAC) {
                                                 alpha *= 0.25;
                                             }
@@ -955,9 +749,9 @@
                     }
 
                     if (_speedSmoothed !== null && isFinite(_speedSmoothed)) {
-                        var calibrated = _speedSmoothed * COMPASS_SPEED_SCALE;
+                        let calibrated = _speedSmoothed * COMPASS_SPEED_SCALE;
                         if (!isFinite(calibrated) || calibrated < 0) calibrated = 0;
-                        var quantized = (COMPASS_SPEED_QUANT > 1)
+                        let quantized = (COMPASS_SPEED_QUANT > 1)
                             ? Math.round(calibrated / COMPASS_SPEED_QUANT) * COMPASS_SPEED_QUANT
                             : Math.round(calibrated);
                         if (quantized < 5) quantized = 0;
@@ -972,7 +766,7 @@
             }
 
             function _tick() {
-                var hud = _getHud();
+                let hud = _getHud();
                 if (!hud) return;
 
                 if (_isInHideout(hud)) {
@@ -984,43 +778,46 @@
                 }
                 _inHideout = false;
 
-                var cfg = ctx.config.view ? ctx.config.view() : ctx.config.all();
-                var hasWork = !!(cfg.ENABLE_COMPASS || cfg.ENABLE_COMPASS_SPEED || cfg.MINIMAP_ROTATE_WITH_PLAYER || cfg.MINIMAP_FLIP);
+                const cfg = readModel();
+                const hasWork = cfg.compass || cfg.speed || cfg.spin || cfg.flip;
 
                 if (!hasWork) {
                     _hideCompassOverlay();
-                    var flipTarget = _findMinimapFlipClassTarget(hud);
-                    if (_isAlive(flipTarget) && flipTarget.BHasClass && flipTarget.BHasClass("qol_minimap_flip_active")) flipTarget.SetHasClass("qol_minimap_flip_active", false);
-                    var container = _findMinimapContainer(hud);
-                    if (_isAlive(container) && container.BHasClass && container.BHasClass("qol_minimap_flip_active")) container.SetHasClass("qol_minimap_flip_active", false);
-                    _applyStaticMinimapRotation(hud, _nowMs(), 0);
+                    _releaseMinimapRuntime();
                     if (_loop) _loop.reschedule(COMPASS_INTERVAL_IDLE_SEC);
                     return;
                 }
 
                 if (_loop) _loop.reschedule(COMPASS_INTERVAL_SEC);
 
-                var nowMs = _nowMs();
+                const nowMs = _nowMs();
+                discover(hud);
                 _updateCompass(hud, cfg, nowMs);
                 _updateMinimapRotate(hud, cfg, nowMs);
             }
 
             return {
-                onEnable: function () {
-                    var S = QOL.core && QOL.core.Scheduler;
+                onEnable() {
+                    let S = QOL.core && QOL.core.Scheduler;
                     if (S && S.createPollLoop) {
                         _loop = S.createPollLoop(_tick, COMPASS_INTERVAL_SEC, FEATURE_ID);
                     }
                 },
-                onDisable: function () {
+                onDisable() {
                     if (_loop) { _loop.stop(); _loop = null; }
                     _hideCompassOverlay();
                     _releaseMinimapRuntime();
+                    for (const panel of [_compassRoot, _speedRoot]) if (_isAlive(panel)) P.delete(panel);
+                    _compassRoot = _compassBox = _compassTicksContainer = _compassNeedle = _compassFadeLeft = _compassFadeRight = null;
+                    _compassReadout = _compassDegree = _speedRoot = _speedLabel = null;
+                    _compassTicks = [];
+                    layoutStyles.clear(); gameplayResolver.reset(); hudResolver.reset(); imageResolver.reset();
+                    _resetCompassRuntimeState();
                     _inHideout = false;
                 },
-                onSettingsChanged: function () {
+                onSettingsChanged() {
                     _tick();
-                    var hud = _getHud();
+                    let hud = _getHud();
                     if (hud && QOL.core && QOL.core.hud && QOL.core.hud.refreshRootClasses) {
                         QOL.core.hud.refreshRootClasses(hud);
                     }
@@ -1029,7 +826,7 @@
         },
         test: function (ctx) {
             try {
-                var passed = (ctx && ctx.id === FEATURE_ID);
+                let passed = (ctx && ctx.id === FEATURE_ID);
                 return {
                     passed: passed,
                     name: "ql_compass manifest check",

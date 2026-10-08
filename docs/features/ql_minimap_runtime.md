@@ -20,6 +20,18 @@ panels invalidate the applied presentation. Disabling releases only the geometry
 overrides and renderer class owned by that path. Whole-HUD classes remain owned
 by the app's complete configuration synchronization.
 
+Content discovery also observes replacements of `canvas` and `map_render`
+inside an unchanged viewport. Previous living native targets release their
+owned tint/opacity/range overrides; tunnel and crate panels belong to the
+current anchor generation. Missing native sources are retried without treating
+a live cached handle as evidence that the current map still contains it.
+
+Objective overlays consume the separate [phase producer](ql_objective_timers.md).
+Their fixed-icon bridge surface and placement use the same Base/Alt/Tab size
+and view precedence as this owner. Ordinary map scaling retains the logical
+surface that scales with its parent; fixed-icon mode keeps timer text/icon size
+while moving the bridge positions with the resized viewport.
+
 Fixed Icon Size resizes the viewport without magnifying its HUD parent. The
 renderer must resize with it: leaving `hud_minimap` at its fixed native pixel
 dimensions enlarges only the surrounding frame. The scoped renderer class in
