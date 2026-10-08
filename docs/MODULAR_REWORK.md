@@ -26,6 +26,8 @@ behavior until its owning implementation has been audited.
   correlated account probes and current-account activation replace stale closures.
 - Quickbuy companion with scoped native generations, retained pricing/preview
   rules, retired input callbacks and tracked poll/chat/focus/drag work.
+- Account-gated translation owner with private native message generations,
+  bounded retry/cache state and readable source text when the helper is absent.
 
 Frozen main-config fixtures preserve all healthbar variants and both minimap
 scale methods. Published versions, compact layouts and persistent defaults stay
@@ -33,8 +35,7 @@ unchanged, apart from the already approved native-origin AP/stamina offsets.
 
 ## Remaining implementation and audit
 
-1. Rewrite the remaining legacy HUD owners: Advanced item mirror and
-   translation. Preserve their established
+1. Rewrite the remaining legacy HUD owner: Advanced item mirror. Preserve its established
    source selection, filtering, identity and context boundaries.
 2. Audit already modernized owners for remaining shared mutable bookkeeping,
    duplicate native style writers and missing release paths. Remove obsolete

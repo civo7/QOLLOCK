@@ -75,7 +75,8 @@ Read only the note relevant to the change: [healthbar](ql_healthbar.md),
 [passive cooldowns](ql_passive_cooldown.md),
 [legacy audio](ql_legacy_audio_passive.md), [minimap](ql_minimap_runtime.md),
 [compass](ql_compass.md), [objective timer producer/consumers](ql_objective_timers.md), [recent purchases](ql_recent_purchases.md), or
-[rank/profile/Statlocker](ql_profile_rank.md), or [update checker](ql_update_checker.md).
+[rank/profile/Statlocker](ql_profile_rank.md), [chat translation](ql_chat_translation.md),
+or [update checker](ql_update_checker.md).
 
 ## Editing a feature
 

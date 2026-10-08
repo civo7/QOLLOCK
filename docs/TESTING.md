@@ -79,6 +79,11 @@ late/replaced native queues, controls, chat bindings, partial writes, retired
 handlers and cancelled deferred work. The lifecycle auditor's counterfactual
 still rejects a deliberately lost poll handle with the same leaked task counts.
 
+`chat_translation_owner.test.js` checks production account gating and pending
+evidence, independent native message selection, bounded cache and lifecycle
+cleanup. Native text remains readable through modeled failed helper requests;
+localhost image loading and native chat layout require client verification.
+
 `tests/customize_config_compat.test.js` imports frozen legacy compact codes
 generated with the main codec/schema recorded in the fixture, then checks
 Customize cancellation, Apply and current-format export. It also checks legacy
