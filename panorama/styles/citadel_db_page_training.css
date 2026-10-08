@@ -128,20 +128,20 @@ Label.unavailableText
 
 #BrowsableShop .buttonImage
 {
-	background-size: 150% 100%;
-	background-position: right;
+	background-size: 20% 30%, 100% 100%, 100% 100%;
+	background-position: 15px 15px, center, center;
 	background-repeat: no-repeat;
 	background-color: none;
-	background-image: url("s2r://panorama/images/main_menu/news_shop_rework_png.vtex");
+	background-image: url("s2r://panorama/images/shop/catalog/pricetag_tier4_psd.vtex"), url("s2r://panorama/images/hideout/chalk_doodle09_psd.vtex"), url("s2r://panorama/images/post_game/mvp_bg_png.vtex");
 }
 
 #LearnToPlayer .buttonImage
 {
-	background-size: 80% 70% 100% 100%;
+	background-size: 100% 100%, 100% 100%;
 	background-position: center;
 	background-repeat: no-repeat;
 	background-color: none;
-	background-image: url("s2r://panorama/images/main_menu/dl_v1_png.vtex"), url("s2r://panorama/images/match_intro/team1_bg_psd.vtex");
+	background-image: url("s2r://panorama/images/hideout/chalk_doodle06_psd.vtex"), url("s2r://panorama/images/match_intro/team1_bg_psd.vtex");
 }
 
 #GettingStarted .buttonImage
@@ -157,7 +157,7 @@ Label.unavailableText
 
 #HeroTesting .buttonImage
 {
-	background-size: 45% 90%, 40% 100%, 40% 100%, 110% 110%;
+	background-size: 45% 90%, 50% 100%, 40% 100%, 110% 110%;
 	background-position: left bottom, center bottom, 230px -5px, center;
 	background-repeat: no-repeat;
 	background-color: none;
@@ -177,21 +177,21 @@ Label.unavailableText
 
 #HeroVoting .buttonImage
 {
-	background-size: 100% 120%;
+	background-size: 100% 200%;
 	background-position: top;
 	background-repeat: no-repeat;
 	background-color: none;
-	background-image: url("s2r://panorama/images/seasonal/2026/vote_apollo_sm_png.vtex");
+	background-image: url("s2r://panorama/images/main_menu/hero_release_vote/hero_chessmaster_psd.vtex");
 }
 
 #RankedInfo .buttonImage
 {
-	background-size: 160% 90%, 180% 100%;
+	background-size: 160% 90%, 100% 100%;
 	background-position: center;
 	background-repeat: no-repeat;
 	background-color: none;
 	brightness: 0.9;
-	background-image: url("s2r://panorama/images/ranked/badges/rank9/badge_lg_psd.vtex"), url("s2r://panorama/images/main_menu/background_nyc_cityscape_bw_psd.vtex");
+	background-image: url("s2r://panorama/images/ranked/badges/rank9/badge_lg_psd.vtex"), url("s2r://panorama/images/post_game/bg_team2_psd.vtex");
 }
 
 #GlobalLeaderboard .buttonImage
@@ -200,16 +200,25 @@ Label.unavailableText
 	background-position: center;
 	background-repeat: no-repeat;
 	background-color: none;
-	background-image: url("s2r://panorama/images/ranked/badges/rank10/badge_lg_psd.vtex"), url("s2r://panorama/images/main_menu/background_gothic_jpg.vtex");
+	background-image: url("s2r://panorama/images/ranked/badges/rank10/badge_lg_psd.vtex"), url("s2r://panorama/images/post_game/bg_team1_psd.vtex");
 }
 
 #News .buttonImage
 {
-	background-size: 110% 100%, 125% 125%;
+	background-size: 110% 100%, 95% 95%;
 	background-position: center;
 	background-repeat: no-repeat;
 	background-color: none;
 	background-image: url("s2r://panorama/images/main_menu/play/card_map_subject_psd.vtex"), url("s2r://panorama/images/main_menu/play/card_map_psd.vtex");
+}
+
+#VoiceLines .buttonImage
+{
+	background-size: 100% 140%, 110% 130%;
+	background-position: center;
+	background-repeat: no-repeat;
+	background-color: none;
+	background-image: url("s2r://panorama/images/main_menu/shiv_png.vtex"), url("s2r://panorama/images/main_menu/play/card_ranked_psd.vtex");
 }
 
 .BotsTitle
