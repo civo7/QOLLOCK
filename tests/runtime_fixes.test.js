@@ -193,7 +193,7 @@ test("ql_ui_controls manifest and multitoggle settings are properly registered a
 });
 
 test("Minecraft healthbar parses health from currentHealthOverHearts and tracks stamina charges for hunger", () => {
-    const hud = sim.createHud();
+    const hud = sim.createHud({ inHideout: false });
     hud.assertLoaded();
     const Q = hud.sandbox.global.QOL;
     const $ = hud.sandbox.global.$;

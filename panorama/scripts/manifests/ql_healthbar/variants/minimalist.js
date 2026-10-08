@@ -1,87 +1,40 @@
-// ql_feat_healthbar_minimalist.js — Minimalist healthbar runtime
-// Extracted from ql_feat_healthbar.js, Phase 12
-(function() {
-    'use strict';
-    var _featureId = "ql_feat_healthbar_minimalist";
-    var Panel = (QOL.core && QOL.core.panel) ? QOL.core.panel : {};
-    var State = QOL.state || (typeof globalThis !== "undefined" && globalThis.State) || {};
-    var Utils = QOL.utils;
-    var GetCachedPanel = QOL.getCachedPanel;
-    var SetCachedPanel = QOL.setCachedPanel;
-    var IsCfgEnabled = QOL.utils.IsCfgEnabled;
-    var IsPanelValid = QOL.utils.IsPanelValid;
+// OWNS: Shared healthbar offsets, canvas scale and opacity in every variant.
+// DOES NOT OWN: Variant CSS, health values, accents or native child animations.
+// Source: Hud > .HudCore > gameplay_hud > health_and_abilities_container.
+(() => {
+    "use strict";
+    const H = QOL.healthbar;
+    const P = QOL.core.panel;
+    H.registerVariant("minimalist", function(ctx) {
+        const resolver = QOL.panelCache.createIdResolver("health_and_abilities_container", {
+            retryMs: 400,
+            ownerPath: [{ id: "Hud", optional: true }, { className: "HudCore" }, "gameplay_hud"]
+        });
+        const styles = H.createPlayerStyle();
+        const accent = ctx && ctx.accent || H.accent;
+        H.bindPlayerStyle(styles);
+        let panel = null;
 
-    // ── Constants ──
-    var PANEL_ID_HEALTH_CONTAINER = "health_and_abilities_container";
-
-    // Note: These shared helpers remain in ql_feat_healthbar.js but are imported
-    // via QOL.healthbar namespace at runtime
-    var ResetMinimalistHealthbarOffsetRuntime = QOL.healthbar.resetMinimalistOffsetRuntime;
-    var ResetMinimalistHealthbarOffsetRuntimeAll = QOL.healthbar.resetMinimalistOffsetRuntimeAll;
-    var BuildPlayerHealthbarRuntimeStyleState = QOL.healthbar.buildPlayerHealthbarStyleState;
-    var ApplyPlayerHealthbarRuntimeStyleToPanel = QOL.healthbar.applyPlayerStyleToPanel;
-    var ApplyPlayerHealthbarAccentColor = QOL.healthbar.accent.update;
-    var ResetPlayerHealthbarAccentColorRuntime = QOL.healthbar.accent.reset;
-
-    // ── Minimalist ──
-
-    function UpdateMinimalistHealthbarOffsets(root, cfg, enabled) {
-        var healthContainer = GetCachedPanel("healthContainer");
-        if (!healthContainer) {
-            healthContainer = (root && root.FindChildTraverse) ? root.FindChildTraverse(PANEL_ID_HEALTH_CONTAINER) : null;
-            SetCachedPanel("healthContainer", healthContainer);
+        function release() {
+            styles.release();
+            accent.release();
+            panel = null;
+            resolver.reset();
         }
 
-        var previousPanel = IsPanelValid(State.minimalistHealthbarOffsetPanel) ? State.minimalistHealthbarOffsetPanel : null;
-        if (previousPanel && previousPanel !== healthContainer) {
-            QOL.healthbar.resetPlayerStyle(previousPanel);
+        function update(root, cfg, enabled) {
+            const current = resolver.resolve(root);
+            if (current !== panel) {
+                if (panel) styles.release(panel);
+                accent.release();
+                panel = current;
+            }
+            if (!P.isAlive(panel)) return;
+            const classActive = root && root.BHasClass("minimalist_healthbar_active");
+            const model = H.buildPlayerHealthbarStyleState(cfg, enabled, classActive, root);
+            styles.apply(panel, model, true, H.playerScaleGeometry(panel));
+            accent.update(root, cfg, panel);
         }
-
-        if (!healthContainer) {
-            ResetMinimalistHealthbarOffsetRuntimeAll(root, healthContainer, previousPanel);
-            ResetPlayerHealthbarAccentColorRuntime();
-            State.minimalistHealthbarOffsetSig = "";
-            State.minimalistHealthbarOffsetApplied = false;
-            State.minimalistHealthbarOffsetPanel = null;
-            State.playerHealthbarScalePanel = null;
-            State.playerHealthbarScaleOpacityRuntimeApplied = false;
-            return;
-        }
-
-        var classActive = !!(root && root.BHasClass && root.BHasClass("minimalist_healthbar_active"));
-        var runtimeState = BuildPlayerHealthbarRuntimeStyleState(cfg, enabled, classActive);
-        var geometry = QOL.healthbar.playerScaleGeometry(healthContainer);
-        var accentColor = (cfg && cfg.PLAYER_HEALTHBAR_ACCENT_COLOR !== undefined) ? cfg.PLAYER_HEALTHBAR_ACCENT_COLOR : 0;
-        var styleSig = runtimeState.finalOffsetX + "|" + runtimeState.finalOffsetY + "|" + runtimeState.scaleText + "|" + runtimeState.opacityText + "|" + ((enabled && classActive) ? "1" : "0") + "|" + accentColor + "|" + geometry.width + "|" + geometry.height;
-
-        if (
-            State.minimalistHealthbarOffsetApplied &&
-            State.minimalistHealthbarOffsetPanel === healthContainer &&
-            State.playerHealthbarScalePanel === geometry.target &&
-            State.minimalistHealthbarOffsetSig === styleSig
-        ) {
-            ApplyPlayerHealthbarAccentColor(root, cfg, healthContainer);
-            return;
-        }
-
-        ApplyPlayerHealthbarRuntimeStyleToPanel(healthContainer, runtimeState, true, geometry);
-        ApplyPlayerHealthbarAccentColor(root, cfg, healthContainer);
-        State.playerHealthbarScaleOpacityRuntimeApplied = runtimeState.scaleOpacityActive;
-
-        State.minimalistHealthbarOffsetSig = styleSig;
-        State.minimalistHealthbarOffsetApplied = true;
-        State.minimalistHealthbarOffsetPanel = healthContainer;
-        State.playerHealthbarScalePanel = geometry.target;
-    }
-
-    // ── Export ──
-    QOL.healthbar = QOL.healthbar || {};
-    QOL.healthbar.minimalist = { update: UpdateMinimalistHealthbarOffsets };
-
-    // ── Self-test ──
-    try {
-        if (typeof UpdateMinimalistHealthbarOffsets !== "function") throw new Error("not defined");
-    } catch(e) {
-        $.Msg("[QOLLock][ERROR][" + _featureId + "] self-test: " + (e && e.message ? e.message : String(e)));
-    }
+        return { update, release, isActive: () => styles.isActive() || accent.isActive() };
+    });
 })();

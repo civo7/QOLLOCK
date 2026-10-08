@@ -12,6 +12,25 @@ mode changes or turns off. Shared accent and position cleanup can still matter
 when a replacement variant is inactive. Returning to mode 0 must restore native
 layout.
 
+The dispatcher owns the derived configuration and one instance of each variant
+controller. Controllers expose `update`, `release` and `isActive`; all mutable
+source references, signatures, pulse state and animation state belong to those
+instances. Public `QOL.healthbar` variant/style entry points delegate to the same
+current controllers, without a second engine or poll loop. Root variant classes
+remain the complete-config HUD projector's responsibility. The dispatcher reads
+the retained Minimalist preset offsets and shared warning policy through its own
+declared ConfigStore slice; settings hooks reproject classes before rendering.
+
+Source discovery follows the current native health container and the explicit
+canvas children in the shipped XML. Still-living former owners are released on
+replacement, including an independently replaced heart grid, number group or
+food container. Budhud deletes its owned percentage label when its source or
+mode changes. Native current-health color and warning pulse belong exclusively
+to `ql_color_warnings`; Budhud observes that color for its percentage readout
+instead of running another pulse or clearing the native label. Presentation and accent
+signatures are cached only after successful writes; partial writes remain
+retryable. Default presentation never clears unrelated native transforms.
+
 Fighting Game (FG) creates its own portrait under the current health bar.
 Native gold and level portraits are unreliable identity sources. FG uses the
 verified pregame hero signal when applicable, then live crosshair evidence;
@@ -24,6 +43,21 @@ is unchanged.
 
 Minecraft Hearts has a different layout and animation path from the native
 bar. Do not generalize geometry or performance results from mode 0 to it.
+Its generated rows are the controller's property; rebuilding or disabling does
+not remove foreign children from the static containers. Blink, low-health jiggle
+and healing waves use feature-owned managed one-shots with generation guards.
+Hideout, source loss, replacement and disable cancel them and reset their state.
+`mc.inspect()` reports the current source, live heart count and animation status
+for runtime diagnostics, without exposing mutable controller bookkeeping.
+
+Deferred-damage and incoming-heal fractions use the verified native
+`ProgressBarWithMiddle` parents and their `.ProgressBarMiddle` children. The
+fraction is the child's measured height divided by its parent height (or a
+percentage height before layout). Historical guessed `*_Middle` IDs are no longer
+queried. Verify both overlays and their healing/blink timing after compilation;
+offline tests prove source routing and lifecycle, not native progress rendering.
+Native current/max number bindings remain native; only derived percentage and
+experience labels are written by Minecraft.
 For native layout, hero switching and fill alignment, follow
 [client verification](../TESTING.md) after maintainer compile/repack.
 

@@ -1,14 +1,12 @@
 // FG owns its portrait; native gold/level panels keep their original bindings.
-(function() {
+(() => {
     'use strict';
-    var U = QOL.utils;
-    var P = QOL.core.panel;
-    var portrait = null;
-    var hero = '';
+    const U = QOL.utils;
+    const P = QOL.core.panel;
     // Explicit m_strIconImageSmall resources from extracted scripts/heroes.vdata.
     // Keep extensions: e.g. Vindicta uses PNG, Sinclair uses PSD. Unknown heroes
     // stay hidden rather than guessing a resource or displaying Abrams.
-    var heroIcons = {
+    const heroIcons = {
         hero_inferno: 'inferno_sm_psd',
         hero_gigawatt: 'gigawatt_sm_psd',
         hero_hornet: 'hornet_sm_png',
@@ -68,14 +66,19 @@
         hero_unicorn: 'unicorn_sm_psd'
     };
     // Hexagon center: (1850 / 2048 - 0.5) * 400 = 161px from frame center.
-    var portraitStyles = {
+    const portraitStyles = {
         visibility: 'visible', opacity: '1', ignoreParentFlow: 'true',
         horizontalAlign: 'center', verticalAlign: 'center',
         x: '0px', y: '161px', margin: '0px', width: '48px', height: '48px',
         uiScale: '100%', transform: 'rotateZ(-90deg)', borderRadius: '50%',
         overflow: 'clip', zIndex: '105'
     };
-    var styleSig = null;
+    QOL.healthbar.registerVariant("fg", function() {
+        const resolver = QOL.panelCache.createIdResolver("health_and_abilities_container", {
+            retryMs: 400,
+            ownerPath: [{ id: "Hud", optional: true }, { className: "HudCore" }, "gameplay_hud"]
+    });
+    let portrait = null, hero = '', styleSig = null;
 
     function reset() {
         if (U.IsPanelValid(portrait)) portrait.visible = false;
@@ -83,6 +86,7 @@
         portrait = null;
         hero = '';
         styleSig = null;
+        resolver.reset();
     }
 
     function update(root, cfg) {
@@ -90,9 +94,9 @@
             reset();
             return;
         }
-        var health = root.FindChildTraverse('health_and_abilities_container');
-        var bars = health && health.FindChildTraverse('hud_health_bars');
-        var anchor = U.FindFirstPanelByClass(bars, 'health_bar_border');
+        const health = resolver.resolve(root);
+        const bars = health && health.FindChildTraverse('hud_health_bars');
+        const anchor = U.FindFirstPanelByClass(bars, 'health_bar_border');
         if (U.IsPanelValid(portrait) && portrait.GetParent() !== anchor) reset();
         if (!U.IsPanelValid(anchor)) return;
         if (!U.IsPanelValid(portrait)) {
@@ -107,9 +111,9 @@
         styleSig = P.syncStyles(portrait, portraitStyles, styleSig).sig;
         // The pregame reveal identifies the hero before the crosshair appears.
         // In hero testing it also wins over a crosshair left from the last pawn.
-        var probe = QOL.core.heroProbe;
-        var pregameHero = probe.readHeroFromPregame(root);
-        var nextHero = pregameHero || probe.readHeroFromCrosshair(root);
+        const probe = QOL.core.heroProbe;
+        const pregameHero = probe.readHeroFromPregame(root);
+        const nextHero = pregameHero || probe.readHeroFromCrosshair(root);
         if (!nextHero || !Object.prototype.hasOwnProperty.call(heroIcons, nextHero)) {
             if (portrait.visible) portrait.visible = false;
             hero = '';
@@ -122,8 +126,6 @@
         if (!portrait.visible) portrait.visible = true;
     }
 
-    QOL.healthbar.fg = {
-        update: update,
-        isActive: function() { return U.IsPanelValid(portrait); }
-    };
+    return { update, release: reset, isActive: () => U.IsPanelValid(portrait) };
+    });
 })();

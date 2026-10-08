@@ -47,6 +47,13 @@ function recordingPanel(extra) {
         },
     });
     return Object.assign({
+        IsValid: () => true,
+        FindChild: () => null,
+        ClearPropertyFromCode(property) {
+            const alias = property.replace(/-([a-z])/g, (_, c) => c.toUpperCase());
+            delete style[alias];
+            return true;
+        },
         style,
         writes,
         last(prop) {

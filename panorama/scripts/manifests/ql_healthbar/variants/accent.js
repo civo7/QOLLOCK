@@ -1,151 +1,71 @@
-// ql_feat_healthbar_accent.js — Player healthbar accent color subsystem
-// Extracted from ql_feat_healthbar.js, Phase 11 Step 3a
-(function() {
-    'use strict';
-    var _featureId = "ql_feat_healthbar_accent";
-    var Panel = (QOL.core && QOL.core.panel) ? QOL.core.panel : {};
-    var State = QOL.state || (typeof globalThis !== "undefined" && globalThis.State) || {};
-    var Utils = QOL.utils;
-    var GetCachedPanel = QOL.getCachedPanel;
-    var SetCachedPanel = QOL.setCachedPanel;
-    var IsPanelValid = QOL.utils.IsPanelValid;
-    var SetStyleSafe = QOL.utils.SetStyleSafe;
-    var SetWashColorSafe = Panel.setWashColor || QOL.setWashColorSafe;
-    var NormalizePaletteColorIndex = Panel.normalizePaletteIndex || QOL.normalizePaletteColorIndex;
-    var ResolveWashColorFromPalette = Panel.resolvePaletteColor || QOL.resolveWashColorFromPalette;
+// OWNS: Accent wash on the current health frame and health-number backers.
+// DOES NOT OWN: Native health fill, warning colors, or unrelated healthbars.
+(() => {
+    "use strict";
+    const H = QOL.healthbar;
+    const P = QOL.core.panel;
+    const readIndex = cfg => P.normalizePaletteIndex(cfg && cfg.PLAYER_HEALTHBAR_ACCENT_COLOR);
 
-    // ── Functions ──
+    H.registerVariant("accent", function(ctx) {
+        let targets = [], signature = null, pending = null, generation = 0;
+        const owned = new Set();
+        const featureId = ctx && ctx.id || "ql_healthbar";
 
-    function ReadPlayerHealthbarAccentColorIndex(cfg) {
-        return NormalizePaletteColorIndex(cfg && cfg.PLAYER_HEALTHBAR_ACCENT_COLOR);
-    }
+        function cancel() {
+            generation++;
+            if (pending) pending.stop();
+            pending = null;
+        }
 
-    function ResetPlayerHealthbarAccentColorRuntime() {
-        State.playerHealthbarAccentColorToken = (Number(State.playerHealthbarAccentColorToken) || 0) + 1;
-        var panels = State.playerHealthbarAccentColorPanels || [];
-        for (var i = 0; i < panels.length; i++) {
-            if (IsPanelValid(panels[i])) {
-                SetWashColorSafe(panels[i], "");
+        function clear(panel) {
+            if (!P.isAlive(panel) || P.clearStyleProperty(panel, "washColor")) owned.delete(panel);
+        }
+
+        function release() {
+            cancel();
+            for (const panel of Array.from(owned)) clear(panel);
+            targets = [];
+            signature = null;
+        }
+
+        function discover(health) {
+            if (!P.isAlive(health)) return [];
+            const panels = new Set();
+            const frame = P.findTraverse(health, "health_bar_frame");
+            if (P.isAlive(frame)) panels.add(frame);
+            for (const backer of QOL.utils.FindPanelsByClass(health, "healthBacker") || []) {
+                if (P.isAlive(backer)) panels.add(backer);
             }
+            return Array.from(panels);
         }
-        State.playerHealthbarAccentColorPanels = [];
-        State.playerHealthbarAccentColorSig = "";
-    }
 
-    function PushAccentColorTarget(list, panel) {
-        if (!IsPanelValid(panel)) return;
-        for (var i = 0; i < list.length; i++) {
-            if (list[i] === panel) return;
-        }
-        list.push(panel);
-    }
-
-    function FindPlayerHealthbarAccentColorPanels(root, healthContainer) {
-        var targets = [];
-        if (healthContainer && healthContainer.FindChildTraverse) {
-            PushAccentColorTarget(targets, healthContainer.FindChildTraverse("health_bar_frame"));
-        }
-        if (healthContainer && healthContainer.FindChildrenWithClassTraverse) {
-            var backers = healthContainer.FindChildrenWithClassTraverse("healthBacker") || [];
-            for (var i = 0; i < backers.length; i++) {
-                PushAccentColorTarget(targets, backers[i]);
-            }
-        }
-        if (targets.length === 0 && root && root.FindChildTraverse) {
-            PushAccentColorTarget(targets, root.FindChildTraverse("health_bar_frame"));
-        }
-        if (targets.length <= 1 && root && root.FindChildrenWithClassTraverse) {
-            var rootBackers = root.FindChildrenWithClassTraverse("healthBacker") || [];
-            for (var j = 0; j < rootBackers.length; j++) {
-                PushAccentColorTarget(targets, rootBackers[j]);
-            }
-        }
-        return targets;
-    }
-
-    function ApplyPlayerHealthbarAccentColor(root, cfg, healthContainer) {
-        var panels = FindPlayerHealthbarAccentColorPanels(root, healthContainer);
-        var colorIndex = ReadPlayerHealthbarAccentColorIndex(cfg);
-        var color = ResolveWashColorFromPalette(colorIndex);
-        var idParts = [];
-        for (var i = 0; i < panels.length; i++) {
-            idParts.push(String(panels[i].id || "healthBacker"));
-        }
-        var styleSig = idParts.join(",") + "|" + color;
-
-        var oldPanels = State.playerHealthbarAccentColorPanels || [];
-        for (var oldIndex = 0; oldIndex < oldPanels.length; oldIndex++) {
-            var stillTargeted = false;
-            for (var newIndex = 0; newIndex < panels.length; newIndex++) {
-                if (oldPanels[oldIndex] === panels[newIndex]) {
-                    stillTargeted = true;
-                    break;
+        function update(root, cfg, health) {
+            const current = discover(health);
+            const color = P.resolvePaletteColor(readIndex(cfg));
+            const same = current.length === targets.length && current.every((panel, index) => panel === targets[index]);
+            if (same && signature === color && (color || owned.size === 0)) return;
+            cancel();
+            for (const panel of Array.from(owned)) if (!current.includes(panel) || !color) clear(panel);
+            targets = current;
+            signature = null;
+            if (!color || current.length === 0) { if (owned.size === 0) signature = color; return; }
+            // Preserve the existing native wash refresh delay. It belongs to this
+            // generation and is cancelled on replacement, settings change or disable.
+            const token = generation;
+            pending = QOL.core.Scheduler.scheduleOnce(() => {
+                pending = null;
+                if (token !== generation) return;
+                let complete = true;
+                for (const panel of current) {
+                    owned.add(panel);
+                    if (!P.setWashColor(panel, color)) complete = false;
                 }
-            }
-            if (!stillTargeted && IsPanelValid(oldPanels[oldIndex])) {
-                SetWashColorSafe(oldPanels[oldIndex], "");
-            }
+                if (complete) signature = color;
+            }, 0.01, featureId);
         }
-
-        if (panels.length === 0) {
-            State.playerHealthbarAccentColorToken = (Number(State.playerHealthbarAccentColorToken) || 0) + 1;
-            State.playerHealthbarAccentColorPanels = [];
-            State.playerHealthbarAccentColorSig = "";
-            return;
-        }
-
-        var samePanels = oldPanels.length === panels.length;
-        for (var panelIndex = 0; samePanels && panelIndex < panels.length; panelIndex++) {
-            if (oldPanels[panelIndex] !== panels[panelIndex]) samePanels = false;
-        }
-        if (State.playerHealthbarAccentColorSig === styleSig && samePanels) {
-            return;
-        }
-        State.playerHealthbarAccentColorToken = (Number(State.playerHealthbarAccentColorToken) || 0) + 1;
-        var applyToken = State.playerHealthbarAccentColorToken;
-        for (var applyIndex = 0; applyIndex < panels.length; applyIndex++) {
-            SetWashColorSafe(panels[applyIndex], "");
-        }
-        State.playerHealthbarAccentColorPanels = panels;
-        State.playerHealthbarAccentColorSig = styleSig;
-        if (color) {
-            $.Schedule(0.01, function() {
-                if (State.playerHealthbarAccentColorToken !== applyToken || State.playerHealthbarAccentColorSig !== styleSig) {
-                    return;
-                }
-                for (var delayedIndex = 0; delayedIndex < panels.length; delayedIndex++) {
-                    if (IsPanelValid(panels[delayedIndex])) {
-                        SetWashColorSafe(panels[delayedIndex], color);
-                    }
-                }
-            });
-        }
-    }
-
-    // ── Publish bridge functions for coreRoot access (moved from ql_feat_healthbar.js) ──
-    try {
-        QOL.resolvePlayerHealthbarAccentColorIndex = ReadPlayerHealthbarAccentColorIndex;
-    } catch(e) { $.Msg("[QOLLock][WARN][" + _featureId + "] could not publish resolvePlayerHealthbarAccentColorIndex"); }
-    try {
-        QOL.applyPlayerHealthbarAccentColor = ApplyPlayerHealthbarAccentColor;
-    } catch(e) { $.Msg("[QOLLock][WARN][" + _featureId + "] could not publish applyPlayerHealthbarAccentColor"); }
-
-    // ── QOL.healthbar.accent module ──
-    try {
-        QOL.healthbar = QOL.healthbar || {};
-        QOL.healthbar.accent = {
-            update: ApplyPlayerHealthbarAccentColor,
-            reset: ResetPlayerHealthbarAccentColorRuntime,
-            readIndex: ReadPlayerHealthbarAccentColorIndex
-        };
-    } catch(e) { $.Msg("[QOLLock][WARN][" + _featureId + "] could not publish QOL.healthbar.accent"); }
-
-    // ── Self-test ──
-    try {
-        if (typeof ApplyPlayerHealthbarAccentColor !== "function") throw new Error("ApplyPlayerHealthbarAccentColor missing");
-        if (typeof ResetPlayerHealthbarAccentColorRuntime !== "function") throw new Error("ResetPlayerHealthbarAccentColorRuntime missing");
-        if (typeof QOL.healthbar.accent !== "object") throw new Error("QOL.healthbar.accent not published");
-    } catch(e) {
-        $.Msg("[QOLLock][ERROR][" + _featureId + "] self-test: " + (e && e.message ? e.message : String(e)));
-    }
+        return { update, release, isActive: () => owned.size > 0 || pending !== null };
+    });
+    H.accent.readIndex = readIndex;
+    QOL.resolvePlayerHealthbarAccentColorIndex = readIndex;
+    QOL.applyPlayerHealthbarAccentColor = (...args) => H.accent.update(...args);
 })();

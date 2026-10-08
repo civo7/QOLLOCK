@@ -1,207 +1,98 @@
-// features/ql_healthbar/manifest.js
-// =============================================================================
-// QOLLOCK — Healthbar Runtime
-// =============================================================================
-// OWNS:        Healthbar type dispatcher with variant routing
-// DOES NOT OWN: TODO
-// DEPENDS ON:  QOL.core.FeatureRegistry, QOL.core.Scheduler
-// CONFIG KEYS: HEALTHBAR_TYPE, PLAYER_HEALTHBAR_SCALE, PLAYER_HEALTHBAR_OPACITY, PLAYER_HEALTHBAR_X_OFFSET, PLAYER_HEALTHBAR_Y_OFFSET, PLAYER_HEALTHBAR_ACCENT_COLOR
-// CSS:         none
-// PATTERN:     Polling (0.1Hz). Self-scheduling via Scheduler.
-// =============================================================================
-
-(function() {
+// OWNS: Healthbar settings model, variant routing and native lifetime discovery.
+// DOES NOT OWN: Root CSS projection, game health bindings or native child animations.
+(() => {
     "use strict";
-
-    var FR = QOL.core.FeatureRegistry;
-    if (!FR) { $.Msg("[QOLLock] ql_healthbar: FeatureRegistry not found — aborting"); return; }
-    var logger = QOL.core.Logger;
-
-    var State = (typeof QOL !== "undefined" && QOL.state) ? QOL.state : {};
-
-    function _hasNonDefaultPlayerHealthbar(cfg) {
-        if (!cfg) return false;
-        var ox = (cfg.PLAYER_HEALTHBAR_X_OFFSET === undefined || cfg.PLAYER_HEALTHBAR_X_OFFSET === null) ? 0 : Math.round(Number(cfg.PLAYER_HEALTHBAR_X_OFFSET));
-        var oy = (cfg.PLAYER_HEALTHBAR_Y_OFFSET === undefined || cfg.PLAYER_HEALTHBAR_Y_OFFSET === null) ? 0 : Math.round(Number(cfg.PLAYER_HEALTHBAR_Y_OFFSET));
-        var sc = (cfg.PLAYER_HEALTHBAR_SCALE === undefined || cfg.PLAYER_HEALTHBAR_SCALE === null) ? 100 : Math.round(Number(cfg.PLAYER_HEALTHBAR_SCALE));
-        var op = (cfg.PLAYER_HEALTHBAR_OPACITY === undefined || cfg.PLAYER_HEALTHBAR_OPACITY === null) ? 1.0 : Number(cfg.PLAYER_HEALTHBAR_OPACITY);
-        var ac = (cfg.PLAYER_HEALTHBAR_ACCENT_COLOR === undefined || cfg.PLAYER_HEALTHBAR_ACCENT_COLOR === null) ? 0 : Math.round(Number(cfg.PLAYER_HEALTHBAR_ACCENT_COLOR));
-        if (!isFinite(ox)) ox = 0;
-        if (!isFinite(oy)) oy = 0;
-        if (!isFinite(sc)) sc = 100;
-        if (!isFinite(op)) op = 1.0;
-        if (!isFinite(ac)) ac = 0;
-        return (ox !== 0 || oy !== 0 || sc !== 100 || Math.abs(op - 1.0) > 0.0001 || ac !== 0);
-    }
-
-    FR.register({
+    const H = QOL.healthbar;
+    const P = QOL.core.panel;
+    QOL.core.FeatureRegistry.register({
         id: "ql_healthbar",
         enabledByDefault: true,
-        stateKeys: [
-            // Dispatcher (35 keys from ql_feat_healthbar.js)
-            "minimalistHealthbarOffsetSig", "minimalistHealthbarOffsetApplied",
-            "minimalistHealthbarOffsetPanel", "playerHealthbarScalePanel", "playerHealthbarScaleOpacityRuntimeApplied",
-            "budhudWasEnabled", "budhudNextUpdateMs",
-            "budhudLastColor", "budhudLastPercentText",
-            "budhudCurrentLabelBaseColor", "budhudCurrentLabelBaseColorCaptured",
-            "mcWasEnabled", "mcNextUpdateMs",
-            "mcHeartsBlinkTimer", "mcLowHealthJiggleTimer", "mcHealingWaveTimer",
-            "mcIsAfflicted", "mcCheckModifierNextMs",
-            "mcHeartSlots", "mcHeartContainerImages", "mcHeartHealingImages",
-            "mcHeartDeferredImages", "mcHeartFillImages",
-            "mcHeartsCapacity", "mcHeartsRowCount", "mcLastVisibleHeartsCount",
-            "mcBarrierHeartsPanels", "mcBarrierHeartContainerImages",
-            "mcBarrierHeartFillImages", "mcBarrierHeartsCapacity",
-            "mcCachedFoodIcons", "mcLoggedHealthContainerMiss",
-            "coloredHealthbarBridgeValue", "playerHealthbarAccentColorSig",
-            "playerHealthbarAccentColorPanels", "playerHealthbarAccentColorToken",
-            // Budhud orphans (2)
-            "coloredHealthbarPulseVal", "coloredHealthbarPulseDir",
-            // FG orphans (13)
-            "fgHeroImageOriginalParent", "fgHeroImageOriginalIndex",
-            "fgHeroImageSwapCandidateSig", "fgHeroImageSwapCandidateHits",
-            "fgHeroImageSwapCandidatePanel", "fgHeroImageMoved",
-            "fgHeroImageRuntimeStyleSig", "fgHeroRuntimeLevelPanel",
-            "fgHeroRuntimeHeroPanel", "fgHeroImageCurrentSig",
-            "fgHeroImagePendingAttachMs", "fgHeroImageSourceProbeNextMs",
-            // MC orphans (24)
-            "mcLoggedGoldApMiss", "mcLoggedBulletBarrierMiss",
-            "mcLastModifierResult", "mcLastBlinkHalfSegments", "mcLastIsBlinkOn",
-            "mcLastContainerHeartsNeeded", "mcLastContainerLastSlotIsHalf",
-            "mcLastFillFullHearts", "mcLastFillHasHalf", "mcLastFillAfflicted",
-            "mcLastDeferredFullHearts", "mcLastDeferredHasHalf", "mcLastDeferredStartSlots",
-            "mcLastHealingFullHearts", "mcLastHealingHasHalf", "mcLastHealingStartSlots",
-            "mcLastBarrierFullHearts", "mcLastBarrierHasHalf", "mcLastBarrierLastSlotIsHalf",
-            "mcHeartsBlinking", "mcHeartsBlinkPhase",
-            "mcLowHealthJiggleActive", "mcHealingWaveActive", "mcHealingWaveCurrentIndex"
-        ],
         settings: [
-            { key: "HEALTHBAR_TYPE", type: "dropdown", options: [0,1,2,3,4,5] },
+            { key: "HEALTHBAR_TYPE", type: "dropdown", options: [0, 1, 2, 3, 4, 5] },
             { key: "ENABLE_MINECRAFT_HEALTH_NUMBERS", type: "toggle", label: "Health Numbers", description: "Show current / max HP numbers over the Minecraft hearts." },
             { key: "PLAYER_HEALTHBAR_SCALE", type: "slider" },
             { key: "PLAYER_HEALTHBAR_OPACITY", type: "slider" },
             { key: "PLAYER_HEALTHBAR_X_OFFSET", type: "slider" },
             { key: "PLAYER_HEALTHBAR_Y_OFFSET", type: "slider" },
-            { key: "PLAYER_HEALTHBAR_ACCENT_COLOR", type: "palette" }
+            { key: "PLAYER_HEALTHBAR_ACCENT_COLOR", type: "palette" },
+            // Retained preset offsets and shared warning policy are real inputs
+            // of these variants and must be in their ConfigStore slice.
+            { key: "MINIMALIST_HEALTHBAR_X_OFFSET", type: "slider" },
+            { key: "MINIMALIST_HEALTHBAR_Y_OFFSET", type: "slider" },
+            { key: "ENABLE_COLORED_HEALTHBAR", type: "toggle" },
+            { key: "ENABLE_COLOR_WARNING_25", type: "toggle" },
+            { key: "ENABLE_COLOR_WARNING_65", type: "toggle" },
+            { key: "ENABLE_COLOR_WARNING_75", type: "toggle" }
         ],
-        create: function(ctx) {
-            var _loop = null;
+        create(ctx) {
+            const accent = H.accent.create(ctx);
+            const shared = H.minimalist.create({ id: ctx.id, accent });
+            const budhud = H.budhud.create(ctx);
+            const fg = H.fg.create(ctx);
+            const mc = H.mc.create(ctx);
+            const owners = [shared, accent, budhud, fg, mc];
+            let model = null, loop = null;
 
-            function _tick() {
-                try { _update(); } catch(e) {
-                    if (logger && logger.logError) {
-                        logger.logError("ql_healthbar", "_tick threw: " + (e.message || e));
-                    }
-                }
+            function readModel() {
+                const cfg = { ...ctx.config.view() };
+                const type = Number(cfg.HEALTHBAR_TYPE) || 0;
+                return { cfg, type };
             }
 
-            function _update() {
-                var root = $.GetContextPanel();
-                if (!root) return;
-                var cfg = (ctx && ctx.config && ctx.config.all) ? ctx.config.all() : ((typeof State !== "undefined" && State.lastConfig) ? State.lastConfig : {});
-                if (QOL.core.hud.isInHideout(root)) {
-                    // The HUD can survive a match exit. Stop variant-owned raw
-                    // schedules before idling; Scheduler only owns this poll.
-                    QOL.healthbar.mc.update(root, {}, 0, false);
-                    QOL.healthbar.budhud.update(root, {}, 0, 0);
-                    var hideoutType = Number(cfg.HEALTHBAR_TYPE) || 0;
-                    var runNativeStyle = hideoutType === 1 || _hasNonDefaultPlayerHealthbar(cfg) ||
-                        !!State.playerHealthbarAccentColorSig || State.minimalistHealthbarOffsetApplied ||
-                        State.playerHealthbarScaleOpacityRuntimeApplied;
-                    if (runNativeStyle && QOL.healthbar.minimalist && QOL.healthbar.minimalist.update) {
-                        QOL.healthbar.minimalist.update(root, cfg, hideoutType === 1);
-                    }
-                    QOL.healthbar.fg.update(root, cfg);
-                    if (_loop) _loop.reschedule(0.5);
-                    return;
+            function update() {
+                const root = $.GetContextPanel();
+                if (!P.isAlive(root) || !model) return;
+                const now = QOL.utils.PerfNowMs();
+                const hideout = QOL.core.hud.isInHideout(root);
+                shared.update(root, model.cfg, model.type === 1);
+                fg.update(root, model.cfg);
+                if (hideout) {
+                    if (budhud.isActive()) budhud.release();
+                    if (mc.isActive()) mc.release();
+                } else {
+                    budhud.update(root, model.cfg, model.type, now);
+                    mc.update(root, model.cfg, now, model.type === 5);
                 }
-                if (_loop) _loop.reschedule(0.05);
-                var nowMs = Date.now ? Date.now() : (new Date()).getTime();
-                var healthbarType = Number(cfg.HEALTHBAR_TYPE) || 0;
-                var minimalistHealthbarEnabled = (healthbarType === 1);
-                var fgHealthbarEnabled = (healthbarType === 2);
+                // rate-exempt: animated Minecraft hearts require 20Hz; FG keeps
+                // the existing live hero refresh cadence, Budhud renders at 10Hz.
+                if (loop) loop.reschedule(hideout || model.type === 0 || model.type === 1 || model.type === 3 ? 0.5 : 0.05);
+            }
 
-                var shouldRunMinimalistRuntime =
-                    minimalistHealthbarEnabled ||
-                    _hasNonDefaultPlayerHealthbar(cfg) ||
-                    !!(State.playerHealthbarAccentColorSig && String(State.playerHealthbarAccentColorSig).length > 0) ||
-                    State.minimalistHealthbarOffsetApplied ||
-                    State.playerHealthbarScaleOpacityRuntimeApplied;
-                if (shouldRunMinimalistRuntime && QOL.healthbar && QOL.healthbar.minimalist && QOL.healthbar.minimalist.update) {
-                    QOL.healthbar.minimalist.update(root, cfg, minimalistHealthbarEnabled);
-                }
+            function refreshSettings() {
+                model = readModel();
+                QOL.core.hud.refreshRootClasses($.GetContextPanel());
+                update();
+            }
 
-                var shouldRunBudhudRuntime = (healthbarType === 4) || State.budhudWasEnabled;
-                if (shouldRunBudhudRuntime && QOL.healthbar && QOL.healthbar.budhud && QOL.healthbar.budhud.update) {
-                    QOL.healthbar.budhud.update(root, cfg, healthbarType, nowMs);
+            function release() {
+                let error = null;
+                // A failure in one variant must not prevent the others' cleanup.
+                for (const owner of owners) {
+                    try { owner.release(); } catch (failure) { if (!error) error = failure; }
                 }
-
-                var shouldRunFgRuntime = fgHealthbarEnabled || QOL.healthbar.fg.isActive();
-                if (shouldRunFgRuntime && QOL.healthbar && QOL.healthbar.fg && QOL.healthbar.fg.update) {
-                    QOL.healthbar.fg.update(root, cfg);
-                }
-
-                var shouldRunMinecraftRuntime = (healthbarType === 5) || State.mcWasEnabled;
-                if (shouldRunMinecraftRuntime && QOL.healthbar && QOL.healthbar.mc && QOL.healthbar.mc.update) {
-                    QOL.healthbar.mc.update(root, cfg, nowMs, healthbarType === 5);
-                }
+                model = null;
+                if (error) throw error;
             }
 
             return {
-                onEnable: function() {
-                    var S = QOL.core.Scheduler;
-                    // rate-exempt: 20Hz (0.05s) required for custom animated healthbars (budhud/minecraft)
-                    _loop = S && S.createPollLoop ? S.createPollLoop(_tick, 0.05, "ql_healthbar") : null;
-                    _update();
+                onEnable() {
+                    refreshSettings();
+                    // rate-exempt: 20Hz for the animated variants; update reduces
+                    // the cadence once the initial native state has been observed.
+                    loop = QOL.core.Scheduler.createPollLoop(update, 0.05, ctx.id);
                 },
-                onDisable: function() {
-                    if (_loop) { _loop.stop(); _loop = null; }
-                    var S = QOL.core.Scheduler;
-                    if (S) S.cancelAllForFeature("ql_healthbar");
-                    if (logger && logger.clearThrottle) logger.clearThrottle("ql_healthbar");
-                    try {
-                        var root = $.GetContextPanel();
-                        var hc = root ? root.FindChildTraverse("health_and_abilities_container") : null;
-                        if (QOL.healthbar && QOL.healthbar.resetPlayerStyle && hc) {
-                            QOL.healthbar.resetPlayerStyle(hc);
-                        }
-                        if (QOL.healthbar && QOL.healthbar.accent && QOL.healthbar.accent.reset) {
-                            QOL.healthbar.accent.reset();
-                        }
-                        if (QOL.healthbar && QOL.healthbar.resetMinimalistOffsetRuntimeAll) {
-                            QOL.healthbar.resetMinimalistOffsetRuntimeAll(root, null, null);
-                        }
-                        if (QOL.healthbar && QOL.healthbar.budhud && QOL.healthbar.budhud.update) {
-                            QOL.healthbar.budhud.update(root, {}, 0, Date.now ? Date.now() : 0);
-                        }
-                        if (QOL.healthbar && QOL.healthbar.fg && QOL.healthbar.fg.update) {
-                            QOL.healthbar.fg.update(root, {});
-                        }
-                        if (QOL.healthbar && QOL.healthbar.mc && QOL.healthbar.mc.update) {
-                            QOL.healthbar.mc.update(root, {}, Date.now ? Date.now() : 0, false);
-                        }
-                        State.minimalistHealthbarOffsetSig = "";
-                        State.minimalistHealthbarOffsetApplied = false;
-                        State.minimalistHealthbarOffsetPanel = null;
-                        State.playerHealthbarScalePanel = null;
-                        State.playerHealthbarScaleOpacityRuntimeApplied = false;
-                    } catch(e) {}
-                },
-                onSettingsChanged: function() {
-                    _update();
-                    var root = $.GetContextPanel ? $.GetContextPanel() : null;
-                    if (root && QOL.core && QOL.core.hud && QOL.core.hud.refreshRootClasses) {
-                        QOL.core.hud.refreshRootClasses(root);
-                    }
+                onSettingsChanged: refreshSettings,
+                onDisable() {
+                    if (loop) { loop.stop(); loop = null; }
+                    release();
                 }
             };
         },
-    test: function(ctx) {
-        try {
-            var root = $.GetContextPanel();
-            var container = root ? root.FindChildTraverse("health_and_abilities_container") : null;
-            return { passed: !!container, name: "Healthbar container panel exists", message: container ? "" : "health_and_abilities_container not found", assertions: [{ passed: !!container, name: "health_and_abilities_container panel exists" }] };
-        } catch(e) { return { passed: false, name: "Healthbar panel check", message: (e && e.message ? e.message : String(e)) }; }
-    }
+        test() {
+            const container = P.findTraverse($.GetContextPanel(), "health_and_abilities_container");
+            return { passed: !!container, name: "Healthbar container panel exists",
+                message: container ? "" : "health_and_abilities_container not found",
+                assertions: [{ passed: !!container, name: "health_and_abilities_container panel exists" }] };
+        }
     });
 })();

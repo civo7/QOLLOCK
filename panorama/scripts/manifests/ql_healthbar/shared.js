@@ -1,227 +1,184 @@
-// features/ql_healthbar/shared.js
-// =============================================================================
-// QOLLOCK — Healthbar Shared Helpers
-// =============================================================================
-// OWNS:        Shared panel reset, style computation, and application helpers
-//              used by multiple healthbar variants: resetMinimalistOffsetRuntime,
-//              resetPlayerScaleOpacity, buildPlayerHealthbarStyleState,
-//              applyPlayerStyleToPanel, resetPlayerStyle, resetOffsetRuntimeAll.
-// DOES NOT OWN: Variant-specific logic, health reading, panel discovery
-// DEPENDS ON:  Nothing beyond Utils + GetCachedPanel (already available)
-// USED BY:     Healthbar variants (minimalist, fg, budhud, accent, mc)
-//              via QOL.healthbar.* namespace
-//
-// Extracted from ql_feat_healthbar.js (Phase 6).
-// Coexists with original — both publish to QOL.healthbar.* namespace.
-// =============================================================================
-
-(function() {
+// OWNS: Healthbar variant registration and instance-scoped presentation styles.
+// DOES NOT OWN: Native health values, variant animations or root CSS projection.
+(() => {
     "use strict";
+    const H = QOL.healthbar = QOL.healthbar || {};
+    const P = QOL.core.panel;
 
-    // Publish to QOL.healthbar namespace (create if not exists)
-    QOL.healthbar = QOL.healthbar || {};
-
-    // -- Shared reset helpers --
-
-    var clearStyle = QOL.utils.ClearStyleSafe;
-    var Panel = QOL.core.panel;
-    var scaleOwners = new Map();
-    var positionOwners = new Set();
-
-    // The XML root is the engine-owned CitadelHudHealthContainer, not a
-    // separate Panel. Keep its native canvas and CSS baseline unchanged.
-    QOL.healthbar.getPlayerScalePanel = function(panel) {
-        return Panel.findChild(panel, "QOLHealthbarGeometry");
+    // Compatibility calls delegate to the dispatcher-owned instance. Registration
+    // and factory construction never mutate panels or start work.
+    H.registerVariant = function(name, factory) {
+        let current = null;
+        const api = {
+            create(ctx) {
+                current = factory(ctx);
+                return current;
+            },
+            update(...args) {
+                if (!current) current = factory();
+                return current.update(...args);
+            },
+            release() { if (current) current.release(); },
+            reset() { if (current) current.release(); },
+            isActive() { return !!current && current.isActive(); },
+            inspect() { return current && current.inspect ? current.inspect() : null; }
+        };
+        H[name] = api;
+        return api;
     };
-    QOL.healthbar.playerScaleGeometry = function(panel) {
-        var target = QOL.healthbar.getPlayerScalePanel(panel);
-        function logicalSize(axis, dimension) {
-            var actual = Number(panel && panel["actuallayout" + dimension]);
-            var scale = Number(panel && panel["actualuiscale_" + axis]);
+
+    H.getPlayerScalePanel = panel => P.findChild(panel, "QOLHealthbarGeometry");
+    H.playerScaleGeometry = function(panel) {
+        const logicalSize = (axis, dimension) => {
+            const actual = Number(panel && panel["actuallayout" + dimension]);
+            const scale = Number(panel && panel["actualuiscale_" + axis]);
             return actual > 0 && scale > 0 ? Number((actual / scale).toFixed(2)) : 0;
-        }
-        return { target: target, width: logicalSize("x", "width"), height: logicalSize("y", "height") };
-    };
-    function clearScaleOwner(panel) {
-        var target = scaleOwners.get(panel);
-        if (Panel.isAlive(target)) {
-            clearStyle(target, "uiScale");
-            clearStyle(target, "width");
-            clearStyle(target, "height");
-        }
-        scaleOwners.delete(panel);
-    }
-
-    QOL.healthbar.resetMinimalistOffsetRuntime = function(panel) {
-        if (!panel || !panel.style) return;
-        if (positionOwners.has(panel)) {
-            // x/y are components of native position. Return the layout to its
-            // origin before releasing the composite property back to CSS.
-            panel.style.x = "0px";
-            panel.style.y = "0px";
-            clearStyle(panel, "position");
-            positionOwners.delete(panel);
-        }
-        clearStyle(panel, "x");
-        clearStyle(panel, "y");
+        };
+        return { target: H.getPlayerScalePanel(panel), width: logicalSize("x", "width"), height: logicalSize("y", "height") };
     };
 
-    // Clear, never write identity values. ui-scale in particular belongs to CSS:
-    // base/hud.css:420 puts 120% on #health_and_abilities_container (104% under
-    // .support_16_10_active), so writing "100%" here is not a reset — it shrinks
-    // the bar to 100/120 and, because the panel is centred off a 1290px right
-    // margin, moves it left. Same reasoning for opacity: the game fades the
-    // container in over 1.5s on .GameStatePreGame, and a forced 1.00 skips it.
-    QOL.healthbar.resetPlayerScaleOpacity = function(panel) {
-        if (!panel || !panel.style) return;
-        clearScaleOwner(panel);
-        clearStyle(panel, "preTransformScale2d");
-        clearStyle(panel, "uiScale");
-        clearStyle(panel, "opacity");
-    };
-
-    QOL.healthbar.resetPlayerStyle = function(panel) {
-        QOL.healthbar.resetMinimalistOffsetRuntime(panel);
-        QOL.healthbar.resetPlayerScaleOpacity(panel);
-    };
-
-    QOL.healthbar.resetMinimalistOffsetRuntimeAll = function(root, currentPanel, previousPanel) {
-        var Utils = QOL.utils;
-        var GetCachedPanel = QOL.getCachedPanel;
-        var GetUIRoot = QOL.getUIRoot;
-        var PushUnique = QOL_UTILS.PushUnique;
-
-        var seen = [];
-        function push(p) { if (p && typeof p.IsValid === "function" && p.IsValid()) PushUnique(seen, p); }
-
-        push(currentPanel);
-        push(previousPanel);
-        push(GetCachedPanel ? GetCachedPanel("healthContainer") : null);
-
-        if (root && root.FindChildTraverse) {
-            push(root.FindChildTraverse("health_and_abilities_container"));
+    H.buildPlayerHealthbarStyleState = function(cfg, minimalistEnabled, minimalistClassActive, root) {
+        const number = (key, fallback, min, max, round = false) => {
+            let value = Number(cfg && cfg[key]);
+            if (!Number.isFinite(value) || !cfg || cfg[key] === undefined || cfg[key] === null) value = fallback;
+            if (round) value = Math.round(value);
+            return Math.max(min, Math.min(max, value));
+        };
+        const x = number("PLAYER_HEALTHBAR_X_OFFSET", 0, -1000, 1000, true);
+        const y = number("PLAYER_HEALTHBAR_Y_OFFSET", 0, -1000, 1000, true);
+        const scale = number("PLAYER_HEALTHBAR_SCALE", 100, 50, 200, true);
+        const opacity = number("PLAYER_HEALTHBAR_OPACITY", 1, 0, 1);
+        const minimalist = minimalistEnabled && minimalistClassActive;
+        const mx = minimalist ? number("MINIMALIST_HEALTHBAR_X_OFFSET", 0, -300, 300, true) : 0;
+        const my = minimalist ? number("MINIMALIST_HEALTHBAR_Y_OFFSET", 0, -300, 300, true) : 0;
+        // The outer container has native CSS scale/aspect-ratio baselines. This
+        // fallback is only used by a previously loaded layout without the canvas.
+        const hud = P.findHud(root);
+        const has = cls => P.isAlive(hud) && hud.BHasClass(cls);
+        let baseline = has("support_16_10_active") ? 104 : 120;
+        if (has("minecraft_healthbar_active")) baseline = 130;
+        if (has("fg_healthbar_active")) baseline = 120;
+        if (has("support_16_10_active")) {
+            if (has("klutz_healthbar_active")) baseline = 125;
+            if (has("minimalist_healthbar_active") && has("AspectRatio16x10")) baseline = 110;
         }
-        var uiRoot = GetUIRoot ? GetUIRoot() : null;
-        if (uiRoot && uiRoot.FindChildTraverse) {
-            push(uiRoot.FindChildTraverse("health_and_abilities_container"));
-        }
-
-        for (var p = 0; p < seen.length; p++) {
-            QOL.healthbar.resetMinimalistOffsetRuntime(seen[p]);
-        }
-    };
-
-    // -- Shared style computation --
-
-    QOL.healthbar.buildPlayerHealthbarStyleState = function(cfg, minimalistEnabled, minimalistClassActive) {
-        var playerOffsetX = (cfg && cfg.PLAYER_HEALTHBAR_X_OFFSET !== undefined && cfg.PLAYER_HEALTHBAR_X_OFFSET !== null)
-            ? Math.round(Number(cfg.PLAYER_HEALTHBAR_X_OFFSET)) : 0;
-        var playerOffsetY = (cfg && cfg.PLAYER_HEALTHBAR_Y_OFFSET !== undefined && cfg.PLAYER_HEALTHBAR_Y_OFFSET !== null)
-            ? Math.round(Number(cfg.PLAYER_HEALTHBAR_Y_OFFSET)) : 0;
-        var playerScale = (cfg && cfg.PLAYER_HEALTHBAR_SCALE !== undefined && cfg.PLAYER_HEALTHBAR_SCALE !== null)
-            ? Math.round(Number(cfg.PLAYER_HEALTHBAR_SCALE)) : 100;
-        var playerOpacity = (cfg && cfg.PLAYER_HEALTHBAR_OPACITY !== undefined && cfg.PLAYER_HEALTHBAR_OPACITY !== null)
-            ? Number(cfg.PLAYER_HEALTHBAR_OPACITY) : 1.0;
-
-        if (!isFinite(playerOffsetX)) playerOffsetX = 0;
-        if (!isFinite(playerOffsetY)) playerOffsetY = 0;
-        if (!isFinite(playerScale)) playerScale = 100;
-        if (!isFinite(playerOpacity)) playerOpacity = 1.0;
-        if (playerOffsetX < -1000) playerOffsetX = -1000;
-        if (playerOffsetX > 1000) playerOffsetX = 1000;
-        if (playerOffsetY < -1000) playerOffsetY = -1000;
-        if (playerOffsetY > 1000) playerOffsetY = 1000;
-        if (playerScale < 50) playerScale = 50;
-        if (playerScale > 200) playerScale = 200;
-        if (playerOpacity < 0) playerOpacity = 0;
-        if (playerOpacity > 1) playerOpacity = 1;
-
-        var minimalistOffsetX = 0;
-        var minimalistOffsetY = 0;
-        if (minimalistEnabled && minimalistClassActive) {
-            var loX = (cfg && cfg.MINIMALIST_HEALTHBAR_X_OFFSET !== undefined && cfg.MINIMALIST_HEALTHBAR_X_OFFSET !== null)
-                ? Math.round(Number(cfg.MINIMALIST_HEALTHBAR_X_OFFSET)) : 0;
-            var loY = (cfg && cfg.MINIMALIST_HEALTHBAR_Y_OFFSET !== undefined && cfg.MINIMALIST_HEALTHBAR_Y_OFFSET !== null)
-                ? Math.round(Number(cfg.MINIMALIST_HEALTHBAR_Y_OFFSET)) : 0;
-            if (!isFinite(loX)) loX = 0;
-            if (!isFinite(loY)) loY = 0;
-            if (loX < -300) loX = -300;
-            if (loX > 300) loX = 300;
-            if (loY < -300) loY = -300;
-            if (loY > 300) loY = 300;
-            minimalistOffsetX = loX;
-            minimalistOffsetY = -loY;
-        }
-
-        var finalOffsetX = playerOffsetX + minimalistOffsetX;
-        var finalOffsetY = (-playerOffsetY) + minimalistOffsetY;
-        var finalScale = playerScale / 100;
-        // Inline ui-scale replaces CSS rather than multiplying it. Preserve
-        // the native baseline and its aspect-ratio override (source styles).
-        var basePct = 120;
-        var scaleRoot = Panel.findHud();
-        if (scaleRoot && scaleRoot.BHasClass("support_16_10_active")) basePct = 104;
-        if (scaleRoot && scaleRoot.BHasClass("minecraft_healthbar_active")) basePct = 130;
-        if (scaleRoot && scaleRoot.BHasClass("fg_healthbar_active")) basePct = 120;
-        if (scaleRoot && scaleRoot.BHasClass("support_16_10_active")) {
-            if (scaleRoot.BHasClass("klutz_healthbar_active")) basePct = 125;
-            if (scaleRoot.BHasClass("minimalist_healthbar_active") && scaleRoot.BHasClass("AspectRatio16x10")) basePct = 110;
-        }
-        var scaleText = Math.round(basePct * playerScale / 100) + "%";
-        var opacityText = playerOpacity.toFixed(2);
-        var scaleActive = Math.abs(finalScale - 1.0) > 0.0001;
-        var opacityActive = Math.abs(playerOpacity - 1.0) > 0.0001;
-
         return {
-            finalOffsetX: finalOffsetX, finalOffsetY: finalOffsetY,
-            finalScale: finalScale, scaleText: scaleText,
-            opacityText: opacityText, playerOpacity: playerOpacity,
-            scaleActive: scaleActive, opacityActive: opacityActive,
-            scaleOpacityActive: scaleActive || opacityActive
+            finalOffsetX: x + mx, finalOffsetY: -y - my,
+            finalScale: scale / 100, scaleText: Math.round(baseline * scale / 100) + "%",
+            playerOpacity: opacity, opacityText: opacity.toFixed(2),
+            scaleActive: scale !== 100, opacityActive: opacity !== 1,
+            scaleOpacityActive: scale !== 100 || opacity !== 1
         };
     };
 
-    // -- Shared style application --
+    H.createPlayerStyle = function() {
+        const owners = new Map();
+        const canvases = new Map();
 
-    // Release defaults so native CSS transitions and aspect-ratio scales return.
-    QOL.healthbar.applyPlayerStyleToPanel = function(panel, runtimeState, includeOffsets, geometry) {
-        if (!panel || !panel.style || !runtimeState) return;
-        for (var owner of scaleOwners.keys()) if (!Panel.isAlive(owner)) scaleOwners.delete(owner);
-        for (var positionOwner of positionOwners) if (!Panel.isAlive(positionOwner)) positionOwners.delete(positionOwner);
-        var applyOffsets = (includeOffsets !== false);
-        if (applyOffsets) {
-            if (runtimeState.finalOffsetX !== 0 || runtimeState.finalOffsetY !== 0) {
-                var x = String(runtimeState.finalOffsetX) + "px";
-                var y = String(runtimeState.finalOffsetY) + "px";
-                if (panel.style.x !== x) panel.style.x = x;
-                if (panel.style.y !== y) panel.style.y = y;
-                positionOwners.add(panel);
-            } else QOL.healthbar.resetMinimalistOffsetRuntime(panel);
+        function clear(panel, property) {
+            if (!P.isAlive(panel)) return true;
+            if (property === "x" || property === "y") {
+                try { panel.style[property] = "0px"; } catch (_) { return false; }
+            }
+            return P.clearStyleProperty(panel, property);
         }
-        clearStyle(panel, "preTransformScale2d");
-        geometry = geometry || QOL.healthbar.playerScaleGeometry(panel);
-        var target = geometry.target;
-        var previous = scaleOwners.get(panel);
-        if (previous && previous !== target) clearScaleOwner(panel);
-        if (Panel.isAlive(target)) {
-            clearStyle(panel, "uiScale");
-            if (runtimeState.scaleActive && geometry.width > 0 && geometry.height > 0) {
-                // Percentage-sized children and fixed-size number groups must
-                // share one unchanged logical canvas when ui-scale relayouts.
-                var width = geometry.width + "px";
-                var height = geometry.height + "px";
-                var text = Math.round(runtimeState.finalScale * 100) + "%";
-                if (target.style.width !== width) target.style.width = width;
-                if (target.style.height !== height) target.style.height = height;
-                if (target.style.uiScale !== text) target.style.uiScale = text;
-                scaleOwners.set(panel, target);
-            } else clearScaleOwner(panel);
-        } else {
-            // Compatibility with a health layout loaded before the new XML.
-            if (runtimeState.scaleActive) panel.style.uiScale = runtimeState.scaleText;
-            else clearStyle(panel, "uiScale");
+
+        function releaseProperties(panel, properties) {
+            const record = owners.get(panel);
+            if (!record) return;
+            let offsets = false;
+            for (const property of Array.from(record.owned)) {
+                if (properties && !properties.has(property)) continue;
+                if (clear(panel, property)) {
+                    record.owned.delete(property);
+                    offsets = offsets || property === "x" || property === "y";
+                }
+            }
+            if (offsets) P.clearStyleProperty(panel, "position");
+            record.signature = null;
+            if (record.owned.size === 0) owners.delete(panel);
         }
-        if (runtimeState.opacityActive) panel.style.opacity = runtimeState.opacityText;
-        else clearStyle(panel, "opacity");
+
+        function sync(panel, styles) {
+            if (!P.isAlive(panel)) return false;
+            let record = owners.get(panel);
+            if (!record && Object.keys(styles).length === 0) return true;
+            if (!record) { record = { owned: new Set(), signature: null }; owners.set(panel, record); }
+            let cleared = true;
+            for (const property of Array.from(record.owned)) {
+                if (Object.prototype.hasOwnProperty.call(styles, property)) continue;
+                if (clear(panel, property)) {
+                    record.owned.delete(property);
+                    if (property === "x" || property === "y") P.clearStyleProperty(panel, "position");
+                } else cleared = false;
+                record.signature = null;
+            }
+            // Track attempted properties before writing so partial failures can
+            // still be cleaned up, and cache only a complete successful map.
+            for (const property of Object.keys(styles)) record.owned.add(property);
+            const result = P.syncStyles(panel, styles, record.signature);
+            record.signature = cleared ? result.sig : null;
+            if (record.owned.size === 0) owners.delete(panel);
+            return result.sig !== null && cleared;
+        }
+
+        function releaseScaleOpacity(panel) {
+            const canvas = canvases.get(panel);
+            if (canvas) releaseProperties(canvas);
+            canvases.delete(panel);
+            releaseProperties(panel, new Set(["uiScale", "opacity"]));
+        }
+
+        function release(panel) {
+            if (panel) {
+                releaseScaleOpacity(panel);
+                releaseProperties(panel);
+                return;
+            }
+            for (const owner of Array.from(owners.keys())) releaseProperties(owner);
+            canvases.clear();
+        }
+
+        function apply(panel, model, includeOffsets = true, geometry = H.playerScaleGeometry(panel)) {
+            if (!P.isAlive(panel) || !model) return false;
+            for (const owner of owners.keys()) if (!P.isAlive(owner)) owners.delete(owner);
+            for (const owner of canvases.keys()) if (!P.isAlive(owner)) canvases.delete(owner);
+            const styles = {};
+            if (includeOffsets) {
+                if (model.finalOffsetX !== 0) styles.x = model.finalOffsetX + "px";
+                if (model.finalOffsetY !== 0) styles.y = model.finalOffsetY + "px";
+            }
+            if (model.opacityActive) styles.opacity = model.opacityText;
+            const previous = canvases.get(panel);
+            if (previous && previous !== geometry.target) releaseProperties(previous);
+            let complete = true;
+            if (P.isAlive(geometry.target)) {
+                canvases.set(panel, geometry.target);
+                const canvasStyles = {};
+                if (model.scaleActive && geometry.width > 0 && geometry.height > 0) {
+                    canvasStyles.width = geometry.width + "px";
+                    canvasStyles.height = geometry.height + "px";
+                    canvasStyles.uiScale = Math.round(model.finalScale * 100) + "%";
+                }
+                complete = sync(geometry.target, canvasStyles);
+            } else {
+                canvases.delete(panel);
+                if (model.scaleActive) styles.uiScale = model.scaleText;
+            }
+            return sync(panel, styles) && complete;
+        }
+        return { apply, release, releaseScaleOpacity,
+            releaseOffsets: panel => releaseProperties(panel, new Set(["x", "y"])),
+            isActive: () => owners.size > 0 };
     };
+
+    // Public presentation helpers always address the dispatcher's sole style owner.
+    let playerStyle = null;
+    H.bindPlayerStyle = owner => { playerStyle = owner; };
+    const styleOwner = () => playerStyle || (playerStyle = H.createPlayerStyle());
+    H.applyPlayerStyleToPanel = (...args) => styleOwner().apply(...args);
+    H.resetPlayerStyle = panel => styleOwner().release(panel);
+    H.resetPlayerScaleOpacity = panel => styleOwner().releaseScaleOpacity(panel);
+    H.resetMinimalistOffsetRuntime = panel => styleOwner().releaseOffsets(panel);
+    H.resetMinimalistOffsetRuntimeAll = () => styleOwner().release();
 })();

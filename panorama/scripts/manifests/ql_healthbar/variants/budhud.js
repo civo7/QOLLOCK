@@ -1,240 +1,97 @@
-// ql_feat_healthbar_budhud.js — Budhud healthbar subsystem
-// Extracted from ql_feat_healthbar.js, Phase 11 Step 1
-(function() {
-    'use strict';
-    var _featureId = "ql_feat_healthbar_budhud";
-    var Panel = (QOL.core && QOL.core.panel) ? QOL.core.panel : {};
-    var State = QOL.state || (typeof globalThis !== "undefined" && globalThis.State) || {};
-    var Utils = QOL.utils;
-    var GetCachedPanel = QOL.getCachedPanel;
-    var SetCachedPanel = QOL.setCachedPanel;
-    var IsCfgEnabled = QOL.utils.IsCfgEnabled;
-    var IsPanelValid = QOL.utils.IsPanelValid;
-    var FindFirstPanelByClass = Utils.FindFirstPanelByClass;
-    var ToRgbString = Utils.ToRgbString;
-    var BlendRgb = Utils.BlendRgb;
-    var IsColorWarningEnabled = function(cfg) { return QOL.isColorWarningEnabled ? QOL.isColorWarningEnabled(cfg) : false; };
+// OWNS: Budhud percentage label, mirroring the native current-health color.
+// DOES NOT OWN: Health bindings, native warning colors or variant CSS.
+(() => {
+    "use strict";
+    const H = QOL.healthbar;
+    const P = QOL.core.panel;
+    const U = QOL.utils;
+    H.registerVariant("budhud", function() {
+        const resolver = QOL.panelCache.createIdResolver("health_and_abilities_container", {
+            retryMs: 400,
+            ownerPath: [{ id: "Hud", optional: true }, { className: "HudCore" }, "gameplay_hud"]
+        });
+        let source = null, current = null, total = null, percent = null;
+        let created = false, nextUpdateMs = 0;
+        let textSignature = null, styleSignature = null;
 
-    // ── Color constants ──
-    var COLORED_HEALTHBAR_LOW_HP_THRESHOLD = 25;
-    var COLORED_HEALTHBAR_MID_HP_THRESHOLD = 65;
-    var COLORED_HEALTHBAR_HIGH_HP_THRESHOLD = 75;
-    var COLORED_HEALTHBAR_PULSE_STEP = 0.1;
-    var COLORED_HEALTHBAR_COLOR_RED = [255, 0, 0];
-    var COLORED_HEALTHBAR_COLOR_DARK_RED = [222, 0, 0];
-    var COLORED_HEALTHBAR_COLOR_ORANGE = [255, 177, 0];
-    var COLORED_HEALTHBAR_COLOR_YELLOW = [255, 240, 120];
-    var COLORED_HEALTHBAR_COLOR_WHITE = [255, 255, 255];
-
-    // ── Colored healthbar ──
-
-    function ResolveColoredHealthbarColor(pct, cfg) {
-        var use25 = IsCfgEnabled(cfg, "ENABLE_COLOR_WARNING_25");
-        var use65 = IsCfgEnabled(cfg, "ENABLE_COLOR_WARNING_65");
-        var use75 = IsCfgEnabled(cfg, "ENABLE_COLOR_WARNING_75");
-
-        if (use25 && pct <= COLORED_HEALTHBAR_LOW_HP_THRESHOLD) {
-            State.coloredHealthbarPulseVal += (State.coloredHealthbarPulseDir * COLORED_HEALTHBAR_PULSE_STEP);
-            if (State.coloredHealthbarPulseVal >= 1) {
-                State.coloredHealthbarPulseVal = 1;
-                State.coloredHealthbarPulseDir = -1;
-            } else if (State.coloredHealthbarPulseVal <= 0) {
-                State.coloredHealthbarPulseVal = 0;
-                State.coloredHealthbarPulseDir = 1;
-            }
-            return ToRgbString(BlendRgb(COLORED_HEALTHBAR_COLOR_RED, COLORED_HEALTHBAR_COLOR_DARK_RED, State.coloredHealthbarPulseVal));
-        }
-        if (use65 && pct <= COLORED_HEALTHBAR_MID_HP_THRESHOLD) return ToRgbString(COLORED_HEALTHBAR_COLOR_ORANGE);
-        if (use75 && pct <= COLORED_HEALTHBAR_HIGH_HP_THRESHOLD) return ToRgbString(COLORED_HEALTHBAR_COLOR_YELLOW);
-        return ToRgbString(COLORED_HEALTHBAR_COLOR_WHITE);
-    }
-
-    // ── Budhud ──
-
-    function ParseBudhudNumericLabelValue(rawText) {
-        if (rawText === undefined || rawText === null) return NaN;
-        var text = String(rawText || "");
-        if (!text || text.length === 0) return NaN;
-        var digits = text.replace(/[^0-9]/g, "");
-        if (!digits || digits.length === 0) return NaN;
-        var value = parseInt(digits, 10);
-        if (!isFinite(value)) return NaN;
-        return value;
-    }
-
-    function ResolveBudhudHealthPanels(root) {
-        if (!root || !root.FindChildTraverse) return null;
-
-        var content = GetCachedPanel("budhudHealthBarContent");
-        if (!content) {
-            content = root.FindChildTraverse("HealthBarContent");
-            SetCachedPanel("budhudHealthBarContent", content);
-        }
-        if (!IsPanelValid(content)) return null;
-
-        // No parent check here. The one this used to carry — GetParent() !== root —
-        // was structurally always true: HealthRegenAndTotal is nested inside
-        // HealthContainerRoot (hud_health_container.xml:72), never a direct child of
-        // the HUD root passed in. So the cache never satisfied the guard and this ran
-        // a full-root FindChildTraverse every tick. GetCachedPanel already
-        // re-validates through IsValid() and drops dead refs, which is what the guard
-        // was reaching for.
-        var regenTotal = GetCachedPanel("budhudHealthRegenAndTotal");
-        if (!regenTotal) {
-            regenTotal = root.FindChildTraverse ? root.FindChildTraverse("HealthRegenAndTotal") : null;
-            SetCachedPanel("budhudHealthRegenAndTotal", regenTotal);
-        }
-        if (!IsPanelValid(regenTotal)) return null;
-
-        var healthContainer = GetCachedPanel("budhudHealthContainer");
-        if (!healthContainer || (healthContainer.GetParent && healthContainer.GetParent() !== regenTotal)) {
-            healthContainer = FindFirstPanelByClass(regenTotal, "healthContainer");
-            SetCachedPanel("budhudHealthContainer", healthContainer);
-        }
-        if (!IsPanelValid(healthContainer)) return null;
-
-        var currentLabel = GetCachedPanel("budhudCurrentHealthLabel");
-        if (!currentLabel || (currentLabel.GetParent && !currentLabel.GetParent())) {
-            currentLabel = FindFirstPanelByClass(regenTotal, "currentHealthLabel");
-            SetCachedPanel("budhudCurrentHealthLabel", currentLabel);
-        }
-        if (!IsPanelValid(currentLabel)) return null;
-
-        var totalLabel = GetCachedPanel("budhudTotalHealthLabel");
-        if (!totalLabel || (totalLabel.GetParent && !totalLabel.GetParent())) {
-            totalLabel = FindFirstPanelByClass(regenTotal, "totalHealthLabel");
-            SetCachedPanel("budhudTotalHealthLabel", totalLabel);
-        }
-        if (!IsPanelValid(totalLabel)) return null;
-
-        var percentLabel = GetCachedPanel("budhudPercentLabel");
-        if (!percentLabel || (percentLabel.GetParent && percentLabel.GetParent() !== healthContainer)) {
-            percentLabel = healthContainer.FindChildTraverse ? healthContainer.FindChildTraverse("HealthPercentLabel") : null;
-            if (!IsPanelValid(percentLabel)) {
-                try {
-                    percentLabel = $.CreatePanel("Label", healthContainer, "HealthPercentLabel");
-                } catch (eCreate) {
-                    $.Msg("[QOLLock][WARN][" + _featureId + "] op failed: " + (eCreate && eCreate.message ? eCreate.message : String(eCreate || "")));
-                    percentLabel = null;
+        function releaseLabels() {
+            if (P.isAlive(percent)) {
+                if (created) { percent.visible = false; P.delete(percent); }
+                else {
+                    P.clearStyleProperty(percent, "visibility");
+                    P.clearStyleProperty(percent, "color");
                 }
             }
-            SetCachedPanel("budhudPercentLabel", percentLabel);
-        }
-        if (!IsPanelValid(percentLabel)) return null;
-
-        return {
-            currentLabel: currentLabel,
-            totalLabel: totalLabel,
-            percentLabel: percentLabel
-        };
-    }
-
-    function ResetBudhudHealthbarRuntime() {
-        var currentLabel = GetCachedPanel("budhudCurrentHealthLabel");
-        var percentLabel = GetCachedPanel("budhudPercentLabel");
-
-        if (currentLabel) {
-            try {
-                if (State.budhudCurrentLabelBaseColorCaptured) {
-                    currentLabel.style.color = String(State.budhudCurrentLabelBaseColor || "");
-                } else {
-                    currentLabel.style.color = "";
-                }
-            } catch(e0) { $.Msg("[QOLLock][WARN][" + _featureId + "] op failed: " + (e0 && e0.message ? e0.message : String(e0 || ""))); }
-        }
-        if (percentLabel) {
-            try { percentLabel.style.visibility = "collapse"; } catch(e1) { $.Msg("[QOLLock][WARN][" + _featureId + "] op failed: " + (e1 && e1.message ? e1.message : String(e1 || ""))); }
-            try { percentLabel.style.color = ""; } catch(e2) { $.Msg("[QOLLock][WARN][" + _featureId + "] op failed: " + (e2 && e2.message ? e2.message : String(e2 || ""))); }
+            current = null; total = null; percent = null;
+            created = false;
+            textSignature = null; styleSignature = null;
         }
 
-        State.budhudWasEnabled = false;
-        State.budhudLastColor = "";
-        State.budhudLastPercentText = "";
-        State.budhudNextUpdateMs = 0;
-    }
+        function release() {
+            releaseLabels();
+            source = null; nextUpdateMs = 0;
+            resolver.reset();
+        }
 
-    function UpdateBudhudHealthbar(root, cfg, healthbarType, nowMs) {
-        if (!root || !root.FindChildTraverse) return;
-        var enabled = (Number(healthbarType) === 4);
-        if (!enabled) {
-            if (State.budhudWasEnabled) {
-                ResetBudhudHealthbarRuntime();
+        function resolve(root) {
+            const health = resolver.resolve(root);
+            // HealthRegenAndTotal is a sibling of native bars inside the canvas.
+            const numbers = P.findTraverse(health, "HealthRegenAndTotal");
+            const group = U.FindFirstPanelByClass(numbers, "healthContainer");
+            const nextCurrent = U.FindFirstPanelByClass(group || numbers, "currentHealthLabel");
+            const nextTotal = U.FindFirstPanelByClass(group || numbers, "totalHealthLabel");
+            if (source !== health || current !== nextCurrent || total !== nextTotal ||
+                P.isAlive(percent) && percent.GetParent() !== group) {
+                releaseLabels();
+                source = health; current = nextCurrent; total = nextTotal;
+                nextUpdateMs = 0;
             }
-            return;
-        }
-
-        if ((Number(nowMs) || 0) < (Number(State.budhudNextUpdateMs) || 0)) {
-            return;
-        }
-
-        var panels = ResolveBudhudHealthPanels(root);
-        if (!panels) {
-            State.budhudNextUpdateMs = (Number(nowMs) || 0) + 400;
-            return;
-        }
-
-        var currentLabel = panels.currentLabel;
-        var totalLabel = panels.totalLabel;
-        var percentLabel = panels.percentLabel;
-
-        if (!State.budhudCurrentLabelBaseColorCaptured) {
-            try { State.budhudCurrentLabelBaseColor = String(currentLabel.style.color || ""); } catch (eBase) { State.budhudCurrentLabelBaseColor = ""; }
-            State.budhudCurrentLabelBaseColorCaptured = true;
-        }
-
-        var currentValue = ParseBudhudNumericLabelValue(currentLabel && currentLabel.text);
-        var totalValue = ParseBudhudNumericLabelValue(totalLabel && totalLabel.text);
-        if (!isFinite(currentValue) || !isFinite(totalValue) || totalValue <= 0) {
-            State.budhudNextUpdateMs = (Number(nowMs) || 0) + 200;
-            State.budhudWasEnabled = true;
-            return;
-        }
-
-        var percent = (currentValue / totalValue) * 100;
-        if (!isFinite(percent)) percent = 0;
-        if (percent < 0) percent = 0;
-
-        var nextPercentText = String(Math.floor(percent)) + "%";
-        if (nextPercentText !== State.budhudLastPercentText) {
-            percentLabel.text = nextPercentText;
-            State.budhudLastPercentText = nextPercentText;
-        }
-        try { percentLabel.style.visibility = "visible"; } catch(eVis) { $.Msg("[QOLLock][WARN][" + _featureId + "] op failed: " + (eVis && eVis.message ? eVis.message : String(eVis || ""))); }
-
-        var warningEnabled = IsColorWarningEnabled(cfg);
-        if (warningEnabled) {
-            var nextColor = ResolveColoredHealthbarColor(percent, cfg);
-            if (nextColor !== State.budhudLastColor) {
-                try { currentLabel.style.color = nextColor; } catch(eColor0) { $.Msg("[QOLLock][WARN][" + _featureId + "] op failed: " + (eColor0 && eColor0.message ? eColor0.message : String(eColor0 || ""))); }
-                try { percentLabel.style.color = nextColor; } catch(eColor1) { $.Msg("[QOLLock][WARN][" + _featureId + "] op failed: " + (eColor1 && eColor1.message ? eColor1.message : String(eColor1 || ""))); }
-                State.budhudLastColor = nextColor;
+            if (!P.isAlive(current) || !P.isAlive(total) || !P.isAlive(group)) return false;
+            if (!P.isAlive(percent)) {
+                percent = P.findChild(group, "HealthPercentLabel");
+                created = !P.isAlive(percent);
+                if (created) percent = P.create("Label", group, "HealthPercentLabel");
+                textSignature = null; styleSignature = null;
+                if (P.isAlive(percent)) percent.hittest = false;
             }
-        } else {
-            var baseColor = State.budhudCurrentLabelBaseColorCaptured
-                ? String(State.budhudCurrentLabelBaseColor || "")
-                : "";
-            var baseSig = "__base__:" + baseColor;
-            if (State.budhudLastColor !== baseSig) {
-                try { currentLabel.style.color = baseColor; } catch(eBase0) { $.Msg("[QOLLock][WARN][" + _featureId + "] op failed: " + (eBase0 && eBase0.message ? eBase0.message : String(eBase0 || ""))); }
-                try { percentLabel.style.color = baseColor; } catch(eBase1) { $.Msg("[QOLLock][WARN][" + _featureId + "] op failed: " + (eBase1 && eBase1.message ? eBase1.message : String(eBase1 || ""))); }
-                State.budhudLastColor = baseSig;
-            }
+            return P.isAlive(percent);
         }
 
-        State.budhudWasEnabled = true;
-        State.budhudNextUpdateMs = (Number(nowMs) || 0) + 100;
-    }
+        function readModel(cfg) {
+            return {
+                warningEnabled: QOL.isColorWarningEnabled(cfg)
+            };
+        }
 
-    // ── Export ──
-    try {
-        if (typeof QOL.healthbar !== "object") QOL.healthbar = {};
-        QOL.healthbar.budhud = { update: UpdateBudhudHealthbar };
-    } catch(e) { $.Msg("[QOLLock][ERROR][" + _featureId + "] could not export QOL.healthbar.budhud: " + (e && e.message ? e.message : String(e))); }
+        function readHealth() {
+            const parse = text => {
+                const digits = String(text || "").replace(/[^0-9]/g, "");
+                return digits ? Number(digits) : NaN;
+            };
+            const hp = parse(current.text), max = parse(total.text);
+            return Number.isFinite(hp) && Number.isFinite(max) && max > 0 ? Math.max(0, hp / max * 100) : null;
+        }
 
-    // ── Self-test ──
-    try {
-        if (typeof UpdateBudhudHealthbar !== "function") throw new Error("UpdateBudhudHealthbar missing");
-    } catch(e) {
-        $.Msg("[QOLLock][ERROR][" + _featureId + "] self-test: " + (e && e.message ? e.message : String(e)));
-    }
+        function render(value, model) {
+            const text = Math.floor(value) + "%";
+            if (textSignature !== text) { percent.text = text; textSignature = text; }
+            const styles = { visibility: "visible" };
+            // ql_color_warnings is the sole native color writer and pulse model.
+            // Reading its current presentation prevents a second animation phase.
+            if (model.warningEnabled) styles.color = current.style.color || U.ToRgbString(U.COLORED_HEALTHBAR_COLOR_WHITE);
+            else P.clearStyleProperty(percent, "color");
+            styleSignature = P.syncStyles(percent, styles, styleSignature).sig;
+        }
+
+        function update(root, cfg, type, nowMs) {
+            if (Number(type) !== 4 || !P.isAlive(root)) { release(); return; }
+            if (!resolve(root)) { nextUpdateMs = Number(nowMs) + 400; return; }
+            if (Number(nowMs) < nextUpdateMs) return;
+            const value = readHealth();
+            if (value === null) { nextUpdateMs = Number(nowMs) + 200; return; }
+            render(value, readModel(cfg));
+            nextUpdateMs = Number(nowMs) + 100;
+        }
+        return { update, release, isActive: () => P.isAlive(percent) };
+    });
 })();

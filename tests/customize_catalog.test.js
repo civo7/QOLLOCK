@@ -19,7 +19,7 @@ test("catalog covers current visual manifest controls, with explicit compatibili
         // These masters are derived by the existing threshold normalizers.
         "ENABLE_COLORED_HEALTHBAR", "ENABLE_ENEMY_COLORED_HEALTHBAR", "ENABLE_ALLY_COLORED_HEALTHBAR",
         // Retained for saved-config compatibility; placement now uses Customize offsets.
-        "STATS_POSITION_SIDE",
+        "STATS_POSITION_SIDE", "MINIMALIST_HEALTHBAR_X_OFFSET", "MINIMALIST_HEALTHBAR_Y_OFFSET",
         // Split Alt/Tab fields own current map sizing; this is a legacy alias.
         "MINIMAP_LARGE_SIZE", "ENABLE_PERF_DEBUG", "ENABLE_PERF_DEBUG_DETAIL"
     ]);
