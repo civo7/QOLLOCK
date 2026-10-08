@@ -166,28 +166,6 @@ var State;
         },
         customHudSuppressed: false,
         keyboardBoxCaches: [],
-        recentPurchaseFiltersCreated: false,
-        recentPurchaseLastFilterSig: null,
-        recentPurchaseLastFirstChild: null,
-        recentPurchaseLastVisibilitySig: null,
-        recentPurchaseWasInHideout: null,
-        recentPurchaseQuickSeenKeys: {},
-        recentPurchaseQuickInitialized: false,
-        recentPurchaseQuickActiveEntries: [],
-        heroPopup: {
-            panelsByHero: {},
-            activeEntriesByHero: {},
-            lastEntryTime: {},
-            playerCardCache: {},
-            overlapPending: false,
-            mapState: 0,
-            buildGen: 0,
-            ultCooldownsEnabled: false,
-            // Resolved Item Buy Notifications geometry (offset/opacity/scale), cached
-            // so lazily-created per-hero panels can be styled at creation time and
-            // live panels only re-styled when the sliders actually move.
-            style: null
-        },
         bottomBarCurrencyColorStyleSig: "",
         // Paired with the sig above. A colour already applied still has to be
         // re-applied when the HUD rebuilds and the signature panel is a different
@@ -301,10 +279,6 @@ var State;
         rootClassCache: { panel: null, values: {} },
         coreRootStaticSig: "",
         abilitiesClassCache: { panel: null, values: {} },
-        recentPurchasesContainer: null,
-        recentPurchasesPanel: null,
-        quickPurchasesPanel: null,
-        cachedRejuvTimer: null,
         targetShapesCache: [],
         hintContainerCache: [],
         targetShapeStyleSig: "",

@@ -63,6 +63,11 @@ one warning owner; objective timers consume a scalar rejuvenator snapshot.
 These checks complement the frozen-main compatibility matrix and do not replace
 client validation of native animation, composition, input or timing.
 
+`recent_purchases_owner.test.js` exercises production filters, feed and hero
+popups against recycled rows, late purchaser evidence, living native replacement,
+shared geometry and partial writes. Native history remains engine-owned;
+expired or recycled-row evidence must not replay an earlier purchase.
+
 `tests/customize_config_compat.test.js` imports frozen legacy compact codes
 generated with the main codec/schema recorded in the fixture, then checks
 Customize cancellation, Apply and current-format export. It also checks legacy

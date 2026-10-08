@@ -1,164 +1,55 @@
-// manifests/ql_recent_purchases/manifest.js
-// =============================================================================
-// QOLLOCK — Recent Purchases & Item Buy Notifications
-// =============================================================================
-// OWNS:        Recent Purchases shop panel filters/icons, Centralized Quick
-//              Purchases popup, and Per-Hero purchase popup overlays.
-// DOES NOT OWN: CitadelShop core, native purchase event stream
-// DEPENDS ON:  QOL.core.FeatureRegistry, QOL.core.Scheduler, QOL.core.Hud
-// CONFIG KEYS: ENABLE_SHOP_RECENT_PURCHASES, ENABLE_SHOP_ITEM_NOTIFICATIONS,
-//              ENABLE_HERO_PURCHASE_POPUPS, RECENT_PURCHASES_PANEL_X_OFFSET,
-//              RECENT_PURCHASES_PANEL_Y_OFFSET, RECENT_PURCHASES_PANEL_OPACITY,
-//              RECENT_PURCHASES_PANEL_SCALE, RECENT_PURCHASES_QUICK_X_OFFSET,
-//              RECENT_PURCHASES_QUICK_Y_OFFSET, RECENT_PURCHASES_QUICK_OPACITY,
-//              RECENT_PURCHASES_QUICK_SCALE, RECENT_PURCHASES_QUICK_MAX,
-//              RECENT_PURCHASES_QUICK_DISPLAY_SEC, RECENT_PURCHASES_QUICK_REJUV,
-//              RECENT_PURCHASES_QUICK_SCOREBOARD
-// CSS:         shop_recent_purchases_active, shop_recent_purchases_redux,
-//              shop_item_notifications_active
-// PATTERN:     Polling (~5Hz, 0.2s). Self-scheduling via Scheduler.
-// =============================================================================
-
-(function() {
+// OWNS: Shop purchase filters/icons, central feed and per-hero purchase overlays.
+// DOES NOT OWN: Native purchase history, shop layout, top-bar cards or root CSS policy.
+// Sources: hud.xml > .HudCore > CitadelHudHeroShop > Shop > NavPanel;
+// citadel_hud_top_bar.xml and citadel_hud_top_bar_player.xml (HeroNameHidden/HeroBadge).
+(() => {
     "use strict";
-
-    var FR = QOL.core.FeatureRegistry;
-    if (!FR) {
-        $.Msg("[QOLLock] ql_recent_purchases: FeatureRegistry not found — aborting");
-        return;
-    }
-
-    var RECENT_PURCHASE_QUICK_FADE_SEC = 0.4;
-    var RECENT_PURCHASE_QUICK_MAX_DEFAULT = 3;
-    var RECENT_PURCHASE_QUICK_DISPLAY_SEC_DEFAULT = 5;
-    var PANEL_ID_TOP_BAR = "TopBar";
-    var CLASS_ULTIMATE_UNLOCKED = "UltimateUnlocked";
-    var CLASS_RECENT_PURCHASE = "recentPurchase";
-
-    var HERO_MAP_IDLE = 0;
-    var HERO_MAP_BUILDING = 1;
-    var HERO_MAP_BUILT = 2;
-    var QUICK_ROW_UI_SCALE = 0.75;
-    var QUICK_OVERLAP_GAP = 0;
-    var PANEL_SEARCH_MS = 2000;
-
-    var RECENT_PURCHASE_QUICK_CLASSES = [
+    const Q = QOL;
+    const P = Q.core.panel;
+    const S = Q.core.Scheduler;
+    const FADE_SEC = 0.4;
+    const QUICK_ROW_SCALE = 0.75;
+    // CSS baselines, not persistent setting defaults.
+    const SHOP_SCALE = 130;
+    const SCOREBOARD_SCALE = 85;
+    const PURCHASE_CLASSES = [
         "isTier1Purchase", "isTier2Purchase", "isTier3Purchase", "isTier4Purchase",
-        "isWeaponPurchase", "isArmorPurchase", "isTechPurchase",
-        "isTeam1Purchase", "isTeam2Purchase"
+        "isWeaponPurchase", "isArmorPurchase", "isTechPurchase", "isTeam1Purchase", "isTeam2Purchase"
     ];
-
-    var RECENT_PURCHASE_FILTERS = [
-        { id: "Tier1Toggle", label: "T1", group: "tier", active: true, invert: true,
-          ShouldHideItem: function(p) { return p.BHasClass("isTier1Purchase"); } },
-        { id: "Tier2Toggle", label: "T2", group: "tier", active: true, invert: true,
-          ShouldHideItem: function(p) { return p.BHasClass("isTier2Purchase"); } },
-        { id: "Tier3Toggle", label: "T3", group: "tier", active: true, invert: true,
-          ShouldHideItem: function(p) { return p.BHasClass("isTier3Purchase"); } },
-        { id: "Tier4Toggle", label: "T4", group: "tier", active: true, invert: true,
-          ShouldHideItem: function(p) { return p.BHasClass("isTier4Purchase"); } },
-        { id: "Team1OnlyToggle", label: "Hidden King", group: "team", active: true, invert: true,
-          ShouldShowToggle: function(ctx) { return ctx.isSpectator; },
-          ShouldHideItem: function(p) { return p.BHasClass("isTeam1Purchase"); } },
-        { id: "Team2OnlyToggle", label: "Archmother", group: "team", active: true, invert: true,
-          ShouldShowToggle: function(ctx) { return ctx.isSpectator; },
-          ShouldHideItem: function(p) { return p.BHasClass("isTeam2Purchase"); } },
-        { id: "MyTeamToggle", label: "My Team", group: "team", active: true, invert: true,
-          ShouldShowToggle: function(ctx) { return !ctx.isSpectator; },
-          ShouldHideItem: function(p, ctx) {
-              if (ctx.localTeam === 1) return p.BHasClass("isTeam1Purchase");
-              if (ctx.localTeam === 2) return p.BHasClass("isTeam2Purchase");
-              return false;
-          } },
-        { id: "EnemyTeamToggle", label: "Enemy Team", group: "team", active: true, invert: true,
-          ShouldShowToggle: function(ctx) { return !ctx.isSpectator; },
-          ShouldHideItem: function(p, ctx) {
-              if (ctx.localTeam === 1) return p.BHasClass("isTeam2Purchase");
-              if (ctx.localTeam === 2) return p.BHasClass("isTeam1Purchase");
-              return false;
-          } }
+    const FILTERS = [
+        { id: "Tier1Toggle", label: "T1", group: "tier", purchaseClass: "isTier1Purchase" },
+        { id: "Tier2Toggle", label: "T2", group: "tier", purchaseClass: "isTier2Purchase" },
+        { id: "Tier3Toggle", label: "T3", group: "tier", purchaseClass: "isTier3Purchase" },
+        { id: "Tier4Toggle", label: "T4", group: "tier", purchaseClass: "isTier4Purchase" },
+        { id: "Team1OnlyToggle", label: "Hidden King", group: "team", spectator: true, purchaseClass: "isTeam1Purchase" },
+        { id: "Team2OnlyToggle", label: "Archmother", group: "team", spectator: true, purchaseClass: "isTeam2Purchase" },
+        { id: "MyTeamToggle", label: "My Team", group: "team", spectator: false, localTeam: true },
+        { id: "EnemyTeamToggle", label: "Enemy Team", group: "team", spectator: false, localTeam: false }
     ];
-
-    var isPanelValid = QOL.utils.IsPanelValid;
-
-    function setPanelOpacitySafe(panel, opacityText, fallback) {
-        if (!isPanelValid(panel)) return;
-        try {
-            var target = String(opacityText || fallback);
-            if (panel.style.opacity !== target) panel.style.opacity = target;
-        } catch(e) {}
+    const enabled = value => Number(value) === 1;
+    const number = (value, fallback) => Number.isFinite(Number(value)) ? Number(value) : fallback;
+    const scale = value => number(value, 1) > 0 ? number(value, 1) : 1;
+    const opacity = value => {
+        const result = number(value, 1);
+        return result >= 0 && result <= 1 ? result : 1;
+    };
+    function purchaseText(row, className) {
+        const labels = row.FindChildrenWithClassTraverse(className);
+        return labels.length ? P.readText(labels[0]).trim() : "";
     }
-
-    function setStyleIfChanged(panel, prop, val) {
-        if (!isPanelValid(panel)) return;
-        try {
-            if (panel.style[prop] !== val) panel.style[prop] = val;
-        } catch(e) {}
-    }
-
-    function normalizeOpacityNumber(val, def) {
-        var n = Number(val);
-        return isFinite(n) && n >= 0 && n <= 1 ? n : (def !== undefined ? def : 1);
-    }
-
-    function normalizeHudOffsetNumber(val, def) {
-        var n = Number(val);
-        return isFinite(n) ? n : (def || 0);
-    }
-
-    function normalizeHudScaleNumber(val, def) {
-        var n = Number(val);
-        return isFinite(n) && n > 0 ? n : (def || 1);
-    }
-
-    function hasClassInHierarchy(p, cls) {
-        if (typeof QOL_UTILS !== "undefined" && QOL_UTILS.HasClassInHierarchy) {
-            return QOL_UTILS.HasClassInHierarchy(p, cls);
-        }
-        while (p) {
-            if (p.BHasClass && p.BHasClass(cls)) return true;
-            p = p.GetParent ? p.GetParent() : null;
+    function belongsTo(panel, owner) {
+        for (let depth = 0; P.isAlive(panel) && depth < 64; depth++) {
+            if (panel === owner) return true;
+            panel = panel.GetParent();
         }
         return false;
     }
-
-    function getRecentPurchaseName(panel) {
-        if (!isPanelValid(panel)) return "";
-        var labels = panel.FindChildrenWithClassTraverse("recentModPurchaseName");
-        return (labels && labels.length > 0) ? labels[0].text.trim() : "";
+    function icons() {
+        return Q.recentPurchasesIcons || (typeof MOD_ICONS !== "undefined" ? MOD_ICONS : {});
     }
-
-    function getRecentPurchaseTimeText(panel) {
-        if (!isPanelValid(panel)) return "";
-        var labels = panel.FindChildrenWithClassTraverse("recentTimePurchased");
-        return (labels && labels.length > 0) ? labels[0].text.trim() : "";
-    }
-
-    function getRecentPurchaseHeroName(panel) {
-        if (!isPanelValid(panel)) return "";
-        var labels = panel.FindChildrenWithClassTraverse("recentModPurchaserHero");
-        return (labels && labels.length > 0) ? labels[0].text.trim() : "";
-    }
-
-    function getModIcons() {
-        if (typeof QOL !== "undefined" && QOL.recentPurchasesIcons) return QOL.recentPurchasesIcons;
-        if (typeof MOD_ICONS !== "undefined") return MOD_ICONS;
-        return {};
-    }
-
-    function getHeroImages() {
-        if (typeof HERO_IMAGES !== "undefined") return HERO_IMAGES;
-        return {};
-    }
-
-    FR.register({
-        id: "ql_recent_purchases",
-        enabledByDefault: false,
-        enableKeys: [
-            "ENABLE_SHOP_RECENT_PURCHASES",
-            "ENABLE_SHOP_ITEM_NOTIFICATIONS",
-            "ENABLE_HERO_PURCHASE_POPUPS"
-        ],
+    Q.core.FeatureRegistry.register({
+        id: "ql_recent_purchases", enabledByDefault: false,
+        enableKeys: ["ENABLE_SHOP_RECENT_PURCHASES", "ENABLE_SHOP_ITEM_NOTIFICATIONS", "ENABLE_HERO_PURCHASE_POPUPS"],
         settings: [
             { key: "ENABLE_SHOP_RECENT_PURCHASES", type: "toggle" },
             { key: "ENABLE_SHOP_ITEM_NOTIFICATIONS", type: "toggle" },
@@ -174,931 +65,493 @@
             { key: "RECENT_PURCHASES_QUICK_MAX", type: "number" },
             { key: "RECENT_PURCHASES_QUICK_DISPLAY_SEC", type: "number" },
             { key: "RECENT_PURCHASES_QUICK_REJUV", type: "toggle" },
-            { key: "RECENT_PURCHASES_QUICK_SCOREBOARD", type: "toggle" }
+            { key: "RECENT_PURCHASES_QUICK_SCOREBOARD", type: "toggle" },
+            // Observe the existing owners' canonical settings for shared top-bar geometry.
+            { key: "ENABLE_ULT_COOLDOWNS", type: "toggle" },
+            { key: "ENABLE_OBJ_MAP", type: "toggle" },
+            { key: "ENABLE_URN_DIFF", type: "toggle" }
         ],
-        create: function(ctx) {
-            var _loop = null;
-            var _pendingTasks = [];
-            var _runtimeGeneration = 0;
-            var _heroMapGeneration = 0;
-            var _notificationMode = 0;
+        create(ctx) {
+            const featureId = ctx.id || "ql_recent_purchases";
+            const corePath = [{ id: "Hud", optional: true }, { className: "HudCore" }];
+            const resolver = (id, ownerPath) => Q.panelCache.createIdResolver(id, { ownerPath, retryMs: 2000, refreshMs: 2000 });
+            const shopSource = resolver("RecentPurchasesPanel", [...corePath, "CitadelHudHeroShop", "Shop", "NavPanel"]);
+            const topSource = resolver("TopBar", corePath);
+            const rejuvSource = resolver("RejuvenatorTimer", ["RejuvenatorCharges"]);
+            const objectiveSource = resolver("ObjectivesMap", []);
+            const urnSource = resolver("UrnTracker", []);
+            const filters = FILTERS.map(filter => ({ ...filter, active: true }));
+            const nativeStyles = new Map();
+            const nativeClasses = new Map();
+            const overlayStyles = new Map();
+            const tasks = new Set();
+            const controls = new Set();
+            const toggles = new Map();
+            const heroPanels = new Map();
+            const cardMap = new Map();
+            let running = false, loop = null, model = null, generation = 0, controlsGeneration = 0;
+            let shop = null, container = null, topBar = null, rootPanel = null, hideout = null, mode = 0;
+            let quickPanel = null, quickEntries = [], history = new Map(), historyReady = false, pendingPurchases = [];
+            let cards = [], cardsReady = false, mapping = false, filterControlsReady = false, filtersVisible = true;
+            let forceSearch = false, overlapPending = false;
 
-            // Runtime state
-            var _filtersCreated = false;
-            var _filterControls = [];
-            var _lastVisibilitySig = null;
-            var _lastFilterSig = null;
-            var _lastFirstChild = null;
-            var _wasInHideout = null;
-            var _quickSeenKeys = {};
-            var _quickInitialized = false;
-            var _quickActiveEntries = [];
-            var _rpPanelStyleSig = "";
-            var _quickPanelStyleSig = "";
+            function readModel() {
+                const cfg = ctx.config.view();
+                const max = Math.round(number(cfg.RECENT_PURCHASES_QUICK_MAX, 3));
+                const display = Math.round(number(cfg.RECENT_PURCHASES_QUICK_DISPLAY_SEC, 5));
+                return {
+                    shop: enabled(cfg.ENABLE_SHOP_RECENT_PURCHASES),
+                    mode: enabled(cfg.ENABLE_SHOP_ITEM_NOTIFICATIONS) ? (enabled(cfg.ENABLE_HERO_PURCHASE_POPUPS) ? 2 : 1) : 0,
+                    shopX: number(cfg.RECENT_PURCHASES_PANEL_X_OFFSET, 0), shopY: number(cfg.RECENT_PURCHASES_PANEL_Y_OFFSET, 0),
+                    shopOpacity: opacity(cfg.RECENT_PURCHASES_PANEL_OPACITY), shopScale: scale(cfg.RECENT_PURCHASES_PANEL_SCALE),
+                    x: number(cfg.RECENT_PURCHASES_QUICK_X_OFFSET, 0), y: number(cfg.RECENT_PURCHASES_QUICK_Y_OFFSET, 0),
+                    opacity: opacity(cfg.RECENT_PURCHASES_QUICK_OPACITY), scale: scale(cfg.RECENT_PURCHASES_QUICK_SCALE),
+                    max: max >= 1 && max <= 5 ? max : 3, display: display >= 3 && display <= 15 ? display : 5,
+                    rejuv: Number(cfg.RECENT_PURCHASES_QUICK_REJUV) !== 0,
+                    scoreboard: Number(cfg.RECENT_PURCHASES_QUICK_SCOREBOARD) !== 0,
+                    ult: enabled(cfg.ENABLE_ULT_COOLDOWNS), objectives: enabled(cfg.ENABLE_OBJ_MAP), urn: enabled(cfg.ENABLE_URN_DIFF)
+                };
+            }
 
-            // Cached panel references
-            var _rpPanel = null;
-            var _rpContainer = null;
-            var _rpSearchRoot = null;
-            var _nextPanelSearchMs = 0;
-            var _quickPurchasesHostPanel = null;
-            var _quickPurchasesPanel = null;
-            var _cachedRejuvTimer = null;
-            var _topBarPanel = null;
-
-            // Hero popup state
-            var _heroPopup = {
-                panelsByHero: {},
-                activeEntriesByHero: {},
-                lastEntryTime: {},
-                playerCardCache: {},
-                overlapPending: false,
-                mapState: HERO_MAP_IDLE,
-                buildGen: 0,
-                ultCooldownsEnabled: false,
-                style: null
-            };
-
-            function _scheduleRP(delay, callback) {
-                var generation = _runtimeGeneration;
-                var task = QOL.core.Scheduler.scheduleOnce(function() {
-                    var index = _pendingTasks.indexOf(task);
-                    if (index >= 0) _pendingTasks.splice(index, 1);
-                    if (generation !== _runtimeGeneration || QOL.core.hud.isInHideout($.GetContextPanel())) return;
+            // Track attempted writes as well as successful signatures. A partial native
+            // write stays retryable, and defaults release the code override back to CSS.
+            function renderStyles(records, panel, styles, observeNative = false) {
+                if (!P.isAlive(panel)) return false;
+                let record = records.get(panel);
+                if (!record) { record = { properties: new Set(), sig: null }; records.set(panel, record); }
+                let cleared = true;
+                for (const property of record.properties) {
+                    if (Object.prototype.hasOwnProperty.call(styles, property)) continue;
+                    if (property === "x" || property === "y") P.syncStyles(panel, { [property]: "0px" }, null);
+                    if (P.clearStyleProperty(panel, property)) record.properties.delete(property);
+                    else cleared = false;
+                    record.sig = null;
+                }
+                for (const property of Object.keys(styles)) record.properties.add(property);
+                if (observeNative && Object.keys(styles).some(property => panel.style[property] !== styles[property])) record.sig = null;
+                record.sig = P.syncStyles(panel, styles, record.sig).sig;
+                return cleared && record.sig !== null;
+            }
+            function releaseStyles(records, panel) {
+                if (!P.isAlive(panel) || renderStyles(records, panel, {})) records.delete(panel);
+            }
+            function nativeClass(panel, className, active) {
+                let record = nativeClasses.get(panel);
+                if (!record) { record = new Map(); nativeClasses.set(panel, record); }
+                if (!record.has(className)) record.set(className, panel.BHasClass(className));
+                P.setClass(panel, className, record.get(className) || active);
+            }
+            function releaseClass(panel, className, baseline) {
+                if (P.isAlive(panel)) P.setClass(panel, className, baseline);
+                return !P.isAlive(panel) || panel.BHasClass(className) === baseline;
+            }
+            function releaseNative(usedStyles = new Set(), usedClasses = new Set()) {
+                for (const panel of nativeStyles.keys()) if (!usedStyles.has(panel)) releaseStyles(nativeStyles, panel);
+                for (const [panel, record] of nativeClasses) {
+                    if (usedClasses.has(panel)) continue;
+                    for (const [className, baseline] of record) if (releaseClass(panel, className, baseline)) record.delete(className);
+                    if (!record.size) nativeClasses.delete(panel);
+                }
+            }
+            function schedule(delay, callback) {
+                const current = generation;
+                const task = S.scheduleOnce(() => {
+                    tasks.delete(task);
+                    if (!running || current !== generation || Q.core.hud.isInHideout($.GetContextPanel())) return;
                     callback();
-                }, delay, "ql_recent_purchases");
-                _pendingTasks.push(task);
+                }, delay, featureId);
+                tasks.add(task);
+                return task;
             }
-
-            function _buildContextRP(container) {
-                var c = { isSpectator: false, localTeam: 0 };
-                var p = $.GetContextPanel();
-                while (p) {
-                    if (p.BHasClass && p.BHasClass("TeamSpectator")) { c.isSpectator = true; break; }
-                    p = p.GetParent ? p.GetParent() : null;
-                }
-                if (!c.isSpectator && container && isPanelValid(container)) {
-                    if (hasClassInHierarchy(container, "localPlayerTeam1")) c.localTeam = 1;
-                    else if (hasClassInHierarchy(container, "localPlayerTeam2")) c.localTeam = 2;
-                }
-                return c;
+            function resetNotifications() {
+                generation++;
+                for (const task of tasks) task.stop();
+                tasks.clear();
+                P.delete(quickPanel);
+                for (const item of heroPanels.values()) P.delete(item.panel);
+                quickPanel = null; quickEntries = []; heroPanels.clear(); overlayStyles.clear();
+                history = new Map(); historyReady = false; pendingPurchases = [];
+                cards = []; cardMap.clear(); cardsReady = false; mapping = false; overlapPending = false;
             }
-
-            function _getFilterSigRP(c, container) {
-                var sig = (c.isSpectator ? "1" : "0") + c.localTeam + container.GetChildCount();
-                for (var i = 0; i < RECENT_PURCHASE_FILTERS.length; i++) {
-                    sig += RECENT_PURCHASE_FILTERS[i].active ? "1" : "0";
-                }
-                return sig;
+            function removeControls() {
+                controlsGeneration++;
+                for (const panel of controls) P.delete(panel);
+                controls.clear(); toggles.clear(); filterControlsReady = false;
             }
-
-            function _updateModIconsRP(container, purchases) {
-                if (!container || !isPanelValid(container)) return;
-                if (!purchases) purchases = container.FindChildrenWithClassTraverse(CLASS_RECENT_PURCHASE);
-                var iconsMap = getModIcons();
-                for (var i = 0; i < purchases.length; i++) {
-                    var purchase = purchases[i];
-                    var icons = purchase.FindChildrenWithClassTraverse("mod_icon");
-                    if (!icons || icons.length === 0) continue;
-                    var icon = icons[0];
-                    if (icon.BHasClass("iconSet")) continue;
-                    var itemName = getRecentPurchaseName(purchase);
-                    if (!itemName) continue;
-                    var image = iconsMap[itemName];
-                    if (!image) continue;
-                    icon.style.backgroundImage = image;
-                    icon.style.washColor = "none";
-                    icon.AddClass("iconSet");
+            function releaseShop() { removeControls(); releaseNative(); }
+            function resetSources() {
+                for (const source of [shopSource, topSource, rejuvSource, objectiveSource, urnSource]) source.reset();
+            }
+            function resolveSources(root) {
+                const nextShop = shopSource.resolve(root, forceSearch);
+                const nextContainer = P.findChild(nextShop, "RecentPurchasesContainer");
+                const nextTop = model.mode ? topSource.resolve(root, forceSearch) : null;
+                forceSearch = false;
+                if (nextShop !== shop || nextContainer !== container) {
+                    releaseShop(); resetNotifications();
+                    shop = nextShop; container = nextContainer;
+                }
+                if (nextTop !== topBar) {
+                    resetNotifications(); topBar = nextTop;
+                    rejuvSource.reset(); objectiveSource.reset(); urnSource.reset();
                 }
             }
-
-            function _createFilterCheckboxesRP() {
-                if (_filtersCreated) return;
-                var panel = _rpPanel;
-                if (!panel) return;
-
-                var collapseToggle = $.CreatePanel("ToggleButton", panel, "FiltersCollapseToggle");
-                collapseToggle.AddClass("PurchaseFilterToggle");
-                collapseToggle.checked = true;
-                var collapseLabel = $.CreatePanel("Label", collapseToggle, "");
-                collapseLabel.text = "Show Filters";
-
-                var filtersPanel = $.CreatePanel("Panel", panel, "PurchaseFiltersContainer");
-                _filterControls = [collapseToggle, filtersPanel];
-                var filtersVisible = true;
-                $.RegisterEventHandler("Activated", collapseToggle, function() {
-                    filtersVisible = !filtersVisible;
-                    if (filtersVisible) filtersPanel.RemoveClass("filterButtonHidden");
-                    else filtersPanel.AddClass("filterButtonHidden");
-                });
-
-                var groupPanels = {};
-                for (var i = 0; i < RECENT_PURCHASE_FILTERS.length; i++) {
-                    var filter = RECENT_PURCHASE_FILTERS[i];
-                    if (filter.group) {
-                        if (!groupPanels[filter.group]) {
-                            groupPanels[filter.group] = $.CreatePanel("Panel", filtersPanel, "FilterGroup_" + filter.group);
-                            groupPanels[filter.group].AddClass("PurchaseFilterGroup");
+            function readPurchases() {
+                if (!P.isAlive(container)) return [];
+                return container.FindChildrenWithClassTraverse("recentPurchase").filter(P.isAlive).map(row => ({
+                    row, name: purchaseText(row, "recentModPurchaseName"), time: purchaseText(row, "recentTimePurchased"),
+                    hero: purchaseText(row, "recentModPurchaserHero"), classes: PURCHASE_CLASSES.filter(cls => row.BHasClass(cls))
+                }));
+            }
+            function filterContext() {
+                return {
+                    spectator: Q.utils.HasClassInHierarchy(container, "TeamSpectator"),
+                    team: Q.utils.HasClassInHierarchy(container, "Team1") ? 1 : Q.utils.HasClassInHierarchy(container, "Team2") ? 2 : null
+                };
+            }
+            const showFilter = (filter, context) => filter.spectator === undefined || filter.spectator === context.spectator;
+            function filterHides(filter, purchase, context) {
+                let cls = filter.purchaseClass;
+                if (!cls && context.team) cls = "isTeam" + (filter.localTeam ? context.team : 3 - context.team) + "Purchase";
+                return !filter.active && showFilter(filter, context) && !!cls && purchase.classes.indexOf(cls) >= 0;
+            }
+            function createControls() {
+                if (filterControlsReady || !P.isAlive(shop)) return;
+                // Clear partially-created owned roots before retrying creation.
+                removeControls();
+                const current = controlsGeneration;
+                try {
+                    const collapse = $.CreatePanel("ToggleButton", shop, "FiltersCollapseToggle");
+                    controls.add(collapse); collapse.AddClass("PurchaseFilterToggle"); collapse.checked = filtersVisible;
+                    $.CreatePanel("Label", collapse, "").text = "Show Filters";
+                    const host = $.CreatePanel("Panel", shop, "PurchaseFiltersContainer");
+                    controls.add(host);
+                    collapse.SetPanelEvent("onactivate", () => {
+                        if (!running || current !== controlsGeneration) return;
+                        filtersVisible = !filtersVisible; collapse.checked = filtersVisible;
+                        P.setClass(host, "filterButtonHidden", !filtersVisible);
+                    });
+                    const groups = new Map();
+                    for (const filter of filters) {
+                        if (!groups.has(filter.group)) {
+                            const group = $.CreatePanel("Panel", host, "FilterGroup_" + filter.group);
+                            group.AddClass("PurchaseFilterGroup"); groups.set(filter.group, group);
                         }
-                    }
-                    var parent = filter.group ? groupPanels[filter.group] : filtersPanel;
-                    var toggle = $.CreatePanel("ToggleButton", parent, filter.id);
-                    toggle.AddClass("PurchaseFilterToggle");
-                    toggle.checked = filter.active;
-                    var label = $.CreatePanel("Label", toggle, "");
-                    label.text = filter.label;
-                    (function(capturedFilter) {
-                        $.RegisterEventHandler("Activated", toggle, function() {
-                            capturedFilter.active = !capturedFilter.active;
+                        const toggle = $.CreatePanel("ToggleButton", groups.get(filter.group), filter.id);
+                        toggle.AddClass("PurchaseFilterToggle"); toggle.checked = filter.active;
+                        $.CreatePanel("Label", toggle, "").text = filter.label;
+                        toggle.SetPanelEvent("onactivate", () => {
+                            if (!running || current !== controlsGeneration) return;
+                            filter.active = !filter.active; toggle.checked = filter.active;
+                            update();
                         });
-                    })(filter);
-                }
-
-                var existingLabel = panel.FindChild("RecentPurchases");
-                var container = panel.FindChild("RecentPurchasesContainer");
-                if (existingLabel) existingLabel.SetParent(panel);
-                if (container) container.SetParent(panel);
-
-                _filtersCreated = true;
-            }
-
-            function _removeFilterControlsRP() {
-                for (var i = 0; i < _filterControls.length; i++) {
-                    if (isPanelValid(_filterControls[i])) _filterControls[i].DeleteAsync(0);
-                }
-                _filterControls = [];
-                _filtersCreated = false;
-            }
-
-            function _updateFilterVisibilityRP(c) {
-                var visSig = c.isSpectator ? "1" : "0";
-                if (visSig === _lastVisibilitySig) return;
-                _lastVisibilitySig = visSig;
-                for (var i = 0; i < RECENT_PURCHASE_FILTERS.length; i++) {
-                    var filter = RECENT_PURCHASE_FILTERS[i];
-                    if (!filter.ShouldShowToggle) continue;
-                    var toggle = _rpPanel.FindChildTraverse(filter.id);
-                    if (!toggle) continue;
-                    if (filter.ShouldShowToggle(c)) toggle.RemoveClass("filterButtonHidden");
-                    else toggle.AddClass("filterButtonHidden");
-                }
-            }
-
-            function _applyFiltersRP(container, c, purchases) {
-                if (!container || !isPanelValid(container)) return;
-                var sig = _getFilterSigRP(c, container);
-                var firstChild = container.GetChildCount() > 0 ? container.GetChild(0) : null;
-                if (sig === _lastFilterSig && firstChild === _lastFirstChild) return;
-                _lastFilterSig = sig;
-                _lastFirstChild = firstChild;
-
-                if (!purchases) purchases = container.FindChildrenWithClassTraverse(CLASS_RECENT_PURCHASE);
-                for (var i = 0; i < purchases.length; i++) {
-                    var purchase = purchases[i];
-                    var hidden = false;
-                    for (var j = 0; j < RECENT_PURCHASE_FILTERS.length; j++) {
-                        var filter = RECENT_PURCHASE_FILTERS[j];
-                        if (filter.ShouldShowToggle && !filter.ShouldShowToggle(c)) continue;
-                        var shouldApply = filter.invert ? !filter.active : filter.active;
-                        if (shouldApply && filter.ShouldHideItem(purchase, c)) { hidden = true; break; }
+                        toggles.set(filter.id, toggle);
                     }
-                    if (hidden) purchase.AddClass("filterHidden");
-                    else purchase.RemoveClass("filterHidden");
-                }
+                    P.setClass(host, "filterButtonHidden", !filtersVisible);
+                    // Move only our controls. Native header/history retain their order and parent.
+                    const first = shop.GetChild(0);
+                    if (first && first !== collapse) { shop.MoveChildBefore(collapse, first); shop.MoveChildBefore(host, first); }
+                    filterControlsReady = true;
+                } catch (error) { removeControls(); throw error; }
             }
-
-            function _quickRemoveEntryRP(entry) {
-                _quickActiveEntries = _quickActiveEntries.filter(function(e) { return e !== entry; });
-                if (!isPanelValid(entry)) return;
-                entry.AddClass("quickFading");
-                _scheduleRP(RECENT_PURCHASE_QUICK_FADE_SEC, function() {
-                    if (isPanelValid(entry)) entry.DeleteAsync(0);
-                });
+            function geometry(x, y, alpha, ratio, baseline) {
+                const styles = {};
+                if (x) styles.x = x + "px";
+                if (y) styles.y = -y + "px";
+                if (alpha !== 1) styles.opacity = alpha.toFixed(2);
+                if (ratio !== 1) styles.uiScale = Math.round(baseline * ratio) + "%";
+                return styles;
             }
-
-            function _quickEvictEntryRP(entry) {
-                _quickActiveEntries = _quickActiveEntries.filter(function(e) { return e !== entry; });
-                if (isPanelValid(entry)) entry.DeleteAsync(0);
-            }
-
-            function _collectNewPurchasesRP(purchases) {
-                var seen = {};
-                var fresh = [];
-                for (var i = 0; i < purchases.length; i++) {
-                    var purchase = purchases[i];
-                    if (!isPanelValid(purchase)) continue;
-                    var name = getRecentPurchaseName(purchase);
-                    var time = getRecentPurchaseTimeText(purchase);
-                    if (!name || !time) continue;
-                    var key = name + "|" + time;
-                    if (_quickInitialized && !_quickSeenKeys[key] && !seen[key] && !purchase.BHasClass("filterHidden")) {
-                        fresh.push({ panel: purchase, name: name });
+            function renderShop(purchases) {
+                const usedStyles = new Set(), usedClasses = new Set();
+                if (model.shop && P.isAlive(shop)) {
+                    renderStyles(nativeStyles, shop, geometry(model.shopX, model.shopY, model.shopOpacity, model.shopScale, SHOP_SCALE));
+                    usedStyles.add(shop);
+                    createControls();
+                    const context = filterContext();
+                    for (const filter of filters) P.setClass(toggles.get(filter.id), "filterButtonHidden", !showFilter(filter, context));
+                    const imageMap = icons();
+                    for (const purchase of purchases) {
+                        nativeClass(purchase.row, "filterHidden", filters.some(filter => filterHides(filter, purchase, context)));
+                        usedClasses.add(purchase.row);
+                        const icon = purchase.row.FindChildrenWithClassTraverse("mod_icon")[0];
+                        const image = imageMap[purchase.name];
+                        if (!P.isAlive(icon) || !image) continue;
+                        const complete = renderStyles(nativeStyles, icon, { backgroundImage: image, washColor: "none" }, true);
+                        nativeClass(icon, "iconSet", complete);
+                        usedStyles.add(icon); usedClasses.add(icon);
                     }
-                    seen[key] = true;
+                } else removeControls();
+                releaseNative(usedStyles, usedClasses);
+            }
+            function collectNew(purchases) {
+                const next = new Map(), fresh = [];
+                for (const purchase of purchases) {
+                    if (!purchase.name || !purchase.time) continue;
+                    const previous = history.get(purchase.row);
+                    // Row identity distinguishes simultaneous purchases with equal item/time.
+                    // A late hero label fills the same event rather than replaying it.
+                    const same = previous && previous.name === purchase.name && previous.time === purchase.time &&
+                        (!previous.hero || !purchase.hero || previous.hero === purchase.hero);
+                    if (historyReady && !same && !purchase.row.BHasClass("filterHidden")) {
+                        fresh.push({ ...purchase, observedAt: Q.utils.PerfNowMs() });
+                    }
+                    next.set(purchase.row, { name: purchase.name, time: purchase.time, hero: purchase.hero || (previous && previous.hero) || "" });
                 }
-                // Follow the native list's lifetime. Clearing all keys at 300
-                // would replay retained history after removing native trimming.
-                _quickSeenKeys = seen;
-                _quickInitialized = true;
+                history = next; historyReady = true;
                 return fresh;
             }
-
-            function _addQuickEntryRP(sourcePurchase, quickPanel, nameText, quickMax, quickDisplaySec) {
-                while (_quickActiveEntries.length >= quickMax) {
-                    _quickEvictEntryRP(_quickActiveEntries[0]);
-                }
-
-                var entry = $.CreatePanel("Panel", quickPanel, "");
-                entry.AddClass("quickPurchase");
-
-                for (var i = 0; i < RECENT_PURCHASE_QUICK_CLASSES.length; i++) {
-                    if (sourcePurchase.BHasClass(RECENT_PURCHASE_QUICK_CLASSES[i])) {
-                        entry.AddClass(RECENT_PURCHASE_QUICK_CLASSES[i]);
-                    }
-                }
-
-                var heroIcon = $.CreatePanel("Panel", entry, "");
-                heroIcon.AddClass("quickHeroIcon");
-                (function(p, src) {
-                    function trySet(attempts) {
-                        if (!isPanelValid(p)) return;
-                        var heroName = getRecentPurchaseHeroName(src);
-                        var heroImages = getHeroImages();
-                        var url = heroName ? heroImages[heroName] : null;
-                        if (url) {
-                            p.style.backgroundImage = url;
-                            p.style.backgroundSize = "100% 100%";
-                        } else if (attempts > 0) {
-                            _scheduleRP(0.05, function() { trySet(attempts - 1); });
-                        }
-                    }
-                    _scheduleRP(0, function() { trySet(10); });
-                })(heroIcon, sourcePurchase);
-
-                var itemInfo = $.CreatePanel("Panel", entry, "");
-                itemInfo.AddClass("quickItemInfo");
-
-                var texture = $.CreatePanel("Panel", itemInfo, "");
-                texture.AddClass("quickItemTexture");
-
-                var iconsMap = getModIcons();
-                var iconUrl = iconsMap[nameText];
-                if (iconUrl) {
-                    var icon = $.CreatePanel("Panel", itemInfo, "");
-                    icon.AddClass("mod_icon");
-                    var capturedIcon = icon;
-                    var capturedIconUrl = iconUrl;
-                    _scheduleRP(0, function() {
-                        if (isPanelValid(capturedIcon)) {
-                            capturedIcon.style.backgroundImage = capturedIconUrl;
-                            capturedIcon.style.backgroundSize = "100% 100%";
-                        }
-                    });
-                }
-
-                var nameLabel = $.CreatePanel("Label", itemInfo, "");
-                nameLabel.AddClass("quickPurchaseName");
-                nameLabel.text = nameText;
-
-                _quickActiveEntries.push(entry);
-
-                _scheduleRP(quickDisplaySec, function() {
-                    if (isPanelValid(entry)) _quickRemoveEntryRP(entry);
+            function laterImage(panel, readImage, attempts = 10) {
+                schedule(0, () => {
+                    if (!P.isAlive(panel)) return;
+                    const image = readImage();
+                    const complete = image && renderStyles(overlayStyles, panel, { backgroundImage: image, backgroundSize: "100% 100%" });
+                    if (!complete && attempts > 0) schedule(0.05, () => laterImage(panel, readImage, attempts - 1));
                 });
             }
-
-            function _getOrCreateQuickPanelRP(root) {
-                if (isPanelValid(_quickPurchasesPanel)) return _quickPurchasesPanel;
-                if (!isPanelValid(_quickPurchasesHostPanel)) {
-                    _quickPurchasesHostPanel = root.FindChildTraverse(PANEL_ID_TOP_BAR);
-                }
-                var topBar = _quickPurchasesHostPanel;
-                if (!topBar) return null;
-                _quickPurchasesPanel = $.CreatePanel("Panel", topBar, "QuickPurchasesPanel");
-                return _quickPurchasesPanel;
+            function forgetOverlay(panel) {
+                for (const source of overlayStyles.keys()) if (!P.isAlive(source) || belongsTo(source, panel)) overlayStyles.delete(source);
+                P.delete(panel);
             }
-
-            function _updateQuickPurchasesRP(root, container, quickMax, quickDisplaySec, purchases) {
-                var quickPanel = _getOrCreateQuickPanelRP(root);
-                if (!quickPanel || !container || !isPanelValid(container)) return;
-
-                if (!purchases) purchases = container.FindChildrenWithClassTraverse(CLASS_RECENT_PURCHASE);
-
-                var fresh = _collectNewPurchasesRP(purchases);
-                for (var i = 0; i < fresh.length; i++) {
-                    _addQuickEntryRP(fresh[i].panel, quickPanel, fresh[i].name, quickMax, quickDisplaySec);
-                }
+            function retireEntry(entry, list, fade) {
+                const index = list.indexOf(entry);
+                if (index >= 0) list.splice(index, 1);
+                if (!P.isAlive(entry)) return;
+                if (fade) {
+                    entry.AddClass("quickFading");
+                    schedule(FADE_SEC, () => { forgetOverlay(entry); queueOverlaps(0); });
+                } else { forgetOverlay(entry); queueOverlaps(0); }
             }
-
-            function _syncRejuvClassRP(rejuvEnabled) {
-                var quickPanel = _quickPurchasesPanel;
-                if (!isPanelValid(quickPanel)) return;
-                quickPanel.SetHasClass("rp_quick_rejuv_active", !!rejuvEnabled);
-                if (!isPanelValid(_cachedRejuvTimer)) {
-                    var _ctxPanel = $.GetContextPanel();
-                    var _ctxParent = _ctxPanel && _ctxPanel.GetParent ? _ctxPanel.GetParent() : null;
-                    _cachedRejuvTimer = _ctxParent ? _ctxParent.FindChildTraverse("RejuvenatorTimer") : null;
-                }
-                var timer = _cachedRejuvTimer;
-                if (!timer) return;
-                if (timer.BHasClass("has_rejuv")) quickPanel.AddClass("has_rejuv");
-                else quickPanel.RemoveClass("has_rejuv");
+            function trimEntries(list) {
+                for (let index = list.length - 1; index >= 0; index--) if (!P.isAlive(list[index])) list.splice(index, 1);
+                while (list.length > model.max) retireEntry(list[0], list, false);
             }
-
-            function _getTopBarOverlayBottomRP(panel, fallbackBottom) {
-                if (!isPanelValid(panel)) return 0;
-                var bottom = 0;
+            function addEntry(purchase, host, list, central) {
+                while (list.length >= model.max) retireEntry(list[0], list, false);
+                const entry = $.CreatePanel("Panel", host, "");
                 try {
-                    var y = Number(panel.actualyoffset) || 0;
-                    var h = Number(panel.actuallayoutheight) || 0;
-                    if (isFinite(y) && isFinite(h) && h > 0) bottom = y + h;
-                } catch(e) {}
-                if (bottom > 0) return bottom;
-                return Number(fallbackBottom) || 0;
-            }
-
-            function _computeQuickPurchasesMarginTopRP(root, cfg, rejuvEnabled, scoreboardEnabled) {
-                var isScoreboardOpen = false;
-                try {
-                    isScoreboardOpen = scoreboardEnabled && QOL.core.hud.isScoreboardOpen(root);
-                } catch(e) {}
-
-                var marginTop = 90;
-                if (isScoreboardOpen) marginTop = 175;
-                else {
-                    var quickPanel = _quickPurchasesPanel;
-                    var hasRejuv = isPanelValid(quickPanel) && quickPanel.BHasClass && quickPanel.BHasClass("has_rejuv");
-                    if (rejuvEnabled && hasRejuv) marginTop = 153;
-                }
-
-                var occupiedBottom = 0;
-                if (Number(cfg.ENABLE_OBJ_MAP) === 1) {
-                    var objectiveMap = root && root.FindChildTraverse ? root.FindChildTraverse("ObjectivesMap") : null;
-                    occupiedBottom = Math.max(occupiedBottom, _getTopBarOverlayBottomRP(objectiveMap, 112));
-                }
-                if (Number(cfg.ENABLE_URN_DIFF) === 1) {
-                    var urnTracker = root && root.FindChildTraverse ? root.FindChildTraverse("UrnTracker") : null;
-                    occupiedBottom = Math.max(occupiedBottom, _getTopBarOverlayBottomRP(urnTracker, 96));
-                }
-
-                if (occupiedBottom > 0) {
-                    marginTop = Math.max(marginTop, Math.round(occupiedBottom + 12));
-                }
-                return marginTop;
-            }
-
-            function _resetNotificationsRP() {
-                _runtimeGeneration++;
-                for (var i = 0; i < _pendingTasks.length; i++) _pendingTasks[i].stop();
-                _pendingTasks = [];
-                // The native shop owns RecentPurchasesContainer and its rows.
-                // Only delete overlays created by this feature.
-                if (isPanelValid(_quickPurchasesPanel)) _quickPurchasesPanel.DeleteAsync(0);
-                _quickPurchasesPanel = null;
-                _quickPurchasesHostPanel = null;
-                _quickActiveEntries = [];
-                _quickPanelStyleSig = "";
-                _cachedRejuvTimer = null;
-                _topBarPanel = null;
-                _quickSeenKeys = {};
-                _quickInitialized = false;
-                _resetHeroPopupState();
-            }
-
-            // ── Hero Purchase Popups ──────────────────────────────────────────
-
-            function _buildHeroPlayerCardMap(root) {
-                if (_heroPopup.mapState === HERO_MAP_BUILDING) return;
-                _heroPopup.mapState = HERO_MAP_BUILDING;
-                _heroPopup.buildGen = ++_heroMapGeneration;
-                var myGen = _heroPopup.buildGen;
-                var labels = root.FindChildrenWithClassTraverse("HeroNameHidden");
-                if (!labels || labels.length === 0) {
-                    _heroPopup.mapState = HERO_MAP_IDLE;
-                    return;
-                }
-                var pending = labels.length;
-                function onDone() {
-                    pending--;
-                    if (pending === 0 && _heroPopup.buildGen === myGen) {
-                        _heroPopup.mapState = HERO_MAP_BUILT;
-                    }
-                }
-                for (var i = 0; i < labels.length; i++) {
-                    (function(label) {
-                        var playerPanel = label.GetParent();
-                        var badge = null;
-                        var badgeWalkGuard = 0;
-                        while (playerPanel && isPanelValid(playerPanel) && badgeWalkGuard < 64) {
-                            badge = playerPanel.FindChildTraverse("HeroBadge");
-                            if (badge) break;
-                            playerPanel = playerPanel.GetParent();
-                            badgeWalkGuard++;
-                        }
-                        if (!badge || !playerPanel) { onDone(); return; }
-                        var heroId = badge.heroid;
-                        if (typeof heroId !== "number" || heroId <= 0) { onDone(); return; }
-                        playerPanel.SetDialogVariableInt("hero_id", heroId);
-                        _scheduleRP(0.3, function() {
-                            if (_heroPopup.buildGen !== myGen) return;
-                            if (isPanelValid(label)) {
-                                var name = label.text.trim().toUpperCase();
-                                if (name) {
-                                    _heroPopup.playerCardCache[name] = playerPanel;
-                                }
-                            }
-                            onDone();
+                    entry.AddClass("quickPurchase");
+                    for (const cls of purchase.classes) entry.AddClass(cls);
+                    if (central) {
+                        const heroIcon = $.CreatePanel("Panel", entry, ""); heroIcon.AddClass("quickHeroIcon");
+                        laterImage(heroIcon, () => {
+                            const name = purchase.hero || (P.isAlive(purchase.row) ? purchaseText(purchase.row, "recentModPurchaserHero") : "");
+                            return typeof HERO_IMAGES !== "undefined" ? HERO_IMAGES[name] : null;
                         });
-                    })(labels[i]);
-                }
-            }
-
-            function _isHeroPlayerCardMapStale() {
-                if (_heroPopup.mapState !== HERO_MAP_BUILT) return false;
-                for (var hero in _heroPopup.playerCardCache) {
-                    if (!Object.prototype.hasOwnProperty.call(_heroPopup.playerCardCache, hero)) continue;
-                    var parentPanel = _heroPopup.playerCardCache[hero];
-                    if (!parentPanel || !isPanelValid(parentPanel)) return true;
-                }
-                return false;
-            }
-
-            function _applyHeroPopupStyle(panel) {
-                var st = _heroPopup.style;
-                if (!st || !isPanelValid(panel)) return;
-                setStyleIfChanged(panel, "x", st.x);
-                setStyleIfChanged(panel, "y", st.y);
-                setStyleIfChanged(panel, "uiScale", st.uiScale);
-                setPanelOpacitySafe(panel, st.opacity, 1.0);
-            }
-
-            function _getOrCreateHeroPopupPanel(heroNameUpper) {
-                if (_heroPopup.panelsByHero[heroNameUpper] &&
-                    isPanelValid(_heroPopup.panelsByHero[heroNameUpper])) {
-                    return _heroPopup.panelsByHero[heroNameUpper];
-                }
-                var playerPanel = _heroPopup.playerCardCache[heroNameUpper];
-                if (!playerPanel || !isPanelValid(playerPanel)) {
-                    if (_heroPopup.mapState !== HERO_MAP_BUILDING) {
-                        _heroPopup.mapState = HERO_MAP_IDLE;
                     }
-                    return null;
-                }
-                var panel = $.CreatePanel("Panel", playerPanel, "");
-                panel.AddClass("QuickPurchasesPanel");
-                _heroPopup.panelsByHero[heroNameUpper] = panel;
-                _applyHeroPopupStyle(panel);
-                return panel;
+                    const info = $.CreatePanel("Panel", entry, ""); info.AddClass("quickItemInfo");
+                    if (central) $.CreatePanel("Panel", info, "").AddClass("quickItemTexture");
+                    const image = icons()[purchase.name];
+                    if (image) {
+                        const icon = $.CreatePanel("Panel", info, ""); icon.AddClass("mod_icon");
+                        laterImage(icon, () => image);
+                    }
+                    const label = $.CreatePanel("Label", info, ""); label.AddClass("quickPurchaseName"); label.text = purchase.name;
+                    list.push(entry);
+                    schedule(model.display, () => retireEntry(entry, list, true));
+                } catch (error) { forgetOverlay(entry); throw error; }
             }
-
-            function _syncHeroPopupStyle(offsetX, offsetY, opacityText, scale) {
-                var sig = offsetX + "|" + offsetY + "|" + opacityText + "|" + scale;
-                if (_heroPopup.style && _heroPopup.style.sig === sig) return;
-                _heroPopup.style = {
-                    sig: sig,
-                    x: String(offsetX) + "px",
-                    y: String(-offsetY) + "px",
-                    opacity: opacityText,
-                    uiScale: Math.round(scale * 100) + "%",
-                    scale: scale
-                };
-                for (var hero in _heroPopup.panelsByHero) {
-                    if (!Object.prototype.hasOwnProperty.call(_heroPopup.panelsByHero, hero)) continue;
-                    _applyHeroPopupStyle(_heroPopup.panelsByHero[hero]);
-                }
-                _scheduleResolveHeroPopupOverlaps(0.1);
+            function overlayBottom(panel, fallback) {
+                if (!P.isAlive(panel)) return 0;
+                const height = Number(panel.actuallayoutheight), y = number(panel.actualyoffset, 0);
+                return height > 0 ? y + height : fallback;
             }
-
-            function _getHeroPopupScale() {
-                var st = _heroPopup.style;
-                var n = st ? Number(st.scale) : 1;
-                return isFinite(n) && n > 0 ? n : 1;
-            }
-
-            function _getPanelLeftInTopBar(panel) {
-                var topBar = isPanelValid(_topBarPanel) ? _topBarPanel : null;
-                if (!topBar) {
-                    try {
-                        var root = $.GetContextPanel();
-                        var rootGuard = 0;
-                        while (root && root.GetParent && root.GetParent() !== null && rootGuard < 64) {
-                            root = root.GetParent();
-                            rootGuard++;
-                        }
-                        if (root) {
-                            topBar = root.FindChildTraverse(PANEL_ID_TOP_BAR);
-                            _topBarPanel = topBar;
-                        }
-                    } catch(e) {}
+            function renderCentral(purchases, root) {
+                if (!P.isAlive(topBar)) return;
+                if (!P.isAlive(quickPanel) || quickPanel.GetParent() !== topBar) {
+                    resetNotifications(); quickPanel = $.CreatePanel("Panel", topBar, "QuickPurchasesPanel");
                 }
-                var x = 0;
-                var current = panel;
-                var walkGuard = 0;
-                while (current && isPanelValid(current) && current !== topBar && walkGuard < 64) {
-                    var n = Number(current.actualxoffset);
-                    x += isFinite(n) ? n : 0;
-                    current = current.GetParent();
-                    walkGuard++;
+                const timer = rejuvSource.resolve(topBar);
+                const hasRejuv = P.isAlive(timer) && timer.BHasClass("has_rejuv");
+                P.setClass(quickPanel, "rp_quick_rejuv_active", model.rejuv);
+                P.setClass(quickPanel, "has_rejuv", hasRejuv);
+                P.setClass(quickPanel, "rp_quick_scoreboard_active", model.scoreboard);
+                const scoreboard = model.scoreboard && Q.core.hud.isScoreboardOpen(root);
+                let margin = scoreboard ? 175 : model.rejuv && hasRejuv ? 153 : 90;
+                let bottom = 0;
+                if (model.objectives) bottom = Math.max(bottom, overlayBottom(objectiveSource.resolve(topBar), 112));
+                if (model.urn) bottom = Math.max(bottom, overlayBottom(urnSource.resolve(topBar), 96));
+                if (bottom > 0) margin = Math.max(margin, Math.round(bottom + 12));
+                const styles = geometry(model.x, model.y, model.opacity, model.scale, scoreboard ? SCOREBOARD_SCALE : 100);
+                styles.marginTop = margin + "px";
+                renderStyles(overlayStyles, quickPanel, styles);
+                trimEntries(quickEntries);
+                pendingPurchases.push(...collectNew(purchases));
+                while (pendingPurchases.length) {
+                    addEntry(pendingPurchases[0], quickPanel, quickEntries, true);
+                    pendingPurchases.shift();
+                }
+            }
+            function readCards() {
+                if (!P.isAlive(topBar)) return [];
+                const result = [];
+                for (const label of topBar.FindChildrenWithClassTraverse("HeroNameHidden")) {
+                    let card = label.GetParent(), badge = null;
+                    for (let depth = 0; P.isAlive(card) && card !== topBar && depth < 64; depth++) {
+                        badge = P.findTraverse(card, "HeroBadge");
+                        if (P.isAlive(badge)) break;
+                        card = card.GetParent();
+                    }
+                    if (!P.isAlive(card) || card === topBar || !P.isAlive(badge)) continue;
+                    const id = badge.heroid;
+                    result.push({ label, card, badge, id: typeof id === "number" ? id : 0, name: P.readText(label).trim().toUpperCase() });
+                }
+                return result;
+            }
+            function sameCards(next) {
+                return next.length === cards.length && next.every((item, index) => {
+                    const previous = cards[index];
+                    return item.label === previous.label && item.card === previous.card && item.badge === previous.badge && item.id === previous.id &&
+                        (!cardsReady || item.name === previous.name);
+                });
+            }
+            function syncCards() {
+                const next = readCards();
+                if (!sameCards(next)) { resetNotifications(); cards = next; }
+                if (cardsReady || mapping || !cards.length) return;
+                mapping = true;
+                for (const item of cards) if (item.id > 0) item.card.SetDialogVariableInt("hero_id", item.id);
+                schedule(0.3, () => {
+                    cardMap.clear();
+                    for (const item of cards) {
+                        if (item.id <= 0 || !belongsTo(item.card, topBar) || !P.isAlive(item.label) ||
+                            !P.isAlive(item.badge) || item.badge.heroid !== item.id) continue;
+                        item.name = P.readText(item.label).trim().toUpperCase();
+                        if (item.name) cardMap.set(item.name, item.card);
+                    }
+                    mapping = false; cardsReady = cardMap.size > 0;
+                });
+            }
+            function heroPanel(name) {
+                const card = cardMap.get(name);
+                if (!P.isAlive(card) || !belongsTo(card, topBar)) return null;
+                let item = heroPanels.get(name);
+                if (item && (!P.isAlive(item.panel) || item.panel.GetParent() !== card)) {
+                    forgetOverlay(item.panel); heroPanels.delete(name); item = null;
+                }
+                if (!item) {
+                    const panel = $.CreatePanel("Panel", card, "");
+                    item = { panel, entries: [], latest: 0 }; heroPanels.set(name, item);
+                    panel.AddClass("QuickPurchasesPanel");
+                }
+                return item;
+            }
+            function panelLeft(panel) {
+                let x = 0;
+                for (let depth = 0; P.isAlive(panel) && panel !== topBar && depth < 64; depth++) {
+                    x += number(panel.actualxoffset, 0); panel = panel.GetParent();
                 }
                 return x;
             }
-
-            function _scheduleResolveHeroPopupOverlaps(delay) {
-                if (_heroPopup.overlapPending) return;
-                _heroPopup.overlapPending = true;
-                _scheduleRP(delay || 0, function() {
-                    try {
-                        _resolveHeroPopupOverlaps();
-                    } finally {
-                        _heroPopup.overlapPending = false;
+            function renderHeroOverlaps() {
+                const active = [];
+                const styles = geometry(model.x, model.y, model.opacity, model.scale, 100);
+                for (const item of heroPanels.values()) {
+                    if (!P.isAlive(item.panel)) continue;
+                    P.setClass(item.panel, "QuickPurchasesPanel", true);
+                    trimEntries(item.entries);
+                    let margin = 125;
+                    const card = item.panel.GetParent();
+                    if (card.BHasClass("UltimateUnlocked")) margin = model.ult && !card.BHasClass("UltimateCooldownReady") ? 172 : 152;
+                    if (item.entries.length) active.push({ item, margin });
+                    else renderStyles(overlayStyles, item.panel, { ...styles, marginTop: margin + "px" });
+                }
+                active.sort((a, b) => b.item.latest - a.item.latest);
+                for (let index = 0; index < active.length; index++) {
+                    const current = active[index];
+                    const width = Math.max(1, number(current.item.panel.actuallayoutwidth, 0));
+                    current.center = panelLeft(current.item.panel) + width / 2;
+                    current.halfWidth = width * model.scale / 2;
+                    for (let previous = 0; previous < index; previous++) {
+                        const other = active[previous];
+                        if (Math.abs(current.center - other.center) >= current.halfWidth + other.halfWidth) continue;
+                        const height = number(other.item.panel.contentheight, 0) * QUICK_ROW_SCALE * model.scale;
+                        current.margin = Math.max(current.margin, other.margin + height);
                     }
+                    renderStyles(overlayStyles, current.item.panel, { ...styles, marginTop: current.margin + "px" });
+                }
+            }
+            function queueOverlaps(delay) {
+                if (mode !== 2 || overlapPending) return;
+                overlapPending = true;
+                schedule(delay, () => {
+                    try { renderHeroOverlaps(); } finally { overlapPending = false; }
                 });
             }
-
-            function _resolveHeroPopupOverlaps() {
-                var active = [];
-                for (var hero in _heroPopup.panelsByHero) {
-                    if (!Object.prototype.hasOwnProperty.call(_heroPopup.panelsByHero, hero)) continue;
-                    var p = _heroPopup.panelsByHero[hero];
-                    if (!p || !isPanelValid(p)) continue;
-                    var entries = _heroPopup.activeEntriesByHero[hero];
-                    if (!entries || entries.length === 0) continue;
-                    active.push({ hero: hero, panel: p });
-                }
-
-                for (var i = 0; i < active.length; i++) {
-                    var margin = 125;
-                    var parentPanel = active[i].panel.GetParent();
-                    if (parentPanel && isPanelValid(parentPanel) && parentPanel.BHasClass(CLASS_ULTIMATE_UNLOCKED)) {
-                        if (_heroPopup.ultCooldownsEnabled && !parentPanel.BHasClass("UltimateCooldownReady")) {
-                            margin = 172;
-                        } else {
-                            margin = 152;
-                        }
+            function renderHeroes(purchases) {
+                syncCards();
+                if (!cardsReady) return;
+                pendingPurchases.push(...collectNew(purchases));
+                for (let index = 0; index < pendingPurchases.length;) {
+                    const purchase = pendingPurchases[index];
+                    if (!purchase.hero && belongsTo(purchase.row, container) &&
+                        purchaseText(purchase.row, "recentModPurchaseName") === purchase.name &&
+                        purchaseText(purchase.row, "recentTimePurchased") === purchase.time) {
+                        purchase.hero = purchaseText(purchase.row, "recentModPurchaserHero");
                     }
-                    active[i].baseMargin = margin;
-                }
-
-                if (active.length === 0) return;
-                if (active.length < 2) {
-                    active[0].panel.style.marginTop = active[0].baseMargin + "px";
-                    return;
-                }
-
-                var popupScale = _getHeroPopupScale();
-                for (var i = 0; i < active.length; i++) {
-                    var rawWidth = Math.max(1, Number(active[i].panel.actuallayoutwidth) || 0);
-                    active[i].centerX = _getPanelLeftInTopBar(active[i].panel) + rawWidth / 2;
-                    active[i].halfWidth = rawWidth * popupScale / 2;
-                }
-
-                active.sort(function(a, b) {
-                    var ta = _heroPopup.lastEntryTime[a.hero] || 0;
-                    var tb = _heroPopup.lastEntryTime[b.hero] || 0;
-                    return tb - ta;
-                });
-
-                var margins = [];
-                for (var i = 0; i < active.length; i++) margins[i] = active[i].baseMargin;
-
-                for (var i = 1; i < active.length; i++) {
-                    if (active[i].halfWidth <= 0) continue;
-                    for (var j = 0; j < i; j++) {
-                        if (active[j].halfWidth <= 0) continue;
-                        var gap = Math.abs(active[i].centerX - active[j].centerX);
-                        if (gap < active[i].halfWidth + active[j].halfWidth) {
-                            var rowsHeight = (Number(active[j].panel.contentheight) || 0) * QUICK_ROW_UI_SCALE * popupScale;
-                            var needed = margins[j] + rowsHeight + QUICK_OVERLAP_GAP;
-                            if (needed > margins[i]) margins[i] = needed;
-                        }
+                    const item = purchase.hero ? heroPanel(purchase.hero.toUpperCase()) : null;
+                    if (!item) {
+                        if (Q.utils.PerfNowMs() - purchase.observedAt >= model.display * 1000) pendingPurchases.splice(index, 1);
+                        else index++;
+                        continue;
                     }
+                    addEntry(purchase, item.panel, item.entries, false); item.latest = $.FrameTime();
+                    pendingPurchases.splice(index, 1);
+                    queueOverlaps(0.1);
                 }
-
-                for (var i = 0; i < active.length; i++) {
-                    active[i].panel.style.marginTop = margins[i] + "px";
-                }
+                renderHeroOverlaps();
             }
-
-            function _removeHeroPurchaseEntry(entry, heroNameUpper) {
-                var arr = _heroPopup.activeEntriesByHero[heroNameUpper];
-                if (arr) {
-                    var filtered = [];
-                    for (var fi = 0; fi < arr.length; fi++) {
-                        if (arr[fi] !== entry) filtered.push(arr[fi]);
-                    }
-                    _heroPopup.activeEntriesByHero[heroNameUpper] = filtered;
+            function update() {
+                if (!running || !model) return;
+                const root = $.GetContextPanel();
+                if (!P.isAlive(root)) return;
+                const inHideout = Q.core.hud.isInHideout(root);
+                if (root !== rootPanel || inHideout !== hideout) {
+                    releaseShop(); resetNotifications(); resetSources();
+                    shop = null; container = null; topBar = null; rootPanel = root; hideout = inHideout;
                 }
-                if (!isPanelValid(entry)) return;
-                entry.AddClass("quickFading");
-                _scheduleRP(RECENT_PURCHASE_QUICK_FADE_SEC, function() {
-                    if (isPanelValid(entry)) entry.DeleteAsync(0);
-                    _scheduleResolveHeroPopupOverlaps(0);
-                });
+                if (loop) loop.reschedule(inHideout ? 0.5 : 0.2);
+                if (inHideout) { releaseNative(); return; }
+                if (mode !== model.mode) { resetNotifications(); mode = model.mode; }
+                if (!model.shop && !mode) { releaseShop(); return; }
+                resolveSources(root);
+                const purchases = readPurchases();
+                renderShop(purchases);
+                if (!P.isAlive(container)) return;
+                if (mode === 1) renderCentral(purchases, root);
+                else if (mode === 2) renderHeroes(purchases);
             }
-
-            function _evictHeroPurchaseEntry(entry, heroNameUpper) {
-                var arr = _heroPopup.activeEntriesByHero[heroNameUpper];
-                if (arr) {
-                    var filtered = [];
-                    for (var fi = 0; fi < arr.length; fi++) {
-                        if (arr[fi] !== entry) filtered.push(arr[fi]);
-                    }
-                    _heroPopup.activeEntriesByHero[heroNameUpper] = filtered;
-                }
-                if (isPanelValid(entry)) entry.DeleteAsync(0);
-                _scheduleResolveHeroPopupOverlaps(0);
+            function shopOpened() { forceSearch = true; }
+            function refreshSettings() {
+                model = readModel(); forceSearch = true;
+                Q.core.hud.refreshRootClasses($.GetContextPanel());
+                update();
             }
-
-            function _addHeroPurchaseEntry(sourcePurchase, nameText, quickMax, quickDisplaySec) {
-                var heroNameUpper = getRecentPurchaseHeroName(sourcePurchase).toUpperCase();
-                var quickPanel = _getOrCreateHeroPopupPanel(heroNameUpper);
-                if (!quickPanel) return;
-
-                if (!_heroPopup.activeEntriesByHero[heroNameUpper]) {
-                    _heroPopup.activeEntriesByHero[heroNameUpper] = [];
-                }
-                _heroPopup.lastEntryTime[heroNameUpper] = $.FrameTime();
-
-                while (_heroPopup.activeEntriesByHero[heroNameUpper].length >= quickMax) {
-                    _evictHeroPurchaseEntry(_heroPopup.activeEntriesByHero[heroNameUpper][0], heroNameUpper);
-                }
-
-                var entry = $.CreatePanel("Panel", quickPanel, "");
-                entry.AddClass("quickPurchase");
-
-                for (var i = 0; i < RECENT_PURCHASE_QUICK_CLASSES.length; i++) {
-                    if (sourcePurchase.BHasClass(RECENT_PURCHASE_QUICK_CLASSES[i])) {
-                        entry.AddClass(RECENT_PURCHASE_QUICK_CLASSES[i]);
-                    }
-                }
-
-                var itemInfo = $.CreatePanel("Panel", entry, "");
-                itemInfo.AddClass("quickItemInfo");
-
-                var iconsMap = getModIcons();
-                var iconUrl = iconsMap[nameText];
-                if (iconUrl) {
-                    var icon = $.CreatePanel("Panel", itemInfo, "");
-                    icon.AddClass("mod_icon");
-                    (function(p, url) {
-                        _scheduleRP(0, function() {
-                            if (isPanelValid(p)) {
-                                p.style.backgroundImage = url;
-                                p.style.backgroundSize = "100% 100%";
-                            }
-                        });
-                    })(icon, iconUrl);
-                }
-
-                var nameLabel = $.CreatePanel("Label", itemInfo, "");
-                nameLabel.AddClass("quickPurchaseName");
-                nameLabel.text = nameText;
-
-                _heroPopup.activeEntriesByHero[heroNameUpper].push(entry);
-
-                _scheduleResolveHeroPopupOverlaps(0.1);
-
-                _scheduleRP(quickDisplaySec, function() {
-                    if (isPanelValid(entry)) _removeHeroPurchaseEntry(entry, heroNameUpper);
-                });
-            }
-
-            function _resetHeroPopupState() {
-                for (var hero in _heroPopup.panelsByHero) {
-                    if (!Object.prototype.hasOwnProperty.call(_heroPopup.panelsByHero, hero)) continue;
-                    var panel = _heroPopup.panelsByHero[hero];
-                    if (panel && isPanelValid(panel)) panel.DeleteAsync(0);
-                }
-                var ultSetting = _heroPopup.ultCooldownsEnabled;
-                var styleSetting = _heroPopup.style || null;
-                _heroPopup = {
-                    panelsByHero: {},
-                    activeEntriesByHero: {},
-                    lastEntryTime: {},
-                    playerCardCache: {},
-                    overlapPending: false,
-                    mapState: HERO_MAP_IDLE,
-                    buildGen: ++_heroMapGeneration,
-                    ultCooldownsEnabled: ultSetting,
-                    style: styleSetting
-                };
-            }
-
-            function _updateHeroPurchasePopups(root, container, quickMax, quickDisplaySec, purchases) {
-                if (_isHeroPlayerCardMapStale()) _resetHeroPopupState();
-                if (_heroPopup.mapState !== HERO_MAP_BUILT) {
-                    _buildHeroPlayerCardMap(root);
-                    return;
-                }
-                if (!container || !isPanelValid(container)) return;
-
-                if (!purchases) purchases = container.FindChildrenWithClassTraverse(CLASS_RECENT_PURCHASE);
-
-                var fresh = _collectNewPurchasesRP(purchases);
-                for (var i = 0; i < fresh.length; i++) {
-                    _addHeroPurchaseEntry(fresh[i].panel, fresh[i].name, quickMax, quickDisplaySec);
-                }
-            }
-
-            function _tick() {
-                var root = $.GetContextPanel();
-                if (!isPanelValid(root)) return;
-
-                var inHideout = QOL.core.hud.isInHideout(root);
-                if (_wasInHideout === null || inHideout !== _wasInHideout) {
-                    _resetNotificationsRP();
-                    _lastFilterSig = null;
-                    _lastFirstChild = null;
-                    _nextPanelSearchMs = 0;
-                    _wasInHideout = inHideout;
-                }
-
-                var cfg = ctx.config.view();
-                var shopEnabled   = Number(cfg.ENABLE_SHOP_RECENT_PURCHASES) === 1;
-                var notifyEnabled = Number(cfg.ENABLE_SHOP_ITEM_NOTIFICATIONS) === 1;
-
-                // Sync root classes
-                var heroPopupsEnabled = Number(cfg.ENABLE_HERO_PURCHASE_POPUPS) === 1;
-                if (root.SetHasClass) {
-                    root.SetHasClass("shop_recent_purchases_active", shopEnabled && !inHideout);
-                    root.SetHasClass("shop_recent_purchases_redux", heroPopupsEnabled && !inHideout);
-                    root.SetHasClass("shop_item_notifications_active", notifyEnabled && !inHideout);
-                }
-
-                if (_loop) _loop.reschedule(inHideout ? 0.5 : 0.2);
-                if (inHideout) return;
-
-                var notificationMode = notifyEnabled ? (heroPopupsEnabled ? 2 : 1) : 0;
-                if (notificationMode !== _notificationMode) {
-                    _resetNotificationsRP();
-                    _notificationMode = notificationMode;
-                }
-
-                if (!shopEnabled && !notifyEnabled) return;
-
-                var now = Date.now();
-                if (_rpSearchRoot !== root || now >= _nextPanelSearchMs ||
-                    (_rpPanel && !isPanelValid(_rpPanel))) {
-                    var currentPanel = root.FindChildTraverse("RecentPurchasesPanel");
-                    if (!isPanelValid(currentPanel)) currentPanel = null;
-                    _rpSearchRoot = root;
-                    _nextPanelSearchMs = now + PANEL_SEARCH_MS;
-                    if (currentPanel !== _rpPanel) {
-                        _resetNotificationsRP();
-                        _removeFilterControlsRP();
-                        _rpPanel = currentPanel;
-                        _rpContainer = null;
-                        _rpPanelStyleSig = "";
-                        _lastFilterSig = null;
-                        _lastFirstChild = null;
-                    }
-                }
-                if (!isPanelValid(_rpPanel)) return;
-                if (_rpPanel) {
-                    var panelOffsetX = normalizeHudOffsetNumber(cfg.RECENT_PURCHASES_PANEL_X_OFFSET, 0);
-                    var panelOffsetY = normalizeHudOffsetNumber(cfg.RECENT_PURCHASES_PANEL_Y_OFFSET, 0);
-                    var panelOpacityText = normalizeOpacityNumber(cfg.RECENT_PURCHASES_PANEL_OPACITY, 1.0).toFixed(2);
-                    var panelScaleText = normalizeHudScaleNumber(cfg.RECENT_PURCHASES_PANEL_SCALE, 1.0).toFixed(2);
-                    var rpSig = panelOffsetX + "|" + panelOffsetY + "|" + panelOpacityText + "|" + panelScaleText;
-                    if (_rpPanelStyleSig !== rpSig) {
-                        setStyleIfChanged(_rpPanel, "x", String(panelOffsetX) + "px");
-                        setStyleIfChanged(_rpPanel, "y", String(-panelOffsetY) + "px");
-                        setPanelOpacitySafe(_rpPanel, panelOpacityText, 1.0);
-                        setStyleIfChanged(_rpPanel, "preTransformScale2d", "1.00, 1.00");
-                        setStyleIfChanged(_rpPanel, "uiScale", Math.round(Number(panelScaleText) * 100) + "%");
-                        _rpPanelStyleSig = rpSig;
-                    }
-                }
-
-                var quickMax = Math.round(Number(cfg.RECENT_PURCHASES_QUICK_MAX) || RECENT_PURCHASE_QUICK_MAX_DEFAULT);
-                var quickDisplaySec = Math.round(Number(cfg.RECENT_PURCHASES_QUICK_DISPLAY_SEC) || RECENT_PURCHASE_QUICK_DISPLAY_SEC_DEFAULT);
-                if (quickMax < 1 || quickMax > 5) quickMax = RECENT_PURCHASE_QUICK_MAX_DEFAULT;
-                if (quickDisplaySec < 3 || quickDisplaySec > 15) quickDisplaySec = RECENT_PURCHASE_QUICK_DISPLAY_SEC_DEFAULT;
-
-                if (!isPanelValid(_rpContainer)) {
-                    if (_rpContainer) _resetNotificationsRP();
-                    _rpContainer = _rpPanel.FindChild("RecentPurchasesContainer");
-                }
-                var container = _rpContainer;
-                if (!container) return;
-
-                var purchases = null;
-                if (shopEnabled || notifyEnabled) {
-                    purchases = container.FindChildrenWithClassTraverse(CLASS_RECENT_PURCHASE);
-                }
-
-                if (shopEnabled) {
-                    _updateModIconsRP(container, purchases);
-                    var c = _buildContextRP(container);
-                    _createFilterCheckboxesRP();
-                    _updateFilterVisibilityRP(c);
-                    _applyFiltersRP(container, c, purchases);
-                }
-
-                if (notifyEnabled) {
-                    var quickOffsetX     = normalizeHudOffsetNumber(cfg.RECENT_PURCHASES_QUICK_X_OFFSET, 0);
-                    var quickOffsetY     = normalizeHudOffsetNumber(cfg.RECENT_PURCHASES_QUICK_Y_OFFSET, 0);
-                    var quickOpacityText = normalizeOpacityNumber(cfg.RECENT_PURCHASES_QUICK_OPACITY, 1.0).toFixed(2);
-                    var quickScale       = normalizeHudScaleNumber(cfg.RECENT_PURCHASES_QUICK_SCALE, 1.0);
-                    var quickScaleText   = quickScale.toFixed(2);
-
-                    if (heroPopupsEnabled) {
-                        _heroPopup.ultCooldownsEnabled = Number(cfg.ENABLE_ULT_COOLDOWNS) === 1;
-                        _syncHeroPopupStyle(quickOffsetX, quickOffsetY, quickOpacityText, quickScale);
-                        _updateHeroPurchasePopups(root, container, quickMax, quickDisplaySec, purchases);
-                    } else {
-                        _updateQuickPurchasesRP(root, container, quickMax, quickDisplaySec, purchases);
-                        var rejuvEnabled      = Number(cfg.RECENT_PURCHASES_QUICK_REJUV) !== 0;
-                        var scoreboardEnabled = Number(cfg.RECENT_PURCHASES_QUICK_SCOREBOARD) !== 0;
-                        _syncRejuvClassRP(rejuvEnabled);
-                        var quickPanel = _quickPurchasesPanel;
-                        if (isPanelValid(quickPanel)) {
-                            quickPanel.SetHasClass("rp_quick_scoreboard_active", scoreboardEnabled);
-                            var mTop = _computeQuickPurchasesMarginTopRP(root, cfg, rejuvEnabled, scoreboardEnabled);
-                            var quickSig = mTop + "|" + quickOffsetX + "|" + quickOffsetY + "|" + quickOpacityText + "|" + quickScaleText;
-                            if (_quickPanelStyleSig !== quickSig) {
-                                setStyleIfChanged(quickPanel, "marginTop", String(mTop) + "px");
-                                setStyleIfChanged(quickPanel, "x", String(quickOffsetX) + "px");
-                                setStyleIfChanged(quickPanel, "y", String(-quickOffsetY) + "px");
-                                setPanelOpacitySafe(quickPanel, quickOpacityText, 1.0);
-                                setStyleIfChanged(quickPanel, "preTransformScale2d", "1.00, 1.00");
-                                setStyleIfChanged(quickPanel, "uiScale", Math.round(Number(quickScaleText) * 100) + "%");
-                                _quickPanelStyleSig = quickSig;
-                            }
-                        }
-                    }
-                }
-            }
-
-            function _onShopOpenedRP() {
-                _nextPanelSearchMs = 0;
-            }
-
             return {
-                onEnable: function() {
-                    var S = QOL.core.Scheduler;
-                    if (ctx.events && ctx.events.on) ctx.events.on("engine:shop_opened", _onShopOpenedRP);
-                    _loop = S && S.createPollLoop ? S.createPollLoop(_tick, 0.2, "ql_recent_purchases") : null;
+                onEnable() {
+                    running = true;
+                    if (ctx.events && ctx.events.on) ctx.events.on("engine:shop_opened", shopOpened);
+                    refreshSettings();
+                    loop = S.createPollLoop(update, 0.2, featureId);
                 },
-                onDisable: function() {
-                    if (ctx.events && ctx.events.off) ctx.events.off("engine:shop_opened", _onShopOpenedRP);
-                    if (_loop) {
-                        _loop.stop();
-                        _loop = null;
-                    }
-                    var S = QOL.core.Scheduler;
-                    if (S) S.cancelAllForFeature("ql_recent_purchases");
-                    _resetNotificationsRP();
-                    _removeFilterControlsRP();
-                    _lastVisibilitySig = null;
-                    _lastFilterSig = null;
-                    _lastFirstChild = null;
-                    _quickSeenKeys = {};
-                    _quickInitialized = false;
-                    _quickActiveEntries = [];
-                    _rpPanel = null;
-                    _rpContainer = null;
-                    _rpSearchRoot = null;
-                    _nextPanelSearchMs = 0;
-                    _quickPurchasesHostPanel = null;
-                    _cachedRejuvTimer = null;
-                    _topBarPanel = null;
-                    _wasInHideout = null;
-                    _notificationMode = 0;
-                    _rpPanelStyleSig = "";
-                    var root = $.GetContextPanel();
-                    if (isPanelValid(root)) {
-                        root.SetHasClass("shop_recent_purchases_active", false);
-                        root.SetHasClass("shop_recent_purchases_redux", false);
-                        root.SetHasClass("shop_item_notifications_active", false);
-                    }
-                },
-                onSettingsChanged: function() {
-                    _lastVisibilitySig = null;
-                    _lastFilterSig = null;
-                    _nextPanelSearchMs = 0;
-                    _tick();
+                onSettingsChanged: refreshSettings,
+                onDisable() {
+                    running = false;
+                    if (ctx.events && ctx.events.off) ctx.events.off("engine:shop_opened", shopOpened);
+                    if (loop) loop.stop();
+                    loop = null; resetNotifications(); releaseShop(); resetSources();
+                    shop = null; container = null; topBar = null; rootPanel = null; hideout = null; mode = 0; model = null; forceSearch = false;
+                    for (const filter of filters) filter.active = true;
+                    filtersVisible = true;
+                    Q.core.hud.refreshRootClasses($.GetContextPanel());
                 }
             };
         },
-        test: function(ctx) {
-            try {
-                var root = $.GetContextPanel();
-                var shop = root ? root.FindChildTraverse("CitadelShop") : null;
-                if (!shop) return null;
-                return {
-                    passed: true,
-                    name: "Shop panel exists for recent purchases",
-                    message: "",
-                    assertions: [{ passed: true, name: "CitadelShop panel exists" }]
-                };
-            } catch(e) {
-                return {
-                    passed: false,
-                    name: "Recent purchases panel check",
-                    message: (e && e.message ? e.message : String(e))
-                };
-            }
+        test() {
+            const shop = P.findTraverse($.GetContextPanel(), "CitadelShop");
+            if (!shop) return null;
+            return { passed: true, name: "Shop panel exists for recent purchases", message: "",
+                assertions: [{ passed: true, name: "CitadelShop panel exists" }] };
         }
     });
 })();
