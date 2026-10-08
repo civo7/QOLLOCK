@@ -46,7 +46,7 @@ tables, CSS values, test history or general verification caveats into it.
 | [ql_topbar](../../panorama/scripts/manifests/ql_topbar/manifest.js) | Top-bar geometry/visibility and shared warning/objective settings. |
 | [ql_crosshair_stats](../../panorama/scripts/manifests/ql_crosshair_stats/manifest.js) | Selected stat/buff/debuff readouts near the crosshair. |
 | [ql_better_unsecured_hud](../../panorama/scripts/manifests/ql_better_unsecured_hud/manifest.js) | Unsecured-souls amount/icon overlay; separate from decay estimation. |
-| [ql_color_warnings](../../panorama/scripts/manifests/ql_color_warnings/manifest.js) | Player/ally/enemy health warning classes and colors; shared threshold keys. |
+| [ql_color_warnings](../../panorama/scripts/manifests/ql_color_warnings/manifest.js) | Sole native self/ally/enemy health color owner; instance-local pulse and threshold policy. Budhud observes the self color. |
 | [ql_showrank](../../panorama/scripts/manifests/ql_showrank/manifest.js) | Rank badges and a separate profile-card context; reject late callbacks and stale player identity. |
 | [ql_rejuv_hud](../../panorama/scripts/manifests/ql_rejuv_hud/manifest.js) | Rejuvenator/bridge-buff state and HUD; publishes `State.rejuvState` consumed by minimap timers. |
 | [ql_minimap_timers](../../panorama/scripts/manifests/ql_minimap_timers/manifest.js) | Minimap objective overlays; consume `State.rejuvState` instead of running another phase engine. |
@@ -74,7 +74,7 @@ Read only the note relevant to the change: [healthbar](ql_healthbar.md),
 [shop and quickbuy](ql_heroshop.md), [item cooldown mirror](ql_item_mirror.md),
 [passive cooldowns](ql_passive_cooldown.md),
 [legacy audio](ql_legacy_audio_passive.md), [minimap](ql_minimap_runtime.md),
-[compass](ql_compass.md), [recent purchases](ql_recent_purchases.md), or
+[compass](ql_compass.md), [objective timer producer/consumers](ql_objective_timers.md), [recent purchases](ql_recent_purchases.md), or
 [update checker](ql_update_checker.md).
 
 ## Editing a feature

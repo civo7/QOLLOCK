@@ -55,6 +55,14 @@ scoped renderer geometry; native map click targets/zoom rendering remain client 
 order and rejects duplicated persistent defaults/bounds, including computed fields
 and multitoggle options. The registered schemas still use the current shared catalog.
 
+`healthbar_module_ownership`, `color_warning_owners`, `map_module_lifecycle`,
+`information_manifest_lifecycle` and `ui_runtime_owners` exercise the current
+production owners against living replacement, late discovery, partial native
+writes, shared observer updates and shutdown. Budhud's native color comes from
+one warning owner; objective timers consume a scalar rejuvenator snapshot.
+These checks complement the frozen-main compatibility matrix and do not replace
+client validation of native animation, composition, input or timing.
+
 `tests/customize_config_compat.test.js` imports frozen legacy compact codes
 generated with the main codec/schema recorded in the fixture, then checks
 Customize cancellation, Apply and current-format export. It also checks legacy
