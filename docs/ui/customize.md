@@ -43,8 +43,13 @@ HUD and settings. They define scoped owner paths, existing editable fields and
 normalization against current settings metadata. Published compact schemas stay
 frozen; unsupported current values use the existing JSON envelope. The catalog includes native
 HUD families, overlays, map/shop states and additions in other script contexts;
-see [the visual surface inventory](../CUSTOMIZE_SURFACE_INVENTORY.md). The
-settings-only modules in `ui/customize/` separate the session, measured geometry,
+see [the visual surface inventory](../CUSTOMIZE_SURFACE_INVENTORY.md).
+
+The shop surface uses `Shop/MainPanel`, while recent purchases use the sibling
+`Shop/NavPanel/RecentPurchasesPanel` from the native shop layout. Quickbuy mode
+controls include the existing Enhanced toggle and retain their shared config units.
+
+The settings-only modules in `ui/customize/` separate the session, measured geometry,
 inspector, window chrome, overlay and tab. Native HUD owners remain under their original parents.
 Frames use the existing Panorama DragStart/DragEnd contract. A temporary,
 input-transparent proxy is the compositor's displayPanel, while native HUD panels,

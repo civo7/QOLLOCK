@@ -1,29 +1,17 @@
-// features/ql_heroshop/manifest.js
-// =============================================================================
-// QOLLOCK — Hero Shop HUD customization (offset, scale, opacity, simplify)
-// =============================================================================
-// OWNS:        Shop MainPanel layout, simplify/discount classes, recent purchases
-// DOES NOT OWN: Shop content, build system
-// DEPENDS ON:  QOL.core.FeatureRegistry, QOL.core.Scheduler
-// CONFIG KEYS: HUD_SHOP_ENABLED, SHOP_OFFSET_X/Y, SHOP_OPACITY, SHOP_SCALE,
-//              ENABLE_SIMPLIFY_SHOP, ENABLE_SIMPLIFY_ITEMS, DISABLE_SHOP_BLUE,
-//              ENABLE_SHOP_STATS, ENABLE_SIMPLIFY_SHOP_STATS, ENABLE_SHOP_RECENT_PURCHASES
-// PATTERN:     Polling (~5Hz). Panel caching with lazy discovery.
-//              Signature diffing to skip redundant style writes.
-// =============================================================================
-
-(function() {
+// OWNS: Shop MainPanel offsets, scale, opacity, visibility and local appearance classes.
+// DOES NOT OWN: Native shop/build content, recent-purchase data or the quickbuy context.
+// Source: hud.xml > .HudCore > CitadelHudHeroShop; citadel_hud_hero_shop.xml > Shop > MainPanel.
+(() => {
     "use strict";
-    var FR = QOL.core.FeatureRegistry;
-    if (!FR) { $.Msg("[QOLLock] heroshop: FeatureRegistry not found — aborting"); return; }
-
-    FR.register({
+    QOL.core.FeatureRegistry.register({
         id: "ql_heroshop",
+        // A hidden or closed shop still needs reactive settings and replacement discovery.
         enabledByDefault: true,
         settings: [
             { key: "HUD_SHOP_ENABLED", type: "toggle" },
             { key: "ENABLE_HERO_SCENE_PANEL", type: "toggle", label: "Hero", description: "Shows your character in the shop menu." },
             { key: "DISABLE_QUICK_BUY", type: "toggle", invert: true, label: "Quick Buy", description: "The item buying auto queue system in the shop menu." },
+            { key: "ENABLE_ENHANCED_QUICKBUY", type: "toggle" },
             { key: "ENHANCED_QUICKBUY_COUNT", type: "slider", label: "Enhanced Count", description: "Controls how many enhanced quickbuy preview items are shown." },
             { key: "ENABLE_QUICKBUY_CLICK_TO_NOTIFY", type: "toggle", label: "Click to Notify", description: "Notify your teammates in chat about how close you are to a quickbuy purchase." },
             { key: "SHOP_OFFSET_X", type: "slider" },
@@ -37,254 +25,166 @@
             { key: "ENABLE_SIMPLIFY_SHOP_STATS", type: "toggle" },
             { key: "ENABLE_SHOP_RECENT_PURCHASES", type: "toggle" }
         ],
-        create: function(ctx) {
-            var PANEL_ID = "CitadelHudHeroShop";
-            var PANEL_SEARCH_MS = 2000;
-            var _loop = null;
-            var _shopPanel = null;
-            var _mainPanel = null;
-            var _classCache = {};
-            var _styleSig = "";
-            var _nextSearchMs = 0;
-            var _nextMainPanelSearchMs = 0;
+        create(ctx) {
+            const P = QOL.core.panel;
+            const U = QOL.utils;
+            const S = QOL.core.Scheduler;
+            const fields = new Map(QOL.settingsFields.map(field => [field.key, field]));
+            const shopResolver = QOL.panelCache.createIdResolver("CitadelHudHeroShop", {
+                retryMs: 2000, ownerPath: [{ id: "Hud", optional: true }, { className: "HudCore" }]
+            });
+            const mainResolver = QOL.panelCache.createIdResolver("MainPanel", {
+                retryMs: 2000, ownerPath: ["Shop"]
+            });
+            const owners = new Map();
+            let shop = null, main = null, model = null, loop = null, pending = null, enabled = false;
 
-            var _isAlive = QOL.utils.IsPanelValid;
-
-            function _normOffset(v, d) { var n = Math.round(Number(v)); return isFinite(n) ? n : d; }
-            function _normOpacity(v, d) { var n = Number(v); return isFinite(n) && n >= 0 && n <= 1 ? n : d; }
-            function _normScale(v, d) { var n = Number(v); return isFinite(n) && n >= 0.5 && n <= 1.5 ? n : d; }
-            function _isOn(cfg, k) {
-                if (!cfg) return false;
-                var v = cfg[k];
-                return v === true || Number(v) === 1;
-            }
-            function _isShopEnabled(cfg) {
-                if (!cfg) return true;
-                var v = cfg.HUD_SHOP_ENABLED;
-                if (v === undefined) return true;
-                return v === true || Number(v) === 1;
+            function number(cfg, key, round = false) {
+                const field = fields.get(key);
+                return U.ClampConfigNumber(cfg[key] ?? QOL_DEFAULT_CONFIG[key], QOL_DEFAULT_CONFIG[key], field.min, field.max, round);
             }
 
-            function _setClass(panel, cls, on) {
-                if (!_isAlive(panel)) return;
-                if (_classCache[cls] === on) return;
-                _classCache[cls] = on;
-                try { panel.SetHasClass(cls, on); } catch(e) {}
+            function on(cfg, key) {
+                const value = cfg[key] === undefined ? QOL_DEFAULT_CONFIG[key] : cfg[key];
+                return Number(value) === 1;
             }
 
-            function _needsFeatures(cfg) {
-                var simplifyStats = _isOn(cfg, "ENABLE_SHOP_STATS") && _isOn(cfg, "ENABLE_SIMPLIFY_SHOP_STATS");
-                var recentPurchases = _isOn(cfg, "ENABLE_SHOP_RECENT_PURCHASES");
-                var shopEnabled = _isShopEnabled(cfg);
-                return simplifyStats || recentPurchases ||
-                    Number(cfg.ENABLE_SIMPLIFY_SHOP) === 1 || Number(cfg.ENABLE_SIMPLIFY_ITEMS) === 1 ||
-                    Number(cfg.DISABLE_SHOP_BLUE) === 1 || !shopEnabled ||
-                    _normOffset(cfg.SHOP_OFFSET_X, 0) !== 0 || _normOffset(cfg.SHOP_OFFSET_Y, 0) !== 0 ||
-                    _normOpacity(cfg.SHOP_OPACITY, 1.0) !== 1.0 || _normScale(cfg.SHOP_SCALE, 1.0) !== 1.0;
+            function readModel() {
+                const cfg = ctx.config.view();
+                const x = number(cfg, "SHOP_OFFSET_X", true), y = number(cfg, "SHOP_OFFSET_Y", true);
+                const scale = number(cfg, "SHOP_SCALE"), opacity = number(cfg, "SHOP_OPACITY");
+                const hidden = !on(cfg, "HUD_SHOP_ENABLED");
+                const styles = {};
+                // Preserve paired-margin offset units. At zero, release the override
+                // so native/training/simplified shop CSS remains authoritative.
+                if (x !== 0) { styles.marginLeft = x + "px"; styles.marginRight = -x + "px"; }
+                if (y !== 0) { styles.marginTop = -y + "px"; styles.marginBottom = y + "px"; }
+                if (scale !== 1) styles.uiScale = Math.round(scale * 100) + "%";
+                if (opacity !== 1) styles.opacity = opacity.toFixed(2);
+                if (hidden) styles.visibility = "collapse";
+                return { hidden, styles, classes: {
+                    simplify_shop_stats_active: on(cfg, "ENABLE_SHOP_STATS") && on(cfg, "ENABLE_SIMPLIFY_SHOP_STATS"),
+                    simplify_shop_active: on(cfg, "ENABLE_SIMPLIFY_SHOP"),
+                    simplify_items_active: on(cfg, "ENABLE_SIMPLIFY_ITEMS"),
+                    disable_shop_blue_active: on(cfg, "DISABLE_SHOP_BLUE"),
+                    shop_recent_purchases_active: on(cfg, "ENABLE_SHOP_RECENT_PURCHASES")
+                } };
             }
 
-            function _tick() {
-                try {
-                    var root = $.GetContextPanel();
-                    if (!root) return;
-                    var now = Date.now ? Date.now() : (new Date()).getTime();
-                    var cfg = ctx.config.view();
+            function owner(panel) {
+                if (!owners.has(panel)) owners.set(panel, { styles: new Set(), classes: new Set(), signature: null });
+                return owners.get(panel);
+            }
 
-                    var shopOffsetX = _normOffset(cfg.SHOP_OFFSET_X, 0);
-                    var shopOffsetY = _normOffset(cfg.SHOP_OFFSET_Y, 0);
-                    var shopOpacity = _normOpacity(cfg.SHOP_OPACITY, 1.0);
-                    var shopScale = _normScale(cfg.SHOP_SCALE, 1.0);
-                    var shopEnabled = _isShopEnabled(cfg);
-                    var simplifyStats = _isOn(cfg, "ENABLE_SHOP_STATS") && _isOn(cfg, "ENABLE_SIMPLIFY_SHOP_STATS");
-                    var recentPurchases = _isOn(cfg, "ENABLE_SHOP_RECENT_PURCHASES");
-                    var needsFeatures = _needsFeatures(cfg);
+            function clearClass(panel, name, record) {
+                P.setClass(panel, name, false);
+                // setClass returns false for both an unchanged class and a failed
+                // write; read the native result before retiring ownership.
+                try { if (!panel.BHasClass(name)) record.classes.delete(name); } catch (_) {}
+            }
 
-                    // ── Hidden guard ──
-                    if (_isAlive(_shopPanel) && needsFeatures) {
-                        try { if (_shopPanel.BHasClass && _shopPanel.BHasClass("qol-hidden")) return; } catch(e) {}
-                    }
+            function release(panel) {
+                const record = owners.get(panel);
+                if (!record) return;
+                if (!P.isAlive(panel)) { owners.delete(panel); return; }
+                for (const property of record.styles) {
+                    if (P.clearStyleProperty(panel, property)) record.styles.delete(property);
+                }
+                for (const name of record.classes) clearClass(panel, name, record);
+                record.signature = null;
+                if (!record.styles.size && !record.classes.size) owners.delete(panel);
+            }
 
-                    // ── Panel discovery ──
-                    if (needsFeatures && now >= _nextSearchMs) {
-                        var currentShop = root.FindChildTraverse ? root.FindChildTraverse(PANEL_ID) : null;
-                        if (currentShop !== _shopPanel) {
-                            _shopPanel = currentShop;
-                            _mainPanel = null;
-                            _nextMainPanelSearchMs = 0;
-                            _classCache = {};
-                            _styleSig = "";
-                        }
-                        _nextSearchMs = now + PANEL_SEARCH_MS;
-                    }
+            function discover(force) {
+                const currentShop = shopResolver.resolve($.GetContextPanel(), force);
+                if (currentShop !== shop) {
+                    release(main); release(shop);
+                    shop = currentShop; main = null;
+                    mainResolver.reset();
+                }
+                const currentMain = mainResolver.resolve(shop, force);
+                if (currentMain !== main) { release(main); main = currentMain; }
+                // Failed cleanup of a living old generation retries independently
+                // of discovery and settings signatures.
+                for (const panel of owners.keys()) if (panel !== shop && panel !== main) release(panel);
+            }
 
-                    // ── Apply ──
-                    if (needsFeatures && _isAlive(_shopPanel)) {
-                        _setClass(_shopPanel, "simplify_shop_stats_active", simplifyStats);
-                        _setClass(_shopPanel, "simplify_shop_active", Number(cfg.ENABLE_SIMPLIFY_SHOP) === 1);
-                        _setClass(_shopPanel, "simplify_items_active", Number(cfg.ENABLE_SIMPLIFY_ITEMS) === 1);
-                        _setClass(_shopPanel, "disable_shop_blue_active", Number(cfg.DISABLE_SHOP_BLUE) === 1);
-                        _setClass(_shopPanel, "shop_recent_purchases_active", recentPurchases);
-
-                        // Refresh main panel cache if needed
-                        if (now >= _nextMainPanelSearchMs && _shopPanel.FindChildTraverse) {
-                            var currentMain = _shopPanel.FindChildTraverse("MainPanel");
-                            if (currentMain !== _mainPanel) {
-                                _mainPanel = currentMain;
-                                _styleSig = "";
-                            }
-                            _nextMainPanelSearchMs = now + PANEL_SEARCH_MS;
-                        }
-                        if (_isAlive(_mainPanel)) {
-                            var marginLeftText = shopOffsetX + "px";
-                            var marginRightText = (-shopOffsetX) + "px";
-                            var marginTopText = (-shopOffsetY) + "px";
-                            var marginBottomText = shopOffsetY + "px";
-                            var opacityText = shopOpacity.toFixed(2);
-                            var scaleText = shopScale.toFixed(2);
-                            var sig = marginLeftText + "|" + marginRightText + "|" + marginTopText + "|" + marginBottomText + "|" + opacityText + "|" + scaleText + "|" + (shopEnabled ? "1" : "0");
-                            if (_styleSig !== sig) {
-                                _mainPanel.style.marginLeft = marginLeftText;
-                                _mainPanel.style.marginRight = marginRightText;
-                                _mainPanel.style.marginTop = marginTopText;
-                                _mainPanel.style.marginBottom = marginBottomText;
-                                _mainPanel.style.x = "0px";
-                                _mainPanel.style.y = "0px";
-                                _mainPanel.style.preTransformScale2d = "1.00, 1.00";
-                                _mainPanel.style.uiScale = Math.round(Number(scaleText) * 100) + "%";
-                                if (_mainPanel.SetHasClass) _mainPanel.SetHasClass("qol-hidden", !shopEnabled);
-                                else _mainPanel.style.visibility = shopEnabled ? "visible" : "collapse";
-                                try {
-                                    if (typeof Utils !== "undefined" && Utils.SetPanelOpacitySafe) {
-                                        Utils.SetPanelOpacitySafe(_mainPanel, opacityText, 1.0);
-                                    } else {
-                                        _mainPanel.style.opacity = opacityText;
-                                    }
-                                } catch(e) {}
-                                _styleSig = sig;
-                            }
-                        }
-                        // Write State for cross-feature compat
-                        try {
-                            if (typeof QOL !== "undefined" && QOL.state) {
-                                var st = QOL.state;
-                                st.heroShopMainPanelStyleSig = _styleSig;
-                                st.heroShopNextSearchMs = _nextSearchMs;
-                            }
-                        } catch(e) {}
-                    } else if (!needsFeatures && _isAlive(_shopPanel)) {
-                        // ── Cleanup: reset all classes + styles ──
-                        _setClass(_shopPanel, "simplify_shop_stats_active", false);
-                        _setClass(_shopPanel, "simplify_shop_active", false);
-                        _setClass(_shopPanel, "simplify_items_active", false);
-                        _setClass(_shopPanel, "disable_shop_blue_active", false);
-                        _setClass(_shopPanel, "shop_recent_purchases_active", false);
-
-                        if (!_isAlive(_mainPanel) && _shopPanel.FindChildTraverse) {
-                            _mainPanel = _shopPanel.FindChildTraverse("MainPanel");
-                        }
-                        if (_isAlive(_mainPanel)) {
-                            var resetSig = "0px|0px|0px|0px|1.00|1.00|1";
-                            if (_styleSig !== resetSig) {
-                                _mainPanel.style.marginLeft = "0px";
-                                _mainPanel.style.marginRight = "0px";
-                                _mainPanel.style.marginTop = "0px";
-                                _mainPanel.style.marginBottom = "0px";
-                                _mainPanel.style.x = "0px";
-                                _mainPanel.style.y = "0px";
-                                _mainPanel.style.preTransformScale2d = "1.00, 1.00";
-                                _mainPanel.style.uiScale = "100%";
-                                if (_mainPanel.SetHasClass) _mainPanel.SetHasClass("qol-hidden", false);
-                                else _mainPanel.style.visibility = "visible";
-                                try {
-                                    if (typeof Utils !== "undefined" && Utils.SetPanelOpacitySafe) {
-                                        Utils.SetPanelOpacitySafe(_mainPanel, 1.0, 1.0);
-                                    } else {
-                                        _mainPanel.style.opacity = "1.00";
-                                    }
-                                } catch(e) {}
-                            }
-                        }
-                        _shopPanel = null;
-                        _mainPanel = null;
-                        _classCache = {};
-                        _styleSig = "";
-                        _nextSearchMs = 0;
-                        try {
-                            if (typeof QOL !== "undefined" && QOL.state) {
-                                QOL.state.heroShopMainPanelStyleSig = "";
-                            }
-                        } catch(e) {}
-                    }
-                } catch(e) {
-                    if (typeof QOL !== "undefined" && QOL.core && QOL.core.Logger) {
-                        QOL.core.Logger.logError("ql_heroshop", "_tick: " + (e.message || e));
-                    }
-                    throw e;
+            function renderClasses(panel, classes) {
+                if (!P.isAlive(panel)) return;
+                const record = owner(panel);
+                for (const [name, active] of Object.entries(classes)) {
+                    if (active) {
+                        record.classes.add(name);
+                        P.setClass(panel, name, true);
+                    } else if (record.classes.has(name)) clearClass(panel, name, record);
                 }
             }
 
-            function _onShopTransition() {
-                QOL.core.Scheduler.scheduleOnce(_tick, 0, ctx.id);
+            function render() {
+                renderClasses(shop, model.classes);
+                if (!P.isAlive(main)) return;
+                const record = owner(main);
+                for (const property of record.styles) {
+                    if (!(property in model.styles)) {
+                        if (P.clearStyleProperty(main, property)) record.styles.delete(property);
+                        record.signature = null;
+                    }
+                }
+                // Record attempted writes too: a partly applied native map must
+                // still be released, and syncStyles leaves a failed signature null.
+                for (const property of Object.keys(model.styles)) record.styles.add(property);
+                record.signature = P.syncStyles(main, model.styles, record.signature).sig;
+                renderClasses(main, { "qol-hidden": model.hidden });
+            }
+
+            function update(force = false) {
+                if (!enabled || !model) return;
+                discover(force);
+                render();
+            }
+
+            function refreshSettings() {
+                model = readModel();
+                QOL.core.hud.refreshRootClasses($.GetContextPanel());
+                update(true);
+            }
+
+            function onShopTransition() {
+                if (!enabled || pending) return;
+                pending = S.scheduleOnce(() => { pending = null; update(true); }, 0, ctx.id);
             }
 
             return {
-                onEnable: function() {
-                    if (ctx && ctx.events && typeof ctx.events.on === "function") {
-                        ctx.events.on("engine:shop_opened", _onShopTransition);
-                        ctx.events.on("engine:shop_closed", _onShopTransition);
-                    }
-                    var S = QOL.core.Scheduler;
-                    _loop = S && S.createPollLoop ? S.createPollLoop(_tick, 1.0, "ql_heroshop") : null;
-                    _tick();
+                onEnable() {
+                    enabled = true;
+                    ctx.events?.on("engine:shop_opened", onShopTransition);
+                    ctx.events?.on("engine:shop_closed", onShopTransition);
+                    refreshSettings();
+                    loop = S.createPollLoop(update, 1, ctx.id);
                 },
-                onDisable: function() {
-                    if (ctx && ctx.events && typeof ctx.events.off === "function") {
-                        ctx.events.off("engine:shop_opened", _onShopTransition);
-                        ctx.events.off("engine:shop_closed", _onShopTransition);
-                    }
-                    if (_loop) { _loop.stop(); _loop = null; }
-                    // Reset panels to default
-                    if (_isAlive(_shopPanel)) {
-                        _setClass(_shopPanel, "simplify_shop_stats_active", false);
-                        _setClass(_shopPanel, "simplify_shop_active", false);
-                        _setClass(_shopPanel, "simplify_items_active", false);
-                        _setClass(_shopPanel, "disable_shop_blue_active", false);
-                        _setClass(_shopPanel, "shop_recent_purchases_active", false);
-                    }
-                    if (_isAlive(_mainPanel)) {
-                        try {
-                            _mainPanel.style.marginLeft = "0px";
-                            _mainPanel.style.marginRight = "0px";
-                            _mainPanel.style.marginTop = "0px";
-                            _mainPanel.style.marginBottom = "0px";
-                            _mainPanel.style.x = "0px";
-                            _mainPanel.style.y = "0px";
-                            _mainPanel.style.preTransformScale2d = "1.00, 1.00";
-                            _mainPanel.style.uiScale = "100%";
-                            var isSupposed = FR && FR.isFeatureSupposedToBeEnabled ? FR.isFeatureSupposedToBeEnabled("ql_heroshop") : false;
-                            if (_mainPanel.SetHasClass) _mainPanel.SetHasClass("qol-hidden", !isSupposed);
-                            try { _mainPanel.style.opacity = "1.00"; } catch(e2) {}
-                        } catch(e) {}
-                    }
-                    _shopPanel = null; _mainPanel = null; _classCache = {}; _styleSig = ""; _nextSearchMs = 0;
-                },
-                onSettingsChanged: function() {
-                    _styleSig = "";
-                    var root = $.GetContextPanel ? $.GetContextPanel() : null;
-                    if (root && QOL.core && QOL.core.hud && QOL.core.hud.refreshRootClasses) {
-                        QOL.core.hud.refreshRootClasses(root);
-                    }
-                    _tick();
+                onSettingsChanged: refreshSettings,
+                onDisable() {
+                    enabled = false;
+                    ctx.events?.off("engine:shop_opened", onShopTransition);
+                    ctx.events?.off("engine:shop_closed", onShopTransition);
+                    if (pending) { pending.stop(); pending = null; }
+                    if (loop) { loop.stop(); loop = null; }
+                    for (const panel of owners.keys()) release(panel);
+                    owners.clear();
+                    shop = null; main = null; model = null;
+                    shopResolver.reset(); mainResolver.reset();
                 }
             };
         },
-    test: function(ctx) {
-        try {
-            var root = $.GetContextPanel();
-            var shop = root ? root.FindChildTraverse("CitadelShop") : null;
-            if (!shop) return null;  // Skip — not in a match context
-            return { passed: true, name: "Hero shop panel exists", message: "", assertions: [{ passed: true, name: "CitadelShop panel exists" }] };
-        } catch(e) { return { passed: false, name: "Hero shop panel check", message: (e && e.message ? e.message : String(e)) }; }
-    }
+        test() {
+            try {
+                const shop = QOL.core.panel.findTraverse($.GetContextPanel(), "CitadelHudHeroShop");
+                if (!shop) return null;
+                return { passed: true, name: "Hero shop panel exists", message: "",
+                    assertions: [{ passed: true, name: "CitadelHudHeroShop panel exists" }] };
+            } catch (e) {
+                return { passed: false, name: "Hero shop panel check", message: e.message || String(e) };
+            }
+        }
     });
 })();

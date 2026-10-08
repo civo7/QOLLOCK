@@ -18,6 +18,8 @@ behavior until its owning implementation has been audited.
 - Healthbar variant controllers, independent warning presentation, scoped map
   content/geometry, compass, reload estimates and objective/stat readouts with
   private lifetime state; generation-safe on-death launch/menu coordination.
+- Reactive shop presentation with native baseline release and the retained
+  Enhanced Quickbuy config/catalog control.
 
 Frozen main-config fixtures preserve all healthbar variants and both minimap
 scale methods. Published versions, compact layouts and persistent defaults stay
@@ -25,9 +27,8 @@ unchanged, apart from the already approved native-origin AP/stamina offsets.
 
 ## Remaining implementation and audit
 
-1. Rewrite the remaining legacy HUD owners: shop/quickbuy integration, recent
-   purchases, Advanced item mirror, profile/rank/statlocker,
-   and translation. Preserve their established
+1. Rewrite the remaining legacy HUD owners: recent purchases, Advanced item
+   mirror, profile/rank/statlocker and translation. Preserve their established
    source selection, filtering, identity and context boundaries.
 2. Audit already modernized owners for remaining shared mutable bookkeeping,
    duplicate native style writers and missing release paths. Remove obsolete

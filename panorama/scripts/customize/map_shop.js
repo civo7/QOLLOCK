@@ -45,9 +45,10 @@
             t("DISABLE_SHOP_BLUE", "Disable Shop Blue"), t("ENABLE_SHOP_STATS", "Shop Stats"), t("ENABLE_SIMPLIFY_SHOP_STATS", "Simplify Shop Stats")
         ] },
         { id: "quickbuy", name: "Quick Buy", group: "Shop", path: [...lower, "CitadelHudQuickbuy"], fields: [
-            t("DISABLE_QUICK_BUY", "Disable Quick Buy"), f("ENHANCED_QUICKBUY_COUNT", "Enhanced Count"), t("ENABLE_QUICKBUY_CLICK_TO_NOTIFY", "Click to Notify")
+            t("DISABLE_QUICK_BUY", "Disable Quick Buy"), t("ENABLE_ENHANCED_QUICKBUY", "Enhanced"),
+            f("ENHANCED_QUICKBUY_COUNT", "Enhanced Count"), t("ENABLE_QUICKBUY_CLICK_TO_NOTIFY", "Click to Notify")
         ] },
-        { id: "recentPurchases", name: "Recent Purchases", group: "Shop", path: [...core, "CitadelHudHeroShop", "Shop", "MainPanel", "RecentPurchasesPanel"], fields: [
+        { id: "recentPurchases", name: "Recent Purchases", group: "Shop", path: [...core, "CitadelHudHeroShop", "Shop", "NavPanel", "RecentPurchasesPanel"], fields: [
             toggle("ENABLE_SHOP_RECENT_PURCHASES"), ...geometry("RECENT_PURCHASES_PANEL_", true), opacity("RECENT_PURCHASES_PANEL_")
         ] },
         { id: "purchaseNotifications", name: "Item Notifications", group: "Shop", path: [...core, "TopBar", "QuickPurchasesPanel"], fields: [
