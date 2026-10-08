@@ -5,27 +5,36 @@ const assert = require("node:assert/strict");
 const fs = require("node:fs");
 const path = require("node:path");
 const vm = require("node:vm");
+const { parseLayoutScripts } = require("../scripts/simulator/layout");
 
 function fixture() {
     let manifest;
     let now = 10000;
     let gameplayShown = true;
-    const code = fs.readFileSync(path.join(__dirname, "../panorama/scripts/manifests/ql_item_mirror/manifest.js"), "utf8");
-    // Expose private operations only in this VM, while executing the real manifest.
+    const code = fs.readFileSync(path.join(__dirname, "../panorama/scripts/manifests/ql_item_mirror/controller.js"), "utf8");
+    // Expose private operations only in this VM, while executing the active modules.
     const instrumented = code.replace("onEnable: function() {", `
-        sync: _syncMirrorItemFromSourceMulti,
-        reconcile: _reconcileItemMirrorSourcesMulti,
-        discover: _buildItemMirrorSourcesMulti,
+        sync: renderer._syncMirrorItemFromSourceMulti,
+        reconcile: native._reconcileItemMirrorSourcesMulti,
+        discover: native._buildItemMirrorSourcesMulti,
         gameplayShown: _isItemMirrorGameplayShown,
-        style: _getInlineStyleProperty,
+        style: native._getInlineStyleProperty,
         onEnable: function() {`);
+    assert.notEqual(instrumented, code, "private fixture hook must match the current controller lifecycle");
     const scheduled = [];
     const sandbox = {
         Date: { now: () => now },
         QOL: {
+            features: {},
+            panelCache: { createIdResolver: () => ({ resolve: () => null, reset() {} }) },
             core: {
                 FeatureRegistry: { register: m => { manifest = m; } },
                 Logger: { logWarn: m => { throw new Error(m); } },
+                Scheduler: { scheduleOnce: (callback, delay) => {
+                    const entry = { delay, callback, cancelled: false };
+                    scheduled.push(entry);
+                    return { stop: () => { entry.cancelled = true; } };
+                } },
                 hud: { isGameplayHudShown: () => gameplayShown }
             },
             utils: { PerfNowMs: () => now, IsPanelValid: p => !!p && p.valid !== false }
@@ -33,7 +42,13 @@ function fixture() {
         QOL_UTILS: { SetPanelOpacitySafe: (p, value) => { p.style.opacity = value; } },
         $: { Schedule: (delay, callback) => { scheduled.push({ delay, callback }); } }
     };
-    vm.runInNewContext(instrumented, sandbox);
+    const layout = parseLayoutScripts(path.resolve(__dirname, "../panorama/layout/hud.xml"));
+    const modules = layout.scripts.filter(script => script.src.includes("/manifests/ql_item_mirror/"));
+    assert.equal(modules.length, 5, "load the complete active owner graph");
+    for (const script of modules) {
+        const source = script.absPath.endsWith("controller.js") ? instrumented : fs.readFileSync(script.absPath, "utf8");
+        vm.runInNewContext(source, sandbox);
+    }
     const api = manifest.create({});
     let searches = 0;
     let text = "";
@@ -193,6 +208,35 @@ test("item mirror inline style fallback matches whole properties and can be reus
         assert.equal(f.api.style(panel, "visibility"), "visible");
     }
     assert.equal(f.api.style({ GetAttributeString: () => "background-clip: border-box" }, "clip"), "");
+});
+
+for (const direction of [-1, 1]) {
+    test("item mirror estimates radial cooldown in direction " + direction + " and prioritizes late native text", () => {
+        const f = fixture(); f.tick(0);
+        f.source.cooldownMask.style.clip = `radial(50% 50%, 0deg, ${180 + direction * 20}deg)`;
+        f.tick(200);
+        assert.equal(f.slot.cooldownText.text, "2");
+        f.source.cooldownMask.style.clip = `radial(50% 50%, 0deg, ${180 + direction * 100}deg)`;
+        f.tick(800);
+        assert.equal(f.slot.cooldownText.text, "0.8");
+        f.setText("19s"); f.tick(1000);
+        assert.equal(f.slot.cooldownText.text, "19", "numeric native text overrides the radial estimate");
+        f.api.onDisable();
+    });
+}
+
+test("item mirror discards radial speed when a semantic item's native mask is replaced", () => {
+    const f = fixture(); f.tick(0);
+    f.source.cooldownMask.style.clip = "radial(50% 50%, 0deg, 160deg)";
+    f.tick(200); assert.equal(f.slot.cooldownText.text, "2");
+    f.source.cooldownMask = { style: { clip: "radial(50% 50%, 0deg, 350deg)" }, GetAttributeString: (_key, fallback) => fallback };
+    f.tick(200);
+    assert.equal(f.slot.cooldownText.style.visibility, "collapse", "a new mask needs its own velocity samples");
+    assert.equal(f.scheduled.length, 0, "source replacement is not a completion event");
+    f.source.cooldownMask.style.clip = "radial(50% 50%, 0deg, 345deg)";
+    f.tick(200);
+    assert.equal(f.slot.cooldownText.text, "14", "old display locks and velocity cannot cap the new estimate");
+    f.api.onDisable();
 });
 
 test("item mirror discovers every purchased item when native classes live on anonymous owner panels", () => {

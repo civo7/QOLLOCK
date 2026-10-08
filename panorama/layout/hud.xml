@@ -102,7 +102,13 @@
 		<!-- ==== End QOLLOCK independent HUD presentation scales ==== -->
 		<include src="s2r://panorama/scripts/manifests/ql_compass/manifest.vjs_c" />
 		<include src="s2r://panorama/scripts/manifests/ql_reload_cooldown/manifest.vjs_c" />
+		<!-- ==== QOLLOCK Advanced item-mirror owners ==== -->
+		<include src="s2r://panorama/scripts/manifests/ql_item_mirror/data.vjs_c" />
+		<include src="s2r://panorama/scripts/manifests/ql_item_mirror/sources.vjs_c" />
+		<include src="s2r://panorama/scripts/manifests/ql_item_mirror/renderer.vjs_c" />
+		<include src="s2r://panorama/scripts/manifests/ql_item_mirror/controller.vjs_c" />
 		<include src="s2r://panorama/scripts/manifests/ql_item_mirror/manifest.vjs_c" />
+		<!-- ==== End QOLLOCK Advanced item-mirror owners ==== -->
 		<include src="s2r://panorama/scripts/manifests/ql_healthbar/shared.vjs_c" />
 		<include src="s2r://panorama/scripts/manifests/ql_healthbar/variants/accent.vjs_c" />
 		<include src="s2r://panorama/scripts/manifests/ql_healthbar/variants/minimalist.vjs_c" />

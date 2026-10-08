@@ -84,6 +84,13 @@ evidence, independent native message selection, bounded cache and lifecycle
 cleanup. Native text remains readable through modeled failed helper requests;
 localhost image loading and native chat layout require client verification.
 
+`item_mirror_ownership.test.js` exercises current HUD/inventory generations,
+living source/child replacement, partial writes/construction and pending/active
+feedback cancellation. The existing `item_mirror.test.js` still checks discovery,
+exceptions, source identity and text backoff, and now covers both radial
+directions and native-generation estimator reset. The production runtime test
+retains all four filters and purchase/sale/shop behavior.
+
 `presentation_lifecycle.test.js` exercises explicit disable, partial enable
 failure, Scheduler auto-disable and shutdown/reboot through the production
 registry. It verifies custom-only CSS release, retained config, independent
