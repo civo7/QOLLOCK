@@ -56,7 +56,7 @@ tables, CSS values, test history or general verification caveats into it.
 | [ql_items](../../panorama/scripts/manifests/ql_items/manifest.js) | Native inventory layout, opacity and wash color; late/replaced icons need reapplication. |
 | [ql_stamina](../../panorama/scripts/manifests/ql_stamina/manifest.js) | Stamina charge rotation/wash; distinguish stamina ring from colliding ability IDs. |
 | [ql_compass](../../panorama/scripts/manifests/ql_compass/manifest.js) | Compass tape, speed display, minimap rotation/flip and player-heading discovery. |
-| [ql_reload_cooldown](../../panorama/scripts/manifests/ql_reload_cooldown/manifest.js) | Reload countdown estimated from native radial progress; icon/circle hiding settings. |
+| [ql_reload_cooldown](../../panorama/scripts/manifests/ql_reload_cooldown/manifest.js) | Reload countdown estimated from native radial progress; [source/label lifetime](ql_reload_cooldown.md), icon/circle hiding settings. |
 | [ql_item_mirror](../../panorama/scripts/manifests/ql_item_mirror/manifest.js) | Advanced item cooldown matching/mirroring; not a replacement for Basic mode styling. |
 | [ql_healthbar](../../panorama/scripts/manifests/ql_healthbar/manifest.js) | Numeric healthbar-type dispatcher plus shared/variant modules; PLAYER_HEALTHBAR_* settings. |
 | [ql_perf](../../panorama/scripts/manifests/ql_perf/manifest.js) | Scheduler diagnostics/overlay; not a measurement of total engine frame time. |

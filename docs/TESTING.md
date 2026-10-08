@@ -56,7 +56,7 @@ order and rejects duplicated persistent defaults/bounds, including computed fiel
 and multitoggle options. The registered schemas still use the current shared catalog.
 
 `healthbar_module_ownership`, `color_warning_owners`, `map_module_lifecycle`,
-`information_manifest_lifecycle` and `ui_runtime_owners` exercise the current
+`information_manifest_lifecycle`, `reload_owner_lifecycle` and `ui_runtime_owners` exercise the current
 production owners against living replacement, late discovery, partial native
 writes, shared observer updates and shutdown. Budhud's native color comes from
 one warning owner; objective timers consume a scalar rejuvenator snapshot.
