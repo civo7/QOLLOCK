@@ -25,7 +25,8 @@ keys and wire precision. Search indexes the moved field names and keys and
 returns the scoped action; section reset includes the action's settings. Native children follow their
 parent's movement and existing shared colors retain their established ownership.
 
-Whole-HUD root classes remain owned by the app's complete configuration sync.
+Whole-HUD root classes use the shared complete-configuration projector from the
+app sync and reactive feature hooks.
 Top Bar updates apply only that feature's styles; passing its local config slice
 to the global class synchronizer would transiently reset unrelated settings.
 
@@ -140,8 +141,10 @@ Enter and blur also accept it. Incomplete input stays in its field and does not
 overwrite the preview. Accepted typing preserves the caret until blur; history,
 reset, selection changes and closing cancel pending callbacks. Opacity and
 multiplier scales display percentages while retaining their original stored
-units. Exact position, additional feature options and color presets can be
-expanded separately. Visibility controls distinguish hiding a panel from
+units. Exact position remains visible without a disclosure; color presets can
+be expanded separately. Player Stats placement uses the same coordinates and
+canvas gestures as other surfaces; its legacy Side setting is absent from both
+the editor and ordinary gameplay controls. Visibility controls distinguish hiding a panel from
 enabling custom layout or a magazine indicator.
 Range feedback localizes the complete `Use a number from {min} to {max}.`
 source key before substituting the displayed numeric limits.
@@ -182,7 +185,7 @@ the complete group, including the magazine, without changing those text sizes.
 
 Magnets align viewport/neighbor edges and centers in canvas units. Guides appear
 only when acknowledged native bounds meet the proposed alignment; clamped or
-delayed offsets do not produce a false guide. Six explicit alignment actions use
+delayed offsets do not produce a false guide. Explicit alignment actions use
 the measured viewport and the same offset conversion as dragging. Actions after
 typed edits wait for their preview and the measured offset/size change before
 calculating a delta; an unavailable layout times out without applying a stale
@@ -205,8 +208,8 @@ size/visibility controls, without screen-position frames.
 Ammo and player-stats placement use expanded current-schema bounds consistently
 in the editor, ordinary controls and gameplay owners. Historical compact schemas
 retain their original bounds. The stats manifest and editor share the same
-visible-owner selection, including the coexisting collapsed legacy stats block;
-right docking changes native content rather than shrinking its full-screen owner.
+visible-owner selection, including the coexisting collapsed legacy stats block.
+Legacy Side values round-trip without changing native docking or exposing a control.
 
 `core/ql_customize_preview.js` carries a leased draft through HUD attributes.
 The existing app config poll validates the session stamp and field whitelist,

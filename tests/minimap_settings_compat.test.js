@@ -53,6 +53,8 @@ test("fixed icon size changes Base/Alt/Tab geometry and survives export/import",
             assert.equal(panel.style.width, expected, panel.id + " width");
             assert.equal(panel.style.height, expected, panel.id + " height");
         }
+        assert.equal(inner[2].BHasClass("QOLFixedMinimapIcons"), g.MOD_CONFIG.MINIMAP_FIXED_ICON_SIZE === 1,
+            "renderer participates in fixed-icon geometry instead of only enlarging the frame");
     };
     update({ MINIMAP_SMALL_SIZE: 650, MINIMAP_LARGE_SIZE_ALT: 800, MINIMAP_LARGE_SIZE_TAB: 1000,
         ENABLE_ALT_ZOOM: 1, ENABLE_TAB_ZOOM: 1 });

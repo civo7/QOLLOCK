@@ -68,7 +68,10 @@
 		<include src="s2r://panorama/scripts/manifests/ql_unsecured_souls_timer/manifest.vjs_c" />
 		<include src="s2r://panorama/scripts/manifests/ql_urn_timer/manifest.vjs_c" />
 		<include src="s2r://panorama/scripts/manifests/ql_on_death_arcade/manifest.vjs_c" />
+		<!-- ==== QOLLOCK: minimap geometry and runtime ==== -->
+		<include src="s2r://panorama/scripts/manifests/ql_minimap_runtime/geometry.vjs_c" />
 		<include src="s2r://panorama/scripts/manifests/ql_minimap_runtime/manifest.vjs_c" />
+		<!-- ==== QOLLOCK: minimap geometry and runtime end ==== -->
 		<include src="s2r://panorama/scripts/manifests/ql_recent_purchases/manifest.vjs_c" />
 		<include src="s2r://panorama/scripts/manifests/ql_target_shapes/manifest.vjs_c" />
 		<include src="s2r://panorama/scripts/manifests/ql_souls/manifest.vjs_c" />

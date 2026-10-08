@@ -99,12 +99,14 @@ test("Reset sync and disposed inspectors cannot reapply a queued value", () => {
     clean(env);
 });
 
-test("exact position and presets disclose on demand; numeric steppers honor wire precision", () => {
+test("exact position is immediately visible; presets disclose on demand and numeric steppers honor wire precision", () => {
     const env = setup("items");
     const position = env.find("QOLCustomizePositionBody");
-    assert.equal(position.visible, false);
-    env.find("QOLCustomizePositionToggle")._fire("onactivate");
     assert.equal(position.visible, true);
+    assert.equal(env.find("QOLCustomizePositionToggle"), null);
+    assert.equal(env.find("QOLCustomizePositionTitle").hittest, false);
+    assert.equal(env.find("QOLCustomize_ITEMS_X_OFFSET").GetParent().GetParent().GetParent(), position);
+    assert.equal(env.find("QOLCustomize_ITEMS_Y_OFFSET").GetParent().GetParent().GetParent(), position);
     env.find("QOLCustomizeIncrease_ITEMS_X_OFFSET")._fire("onactivate");
     assert.equal(env.session.value("ITEMS_X_OFFSET"), 1);
     env.find("QOLCustomizeDecrease_ITEMS_SCALE")._fire("onactivate");
@@ -157,7 +159,8 @@ test("inspector renders new copy in Russian and incomplete-language fallback", (
         [13, "Visible", "Exact position", "Color presets"]]) {
         const env = setup("items", language);
         assert.equal(env.find("QOLCustomize_HUD_ITEMS_ENABLED").GetChild(0).text, visibility);
-        assert.equal(env.find("QOLCustomizePositionToggle").GetChild(0).text, position);
+        assert.equal(env.find("QOLCustomizePositionTitle").text, position);
+        assert.equal(env.find("QOLCustomizePositionBody").visible, true);
         assert.equal(env.find("QOLCustomizePaletteToggle_ITEMS_WASH_COLOR").GetChild(0).text, palette);
         clean(env);
     }

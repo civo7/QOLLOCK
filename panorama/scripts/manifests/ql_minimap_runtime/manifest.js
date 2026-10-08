@@ -29,6 +29,8 @@
         $.Msg("[QOLLock] ql_minimap_runtime: FeatureRegistry not found — aborting");
         return;
     }
+    const sizeSetting = key => ({ ...QOL.settingsFields.find(field => field.key === key),
+        type: "slider", default: QOL_DEFAULT_CONFIG[key] });
 
     if (typeof QOL !== "undefined" && QOL) {
         QOL.ensureMinimapOverlayAnchor = function(root) {
@@ -38,7 +40,6 @@
     }
 
     var PANEL_ID_MINIMAP = "hud_minimap";
-    var PANEL_ID_GAMEPLAY_HUD = "gameplay_hud";
     var MINIMAP_CAST_RANGE_BASE_SIZE = 400.0;
     var MINIMAP_LAYOUT_BASE_SIZE_PX = 400;
     var MINIMAP_CRATE_OVERLAY_MARKER_BORDER_OPACITY = 0.45;
@@ -46,14 +47,6 @@
     var MINIMAP_CRATE_OVERLAY_MARKER_SIZE_PX = 2;
 
     var isPanelValid = QOL.utils.IsPanelValid;
-
-    function isPanelListValid(list) {
-        if (!Array.isArray(list) || list.length <= 0) return false;
-        for (var i = 0; i < list.length; i++) {
-            if (!isPanelValid(list[i])) return false;
-        }
-        return true;
-    }
 
     function setPanelOpacitySafe(panel, opacityText, fallback) {
         if (!isPanelValid(panel)) return;
@@ -107,12 +100,12 @@
             { key: "MINIMAP_BASE_OPACITY", type: "slider", min: 0, max: 1, step: 0.05, default: 1 },
             { key: "MINIMAL_MINIMAP", type: "toggle", default: false },
             { key: "MINIMAL_MINIMAP_OPACITY", type: "slider", min: 0, max: 1, step: 0.05, default: 0.9 },
-            { key: "MINIMAP_SMALL_SIZE", type: "number", default: 400 },
+            sizeSetting("MINIMAP_SMALL_SIZE"),
             { key: "MINIMAP_FIXED_ICON_SIZE", type: "toggle", default: false },
             { key: "MINIMAP_X_OFFSET", type: "number", default: 0 },
             { key: "MINIMAP_Y_OFFSET", type: "number", default: 0 },
-            { key: "MINIMAP_LARGE_SIZE_ALT", type: "number", default: 800 },
-            { key: "MINIMAP_LARGE_SIZE_TAB", type: "number", default: 800 },
+            sizeSetting("MINIMAP_LARGE_SIZE_ALT"),
+            sizeSetting("MINIMAP_LARGE_SIZE_TAB"),
             { key: "ZOOM_X_OFFSET_ALT", type: "number", default: 0 },
             { key: "ZOOM_Y_OFFSET_ALT", type: "number", default: 0 },
             { key: "ZOOM_X_OFFSET_TAB", type: "number", default: 0 },
@@ -135,6 +128,7 @@
         ],
         create: function(ctx) {
             var _loop = null;
+            const geometry = QOL.features.minimapGeometry.create();
 
             // Runtime state
             var _cachedPanels = [];
@@ -143,16 +137,11 @@
             var _configDirty = true;
             var _minimapMinimalistOpacityApplied = false;
             var _minimapCastRangeScaleApplied = false;
-            var _cachedMinimapCastRangeKey = "";
             var _minimapIconColorStyleSig = "";
             var _cachedMinimapTunnelHidden = false;
             var _cachedMinimapCrateHidden = false;
             var _minimapCrateOverlayBuildSig = "";
 
-            // Draw-over-UI state
-            var _drawOverUiActive = false;
-            var _drawOverUiOriginalParent = null;
-            var _drawOverUiOriginalIndex = -1;
 
             // Cached panel references
             var _tunnelOverlay = null;
@@ -161,31 +150,13 @@
             var _overlayAnchor = null;
             var _minimapCanvas = null;
             var _hudMinimapPanel = null;
-            var _drawHudRoot = null;
             var _mapRenderPanel = null;
             var _nextFallbackCastRangeScanMs = 0;
 
-            function _ensureMinimapPanelCache(root) {
-                var ids = ["minimap_persp", "minimap_container", "minimap_frame", "HudMinimapContainer", PANEL_ID_MINIMAP];
-                if (isPanelListValid(_cachedPanels) && _cachedPanels.length === ids.length) return _cachedPanels;
-                var panels = [];
-                if (root && root.FindChildTraverse) {
-                    for (var i = 0; i < ids.length; i++) {
-                        var panel = root.FindChildTraverse(ids[i]);
-                        if (panel) panels.push(panel);
-                    }
-                }
-                if (panels.length > 0) {
-                    _cachedPanels = panels;
-                }
-                return panels;
-            }
-
             function _ensureMinimapOverlayAnchor(root) {
-                if (!root || !root.FindChildTraverse) return null;
                 if (isPanelValid(_overlayAnchor)) return _overlayAnchor;
-                var anchor = root.FindChildTraverse("minimap_container");
-                if (!anchor) anchor = root.FindChildTraverse("minimap_persp");
+                var anchor = _cachedPanels.find(panel => panel.id === "minimap_container") ||
+                    _cachedPanels.find(panel => panel.id === "minimap_persp");
                 _overlayAnchor = anchor || null;
                 return _overlayAnchor;
             }
@@ -385,7 +356,6 @@
                         _hudMinimapPanel = hudMinimap;
                         canvas = hudMinimap.FindChildTraverse ? hudMinimap.FindChildTraverse("canvas") : null;
                     }
-                    if (!canvas) canvas = root.FindChildTraverse("canvas");
                     _minimapCanvas = canvas;
                 }
                 if (!canvas) {
@@ -449,95 +419,6 @@
                 _minimapCastRangeScaleApplied = rangePanels.length > 0;
             }
 
-            function _resolveHudRootForMinimapDraw(root) {
-                if (isPanelValid(_drawHudRoot)) return _drawHudRoot;
-                var gameplayHud = root && root.FindChildTraverse ? root.FindChildTraverse(PANEL_ID_GAMEPLAY_HUD) : null;
-                var hudCore = gameplayHud && gameplayHud.GetParent ? gameplayHud.GetParent() : null;
-                var hudRoot = hudCore && hudCore.GetParent ? hudCore.GetParent() : null;
-                var fallback = $.GetContextPanel ? $.GetContextPanel() : null;
-                var target = hudRoot || hudCore || fallback || root || null;
-                _drawHudRoot = target;
-                return target;
-            }
-
-            function _captureMinimapOriginalParent(minimapPersp) {
-                if (!minimapPersp || _drawOverUiOriginalParent) return;
-                var parent = minimapPersp.GetParent ? minimapPersp.GetParent() : null;
-                _drawOverUiOriginalParent = parent || null;
-                _drawOverUiOriginalIndex = -1;
-                if (!parent || !parent.GetChildCount || !parent.GetChild) return;
-
-                var count = parent.GetChildCount();
-                for (var i = 0; i < count; i++) {
-                    if (parent.GetChild(i) === minimapPersp) {
-                        _drawOverUiOriginalIndex = i;
-                        break;
-                    }
-                }
-            }
-
-            function _restoreMinimapOriginalOrder(minimapPersp) {
-                var parent = _drawOverUiOriginalParent;
-                if (!minimapPersp || !parent || !isPanelValid(parent)) return;
-
-                if (minimapPersp.GetParent && minimapPersp.GetParent() !== parent && minimapPersp.SetParent) {
-                    minimapPersp.SetParent(parent);
-                }
-
-                if (!parent.GetChildCount || !parent.GetChild || !parent.MoveChildBefore) return;
-
-                var targetIndex = _drawOverUiOriginalIndex;
-                if (isFinite(targetIndex) && targetIndex >= 0) {
-                    var count = parent.GetChildCount();
-                    if (count > 1 && targetIndex < count) {
-                        var anchor = parent.GetChild(targetIndex);
-                        if (anchor && anchor !== minimapPersp) {
-                            parent.MoveChildBefore(minimapPersp, anchor);
-                        }
-                    }
-                }
-                _drawOverUiOriginalParent = null;
-                _drawOverUiOriginalIndex = -1;
-            }
-
-            function _updateZoomDrawOverUi(root, cfg, zoomTabActive, zoomAltActive, minimapPersp) {
-                minimapPersp = isPanelValid(minimapPersp)
-                    ? minimapPersp
-                    : (root && root.FindChildTraverse ? root.FindChildTraverse("minimap_persp") : null);
-                if (!isPanelValid(minimapPersp)) {
-                    _drawOverUiActive = false;
-                    return;
-                }
-
-                var drawOverUiTab = zoomTabActive && Number(cfg.TAB_ZOOM_DRAW_OVER_UI) === 1;
-                var drawOverUiAlt = zoomAltActive && Number(cfg.ALT_ZOOM_DRAW_OVER_UI) === 1;
-                var drawOverUi = drawOverUiTab || drawOverUiAlt;
-                if (drawOverUi) {
-                    // The native location labels added in build 6711 inherit their
-                    // string dialog variables through this hierarchy. Reparenting
-                    // minimap_persp makes both labels resolve as "INVALID", so keep
-                    // the native parent and use the stacking override only.
-                    if (_drawOverUiOriginalParent && minimapPersp.GetParent && minimapPersp.GetParent() !== _drawOverUiOriginalParent) {
-                        _restoreMinimapOriginalOrder(minimapPersp);
-                    }
-
-                    if (minimapPersp.style.zIndex !== "2147483647") {
-                        minimapPersp.style.zIndex = "2147483647";
-                    }
-                    _drawOverUiActive = true;
-                    return;
-                }
-
-                if (_drawOverUiActive ||
-                    (_drawOverUiOriginalParent && minimapPersp.GetParent && minimapPersp.GetParent() !== _drawOverUiOriginalParent)) {
-                    _restoreMinimapOriginalOrder(minimapPersp);
-                }
-                if (minimapPersp.style.zIndex !== "0") {
-                    minimapPersp.style.zIndex = "0";
-                }
-                _drawOverUiActive = false;
-            }
-
             function _buildMinimapRuntimeSignature(cfg) {
                 if (!cfg) return "";
                 return [
@@ -586,7 +467,6 @@
             function _isHudOrHierarchyClassActive(root, panel, className) {
                 if (root && root.BHasClass && root.BHasClass(className)) return true;
                 if (panel && hasClassInHierarchy(panel, className)) return true;
-                if (isPanelValid(_drawOverUiOriginalParent) && hasClassInHierarchy(_drawOverUiOriginalParent, className)) return true;
                 var hudMinimap = isPanelValid(_hudMinimapPanel) ? _hudMinimapPanel : (root && root.FindChildTraverse ? root.FindChildTraverse(PANEL_ID_MINIMAP) : null);
                 if (isPanelValid(hudMinimap)) {
                     _hudMinimapPanel = hudMinimap;
@@ -635,9 +515,29 @@
                 var root = $.GetContextPanel();
                 if (!root) return;
 
-                var minimapPanels = _ensureMinimapPanelCache(root);
-                if (!minimapPanels || minimapPanels.length <= 0) return;
-                var master = minimapPanels[0];
+                const resolved = geometry.resolve(root);
+                _cachedPanels = resolved.panels;
+                if (resolved.changed) {
+                    if (isPanelValid(_minimapCanvas) && _minimapIconColorStyleSig) QOL.utils.ClearStyleSafe(_minimapCanvas, "washColor");
+                    _configDirty = true;
+                    _minimapRuntimeSig = "";
+                    _overlayAnchor = null;
+                    _minimapCanvas = null;
+                    _hudMinimapPanel = resolved.renderer;
+                    _mapRenderPanel = null;
+                    _minimapIconColorStyleSig = "";
+                    _minimapCrateOverlayBuildSig = "";
+                    _cachedMinimapTunnelHidden = false;
+                    _cachedMinimapCrateHidden = false;
+                }
+                if (!isPanelValid(resolved.host)) {
+                    if (resolved.changed) {
+                        _hideMinimapTunnelOverlay(root);
+                        _hideMinimapCrateOverlay(root);
+                    }
+                    return;
+                }
+                var master = resolved.host;
 
                 var cfg = ctx.config.view();
 
@@ -654,6 +554,8 @@
                 var shouldZoom = zoomAlt || zoomTab;
                 var activeZoomMode = zoomAlt ? "ALT" : (zoomTab ? "TAB" : "");
                 var activeZoomModeForTunnels = activeZoomMode;
+                geometry.setDrawOverUi((zoomAlt && Number(cfg.ALT_ZOOM_DRAW_OVER_UI) === 1) ||
+                    (zoomTab && Number(cfg.TAB_ZOOM_DRAW_OVER_UI) === 1));
 
                 var smallSize = Number(cfg.MINIMAP_SMALL_SIZE);
                 if (!isFinite(smallSize) || smallSize <= 0) smallSize = MINIMAP_LAYOUT_BASE_SIZE_PX;
@@ -670,9 +572,6 @@
 
                 // Fast path: if zoom state hasn't changed, config is not dirty, and signature is initialized
                 if (!zoomChanged && !_configDirty && _minimapRuntimeSig) {
-                    if (_drawOverUiActive) {
-                        _updateZoomDrawOverUi(root, cfg, zoomTab, zoomAlt, master);
-                    }
                     if (!isBaseSize || shouldZoom) {
                         _updateMinimapCastRangeScale(root, activeTargetSize);
                     }
@@ -682,9 +581,6 @@
                 _configDirty = false;
                 var runtimeSig = _buildMinimapRuntimeSignature(cfg);
 
-                _updateZoomDrawOverUi(root, cfg, zoomTab, zoomAlt, master);
-
-                var minimapSizeText = Math.round(activeTargetSize) + "px";
 
                 _updateMinimapCastRangeScale(root, activeTargetSize);
                 _updateMinimapIconColor(root, cfg);
@@ -697,10 +593,7 @@
                         ? _getZoomValue(cfg, "ZOOM_Y_OFFSET_TAB", "ZOOM_Y_OFFSET", 0)
                         : _getZoomValue(cfg, "ZOOM_Y_OFFSET_ALT", "ZOOM_Y_OFFSET", 0);
 
-                    var minimapScale = activeTargetSize / 400.0;
-                    var minimapScaleText = Math.round(minimapScale * 100) + "%";
                     var fixedIconSize = Number(cfg.MINIMAP_FIXED_ICON_SIZE) === 1;
-                    var mapUiScale = fixedIconSize ? "100%" : minimapScaleText;
 
                     var op = 1.0;
                     if (zoomAlt) {
@@ -715,63 +608,12 @@
                     if (op < 0) op = 0;
                     if (op > 1) op = 1;
 
-                    for (var pi = 0; pi < minimapPanels.length; pi++) {
-                        var p = minimapPanels[pi];
-                        if (p.id === "minimap_persp") {
-                            if (p.style.uiScale !== mapUiScale) {
-                                p.style.uiScale = mapUiScale;
-                            }
-                            // Build 6711 expanded the native host to 440x520 so
-                            // location text and edge UI have space outside the
-                            // square map viewport. Preserve that native aspect.
-                            QOL.utils.ClearStyleSafe(p, "width");
-                            QOL.utils.ClearStyleSafe(p, "height");
-                            if (p.style.preTransformScale2d !== "1.00, 1.00") {
-                                p.style.preTransformScale2d = "1.00, 1.00";
-                            }
-                            try {
-                                p.style.transformOrigin = shouldZoom ? "50% 50%" : "100% 100%";
-                            } catch(eOrigin) {}
-                            p.style.horizontalAlign = shouldZoom ? "center" : "right";
-                            p.style.verticalAlign = shouldZoom ? "center" : "bottom";
-                            p.style.align = shouldZoom ? "center center" : "right bottom";
-                            if (shouldZoom) {
-                                p.style.margin = (-zoomOffsetY) + "px 0px 0px " + zoomOffsetX + "px";
-                                p.style.marginTop = (-zoomOffsetY) + "px";
-                                p.style.marginLeft = zoomOffsetX + "px";
-                                p.style.marginRight = "0px";
-                                p.style.marginBottom = "0px";
-                            } else {
-                                var marginX = 30 - (Number(cfg.MINIMAP_X_OFFSET) || 0);
-                                var marginY = 30 + (Number(cfg.MINIMAP_Y_OFFSET) || 0);
-                                p.style.margin = "0px " + marginX + "px " + marginY + "px 0px";
-                                p.style.marginRight = marginX + "px";
-                                p.style.marginBottom = marginY + "px";
-                                p.style.marginLeft = "0px";
-                                p.style.marginTop = "0px";
-                            }
-                            setPanelOpacitySafe(p, op, 1.0);
-                        } else {
-                            // The inner container/frame have fixed 400px CSS dimensions.
-                            // hud_minimap now owns a much larger native render surface in
-                            // zoom modes. Never replace those dimensions with viewport
-                            // dimensions or its text and canvas elements become distorted.
-                            if (p.id === PANEL_ID_MINIMAP) {
-                                QOL.utils.ClearStyleSafe(p, "width");
-                                QOL.utils.ClearStyleSafe(p, "height");
-                            } else if (fixedIconSize) {
-                                if (p.style.width !== minimapSizeText) p.style.width = minimapSizeText;
-                                if (p.style.height !== minimapSizeText) p.style.height = minimapSizeText;
-                            } else {
-                                QOL.utils.ClearStyleSafe(p, "width");
-                                QOL.utils.ClearStyleSafe(p, "height");
-                            }
-                            if (p.style.uiScale) p.style.uiScale = null;
-                            if (p.style.opacity) p.style.opacity = null;
-                        }
-                    }
+                    geometry.apply({ size: activeTargetSize, fixedIcons: fixedIconSize, zoomed: shouldZoom,
+                        x: shouldZoom ? zoomOffsetX : Number(cfg.MINIMAP_X_OFFSET) || 0,
+                        y: shouldZoom ? zoomOffsetY : Number(cfg.MINIMAP_Y_OFFSET) || 0, opacity: op });
 
-                    var mapRenderPanel = isPanelValid(_mapRenderPanel) ? _mapRenderPanel : (root.FindChildTraverse ? root.FindChildTraverse("map_render") : null);
+                    var mapRenderPanel = isPanelValid(_mapRenderPanel) ? _mapRenderPanel :
+                        (_hudMinimapPanel && _hudMinimapPanel.FindChildTraverse ? _hudMinimapPanel.FindChildTraverse("map_render") : null);
                     if (mapRenderPanel) {
                         _mapRenderPanel = mapRenderPanel;
                         var minimalistEnabled = (!zoomAlt && !zoomTab && Number(cfg.MINIMAL_MINIMAP) === 1);
@@ -834,30 +676,7 @@
                     if (S) S.cancelAllForFeature("ql_minimap_runtime");
 
                     var root = $.GetContextPanel();
-                    if (_cachedPanels && _cachedPanels.length > 0) {
-                        var master = _cachedPanels[0];
-                        if (master && isPanelValid(master)) {
-                            _updateZoomDrawOverUi(root, {}, false, false, master);
-                        }
-                        for (var dpi = 0; dpi < _cachedPanels.length; dpi++) {
-                            var dp = _cachedPanels[dpi];
-                            if (isPanelValid(dp)) {
-                                try { dp.style.uiScale = null; } catch(e) {}
-                                QOL.utils.ClearStyleSafe(dp, "width");
-                                QOL.utils.ClearStyleSafe(dp, "height");
-                                try { dp.style.margin = null; } catch(e) {}
-                                try { dp.style.marginTop = null; } catch(e) {}
-                                try { dp.style.marginRight = null; } catch(e) {}
-                                try { dp.style.marginBottom = null; } catch(e) {}
-                                try { dp.style.marginLeft = null; } catch(e) {}
-                                try { dp.style.align = null; } catch(e) {}
-                                try { dp.style.horizontalAlign = null; } catch(e) {}
-                                try { dp.style.verticalAlign = null; } catch(e) {}
-                                try { dp.style.transformOrigin = null; } catch(e) {}
-                                try { dp.style.opacity = null; } catch(e) {}
-                            }
-                        }
-                    }
+                    geometry.release();
 
                     _hideMinimapTunnelOverlay(root);
                     _hideMinimapCrateOverlay(root);
@@ -877,7 +696,6 @@
                     _minimapRuntimeSig = "";
                     _minimapMinimalistOpacityApplied = false;
                     _minimapCastRangeScaleApplied = false;
-                    _cachedMinimapCastRangeKey = "";
                     _minimapIconColorStyleSig = "";
                     _cachedMinimapTunnelHidden = false;
                     _cachedMinimapCrateHidden = false;
@@ -885,7 +703,6 @@
                     _overlayAnchor = null;
                     _minimapCanvas = null;
                     _hudMinimapPanel = null;
-                    _drawHudRoot = null;
                     _mapRenderPanel = null;
                     _configDirty = true;
                     _currentRate = 0;
@@ -893,13 +710,10 @@
                 onSettingsChanged: function() {
                     _configDirty = true;
                     _minimapRuntimeSig = "";
+                    geometry.resetDiscovery();
                     var cfg = ctx.config.view ? ctx.config.view() : (ctx.config.all ? ctx.config.all() : {});
                     _syncLoop(cfg);
                     _tick();
-                    var root = $.GetContextPanel ? $.GetContextPanel() : null;
-                    if (root && QOL.core && QOL.core.hud && QOL.core.hud.applyRootClasses) {
-                        QOL.core.hud.applyRootClasses(root, cfg, Date.now ? Date.now() : (new Date()).getTime(), false);
-                    }
                 }
             };
         },

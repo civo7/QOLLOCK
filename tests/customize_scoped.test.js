@@ -87,6 +87,32 @@ test("scoped session rejects other fields atomically and cannot unlock or reset 
     clean(env);
 });
 
+test("Player Stats uses Customize placement in HUD and UI tabs without exposing legacy Side", () => {
+    const env = setup();
+    const { global: g, clock } = env;
+    g.MOD_CONFIG.STATS_POSITION_SIDE = 1;
+    g.QOL.core.storageBridge.saveSettings = (_config, callback) => callback(null);
+    for (const tab of ["HUD", "UI"]) {
+        g.QOL.ui.window.setActiveTabAndRefresh(tab); clock.advance(300);
+        assert.equal(env.list.FindChildrenWithClassTraverse("SettingRow_STATS_POSITION_SIDE").length, 0, tab);
+        for (const key of ["STATS_POSITION_HIDE_NORMAL", "STATS_POSITION_HIDE_SCOREBOARD"])
+            assert.ok(env.list.FindChildrenWithClassTraverse("SettingRow_" + key).length > 0, key);
+        activate(env, "QOLCustomizeEntry_playerStats");
+        assert.equal(env.em.FindChildTraverse("QOLCustomize_STATS_POSITION_SIDE"), null);
+        assert.equal(env.em.FindChildTraverse("QOLCustomizePositionBody").visible, true);
+        const input = env.em.FindChildTraverse("QOLCustomize_STATS_POSITION_X_OFFSET");
+        input.text = "125"; input._fire("oninputsubmit");
+        activate(env, "QOLCustomizeReset");
+        activate(env, "QOLCustomizeApply"); clock.advance(700);
+        assert.equal(g.MOD_CONFIG.STATS_POSITION_SIDE, 1, "obsolete persisted field remains untouched");
+        assert.equal(g.MOD_CONFIG.STATS_POSITION_X_OFFSET, 0);
+    }
+    const parsed = g.QOL.ui.modal.tryApplyImportStringWithDiagnostics(g.QOL.ui.configTab.getCurrentExportSettingsString());
+    assert.equal(parsed.ok, true);
+    assert.equal(parsed.candidateConfig.STATS_POSITION_SIDE, 1, "legacy field still round-trips");
+    clean(env);
+});
+
 test("editing Top Bar never transiently resets unrelated HUD classes", () => {
     const env = setup();
     const { global: g, clock, hud } = env;

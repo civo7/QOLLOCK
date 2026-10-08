@@ -94,12 +94,14 @@ test("guides require acknowledged native alignment, magnets toggle changes movem
     clean(env);
 });
 
-test("six alignment actions edit real offsets and preserve the other axis", () => {
-    for (const [action, axis, expected] of [["left", "X", -200], ["center", "X", 680], ["right", "X", 1560],
+test("alignment actions edit real offsets and preserve the other axis without obsolete horizontal buttons", () => {
+    for (const [action, axis, expected] of [["right", "X", 1560],
         ["top", "Y", 100], ["middle", "Y", -410], ["bottom", "Y", -920]]) {
         const env = setup();
         env.global.QOL.ui.customize.start(null, { elementId: "souls" });
         rect(env.find("QOLCustomizeEditor"), 1920, 1080);
+        assert.equal(env.find("QOLCustomizeAlign_left"), null);
+        assert.equal(env.find("QOLCustomizeAlign_center"), null);
         click(env, "QOLCustomizeAlign_" + action); env.clock.advance(700);
         const store = env.hud.sandbox.global.QOL.core.ConfigStore;
         assert.equal(store.get("ql_souls", "SOULS_" + axis + "_OFFSET"), expected, action);
@@ -116,11 +118,11 @@ test("alignment waits for prior typed layout rather than adding a stale delta", 
     rect(env.find("QOLCustomizeEditor"), 1920, 1080);
     const input = env.find("QOLCustomize_SOULS_X_OFFSET");
     input.text = "300"; // Commit through the alignment action itself.
-    click(env, "QOLCustomizeAlign_center");
+    click(env, "QOLCustomizeAlign_right");
     env.clock.advance(600);
     assert.equal(env.hud.sandbox.global.QOL.core.ConfigStore.get("ql_souls", "SOULS_X_OFFSET"), 300, "ACK must not align from the old native position");
     env.panel.actualxoffset = 500; env.clock.advance(400);
-    assert.equal(env.hud.sandbox.global.QOL.core.ConfigStore.get("ql_souls", "SOULS_X_OFFSET"), 680);
+    assert.equal(env.hud.sandbox.global.QOL.core.ConfigStore.get("ql_souls", "SOULS_X_OFFSET"), 1560);
     clean(env);
 });
 

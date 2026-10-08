@@ -540,7 +540,7 @@
             const alignment = P.create("Panel", tools, "QOLCustomizeAlignment");
             alignment.AddClass("QOLCustomizeEnum");
             owner.alignButtons = [];
-            for (const [action, text] of [["left", "Align left"], ["center", "Center horizontally"], ["right", "Align right"],
+            for (const [action, text] of [["right", "Align right"],
                 ["top", "Align top"], ["middle", "Center vertically"], ["bottom", "Align bottom"]]) {
                 owner.alignButtons.push(I.button(alignment, "QOLCustomizeAlign_" + action, text, () => align(owner, action)));
             }

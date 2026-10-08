@@ -7,6 +7,100 @@
 	transition-property: transform, ui-scale, opacity, pre-transform-scale2d;
 }
 
+/* Fixed-icon mode resizes the viewport without magnifying the HUD. The native
+ * renderer also needs to grow: retaining its fixed pixel width only enlarges
+ * the frame. These percentages preserve the native render/viewport ratios,
+ * including the larger zoom surfaces and the scoreboard's smaller map. */
+#hud_minimap.QOLFixedMinimapIcons
+{
+	width: 90%;
+	height: 90%;
+}
+
+.useZoomedMinimap #hud_minimap.QOLFixedMinimapIcons
+{
+	width: 380%;
+	height: 380%;
+}
+
+.useZoomedMinimap #hud_minimap.QOLFixedMinimapIcons.zoomLevel-1
+{
+	width: 166.25%;
+	height: 166.25%;
+}
+
+.useZoomedMinimap #hud_minimap.QOLFixedMinimapIcons.zoomLevel0
+{
+	width: 201.875%;
+	height: 201.875%;
+}
+
+.useZoomedMinimap #hud_minimap.QOLFixedMinimapIcons.zoomLevel1
+{
+	width: 237.5%;
+	height: 237.5%;
+}
+
+.useZoomedMinimap #hud_minimap.QOLFixedMinimapIcons.zoomLevel2
+{
+	width: 273.125%;
+	height: 273.125%;
+}
+
+.useZoomedMinimap #hud_minimap.QOLFixedMinimapIcons.zoomLevel3
+{
+	width: 308.75%;
+	height: 308.75%;
+}
+
+.useZoomedMinimap #hud_minimap.QOLFixedMinimapIcons.zoomLevel4
+{
+	width: 344.375%;
+	height: 344.375%;
+}
+
+.useZoomedMinimap #hud_minimap.QOLFixedMinimapIcons.zoomLevel6
+{
+	width: 415.625%;
+	height: 415.625%;
+}
+
+.useZoomedMinimap #hud_minimap.QOLFixedMinimapIcons.zoomLevel7
+{
+	width: 451.25%;
+	height: 451.25%;
+}
+
+.useZoomedMinimap #hud_minimap.QOLFixedMinimapIcons.zoomLevel8
+{
+	width: 486.875%;
+	height: 486.875%;
+}
+
+.useZoomedMinimap #hud_minimap.QOLFixedMinimapIcons.zoomLevel9
+{
+	width: 522.5%;
+	height: 522.5%;
+}
+
+.useZoomedMinimap #hud_minimap.QOLFixedMinimapIcons.zoomLevel10
+{
+	width: 558.125%;
+	height: 558.125%;
+}
+
+.useZoomedMinimap #hud_minimap.QOLFixedMinimapIcons.zoomLevel11
+{
+	width: 593.75%;
+	height: 593.75%;
+}
+
+.useZoomedMinimap #hud_minimap.QOLFixedMinimapIcons.gScoreboardOpen
+{
+	width: 95%;
+	height: 95%;
+}
+
 .minimalist_minimap_active #map_render
 {
 	opacity: .9;

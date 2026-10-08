@@ -37,7 +37,6 @@
         { id: "playerStats", name: "Player Stats", path: [...lower, "hudPlayerStats"], fallbackPath: [...core, "hudActivePlayerStats"],
             resolve(hud) { return chooseStatsPanel(findPath(hud, [...lower, "hudPlayerStats"]), findPath(hud, [...core, "hudActivePlayerStats"])); }, fields: [
             { key: "ENABLE_STATS_POSITION", label: "Custom position", type: "toggle" }, ...geometry("STATS_POSITION_"),
-            { key: "STATS_POSITION_SIDE", label: "Side", type: "side" },
             { key: "STATS_POSITION_HIDE_NORMAL", label: "Hide (Normal)", type: "toggle" },
             { key: "STATS_POSITION_HIDE_SCOREBOARD", label: "Hide (Scoreboard)", type: "toggle" }
         ] }

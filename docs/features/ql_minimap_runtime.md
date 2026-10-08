@@ -14,11 +14,21 @@ Scoreboard toggle is a refresh trigger, not a boolean state payload. Deferred
 refreshes belong to the feature Scheduler task group so disable cancels them;
 event subscriptions still require explicit removal.
 
-Fixed Icon Size changes the outer minimap and viewport geometry together, but
-must leave `hud_minimap` width and height under native control. Build 6711 uses
-a larger internal render surface for zoom modes; replacing it with viewport
-dimensions distorts native text and map elements. Turning Fixed Icon Size off
-must release the remaining inner width and height overrides.
+The feature's `geometry.js` owns scoped native-panel discovery and its style
+records. Base, Alt and Tab use the same viewport geometry path; replacement
+panels invalidate the applied presentation. Disabling releases only the geometry
+overrides and renderer class owned by that path. Whole-HUD classes remain owned
+by the app's complete configuration synchronization.
+
+Fixed Icon Size resizes the viewport without magnifying its HUD parent. The
+renderer must resize with it: leaving `hud_minimap` at its fixed native pixel
+dimensions enlarges only the surrounding frame. The scoped renderer class in
+`hud_minimap.css` expresses native dimensions as viewport-relative percentages,
+preserving the original render/viewport proportions. Native zoom-level and
+scoreboard selectors still choose the corresponding internal render surface;
+the large zoom surface must not be replaced by a viewport-sized square. Turning
+Fixed Icon Size off releases the viewport width/height overrides and class so
+the native pixel dimensions apply again.
 
 The same build changed `minimap_persp` to a non-square native host so location
 text and edge UI fit around the square map viewport. Scaling may use `ui-scale`,

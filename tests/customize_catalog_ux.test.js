@@ -77,7 +77,6 @@ test("Cancel discards both accepted live typing and pending callbacks without sa
         const { global: g, clock, find, souls } = env;
         const baseline = JSON.stringify(g.MOD_CONFIG);
         assert.equal(g.QOL.ui.customize.start(), true);
-        find("QOLCustomizePositionToggle")._fire("onactivate");
         const input = find("QOLCustomize_SOULS_X_OFFSET");
         input.text = "300"; input._fire("ontextentrychange");
         if (accepted) {

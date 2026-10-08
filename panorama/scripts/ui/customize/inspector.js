@@ -5,8 +5,8 @@
     const P = Q.core.panel;
     let nextBuild = 0;
     const localize = text => Q.ui.theme.LocalizeSettingsText(text, true);
-    const label = (parent, text, role = "ModalInstructions") => {
-        const panel = P.create("Label", parent, "");
+    const label = (parent, text, role = "ModalInstructions", id = "") => {
+        const panel = P.create("Label", parent, id);
         panel.hittest = false;
         panel.AddClass(role);
         panel.text = localize(text);
@@ -73,8 +73,7 @@
                 const on = Number(session.value(field.key)) === 1;
                 const shown = field.inverted ? !on : on;
                 setActive(control, title ? shown : on);
-                control.GetChild(0).text = localize(field.type === "side" ? (on ? "Right" : "Left") :
-                    title ? (shown ? "Visible" : "Hidden") : (on ? "On" : "Off"));
+                control.GetChild(0).text = localize(title ? (shown ? "Visible" : "Hidden") : (on ? "On" : "Off"));
             });
             return control;
         };
@@ -87,16 +86,11 @@
         if (positions.length) {
             const posHost = P.create("Panel", main, "QOLCustomizePosition");
             posHost.AddClass("QOLCustomizePositionSection");
-            const posToggle = button(posHost, "QOLCustomizePositionToggle", "Exact position", () => {
-                if (posBody) {
-                    posBody.visible = !posBody.visible;
-                    posToggle.SetHasClass("Expanded", posBody.visible);
-                }
-            });
-            posToggle.AddClass("QOLCustomizeSectionHeading");
+            label(posHost, "Exact position", "ModalInstructions", "QOLCustomizePositionTitle")
+                .AddClass("QOLCustomizeSectionHeading");
             const posBody = P.create("Panel", posHost, "QOLCustomizePositionBody");
             posBody.AddClass("QOLCustomizeSectionBody");
-            posBody.visible = false;
+            posBody.visible = true;
             positionBody = posBody;
         }
 
@@ -133,7 +127,7 @@
                 }
                 continue;
             }
-            if (field.type === "toggle" || field.type === "side") {
+            if (field.type === "toggle") {
                 toggle(row, field);
                 continue;
             }

@@ -978,7 +978,7 @@ test("stats position and hide option apply in hideout and reset on disable", () 
     assert.strictEqual(panel.style.opacity, "0", "Hideout must honor hide Player Stats");
     Q.core.ConfigStore.set("ql_stats_position", "STATS_POSITION_HIDE_NORMAL", false);
     hud.clock.advance(100);
-    assert.strictEqual(panel.style.opacity, "1");
+    assert.ok(!panel.style.opacity, "Unhiding releases the override to native opacity");
 
     panel.DeleteAsync(0);
     hud.clock.advance(1);
