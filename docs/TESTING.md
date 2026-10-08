@@ -73,6 +73,12 @@ profile/card isolates: current account bindings, roster replacement, duplicate
 names, correlated late callbacks, partial native writes and bounded retries.
 Native card context creation/reuse and image loading remain client checks.
 
+`quickbuy_owner_lifecycle.test.js` loads the actual quickbuy XML companion in
+its own isolate. It preserves recipe/sale credits and previews while testing
+late/replaced native queues, controls, chat bindings, partial writes, retired
+handlers and cancelled deferred work. The lifecycle auditor's counterfactual
+still rejects a deliberately lost poll handle with the same leaked task counts.
+
 `tests/customize_config_compat.test.js` imports frozen legacy compact codes
 generated with the main codec/schema recorded in the fixture, then checks
 Customize cancellation, Apply and current-format export. It also checks legacy

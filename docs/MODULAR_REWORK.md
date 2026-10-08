@@ -24,6 +24,8 @@ behavior until its owning implementation has been audited.
   retryable late purchaser evidence and preserved native history.
 - Private HUD rank/Statlocker owners and independent profile/card companions;
   correlated account probes and current-account activation replace stale closures.
+- Quickbuy companion with scoped native generations, retained pricing/preview
+  rules, retired input callbacks and tracked poll/chat/focus/drag work.
 
 Frozen main-config fixtures preserve all healthbar variants and both minimap
 scale methods. Published versions, compact layouts and persistent defaults stay

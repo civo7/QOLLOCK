@@ -24,10 +24,22 @@ disable.
 
 The [quickbuy companion](../../panorama/scripts/hud_quickbuy_total_summary.js)
 runs under `hud_quickbuy.xml`, outside the HUD JavaScript context and its
-Scheduler. It owns one raw `$.Schedule` callback at a time. A queue event
+Scheduler. It owns one raw polling callback at a time. A queue event
 refreshes immediately, cancels the pending poll and schedules one replacement;
 inactive features return to one idle poll, and destroyed context handles stop the
 loop. Never let an event burst create parallel polls.
+
+The companion has private discovery, settings/queue calculations, presentation
+records and release paths. Verified native host membership, rather than a living
+handle alone, identifies its current generation. Departed hosts, queues, entries,
+controls and ChatControls release owned code styles/classes/handlers; native
+queue contents and unrelated activation callbacks remain intact. Optional
+chat/focus/drag work uses separately tracked, generation-guarded raw schedules.
+Mode changes and shutdown cancel those tasks; old entry callbacks cannot send
+messages or clear current drag state. Native drag handlers are registered once
+per panel and retired through private guards because their unregister signature
+has not been verified. The verified unhandled queue-event subscription is removed
+at shutdown. Partial writes and missing native children remain retryable.
 
 Quickbuy previews apply the final state directly. Their image path is
 reasserted because the native `CitadelModIcon` may update the same Image

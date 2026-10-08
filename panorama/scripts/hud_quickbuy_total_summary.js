@@ -1,10 +1,8 @@
-(function(){'use strict';
-// Event-driven: CitadelQuickbuyItemsChanged handles immediate queue changes.
-// Polling interval covers passive soul accumulation.
-var QUICKBUY_TOTAL_UPDATE_INTERVAL_SECONDS=0.5;
-var QUICKBUY_TOTAL_UPDATE_INTERVAL_IDLE_SECONDS=0.5;
-var _quickbuyScheduleHandle=null;
-var quickbuyUpcomingPreviewSlots=[
+// OWNS: Quickbuy costs, upcoming previews, notify/drag callbacks and their deferred work.
+// Context: hud_quickbuy.xml; independent from the HUD FeatureRegistry and QOL services.
+(() => {
+    "use strict";
+const quickbuyUpcomingPreviewSlots=[
 	{
 		rootId:'QuickbuyUpcomingPreview2',
 		entryPanelId:'QuickbuyPreview2Entry',
@@ -30,7 +28,7 @@ var quickbuyUpcomingPreviewSlots=[
 		queueIndex:4
 	}
 ];
-var QUICKBUY_ITEM_NAME_ALIASES={
+const QUICKBUY_ITEM_NAME_ALIASES={
 	'basic magazine':'extended magazine',
 	'dispel magic':'debuff remover',
 	'mystic reach':'mystic expansion',
@@ -39,14 +37,14 @@ var QUICKBUY_ITEM_NAME_ALIASES={
 	'sharp shooter':'sharpshooter',
 	'spellslinger headshots':'spirit rend'
 };
-var QUICKBUY_ICON_OVERRIDES={
+const QUICKBUY_ICON_OVERRIDES={
 	'compress cooldown':'s2r://panorama/images/items/spirit/improved_cooldown_psd.vtex',
 	'mystic expansion':'s2r://panorama/images/items/spirit/mystic_reach_psd.vtex',
 	'mystic regeneration':'s2r://panorama/images/items/spirit/mystic_regen_psd.vtex',
 	'debuff reducer':'s2r://panorama/images/items/vitality/debuff_reducer_psd.vtex',
 	'dispel magic':'s2r://panorama/images/items/vitality/debuff_remover_psd.vtex'
 };
-var QUICKBUY_RAW_RECIPE_COMPONENTS={
+const QUICKBUY_RAW_RECIPE_COMPONENTS={
 	'Aerial Supremacy':['Stamina Mastery'],
 	'Apex Combat':['Ricochet'],
 	'Arcane Surge':['Extra Stamina'],
@@ -113,22 +111,11 @@ var QUICKBUY_RAW_RECIPE_COMPONENTS={
 	'Weapon Shielding':['Grit'],
 	'Weighted Shots':['Slowing Bullets']
 };
-var QUICKBUY_RECIPE_COMPONENTS={};
-var QUICKBUY_CHAT_SUBMIT_COOLDOWN_MS=1000;
-var QUICKBUY_CHAT_RETRY_DELAYS=[0,0.008,0.012,0.016,0.032];
-var quickbuyLastChatSubmitMs=0;
-var quickbuyChatCache={
-	panel:null,
-	input:null,
-	targetLabel:null
-};
-var quickbuyLastShopOpenState=false;
-
 function ParseQuickbuySoulsCost(costText){
 	if(!costText)return 0;
-	var digits=costText.toString().match(/\d+/g);
+	let digits=costText.toString().match(/\d+/g);
 	if(!digits||digits.length===0)return 0;
-	var soulsCost=parseInt(digits.join(''),10);
+	let soulsCost=parseInt(digits.join(''),10);
 	return isFinite(soulsCost)?soulsCost:0;
 }
 
@@ -138,7 +125,7 @@ function NormalizeQuickbuyItemName(itemNameText){
 }
 
 function CanonicalizeQuickbuyItemName(itemNameText){
-	var normalizedItemName=NormalizeQuickbuyItemName(itemNameText)
+	let normalizedItemName=NormalizeQuickbuyItemName(itemNameText)
 		.toLowerCase()
 		.replace(/[^a-z0-9]+/g,' ')
 		.replace(/\s+/g,' ')
@@ -149,342 +136,31 @@ function CanonicalizeQuickbuyItemName(itemNameText){
 }
 
 function InitializeQuickbuyRecipeComponents(){
-	for(var upgradeName in QUICKBUY_RAW_RECIPE_COMPONENTS){
+	for(let upgradeName in QUICKBUY_RAW_RECIPE_COMPONENTS){
 		if(!QUICKBUY_RAW_RECIPE_COMPONENTS.hasOwnProperty(upgradeName))continue;
-		var canonicalUpgradeName=CanonicalizeQuickbuyItemName(upgradeName);
+		let canonicalUpgradeName=CanonicalizeQuickbuyItemName(upgradeName);
 		QUICKBUY_RECIPE_COMPONENTS[canonicalUpgradeName]=[];
-		for(var componentIndex=0;componentIndex<QUICKBUY_RAW_RECIPE_COMPONENTS[upgradeName].length;componentIndex++){
+		for(let componentIndex=0;componentIndex<QUICKBUY_RAW_RECIPE_COMPONENTS[upgradeName].length;componentIndex++){
 			QUICKBUY_RECIPE_COMPONENTS[canonicalUpgradeName].push(CanonicalizeQuickbuyItemName(QUICKBUY_RAW_RECIPE_COMPONENTS[upgradeName][componentIndex]));
 		}
 	}
 }
 
-function FindChildTraverseInAncestors(startPanel,targetChildId){
-	var searchPanel=startPanel;
-	while(searchPanel){
-		var foundPanel=searchPanel.FindChildTraverse(targetChildId);
-		if(foundPanel)return foundPanel;
-		if(!searchPanel.GetParent)break;
-		searchPanel=searchPanel.GetParent();
-	}
-	return null;
-}
-
-function FindQuickbuyHostPanel(startPanel){
-	var panel=startPanel;
-	while(panel){
-		if(panel.id==='CitadelHudQuickbuy')return panel;
-		if(!panel.GetParent)break;
-		panel=panel.GetParent();
-	}
-	return FindChildTraverseInAncestors(startPanel,'CitadelHudQuickbuy');
-}
-
-function IsEnhancedQuickbuyActive(contextPanel){
-	var quickbuyHostPanel=FindQuickbuyHostPanel(contextPanel);
-	if(quickbuyHostPanel&&quickbuyHostPanel.BHasClass&&quickbuyHostPanel.BHasClass('enhanced_quickbuy_active'))return true;
-
-	var scanPanel=contextPanel;
-	while(scanPanel){
-		if(scanPanel.BHasClass&&scanPanel.BHasClass('enhanced_quickbuy_active'))return true;
-		if(!scanPanel.GetParent)break;
-		scanPanel=scanPanel.GetParent();
-	}
-
-	return false;
-}
-
-function IsClickToNotifyActive(contextPanel){
-	var quickbuyHostPanel=FindQuickbuyHostPanel(contextPanel);
-	if(quickbuyHostPanel&&quickbuyHostPanel.BHasClass&&quickbuyHostPanel.BHasClass('shop_click_to_notify_active'))return true;
-
-	var scanPanel=contextPanel;
-	while(scanPanel){
-		if(scanPanel.BHasClass&&scanPanel.BHasClass('shop_click_to_notify_active'))return true;
-		if(!scanPanel.GetParent)break;
-		scanPanel=scanPanel.GetParent();
-	}
-
-	return false;
-}
-
-function IsQuickbuyCostFeatureActive(contextPanel){
-	return IsEnhancedQuickbuyActive(contextPanel)||IsClickToNotifyActive(contextPanel);
-}
-
-function FormatQuickbuySoulsAmount(value){
-	var n=Math.max(0,Math.floor(Number(value)||0));
-	return String(n).replace(/\B(?=(\d{3})+(?!\d))/g,',');
-}
-
-function FindQuickbuyRootPanel(startPanel){
-	var panel=startPanel;
-	while(panel&&panel.GetParent&&panel.GetParent())panel=panel.GetParent();
-	return panel||startPanel||null;
-}
-
-function GetQuickbuyChatPanel(){
-	if(quickbuyChatCache.panel&&quickbuyChatCache.panel.IsValid&&quickbuyChatCache.panel.IsValid())return quickbuyChatCache.panel;
-	var root=FindQuickbuyRootPanel($.GetContextPanel());
-	if(!root||!root.FindChildTraverse)return null;
-	var chatPanel=root.FindChildTraverse('Chat');
-	if(chatPanel&&chatPanel.IsValid&&chatPanel.IsValid()){
-		quickbuyChatCache.panel=chatPanel;
-		return chatPanel;
-	}
-	return null;
-}
-
-function GetQuickbuyChatInput(){
-	if(quickbuyChatCache.input&&quickbuyChatCache.input.IsValid&&quickbuyChatCache.input.IsValid())return quickbuyChatCache.input;
-	var chatPanel=GetQuickbuyChatPanel();
-	var chatInput=null;
-	if(chatPanel&&chatPanel.FindChildTraverse){
-		var chatControls=chatPanel.FindChildTraverse('ChatControls');
-		chatInput=(chatControls&&chatControls.FindChildTraverse)?chatControls.FindChildTraverse('ChatInput'):null;
-		if(!chatInput)chatInput=chatPanel.FindChildTraverse('ChatInput');
-	}
-	if(!chatInput){
-		var root=FindQuickbuyRootPanel($.GetContextPanel());
-		if(root&&root.FindChildTraverse)chatInput=root.FindChildTraverse('ChatInput');
-	}
-	if(chatInput&&chatInput.IsValid&&chatInput.IsValid()){
-		quickbuyChatCache.input=chatInput;
-		return chatInput;
-	}
-	return null;
-}
-
-function GetQuickbuyChatTargetLabel(){
-	if(quickbuyChatCache.targetLabel&&quickbuyChatCache.targetLabel.IsValid&&quickbuyChatCache.targetLabel.IsValid())return quickbuyChatCache.targetLabel;
-	var chatPanel=GetQuickbuyChatPanel();
-	if(!chatPanel||!chatPanel.FindChildTraverse)return null;
-	var chatControls=chatPanel.FindChildTraverse('ChatControls');
-	var targetLabel=(chatControls&&chatControls.FindChildTraverse)?chatControls.FindChildTraverse('ChatTargetLabel'):null;
-	if(!targetLabel)targetLabel=chatPanel.FindChildTraverse('ChatTargetLabel');
-	if(targetLabel&&targetLabel.IsValid&&targetLabel.IsValid()){
-		quickbuyChatCache.targetLabel=targetLabel;
-		return targetLabel;
-	}
-	return null;
-}
-
-function IsQuickbuyTeamChatReady(chatInput,targetLabel){
-	if(!chatInput||!targetLabel)return false;
-	if(chatInput.IsValid&&!chatInput.IsValid())return false;
-	if(targetLabel.IsValid&&!targetLabel.IsValid())return false;
-	var labelText=String(targetLabel.text||'').replace(/^\s+|\s+$/g,'');
-	if(!labelText||labelText==='#citadel_chat_placeholder')return false;
-	if(labelText==='To (ALL):'||labelText.indexOf('(ALL)')!==-1)return false;
-	return true;
-}
-
-function CloseQuickbuyChatUi(chatInput){
-	var chatPanel=GetQuickbuyChatPanel();
-	try{$.DispatchEvent('CitadelChatInputBlur',chatInput);}catch(e0){$.Msg("[QOLLock][QuickBuy] CloseQuickbuyChatUi blur error: " + String(e0));}
-	try{$.DispatchEvent('DropInputFocus',chatInput);}catch(e1){$.Msg("[QOLLock][QuickBuy] CloseQuickbuyChatUi focus error: " + String(e1));}
-	if(chatPanel){
-		try{$.DispatchEvent('CitadelChatInputBlur',chatPanel);}catch(e2){$.Msg("[QOLLock][QuickBuy] CloseQuickbuyChatUi panel blur error: " + String(e2));}
-		try{$.DispatchEvent('DropInputFocus',chatPanel);}catch(e3){$.Msg("[QOLLock][QuickBuy] CloseQuickbuyChatUi panel focus error: " + String(e3));}
-	}
-	$.Schedule(0,function(){
-		try{$.DispatchEvent('CitadelChatInputBlur',chatInput);}catch(e4){$.Msg("[QOLLock][QuickBuy] CloseQuickbuyChatUi delayed blur error: " + String(e4));}
-	});
-}
-
-function SubmitQuickbuyTeamChat(chatInput,message){
-	try{
-		chatInput.text=message;
-		$.DispatchEvent('CitadelChatInputSubmitted',chatInput);
-		chatInput.text='';
-		return true;
-	}catch(e0){
-		return false;
-	}
-}
-
-function TrySubmitQuickbuyTeamChat(message,delayIndex,targetRetryCount){
-	var chatInput=GetQuickbuyChatInput();
-	var targetLabel=GetQuickbuyChatTargetLabel();
-	if(IsQuickbuyTeamChatReady(chatInput,targetLabel)){
-		if(targetRetryCount<1&&delayIndex<QUICKBUY_CHAT_RETRY_DELAYS.length-1){
-			$.Schedule(QUICKBUY_CHAT_RETRY_DELAYS[delayIndex+1],function(){TrySubmitQuickbuyTeamChat(message,delayIndex+1,targetRetryCount+1);});
-			return;
-		}
-		if(!SubmitQuickbuyTeamChat(chatInput,message)){
-			try{$.DispatchEvent('SetInputFocus',chatInput);}catch(e0){$.Msg("[QOLLock][QuickBuy] SetInputFocus error: " + String(e0));}
-			SubmitQuickbuyTeamChat(chatInput,message);
-		}
-		CloseQuickbuyChatUi(chatInput);
-		return;
-	}
-	if(delayIndex>=QUICKBUY_CHAT_RETRY_DELAYS.length-1)return;
-	$.Schedule(QUICKBUY_CHAT_RETRY_DELAYS[delayIndex+1],function(){TrySubmitQuickbuyTeamChat(message,delayIndex+1,0);});
-}
-
-function SendQuickbuyNeededSoulsChatMessage(message){
-	var now=Date.now?Date.now():(new Date()).getTime();
-	if(now-quickbuyLastChatSubmitMs<QUICKBUY_CHAT_SUBMIT_COOLDOWN_MS)return;
-	quickbuyLastChatSubmitMs=now;
-	var cleanMessage=String(message||'').replace(/["\r\n;]/g,' ').replace(/^\s+|\s+$/g,'');
-	if(!cleanMessage)return;
-	try{$.DispatchEvent('CitadelConCommand','say_chat_team');}catch(e0){$.Msg("[QOLLock][QuickBuy] ConCommand('say_chat_team') error: " + String(e0));}
-	$.Schedule(QUICKBUY_CHAT_RETRY_DELAYS[0],function(){TrySubmitQuickbuyTeamChat(cleanMessage,0,0);});
-}
-
-function SetQuickbuyPanelStyleIfChanged(panel,styleName,styleValue){
-	if(!panel||!panel.style||!styleName)return;
-	var cacheName='_qolQuickbuyStyle_' + styleName;
-	if(panel[cacheName]===styleValue)return;
-	panel.style[styleName]=styleValue;
-	panel[cacheName]=styleValue;
-}
-
-function StyleQuickbuyMoneyLabel(panel,color){
-	if(!panel)return;
-	SetQuickbuyPanelStyleIfChanged(panel,'color',color);
-	SetQuickbuyPanelStyleIfChanged(panel,'washColor',color);
-	SetQuickbuyPanelStyleIfChanged(panel,'fontSize','16px');
-	SetQuickbuyPanelStyleIfChanged(panel,'fontWeight','bold');
-	SetQuickbuyPanelStyleIfChanged(panel,'verticalAlign','center');
-}
-
-function CollectQuickbuyItemPanels(panel,quickbuyItemPanels){
-	if(!panel)return;
-	if(panel.BHasClass&&panel.BHasClass('QuickbuyItem'))quickbuyItemPanels.push(panel);
-	for(var childIndex=0;childIndex<panel.GetChildCount();childIndex++)CollectQuickbuyItemPanels(panel.GetChild(childIndex),quickbuyItemPanels);
-}
-
-function ForEachQuickbuyPanel(panel,callback){
-	if(!panel||!callback)return;
-	callback(panel);
-	for(var childIndex=0;childIndex<panel.GetChildCount();childIndex++)ForEachQuickbuyPanel(panel.GetChild(childIndex),callback);
-}
-
-function ClearQuickbuyDragState(contextPanel){
-	var quickbuyHostPanel=FindQuickbuyHostPanel(contextPanel||$.GetContextPanel());
-	if(!quickbuyHostPanel)return;
-
-	var dragClassNames=[
-		'DraggingOutside',
-		'IsBeingDragged',
-		'IsDragSource',
-		'IsDragTarget',
-		'Dragging'
-	];
-	ForEachQuickbuyPanel(quickbuyHostPanel,function(panel){
-		if(!panel||!panel.SetHasClass)return;
-		for(var classIndex=0;classIndex<dragClassNames.length;classIndex++)panel.SetHasClass(dragClassNames[classIndex],false);
-	});
-
-	try{$.DispatchEvent('DropInputFocus',quickbuyHostPanel);}catch(e0){$.Msg("[QOLLock][QuickBuy] ClearQuickbuyDragState DropInputFocus error: " + String(e0));}
-	try{$.DispatchEvent('CitadelUIHideTextTooltip');}catch(e1){$.Msg("[QOLLock][QuickBuy] ClearQuickbuyDragState HideTextTooltip error: " + String(e1));}
-	try{CitadelUIHideTextTooltip();}catch(e2){$.Msg("[QOLLock][QuickBuy] ClearQuickbuyDragState HideTextTooltip fallback error: " + String(e2));}
-}
-
-function ScheduleQuickbuyDragCleanup(contextPanel){
-	$.Schedule(0.0,function(){ClearQuickbuyDragState(contextPanel);});
-	$.Schedule(0.03,function(){ClearQuickbuyDragState(contextPanel);});
-}
-
-function BindQuickbuyDragCleanupHandlers(entryPanel){
-	if(!entryPanel||entryPanel._qolQuickbuyDragCleanupBound)return;
-	entryPanel._qolQuickbuyDragCleanupBound=true;
-
-	$.RegisterEventHandler('DragEnd',entryPanel,function(){
-		ScheduleQuickbuyDragCleanup(entryPanel);
-		return false;
-	});
-	$.RegisterEventHandler('DragDrop',entryPanel,function(){
-		ScheduleQuickbuyDragCleanup(entryPanel);
-		return false;
-	});
-
-	var reorderButton=entryPanel.FindChildTraverse?entryPanel.FindChildTraverse('ReorderButton'):null;
-	if(reorderButton&&!reorderButton._qolQuickbuyDragCleanupBound){
-		reorderButton._qolQuickbuyDragCleanupBound=true;
-		$.RegisterEventHandler('DragEnd',reorderButton,function(){
-			ScheduleQuickbuyDragCleanup(reorderButton);
-			return false;
-		});
-		reorderButton.SetPanelEvent('onmouseup',function(){ScheduleQuickbuyDragCleanup(reorderButton);});
-	}
-}
-
-function UpdateQuickbuyInputCleanupState(contextPanel,quickbuyQueueEntries,quickbuySellQueueEntries){
-	var quickbuyHostPanel=FindQuickbuyHostPanel(contextPanel);
-	var shopOpen=!!(quickbuyHostPanel&&quickbuyHostPanel.BHasClass&&quickbuyHostPanel.BHasClass('gShopOpen'));
-
-	for(var queueIndex=0;queueIndex<quickbuyQueueEntries.length;queueIndex++)BindQuickbuyDragCleanupHandlers(quickbuyQueueEntries[queueIndex].itemPanel);
-	for(var sellIndex=0;sellIndex<quickbuySellQueueEntries.length;sellIndex++)BindQuickbuyDragCleanupHandlers(quickbuySellQueueEntries[sellIndex].itemPanel);
-
-	if(quickbuyLastShopOpenState&&!shopOpen)ClearQuickbuyDragState(contextPanel);
-	quickbuyLastShopOpenState=shopOpen;
-}
-
-function CollectQuickbuyQueueEntries(quickbuyQueuePanel){
-	var quickbuyQueueEntries=[];
-	if(quickbuyQueuePanel){
-		var quickbuyItemPanels=[];
-		CollectQuickbuyItemPanels(quickbuyQueuePanel,quickbuyItemPanels);
-		for(var itemIndex=0;itemIndex<quickbuyItemPanels.length;itemIndex++){
-			var quickbuyItemPanel=quickbuyItemPanels[itemIndex];
-			var modCostLabel=quickbuyItemPanel.FindChildTraverse('ModCost');
-			var modNameLabel=quickbuyItemPanel.FindChildTraverse('ModName');
-			quickbuyQueueEntries.push({
-				itemPanel:quickbuyItemPanel,
-				itemName:NormalizeQuickbuyItemName(modNameLabel?modNameLabel.text:''),
-				itemKey:CanonicalizeQuickbuyItemName(modNameLabel?modNameLabel.text:''),
-				baseSoulsCost:ParseQuickbuySoulsCost(modCostLabel?modCostLabel.text:''),
-				effectiveSoulsCost:0,
-				cumulativeSoulsCost:0,
-				remainingSoulsCost:0
-			});
-		}
-	}
-	return quickbuyQueueEntries;
-}
-
-function CollectQuickbuySellQueueEntries(quickbuySellQueuePanel){
-	var quickbuySellQueueEntries=[];
-	if(quickbuySellQueuePanel){
-		var quickbuySellItemPanels=[];
-		CollectQuickbuyItemPanels(quickbuySellQueuePanel,quickbuySellItemPanels);
-		for(var sellIndex=0;sellIndex<quickbuySellItemPanels.length;sellIndex++){
-			var quickbuySellItemPanel=quickbuySellItemPanels[sellIndex];
-			var sellCostLabel=quickbuySellItemPanel.FindChildTraverse('ModCost');
-			quickbuySellQueueEntries.push({
-				itemPanel:quickbuySellItemPanel,
-				sellSoulsCredit:Math.floor(ParseQuickbuySoulsCost(sellCostLabel?sellCostLabel.text:'')/2)
-			});
-		}
-	}
-	return quickbuySellQueueEntries;
-}
-
-function GetCurrentSoulsAmount(){
-	var contextPanel=$.GetContextPanel();
-	var currentSoulsAmountPanel=FindChildTraverseInAncestors(contextPanel,'CurrentGoldAmount');
-	if(!currentSoulsAmountPanel)return 0;
-	var currentSoulsLabel=currentSoulsAmountPanel.FindChildTraverse('hudCurGoldLabel');
-	return currentSoulsLabel?ParseQuickbuySoulsCost(currentSoulsLabel.text):0;
-}
-
 function GetQuickbuySellQueueSoulsCredit(quickbuySellQueueEntries){
-	var totalSellSoulsCredit=0;
-	for(var sellIndex=0;sellIndex<quickbuySellQueueEntries.length;sellIndex++)totalSellSoulsCredit+=quickbuySellQueueEntries[sellIndex].sellSoulsCredit;
+	let totalSellSoulsCredit=0;
+	for(let sellIndex=0;sellIndex<quickbuySellQueueEntries.length;sellIndex++)totalSellSoulsCredit+=quickbuySellQueueEntries[sellIndex].sellSoulsCredit;
 	return totalSellSoulsCredit;
 }
 
 function BuildQuickbuyQueueCostProgress(quickbuyQueueEntries,currentSoulsAmount,quickbuySellQueueEntries){
-	var adjustedQuickbuyTotalSoulsCost=0;
-	var runningQuickbuySoulsCost=0;
-	var componentPurchasePoolByName={};
-	var availableSoulsAmount=currentSoulsAmount+GetQuickbuySellQueueSoulsCredit(quickbuySellQueueEntries);
-	var queueIndex=0,componentIndex=0;
+	let adjustedQuickbuyTotalSoulsCost=0;
+	let runningQuickbuySoulsCost=0;
+	let componentPurchasePoolByName={};
+	let availableSoulsAmount=currentSoulsAmount+GetQuickbuySellQueueSoulsCredit(quickbuySellQueueEntries);
+	let queueIndex=0,componentIndex=0;
 
 	for(queueIndex=0;queueIndex<quickbuyQueueEntries.length;queueIndex++){
-		var quickbuyQueueEntry=quickbuyQueueEntries[queueIndex];
+		let quickbuyQueueEntry=quickbuyQueueEntries[queueIndex];
 		quickbuyQueueEntry.effectiveSoulsCost=quickbuyQueueEntry.baseSoulsCost;
 		if(!quickbuyQueueEntry.itemKey)continue;
 		if(!componentPurchasePoolByName[quickbuyQueueEntry.itemKey])componentPurchasePoolByName[quickbuyQueueEntry.itemKey]=[];
@@ -496,17 +172,17 @@ function BuildQuickbuyQueueCostProgress(quickbuyQueueEntries,currentSoulsAmount,
 	}
 
 	for(queueIndex=0;queueIndex<quickbuyQueueEntries.length;queueIndex++){
-		var queuedUpgradeName=quickbuyQueueEntries[queueIndex].itemKey;
-		var requiredComponentNames=QUICKBUY_RECIPE_COMPONENTS[queuedUpgradeName];
+		let queuedUpgradeName=quickbuyQueueEntries[queueIndex].itemKey;
+		let requiredComponentNames=QUICKBUY_RECIPE_COMPONENTS[queuedUpgradeName];
 		if(!requiredComponentNames)continue;
 
 		for(componentIndex=0;componentIndex<requiredComponentNames.length;componentIndex++){
-			var requiredComponentName=requiredComponentNames[componentIndex];
-			var purchasedComponentPool=componentPurchasePoolByName[requiredComponentName];
+			let requiredComponentName=requiredComponentNames[componentIndex];
+			let purchasedComponentPool=componentPurchasePoolByName[requiredComponentName];
 			if(!purchasedComponentPool)continue;
 
-			for(var purchasedComponentIndex=0;purchasedComponentIndex<purchasedComponentPool.length;purchasedComponentIndex++){
-				var purchasedComponent=purchasedComponentPool[purchasedComponentIndex];
+			for(let purchasedComponentIndex=0;purchasedComponentIndex<purchasedComponentPool.length;purchasedComponentIndex++){
+				let purchasedComponent=purchasedComponentPool[purchasedComponentIndex];
 				if(purchasedComponent.isConsumedByLaterUpgrade)continue;
 				if(purchasedComponent.queueIndex>=queueIndex)continue;
 
@@ -518,7 +194,7 @@ function BuildQuickbuyQueueCostProgress(quickbuyQueueEntries,currentSoulsAmount,
 	}
 
 	for(queueIndex=0;queueIndex<quickbuyQueueEntries.length;queueIndex++){
-		var queueEntry=quickbuyQueueEntries[queueIndex];
+		let queueEntry=quickbuyQueueEntries[queueIndex];
 		if(queueEntry.effectiveSoulsCost<0)queueEntry.effectiveSoulsCost=0;
 		runningQuickbuySoulsCost+=queueEntry.effectiveSoulsCost;
 		queueEntry.cumulativeSoulsCost=runningQuickbuySoulsCost;
@@ -530,280 +206,478 @@ function BuildQuickbuyQueueCostProgress(quickbuyQueueEntries,currentSoulsAmount,
 	return adjustedQuickbuyTotalSoulsCost<0?0:adjustedQuickbuyTotalSoulsCost;
 }
 
-function UpdateQuickbuyQueueEntryRemainingSouls(quickbuyQueueEntries,clickToNotifyActive){
-	for(var queueIndex=0;queueIndex<quickbuyQueueEntries.length;queueIndex++){
-		var queueEntry=quickbuyQueueEntries[queueIndex];
-		if(!queueEntry.itemPanel)continue;
-		queueEntry.itemPanel.SetHasClass('HasRemainingSoulsNeeded',queueEntry.remainingSoulsCost>0);
 
-		var queueRemainingSoulsLabel=queueEntry.itemPanel.FindChildTraverse('QueueRemainingSoulsLabel');
-		if(queueRemainingSoulsLabel){
-			queueRemainingSoulsLabel.text=String(queueEntry.remainingSoulsCost);
-			var canNotify=clickToNotifyActive&&queueEntry.remainingSoulsCost>0;
-			queueRemainingSoulsLabel.SetHasClass('CanClickToNotify',canNotify);
-			if(clickToNotifyActive)StyleQuickbuyMoneyLabel(queueRemainingSoulsLabel,canNotify?'#d64259':'#66ffd9');
-			queueRemainingSoulsLabel.SetPanelEvent('onactivate',function(){});
-			var queueRemainingSoulsDivider=queueEntry.itemPanel.FindChildTraverse('QueueRemainingSoulsDivider');
-			if(queueRemainingSoulsDivider)StyleQuickbuyMoneyLabel(queueRemainingSoulsDivider,'#d8d0c088');
-			var modCostLabel=queueEntry.itemPanel.FindChildTraverse('ModCost');
-			var goldIcon=queueEntry.itemPanel.FindChildTraverse('goldIcon')||queueEntry.itemPanel.FindChildTraverse('ModCostIcon');
-			if(clickToNotifyActive){
-				StyleQuickbuyMoneyLabel(modCostLabel,canNotify?'#d64259':'#66ffd9');
-				if(goldIcon)SetQuickbuyPanelStyleIfChanged(goldIcon,'washColor',canNotify?'#d64259':'#66ffd9');
-			}
-			var notifyButton=queueEntry.itemPanel.FindChildTraverse('NotifyButton');
-			if(notifyButton)notifyButton.SetHasClass('CanClickToNotify',canNotify);
-			if(canNotify){
-				var chatMessage='Need ' + FormatQuickbuySoulsAmount(queueEntry.remainingSoulsCost) + ' more for ' + (queueEntry.itemName||'item');
-				if(notifyButton&&notifyButton._qolClickToNotifyMessage!==chatMessage){
-					notifyButton._qolClickToNotifyMessage=chatMessage;
-					notifyButton.SetPanelEvent('onactivate',(function(message){
-						return function(){SendQuickbuyNeededSoulsChatMessage(message);};
-					})(chatMessage));
-				}
-			}else if(notifyButton&&notifyButton._qolClickToNotifyMessage){
-				notifyButton._qolClickToNotifyMessage='';
-				notifyButton.SetPanelEvent('onactivate',function(){});
-			}
-		}
-	}
-}
+    const POLL_SECONDS = 0.5;
+    const CHAT_COOLDOWN_MS = 1000;
+    const CHAT_RETRY_DELAYS = [0, 0.008, 0.012, 0.016, 0.032];
+    const QUICKBUY_RECIPE_COMPONENTS = {};
+    const ICON_CLASSES = ['hasAbility', 'isWeapon', 'isArmor', 'isTech', 'isTier0', 'isTier5',
+        'HideModTierLabel', 'isEnhanced', 'hasUpgradeLevel', 'isCorrupted', 'isActiveItem',
+        'Locked', 'unowned', 'owned', 'newSlotUnlocked', 'IsNewItem'];
+    const TIER_CLASSES = ['ModTierLevel1', 'ModTierLevel2', 'ModTierLevel3', 'ModTierLevel4', 'ModTierLevel5'];
+    const DRAG_CLASSES = ['DraggingOutside', 'IsBeingDragged', 'IsDragSource', 'IsDragTarget', 'Dragging'];
+    const records = new Map();
+    const bindings = new WeakMap();
+    let lookups = new WeakMap();
+    const tasks = new Map();
+    let context = null, host = null, root = null, running = true, frame = 0, generation = 0;
+    let pollHandle = null, eventHandle = null, lastShopOpen = false, lastChatSubmitMs = 0, notifyEnabled = false;
 
-function GetQuickbuyNextRemainingSouls(quickbuyQueueEntries){
-	if(quickbuyQueueEntries.length>0)return quickbuyQueueEntries[0].remainingSoulsCost;
-	return 0;
-}
+    function isAlive(panel) {
+        try { return !!panel && typeof panel.IsValid === 'function' && panel.IsValid(); } catch (_) { return false; }
+    }
 
-function SetKnownModIconClasses(targetModIcon,sourceModIcon){
-	if(!targetModIcon)return;
-	var modIconClassNames=[
-		'hasAbility',
-		'isWeapon',
-		'isArmor',
-		'isTech',
-		'isTier0',
-		'isTier5',
-		'HideModTierLabel',
-		'isEnhanced',
-		'hasUpgradeLevel',
-		'isCorrupted',
-		'isActiveItem',
-		'Locked',
-		'unowned',
-		'owned',
-		'newSlotUnlocked',
-		'IsNewItem'
-	];
+    function belongsTo(panel, owner) {
+        for (let depth = 0; depth < 64 && isAlive(panel); depth++) {
+            if (panel === owner) return true;
+            try { panel = panel.GetParent(); } catch (_) { return false; }
+        }
+        return false;
+    }
 
-	for(var classIndex=0;classIndex<modIconClassNames.length;classIndex++){
-		var className=modIconClassNames[classIndex];
-		var hasClass=false;
-		if(sourceModIcon&&sourceModIcon.BHasClass)hasClass=!!sourceModIcon.BHasClass(className);
-		targetModIcon.SetHasClass(className,hasClass);
-	}
-}
+    function child(panel, id) {
+        try { const found = isAlive(panel) && panel.FindChild(id); return isAlive(found) ? found : null; }
+        catch (_) { return null; }
+    }
 
-function BuildQuickbuyPreviewIconPath(itemName,sourceModIcon){
-	var canonicalItemName=CanonicalizeQuickbuyItemName(itemName);
-	if(QUICKBUY_ICON_OVERRIDES[canonicalItemName])return QUICKBUY_ICON_OVERRIDES[canonicalItemName];
+    function childClass(panel, name) {
+        if (!isAlive(panel)) return null;
+        for (let i = 0; i < panel.GetChildCount(); i++) {
+            const candidate = panel.GetChild(i);
+            if (isAlive(candidate) && candidate.BHasClass(name)) return candidate;
+        }
+        return null;
+    }
 
-	var iconFolder='weapon';
-	if(sourceModIcon&&sourceModIcon.BHasClass){
-		if(sourceModIcon.BHasClass('isArmor'))iconFolder='vitality';
-		else if(sourceModIcon.BHasClass('isTech'))iconFolder='spirit';
-	}
+    function nativeHost(owner) {
+        const hud = owner?.id === 'Hud' ? owner : child(owner, 'Hud');
+        const core = childClass(hud || owner, 'HudCore');
+        const parent = child(child(core, 'StatsAndModsContainer'), 'LowerLeft');
+        return { parent, panel: child(parent, 'CitadelHudQuickbuy') || child(hud, 'CitadelHudQuickbuy') || child(owner, 'CitadelHudQuickbuy') };
+    }
 
-	var iconName=canonicalItemName.replace(/\s+/g,'_');
-	if(!iconName)return '';
-	return 's2r://panorama/images/items/' + iconFolder + '/' + iconName + '_psd.vtex';
-}
+    function preferred(owner, id) {
+        // These paths are from hud.xml, hud_quickbuy.xml and hud_quickbuy_entry.xml.
+        if (id === 'CitadelHudQuickbuy') return nativeHost(owner).panel;
+        if (id === 'QuickbuyQueue' || id === 'QuickbuySellQueue') return child(childClass(owner, 'QuickbuyQueueOuter'), id);
+        if (/^QuickbuyUpcomingPreview[2-5]$/.test(id)) return child(child(owner, 'QuickbuyUpcomingPreviewContainer'), id);
+        if (/^QuickbuyPreview[2-5]Entry$/.test(id)) return child(childClass(owner, 'QuickbuyUpcomingMini'), id);
+        if (/^QuickbuyUpcomingPreview[2-5]SoulsNeededLabel$/.test(id)) return child(childClass(owner, 'QuickbuyUpcomingPreviewSoulsNeeded'), id);
+        if (id === 'NotifyButton' || id === 'ReorderButton') return child(child(owner, 'ControlIcons'), id);
+        const content = child(owner, 'ItemContentPanel');
+        if (id === 'ModIcon') return child(content, id);
+        const namePanel = childClass(content, 'NamePanel');
+        if (id === 'ModName') return child(namePanel, id);
+        if (id === 'ModCost' || id === 'QueueRemainingSoulsLabel') return child(childClass(namePanel, 'CostPanel'), id);
+        if (id === 'QueueRemainingSoulsDivider') return childClass(childClass(namePanel, 'CostPanel'), id);
+        return null;
+    }
 
-function SyncQuickbuyPreviewModIcon(previewModIcon,sourceModIcon,itemName){
-	if(!previewModIcon)return;
+    // The companion context does not include QOL services. Each lookup keeps
+    // its own root/parent generation, direct-child checks and bounded misses.
+    function resolve(owner, id, force = false) {
+        if (!isAlive(owner)) return null;
+        let ownerLookups = lookups.get(owner);
+        if (!ownerLookups) { ownerLookups = new Map(); lookups.set(owner, ownerLookups); }
+        let state = ownerLookups.get(id);
+        if (!state) {
+            state = { root: owner, parent: null, panel: null, next: 0 };
+            ownerLookups.set(id, state);
+        }
+        const direct = preferred(owner, id) || child(owner, id);
+        if (direct) { state.panel = direct; state.parent = owner; state.next = Date.now() + 5000; return direct; }
+        if (!force && state.panel && belongsTo(state.parent, owner)) {
+            const current = child(state.parent, id);
+            if (current && Date.now() < state.next) { state.panel = current; return current; }
+        }
+        if (!force && !state.panel && Date.now() < state.next) return null;
+        try { state.panel = owner.FindChildTraverse(id); } catch (_) { state.panel = null; }
+        if (!isAlive(state.panel)) state.panel = null;
+        state.parent = state.panel ? state.panel.GetParent() : null;
+        state.next = Date.now() + (state.panel ? 5000 : 1000);
+        return state.panel;
+    }
 
-	SetKnownModIconClasses(previewModIcon,sourceModIcon);
+    function ancestors(panel) {
+        const result = [];
+        for (let depth = 0; depth < 64 && isAlive(panel); depth++) {
+            result.push(panel);
+            try { panel = panel.GetParent(); } catch (_) { break; }
+        }
+        return result;
+    }
 
-	var targetModIconImage=previewModIcon.FindChildTraverse('ModIconImage');
-	var sourceModIconImage=sourceModIcon?sourceModIcon.FindChildTraverse('ModIconImage'):null;
-	var sourceImagePath='';
+    function readModel() {
+        const chain = ancestors(context);
+        const active = name => chain.some(panel => panel.BHasClass(name));
+        let count = 3;
+        for (const panel of chain.slice(0, 6)) {
+            const value = panel.GetAttributeInt('qol_enhanced_quickbuy_count', -1);
+            if (value >= 1) { count = value; break; }
+        }
+        return { enhanced: active('enhanced_quickbuy_active'), notify: active('shop_click_to_notify_active'),
+            count: Math.max(1, Math.min(quickbuyUpcomingPreviewSlots.length + 1, Math.round(Number(count)) || 3)),
+            shopOpen: !!host?.BHasClass('gShopOpen') };
+    }
 
-	if(sourceModIconImage&&sourceModIconImage.GetAttributeString)sourceImagePath=sourceModIconImage.GetAttributeString('src','');
-	if(!sourceImagePath)sourceImagePath=BuildQuickbuyPreviewIconPath(itemName,sourceModIcon);
-	// The Image belongs to a native CitadelModIcon. Reassert its final path;
-	// C++ may update the same instance, so a JS-only signature is insufficient.
-	if(targetModIconImage&&targetModIconImage.SetImage)targetModIconImage.SetImage(sourceImagePath||'');
+    function record(panel) {
+        if (!records.has(panel)) records.set(panel, { styles: new Map(), classes: new Map(), text: 0, image: 0, events: new Map() });
+        return records.get(panel);
+    }
 
-	var targetTierLabel=previewModIcon.FindChildTraverse('mod_tier_label');
-	var sourceTierLabel=sourceModIcon?sourceModIcon.FindChildTraverse('mod_tier_label'):null;
-	var tierClassNames=['ModTierLevel1','ModTierLevel2','ModTierLevel3','ModTierLevel4','ModTierLevel5'];
-	for(var tierClassIndex=0;tierClassIndex<tierClassNames.length;tierClassIndex++){
-		var tierClassName=tierClassNames[tierClassIndex];
-		if(targetTierLabel){
-			var hasTierClass=false;
-			if(sourceTierLabel&&sourceTierLabel.BHasClass)hasTierClass=!!sourceTierLabel.BHasClass(tierClassName);
-			targetTierLabel.SetHasClass(tierClassName,hasTierClass);
-		}
-	}
-}
+    function style(panel, property, value) {
+        if (!isAlive(panel)) return;
+        const owned = record(panel).styles;
+        let entry = owned.get(property);
+        if (!entry) { entry = { value: null, seen: frame }; owned.set(property, entry); }
+        entry.seen = frame;
+        if (entry.value !== value || panel.style[property] !== value) {
+            panel.style[property] = value;
+            entry.value = value;
+        }
+    }
 
-function GetEnhancedQuickbuyCount(contextPanel){
-	var rawCount=3;
-	var panel=contextPanel;
-	for(var depth=0;depth<6;depth++){
-		try{
-			if(panel&&panel.GetAttributeInt){
-				rawCount=panel.GetAttributeInt('qol_enhanced_quickbuy_count',-1);
-				if(rawCount>=1)break;
-			}
-		}catch(_countAttrErr){ /* panel deleted mid-frame */ }
-		try{
-			panel=(panel&&panel.GetParent)?panel.GetParent():null;
-		}catch(_countParentErr){
-			panel=null;
-		}
-		if(!panel)break;
-	}
-	if(rawCount<1)rawCount=3;
-	var count=Math.round(Number(rawCount));
-	if(!isFinite(count))count=3;
-	if(count<1)count=1;
-	if(count>5)count=5;
-	return count;
-}
+    function cls(panel, name, active) {
+        if (!isAlive(panel)) return;
+        record(panel).classes.set(name, frame);
+        if (panel.BHasClass(name) !== !!active) panel.SetHasClass(name, !!active);
+    }
 
-function UpdateQuickbuyUpcomingPreviewSlots(quickbuyQueueEntries){
-	var contextPanel=$.GetContextPanel();
-	var maxUpcomingPreviewSlots=Math.max(0,GetEnhancedQuickbuyCount(contextPanel)-1);
-	for(var previewSlotIndex=0;previewSlotIndex<quickbuyUpcomingPreviewSlots.length;previewSlotIndex++){
-		var previewSlot=quickbuyUpcomingPreviewSlots[previewSlotIndex];
-		var previewRoot=contextPanel.FindChildTraverse(previewSlot.rootId);
-		var previewEntryPanel=contextPanel.FindChildTraverse(previewSlot.entryPanelId);
-		var previewModIcon=previewEntryPanel?previewEntryPanel.FindChildTraverse('ModIcon'):null;
-		var previewSoulsLabel=contextPanel.FindChildTraverse(previewSlot.soulsLabelId);
-		if(!previewRoot)continue;
+    function text(panel, value) {
+        if (!isAlive(panel)) return;
+        record(panel).text = frame;
+        const desired = String(value);
+        if (panel.text !== desired) panel.text = desired;
+    }
 
-		var previewQueueEntry=previewSlotIndex<maxUpcomingPreviewSlots?quickbuyQueueEntries[previewSlot.queueIndex]:null;
-		var hasPreview=!!(previewQueueEntry&&previewQueueEntry.itemPanel);
-		var sourceModIcon=hasPreview?previewQueueEntry.itemPanel.FindChildTraverse('ModIcon'):null;
-		// Apply the final state directly. Clearing a filled slot before restoring
-		// it causes real text/class/image changes on every unchanged polling tick.
-		previewRoot.SetHasClass('HasPreviewItem',hasPreview);
-		previewRoot.SetHasClass('CanAffordUpcoming',hasPreview&&previewQueueEntry.remainingSoulsCost<=0);
-		if(previewSoulsLabel)previewSoulsLabel.text=hasPreview?String(previewQueueEntry.remainingSoulsCost):'0';
-		SyncQuickbuyPreviewModIcon(previewModIcon,sourceModIcon,hasPreview?previewQueueEntry.itemName:'');
-	}
-}
+    function image(panel, path) {
+        if (!isAlive(panel)) return;
+        record(panel).image = frame;
+        // Native CitadelModIcon may rewrite this same Image instance.
+        panel.SetImage(path || '');
+    }
 
-function ResetQuickbuyUpcomingPreviewSlots(contextPanel){
-	for(var previewSlotIndex=0;previewSlotIndex<quickbuyUpcomingPreviewSlots.length;previewSlotIndex++){
-		var previewSlot=quickbuyUpcomingPreviewSlots[previewSlotIndex];
-		var previewRoot=contextPanel.FindChildTraverse(previewSlot.rootId);
-		var previewSoulsLabel=contextPanel.FindChildTraverse(previewSlot.soulsLabelId);
-		var previewEntryPanel=contextPanel.FindChildTraverse(previewSlot.entryPanelId);
-		var previewModIcon=previewEntryPanel?previewEntryPanel.FindChildTraverse('ModIcon'):null;
-		if(previewRoot){
-			previewRoot.SetHasClass('HasPreviewItem',false);
-			previewRoot.SetHasClass('CanAffordUpcoming',false);
-		}
-		if(previewSoulsLabel)previewSoulsLabel.text='0';
-		SyncQuickbuyPreviewModIcon(previewModIcon,null,'');
-	}
-}
+    function panelEvent(panel, name, callback, key, guard = () => true) {
+        if (!isAlive(panel)) return;
+        const events = record(panel).events;
+        let entry = events.get(name);
+        if (!entry) { entry = { active: true, seen: frame, callback: null, key: null }; events.set(name, entry); }
+        entry.active = true; entry.seen = frame; entry.callback = callback; entry.guard = guard;
+        if (entry.key === key) return;
+        // Publish the key after the native write succeeds. A failed binding must retry.
+        panel.SetPanelEvent(name, () => { if (running && entry.active && isAlive(panel) && entry.guard()) entry.callback(); });
+        entry.key = key;
+    }
 
-function ResetQuickbuyQueuePanels(contextPanel){
-	var quickbuyTotalCostLabel=contextPanel.FindChildTraverse('QuickbuyShopTotalCostLabel');
-	var quickbuyNextSoulsNeededLabel=contextPanel.FindChildTraverse('QuickbuyNextSoulsNeededLabel');
-	var quickbuyQueuePanel=contextPanel.FindChildTraverse('QuickbuyQueue');
-	if(quickbuyTotalCostLabel)quickbuyTotalCostLabel.text='0';
-	if(quickbuyNextSoulsNeededLabel)quickbuyNextSoulsNeededLabel.text='0';
-	ResetQuickbuyUpcomingPreviewSlots(contextPanel);
+    function releaseProperty(panel, property) {
+        try { return panel.ClearPropertyFromCode(property.replace(/[A-Z]/g, c => '-' + c.toLowerCase())) !== false; }
+        catch (_) { return false; }
+    }
 
-	var quickbuyQueueEntries=CollectQuickbuyQueueEntries(quickbuyQueuePanel);
-	for(var queueIndex=0;queueIndex<quickbuyQueueEntries.length;queueIndex++){
-		var queueEntry=quickbuyQueueEntries[queueIndex];
-		if(!queueEntry.itemPanel)continue;
-		queueEntry.itemPanel.SetHasClass('HasRemainingSoulsNeeded',false);
-		var queueRemainingSoulsLabel=queueEntry.itemPanel.FindChildTraverse('QueueRemainingSoulsLabel');
-		if(queueRemainingSoulsLabel){
-			queueRemainingSoulsLabel.text='0';
-			queueRemainingSoulsLabel.SetHasClass('CanClickToNotify',false);
-			queueRemainingSoulsLabel._qolClickToNotifyMessage='';
-			queueRemainingSoulsLabel.SetPanelEvent('onactivate',function(){});
-		}
-		var notifyButton=queueEntry.itemPanel.FindChildTraverse('NotifyButton');
-		if(notifyButton){
-			notifyButton.SetHasClass('CanClickToNotify',false);
-			notifyButton._qolClickToNotifyMessage='';
-			notifyButton.SetPanelEvent('onactivate',function(){});
-		}
-	}
-}
+    function releaseRecord(panel, all = false) {
+        const owned = records.get(panel);
+        if (!owned) return;
+        const binding = bindings.get(panel);
+        if (!isAlive(panel)) {
+            if (binding) binding.active = false;
+            for (const event of owned.events.values()) event.active = false;
+            records.delete(panel); return;
+        }
+        if (binding && (all || binding.seen !== frame)) binding.active = false;
+        for (const [property, entry] of owned.styles) {
+            if ((all || entry.seen !== frame) && releaseProperty(panel, property)) owned.styles.delete(property);
+        }
+        for (const [name, seen] of owned.classes) {
+            if (all || seen !== frame) {
+                try {
+                    if (panel.BHasClass(name)) panel.SetHasClass(name, false);
+                    owned.classes.delete(name);
+                } catch (e) { $.Msg('[QOLLock][QuickBuy] release class: ' + String(e)); }
+            }
+        }
+        if (owned.text && (all || owned.text !== frame)) {
+            try { if (panel.text !== '0') panel.text = '0'; owned.text = 0; }
+            catch (e) { $.Msg('[QOLLock][QuickBuy] release text: ' + String(e)); }
+        }
+        if (owned.image && (all || owned.image !== frame)) {
+            try { panel.SetImage(''); owned.image = 0; }
+            catch (e) { $.Msg('[QOLLock][QuickBuy] release image: ' + String(e)); }
+        }
+        for (const [name, event] of owned.events) {
+            if (all || event.seen !== frame) {
+                event.active = false;
+                try {
+                    if (typeof panel.ClearPanelEvent === 'function') panel.ClearPanelEvent(name);
+                    else panel.SetPanelEvent(name, () => {});
+                    owned.events.delete(name);
+                } catch (e) { $.Msg('[QOLLock][QuickBuy] release event: ' + String(e)); }
+            }
+        }
+        if (!owned.styles.size && !owned.classes.size && !owned.text && !owned.image && !owned.events.size && !binding?.active) records.delete(panel);
+    }
 
-function _cancelQuickbuyUpdate() {
-	if (_quickbuyScheduleHandle !== null) {
-		try { $.CancelScheduled(_quickbuyScheduleHandle); } catch(e) {}
-		_quickbuyScheduleHandle = null;
-	}
-}
+    function sweep(all = false) {
+        for (const panel of records.keys()) releaseRecord(panel, all);
+    }
 
-function _scheduleQuickbuyUpdate(delaySec) {
-	_cancelQuickbuyUpdate();
-	_quickbuyScheduleHandle = $.Schedule(delaySec, function() {
-		_quickbuyScheduleHandle = null;
-		UpdateQuickbuyQueueCostPanels();
-	});
-}
+    function cancelTasks(group = null) {
+        for (const [handle, task] of tasks) if (group === null || task.group === group) {
+            $.CancelScheduled(handle); tasks.delete(handle);
+        }
+    }
 
-function UpdateQuickbuyQueueCostPanels(){
-	// Engine events also call this function while a polling callback is pending.
-	// Cancel that callback before replacing it; forgetting its handle leaks a loop.
-	_cancelQuickbuyUpdate();
-	var contextPanel;
-	try {
-		contextPanel=$.GetContextPanel();
-		if(!contextPanel||typeof contextPanel.IsValid!=='function'||!contextPanel.IsValid())return;
-	} catch(e) { return; }
+    function schedule(callback, delay, group, guard = () => true) {
+        const token = generation;
+        const handle = $.Schedule(delay, () => {
+            tasks.delete(handle);
+            if (!running || token !== generation || !liveGeneration() || !guard()) return;
+            try { callback(); } catch (e) { $.Msg('[QOLLock][QuickBuy] ' + group + ': ' + String(e)); }
+        });
+        tasks.set(handle, { group });
+    }
 
-	if(!IsQuickbuyCostFeatureActive(contextPanel)){
-		ResetQuickbuyQueuePanels(contextPanel);
-		_scheduleQuickbuyUpdate(QUICKBUY_TOTAL_UPDATE_INTERVAL_IDLE_SECONDS);
-		return;
-	}
-	var clickToNotifyActive=IsClickToNotifyActive(contextPanel);
+    function cancelPoll() {
+        if (pollHandle !== null) { $.CancelScheduled(pollHandle); pollHandle = null; }
+    }
 
-	var quickbuyTotalCostLabel=contextPanel.FindChildTraverse('QuickbuyShopTotalCostLabel');
-	var quickbuyNextSoulsNeededLabel=contextPanel.FindChildTraverse('QuickbuyNextSoulsNeededLabel');
-	var quickbuyQueuePanel=contextPanel.FindChildTraverse('QuickbuyQueue');
-	var quickbuySellQueuePanel=contextPanel.FindChildTraverse('QuickbuySellQueue');
-	if(!quickbuyTotalCostLabel){
-		_scheduleQuickbuyUpdate(QUICKBUY_TOTAL_UPDATE_INTERVAL_SECONDS);
-		return;
-	}
+    function shutdown() {
+        running = false; generation++;
+        cancelPoll(); cancelTasks();
+        try { sweep(true); } catch (e) { $.Msg('[QOLLock][QuickBuy] release: ' + String(e)); }
+        if (eventHandle !== null && typeof $.UnregisterForUnhandledEvent === 'function') {
+            $.UnregisterForUnhandledEvent('CitadelQuickbuyItemsChanged', eventHandle);
+            eventHandle = null;
+        }
+        records.clear(); lookups = new WeakMap(); context = host = root = null;
+    }
 
-	var currentSoulsAmount=GetCurrentSoulsAmount();
-	var quickbuyQueueEntries=CollectQuickbuyQueueEntries(quickbuyQueuePanel);
-	var quickbuySellQueueEntries=CollectQuickbuySellQueueEntries(quickbuySellQueuePanel);
-	UpdateQuickbuyInputCleanupState(contextPanel,quickbuyQueueEntries,quickbuySellQueueEntries);
-	var adjustedQuickbuyTotalSoulsCost=BuildQuickbuyQueueCostProgress(quickbuyQueueEntries,currentSoulsAmount,quickbuySellQueueEntries);
+    function liveGeneration() {
+        try {
+            const current = nativeHost(root);
+            return isAlive(context) && $.GetContextPanel() === context &&
+                (!host || (belongsTo(context, host) && (!current.parent || current.panel === host) && (!current.panel || current.panel === host)));
+        } catch (_) { return false; }
+    }
 
-	quickbuyTotalCostLabel.text=String(adjustedQuickbuyTotalSoulsCost);
-	UpdateQuickbuyQueueEntryRemainingSouls(quickbuyQueueEntries,clickToNotifyActive);
-	UpdateQuickbuyUpcomingPreviewSlots(quickbuyQueueEntries);
+    function discover() {
+        let current;
+        try { current = $.GetContextPanel(); } catch (_) { shutdown(); return false; }
+        if (!isAlive(current)) { shutdown(); return false; }
+        const chain = ancestors(current), currentRoot = chain[chain.length - 1];
+        const currentHost = chain.find(panel => panel.id === 'CitadelHudQuickbuy') || resolve(currentRoot, 'CitadelHudQuickbuy');
+        // Prefer the current direct host; old living contexts must not keep
+        // mutating an orphan when the native owner has moved to another host.
+        const native = nativeHost(currentRoot);
+        if (currentHost && ((native.parent && native.panel !== currentHost) || (native.panel && native.panel !== currentHost))) { shutdown(); return false; }
+        if (context !== current || host !== currentHost || root !== currentRoot) {
+            generation++; cancelTasks(); sweep(true); lookups = new WeakMap();
+            context = current; host = currentHost; root = currentRoot;
+            lastShopOpen = false; notifyEnabled = false;
+        }
+        return true;
+    }
 
-	if(quickbuyNextSoulsNeededLabel)quickbuyNextSoulsNeededLabel.text=String(GetQuickbuyNextRemainingSouls(quickbuyQueueEntries));
+    function collect(owner) {
+        const items = [];
+        function visit(panel, depth) {
+            if (!isAlive(panel) || depth > 64) return;
+            if (panel.BHasClass('QuickbuyItem')) items.push(panel);
+            for (let i = 0; i < panel.GetChildCount(); i++) visit(panel.GetChild(i), depth + 1);
+        }
+        visit(owner, 0);
+        return items;
+    }
 
-	_scheduleQuickbuyUpdate(QUICKBUY_TOTAL_UPDATE_INTERVAL_SECONDS);
-}
+    function readEntries(queue) {
+        return collect(queue).map(itemPanel => {
+            const cost = resolve(itemPanel, 'ModCost'), name = resolve(itemPanel, 'ModName');
+            const itemName = NormalizeQuickbuyItemName(name?.text || '');
+            return { itemPanel, itemName, itemKey: CanonicalizeQuickbuyItemName(itemName),
+                baseSoulsCost: ParseQuickbuySoulsCost(cost?.text || ''), effectiveSoulsCost: 0, cumulativeSoulsCost: 0, remainingSoulsCost: 0 };
+        });
+    }
 
-// Engine event subscription: immediately updates queue when items are added, removed, or purchased
-if (typeof $.RegisterForUnhandledEvent === 'function') {
-	try {
-		$.RegisterForUnhandledEvent('CitadelQuickbuyItemsChanged', function() {
-			UpdateQuickbuyQueueCostPanels();
-		});
-	} catch(e) {}
-}
+    function readSouls() {
+        for (const panel of ancestors(context)) {
+            const amount = resolve(panel, 'CurrentGoldAmount');
+            if (amount) return ParseQuickbuySoulsCost(resolve(amount, 'hudCurGoldLabel')?.text || '');
+        }
+        return 0;
+    }
 
-InitializeQuickbuyRecipeComponents();
-_scheduleQuickbuyUpdate(0.0);
+    function money(panel, color) {
+        for (const [property, value] of Object.entries({ color, washColor: color, fontSize: '16px', fontWeight: 'bold', verticalAlign: 'center' })) style(panel, property, value);
+    }
+
+    function clearDragState(sourceHost) {
+        if (!isAlive(sourceHost)) return;
+        const visit = (panel, depth) => {
+            if (!isAlive(panel) || depth > 64) return;
+            for (const name of DRAG_CLASSES) if (panel.BHasClass(name)) panel.SetHasClass(name, false);
+            for (let i = 0; i < panel.GetChildCount(); i++) visit(panel.GetChild(i), depth + 1);
+        };
+        visit(sourceHost, 0);
+        $.DispatchEvent('DropInputFocus', sourceHost);
+        $.DispatchEvent('CitadelUIHideTextTooltip');
+    }
+
+    function bindDrag(panel, queue, reorder = false) {
+        if (!isAlive(panel)) return;
+        let binding = bindings.get(panel);
+        if (!binding) {
+            binding = { active: false, seen: 0, queue: null, registered: new Set() };
+            bindings.set(panel, binding);
+            const cleanup = () => {
+                if (!running || !binding.active || !isAlive(panel) || !isAlive(binding.queue) ||
+                    resolve(context, binding.queue.id, true) !== binding.queue || !belongsTo(panel, binding.queue)) return false;
+                cancelTasks('drag');
+                const ownerHost = host;
+                const guard = () => binding.active && isAlive(ownerHost) && host === ownerHost && belongsTo(panel, binding.queue);
+                schedule(() => clearDragState(ownerHost), 0, 'drag', guard);
+                schedule(() => clearDragState(ownerHost), 0.03, 'drag', guard);
+                return false;
+            };
+            binding.cleanup = cleanup;
+        }
+        if (!binding.registered.has('DragEnd')) {
+            $.RegisterEventHandler('DragEnd', panel, binding.cleanup);
+            binding.registered.add('DragEnd');
+        }
+        if (!reorder && !binding.registered.has('DragDrop')) {
+            $.RegisterEventHandler('DragDrop', panel, binding.cleanup);
+            binding.registered.add('DragDrop');
+        }
+        binding.active = true; binding.seen = frame; binding.queue = queue;
+        record(panel);
+        if (reorder) panelEvent(panel, 'onmouseup', binding.cleanup, 'drag-cleanup', () => binding.active && belongsTo(panel, binding.queue));
+    }
+
+    function chatSources() {
+        const chat = resolve(root, 'Chat');
+        const controls = child(chat, 'ChatControls') || chat;
+        const input = resolve(controls, 'ChatInput') || resolve(root, 'ChatInput');
+        const target = resolve(controls, 'ChatTargetLabel');
+        return { chat, input, target };
+    }
+
+    function closeChat(input, chat) {
+        if (isAlive(input)) { $.DispatchEvent('CitadelChatInputBlur', input); $.DispatchEvent('DropInputFocus', input); }
+        if (isAlive(chat)) { $.DispatchEvent('CitadelChatInputBlur', chat); $.DispatchEvent('DropInputFocus', chat); }
+        schedule(() => $.DispatchEvent('CitadelChatInputBlur', input), 0, 'focus', () => readModel().notify && chatSources().input === input);
+    }
+
+    function sendChat(message, source, queue) {
+        const now = Date.now();
+        if (now - lastChatSubmitMs < CHAT_COOLDOWN_MS) return;
+        const allowed = () => running && isAlive(context) && readModel().notify && belongsTo(source, queue) && resolve(context, 'QuickbuyQueue', true) === queue;
+        if (!allowed()) return;
+        const clean = String(message || '').replace(/["\r\n;]/g, ' ').trim();
+        if (!clean) return;
+        lastChatSubmitMs = now;
+        cancelTasks('chat'); cancelTasks('focus');
+        $.DispatchEvent('CitadelConCommand', 'say_chat_team');
+        function attempt(index, readyCount) {
+            const { chat, input, target } = chatSources();
+            const targetText = String(target?.text || '').trim();
+            const ready = isAlive(input) && isAlive(target) && targetText && targetText !== '#citadel_chat_placeholder' && !targetText.includes('(ALL)');
+            if (ready) {
+                if (readyCount < 1 && index < CHAT_RETRY_DELAYS.length - 1) {
+                    schedule(() => attempt(index + 1, readyCount + 1), CHAT_RETRY_DELAYS[index + 1], 'chat', allowed); return;
+                }
+                const submit = () => { input.text = clean; $.DispatchEvent('CitadelChatInputSubmitted', input); input.text = ''; };
+                try { submit(); } catch (_) { $.DispatchEvent('SetInputFocus', input); submit(); }
+                closeChat(input, chat); return;
+            }
+            if (index < CHAT_RETRY_DELAYS.length - 1) schedule(() => attempt(index + 1, 0), CHAT_RETRY_DELAYS[index + 1], 'chat', allowed);
+        }
+        schedule(() => attempt(0, 0), CHAT_RETRY_DELAYS[0], 'chat', allowed);
+    }
+
+    function renderEntries(entries, queue, model) {
+        for (const entry of entries) {
+            const panel = entry.itemPanel, needed = entry.remainingSoulsCost;
+            cls(panel, 'HasRemainingSoulsNeeded', needed > 0);
+            bindDrag(panel, queue);
+            bindDrag(resolve(panel, 'ReorderButton'), queue, true);
+            const label = resolve(panel, 'QueueRemainingSoulsLabel');
+            text(label, needed);
+            const canNotify = model.notify && needed > 0;
+            cls(label, 'CanClickToNotify', canNotify);
+            const notify = resolve(panel, 'NotifyButton');
+            cls(notify, 'CanClickToNotify', canNotify);
+            if (model.notify) {
+                const color = canNotify ? '#d64259' : '#66ffd9';
+                money(label, color); money(resolve(panel, 'ModCost'), color);
+                money(resolve(panel, 'QueueRemainingSoulsDivider'), '#d8d0c088');
+                style(resolve(panel, 'goldIcon') || resolve(panel, 'ModCostIcon'), 'washColor', color);
+            }
+            if (canNotify) {
+                const message = 'Need ' + String(Math.max(0, Math.floor(needed))).replace(/\B(?=(\d{3})+(?!\d))/g, ',') + ' more for ' + (entry.itemName || 'item');
+                panelEvent(notify, 'onactivate', () => sendChat(message, panel, queue), message,
+                    () => belongsTo(notify, panel) && resolve(panel, 'NotifyButton', true) === notify);
+            }
+        }
+    }
+
+    function renderIcon(icon, source, itemName) {
+        if (!isAlive(icon)) return;
+        for (const name of ICON_CLASSES) cls(icon, name, !!source?.BHasClass(name));
+        const sourceImage = resolve(source, 'ModIconImage');
+        let path = sourceImage?.GetAttributeString('src', '') || '';
+        if (!path && itemName) {
+            const name = CanonicalizeQuickbuyItemName(itemName);
+            const folder = source?.BHasClass('isArmor') ? 'vitality' : source?.BHasClass('isTech') ? 'spirit' : 'weapon';
+            path = QUICKBUY_ICON_OVERRIDES[name] || (name ? 's2r://panorama/images/items/' + folder + '/' + name.replace(/\s+/g, '_') + '_psd.vtex' : '');
+        }
+        image(resolve(icon, 'ModIconImage'), path);
+        const sourceTier = resolve(source, 'mod_tier_label'), tier = resolve(icon, 'mod_tier_label');
+        for (const name of TIER_CLASSES) cls(tier, name, !!sourceTier?.BHasClass(name));
+    }
+
+    function renderPreviews(entries, count) {
+        for (const slot of quickbuyUpcomingPreviewSlots) {
+            const panel = resolve(context, slot.rootId), entry = slot.queueIndex < count ? entries[slot.queueIndex] : null;
+            const target = resolve(panel, slot.entryPanelId) || resolve(context, slot.entryPanelId);
+            cls(panel, 'HasPreviewItem', !!entry); cls(panel, 'CanAffordUpcoming', !!entry && entry.remainingSoulsCost <= 0);
+            text(resolve(panel, slot.soulsLabelId) || resolve(context, slot.soulsLabelId), entry?.remainingSoulsCost || 0);
+            renderIcon(resolve(target, 'ModIcon'), entry ? resolve(entry.itemPanel, 'ModIcon') : null, entry?.itemName || '');
+        }
+    }
+
+    function update() {
+        if (!running) return;
+        cancelPoll();
+        try {
+            if (!discover()) return;
+            frame++;
+            const model = readModel();
+            const active = model.enhanced || model.notify;
+            if (notifyEnabled && !model.notify) { cancelTasks('chat'); cancelTasks('focus'); }
+            notifyEnabled = model.notify;
+            if (lastShopOpen && (!model.shopOpen || !active)) { cancelTasks('drag'); clearDragState(host); }
+            lastShopOpen = active && model.shopOpen;
+            const queue = resolve(context, 'QuickbuyQueue'), sellQueue = resolve(context, 'QuickbuySellQueue');
+            const entries = active ? readEntries(queue) : [];
+            const sales = active ? collect(sellQueue).map(panel => ({ itemPanel: panel, sellSoulsCredit: Math.floor(ParseQuickbuySoulsCost(resolve(panel, 'ModCost')?.text || '') / 2) })) : [];
+            const total = BuildQuickbuyQueueCostProgress(entries, readSouls(), sales);
+            text(resolve(context, 'QuickbuyShopTotalCostLabel'), total);
+            text(resolve(context, 'QuickbuyNextSoulsNeededLabel'), entries[0]?.remainingSoulsCost || 0);
+            if (active) {
+                renderEntries(entries, queue, model);
+                for (const sale of sales) { bindDrag(sale.itemPanel, sellQueue); bindDrag(resolve(sale.itemPanel, 'ReorderButton'), sellQueue, true); }
+            }
+            renderPreviews(entries, model.count);
+            sweep();
+        } catch (e) { $.Msg('[QOLLock][QuickBuy] update: ' + String(e)); }
+        finally {
+            if (running) pollHandle = $.Schedule(POLL_SECONDS, () => { pollHandle = null; update(); });
+        }
+    }
+
+    InitializeQuickbuyRecipeComponents();
+    if (typeof $.RegisterForUnhandledEvent === 'function') {
+        eventHandle = $.RegisterForUnhandledEvent('CitadelQuickbuyItemsChanged', update);
+    }
+    pollHandle = $.Schedule(0, () => { pollHandle = null; update(); });
+
 })();

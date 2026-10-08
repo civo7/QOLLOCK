@@ -43,8 +43,8 @@ for (const active of [true, false]) {
 test("lifecycle audit rejects a deliberately reintroduced quickbuy event scheduling leak", () => {
     const source = fs.readFileSync(path.resolve(__dirname, "../panorama/scripts/hud_quickbuy_total_summary.js"), "utf8");
     // Fault injection: lose the pending handle at event entry, as the old bug did.
-    const broken = source.replace(/(_cancelQuickbuyUpdate\(\);\s*var contextPanel;)/,
-        "_quickbuyScheduleHandle = null;\n\tvar contextPanel;");
+    const eventEntry = /(function update\(\)\s*\{\s*if \(!running\) return;\s*)cancelPoll\(\);/;
+    const broken = source.replace(eventEntry, "$1pollHandle = null;");
     assert.notEqual(broken, source, "fault injection must actually change production source");
     const report = auditQuickbuy({ cycles: 1, source: broken });
     assert.equal(report.phases[1].pending, 21);
