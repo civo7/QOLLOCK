@@ -51,7 +51,7 @@ test("urn retries missing minimap and restores replaced timer and hideout transi
     hud.clock.advance(2100);
     searches = 0;
     tick();
-    assert.equal(Q.state.riftTimerDisplayMode, "warning");
+    assert.equal(find("RiftTimer").BHasClass("rift_warning"), true);
     assert.equal(searches, 1);
     cp.RemoveClass("koth_warning");
     hud.clock.advance(500);
@@ -72,9 +72,11 @@ test("urn retries missing minimap and restores replaced timer and hideout transi
     assert.equal(find("RiftTimer").visible, true);
     assert.equal(find("RiftTimerLabel").text, text);
     instance.onDisable();
-    assert.equal(find("RiftTimer").visible, false);
+    hud.clock.advance(1);
+    assert.equal(find("RiftTimer"), null);
     instance.onEnable();
     instance.onSettingsChanged();
+    hud.clock.advance(1);
     assert.equal(find("RiftTimer").visible, true);
     assert.equal(hud.clock.errors.length, 0);
 });

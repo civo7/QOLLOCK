@@ -136,7 +136,10 @@ test("CLI emits parseable JSON even with a feature and verbose, without a local 
     fs.writeFileSync(capturePath, JSON.stringify(fixture()));
     const cli = spawnSync(process.execPath, ["scripts/trace_feature_hud.js", "ql_crosshair_stats",
         "--capture", capturePath, "--seconds", "2", "--json", "--verbose", "--events"],
-    { cwd: path.resolve(__dirname, ".."), encoding: "utf8" });
+    // Opt-in event traces repeat full native breadcrumbs; scoped resolvers add
+    // direct-child events alongside whole-tree searches. Preserve all events.
+    { cwd: path.resolve(__dirname, ".."), encoding: "utf8", maxBuffer: 8 * 1024 * 1024 });
+    assert.equal(cli.error, undefined, cli.error && cli.error.message);
     assert.equal(cli.status, 0, cli.stderr);
     const result = JSON.parse(cli.stdout);
     assert.ok(result.features[0].missedTargets.damageAmpContainer >= 1);

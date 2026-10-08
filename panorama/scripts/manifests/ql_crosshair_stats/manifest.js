@@ -1,28 +1,10 @@
-// features/ql_crosshair_stats/manifest.js
-// =============================================================================
-// QOLLOCK — Crosshair Active Stats Mirror
-// =============================================================================
-// OWNS:        Crosshair stat overlay mirroring #hudActivePlayerStats modifiers.
-//              15 stat rows with icons, debuff/buff classification,
-//              native polarity, layout/opacity/scale.
-// DOES NOT OWN: #hudActivePlayerStats source panel (Valve), stat values (game)
-// DEPENDS ON:  QOL.core.FeatureRegistry, QOL.core.Scheduler,
-//              QOL.core.panel.findHud, QOL.panelCache.resolve, QOL delegates
-// CONFIG KEYS: ENABLE_CROSSHAIR_STATS, CROSSHAIR_STATS_SHOW_DEBUFFS/BUFFS,
-//              X/Y_OFFSET, SCALE, OPACITY, + 15 per-stat toggles
-// PATTERN:     Polling (10Hz). Creates QOLCrosshairStatsOverlay with 15 rows.
-// STATE KEYS:  crosshairStats (built, lastLayoutSig, lastContentSig,
-//              lastVisibleCount, rowPanels, rowValues, sourceContainers,
-//              sourceValueRefs, sourcePanel)
-// =============================================================================
-
-(function() {
+// OWNS: Crosshair modifier mirror rows, layout and native-polarity filtering.
+// DOES NOT OWN: hudActivePlayerStats or gameplay values and native feedback.
+// Verified owners: active-player-stats XML plus the current Debugger capture.
+(() => {
     "use strict";
-    var FR = QOL.core.FeatureRegistry;
-    if (!FR) { $.Msg("[QOLLock] crosshair_stats: FeatureRegistry not found — aborting"); return; }
-    var SOURCE_PANEL_ID = "hudActivePlayerStats";
-
-    FR.register({
+    const SOURCE_PANEL_ID = "hudActivePlayerStats";
+    QOL.core.FeatureRegistry.register({
         id: "ql_crosshair_stats",
         enableKey: "ENABLE_CROSSHAIR_STATS",
         enabledByDefault: false,
@@ -50,11 +32,13 @@
             { key: "CROSSHAIR_STATS_SHOW_REGEN", type: "toggle" },
             { key: "CROSSHAIR_STATS_SHOW_BULLETEVASION", type: "toggle" }
         ],
-        create: function(ctx) {
-            var BASE_X = 135, BASE_Y = 0, VALUE_BFS_LIMIT = 200;
-            var _loop = null;
-
-            var STAT_DEFS = [
+        create(ctx) {
+            const P = QOL.core.panel;
+            const _isAlive = P.isAlive;
+            const _findChild = P.findChild;
+            const BASE_X = 135, BASE_Y = 0, VALUE_BFS_LIMIT = 200;
+            const DISCOVERY_RETRY_MS = 800;
+            const STAT_DEFS = [
                 { id: "fireRateContainer",        key: "fireRate",      icon: "FireRate",                cfg: "CROSSHAIR_STATS_SHOW_FIRERATE", expectsPostfix: true },
                 { id: "speedDisplayContainer",    key: "moveSpeed",     icon: "MoveSpeed",               cfg: "CROSSHAIR_STATS_SHOW_MOVESPEED", expectsPostfix: true },
                 { id: "healingAmpContainer",      key: "healAmp",       icon: "HealingReduction",        cfg: "CROSSHAIR_STATS_SHOW_HEALAMP", expectsPostfix: true },
@@ -72,14 +56,6 @@
                 { id: "bulletEvasionContainer",   key: "bulletEvasion", icon: "MoveDodge",               cfg: "CROSSHAIR_STATS_SHOW_BULLETEVASION" }
             ];
 
-            // ── QOL delegates ──
-            var _getPanel = QOL.getCachedPanel;
-            var _setPanel = QOL.setCachedPanel;
-            var _isAlive = QOL.utils.IsPanelValid;
-            var _findHud = QOL.core.panel && QOL.core.panel.findHud;
-            var _resolvePanel = QOL.panelCache && QOL.panelCache.resolve;
-            const _findChild = QOL.core.panel.findChild;
-            // Verified against active-player-stats XML and the native Debugger capture.
             const SOURCE_PATHS = [
                 ["StatList", "WeaponColumn"],
                 ["StatList", "SpiritColumn"],
@@ -93,19 +69,46 @@
                 moveSpeed: "VitalityColumn", healAmp: "VitalityColumn", bulletResist: "VitalityColumn",
                 techResist: "VitalityColumn", regen: "VitalityColumn", weaponPower: "Weapon", spirit: "Spirit"
             };
-            const DISCOVERY_RETRY_MS = 800;
+
+            const sourceResolver = QOL.panelCache.createIdResolver(SOURCE_PANEL_ID, { retryMs: 800, refreshMs: 800 });
+            const gameplayResolver = QOL.panelCache.createIdResolver("gameplay_hud", {
+                retryMs: 800, ownerPath: [{ id: "Hud", optional: true }, { className: "HudCore" }]
+            });
+            let active = false, model = null, loop = null, overlay = null, overlayParent = null;
+            const rows = new Map();
+            let layoutSignature = null;
             let sourceScopes = {}, sourceParents = {}, discoveryNextMs = {};
             let scopeParents = {}, scopeNextMs = {};
-            let sourceOwner = null, sourceNextMs = 0, hudSuppressed = false;
+            const state = { sourcePanel: null, sourceContainers: {}, sourceValueRefs: {} };
+
+            function readModel() {
+                const cfg = ctx.config.view();
+                const number = (key, fallback) => Number.isFinite(Number(cfg[key])) ? Number(cfg[key]) : fallback;
+                return {
+                    enabled: Number(cfg.ENABLE_CROSSHAIR_STATS) === 1,
+                    showBuffs: Number(cfg.CROSSHAIR_STATS_SHOW_BUFFS) === 1,
+                    showDebuffs: Number(cfg.CROSSHAIR_STATS_SHOW_DEBUFFS) === 1,
+                    rows: new Set(STAT_DEFS.filter(def => Number(cfg[def.cfg]) === 1).map(def => def.key)),
+                    styles: {
+                        marginLeft: (BASE_X + number("CROSSHAIR_STATS_X_OFFSET", 0)) + "px",
+                        marginTop: (BASE_Y - number("CROSSHAIR_STATS_Y_OFFSET", 0)) + "px",
+                        uiScale: number("CROSSHAIR_STATS_SCALE", 100) + "%",
+                        opacity: Math.max(0, Math.min(1, number("CROSSHAIR_STATS_OPACITY", 1))).toFixed(2)
+                    }
+                };
+            }
 
             function _resetDiscovery() {
                 sourceScopes = {}; sourceParents = {}; discoveryNextMs = {};
                 scopeParents = {}; scopeNextMs = {};
+                state.sourceContainers = {}; state.sourceValueRefs = {};
             }
+
             function _isDirectChild(panel, parent) {
                 if (!_isAlive(panel) || !_isAlive(parent)) return false;
-                try { return panel.GetParent() === parent; } catch (_) { return false; }
+                try { return panel.GetParent() === parent && P.findChild(parent, panel.id) === panel; } catch (_) { return false; }
             }
+
             function _belongsToSource(panel, source) {
                 try {
                     for (let depth = 0; depth < 64 && _isAlive(panel); depth++) {
@@ -114,6 +117,15 @@
                     }
                 } catch (_) {}
                 return false;
+            }
+
+            function readSource(root) {
+                const source = sourceResolver.resolve(P.findHud(root) || root);
+                if (source !== state.sourcePanel) {
+                    _resetDiscovery();
+                    state.sourcePanel = source;
+                }
+                return source;
             }
             function _getSourceOwners(st, source, nowMs) {
                 const owners = [];
@@ -145,66 +157,13 @@
                 if (changed) {
                     st.sourceContainers = {}; st.sourceValueRefs = {};
                     sourceParents = {}; discoveryNextMs = {};
-                    st.lastContentSig = "";
                 }
                 return owners;
             }
-            function _isOn(cfg, k) { return Number(cfg[k]) === 1; }
-            function _clamp(cfg, key, fallback, min, max) { var v = Number(cfg[key]); if (!isFinite(v)) v = fallback; if (v < min) v = min; if (v > max) v = max; return v; }
-            function _getGameplayHud(root) { try { if (typeof QOL !== "undefined" && QOL.getGameplayHudPanel) return QOL.getGameplayHudPanel(root); } catch(e) {} return root; }
-            function _isHudClassActive(root, cls) { try { if (typeof QOL !== "undefined" && QOL.isHudClassActive) return QOL.isHudClassActive(root, cls); } catch(e) {} return false; }
-            var _setOpacitySafe = QOL.utils.SetPanelOpacitySafe;
-
-            // ── State helpers ──
-            function _ensureState() {
-                try {
-                    if (typeof QOL !== "undefined" && QOL.state) {
-                        var st = QOL.state;
-                        if (!st.crosshairStats) {
-                            st.crosshairStats = { built: false, lastLayoutSig: "", lastContentSig: "", lastVisibleCount: -1, rowPanels: {}, rowValues: {}, sourceContainers: {}, sourceValueRefs: {}, sourcePanel: null };
-                        }
-                        if (!st.crosshairStats.sourceValueRefs) st.crosshairStats.sourceValueRefs = {};
-                        return st.crosshairStats;
-                    }
-                } catch(e) {}
-                return { built: false, lastLayoutSig: "", lastContentSig: "", lastVisibleCount: -1, rowPanels: {}, rowValues: {}, sourceContainers: {}, sourceValueRefs: {}, sourcePanel: null };
-            }
-            function _getSourcePanel(root, st) {
-                var owner = root;
-                try { if (_findHud) owner = _findHud(root) || root; } catch(e) { owner = root; }
-                if (sourceOwner !== owner) { sourceOwner = owner; sourceNextMs = 0; }
-                if (_isAlive(st.sourcePanel) && st.sourcePanel.id === SOURCE_PANEL_ID && _belongsToSource(st.sourcePanel, owner)) return st.sourcePanel;
-                if (st.sourcePanel) sourceNextMs = 0;
-                const nowMs = Date.now();
-                if (nowMs < sourceNextMs) return null;
-                sourceNextMs = nowMs + DISCOVERY_RETRY_MS;
-                var panel = null;
-                if (_resolvePanel && _isAlive(owner)) {
-                    panel = _resolvePanel(owner, "crosshairStatsSource", SOURCE_PANEL_ID);
-                } else {
-                    panel = _getPanel("crosshairStatsSource");
-                    var reusable = false;
-                    if (_isAlive(panel)) {
-                        try { reusable = panel.id === SOURCE_PANEL_ID; } catch(e) { reusable = false; }
-                    }
-                    if (!reusable) {
-                        panel = (owner && owner.FindChildTraverse) ? owner.FindChildTraverse(SOURCE_PANEL_ID) : null;
-                        _setPanel("crosshairStatsSource", panel);
-                    }
-                }
-                if (panel !== st.sourcePanel) {
-                    _resetDiscovery();
-                    st.sourcePanel = panel;
-                    st.sourceContainers = {};
-                    st.sourceValueRefs = {};
-                    st.lastContentSig = "";
-                }
-                return panel;
-            }
             function _getSourceContainer(st, source, def, owners, nowMs) {
-                var c = st.sourceContainers[def.key];
+                let c = st.sourceContainers[def.key];
                 const preferred = sourceScopes[SOURCE_OWNER[def.key]];
-                if (_isDirectChild(c, sourceParents[def.key]) && _belongsToSource(c, source)) {
+                if (_isDirectChild(c, sourceParents[def.key]) && _belongsToSource(c, source) && _findChild(sourceParents[def.key], def.id) === c) {
                     // A compatibility result must not mask a row later created
                     // at its verified path (old native generations may stay alive).
                     let current = null;
@@ -242,31 +201,30 @@
                 return c;
             }
 
-            // ── Value text extraction (ported from old feature) ──
             function _stripHtml(s) {
                 if (!s) return "";
-                var out = "", inTag = false;
-                for (var i = 0; i < s.length; i++) { var ch = s.charAt(i); if (ch === "<") { inTag = true; continue; } if (ch === ">") { inTag = false; continue; } if (!inTag) out += ch; }
+                let out = "", inTag = false;
+                for (let i = 0; i < s.length; i++) { let ch = s.charAt(i); if (ch === "<") { inTag = true; continue; } if (ch === ">") { inTag = false; continue; } if (!inTag) out += ch; }
                 out = out.split("&nbsp;").join(" ").split("&amp;").join("&").split("&lt;").join("<").split("&gt;").join(">");
-                var parts = out.split(/\s+/), clean = [];
-                for (var p = 0; p < parts.length; p++) { if (parts[p]) clean.push(parts[p]); }
+                let parts = out.split(/\s+/), clean = [];
+                for (let p = 0; p < parts.length; p++) { if (parts[p]) clean.push(parts[p]); }
                 return clean.join(" ");
             }
             function _readBfs(root) {
-                var queue = []; try { if (root.Children) queue = (root.Children() || []).slice(); } catch(e) { return ""; }
-                var guard = 0;
-                while (guard < queue.length && guard < VALUE_BFS_LIMIT) { var node = queue[guard]; guard++; if (!node) continue;
+                let queue = []; try { if (root.Children) queue = (root.Children() || []).slice(); } catch(e) { return ""; }
+                let guard = 0;
+                while (guard < queue.length && guard < VALUE_BFS_LIMIT) { let node = queue[guard]; guard++; if (!node) continue;
                     try { if (node.id === "casterList") continue; } catch(e) {}
-                    try { if (typeof node.text === "string") { var t = node.text; if (t && t.length && t.charAt(0) !== "#") return t; } } catch(e) {}
-                    try { if (node.Children) { var kids = node.Children() || []; for (var i = 0; i < kids.length; i++) queue.push(kids[i]); } } catch(e) {}
+                    try { if (typeof node.text === "string") { let t = node.text; if (t && t.length && t.charAt(0) !== "#") return t; } } catch(e) {}
+                    try { if (node.Children) { let kids = node.Children() || []; for (let i = 0; i < kids.length; i++) queue.push(kids[i]); } } catch(e) {}
                 }
                 return "";
             }
             function _firstByClass(panel, className) {
                 if (!_isAlive(panel) || !panel.FindChildrenWithClassTraverse) return null;
                 try {
-                    var matches = panel.FindChildrenWithClassTraverse(className) || [];
-                    return matches.length ? matches[0] : null;
+                    let matches = panel.FindChildrenWithClassTraverse(className) || [];
+                    return matches.find(match => _isAlive(match) && _belongsToSource(match, panel)) || null;
                 } catch(e) { return null; }
             }
             function _readPanelText(panel) {
@@ -274,18 +232,18 @@
                 try { return (typeof panel.text === "string") ? panel.text : ""; } catch(e) { return ""; }
             }
             function _getSourceValueRefs(st, container, def) {
-                var refs = st.sourceValueRefs[def.key];
-                var current = refs && refs.container === container && _isAlive(refs.core);
-                if (current && def.deltaSelector) current = _isAlive(refs.statNumberDelta);
+                let refs = st.sourceValueRefs[def.key];
+                let current = refs && refs.container === container && _isAlive(refs.core) && refs.core.BHasClass("miniModifierCore");
+                if (current && def.deltaSelector) current = _isAlive(refs.statNumberDelta) && refs.statNumberDelta.BHasClass("statNumberDelta");
                 else if (current) {
-                    current = _isAlive(refs.statNumber);
-                    if (current && def.expectsPostfix) current = _isAlive(refs.statPostfix);
-                    else if (current && refs.statPostfix) current = _isAlive(refs.statPostfix);
+                    current = _isAlive(refs.statNumber) && refs.statNumber.BHasClass("statNumber");
+                    if (current && def.expectsPostfix) current = _isAlive(refs.statPostfix) && refs.statPostfix.BHasClass("statPostfix");
+                    else if (current && refs.statPostfix) current = _isAlive(refs.statPostfix) && refs.statPostfix.BHasClass("statPostfix");
                 }
-                if (current) return refs;
-                var core = _firstByClass(container, "miniModifierCore");
+                if (current && _belongsToSource(refs.core, container) && (!refs.statNumber || _belongsToSource(refs.statNumber, refs.core)) && (!refs.statPostfix || _belongsToSource(refs.statPostfix, refs.core)) && (!refs.statNumberDelta || _belongsToSource(refs.statNumberDelta, refs.core)) && Date.now() < refs.nextRefresh) return refs;
+                let core = _firstByClass(container, "miniModifierCore");
                 refs = {
-                    container: container,
+                    container: container, nextRefresh: Date.now() + DISCOVERY_RETRY_MS,
                     core: core,
                     statNumber: core ? _firstByClass(core, "statNumber") : null,
                     statPostfix: core ? _firstByClass(core, "statPostfix") : null,
@@ -296,194 +254,147 @@
             }
             function _formatDelta(def, value) {
                 if (!value) return "";
-                var first = value.charAt(0);
-                var prefix = (def.deltaPrefix && first !== "+" && first !== "-" && first !== "−") ? def.deltaPrefix : "";
+                let first = value.charAt(0);
+                let prefix = (def.deltaPrefix && first !== "+" && first !== "-" && first !== "−") ? def.deltaPrefix : "";
                 return prefix + value + (def.deltaPostfix || "");
             }
             function _readModifierValue(st, container, def) {
                 if (!_isAlive(container)) return "";
-                var refs = _getSourceValueRefs(st, container, def);
+                let refs = _getSourceValueRefs(st, container, def);
                 if (!refs.core) return _readBfs(container);
                 if (def.deltaSelector) {
-                    var hasDelta = false;
+                    let hasDelta = false;
                     try { hasDelta = container.BHasClass("has_delta"); } catch(e) { hasDelta = false; }
                     if (!hasDelta) return "";
                     return _formatDelta(def, _stripHtml(_readPanelText(refs.statNumberDelta)));
                 }
-                var number = _stripHtml(_readPanelText(refs.statNumber));
-                var postfix = _stripHtml(_readPanelText(refs.statPostfix));
+                let number = _stripHtml(_readPanelText(refs.statNumber));
+                let postfix = _stripHtml(_readPanelText(refs.statPostfix));
                 return number || postfix ? number + postfix : _readBfs(refs.core);
             }
             function _classifyBySign(txt) {
                 if (!txt) return 0;
-                for (var i = 0; i < txt.length; i++) { var ch = txt.charAt(i); if (ch === "-" || ch === "−") return -1; if (ch === "+") return 1; if (ch >= "0" && ch <= "9") return 0; }
+                for (let i = 0; i < txt.length; i++) { let ch = txt.charAt(i); if (ch === "-" || ch === "−") return -1; if (ch === "+") return 1; if (ch >= "0" && ch <= "9") return 0; }
                 return 0;
             }
             function _classifyByGameClass(container) {
                 try { if (container.BHasClass("isNegative") || container.BHasClass("IsNegative")) return -1; if (container.BHasClass("isPositive") || container.BHasClass("IsPositive")) return 1; } catch(e) {}
                 return 0;
             }
-            // ── Overlay lifecycle ──
-            function _ensureOverlay(root) {
-                var st = _ensureState();
-                var overlay = _getPanel("crosshairStatsOverlay");
-                if (_isAlive(overlay) && st.built) return overlay;
-                overlay = (root && root.FindChildTraverse) ? root.FindChildTraverse("QOLCrosshairStatsOverlay") : null;
-                if (!overlay) { var parent = _getGameplayHud(root); if (!parent) return null;
-                    overlay = $.CreatePanel("Panel", parent, "QOLCrosshairStatsOverlay", { hittest: "false", hittestchildren: "false" }); }
-                st.rowPanels = {}; st.rowValues = {};
-                for (var s = 0; s < STAT_DEFS.length; s++) {
-                    var def = STAT_DEFS[s], rowId = "QOLCrosshairStatRow_" + def.key;
-                    var row = overlay.FindChildTraverse(rowId);
-                    if (!row) { row = $.CreatePanel("Panel", overlay, rowId); row.AddClass("QOLCrosshairStatRow");
-                        var icon = $.CreatePanel("Panel", row, rowId + "_icon"); icon.AddClass("QOLCrosshairStatIcon"); icon.AddClass("statIcon"); icon.AddClass("PropertiesIcon"); icon.AddClass(def.icon);
-                        var value = $.CreatePanel("Label", row, rowId + "_value"); value.AddClass("QOLCrosshairStatValue"); value.text = ""; }
-                    if (row.SetHasClass) row.SetHasClass("qol-hidden", true); else row.style.visibility = "collapse";
-                    st.rowPanels[def.key] = row; st.rowValues[def.key] = row.FindChildTraverse(rowId + "_value");
-                }
-                st.built = true; st.lastLayoutSig = ""; st.lastContentSig = ""; st.lastVisibleCount = -1; st.sourceContainers = {}; st.sourceValueRefs = {};
-                _resetDiscovery();
-                sourceOwner = null; sourceNextMs = 0; hudSuppressed = false;
-                _setPanel("crosshairStatsOverlay", overlay); return overlay;
-            }
-            function _removeOverlay(root) {
-                var st = _ensureState(); var overlay = _getPanel("crosshairStatsOverlay");
-                if (!_isAlive(overlay) && root && root.FindChildTraverse) overlay = root.FindChildTraverse("QOLCrosshairStatsOverlay");
-                if (_isAlive(overlay)) { try { overlay.DeleteAsync(0); } catch(e) {} }
-                _setPanel("crosshairStatsOverlay", null); _setPanel("crosshairStatsSource", null);
-                st.built = false; st.rowPanels = {}; st.rowValues = {}; st.sourceContainers = {}; st.sourceValueRefs = {}; st.sourcePanel = null;
-                _resetDiscovery();
-                sourceOwner = null; sourceNextMs = 0; hudSuppressed = false;
-                st.lastLayoutSig = ""; st.lastContentSig = ""; st.lastVisibleCount = -1;
+
+            function removeOverlay() {
+                hideOverlay();
+                if (_isAlive(overlay)) P.delete(overlay);
+                overlay = null; overlayParent = null; rows.clear(); layoutSignature = null;
             }
 
-            // ── Main tick ──
-            function _tick() {
-                try {
-                    var root = $.GetContextPanel(); if (!root) return;
-                    var cfg = ctx.config.view(); var st = _ensureState();
-
-                    if (!_isOn(cfg, "ENABLE_CROSSHAIR_STATS")) {
-                        if (st.built || _getPanel("crosshairStatsOverlay")) _removeOverlay(root);
-                        return;
-                    }
-                    if (!QOL.core.hud.isGameplayHudShown(root)) {
-                        const hiddenOverlay = _getPanel("crosshairStatsOverlay");
-                        if (_isAlive(hiddenOverlay) && !hudSuppressed) {
-                            hiddenOverlay.SetHasClass("qol-hidden", true);
-                            hiddenOverlay.style.visibility = "collapse";
-                        }
-                        hudSuppressed = true;
-                        return;
-                    }
-                    if (hudSuppressed) {
-                        hudSuppressed = false;
-                        st.lastContentSig = ""; st.lastVisibleCount = -1;
-                        discoveryNextMs = {}; scopeNextMs = {}; sourceNextMs = 0;
-                    }
-                    var overlay = _ensureOverlay(root); if (!overlay) return;
-
-                    // Hide while scoreboard is open
-                    if (QOL.core.hud.isScoreboardOpen(root)) {
-                        if (overlay.SetHasClass) { overlay.SetHasClass("qol-hidden", true); try { overlay.style.visibility = "collapse"; } catch(e) {} }
-                        else try { overlay.style.visibility = "collapse"; } catch(e) {}
-                        st.lastVisibleCount = -1; return;
-                    }
-
-                    var showDebuffs = _isOn(cfg, "CROSSHAIR_STATS_SHOW_DEBUFFS");
-                    var showBuffs = _isOn(cfg, "CROSSHAIR_STATS_SHOW_BUFFS");
-
-                    // Layout
-                    var offX = _clamp(cfg, "CROSSHAIR_STATS_X_OFFSET", 0, -500, 500);
-                    var offY = _clamp(cfg, "CROSSHAIR_STATS_Y_OFFSET", 0, -500, 500);
-                    var scale = _clamp(cfg, "CROSSHAIR_STATS_SCALE", 100, 50, 200);
-                    var opacity = Number(cfg.CROSSHAIR_STATS_OPACITY); if (!isFinite(opacity) || opacity < 0) opacity = 1; if (opacity > 1) opacity = 1;
-                    var layoutSig = offX + "|" + offY + "|" + scale + "|" + opacity;
-                    if (layoutSig !== st.lastLayoutSig) {
-                        try { overlay.style.marginLeft = (BASE_X + offX) + "px"; } catch(e) {}
-                        try { overlay.style.marginTop = (BASE_Y - offY) + "px"; } catch(e) {}
-                        // Keep a future manifest cut-over crisp as well: ui-scale is
-                        // layout-time scaling, unlike the blurry transform raster.
-                        try { overlay.style.uiScale = scale + "%"; } catch(e) {}
-                        _setOpacitySafe(overlay, opacity, 1); st.lastLayoutSig = layoutSig;
-                    }
-
-                    // Content
-                    var source = _getSourcePanel(root, st); var contentParts = []; var visibleCount = 0;
-                    const nowMs = Date.now();
-                    const owners = source ? _getSourceOwners(st, source, nowMs) : [];
-                    for (var s = 0; s < STAT_DEFS.length; s++) {
-                        var def = STAT_DEFS[s];
-                        if (def.cfg && !_isOn(cfg, def.cfg)) { contentParts.push(""); continue; }
-                        var container = source ? _getSourceContainer(st, source, def, owners, nowMs) : null;
-                        var active = false;
-                        if (_isAlive(container)) { try { active = container.BHasClass("shouldShow"); } catch(e) { active = false; } }
-                        if (!active) { contentParts.push(""); continue; }
-                        var valueText = _stripHtml(_readModifierValue(st, container, def));
-                        if (!valueText) { contentParts.push(""); continue; }
-                        var cls = _classifyByGameClass(container); if (cls === 0) cls = _classifyBySign(valueText);
-                        var displayValue = valueText;
-                        var isNeg = (cls < 0);
-                        if (isNeg ? !showDebuffs : !showBuffs) { contentParts.push(""); continue; }
-                        visibleCount++; contentParts.push(def.key + (isNeg ? "-" : "+") + displayValue);
-                    }
-                    var contentSig = contentParts.join("|");
-                    if (contentSig !== st.lastContentSig) {
-                        for (var r = 0; r < STAT_DEFS.length; r++) {
-                            var rdef = STAT_DEFS[r], part = contentParts[r];
-                            var rowPanel = st.rowPanels[rdef.key]; if (!_isAlive(rowPanel)) continue;
-                            if (!part) {
-                                if (rowPanel.SetHasClass) rowPanel.SetHasClass("qol-hidden", true); else try { rowPanel.style.visibility = "collapse"; } catch(e) {}
-                                continue;
-                            }
-                            var neg = part.indexOf(rdef.key + "-") === 0;
-                            try { rowPanel.SetHasClass("isDebuff", neg); rowPanel.SetHasClass("isBuff", !neg);
-                                if (rowPanel.SetHasClass) rowPanel.SetHasClass("qol-hidden", false); else rowPanel.style.visibility = "visible"; } catch(e) {}
-                            var valueLabel = st.rowValues[rdef.key];
-                            if (_isAlive(valueLabel)) { var txt = part.substring((rdef.key + "-").length); try { valueLabel.text = txt; } catch(e) {} }
-                        }
-                        st.lastContentSig = contentSig;
-                    }
-                    if (visibleCount !== st.lastVisibleCount) {
-                        if (overlay.SetHasClass) { overlay.SetHasClass("qol-hidden", visibleCount <= 0); try { overlay.style.visibility = (visibleCount > 0) ? "visible" : "collapse"; } catch(e) {} }
-                        else try { overlay.style.visibility = (visibleCount > 0) ? "visible" : "collapse"; } catch(e) {}
-                        st.lastVisibleCount = visibleCount;
-                    }
-                } catch(e) {
-                    if (typeof QOL !== "undefined" && QOL.core && QOL.core.Logger) { QOL.core.Logger.logError("ql_crosshair_stats", "_tick: " + (e.message || e)); }
-                    throw e;
+            function ensureOverlay(root) {
+                const parent = gameplayResolver.resolve(root) || root;
+                if (overlayParent !== parent || !_isDirectChild(overlay, parent)) {
+                    removeOverlay();
+                    overlayParent = parent;
+                    overlay = P.findChild(parent, "QOLCrosshairStatsOverlay") ||
+                        P.create("Panel", parent, "QOLCrosshairStatsOverlay", { hittest: "false", hittestchildren: "false" });
                 }
+                if (!_isAlive(overlay)) return false;
+                let complete = true;
+                for (const def of STAT_DEFS) {
+                    const id = "QOLCrosshairStatRow_" + def.key;
+                    const row = P.findChild(overlay, id) || P.create("Panel", overlay, id);
+                    if (!_isAlive(row)) { complete = false; continue; }
+                    P.setClass(row, "QOLCrosshairStatRow", true);
+                    const icon = P.findChild(row, id + "_icon") || P.create("Panel", row, id + "_icon");
+                    const value = P.findChild(row, id + "_value") || P.create("Label", row, id + "_value");
+                    if (!_isAlive(icon) || !_isAlive(value)) { complete = false; continue; }
+                    for (const name of ["QOLCrosshairStatIcon", "statIcon", "PropertiesIcon", def.icon]) P.setClass(icon, name, true);
+                    P.setClass(value, "QOLCrosshairStatValue", true);
+                    rows.set(def.key, { row, value });
+                }
+                // Retain partial construction for the next tick, but never show
+                // an incomplete overlay or cache it as completely rendered.
+                return complete;
+            }
+
+            function readContent(source) {
+                const now = Date.now();
+                const owners = source ? _getSourceOwners(state, source, now) : [];
+                const content = new Map();
+                for (const def of STAT_DEFS) {
+                    if (!model.rows.has(def.key)) continue;
+                    const container = source ? _getSourceContainer(state, source, def, owners, now) : null;
+                    if (!_isAlive(container) || !container.BHasClass("shouldShow")) continue;
+                    const text = _stripHtml(_readModifierValue(state, container, def));
+                    if (!text) continue;
+                    const polarity = _classifyByGameClass(container) || _classifyBySign(text);
+                    const negative = polarity < 0;
+                    if (negative ? !model.showDebuffs : !model.showBuffs) continue;
+                    content.set(def.key, { text, negative });
+                }
+                return content;
+            }
+
+            function render(content) {
+                layoutSignature = P.syncStyles(overlay, model.styles, layoutSignature).sig;
+                for (const [key, panels] of rows) {
+                    const entry = content.get(key);
+                    P.setClass(panels.row, "qol-hidden", !entry);
+                    if (!entry) continue;
+                    P.setClass(panels.row, "isDebuff", entry.negative);
+                    P.setClass(panels.row, "isBuff", !entry.negative);
+                    if (panels.value.text !== entry.text) panels.value.text = entry.text;
+                }
+                hideOverlay(content.size === 0);
+            }
+
+            function hideOverlay(hidden = true) {
+                if (!_isAlive(overlay)) return;
+                P.setClass(overlay, "qol-hidden", hidden);
+                QOL.utils.SetStyleIfChanged(overlay, "visibility", hidden ? "collapse" : "visible");
+            }
+
+            function update() {
+                if (!active || !model) return;
+                const root = $.GetContextPanel();
+                if (!_isAlive(root)) return;
+                if (!model.enabled) { removeOverlay(); return; }
+                if (!QOL.core.hud.isGameplayHudShown(root) || QOL.core.hud.isScoreboardOpen(root)) {
+                    hideOverlay();
+                    return;
+                }
+                if (!ensureOverlay(root)) { hideOverlay(); return; }
+                render(readContent(readSource(root)));
+            }
+
+            function refreshSettings() {
+                model = readModel();
+                discoveryNextMs = {}; scopeNextMs = {};
+                update();
             }
 
             return {
-                onEnable: function() {
-                    var S = QOL.core.Scheduler;
-                    // rate-exempt: 10Hz (0.1s) required for responsive crosshair stats
-                    _loop = S && S.createPollLoop ? S.createPollLoop(_tick, 0.1, "ql_crosshair_stats") : null;
+                onEnable() {
+                    active = true;
+                    model = readModel();
+                    // rate-exempt: 10Hz preserves responsive live crosshair modifiers.
+                    loop = QOL.core.Scheduler.createPollLoop(update, 0.1, "ql_crosshair_stats");
                 },
-                onDisable: function() {
-                    if (_loop) { _loop.stop(); _loop = null; }
-                    var root = $.GetContextPanel(); _removeOverlay(root);
-                },
-                onSettingsChanged: function() {
-                    var st = _ensureState();
-                    if (st) {
-                        st.lastLayoutSig = "";
-                        st.lastContentSig = "";
-                        discoveryNextMs = {}; scopeNextMs = {}; sourceNextMs = 0;
-                    }
-                    _tick();
+                onSettingsChanged: refreshSettings,
+                onDisable() {
+                    active = false;
+                    if (loop) { loop.stop(); loop = null; }
+                    removeOverlay(); _resetDiscovery();
+                    state.sourcePanel = null; model = null;
+                    sourceResolver.reset(); gameplayResolver.reset();
                 }
             };
         },
-    test: function(ctx) {
-        try {
-            var root = $.GetContextPanel();
-            var stats = root ? root.FindChildTraverse(SOURCE_PANEL_ID) : null;
-            var modifier = stats && stats.FindChildTraverse ? stats.FindChildTraverse("fireRateContainer") : null;
-            var passed = !!stats && !!modifier;
-            return { passed: passed, name: "Crosshair stats source exists", message: passed ? "" : (!stats ? "hudActivePlayerStats not found" : "fireRateContainer not found"), assertions: [{ passed: !!stats, name: "hudActivePlayerStats panel exists" }, { passed: !!modifier, name: "active modifier rows exist" }] };
-        } catch(e) { return { passed: false, name: "Crosshair stats panel check", message: (e && e.message ? e.message : String(e)) }; }
-    }
+        test() {
+            const stats = QOL.core.panel.findTraverse($.GetContextPanel(), SOURCE_PANEL_ID);
+            if (!stats) return null;
+            const modifier = QOL.core.panel.findTraverse(stats, "fireRateContainer");
+            return { passed: !!modifier, name: "Crosshair stats source exists",
+                message: modifier ? "" : "fireRateContainer not found",
+                assertions: [{ passed: true, name: "hudActivePlayerStats panel exists" }, { passed: !!modifier, name: "active modifier rows exist" }] };
+        }
     });
 })();

@@ -1,262 +1,278 @@
-// features/ql_rejuv_hud/manifest.js
-// =============================================================================
-// QOLLOCK — Rejuv HUD (rejuvenator + bridge buff timers on the HUD)
-// =============================================================================
-// OWNS:        Rejuv phase tracking, mid-boss detection, charge tracking,
-//              rejuv capture buff, bridge buff HUD countdown
-// DOES NOT OWN: Minimap overlays (see ql_minimap_timers), mid-boss game object,
-//              top-bar panels, rejuv charges
-// DEPENDS ON:  QOL.core.FeatureRegistry, QOL.core.Scheduler
-// CONFIG KEYS: ENABLE_REJUV_HUD, ENABLE_BUFF_HUD, ENABLE_MINIMAP_REJUV_TIMER
-//              (the last one is read-only here: it boots the phase tracker so
-//              ql_minimap_timers has a live State.rejuvState to render)
-// CSS:         none
-// PATTERN:     Polling (0.3Hz). Self-scheduling via Scheduler.
-// SPLIT FROM:  ql_rejuv_timers — minimap code extracted to ql_minimap_timers
-// =============================================================================
-
-(function() {
+// OWNS: Rejuvenator phase/capture model and QOL topbar objective readouts.
+// PUBLISHES: State.rejuvState {running, spawnWaiting, counter} for minimap timers.
+// DOES NOT OWN: Native charges/mid-boss feedback or minimap overlay geometry.
+// Source paths: citadel_hud_top_bar.xml and the existing native mid_boss tokens.
+(() => {
     "use strict";
-
-    var FR = QOL.core.FeatureRegistry;
-    if (!FR) { $.Msg("[QOLLock] ql_rejuv_hud: FeatureRegistry not found — aborting"); return; }
-
-    FR.register({
-        id: "ql_rejuv_hud",
-        // Multi-key. Own HUD toggles are ENABLE_REJUV_HUD / ENABLE_BUFF_HUD.
-        // ENABLE_MINIMAP_REJUV_TIMER is included because this feature is the sole
-        // writer of State.rejuvState, which ql_minimap_timers reads for the mid-boss
-        // countdown — without it that timer sits frozen at 00:00. Panel visibility is
-        // driven by the buff_hud_disabled / rejuv_hud_disabled root classes applied by
-        // coreRoot, so running the tracker for the minimap consumer does not reveal
-        // the HUD panels. Matches the pre-split ql_rejuv_timers gate.
-        // ENABLE_MINIMAP_BUFF_TIMER is deliberately absent: the bridge buff countdown
-        // is derived from game time inside ql_minimap_timers and needs nothing here.
+    const FEATURE_ID = "ql_rejuv_hud";
+    const BRIDGE_DURATION = 300, CAPTURE_DURATION = 180;
+    const PHASES = [
+        { name: "initial", duration: 0, number: "1" },
+        { name: "firstCd", duration: 420, number: "2" },
+        { name: "secondCd", duration: 360, number: "3" },
+        { name: "thirdCd", duration: 300, number: "3" }
+    ];
+    const OUTPUTS = {
+        rejuvHUD: ["RejuvHUD"], rejuvImg: ["Rejuv", "RejuvImg"], rejuvImgHUD: ["RejuvHUD", "RejuvImgHUD"],
+        rejuvTime: ["Rejuv", "RejuvTime"], rejuvTimeHUD: ["RejuvHUD", "RejuvTimeHUD"],
+        rejuvNum: ["Rejuv", "RejuvNum"], rejuvNumHUD: ["RejuvHUD", "RejuvNumHUD"],
+        capture: ["RejuvBuff"], captureTime: ["RejuvBuff", "RejuvTimeBuff"],
+        buffHUD: ["BuffHUD"], buffTime: ["Buff", "BuffTime"], buffTimeHUD: ["BuffHUD", "BuffTimeHUD"]
+    };
+    QOL.core.FeatureRegistry.register({
+        id: FEATURE_ID,
+        // The producer must run for its minimap consumer without revealing HUD panels.
         enableKeys: ["ENABLE_REJUV_HUD", "ENABLE_BUFF_HUD", "ENABLE_MINIMAP_REJUV_TIMER"],
         enabledByDefault: false,
         settings: [
             { key: "ENABLE_REJUV_HUD", type: "toggle" },
             { key: "ENABLE_BUFF_HUD", type: "toggle" },
-            // Declared so ConfigStore.load() lets the key into this bucket
-            // (load() drops keys absent from the schema) and ctx.config.view()
-            // can see it in the tick below.
             { key: "ENABLE_MINIMAP_REJUV_TIMER", type: "toggle" }
         ],
-        create: function(ctx) {
-            var Panel = (QOL.core && QOL.core.panel) ? QOL.core.panel : {};
-            var State = QOL.state || (typeof globalThis !== "undefined" && globalThis.State) || {};
-            var Utils = QOL.utils;
-            var IsCfgEnabled = QOL.utils.IsCfgEnabled;
-            var IsPanelValid = QOL.utils.IsPanelValid;
-            var SetPanelOpacitySafe = QOL.utils.SetPanelOpacitySafe;
-            var SetPanelClassIfChanged = QOL.setPanelClassIfChanged || function(p, cls, val) { if (p && p.SetHasClass) p.SetHasClass(cls, !!val); };
-            var IsStreetBrawlModeActive = function(r) { return QOL.isStreetBrawlModeActive ? QOL.isStreetBrawlModeActive(r) : false; };
-            var GetGameSecondsForUrn = function(root) { return QOL.core.time.readObservedGameTime(root); };
-            var PANEL_ID_TOP_BAR = QOL.panelIdTopBar || "TopBar";
-            var GetHighestRejuvChargeTokenOnPanel = function(p) { return QOL.getHighestRejuvChargeTokenOnPanel ? QOL.getHighestRejuvChargeTokenOnPanel(p) : 0; };
-            var isConnectedToHideout = QOL.core.hud.isInHideout;
-            var PanelHasClassToken = Panel.hasClassToken || QOL.panelHasClassToken || function(p, c) { return !!(p && p.BHasClass && p.BHasClass(c)); };
+        create(ctx) {
+            const P = QOL.core.panel;
+            const time = QOL.core.time;
+            const State = QOL.state;
+            const makeResolver = (id, ownerPath = [], retryMs = 1000) => QOL.panelCache.createIdResolver(id, { ownerPath, retryMs, refreshMs: 2000 });
+            const topResolver = makeResolver("TopBar");
+            const legacyTopResolver = makeResolver("CitadelHudTopBar");
+            const chargesResolver = makeResolver("RejuvenatorCharges", [{ id: "TopBar", optional: true }]);
+            const mapResolvers = ["hud_minimap", "minimap_persp"].map(id => makeResolver(id, [], 10000));
+            const outputs = new Map();
+            const outputResolvers = new Map(Object.keys(OUTPUTS).map(key => {
+                const path = OUTPUTS[key];
+                return [key, makeResolver(path[path.length - 1], path.slice(0, -1), 2500)];
+            }));
+            let active = false, settings = null, root = null, loop = null, unsubscribe = null;
+            let chargeOwner = null, mapOwner = null, midBoss = null, nextMidBossSearch = 0;
+            let tracker = resetTracker();
+            let presentation = null;
 
-            // ── Constants ──
-            var BRIDGE_DURATION_SEC = 300;
-            var REJUV_DURATION_SEC = 180;
-            var REJUV_SCAN_INTERVAL_MS = 3000;
-            var REJUV_SCAN_INTERVAL_FAST_MS = 1000;
-            var REJUV_MIDBOSS_LOOKUP_INTERVAL_MS = 10000;
-            var REJUV_CHARGES_LOOKUP_INTERVAL_MS = 5000;
-            var REJUV_ROTATE_ANIM_MS = 800;
-            var REJUV_HIDE_POPIN_MS = 500;
-            var REJUV_SEQ = [
-                { name: "initial", dur: 0, num: "1" },
-                { name: "firstCd", dur: 420, num: "2" },
-                { name: "secondCd", dur: 360, num: "3" },
-                { name: "thirdCd", dur: 300, num: "3" }
-            ];
-
-            var _loop = null;
-            var _unsubscribeGameSecond = null;
-            var _root = null;
-
-            var FormatClockMmSs = QOL.core.time.formatSeconds;
-
-            function EnsureRejuvState() {
-                if (State.rejuvState) return State.rejuvState;
-                State.rejuvState = { running: false, wasInHideout: false, idx: 0, counter: 0, phaseStart: 0, claimCount: 0, spawnWaiting: false, lastScanFound: false, lastRejuvChargeCount: 0, lastMidBossActive: false, buffStartTime: 0, buffCounter: 0, lastSec: -1, lastGlobalSec: -1, lastRuntimeSec: -1, lastRuntimeFeatureSig: "", nextScanMs: 0, rotatingUntilMs: 0, rejuvBuffHideAtMs: 0, lastChargesLookupMs: 0, lastChargeCountReadMs: 0, lastChargeCountValue: 0, nextMidBossLookupMs: 0, cacheTopBar: null, cacheCharges: null, cacheFriendly: null, cacheEnemy: null, cacheRejuvTimer: null, cacheMidBossButton: null, panels: {} };
-                return State.rejuvState;
+            function resetTracker() {
+                return { running: false, index: 0, phaseStart: 0, counter: 0, claimCount: 0, spawnWaiting: false,
+                    lastCharges: 0, lastFound: false, lastMidBoss: null, nativeBuff: false,
+                    buffStart: null, buffCounter: 0, captureMode: "hidden", buffHideAt: 0,
+                    nextScan: 0, rotateUntil: 0, lastGameSec: -1, lastSampledMidBoss: null };
             }
 
-            function GetRejuvPanel(state, root, key, id) {
-                var panel = IsPanelValid(state.panels[key]) ? state.panels[key] : null;
-                if (!panel) {
-                    var now = Date.now ? Date.now() : (new Date()).getTime();
-                    var nextSearch = (state._nextPanelSearch && state._nextPanelSearch[key]) || 0;
-                    if (now < nextSearch) return null;
-                    panel = root ? root.FindChildTraverse(id) : null;
-                    if (panel && IsPanelValid(panel)) {
-                        state.panels[key] = panel;
-                    } else {
-                        state.panels[key] = null;
-                        if (!state._nextPanelSearch) state._nextPanelSearch = {};
-                        state._nextPanelSearch[key] = now + 2500;
-                    }
+            function readSettings() {
+                const cfg = ctx.config.view();
+                return {
+                    enabled: ["ENABLE_REJUV_HUD", "ENABLE_BUFF_HUD", "ENABLE_MINIMAP_REJUV_TIMER"].some(key => Number(cfg[key]) === 1)
+                };
+            }
+
+            function publish() {
+                const next = { running: tracker.running, spawnWaiting: tracker.spawnWaiting, counter: tracker.counter };
+                const previous = State.rejuvState;
+                if (!previous || Object.keys(next).some(key => previous[key] !== next[key])) State.rejuvState = Object.freeze(next);
+            }
+
+            function belongsTo(panel, ancestor) {
+                for (let depth = 0; depth < 64 && P.isAlive(panel); depth++) {
+                    if (panel === ancestor) return true;
+                    panel = panel.GetParent();
                 }
+                return false;
+            }
+
+            function readSources(now) {
+                const top = topResolver.resolve(root) || legacyTopResolver.resolve(root);
+                const charges = P.isAlive(top) ? chargesResolver.resolve(top) : null;
+                if (charges !== chargeOwner) { chargeOwner = charges; tracker.nativeBuff = false; }
+                const friendly = P.findChild(charges, "RejuvenatorFriendly");
+                const enemy = P.findChild(charges, "RejuvenatorEnemy");
+                const timer = P.findChild(charges, "RejuvenatorTimer");
+                const chargeCount = P.isAlive(friendly) || P.isAlive(enemy)
+                    ? Math.max(QOL.getHighestRejuvChargeTokenOnPanel(friendly), QOL.getHighestRejuvChargeTokenOnPanel(enemy)) : null;
+                const nativeBuff = P.isAlive(timer) ? timer.BHasClass("has_rejuv") : null;
+                let map = null;
+                for (const resolver of mapResolvers) { map = resolver.resolve(root); if (P.isAlive(map)) break; }
+                const scope = map || root;
+                if (scope !== mapOwner) { mapOwner = scope; midBoss = null; nextMidBossSearch = 0; }
+                if (midBoss && (!P.isAlive(midBoss) || !belongsTo(midBoss, scope) ||
+                    !midBoss.BHasClass("mid_boss") || !midBoss.BHasClass("map_button"))) { midBoss = null; nextMidBossSearch = 0; }
+                if (now >= nextMidBossSearch) {
+                    nextMidBossSearch = now + 10000;
+                    midBoss = QOL.utils.FindPanelsByClass(scope, "mid_boss").find(panel => P.isAlive(panel) && panel.BHasClass("map_button")) || null;
+                }
+                const midBossActive = P.isAlive(midBoss) ? midBoss.BHasClass("midboss_spawned") : null;
+                return { top, chargeCount, nativeBuff, midBossActive };
+            }
+
+            function startPhase(index, gameSec, now) {
+                tracker.index = Math.max(0, Math.min(PHASES.length - 1, index));
+                tracker.phaseStart = gameSec;
+                tracker.counter = PHASES[tracker.index].duration;
+                tracker.spawnWaiting = tracker.counter <= 0;
+                tracker.lastFound = false;
+                tracker.rotateUntil = tracker.spawnWaiting ? 0 : now + 800;
+            }
+
+            function startCapture(gameSec) {
+                if (tracker.buffStart !== null && tracker.buffCounter > 0) return;
+                tracker.buffStart = gameSec; tracker.buffCounter = CAPTURE_DURATION;
+                tracker.captureMode = "show"; tracker.buffHideAt = 0;
+            }
+
+            function endCapture(now) {
+                tracker.buffStart = null; tracker.buffCounter = 0;
+                tracker.captureMode = "hide"; tracker.buffHideAt = now + 500;
+            }
+
+            function updateTracker(gameSec, now, sources) {
+                if (tracker.lastGameSec >= 0 && (gameSec + 5 < tracker.lastGameSec || (tracker.lastGameSec > 30 && gameSec <= 2))) tracker = resetTracker();
+                if (!tracker.running) {
+                    tracker.running = true;
+                    startPhase(0, gameSec, now);
+                    tracker.lastCharges = sources.chargeCount || 0;
+                    tracker.lastMidBoss = sources.midBossActive;
+                    tracker.nextScan = now + 1000;
+                }
+                tracker.lastGameSec = gameSec;
+                if (sources.midBossActive !== null && sources.midBossActive !== tracker.lastSampledMidBoss) {
+                    tracker.lastSampledMidBoss = sources.midBossActive;
+                    tracker.nextScan = 0;
+                }
+                if (sources.nativeBuff === true && !tracker.nativeBuff) startCapture(gameSec);
+                tracker.nativeBuff = sources.nativeBuff === true;
+                const remaining = Math.max(0, PHASES[tracker.index].duration - (gameSec - tracker.phaseStart));
+                tracker.counter = remaining;
+                tracker.spawnWaiting = remaining <= 0;
+                if (tracker.spawnWaiting) tracker.rotateUntil = 0;
+                if (tracker.buffStart !== null) {
+                    tracker.buffCounter = Math.max(0, CAPTURE_DURATION - (gameSec - tracker.buffStart));
+                    // An absent/replaced source is unknown. End early only after
+                    // both authoritative native signals explicitly clear.
+                    if (tracker.buffCounter <= 0 || (sources.nativeBuff === false && sources.chargeCount === 0)) endCapture(now);
+                }
+                if (now >= tracker.nextScan) {
+                    const found = sources.chargeCount !== null && sources.chargeCount > 0;
+                    if ((tracker.lastMidBoss === true && sources.midBossActive === false) ||
+                        (tracker.spawnWaiting && found && !tracker.lastFound)) {
+                        tracker.claimCount++;
+                        startPhase(Math.min(3, tracker.claimCount), gameSec, now);
+                    }
+                    if (tracker.lastCharges === 0 && found) startCapture(gameSec);
+                    if (sources.chargeCount !== null) { tracker.lastFound = found; tracker.lastCharges = sources.chargeCount; }
+                    if (sources.midBossActive !== null) tracker.lastMidBoss = sources.midBossActive;
+                    tracker.nextScan = now + ((tracker.spawnWaiting || tracker.buffStart !== null) ? 1000 : 3000);
+                }
+                const bridgeRemaining = BRIDGE_DURATION - (gameSec % BRIDGE_DURATION);
+                return {
+                    rejuvText: tracker.spawnWaiting ? "Spawn" : time.formatSeconds(tracker.counter),
+                    rejuvNumber: PHASES[tracker.index].number,
+                    bridgeText: time.formatSeconds(bridgeRemaining), bridgeRemaining,
+                    rejuvRemaining: tracker.spawnWaiting ? 0 : tracker.counter,
+                    reverse: !tracker.spawnWaiting, white: tracker.spawnWaiting,
+                    rotating: tracker.rotateUntil > now,
+                    captureText: time.formatSeconds(tracker.buffCounter),
+                    captureVisible: tracker.buffStart !== null || tracker.buffHideAt > now,
+                    captureMode: tracker.captureMode
+                };
+            }
+
+            function releaseOutput(key, panel) {
+                if (!P.isAlive(panel)) return;
+                const classes = key === "capture" ? ["pop-in", "pop-out"]
+                    : key.includes("Img") ? ["rotating", "buff", "reverse", "white"]
+                        : key === "rejuvHUD" || key === "buffHUD" ? ["red", "yellow"] : [];
+                for (const name of classes) P.setClass(panel, name, false);
+                if (key === "capture") QOL.utils.SetPanelOpacitySafe(panel, 0, 0);
+            }
+
+            function release() {
+                for (const [key, panel] of outputs) releaseOutput(key, panel);
+                outputs.clear();
+                for (const resolver of [...outputResolvers.values(), ...mapResolvers, topResolver, legacyTopResolver, chargesResolver]) resolver.reset();
+                chargeOwner = null; mapOwner = null; midBoss = null; nextMidBossSearch = 0;
+                presentation = null;
+            }
+
+            function resolveOutput(key, top) {
+                const panel = outputResolvers.get(key).resolve(top || root);
+                const previous = outputs.get(key);
+                if (previous !== panel) { releaseOutput(key, previous); outputs.set(key, panel); }
                 return panel;
             }
 
-            function RejuvResetImage(state, root) { var imgs = [GetRejuvPanel(state,root,"rImg","RejuvImg"), GetRejuvPanel(state,root,"rImgHUD","RejuvImgHUD")]; for (var i = 0; i < imgs.length; i++) { var img = imgs[i]; if (!img) continue; img.RemoveClass("rotating"); img.RemoveClass("buff"); img.RemoveClass("reverse"); img.RemoveClass("white"); } }
-
-            function RejuvSetPhaseImage(state, root, name, nowMs) { RejuvResetImage(state, root); var imgs = [GetRejuvPanel(state,root,"rImg","RejuvImg"), GetRejuvPanel(state,root,"rImgHUD","RejuvImgHUD")]; var addBuff = String(name).toLowerCase().endsWith("buff"), addReverse = String(name).toLowerCase().endsWith("cd"); for (var i = 0; i < imgs.length; i++) { var img = imgs[i]; if (!img) continue; if (addBuff) img.AddClass("buff"); if (addReverse) img.AddClass("reverse"); if (addBuff || addReverse) img.AddClass("rotating"); } if (addBuff || addReverse) state.rotatingUntilMs = nowMs + REJUV_ROTATE_ANIM_MS; }
-
-            function RejuvSetLabels(state, root, timeText, numText) { var rLab = GetRejuvPanel(state,root,"rLab","RejuvTime"), rLabHUD = GetRejuvPanel(state,root,"rLabHUD","RejuvTimeHUD"), rNum = GetRejuvPanel(state,root,"rNum","RejuvNum"), rNumHUD = GetRejuvPanel(state,root,"rNumHUD","RejuvNumHUD"); if (rLab && rLab.text !== timeText) rLab.text = timeText; if (rLabHUD && rLabHUD.text !== timeText) rLabHUD.text = timeText; if (rNum && rNum.text !== numText) rNum.text = numText; if (rNumHUD && rNumHUD.text !== numText) rNumHUD.text = numText; }
-
-            function ApplyRedYellowPanelClasses(panel, red, yellow) { if (!panel) return; var showRed = !!red, showYellow = !showRed && !!yellow; SetPanelClassIfChanged(panel, "red", showRed); SetPanelClassIfChanged(panel, "yellow", showYellow); }
-
-            function RejuvShowSpawn(state, root) { RejuvSetLabels(state, root, "Spawn", REJUV_SEQ[state.idx].num); RejuvResetImage(state, root); var _rI = GetRejuvPanel(state,root,"rImg","RejuvImg"), _rIH = GetRejuvPanel(state,root,"rImgHUD","RejuvImgHUD"); if (_rI) _rI.AddClass("white"); if (_rIH) _rIH.AddClass("white"); ApplyRedYellowPanelClasses(GetRejuvPanel(state,root,"rejuvHUD","RejuvHUD"), true, false); state.spawnWaiting = true; state.lastScanFound = false; }
-
-            function RejuvCalcPhaseAt(t) { var tt = Math.max(0, Math.floor(Number(t)||0)); if (Number(REJUV_SEQ[0].dur) <= 0) return {idx:0,phaseStart:tt,counter:0,spawnWaiting:true}; if (tt <= 2) return {idx:0,phaseStart:0,counter:REJUV_SEQ[0].dur}; var cum = 0; for (var i = 0; i < REJUV_SEQ.length; i++) { var dur = REJUV_SEQ[i].dur; if (tt < cum + dur) return {idx:i,phaseStart:cum,counter:(cum+dur-tt)}; cum += dur; } var lastIdx = REJUV_SEQ.length - 1, lastDur = REJUV_SEQ[lastIdx].dur, mod = (tt-cum)%BRIDGE_DURATION_SEC, within = mod%lastDur; return {idx:lastIdx,phaseStart:tt-within,counter:lastDur-within}; }
-
-            function RejuvStartPhaseAuto(state, root, nowSec, nowMs) { var c = RejuvCalcPhaseAt(nowSec); state.idx = c.idx; state.counter = c.counter; state.phaseStart = c.phaseStart; state.spawnWaiting = false; if (c.spawnWaiting || state.counter <= 0) { RejuvShowSpawn(state, root); return; } ApplyRedYellowPanelClasses(GetRejuvPanel(state,root,"rejuvHUD","RejuvHUD"), false, false); RejuvSetLabels(state, root, FormatClockMmSs(state.counter), REJUV_SEQ[state.idx].num); RejuvSetPhaseImage(state, root, REJUV_SEQ[state.idx].name, nowMs); }
-
-            function RejuvStartPhaseManual(state, root, targetIdx, nowSec, nowMs) { var idx = Math.max(0, Math.min(REJUV_SEQ.length-1, Number(targetIdx)||0)); state.idx = idx; state.counter = REJUV_SEQ[idx].dur; state.phaseStart = nowSec; state.spawnWaiting = false; ApplyRedYellowPanelClasses(GetRejuvPanel(state,root,"rejuvHUD","RejuvHUD"), false, false); RejuvSetLabels(state, root, FormatClockMmSs(state.counter), REJUV_SEQ[idx].num); RejuvSetPhaseImage(state, root, REJUV_SEQ[idx].name, nowMs); }
-
-            function RejuvEndBuff(state, root, nowMs, immediate) { state.buffStartTime = 0; state.buffCounter = 0; var rb = GetRejuvPanel(state,root,"rejuvBuff","RejuvBuff"); if (!rb) return; rb.RemoveClass("pop-out"); if (immediate) { rb.RemoveClass("pop-in"); SetPanelOpacitySafe(rb, 0, 0); state.rejuvBuffHideAtMs = 0; return; } rb.AddClass("pop-in"); state.rejuvBuffHideAtMs = nowMs + REJUV_HIDE_POPIN_MS; }
-
-            function RejuvStartBuff(state, root, nowSec, preserveExisting) { if (preserveExisting && state.buffStartTime > 0 && state.buffCounter > 0) return; state.buffStartTime = nowSec; state.buffCounter = REJUV_DURATION_SEC; var rb = GetRejuvPanel(state,root,"rejuvBuff","RejuvBuff"), rbt = GetRejuvPanel(state,root,"rejuvBuffTime","RejuvTimeBuff"); if (rb) { rb.RemoveClass("pop-in"); rb.AddClass("pop-out"); SetPanelOpacitySafe(rb, 1, 1); } if (rbt) rbt.text = FormatClockMmSs(state.buffCounter); }
-
-            function RejuvReadChargeCount(state, root, nowMs) { if (!state) return 0; if (state.lastChargeCountReadMs === nowMs) return Number(state.lastChargeCountValue)||0; if (!IsPanelValid(state.cacheTopBar)||!IsPanelValid(state.cacheCharges)||!IsPanelValid(state.cacheFriendly)||!IsPanelValid(state.cacheEnemy)) { if (nowMs - state.lastChargesLookupMs > REJUV_CHARGES_LOOKUP_INTERVAL_MS) { state.lastChargesLookupMs = nowMs; state.cacheTopBar = root.FindChildTraverse(PANEL_ID_TOP_BAR) || root.FindChildTraverse("CitadelHudTopBar"); state.cacheCharges = state.cacheTopBar ? state.cacheTopBar.FindChildTraverse("RejuvenatorCharges") : null; state.cacheFriendly = state.cacheCharges ? state.cacheCharges.FindChildTraverse("RejuvenatorFriendly") : null; state.cacheEnemy = state.cacheCharges ? state.cacheCharges.FindChildTraverse("RejuvenatorEnemy") : null; state.cacheRejuvTimer = state.cacheCharges ? state.cacheCharges.FindChildTraverse("RejuvenatorTimer") : null; } } var cc = Math.max(GetHighestRejuvChargeTokenOnPanel(state.cacheFriendly), GetHighestRejuvChargeTokenOnPanel(state.cacheEnemy)); state.lastChargeCountReadMs = nowMs; state.lastChargeCountValue = cc; return cc; }
-
-            function RejuvHasAnyCharges(state, root, nowMs) { return RejuvReadChargeCount(state, root, nowMs) > 0; }
-            function RejuvGetChargeCount(state, root, nowMs) { return RejuvReadChargeCount(state, root, nowMs); }
-            function RejuvHasNativeBuff(state) { var timer = state && IsPanelValid(state.cacheRejuvTimer) ? state.cacheRejuvTimer : null; try { return !!(timer && timer.BHasClass && timer.BHasClass("has_rejuv")); } catch(e) { return false; } }
-
-            function RejuvFindMidBossButton(root) { if (!root||!root.FindChildrenWithClassTraverse) return null; var all = root.FindChildrenWithClassTraverse("mid_boss")||[]; for (var i = 0; i < all.length; i++) { var p = all[i]; if (!IsPanelValid(p)) continue; if (p.BHasClass && p.BHasClass("map_button")) return p; if (PanelHasClassToken(p,"map_button")) return p; } return null; }
-
-            function RejuvIsMidBossSpawned(state, root, nowMs) { if (!state||!root) return false; var b = IsPanelValid(state.cacheMidBossButton) ? state.cacheMidBossButton : null; if (!b) { if (nowMs >= (state.nextMidBossLookupMs||0)) { b = RejuvFindMidBossButton(root); state.cacheMidBossButton = b||null; state.nextMidBossLookupMs = nowMs + REJUV_MIDBOSS_LOOKUP_INTERVAL_MS; } } if (!b) return false; if (b.BHasClass && b.BHasClass("midboss_spawned")) return true; return PanelHasClassToken(b, "midboss_spawned"); }
-
-            function RejuvGetScanIntervalMs(state) { if (!state) return REJUV_SCAN_INTERVAL_MS; if (state.spawnWaiting || state.buffStartTime > 0) return REJUV_SCAN_INTERVAL_FAST_MS; return REJUV_SCAN_INTERVAL_MS; }
-
-            function RejuvResetState(state, root, nowMs) {
-                state.running = false; state.idx = 0; state.counter = 0; state.phaseStart = 0; state.claimCount = 0; state.spawnWaiting = false; state.lastScanFound = false; state.lastRejuvChargeCount = 0; state.lastMidBossActive = false; state.lastSec = -1; state.lastGlobalSec = -1; state.lastRuntimeSec = -1; state.lastRuntimeFeatureSig = ""; state._cachedRuntimeFeatureSig = ""; state._cachedConfigRef = null; state.nextScanMs = nowMs + RejuvGetScanIntervalMs(state); state.rotatingUntilMs = 0; state.rejuvBuffHideAtMs = 0; state.lastChargesLookupMs = 0; state.lastChargeCountReadMs = 0; state.lastChargeCountValue = 0; state.nextMidBossLookupMs = 0; state._lastMidBossSpawned = undefined; state._lastHadRejuvPerTick = false; state.cacheTopBar = null; state.cacheCharges = null; state.cacheFriendly = null; state.cacheEnemy = null; state.cacheRejuvTimer = null; state.cacheMidBossButton = null;
-                if (Number(REJUV_SEQ[0].dur) <= 0) { RejuvShowSpawn(state, root); } else { RejuvSetLabels(state, root, FormatClockMmSs(REJUV_SEQ[0].dur), REJUV_SEQ[0].num); RejuvResetImage(state, root); }
-                RejuvEndBuff(state, root, nowMs, true);
+            function writeText(panel, text) { if (P.isAlive(panel) && panel.text !== text) panel.text = text; }
+            function warning(panel, remaining) {
+                const blink = remaining % 2 === 1;
+                P.setClass(panel, "red", remaining < 10 && blink);
+                P.setClass(panel, "yellow", remaining >= 10 && remaining < 20 && blink);
             }
 
-            // ── Main tick ──
-            function _tick() {
-                var root = _root || $.GetContextPanel(); if (root && !_root) _root = root;
-                var cfg = ctx.config.view();
-                var nowMs = Date.now ? Date.now() : (new Date()).getTime();
+            function render(model, top) {
+                if (!model) return;
+                for (const key of ["rejuvTime", "rejuvTimeHUD"]) writeText(resolveOutput(key, top), model.rejuvText);
+                for (const key of ["rejuvNum", "rejuvNumHUD"]) writeText(resolveOutput(key, top), model.rejuvNumber);
+                for (const key of ["buffTime", "buffTimeHUD"]) writeText(resolveOutput(key, top), model.bridgeText);
+                for (const key of ["rejuvImg", "rejuvImgHUD"]) {
+                    const panel = resolveOutput(key, top);
+                    P.setClass(panel, "white", model.white);
+                    P.setClass(panel, "reverse", model.reverse);
+                    P.setClass(panel, "rotating", model.rotating);
+                    P.setClass(panel, "buff", false);
+                }
+                const rejuvHUD = resolveOutput("rejuvHUD", top);
+                warning(rejuvHUD, model.rejuvRemaining);
+                if (model.white) { P.setClass(rejuvHUD, "red", true); P.setClass(rejuvHUD, "yellow", false); }
+                warning(resolveOutput("buffHUD", top), model.bridgeRemaining);
+                const capture = resolveOutput("capture", top);
+                P.setClass(capture, "pop-out", model.captureMode === "show");
+                P.setClass(capture, "pop-in", model.captureMode === "hide");
+                QOL.utils.SetStyleIfChanged(capture, "opacity", model.captureVisible ? "1.00" : "0.00");
+                writeText(resolveOutput("captureTime", top), model.captureText);
+            }
 
-                var rejuvHudEnabled = !!(cfg && IsCfgEnabled(cfg, "ENABLE_REJUV_HUD"));
-                var buffHudEnabled = !!(cfg && IsCfgEnabled(cfg, "ENABLE_BUFF_HUD"));
-                // The minimap mid-boss timer consumes State.rejuvState, so keep the
-                // phase tracker running for it even when both HUD toggles are off.
-                var minimapRejuvEnabled = !!(cfg && IsCfgEnabled(cfg, "ENABLE_MINIMAP_REJUV_TIMER"));
-                if (!rejuvHudEnabled && !buffHudEnabled && !minimapRejuvEnabled) {
-                    if (!State.rejuvWasDisabled) { var ds = EnsureRejuvState(); RejuvResetState(ds, root, nowMs); State.rejuvWasDisabled = true; }
+            function update() {
+                if (!active || !settings) return;
+                const currentRoot = $.GetContextPanel();
+                if (currentRoot !== root) { release(); root = currentRoot; tracker = resetTracker(); }
+                if (!P.isAlive(root)) return;
+                if (!settings.enabled || QOL.core.hud.isInHideout(root) || QOL.isStreetBrawlModeActive(root)) {
+                    if (tracker.running || outputs.size) release();
+                    tracker = resetTracker(); publish();
                     return;
                 }
-                if (IsStreetBrawlModeActive(root)) {
-                    if (!State.rejuvWasDisabled) { var ss = EnsureRejuvState(); RejuvResetState(ss, root, nowMs); State.rejuvWasDisabled = true; }
-                    return;
-                }
-                State.rejuvWasDisabled = false;
-                var state = EnsureRejuvState();
-                var nowSec = GetGameSecondsForUrn(root);
-                if (state.lastGlobalSec >= 0 && (nowSec + 5 < state.lastGlobalSec || (state.lastGlobalSec > 30 && nowSec <= 2))) { RejuvResetState(state, root, nowMs); }
-                if (!state.running) { state.running = true; state.claimCount = 0; state.lastScanFound = false; state.spawnWaiting = false; RejuvStartPhaseAuto(state, root, nowSec, nowMs); state.lastSec = nowSec; state.lastGlobalSec = nowSec; state.lastRejuvChargeCount = RejuvGetChargeCount(state, root, nowMs); state.lastMidBossActive = RejuvIsMidBossSpawned(state, root, nowMs); state.nextScanMs = nowMs + RejuvGetScanIntervalMs(state); } else { state.lastGlobalSec = nowSec; }
+                const now = QOL.utils.PerfNowMs();
+                const sources = readSources(now);
+                const gameSec = time.readObservedGameTime(root);
+                presentation = updateTracker(gameSec, now, sources);
+                publish();
+                render(presentation, sources.top);
+            }
 
-                // Config change signature
-                if (State.lastConfig !== state._cachedConfigRef) {
-                    state._cachedRuntimeFeatureSig = [rejuvHudEnabled?"1":"0",buffHudEnabled?"1":"0",minimapRejuvEnabled?"1":"0"].join("|");
-                    state._cachedConfigRef = State.lastConfig;
-                }
-
-                // Per-tick cheap change detection
-                var midBossBtn = IsPanelValid(state.cacheMidBossButton) ? state.cacheMidBossButton : null;
-                if (midBossBtn) { var mbs = !!(midBossBtn.BHasClass && midBossBtn.BHasClass("midboss_spawned")); if (mbs !== state._lastMidBossSpawned) { state._lastMidBossSpawned = mbs; state.nextScanMs = 0; } }
-                var _rjv = IsPanelValid(state.cacheRejuvTimer) ? state.cacheRejuvTimer : null;
-                if (_rjv && _rjv.BHasClass) { var _hrn = _rjv.BHasClass("has_rejuv"); if (_hrn && !state._lastHadRejuvPerTick) RejuvStartBuff(state, root, nowSec, true); state._lastHadRejuvPerTick = _hrn; }
-                else { state._lastHadRejuvPerTick = false; }
-
-                // Fast-path early-exit
-                if (state.lastRuntimeSec === nowSec && state.lastRuntimeFeatureSig === state._cachedRuntimeFeatureSig && nowMs < (state.nextScanMs||0) && (state.rotatingUntilMs <= 0 || nowMs < state.rotatingUntilMs) && (state.rejuvBuffHideAtMs <= 0 || nowMs < state.rejuvBuffHideAtMs) && state.buffStartTime <= 0) return;
-
-                // Changed tick — hideout check (uses shared isConnectedToHideout which checks
-                // "connectedToHideout" class in addition to "InHideout" on both Hud + root panels)
-                var hideout = false;
-                try { hideout = isConnectedToHideout(root); } catch(e) {}
-                if (hideout) { if (!state.wasInHideout || state.running || state.buffStartTime > 0) RejuvResetState(state, root, nowMs); state.wasInHideout = true; return; }
-                if (state.wasInHideout) { state.wasInHideout = false; state.nextScanMs = nowMs; }
-
-                if (state.rotatingUntilMs > 0 && nowMs >= state.rotatingUntilMs) { state.rotatingUntilMs = 0; var _riA = GetRejuvPanel(state,root,"rImg","RejuvImg"), _riHA = GetRejuvPanel(state,root,"rImgHUD","RejuvImgHUD"); if (_riA) _riA.RemoveClass("rotating"); if (_riHA) _riHA.RemoveClass("rotating"); }
-                if (state.rejuvBuffHideAtMs > 0 && nowMs >= state.rejuvBuffHideAtMs) { state.rejuvBuffHideAtMs = 0; var _rbHide = GetRejuvPanel(state,root,"rejuvBuff","RejuvBuff"); if (_rbHide) SetPanelOpacitySafe(_rbHide, 0, 0); }
-
-                if (nowSec !== state.lastSec) {
-                    state.lastSec = nowSec; var dur = REJUV_SEQ[state.idx].dur; var remaining = Math.max(0, dur - (nowSec - state.phaseStart));
-                    if (remaining <= 0) { RejuvShowSpawn(state, root); } else { state.counter = remaining; RejuvSetLabels(state, root, FormatClockMmSs(remaining), REJUV_SEQ[state.idx].num); var _rjHUD = GetRejuvPanel(state,root,"rejuvHUD","RejuvHUD"); ApplyRedYellowPanelClasses(_rjHUD, remaining < 10 && (remaining%2)===1, remaining < 20 && (remaining%2)===1); }
-                }
-
-                // RejuvCount_N can briefly read as zero immediately after capture.
-                // Only end early when the native timer also drops has_rejuv; either
-                // live signal is enough to retain the three-minute countdown.
-                if (state.buffStartTime > 0) { var elapsed = nowSec - state.buffStartTime; state.buffCounter = Math.max(0, REJUV_DURATION_SEC - elapsed); var _rbt = GetRejuvPanel(state,root,"rejuvBuffTime","RejuvTimeBuff"); var _btt = FormatClockMmSs(state.buffCounter); if (_rbt && _rbt.text !== _btt) _rbt.text = _btt; var _lcc = RejuvGetChargeCount(state, root, nowMs); var _nativeBuffActive = RejuvHasNativeBuff(state); if ((!_nativeBuffActive && _lcc <= 0) || state.buffCounter <= 0) RejuvEndBuff(state, root, nowMs, false); }
-
-                // Bridge buff HUD
-                var remainingBridge = BRIDGE_DURATION_SEC - (nowSec % BRIDGE_DURATION_SEC); var bridgeText = FormatClockMmSs(remainingBridge);
-                var _bl = GetRejuvPanel(state,root,"buffLabel","BuffTime"), _blH = GetRejuvPanel(state,root,"buffLabelHUD","BuffTimeHUD");
-                if (_bl && _bl.text !== bridgeText) _bl.text = bridgeText; if (_blH && _blH.text !== bridgeText) _blH.text = bridgeText;
-                var _bH = GetRejuvPanel(state,root,"buffHUD","BuffHUD"); ApplyRedYellowPanelClasses(_bH, remainingBridge < 10 && (remainingBridge%2)===1, remainingBridge < 20 && (remainingBridge%2)===1);
-
-                // Scan
-                if (nowMs >= (state.nextScanMs||0)) {
-                    var found = RejuvHasAnyCharges(state, root, nowMs); var chargeCount = RejuvGetChargeCount(state, root, nowMs); var midBossActive = RejuvIsMidBossSpawned(state, root, nowMs);
-                    if (state.lastMidBossActive && !midBossActive) { state.claimCount++; RejuvStartPhaseManual(state, root, state.claimCount > 2 ? 3 : state.claimCount, nowSec, nowMs); }
-                    else if (state.spawnWaiting && found && !state.lastScanFound) { state.claimCount++; RejuvStartPhaseManual(state, root, state.claimCount > 2 ? 3 : state.claimCount, nowSec, nowMs); }
-                    if ((state.lastRejuvChargeCount||0) === 0 && chargeCount >= 1) RejuvStartBuff(state, root, nowSec, true);
-                    state.lastScanFound = found; state.lastRejuvChargeCount = chargeCount; state.lastMidBossActive = midBossActive; state.nextScanMs = nowMs + RejuvGetScanIntervalMs(state);
-                }
-                state.lastRuntimeSec = nowSec; state.lastRuntimeFeatureSig = state._cachedRuntimeFeatureSig;
+            function refreshSettings() {
+                settings = readSettings();
+                QOL.core.hud.refreshRootClasses($.GetContextPanel());
+                update();
             }
 
             return {
-                onEnable: function() {
-                    var S = QOL.core.Scheduler;
-                    _unsubscribeGameSecond = QOL.core.time.subscribeGameSecond(_tick, 0);
-                    _loop = S && S.createPollLoop ? S.createPollLoop(_tick, 0.3, "ql_rejuv_hud") : null;
+                onEnable() {
+                    active = true; settings = readSettings();
+                    unsubscribe = time.subscribeGameSecond(update, 0);
+                    loop = QOL.core.Scheduler.createPollLoop(update, 0.3, FEATURE_ID);
                 },
-                onDisable: function() {
-                    if (_unsubscribeGameSecond) { _unsubscribeGameSecond(); _unsubscribeGameSecond = null; }
-                    if (_loop) { _loop.stop(); _loop = null; }
-                    var S = QOL.core.Scheduler; if (S) S.cancelAllForFeature("ql_rejuv_hud");
-                    var root = _root || $.GetContextPanel();
-                    try { if (State.rejuvState) { RejuvResetState(State.rejuvState, root, Date.now ? Date.now() : (new Date()).getTime()); } } catch(e) {}
-                    State.rejuvWasDisabled = true;
-                    _root = null;
-                },
-                onSettingsChanged: function() {
-                    if (State && State.rejuvState) State.rejuvState.lastRuntimeFeatureSig = "";
-                    _tick();
+                onSettingsChanged: refreshSettings,
+                onDisable() {
+                    active = false;
+                    if (unsubscribe) { unsubscribe(); unsubscribe = null; }
+                    if (loop) { loop.stop(); loop = null; }
+                    release(); tracker = resetTracker(); publish();
+                    settings = null; root = null;
                 }
             };
         },
-        test: function(ctx) {
-            try {
-                var root = $.GetContextPanel();
-                var topBar = root ? (root.FindChildTraverse("TopBar") || root.FindChildTraverse("CitadelHudTopBar")) : null;
-                var rejuvHUD = root ? root.FindChildTraverse("RejuvHUD") : null;
-                var rejuvImg = root ? root.FindChildTraverse("RejuvImg") : null;
-                return {
-                    passed: !!(topBar && rejuvHUD),
-                    name: "Rejuv HUD panels exist",
-                    message: [ !topBar ? "CitadelHudTopBar not found" : "", !rejuvHUD ? "RejuvHUD not found" : "" ].filter(function(s) { return s !== ""; }).join(", "),
-                    assertions: [
-                        { passed: !!topBar, name: "CitadelHudTopBar exists" },
-                        { passed: !!rejuvHUD, name: "RejuvHUD exists" },
-                        { passed: !!rejuvImg, name: "RejuvImg exists" }
-                    ]
-                };
-            } catch(e) { return { passed: false, name: "Rejuv HUD panel check", message: (e && e.message ? e.message : String(e)) }; }
+        test() {
+            const root = $.GetContextPanel();
+            const top = QOL.core.panel.findTraverse(root, "TopBar") || QOL.core.panel.findTraverse(root, "CitadelHudTopBar");
+            if (!top) return null;
+            const hud = QOL.core.panel.findTraverse(top, "RejuvHUD");
+            return { passed: !!hud, name: "Rejuv HUD panels exist", message: hud ? "" : "RejuvHUD not found",
+                assertions: [{ passed: true, name: "CitadelHudTopBar exists" }, { passed: !!hud, name: "RejuvHUD exists" }] };
         }
     });
 })();

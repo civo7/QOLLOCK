@@ -250,8 +250,7 @@ test("crosshair compatibility search finds late rows outside verified paths and 
     Q.core.ConfigAdapter.loadFromFlat({ ENABLE_CROSSHAIR_STATS: 0 });
     hud.clock.advance(200);
     assert.strictEqual(hud.root.FindChildTraverse("QOLCrosshairStatsOverlay"), null);
-    assert.strictEqual(Q.state.crosshairStats.sourcePanel, null);
-    assert.deepStrictEqual(Object.keys(Q.state.crosshairStats.sourceContainers), []);
+    assert.strictEqual(Q.getCachedPanel("crosshairStatsOverlay"), null);
     Q.core.ConfigAdapter.loadFromFlat({ ENABLE_CROSSHAIR_STATS: 1 });
     hud.clock.advance(100);
     assert.strictEqual(value(hud.root, "bulletEvasion").text, "+5");
