@@ -1,165 +1,99 @@
-(function () {
+// Profile-page context: only ql_utils is included by citadel_db_page_profile.xml.
+// Owns the existing friend rank image/tools class and Statlocker activation handler.
+(() => {
     "use strict";
+    const U = QOL_UTILS, alive = U.IsPanelValid;
+    const context = $.GetContextPanel();
+    let binding = null, tools = null, image = null, button = null;
+    let imageAccount = null, boundButton = null, nextDiscovery = 0, timer = null;
+    let fallbackAccount = "", nextFallback = 0, canonicalObserved = false;
 
-    var ACTIVE_INTERVAL_SEC = 0.35;
-    var IDLE_INTERVAL_SEC = 1.0;
-    var PANEL_RETRY_MS = 500;
-    var FALLBACK_SCAN_MS = 2000;
-    var API_RANK_URL = "https://api.deadlock-api.com/v1/players/";
-
-    var gAccountLabel = null;
-    var gToolsPanel = null;
-    var gRankImage = null;
-    var gStatlockerButton = null;
-    var gLastAccountId = "";
-    var gToolsVisible = null;
-    var gNextPanelSearchMs = 0;
-    var gNextFallbackScanMs = 0;
-
-    var IsPanelValid = QOL_UTILS.IsPanelValid;
-    var ParseAccountId = QOL_UTILS.ParseAccountId;
-    var HasClassInHierarchy = QOL_UTILS.HasClassInHierarchy;
-
-    function ReadAccountIdFromPanel(panel) {
-        if (!IsPanelValid(panel)) return "";
-        var parsed = "";
-        try { parsed = ParseAccountId(panel.text || ""); } catch (e0) {}
-        if (parsed) return parsed;
-        try { parsed = ParseAccountId(panel.accountid); } catch (e1) {}
-        if (parsed) return parsed;
-        try { parsed = ParseAccountId(panel.account_id); } catch (e2) {}
-        if (parsed) return parsed;
-        try {
-            if (panel.GetAttributeString) {
-                parsed = ParseAccountId(panel.GetAttributeString("accountid", "")) ||
-                    ParseAccountId(panel.GetAttributeString("account_id", ""));
+    function parent(panel) { try { return alive(panel) ? panel.GetParent() : null; } catch (_) { return null; } }
+    function active() {
+        let current = context;
+        for (let depth = 0; depth < 24 && alive(current); depth++, current = parent(current)) {
+            if (current.BHasClass("isShowingProfilePage")) return true;
+            if (depth < 12 && current.BHasClass("DashboardPage") && current.BHasClass("active")) return true;
+        }
+        return false;
+    }
+    function belongs(panel) {
+        for (let depth = 0; depth < 64 && alive(panel); depth++, panel = parent(panel)) if (panel === context) return true;
+        return false;
+    }
+    function find(id) { return alive(context) && context.FindChildTraverse ? context.FindChildTraverse(id) : null; }
+    function readAccount(panel) {
+        if (!alive(panel)) return "";
+        return U.ParseAccountId(panel.text || "") || U.ParseAccountId(panel.accountid) || U.ParseAccountId(panel.account_id) ||
+            U.ParseAccountId(U.SafeGetAttribute(panel, "accountid", "")) || U.ParseAccountId(U.SafeGetAttribute(panel, "account_id", ""));
+    }
+    function clearButton(panel) { if (alive(panel)) { try { panel.SetPanelEvent("onactivate", () => {}); } catch (_) {} } }
+    function hide(panel) { if (alive(panel) && panel.BHasClass("QOLProfileToolsVisible")) panel.RemoveClass("QOLProfileToolsVisible"); }
+    function clearImage(panel) { if (alive(panel)) { try { panel.SetImage(""); } catch (_) {} } }
+    function release() {
+        if (timer !== null) { $.CancelScheduled(timer); timer = null; }
+        hide(tools); clearButton(button); clearImage(image);
+        binding = null; tools = null; image = null; button = null; boundButton = null; imageAccount = null;
+    }
+    function discover(force = false) {
+        const now = U.PerfNowMs();
+        const stale = [binding, tools, image, button].some(panel => !alive(panel) || !belongs(panel));
+        if (!force && !stale && now < nextDiscovery) return;
+        if (!force && stale && now < nextDiscovery && [binding, tools, image, button].every(panel => !alive(panel) || belongs(panel))) return;
+        nextDiscovery = now + 500;
+        const currentBinding = find("QOLProfileAccountID"), currentTools = find("QOLFriendProfileTools");
+        const currentImage = find("QOLFriendRankImage"), currentButton = find("QOLProfileStatlockerButton");
+        if (currentTools !== tools) hide(tools);
+        if (currentImage !== image) { clearImage(image); imageAccount = null; }
+        if (currentButton !== button) { clearButton(button); boundButton = null; }
+        if (currentBinding !== binding) { fallbackAccount = ""; nextFallback = 0; imageAccount = null; }
+        binding = currentBinding; tools = currentTools; image = currentImage; button = currentButton;
+    }
+    function account(force = false) {
+        // A canonical binding that is present but blank is an authoritative
+        // loading state. Never use another friend's stacked card in its place.
+        const canonical = find("QOLProfileAccountID");
+        if (alive(canonical)) { canonicalObserved = true; return readAccount(canonical); }
+        if (canonicalObserved) return "";
+        const now = U.PerfNowMs();
+        if (force || now >= nextFallback) {
+            nextFallback = now + 2000; fallbackAccount = "";
+            for (const label of U.FindPanelsByClass(context, "HiddenAccountID")) {
+                fallbackAccount = readAccount(label);
+                if (fallbackAccount) break;
             }
-        } catch (e3) {}
-        return parsed;
-    }
-
-    function HasClassSafe(panel, className) {
-        if (!IsPanelValid(panel) || !panel.BHasClass) return false;
-        try { return !!panel.BHasClass(className); } catch (e0) { return false; }
-    }
-
-    function HasAscendantClass(panel, className, maxDepth) {
-        if (HasClassInHierarchy) return HasClassInHierarchy(panel, className, maxDepth);
-        var cur = panel;
-        var depth = 0;
-        while (IsPanelValid(cur) && depth < maxDepth) {
-            if (HasClassSafe(cur, className)) return true;
-            try { cur = cur.GetParent ? cur.GetParent() : null; } catch (e0) { cur = null; }
-            depth++;
+            if (!fallbackAccount) fallbackAccount = readAccount(context);
         }
-        return false;
+        return fallbackAccount;
     }
-
-    function IsProfilePageActive(ctx) {
-        if (!IsPanelValid(ctx)) return false;
-        if (HasAscendantClass(ctx, "isShowingProfilePage", 24)) return true;
-        var cur = ctx;
-        for (var i = 0; i < 12 && IsPanelValid(cur); i++) {
-            if (HasClassSafe(cur, "DashboardPage") && HasClassSafe(cur, "active")) return true;
-            try { cur = cur.GetParent ? cur.GetParent() : null; } catch (e0) { cur = null; }
+    function render(accountId) {
+        if (alive(image) && imageAccount !== accountId) {
+            image.SetImage(accountId ? "https://api.deadlock-api.com/v1/players/" + accountId + "/rank-predict/image?format=webp&size=small" : "");
+            imageAccount = accountId;
         }
-        return false;
-    }
-
-    function ResolvePanels(ctx, nowMs) {
-        var needsSearch = !IsPanelValid(gAccountLabel) || !IsPanelValid(gToolsPanel) ||
-            !IsPanelValid(gRankImage) || !IsPanelValid(gStatlockerButton);
-        if (!needsSearch || nowMs < gNextPanelSearchMs) return;
-        gNextPanelSearchMs = nowMs + PANEL_RETRY_MS;
-
-        var oldTools = gToolsPanel;
-        var oldImage = gRankImage;
-        var oldButton = gStatlockerButton;
-        if (!IsPanelValid(gAccountLabel)) {
-            gAccountLabel = ctx.FindChildTraverse ? ctx.FindChildTraverse("QOLProfileAccountID") : null;
-        }
-        if (!IsPanelValid(gToolsPanel)) {
-            gToolsPanel = ctx.FindChildTraverse ? ctx.FindChildTraverse("QOLFriendProfileTools") : null;
-        }
-        if (!IsPanelValid(gRankImage)) {
-            gRankImage = ctx.FindChildTraverse ? ctx.FindChildTraverse("QOLFriendRankImage") : null;
-        }
-        if (!IsPanelValid(gStatlockerButton)) {
-            gStatlockerButton = ctx.FindChildTraverse ? ctx.FindChildTraverse("QOLProfileStatlockerButton") : null;
-        }
-        if (gToolsPanel !== oldTools) gToolsVisible = null;
-        if (gRankImage !== oldImage || gStatlockerButton !== oldButton) gLastAccountId = "";
-    }
-
-    function FindAccountIdFallback(ctx) {
-        if (!IsPanelValid(ctx) || !ctx.FindChildrenWithClassTraverse) return "";
-        var labels = ctx.FindChildrenWithClassTraverse("HiddenAccountID") || [];
-        for (var i = 0; i < labels.length; i++) {
-            var accountId = ReadAccountIdFromPanel(labels[i]);
-            if (accountId) return accountId;
-        }
-        return ReadAccountIdFromPanel(ctx);
-    }
-
-    function SetToolsVisible(visible) {
-        if (!IsPanelValid(gToolsPanel) || gToolsVisible === visible) return;
-        try {
-            if (visible) gToolsPanel.AddClass("QOLProfileToolsVisible");
-            else gToolsPanel.RemoveClass("QOLProfileToolsVisible");
-            gToolsVisible = visible;
-        } catch (e0) { /* panel deleted mid-frame */ }
-    }
-
-    function BindStatlockerButton(accountId) {
-        if (!IsPanelValid(gStatlockerButton) || !accountId) return;
-        try {
-            gStatlockerButton.SetPanelEvent("onactivate", function () {
-                $.DispatchEvent("ExternalBrowserGoToURL", "https://statlocker.gg/profile/" + accountId);
+        if (alive(button) && boundButton !== button) {
+            const owner = button;
+            owner.SetPanelEvent("onactivate", () => {
+                if (!alive(context) || !active() || owner !== button || !belongs(owner) || find("QOLProfileStatlockerButton") !== owner) return;
+                const currentAccount = account(true);
+                if (currentAccount) $.DispatchEvent("ExternalBrowserGoToURL", "https://statlocker.gg/profile/" + currentAccount);
             });
-        } catch (e0) { /* panel deleted mid-frame */ }
+            boundButton = owner;
+        }
+        if (alive(tools)) {
+            const visible = !!accountId;
+            if (tools.BHasClass("QOLProfileToolsVisible") !== visible) tools.SetHasClass("QOLProfileToolsVisible", visible);
+        }
     }
-
-    function UpdateProfileTools(accountId) {
-        if (!IsPanelValid(gToolsPanel)) return false;
-        if (!accountId) {
-            SetToolsVisible(false);
-            return true;
-        }
-
-        if (accountId !== gLastAccountId) {
-            gLastAccountId = accountId;
-            if (IsPanelValid(gRankImage) && gRankImage.SetImage) {
-                try {
-                    gRankImage.SetImage(API_RANK_URL + accountId + "/rank-predict/image?format=webp&size=small");
-                } catch (e0) { /* panel deleted mid-frame */ }
-            }
-            BindStatlockerButton(accountId);
-        }
-        SetToolsVisible(true);
-        return true;
+    function update() {
+        timer = null;
+        if (!alive(context)) { release(); return; }
+        let delay = 1.0;
+        try {
+            if (active()) { discover(); render(account()); if (alive(tools)) delay = 0.35; }
+            else hide(tools);
+        } catch (error) { $.Msg("[QOLLock][ProfileStatlocker] " + (error.message || String(error))); }
+        timer = $.Schedule(delay, update);
     }
-
-    function Update() {
-        var ctx = $.GetContextPanel ? $.GetContextPanel() : null;
-        // A destroyed Panorama context cannot recover. Do not create a zombie
-        // schedule chain after this profile page has been torn down.
-        if (!IsPanelValid(ctx)) return;
-
-        if (!IsProfilePageActive(ctx)) {
-            $.Schedule(IDLE_INTERVAL_SEC, Update);
-            return;
-        }
-
-        var nowMs = (QOL_UTILS && QOL_UTILS.PerfNowMs) ? QOL_UTILS.PerfNowMs() : Date.now();
-        ResolvePanels(ctx, nowMs);
-        var accountId = ReadAccountIdFromPanel(gAccountLabel);
-        if (!accountId && nowMs >= gNextFallbackScanMs) {
-            gNextFallbackScanMs = nowMs + FALLBACK_SCAN_MS;
-            accountId = FindAccountIdFallback(ctx);
-        }
-        var foundTools = UpdateProfileTools(accountId);
-        $.Schedule(foundTools ? ACTIVE_INTERVAL_SEC : IDLE_INTERVAL_SEC, Update);
-    }
-
-    Update();
+    update();
 })();

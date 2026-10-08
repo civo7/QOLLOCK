@@ -1,792 +1,329 @@
-// features/ql_showrank/manifest.js
-// =============================================================================
-// QOLLOCK — Show Rank (rank prediction badges on top bar + escape menu)
-// =============================================================================
-// OWNS:        Rank badge display, API image loading, escape menu fill loop,
-//              top bar per-player polling for account ID → rank image
-// DOES NOT OWN: Profile card context (ql_feat_showrank_card.js — permanent exception)
-// DEPENDS ON:  QOL.core.FeatureRegistry, QOL.core.Scheduler
-// CONFIG KEYS: SHOW_RANK, SHOW_RANK_TOPBAR
-// =============================================================================
-
-(function() {
+// OWNS: HUD rank badge presentation, scoreboard account probes and rank publication.
+// DOES NOT OWN: Native player identities, profile-card contexts or remote rank images.
+// Sources: hud.xml EscapeMenu; players_list_entry.xml; citadel_hud_top_bar_team/player.xml.
+// Profile-card communication uses document attributes, never shared JavaScript state.
+(() => {
     "use strict";
-    var FR = QOL.core.FeatureRegistry;
-    if (!FR) { $.Msg("[QOLLock] showrank: FeatureRegistry not found — aborting"); return; }
+    const API_URL = "https://api.deadlock-api.com/v1/players/";
+    const imageUrl = account => API_URL + account + "/rank-predict/image?format=webp&size=small";
+    const nameKey = name => String(name || "").toLowerCase().split("%").join("%25").split("|").join("%7C");
 
-    FR.register({
-        id: "ql_showrank",
-        enableKey: "SHOW_RANK",
-        enabledByDefault: false,
-        settings: [
-            { key: "SHOW_RANK", type: "toggle" },
-            { key: "SHOW_RANK_TOPBAR", type: "toggle" }
-        ],
-        create: function(ctx) {
-            var RANK0 = "s2r://panorama/images/ranked/badges/rank0/badge_sm_psd.vtex";
-            var API_URL = "https://api.deadlock-api.com/v1/players/";
-            var HIDEOUT_CLASSES = ["InHideout","inHideoutIntro","connectedToHideout","connectedtoHideout","connectedtohideout"];
-            var _loop = null, _wasEnabled = false;
-            // Separator for the published-names list, and the escape that makes it safe.
-            //
-            // A player name may legally contain "|". The hero list next to this one gets
-            // away with joining on "|" only because hero names cannot contain it. An
-            // unescaped "|" in a player name round-trips as two bogus entries, so
-            // _clearPublishedRanks would clear "a" and "b" and never the real "a|b" key --
-            // that rank then survives into the next match, where it can attach to a
-            // different player. The dedupe check fails the same way, re-pushing the name
-            // on every fill until the attribute grows without bound.
-            //
-            // Escaped rather than given an exotic separator, because the escaped form is
-            // also the attribute NAME (qol_sr_rankp_<name>) and has to be tame there too.
-            // "%" goes first or the two rules would collide.
-            var RANK_NAME_SEP = "|";
-            function _rankNameKeyPart(name) {
-                return String(name || "").toLowerCase()
-                    .split("%").join("%25")
-                    .split(RANK_NAME_SEP).join("%7C");
+    QOL.core.FeatureRegistry.register({
+        id: "ql_showrank", enableKey: "SHOW_RANK", enabledByDefault: false,
+        settings: [{ key: "SHOW_RANK", type: "toggle" }, { key: "SHOW_RANK_TOPBAR", type: "toggle" }],
+        create(ctx) {
+            const P = QOL.core.panel, U = QOL.utils, S = QOL.core.Scheduler;
+            const topResolver = QOL.panelCache.createIdResolver("TopBar", { retryMs: 500, ownerPath: [{ id: "Hud", optional: true }] });
+            const escapeResolver = QOL.panelCache.createIdResolver("EscapeMenu", { retryMs: 500, ownerPath: [{ id: "Hud", optional: true }] });
+            const listResolver = QOL.panelCache.createIdResolver("PlayersList", { retryMs: 500 });
+            let root = null, doc = null, model = null, loop = null, deferred = null;
+            let enabled = false, lifecycle = 0, generation = "", probeSerial = 0, probe = null;
+            let hideout = false, scoreboardOpen = false;
+            const rows = new Map(), players = new Map();
+
+            function parent(panel) { try { return P.isAlive(panel) ? panel.GetParent() : null; } catch (_) { return null; } }
+            function belongs(panel, owner) {
+                for (let depth = 0; depth < 80 && P.isAlive(panel); depth++, panel = parent(panel)) if (panel === owner) return true;
+                return false;
             }
-            var _fillToken = 0;
-            var _lifecycleToken = 0;
-            var _scoreboardWasOpen = false;
-            var _topBarWasVisible = null;
-            var _hideoutWasActive = false;
-
-            // ── Utilities ──
-            var _nowMs = QOL.utils.PerfNowMs;
-            var _valid = QOL.utils.IsPanelValid;
-            function _isOn(cfg, k) { if (!cfg || !k) return false; return Number(cfg[k]) === 1; }
-            function _hasClass(panel, cls) { try { return panel && panel.BHasClass && panel.BHasClass(cls); } catch(e) { return false; } }
-            /**
-             * Resolve the Hud panel once and hold it.
-             *
-             * The old body was root.FindChildTraverse("Hud") on every call. In the HUD
-             * context $.GetContextPanel() IS the Hud panel, and FindChildTraverse never
-             * returns the panel it was called on — so this lookup could not succeed, and
-             * a miss walks the entire subtree before returning null. Called twice per
-             * tick (_isInHideout, _isEscapeMenuOpen) plus once per scoreboard poll at
-             * 10Hz per row, it was the single most expensive wasted traversal in the
-             * whole mod: 15.2k tree nodes per second, four times the next-worst.
-             *
-             * PanelHelpers.findHud handles both tree shapes — context panel, or a walk up
-             * to the absolute root and a search from there — and caches its own result,
-             * so it returns the real panel instead of null. ql_unspent resolved the same
-             * lookup the same way.
-             *
-             * Fixing the lookup also fixes what depended on it: _isInHideout's InHideout
-             * and inHideoutIntro checks were reading an always-null panel, so two of the
-             * four hideout states were undetectable, and the manifest's own test() bailed
-             * with "skip" on every run because it gated on this same lookup.
-             */
-            function _hudPanel(root) {
-                if (typeof QOL !== "undefined" && QOL.core?.panel?.findHud) return QOL.core.panel.findHud(root);
-                if (typeof QOL !== "undefined" && QOL.ui?.PanelHelpers?.findHud) return QOL.ui.PanelHelpers.findHud();
-                return root ? root.FindChildTraverse("Hud") : null;
-            }
-            function _isInHideout(root) { var h = _hudPanel(root); return _hasClass(h, "InHideout") || _hasClass(h, "inHideoutIntro") || _hasClass(h, "connectedToHideout") || _hasClass(root, "connectedToHideout") || _hasClass(root, "InHideout"); }
-            function _stateGet(k, d) { try { if (typeof QOL !== "undefined" && QOL.state) { var v = QOL.state[k]; return v !== undefined ? v : d; } } catch(e) {} return d; }
-            function _stateSet(k, v) { try { if (typeof QOL !== "undefined" && QOL.state) QOL.state[k] = v; } catch(e) {} }
-
-            // ── DocRoot — walk parent chain to document root (for cross-context attribute bridge) ──
-            function _docRoot(panel) {
-                var cur = panel, guard = 0;
-                while (_valid(cur) && guard < 80) {
-                    var parent = null; try { parent = cur.GetParent(); } catch(e) { break; }
-                    if (!_valid(parent) || parent === cur) break;
-                    cur = parent; guard++;
+            function documentRoot(panel) {
+                for (let depth = 0; depth < 80 && P.isAlive(panel); depth++) {
+                    const next = parent(panel);
+                    if (!P.isAlive(next) || next === panel) break;
+                    panel = next;
                 }
-                return cur;
+                return panel;
             }
-            function _readAttr(root, key, fb) { try { return root.GetAttributeString(key, fb); } catch(e) { return fb; } }
-            function _setAttr(root, key, value) { try { root.SetAttributeString(key, String(value)); } catch(e) {} }
-
-            // ── Badge visibility ──
-            function _badgeVisible(badge, visible) {
-                if (!_valid(badge)) return;
-                try { if (visible) badge.AddClass("ShowRankVisible"); else badge.RemoveClass("ShowRankVisible"); } catch(e) {}
+            const attr = (panel, key, fallback = "") => U.SafeGetAttribute(panel, key, fallback);
+            function writeAttr(panel, key, value) {
+                if (P.isAlive(panel) && attr(panel, key) !== String(value)) panel.SetAttributeString(key, String(value));
             }
-
-            // ── Panel search helpers ──
-            function _findClass(panel, cls) {
-                var list = panel.FindChildrenWithClassTraverse ? panel.FindChildrenWithClassTraverse(cls) : [];
-                return (list && list.length > 0) ? list[0] : null;
-            }
-
-            function _readTopBarHeroName(player) {
-                // HeroName is a presentation label and can be empty while the
-                // top bar is collapsed. HeroNameHidden is the stable binding
-                // added specifically for Show Ranks; keep HeroName as a fallback
-                // for older layouts that do not contain the hidden label yet.
-                var heroLabel = _findClass(player, "HeroNameHidden");
-                if (!_valid(heroLabel)) heroLabel = _findClass(player, "HeroName");
-                if (!_valid(heroLabel)) return "";
-                try { return String(heroLabel.text || "").trim(); } catch(e) { return ""; }
-            }
-
-            function _readTopBarPlayerName(player) {
-                // .PlayerName / .AlwaysPlayerName both carry text="{s:player_name}"
-                // (citadel_hud_top_bar_player.xml:90,94). Read as a second identity when
-                // the hero label comes back empty. AlwaysPlayerName is checked second
-                // because ql_nicknames creates its own runtime label with that class.
-                var label = _findClass(player, "PlayerName");
-                if (!_valid(label)) label = _findClass(player, "AlwaysPlayerName");
-                if (!_valid(label)) return "";
-                try { return String(label.text || "").trim(); } catch(e) { return ""; }
-            }
-
-            // ── Top bar player hierarchy: TopBar → TeamsContainer → Team → PlayerContents → PlayersContainer ──
-            //
-            // The CONTAINERS are cached; the player panels are not.
-            //
-            // Five call sites each re-walked this whole chain, and _ensureTopBarInit ran
-            // it every tick: a TopBar lookup plus five nested traversals, ~7.8k + ~7.1k
-            // tree nodes a second spent re-deriving a hierarchy that does not change
-            // while the HUD is up.
-            //
-            // Caching the resolved player LIST instead would be wrong: the roster fills
-            // in as players connect, so a list cached early would be permanently short
-            // and those players would never get a badge. The expensive part is
-            // FindChildTraverse, not GetChild — so hold the PlayersContainer panels and
-            // read their children every call. Always current, and the traversals are
-            // paid once.
-            //
-            // Cached on panel validity, so a torn-down top bar re-resolves on the next
-            // call; cleared in onEnable so nothing survives a reload.
-            var _topBarCache = null;
-            var _playerContainersCache = null;
-
-            function _topBarPanel(root) {
-                if (_valid(_topBarCache)) return _topBarCache;
-                _topBarCache = null;
-                _playerContainersCache = null;
-                try { _topBarCache = (root && root.FindChildTraverse) ? root.FindChildTraverse("TopBar") : null; } catch(e) { _topBarCache = null; }
-                return _valid(_topBarCache) ? _topBarCache : null;
-            }
-
-            function _playerContainers(root) {
-                var topBar = _topBarPanel(root);
-                if (!_valid(topBar)) return [];
-                if (_playerContainersCache) {
-                    var good = _playerContainersCache.length > 0;
-                    for (var c = 0; good && c < _playerContainersCache.length; c++) {
-                        if (!_valid(_playerContainersCache[c])) good = false;
-                    }
-                    if (good) return _playerContainersCache;
-                    _playerContainersCache = null;
+            function classPanel(owner, className) { return U.FindFirstPanelByClass(owner, className); }
+            function text(panel) { try { return P.isAlive(panel) ? String(panel.text || "").trim() : ""; } catch (_) { return ""; } }
+            function classBinding(record, key, className) {
+                let panel = record.bindings[key];
+                if (!P.isAlive(panel) || !belongs(panel, record.source) || !panel.BHasClass(className) || U.PerfNowMs() >= record.nextBindingRefresh) {
+                    panel = classPanel(record.source, className);
+                    record.bindings[key] = panel;
                 }
-                var found = _findPlayerContainers(topBar);
-                if (found.length > 0) _playerContainersCache = found;
-                return found;
+                return panel;
             }
-
-            function _findPlayerContainers(topBar) {
-                var out = [];
-                var tc = topBar.FindChildTraverse ? topBar.FindChildTraverse("TeamsContainer") : null;
-                if (!_valid(tc)) return out;
-                var tcc = tc.GetChildCount ? tc.GetChildCount() : 0;
-                for (var ti = 0; ti < tcc && ti < 4; ti++) {
-                    var team = tc.GetChild(ti); if (!_valid(team)) continue;
-                    var pc = team.FindChildTraverse ? team.FindChildTraverse("PlayerContents") : null;
-                    if (!_valid(pc)) continue;
-                    var pl = pc.FindChildTraverse ? pc.FindChildTraverse("PlayersContainer") : null;
-                    if (!_valid(pl)) continue;
-                    out.push(pl);
+            function readIdentity(record) {
+                const isRow = record.kind === "row";
+                const hero = classBinding(record, "hero", isRow ? "PlayerHeroHidden" : "HeroNameHidden") ||
+                    (!isRow ? classBinding(record, "heroFallback", "HeroName") : null);
+                const name = classBinding(record, "name", "PlayerName") ||
+                    (!isRow ? classBinding(record, "nameFallback", "AlwaysPlayerName") : null);
+                return { hero: text(hero), name: text(name) };
+            }
+            function makeRecord(source, kind) {
+                const suffix = kind === "row" ? "" : "TopBar";
+                return { source, kind, bindings: {}, nextBindingRefresh: 0, identity: null, account: "", failed: false,
+                    nextLookup: U.PerfNowMs() + 300, idle: 0, base: null, overlay: null, accountLabel: null, imageAccount: null,
+                    baseResolver: QOL.panelCache.createIdResolver("RankPredictionBadge" + suffix, { retryMs: 500 }),
+                    overlayResolver: QOL.panelCache.createIdResolver("RankPredictionBadge" + suffix + "Overlay", { retryMs: 500 }) };
+            }
+            function clearPresentation(record) {
+                P.setClass(record.base, "ShowRankVisible", false);
+                P.setClass(record.overlay, "ShowRankVisible", false);
+                if (P.isAlive(record.overlay)) record.overlay.SetImage("");
+                if (P.isAlive(record.accountLabel) && text(record.accountLabel)) record.accountLabel.text = "";
+                record.imageAccount = null;
+            }
+            function releaseRecord(record) {
+                try { clearPresentation(record); } catch (_) { /* native generation retiring */ }
+                record.baseResolver.reset(); record.overlayResolver.reset();
+                record.bindings = {};
+            }
+            function refreshRecord(record) {
+                const base = record.baseResolver.resolve(record.source);
+                const overlay = record.overlayResolver.resolve(record.source);
+                const accountLabel = classBinding(record, "account", record.kind === "row" ? "PlayerAccountHidden" : "PlayerAccountHiddenTopBar");
+                if (base !== record.base || overlay !== record.overlay || accountLabel !== record.accountLabel) {
+                    clearPresentation(record);
+                    record.base = base; record.overlay = overlay; record.accountLabel = accountLabel;
                 }
-                return out;
+                const identity = readIdentity(record);
+                if (!record.identity || identity.name !== record.identity.name || identity.hero !== record.identity.hero) {
+                    clearPresentation(record);
+                    record.identity = identity; record.account = ""; record.failed = false; record.nextLookup = 0; record.idle = 0;
+                    if (probe?.record === record) abortProbe();
+                }
+                if (U.PerfNowMs() >= record.nextBindingRefresh) record.nextBindingRefresh = U.PerfNowMs() + 3000;
+            }
+            function render(record, visible) {
+                P.setClass(record.base, "ShowRankVisible", visible);
+                if (P.isAlive(record.overlay) && record.imageAccount !== record.account) {
+                    record.overlay.SetImage(record.account ? imageUrl(record.account) : "");
+                    record.imageAccount = record.account;
+                }
+                if (P.isAlive(record.accountLabel)) {
+                    const value = record.failed ? "-" : record.account;
+                    if (text(record.accountLabel) !== value) record.accountLabel.text = value;
+                }
+                P.setClass(record.overlay, "ShowRankVisible", visible && !!record.account);
             }
 
-            function _topBarPlayers(root) {
-                var containers = _playerContainers(root);
-                var out = [];
-                for (var ci = 0; ci < containers.length; ci++) {
-                    var pl = containers[ci];
-                    var plc = 0;
-                    try { plc = pl.GetChildCount ? pl.GetChildCount() : 0; } catch(e) { plc = 0; }
-                    for (var pi = 0; pi < plc && pi < 12; pi++) {
-                        var player = null;
-                        try { player = pl.GetChild(pi); } catch(e) { player = null; }
-                        if (_valid(player)) out.push(player);
+            // The roster is read from verified direct children each pass; a cached
+            // player count cannot establish membership after native replacement.
+            function topPlayers() {
+                const top = topResolver.resolve(root), out = [];
+                const teams = P.findChild(top, "TeamsContainer");
+                if (!P.isAlive(teams)) return out;
+                for (let i = 0; i < Math.min(4, teams.GetChildCount()); i++) {
+                    const contents = P.findChild(teams.GetChild(i), "PlayerContents");
+                    const container = P.findChild(contents, "PlayersContainer");
+                    if (!P.isAlive(container)) continue;
+                    for (let j = 0; j < Math.min(12, container.GetChildCount()); j++) {
+                        const player = container.GetChild(j);
+                        if (P.isAlive(player)) out.push(player);
                     }
                 }
                 return out;
             }
-
-            // ── Escape menu entry scan (BFS matching paneltype) ──
-            // "CitadelHudEscapeMenu" is the panel TYPE; the id is "EscapeMenu"
-            // (hud.xml:469, vanilla hud.xml:322). FindChildTraverse matches on id, so
-            // the old lookup could never hit — a guaranteed full-subtree walk on every
-            // call, which scripts/audit_panel_ids.js flags as an unreachable id.
-            //
-            // Narrowing to the escape menu is only an optimisation for the PlayersList
-            // search below, so the fallback to root is kept: an id that fails to resolve
-            // should cost us the wider search, not the feature.
-            function _getPlayersList(root) {
-                var esc = null; try { esc = root.FindChildTraverse("EscapeMenu"); } catch(e) {}
-                var start = _valid(esc) ? esc : root;
-                try { return start.FindChildTraverse("PlayersList"); } catch(e) { return null; }
-            }
-            function _findAllEntries(root) {
-                var out = [], playersList = _getPlayersList(root);
-                if (!_valid(playersList)) return out;
-                var q = [];
-                try { for (var i = 0; i < playersList.GetChildCount() && i < 200; i++) q.push(playersList.GetChild(i)); } catch(e) {}
-                for (var h = 0; h < q.length && h < 2000; h++) {
-                    var p = q[h];
-                    try { if (p.paneltype === "CitadelPlayersListEntry") { out.push(p); continue; } } catch(e) {}
-                    try { for (var j = 0; j < p.GetChildCount() && q.length < 2000; j++) q.push(p.GetChild(j)); } catch(e) {}
+            function escapeRows() {
+                const escape = escapeResolver.resolve(root);
+                const list = listResolver.resolve(P.isAlive(escape) ? escape : root);
+                if (!P.isAlive(list)) return [];
+                const queue = [], out = [];
+                for (let i = 0; i < Math.min(200, list.GetChildCount()); i++) queue.push(list.GetChild(i));
+                for (let i = 0; i < queue.length && i < 2000; i++) {
+                    const panel = queue[i];
+                    if (!P.isAlive(panel)) continue;
+                    if (panel.paneltype === "CitadelPlayersListEntry") { out.push(panel); continue; }
+                    for (let j = 0; j < panel.GetChildCount() && queue.length < 2000; j++) queue.push(panel.GetChild(j));
                 }
                 return out;
             }
-            function _readClass(panel, cls) {
-                var list = panel.FindChildrenWithClassTraverse ? panel.FindChildrenWithClassTraverse(cls) : [];
-                if (list && list.length > 0) { try { return String(list[0].text || "").trim(); } catch(e) {} }
+            function reconcile(records, sources, kind) {
+                const current = new Set(sources);
+                for (const [source, record] of records) if (!current.has(source)) {
+                    if (probe?.record === record) abortProbe();
+                    releaseRecord(record); records.delete(source);
+                }
+                for (const source of sources) {
+                    if (!records.has(source)) records.set(source, makeRecord(source, kind));
+                    refreshRecord(records.get(source));
+                }
+            }
+
+            function clearPublication(target = doc) {
+                if (!P.isAlive(target)) return;
+                for (const [list, prefix] of [["qol_sr_ranked_heroes", "qol_sr_rank_"], ["qol_sr_ranked_names", "qol_sr_rankp_"]]) {
+                    for (const key of attr(target, list).split("|")) if (key) writeAttr(target, prefix + key, "");
+                    writeAttr(target, list, "");
+                }
+            }
+            function publishRanks() {
+                const heroes = new Map(), names = new Map();
+                function add(map, key, account) {
+                    if (!key) return;
+                    if (!map.has(key)) map.set(key, account);
+                    else if (map.get(key) !== account) map.set(key, "");
+                }
+                for (const record of rows.values()) if (record.account) {
+                    add(heroes, record.identity.hero.toLowerCase(), record.account);
+                    add(names, nameKey(record.identity.name), record.account);
+                }
+                for (const [list, prefix, values] of [["qol_sr_ranked_heroes", "qol_sr_rank_", heroes], ["qol_sr_ranked_names", "qol_sr_rankp_", names]]) {
+                    for (const key of attr(doc, list).split("|")) if (key && !values.has(key)) writeAttr(doc, prefix + key, "");
+                    for (const [key, account] of values) writeAttr(doc, prefix + key, account);
+                    writeAttr(doc, list, Array.from(values.keys()).join("|"));
+                }
+            }
+            function dismissCard() {
+                try { if (typeof DismissAllContextMenus === "function") DismissAllContextMenus(); else $.DispatchEvent("DismissAllContextMenus"); } catch (_) {}
+                try { if (typeof DropInputFocus === "function") DropInputFocus(); else $.DispatchEvent("DropInputFocus"); } catch (_) {}
+            }
+            function cancelDeferred() { if (deferred) { deferred.stop(); deferred = null; } }
+            function clearProbeAttributes(target = doc) {
+                for (const key of ["qol_sr_fill_token", "qol_sr_probe_token", "qol_sr_probe_name", "qol_sr_probe_hero", "qol_sr_probe_account", "qol_sr_probe_result_token"]) writeAttr(target, key, "");
+            }
+            function abortProbe() {
+                cancelDeferred();
+                const active = !!probe;
+                probe = null;
+                clearProbeAttributes();
+                if (active) dismissCard();
+            }
+            function defer(callback, seconds) {
+                cancelDeferred();
+                const activeLifecycle = lifecycle;
+                deferred = S.scheduleOnce(() => {
+                    deferred = null;
+                    if (enabled && lifecycle === activeLifecycle) callback();
+                }, seconds, ctx.id);
+            }
+            function isOpen() {
+                const hud = P.findHud(root);
+                return !!(hud?.BHasClass("ShowEscapeMenu") || root?.BHasClass("ShowEscapeMenu"));
+            }
+            function isHideout() {
+                const hud = P.findHud(root);
+                return [hud, root].some(panel => P.isAlive(panel) && ["InHideout", "inHideoutIntro", "connectedToHideout"].some(name => panel.BHasClass(name)));
+            }
+            function correlatedFallback(token) {
+                const labels = U.FindPanelsByClass(doc, "HiddenAccountID");
+                for (let i = 0; i < Math.min(200, labels.length); i++) {
+                    let card = labels[i];
+                    for (let depth = 0; depth < 24 && P.isAlive(card); depth++, card = parent(card)) {
+                        if (card.paneltype !== "CitadelProfileCard") continue;
+                        if (attr(card, "qol_sr_card_probe_token") === token) {
+                            // Canonical binding, including its blank state, wins.
+                            const canonical = P.findTraverse(card, "QOLProfileCardAccountID");
+                            return U.ParseAccountId(text(P.isAlive(canonical) ? canonical : labels[i]));
+                        }
+                        break;
+                    }
+                }
                 return "";
             }
-            function _getAccountIdLabel(entry) {
-                var labels = entry.FindChildrenWithClassTraverse ? entry.FindChildrenWithClassTraverse("PlayerAccountHidden") : [];
-                return (labels && labels.length > 0) ? labels[0] : null;
+            function finishProbe(account, failed) {
+                const record = probe.record;
+                record.account = account; record.failed = failed;
+                abortProbe();
+                render(record, true); publishRanks();
+                defer(startNextProbe, 0.1);
             }
-            function _hasAccountId(entry) {
-                var label = _getAccountIdLabel(entry);
-                if (!_valid(label)) return true;
-                try { return String(label.text || "").trim().length > 0; } catch(e) { return true; }
+            function pollProbe() {
+                if (!probe) return;
+                const identity = readIdentity(probe.record);
+                if (!isOpen() || isHideout() || !rows.has(probe.record.source) ||
+                    !belongs(probe.record.source, root) || !P.isAlive(probe.record.source) ||
+                    identity.name !== probe.name || identity.hero !== probe.hero || attr(doc, "qol_sr_probe_token") !== probe.token) {
+                    abortProbe(); return;
+                }
+                probe.attempt++;
+                if (U.PerfNowMs() - probe.started > 2000 || probe.attempt > 20) { finishProbe("", true); return; }
+                const account = attr(doc, "qol_sr_probe_result_token") === probe.token ? U.ParseAccountId(attr(doc, "qol_sr_probe_account")) : "";
+                const result = account || correlatedFallback(probe.token);
+                if (result) { finishProbe(result, false); return; }
+                defer(pollProbe, 0.1);
             }
-            function _findUnfilledRow(root) {
-                var entries = _findAllEntries(root);
-                for (var i = 0; i < entries.length; i++) { if (!_hasAccountId(entries[i])) return entries[i]; }
-                return null;
+            function startNextProbe() {
+                if (probe || !enabled || !isOpen() || isHideout()) return;
+                const record = Array.from(rows.values()).find(row => !row.account && !row.failed && P.isAlive(row.accountLabel) && row.identity.name);
+                if (!record) return;
+                const token = generation + ":" + lifecycle + ":" + (++probeSerial);
+                probe = { record, token, name: record.identity.name, hero: record.identity.hero, attempt: 0, started: U.PerfNowMs() };
+                writeAttr(doc, "qol_sr_fill_token", token); writeAttr(doc, "qol_sr_probe_token", token);
+                writeAttr(doc, "qol_sr_probe_name", probe.name); writeAttr(doc, "qol_sr_probe_hero", probe.hero);
+                writeAttr(doc, "qol_sr_probe_account", ""); writeAttr(doc, "qol_sr_probe_result_token", "");
+                dismissCard();
+                try { $.DispatchEvent("Activated", P.findTraverse(record.source, "MainContents") || record.source, "mouse"); }
+                catch (_) { finishProbe("", true); return; }
+                defer(pollProbe, 0.1);
             }
-            function _findMainContents(entry) {
-                try { var mc = entry.FindChildTraverse("MainContents"); if (_valid(mc)) return mc; } catch(e) {}
-                try {
-                    var cc = entry.GetChildCount ? entry.GetChildCount() : 0;
-                    for (var i = 0; i < cc && i < 50; i++) {
-                        var c = entry.GetChild(i); if (c.id === "MainContents") return c;
-                        try {
-                            var cc2 = c.GetChildCount ? c.GetChildCount() : 0;
-                            for (var j = 0; j < cc2 && j < 50; j++) { var g = c.GetChild(j); if (g.id === "MainContents") return g; }
-                        } catch(e) {}
+            function resetGeneration() {
+                abortProbe(); clearPublication();
+                generation = String((parseInt(attr(doc, "qol_sr_generation", "0"), 10) || 0) + 1);
+                writeAttr(doc, "qol_sr_generation", generation);
+                for (const record of [...rows.values(), ...players.values()]) {
+                    clearPresentation(record); record.account = ""; record.failed = false; record.nextLookup = 0; record.idle = 0;
+                }
+            }
+            function update() {
+                if (!enabled || !model) return;
+                const currentRoot = $.GetContextPanel(), currentDoc = documentRoot(currentRoot);
+                if (currentRoot !== root || currentDoc !== doc) {
+                    abortProbe(); clearPublication();
+                    for (const record of [...rows.values(), ...players.values()]) releaseRecord(record);
+                    rows.clear(); players.clear(); P.setClass(root, "HideShowRankTopBar", false);
+                    root = currentRoot; doc = currentDoc; resetGeneration();
+                    scoreboardOpen = false; hideout = false;
+                }
+                if (!P.isAlive(root) || !P.isAlive(doc)) return;
+                P.setClass(root, "HideShowRankTopBar", !model.topbar);
+                const inHideout = isHideout();
+                if (inHideout && !hideout) resetGeneration();
+                hideout = inHideout;
+                writeAttr(doc, "qol_sr_hideout", inHideout ? "1" : "0");
+                if (inHideout) { scoreboardOpen = false; return; }
+                reconcile(players, topPlayers(), "topbar");
+                const open = isOpen();
+                if (open) {
+                    reconcile(rows, escapeRows(), "row");
+                    publishRanks();
+                    for (const record of rows.values()) render(record, true);
+                    const pending = Array.from(rows.values()).some(record => !record.account && !record.failed && P.isAlive(record.accountLabel) && record.identity.name);
+                    if (pending && !probe && !deferred) defer(startNextProbe, scoreboardOpen ? 0.1 : 0.2);
+                } else if (probe || deferred) abortProbe();
+                scoreboardOpen = open;
+                for (const record of players.values()) {
+                    const now = U.PerfNowMs();
+                    if (model.topbar && now >= record.nextLookup) {
+                        const account = U.ParseAccountId(attr(doc, "qol_sr_rank_" + record.identity.hero.toLowerCase())) ||
+                            U.ParseAccountId(attr(doc, "qol_sr_rankp_" + nameKey(record.identity.name)));
+                        record.idle = account === record.account ? record.idle + 1 : 0;
+                        record.account = account;
+                        record.nextLookup = now + (record.idle >= 3 ? 10000 : 3000);
                     }
-                } catch(e) {}
-                return null;
-            }
-            function _readAccountIdSet(root) {
-                var list = root.FindChildrenWithClassTraverse ? (root.FindChildrenWithClassTraverse("HiddenAccountID") || []) : [];
-                var out = [];
-                for (var i = 0; i < list.length; i++) {
-                    var raw = ""; try { raw = String(list[i].text || "").replace(/[^0-9]/g, ""); } catch(e) {}
-                    if (raw.length >= 1 && raw.length <= 10) out.push(raw);
-                }
-                return out;
-            }
-            function _dismissProfileCard() {
-                try { if (typeof DismissAllContextMenus === "function") DismissAllContextMenus(); else if ($.DispatchEvent) $.DispatchEvent("DismissAllContextMenus"); } catch(e) {}
-                try { if (typeof DropInputFocus === "function") DropInputFocus(); else if ($.DispatchEvent) $.DispatchEvent("DropInputFocus"); } catch(e) {}
-            }
-
-            // ── FillRow + PollForResult — click profile card, detect account ID ──
-            function _fillRow(root, entry, onDone) {
-                var docRoot = _docRoot(root);
-                var lifecycleToken = _lifecycleToken;
-                var activeFillToken = _readAttr(docRoot, "qol_sr_fill_token", "");
-                var name = _readClass(entry, "PlayerName");
-                if (!name) { onDone(); return; }
-                var heroName = _readClass(entry, "PlayerHeroHidden");
-                var beforeIds = _readAccountIdSet(root);
-                _setAttr(docRoot, "qol_sr_probe_name", name);
-                _setAttr(docRoot, "qol_sr_probe_hero", heroName);
-                _setAttr(docRoot, "qol_sr_probe_account", "");
-                _dismissProfileCard();
-                var mc = _findMainContents(entry);
-                var target = _valid(mc) ? mc : entry;
-                try { $.DispatchEvent("Activated", target, "mouse"); } catch(e) {
-                    var activateFailLabel = _getAccountIdLabel(entry);
-                    if (_valid(activateFailLabel)) { try { activateFailLabel.text = "-"; } catch(eLabel) {} }
-                    _setAttr(docRoot, "qol_sr_probe_name", ""); _setAttr(docRoot, "qol_sr_probe_hero", ""); _setAttr(docRoot, "qol_sr_probe_account", "");
-                    _dismissProfileCard();
-                    onDone(); return;
-                }
-                var t0 = _nowMs();
-                function _poll(attempt) {
-                    if (lifecycleToken !== _lifecycleToken || !_wasEnabled) return;
-                    if (!_isEscapeMenuOpen(root)) {
-                        _setAttr(docRoot, "qol_sr_probe_name", ""); _setAttr(docRoot, "qol_sr_probe_hero", ""); _setAttr(docRoot, "qol_sr_probe_account", "");
-                        if (_readAttr(docRoot, "qol_sr_fill_token", "") === activeFillToken) _setAttr(docRoot, "qol_sr_fill_token", "");
-                        _dismissProfileCard();
-                        return;
-                    }
-                    var elapsed = _nowMs() - t0;
-                    if (elapsed > 2000 || attempt > 20) {
-                        var timeoutLabel = _getAccountIdLabel(entry);
-                        if (_valid(timeoutLabel)) { try { timeoutLabel.text = "-"; } catch(eLabel) {} }
-                        _setAttr(docRoot, "qol_sr_probe_name", ""); _setAttr(docRoot, "qol_sr_probe_hero", ""); _setAttr(docRoot, "qol_sr_probe_account", "");
-                        _dismissProfileCard(); onDone(); return;
-                    }
-                    // Abort if another FillRow started (probe name changed)
-                    if (_readAttr(docRoot, "qol_sr_probe_name", "") !== name) { _dismissProfileCard(); onDone(); return; }
-                    // The profile-card onload bridge publishes the exact account
-                    // ID without a HUD traversal. Keep the set-difference scan as
-                    // a fallback for Panorama builds where synthetic activation
-                    // does not fire that onload callback.
-                    var result = String(_readAttr(docRoot, "qol_sr_probe_account", "") || "").replace(/[^0-9]/g, "");
-                    if (result.length < 1 || result.length > 10) result = "";
-                    if (!result) {
-                        var afterIds = _readAccountIdSet(root);
-                        for (var ai = 0; ai < afterIds.length && !result; ai++) {
-                            var isNew = true;
-                            for (var bi = 0; bi < beforeIds.length; bi++) {
-                                if (afterIds[ai] === beforeIds[bi]) { isNew = false; break; }
-                            }
-                            if (isNew) result = afterIds[ai];
-                        }
-                    }
-                    if (result) {
-                        _setAttr(docRoot, "qol_sr_probe_name", ""); _setAttr(docRoot, "qol_sr_probe_hero", ""); _setAttr(docRoot, "qol_sr_probe_account", "");
-                        _dismissProfileCard();
-                        var overlay = entry.FindChildTraverse ? entry.FindChildTraverse("RankPredictionBadgeOverlay") : null;
-                        if (_valid(overlay)) {
-                            try { overlay.SetImage(API_URL + result + "/rank-predict/image?format=webp&size=small"); } catch(e) {}
-                        }
-                        var label = _getAccountIdLabel(entry);
-                        if (_valid(label)) { try { label.text = result; } catch(e) {} }
-                        if (heroName) {
-                            var key = "qol_sr_rank_" + heroName.toLowerCase();
-                            _setAttr(docRoot, key, result);
-                            var published = _readAttr(docRoot, "qol_sr_ranked_heroes", "");
-                            var heroes = published ? published.split("|") : [];
-                            if (heroes.indexOf(heroName.toLowerCase()) === -1) {
-                                heroes.push(heroName.toLowerCase());
-                                _setAttr(docRoot, "qol_sr_ranked_heroes", heroes.join("|"));
-                            }
-                        }
-                        // Also publish under the PLAYER name, as a second key the top bar
-                        // can look itself up by.
-                        //
-                        // The top bar has no way to discover an account id on its own — it
-                        // relies entirely on this publication and looks it up by the hero
-                        // name it reads from its own .HeroNameHidden label. Reported
-                        // in-game 2026-08-21: ranks appear in the escape menu and not in
-                        // the top bar, and the Panorama debugger showed that label holding
-                        // an empty string. When it cannot be read, that single key is a
-                        // dead end and no top bar badge can ever appear.
-                        //
-                        // Player names demonstrably ARE readable on top bar player panels:
-                        // ql_nicknames reads .PlayerName there and renders it, which is
-                        // visible on screen. Both sides carry `text="{s:player_name}"`
-                        // (citadel_hud_top_bar_player.xml:94, players_list_entry.xml), so
-                        // the two spellings agree.
-                        //
-                        // Additive on purpose — the hero key still works where it worked.
-                        //
-                        // The name namespace is flat and last-writer-wins, so a duplicate
-                        // display name would silently point two players at one account.
-                        // Names are not unique: bots share them routinely and Steam allows
-                        // it. A wrong badge is worse than no badge because it is
-                        // indistinguishable from a correct one, so an ambiguous name has
-                        // its key CLEARED rather than overwritten and both players fall
-                        // back to the hero key. That matters exactly when the hero label
-                        // reads empty, which is the case this player-name path exists for.
-                        if (name) {
-                            var nameLower = _rankNameKeyPart(name);
-                            var nameKey = "qol_sr_rankp_" + nameLower;
-                            var publishedNames = _readAttr(docRoot, "qol_sr_ranked_names", "");
-                            var names = publishedNames ? publishedNames.split(RANK_NAME_SEP) : [];
-                            var seenBefore = names.indexOf(nameLower) !== -1;
-                            var priorId = seenBefore ? _readAttr(docRoot, nameKey, "") : "";
-                            if (seenBefore && priorId && priorId !== result) {
-                                _setAttr(docRoot, nameKey, "");
-                            } else {
-                                _setAttr(docRoot, nameKey, result);
-                                if (!seenBefore) {
-                                    names.push(nameLower);
-                                    _setAttr(docRoot, "qol_sr_ranked_names", names.join(RANK_NAME_SEP));
-                                }
-                            }
-                        }
-                        _badgeVisible(overlay, true);
-                        onDone(); return;
-                    }
-                    // A 30ms full-HUD class traversal caused bursty work while
-                    // filling the scoreboard. 100ms keeps the same 2s timeout
-                    // while bounding each row to at most 20 fallback scans.
-                    $.Schedule(0.10, function() { _poll(attempt + 1); });
-                }
-                $.Schedule(0.10, function() { _poll(1); });
-            }
-
-            // ── FillLoop — scan escape menu, fill one row per tick ──
-            function _clearPublishedRanks(root) {
-                var docRoot = _docRoot(root);
-                var published = _readAttr(docRoot, "qol_sr_ranked_heroes", "");
-                if (published) {
-                    var heroes = published.split("|");
-                    for (var i = 0; i < heroes.length; i++) { if (heroes[i]) _setAttr(docRoot, "qol_sr_rank_" + heroes[i], ""); }
-                    _setAttr(docRoot, "qol_sr_ranked_heroes", "");
-                }
-                // Player-name keys are cleared on the same trigger. Missing this would
-                // leak a previous match's ranks into the next one, which is worse than
-                // showing none: a badge attached to the wrong player.
-                //
-                // The list holds names already escaped by _rankNameKeyPart, so splitting
-                // on the separator is safe and each entry is the exact key that was
-                // written — no re-escaping here, or a name containing "|" or "%" would be
-                // double-encoded and its key missed, which is the leak this loop exists
-                // to prevent.
-                var publishedNames = _readAttr(docRoot, "qol_sr_ranked_names", "");
-                if (publishedNames) {
-                    var names = publishedNames.split(RANK_NAME_SEP);
-                    for (var n = 0; n < names.length; n++) { if (names[n]) _setAttr(docRoot, "qol_sr_rankp_" + names[n], ""); }
-                    _setAttr(docRoot, "qol_sr_ranked_names", "");
+                    render(record, model.topbar);
                 }
             }
-            function _clearAllAccountIds(root) {
-                var docRoot = _docRoot(root);
-                var entries = _findAllEntries(root);
-                for (var i = 0; i < entries.length; i++) {
-                    var label = _getAccountIdLabel(entries[i]);
-                    if (_valid(label)) { try { label.text = ""; } catch(e) {} }
-                    var overlay = entries[i].FindChildTraverse ? entries[i].FindChildTraverse("RankPredictionBadgeOverlay") : null;
-                    if (_valid(overlay)) { try { overlay.SetImage(""); } catch(e) {} _badgeVisible(overlay, false); }
-                }
-                _clearPublishedRanks(root);
-                var gen = parseInt(_readAttr(docRoot, "qol_sr_generation", "0"), 10) || 0;
-                _setAttr(docRoot, "qol_sr_generation", String(gen + 1));
+            function refreshSettings() {
+                model = { topbar: Number(ctx.config.view().SHOW_RANK_TOPBAR) === 1 };
+                for (const record of players.values()) record.nextLookup = 0;
+                update();
             }
-            function _isEscapeMenuOpen(root) {
-                var h = _hudPanel(root);
-                return _hasClass(h, "ShowEscapeMenu") || _hasClass(root, "ShowEscapeMenu");
-            }
-            function _fillLoop(root, token) {
-                var docRoot = _docRoot(root);
-                if (!_wasEnabled || !_valid(root) || _readAttr(docRoot, "qol_sr_fill_token", "") !== token) return;
-                if (_isInHideout(root)) {
-                    _setAttr(docRoot, "qol_sr_fill_token", "");
-                    return;
-                }
-                _setAttr(docRoot, "qol_sr_hideout", "0");
-                if (!_isEscapeMenuOpen(root)) {
-                    _setAttr(docRoot, "qol_sr_fill_token", "");
-                    return;
-                }
-                var genNow = String(_readAttr(docRoot, "qol_sr_generation", ""));
-                if (_stateGet("showRankEscapeDone", "") === genNow) {
-                    _setAttr(docRoot, "qol_sr_fill_token", "");
-                    return;
-                }
-                var row = _findUnfilledRow(root);
-                if (!row) {
-                    _stateSet("showRankEscapeDone", genNow);
-                    var dismissLifecycleToken = _lifecycleToken;
-                    $.Schedule(0.5, function() {
-                        if (dismissLifecycleToken === _lifecycleToken && _wasEnabled) {
-                            _dismissProfileCard();
-                        }
-                    });
-                    _setAttr(docRoot, "qol_sr_fill_token", "");
-                    return;
-                }
-                _fillRow(root, row, function() { $.Schedule(0.1, function() { _fillLoop(root, token); }); });
-            }
-            function _ensureFillLoopRunning(root) {
-                var docRoot = _docRoot(root);
-                var token = _readAttr(docRoot, "qol_sr_fill_token", "");
-                if (token) return;
-                var genNow = String(_readAttr(docRoot, "qol_sr_generation", ""));
-                if (_stateGet("showRankEscapeDone", "") === genNow) return;
-                _fillToken = (_fillToken || 0) + 1;
-                var newToken = String(_lifecycleToken) + "_" + String(_fillToken);
-                _setAttr(docRoot, "qol_sr_fill_token", newToken);
-                $.Schedule(0.2, function() { _fillLoop(root, newToken); });
-            }
-
-            // ── Top bar player init (per-player polling, generation-aware) ──
-            // qol_sr_generation only ever lives on the document root. Callers hand
-            // us either the HUD context panel or an already-resolved doc root, so
-            // resolve it here instead of trusting the argument: comparing a doc-root
-            // generation against the HUD panel (which has no such attribute, so it
-            // falls back to "0") made _isTopBarInit always report false, so every
-            // player was re-initialised on every 0.5s tick and each fresh polling
-            // chain wiped the badge image that the previous one had just loaded.
-            function _generation(anyPanel) {
-                return _readAttr(_docRoot(anyPanel), "qol_sr_generation", "0");
-            }
-            function _isTopBarInit(player) {
-                try { var s = player.GetAttributeString("_qol_sr_init", ""); return !!s && s === _generation(player); } catch(e) { return false; }
-            }
-            function _markTopBarInit(player) {
-                try { player.SetAttributeString("_qol_sr_init", _generation(player)); } catch(e) {}
-            }
-            function _initTopBarPlayer(player) {
-                var root = _docRoot(player); if (!_valid(root)) return;
-                _markTopBarInit(player);
-                var initGeneration = _generation(player);
-                var lifecycleToken = _lifecycleToken;
-                // Seed _lastGen with the generation we were created for. Starting it
-                // empty made the very first poll take the "generation changed" branch,
-                // clearing the account label and badge and stalling 2s for nothing.
-                var _lastId = "", _lastGen = initGeneration, _idleCount = 0;
-                function _tryLoad() {
-                    if (!_valid(player) || lifecycleToken !== _lifecycleToken || !_wasEnabled) return;
-                    if (Number(ctx.config.get("SHOW_RANK_TOPBAR")) !== 1) return;
-                    try { if (player.GetAttributeString("_qol_sr_init", "") !== initGeneration) return; } catch(eMarker) { return; }
-                    var gen = _generation(player);
-                    if (gen !== _lastGen) {
-                        _lastGen = gen;
-                        var ov = player.FindChildTraverse ? player.FindChildTraverse("RankPredictionBadgeTopBarOverlay") : null;
-                        if (_valid(ov)) { try { ov.SetImage(""); } catch(e) {} }
-                        var al = _findClass(player, "PlayerAccountHiddenTopBar");
-                        if (_valid(al)) { try { al.text = ""; } catch(e) {} }
-                        _lastId = ""; _idleCount = 0;
-                        $.Schedule(2.0, _tryLoad); return;
-                    }
-                    var acctLabel = _findClass(player, "PlayerAccountHiddenTopBar");
-                    var accountId = "";
-                    if (_valid(acctLabel)) { try { accountId = String(acctLabel.text || "").trim(); } catch(e) {} }
-                    if (!accountId) {
-                        var heroName = _readTopBarHeroName(player);
-                        if (heroName) {
-                            var lookupKey = "qol_sr_rank_" + heroName.toLowerCase();
-                            accountId = _readAttr(root, lookupKey, "");
-                        }
-                        // Fall back to the player name. The hero label can read empty on
-                        // top bar panels (seen in the debugger, 2026-08-21), and when it
-                        // does the hero key is a dead end — which is exactly the reported
-                        // symptom of ranks showing in the escape menu but not the top bar.
-                        // The player name is readable here; ql_nicknames renders it from
-                        // the same panel.
-                        if (!accountId) {
-                            var playerName = _readTopBarPlayerName(player);
-                            if (playerName) {
-                                accountId = _readAttr(root, "qol_sr_rankp_" + _rankNameKeyPart(playerName), "");
-                            }
-                        }
-                        if (accountId && _valid(acctLabel)) { try { acctLabel.text = accountId; } catch(e) {} }
-                    }
-                    if (accountId === _lastId) { _idleCount++; } else { _idleCount = 0; }
-                    if (!accountId && _lastId) {
-                        var co = player.FindChildTraverse ? player.FindChildTraverse("RankPredictionBadgeTopBarOverlay") : null;
-                        if (_valid(co)) { try { co.SetImage(""); } catch(e) {} }
-                        if (_valid(acctLabel)) { try { acctLabel.text = ""; } catch(e) {} }
-                        _lastId = "";
-                    }
-                    if (accountId && accountId !== _lastId) {
-                        _lastId = accountId;
-                        var lo = player.FindChildTraverse ? player.FindChildTraverse("RankPredictionBadgeTopBarOverlay") : null;
-                        if (_valid(lo)) {
-                            try { lo.SetImage(API_URL + accountId + "/rank-predict/image?format=webp&size=small"); } catch(e) {}
-                            var showTopBar = Number(ctx.config.get("SHOW_RANK_TOPBAR")) === 1;
-                            if (showTopBar) {
-                                var base = player.FindChildTraverse ? player.FindChildTraverse("RankPredictionBadgeTopBar") : null;
-                                _badgeVisible(base, true); _badgeVisible(lo, true);
-                            }
-                        }
-                    }
-                    $.Schedule(_idleCount >= 3 ? 10.0 : 3.0, _tryLoad);
-                }
-                $.Schedule(0.3, _tryLoad);
-            }
-            // A player with no hero name yet is never marked initialised, so this pass
-            // retried it on every 0.5s tick with no backoff — and _readTopBarHeroName
-            // costs one or two class traversals of the player's subtree (two when
-            // HeroNameHidden is absent and it falls back to HeroName). With 12 nameless
-            // players that is ~24 class traversals a second, against ~0.6 once the names
-            // are in, purely to re-learn that nothing has changed.
-            //
-            // So back off when a whole pass achieves nothing, and drop back to full
-            // cadence the moment one succeeds. Capped low: names arrive early in a match
-            // and a badge appearing up to ~2s late is not worth a subtler scheme.
-            var _initBackoffUntilMs = 0;
-            var _initIdlePasses = 0;
-            var INIT_BACKOFF_STEP_MS = 250;
-            var INIT_BACKOFF_MAX_MS = 2000;
-
-            function _resetTopBarInitBackoff() {
-                _initBackoffUntilMs = 0;
-                _initIdlePasses = 0;
-            }
-
-            function _ensureTopBarInit(root) {
-                if (!_valid(root)) return;
-                var now = _nowMs();
-                if (_initBackoffUntilMs && now < _initBackoffUntilMs) return;
-                var players = _topBarPlayers(root);
-                var initialisedAny = false;
-                var pendingAny = false;
-                for (var i = 0; i < players.length; i++) {
-                    if (_isTopBarInit(players[i])) continue;
-                    pendingAny = true;
-                    // Initialise on EITHER identity. Gating on the hero name alone meant
-                    // a panel whose .HeroNameHidden reads empty was never initialised, so
-                    // its poll chain never started and its badge could never appear — the
-                    // reported "ranks in the escape menu but not the top bar". The chain
-                    // itself re-reads both identities on every attempt, so starting it
-                    // with only a player name is safe.
-                    if (!_readTopBarHeroName(players[i]) && !_readTopBarPlayerName(players[i])) continue;
-                    _initTopBarPlayer(players[i]);
-                    initialisedAny = true;
-                }
-                if (initialisedAny || !pendingAny) {
-                    _resetTopBarInitBackoff();
-                    return;
-                }
-                _initIdlePasses++;
-                var wait = _initIdlePasses * INIT_BACKOFF_STEP_MS;
-                if (wait > INIT_BACKOFF_MAX_MS) wait = INIT_BACKOFF_MAX_MS;
-                _initBackoffUntilMs = now + wait;
-            }
-
-            function _clearTopBarInitMarkers(root) {
-                _resetTopBarInitBackoff();   // markers cleared means re-init is expected now
-                var players = _topBarPlayers(root);
-                for (var i = 0; i < players.length; i++) {
-                    try { players[i].SetAttributeString("_qol_sr_init", ""); } catch(eMarker) {}
-                }
-            }
-
-            // ── Visibility apply ──
-            function _applyTopBarVisibility(root, visible) {
-                try {
-                    var players = _topBarPlayers(root);
-                    for (var i = 0; i < players.length; i++) {
-                        var base = players[i].FindChildTraverse ? players[i].FindChildTraverse("RankPredictionBadgeTopBar") : null;
-                        var ov = players[i].FindChildTraverse ? players[i].FindChildTraverse("RankPredictionBadgeTopBarOverlay") : null;
-                        _badgeVisible(base, visible); _badgeVisible(ov, visible);
-                    }
-                } catch(e) {}
-            }
-            function _applyPlayerListVisibility(root, visible) {
-                var entries = _findAllEntries(root);
-                for (var i = 0; i < entries.length; i++) {
-                    var base = entries[i].FindChildTraverse ? entries[i].FindChildTraverse("RankPredictionBadge") : null;
-                    var ov = entries[i].FindChildTraverse ? entries[i].FindChildTraverse("RankPredictionBadgeOverlay") : null;
-                    _badgeVisible(base, visible); _badgeVisible(ov, visible);
-                }
-            }
-
-            // ── Cleanup ──
-            function _clearTopBarBadges(root) {
-                try {
-                    var players = _topBarPlayers(root);
-                    for (var i = 0; i < players.length; i++) {
-                        var ov = players[i].FindChildTraverse ? players[i].FindChildTraverse("RankPredictionBadgeTopBarOverlay") : null;
-                        if (_valid(ov)) { try { ov.SetImage(""); } catch(e) {} }
-                        var base = players[i].FindChildTraverse ? players[i].FindChildTraverse("RankPredictionBadgeTopBar") : null;
-                        _badgeVisible(base, false); _badgeVisible(ov, false);
-                        var label = _findClass(players[i], "PlayerAccountHiddenTopBar");
-                        if (_valid(label)) { try { label.text = ""; } catch(e) {} }
-                    }
-                } catch(e) {}
-            }
-            function _clearPlayerListBadges(root) {
-                var entries = _findAllEntries(root);
-                for (var i = 0; i < entries.length; i++) {
-                    var ov = entries[i].FindChildTraverse ? entries[i].FindChildTraverse("RankPredictionBadgeOverlay") : null;
-                    if (_valid(ov)) { try { ov.SetImage(""); } catch(e) {} }
-                    var base = entries[i].FindChildTraverse ? entries[i].FindChildTraverse("RankPredictionBadge") : null;
-                    _badgeVisible(base, false); _badgeVisible(ov, false);
-                    var label = _getAccountIdLabel(entries[i]);
-                    if (_valid(label)) { try { label.text = ""; } catch(e) {} }
-                }
-            }
-
-            // ── Main tick ──
-            function _tick() {
-                try {
-                    var root = $.GetContextPanel(); if (!root) return;
-                    var cfg = ctx.config.view();
-                    if (!_isOn(cfg, "SHOW_RANK")) {
-                        if (_wasEnabled) { _clearTopBarBadges(root); _clearPlayerListBadges(root); _clearPublishedRanks(root); _wasEnabled = false; _stateSet("_showRankEnabled", false); _stateSet("showRankEscapeDone", ""); }
-                        return;
-                    }
-                    _wasEnabled = true; _stateSet("_showRankEnabled", true);
-                    if (_isInHideout(root)) {
-                        if (!_hideoutWasActive) {
-                            _clearAllAccountIds(root);
-                            _stateSet("showRankEscapeDone", "");
-                            _setAttr(_docRoot(root), "qol_sr_fill_token", "");
-                        }
-                        _hideoutWasActive = true;
-                        _scoreboardWasOpen = false;
-                        return;
-                    }
-                    _hideoutWasActive = false;
-                    var showTopBar = _isOn(cfg, "SHOW_RANK_TOPBAR");
-                    if (_topBarWasVisible !== showTopBar) {
-                        // Root-level CSS class gates all top bar badge visibility (showrank.css:58-60)
-                        try { if (showTopBar) root.RemoveClass("HideShowRankTopBar"); else root.AddClass("HideShowRankTopBar"); } catch(e) {}
-                        if (showTopBar) _clearTopBarInitMarkers(root);
-                        _applyTopBarVisibility(root, showTopBar);
-                        _topBarWasVisible = showTopBar;
-                    }
-                    if (showTopBar) _ensureTopBarInit(root);
-                    _stateSet("_showRankTopBarVisible", showTopBar);
-                    var scoreboardOpen = _isEscapeMenuOpen(root);
-                    if (scoreboardOpen) {
-                        if (!_scoreboardWasOpen) _applyPlayerListVisibility(root, true);
-                        _ensureFillLoopRunning(root);
-                    }
-                    _scoreboardWasOpen = scoreboardOpen;
-                } catch(e) {
-                    if (typeof QOL !== "undefined" && QOL.core && QOL.core.Logger) { QOL.core.Logger.logError("ql_showrank", "_tick: " + (e.message || e)); }
-                    throw e;
-                }
-            }
-
             return {
-                onEnable: function() {
-                    _lifecycleToken++;
-                    _wasEnabled = false; _fillToken = 0;
-                    _topBarCache = null; _playerContainersCache = null;
-                    _resetTopBarInitBackoff();
-                    _scoreboardWasOpen = false; _topBarWasVisible = null; _hideoutWasActive = false;
-                    var root = $.GetContextPanel();
-                    var docRoot = _docRoot(root);
-                    _setAttr(docRoot, "qol_sr_fill_token", "");
-                    var gen = parseInt(_readAttr(docRoot, "qol_sr_generation", "0"), 10) || 0;
-                    _setAttr(docRoot, "qol_sr_generation", String(gen + 1));
-                    _stateSet("showRankEscapeDone", "");
-                    var S = QOL.core.Scheduler;
-                    _loop = S && S.createPollLoop ? S.createPollLoop(_tick, 0.5, "ql_showrank") : null;
-                },
-                onDisable: function() {
-                    _lifecycleToken++;
-                    if (_loop) { _loop.stop(); _loop = null; }
-                    var root = $.GetContextPanel();
-                    try {
-                        var docRoot = _docRoot(root);
-                        var probeActive = !!_readAttr(docRoot, "qol_sr_probe_name", "");
-                        _setAttr(docRoot, "qol_sr_fill_token", "");
-                        if (probeActive) {
-                            _setAttr(docRoot, "qol_sr_probe_name", "");
-                            _setAttr(docRoot, "qol_sr_probe_hero", "");
-                            _setAttr(docRoot, "qol_sr_probe_account", "");
-                            _dismissProfileCard();
-                        }
-                    } catch(eToken) {}
-                    _clearTopBarBadges(root); _clearPlayerListBadges(root);
-                    try { root.AddClass("HideShowRankTopBar"); } catch(e) {}
-                    _wasEnabled = false; _fillToken = 0;
-                    _scoreboardWasOpen = false; _topBarWasVisible = false; _hideoutWasActive = false;
-                    _stateSet("_showRankEnabled", false); _stateSet("_showRankTopBarVisible", false); _stateSet("showRankEscapeDone", "");
-                },
-                onSettingsChanged: function() {
-                    _tick();
+                onEnable() { enabled = true; lifecycle++; refreshSettings(); loop = S.createPollLoop(update, 0.5, ctx.id); },
+                onSettingsChanged: refreshSettings,
+                onDisable() {
+                    enabled = false; lifecycle++;
+                    if (loop) { loop.stop(); loop = null; }
+                    abortProbe(); clearPublication();
+                    for (const record of [...rows.values(), ...players.values()]) releaseRecord(record);
+                    rows.clear(); players.clear();
+                    P.setClass(root, "HideShowRankTopBar", true);
+                    topResolver.reset(); escapeResolver.reset(); listResolver.reset();
+                    root = null; doc = null; model = null;
                 }
             };
         },
-    test: function(ctx) {
-        try {
-            var root = $.GetContextPanel();
-            var hud = (typeof QOL !== "undefined" && QOL.core && QOL.core.panel && QOL.core.panel.findHud)
-                ? QOL.core.panel.findHud()
-                : (typeof QOL !== "undefined" && QOL.ui && QOL.ui.PanelHelpers && QOL.ui.PanelHelpers.findHud)
-                    ? QOL.ui.PanelHelpers.findHud()
-                    : (root ? root.FindChildTraverse("Hud") : null);
-            if (!hud) return null;  // Skip — not in a match context
-            var topBar = root ? root.FindChildTraverse("TopBar") : null;
-            if (!topBar) return null;  // Skip — TopBar not loaded
-            return { passed: true, name: "ShowRank panels exist", message: "", assertions: [{ passed: true, name: "Hud panel exists" }, { passed: true, name: "TopBar panel exists" }] };
-        } catch(e) { return { passed: false, name: "ShowRank panel check", message: (e && e.message ? e.message : String(e)) }; }
-    }
+        test() {
+            const top = QOL.core.panel.findTraverse($.GetContextPanel(), "TopBar");
+            return top ? { passed: true, name: "ShowRank native TopBar", message: "Observed current source" } : null;
+        }
     });
 })();

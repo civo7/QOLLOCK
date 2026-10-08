@@ -1,79 +1,55 @@
-// ql_feat_showrank_card.js — Profile card account ID bridge for ShowRank
-// Loaded ONLY in profile_card.xml context (CitadelProfileCard onload).
-// Reads the game-populated {i:r:account_id} data binding from the
-// HiddenAccountID label and writes it to the doc-root attribute that
-// FillRow (in the HUD context) polls during escape-menu player-list scanning.
-//
-// Extracted from ql_feat_showrank.js — Phase 10a handler cleanup.
-// Phase 1.7: Replaced silent catch blocks with $.Msg warnings.
-(function() {
-    'use strict';
-
-    var _featureId = "ql_feat_showrank_card";
-
-    function ShowRankCardLoaded() {
-        var card = null;
-        try { card = $.GetContextPanel(); } catch(e) { $.Msg("[QOLLock][WARN][" + _featureId + "] GetContextPanel failed: " + (e && e.message ? e.message : String(e))); }
-        if (!card || !card.FindChildrenWithClassTraverse) return;
-
-        // Read account_id from HiddenAccountID (populated by {i:r:account_id})
-        var accountId = "";
-        var hidden = card.FindChildTraverse ? card.FindChildTraverse("QOLProfileCardAccountID") : null;
-        if (!hidden) {
-            var hiddenList = card.FindChildrenWithClassTraverse("HiddenAccountID") || [];
-            hidden = hiddenList.length > 0 ? hiddenList[0] : null;
+// Loaded only by profile_card.xml. Captures the HUD probe at card creation and
+// publishes the canonical account binding only while that exact request is active.
+(() => {
+    "use strict";
+    const U = QOL_UTILS, alive = U.IsPanelValid;
+    const card = $.GetContextPanel();
+    let doc = card;
+    for (let depth = 0; depth < 80 && alive(doc); depth++) {
+        let next = null;
+        try { next = doc.GetParent(); } catch (_) { break; }
+        if (!alive(next) || next === doc) break;
+        doc = next;
+    }
+    const attr = (panel, key) => U.SafeGetAttribute(panel, key, "");
+    const request = { token: attr(doc, "qol_sr_probe_token"), name: attr(doc, "qol_sr_probe_name"),
+        hero: attr(doc, "qol_sr_probe_hero"), generation: attr(doc, "qol_sr_generation") };
+    let timer = null, attempts = 0, canonicalObserved = false;
+    function currentRequest() {
+        return alive(card) && alive(doc) && !!request.token && !!request.name &&
+            attr(doc, "qol_sr_probe_token") === request.token && attr(doc, "qol_sr_fill_token") === request.token &&
+            attr(doc, "qol_sr_probe_name") === request.name && attr(doc, "qol_sr_probe_hero") === request.hero &&
+            attr(doc, "qol_sr_generation") === request.generation;
+    }
+    if (currentRequest()) U.SafeSetAttribute(card, "qol_sr_card_probe_token", request.token);
+    function accountId() {
+        const canonical = card.FindChildTraverse ? card.FindChildTraverse("QOLProfileCardAccountID") : null;
+        const read = panel => alive(panel) ? U.ParseAccountId(panel.text || "") || U.ParseAccountId(panel.accountid) ||
+            U.ParseAccountId(attr(panel, "accountid")) || U.ParseAccountId(attr(panel, "account_id")) : "";
+        if (alive(canonical)) { canonicalObserved = true; return read(canonical); }
+        if (canonicalObserved) return "";
+        for (const className of ["HiddenAccountID", "AccountID"]) for (const panel of U.FindPanelsByClass(card, className)) {
+            const account = read(panel);
+            if (account) return account;
         }
-        if (hidden) {
-            try {
-                var parsed = (typeof QOL_UTILS !== "undefined" && QOL_UTILS.ParseAccountId)
-                    ? QOL_UTILS.ParseAccountId(hidden.text)
-                    : String(hidden.text || "").replace(/[^0-9]/g, "");
-                if (parsed.length >= 1 && parsed.length <= 10) accountId = parsed;
-            } catch(e) { $.Msg("[QOLLock][WARN][" + _featureId + "] HiddenAccountID read failed: " + (e && e.message ? e.message : String(e))); }
-        }
-
-        // Fallback: AccountID class (may contain [U:1:XXXX] Steam ID format)
-        if (!accountId) {
-            var accList = card.FindChildrenWithClassTraverse("AccountID") || [];
-            for (var i = 0; i < accList.length; i++) {
-                try {
-                    var text = String(accList[i].text || "");
-                    var m = text.match(/\[U:1:(\d+)\]/i);
-                    if (m) { accountId = m[1]; break; }
-                    var digits = (typeof QOL_UTILS !== "undefined" && QOL_UTILS.ParseAccountId)
-                        ? QOL_UTILS.ParseAccountId(text)
-                        : text.replace(/[^0-9]/g, "");
-                    if (digits.length >= 1 && digits.length <= 10) { accountId = digits; break; }
-                } catch(e) { $.Msg("[QOLLock][WARN][" + _featureId + "] AccountID fallback read failed: " + (e && e.message ? e.message : String(e))); }
+        return "";
+    }
+    function publish() {
+        timer = null;
+        if (!currentRequest()) return;
+        try {
+            const account = accountId();
+            if (account) {
+                doc.SetAttributeString("qol_sr_probe_account", account);
+                doc.SetAttributeString("qol_sr_probe_result_token", request.token);
+                return;
             }
-        }
-
-        if (!accountId) return;
-
-        // Walk to doc root so FillRow can poll qol_sr_probe_account
-        var root = card;
-        var guard = 0;
-        while (root && root.GetParent && guard < 64) {
-            var parent = null;
-            try { parent = root.GetParent(); } catch(eParent) { parent = null; }
-            if (!parent || parent === root) break;
-            root = parent;
-            guard++;
-        }
-
-        if (root && root.SetAttributeString) {
-            try { root.SetAttributeString("qol_sr_probe_account", accountId); } catch(e) { $.Msg("[QOLLock][WARN][" + _featureId + "] SetAttributeString failed: " + (e && e.message ? e.message : String(e))); }
-        }
+        } catch (error) { $.Msg("[QOLLock][ShowRankCard] " + (error.message || String(error))); }
+        if (++attempts <= 20) timer = $.Schedule(0.1, publish);
     }
-
-    // Install as global — called by profile_card.xml onload
-    $.ShowRankCardLoaded = ShowRankCardLoaded;
-
-    // Phase 5.1: Self-test — verify the function was defined and exported.
-    try {
-        if (typeof ShowRankCardLoaded !== "function") throw new Error("ShowRankCardLoaded is not a function");
-        if (typeof $.ShowRankCardLoaded !== "function") throw new Error("$.ShowRankCardLoaded not exported");
-    } catch(e) {
-        $.Msg("[QOLLock][ERROR][" + _featureId + "] self-test: " + (e && e.message ? e.message : String(e)));
-    }
+    $.ShowRankCardLoaded = () => {
+        if ($.RefreshStatlockerProfileCard) $.RefreshStatlockerProfileCard();
+        if (timer !== null) { $.CancelScheduled(timer); timer = null; }
+        attempts = 0; publish();
+    };
 })();

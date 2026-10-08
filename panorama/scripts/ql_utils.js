@@ -16,10 +16,14 @@
     }
     exports.IsPanelValid = IsPanelValid;
 
-    // Profile labels may contain punctuation, but account IDs have at most ten digits.
+    // Profile labels may carry Steam account notation or punctuation. The
+    // universe/type prefix in [U:1:<account>] is not part of the account ID.
     function ParseAccountId(value) {
         if (value === undefined || value === null) return "";
-        var digits = String(value).replace(/[^0-9]/g, "");
+        const input = String(value);
+        const steam = input.match(/\[U:1:(\d+)\]/i);
+        if (!steam && /\[[a-z]:/i.test(input)) return "";
+        const digits = steam ? steam[1] : input.replace(/[^0-9]/g, "");
         return digits.length >= 1 && digits.length <= 10 ? digits : "";
     }
     exports.ParseAccountId = ParseAccountId;

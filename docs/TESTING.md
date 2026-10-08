@@ -68,6 +68,11 @@ popups against recycled rows, late purchaser evidence, living native replacement
 shared geometry and partial writes. Native history remains engine-owned;
 expired or recycled-row evidence must not replay an earlier purchase.
 
+`profile_rank_owners.test.js` covers HUD rank/Statlocker owners and independent
+profile/card isolates: current account bindings, roster replacement, duplicate
+names, correlated late callbacks, partial native writes and bounded retries.
+Native card context creation/reuse and image loading remain client checks.
+
 `tests/customize_config_compat.test.js` imports frozen legacy compact codes
 generated with the main codec/schema recorded in the fixture, then checks
 Customize cancellation, Apply and current-format export. It also checks legacy
