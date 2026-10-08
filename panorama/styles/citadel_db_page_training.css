@@ -23,7 +23,7 @@ CitadelTrainingPage
 	horizontal-align: center;
 	margin: 40px;
 	overflow: noclip;
-	width: 1200px;
+	width: 1440px;
 	height: 850px;
 }
 
@@ -201,20 +201,6 @@ Label.unavailableText
 	background-repeat: no-repeat;
 	background-color: none;
 	background-image: url("s2r://panorama/images/ranked/badges/rank10/badge_lg_psd.vtex"), url("s2r://panorama/images/main_menu/background_gothic_jpg.vtex");
-}
-
-#LibraryButton .buttonImage
-{
-	background-size: 100% 125%;
-	background-position: top;
-	background-repeat: no-repeat;
-	background-color: none;
-	background-image: url("s2r://panorama/images/book_images/geist/geist_book_cover_vertical_png.vtex");
-}
-
-#LibraryButton
-{
-	visibility: collapse;
 }
 
 #News .buttonImage
