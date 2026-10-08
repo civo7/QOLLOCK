@@ -38,10 +38,19 @@ tests/customize_catalog.test.js` for the editor subset. Modeled dimensions and
 input events do not establish native rendering or interaction.
 
 `tests/customize_rework.test.js` checks canvas-density conversions, padded AP
-targets, magnet candidates and truthful guides, six alignment actions, delayed
+targets, magnet candidates and truthful guides, alignment actions, delayed
 layout, all three draggable editor windows, actual view toggles and independent
 AP/stamina persistence. `tests/item_mirror_runtime.test.js` retains main's
 Advanced-mode filter, slot, purchase/sale and shop-transition regression.
+
+`feature_contracts.test.js` and `shared_config_owners.test.js` exercise production
+registration, canonical units/defaults, atomic shared-key updates, unchanged-value
+suppression, and failed/retired lifecycle generations. Native and overlay owner
+regressions verify late sources, still-live replacement, owned-property cleanup,
+native animation/content preservation and independent observers. Scaffold tests
+run generated source against the production registry. `minimap_fixed_icon_geometry.test.js`
+drives Size controls and all corner gestures through Base/Alt/Tab preview and the
+scoped renderer geometry; native map click targets/zoom rendering remain client checks.
 
 `tests/customize_config_compat.test.js` imports frozen legacy compact codes
 generated with the main codec/schema recorded in the fixture, then checks

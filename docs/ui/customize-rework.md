@@ -35,6 +35,14 @@ preserve their imported visual values. Separate runtime regressions exercise
 healthbar canvases and Base/Alt/Tab minimap geometry, including fixed-icon mode.
 Historical compact fixtures and JSON imports remain part of the offline gate.
 
+The shared runtime now derives registered settings from the current catalog and
+updates every subscriber of a persisted key atomically. Native and overlay owners
+separate settings models, source discovery, rendering and release; Basic layout
+and reminder audio no longer share style ownership. Fixed-icon minimap sizing
+uses scoped native renderer proportions. Exact coordinates stay visible, and
+obsolete stats docking controls are compatibility-only. See the current
+[manifest pattern](../MANIFEST_STYLE.md) for future changes.
+
 Client acceptance below remains outstanding; source and simulator results cannot
 establish that native input/layout behaves correctly.
 
