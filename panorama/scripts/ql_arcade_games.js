@@ -31,9 +31,10 @@
         openRandom: OpenRandomArcadeModal
     };
     
-const ON_DEATH_ARCADE_REQUEST_ATTR = "QOL_ON_DEATH_ARCADE_REQUEST";
-const ON_DEATH_ARCADE_REQUEST_TOKEN_ATTR = "QOL_ON_DEATH_ARCADE_REQUEST_TOKEN";
-const ON_DEATH_ARCADE_ACTIVE_ATTR = "QOL_ON_DEATH_ARCADE_ACTIVE";
+const ON_DEATH_ARCADE_REQUEST_ATTR = QOL.bridge.channels.onDeathArcadeRequest.attr;
+const ON_DEATH_ARCADE_REQUEST_TOKEN_ATTR = QOL.bridge.channels.onDeathArcadeToken.attr;
+const ON_DEATH_ARCADE_ACTIVE_ATTR = QOL.bridge.channels.onDeathArcadeActive.attr;
+const ON_DEATH_ARCADE_ESCAPE_OWNED_ATTR = QOL.bridge.channels.onDeathArcadeEscapeOwned.attr;
 
 var currentTab = "Support";
 
@@ -3199,11 +3200,10 @@ function BuildOnDeathEscapeMenuTargets() {
 }
 
 function ForceCloseEscapeMenuForOnDeathGames() {
-    var targets = BuildOnDeathEscapeMenuTargets();
-    for (var i = 0; i < targets.length; i++) {
-        var panel = targets[i];
-        if (!panel || !panel.IsValid || !panel.IsValid() || !panel.RemoveClass) continue;
-        try { panel.RemoveClass("ShowEscapeMenu"); } catch(e0) { _WarnLog("settings", "op failed: " + (e0 && e0.message ? e0.message : String(e0 || ""))); }
+    for (const panel of BuildOnDeathEscapeMenuTargets()) {
+        if (!QOL.core.panel.isAlive(panel) || QOL.bridge.readAttr(panel, ON_DEATH_ARCADE_ESCAPE_OWNED_ATTR, "") !== "1") continue;
+        QOL.core.panel.setClass(panel, "ShowEscapeMenu", false);
+        if (!panel.BHasClass("ShowEscapeMenu")) QOL.bridge.writeAttr(panel, ON_DEATH_ARCADE_ESCAPE_OWNED_ATTR, "");
     }
 }
 
@@ -3245,9 +3245,9 @@ function GetOnDeathArcadeBridgeState() {
         token: ""
     };
     if (!root || !root.GetAttributeString) return out;
-    try { out.active = (String(root.GetAttributeString(ON_DEATH_ARCADE_ACTIVE_ATTR, "") || "") === "1"); } catch (e0) { out.active = false; }
-    try { out.gameId = String(root.GetAttributeString(ON_DEATH_ARCADE_REQUEST_ATTR, "") || ""); } catch (e1) { out.gameId = ""; }
-    try { out.token = String(root.GetAttributeString(ON_DEATH_ARCADE_REQUEST_TOKEN_ATTR, "") || ""); } catch (e2) { out.token = ""; }
+    out.active = QOL.bridge.readAttr(root, ON_DEATH_ARCADE_ACTIVE_ATTR, "") === "1";
+    out.gameId = QOL.bridge.readAttr(root, ON_DEATH_ARCADE_REQUEST_ATTR, "");
+    out.token = QOL.bridge.readAttr(root, ON_DEATH_ARCADE_REQUEST_TOKEN_ATTR, "");
     return out;
 }
 

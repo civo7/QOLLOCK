@@ -17,7 +17,7 @@ behavior until its owning implementation has been audited.
   discovery, rendering and release paths.
 - Healthbar variant controllers, independent warning presentation, scoped map
   content/geometry, compass, reload estimates and objective/stat readouts with
-  private lifetime state.
+  private lifetime state; generation-safe on-death launch/menu coordination.
 
 Frozen main-config fixtures preserve all healthbar variants and both minimap
 scale methods. Published versions, compact layouts and persistent defaults stay
@@ -27,7 +27,7 @@ unchanged, apart from the already approved native-origin AP/stamina offsets.
 
 1. Rewrite the remaining legacy HUD owners: shop/quickbuy integration, recent
    purchases, Advanced item mirror, profile/rank/statlocker,
-   translation and on-death launch coordination. Preserve their established
+   and translation. Preserve their established
    source selection, filtering, identity and context boundaries.
 2. Audit already modernized owners for remaining shared mutable bookkeeping,
    duplicate native style writers and missing release paths. Remove obsolete

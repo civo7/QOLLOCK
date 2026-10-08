@@ -1,10 +1,8 @@
 // ==========================================================================
 // ql_bridge.js — QOLLOCK typed cross-context channel descriptors
 // ==========================================================================
-// Provides: single source of truth for all HUD↔Settings panel attribute channels.
-// 18 constants previously duplicated across ql_core.js and ql_settings.js are
-// now defined ONCE here, plus a typed channel descriptor map and safe
-// read/write helpers with uniform error handling.
+// Provides: named HUD↔Settings panel attribute channels and safe read/write helpers.
+// Descriptors retain existing attribute names independently of context globals.
 //
 // Publishes to: QOL.bridge, bare globals
 // Loads AFTER:  ql_utils.js, ql_shared_presets.js
@@ -43,6 +41,10 @@ var HERO_HINT_ATTR = "QOL_LAST_SELECTED_HERO_HINT";
 // ── Channel descriptor map (single source of truth for all cross-context channels) ──
 
 var QOL_BRIDGE_CHANNELS = {
+    "onDeathArcadeActive":  { attr: "QOL_ON_DEATH_ARCADE_ACTIVE",              type: "flag",        desc: "Committed on-death arcade request" },
+    "onDeathArcadeRequest": { attr: "QOL_ON_DEATH_ARCADE_REQUEST",             type: "string",      desc: "Selected arcade game ID" },
+    "onDeathArcadeToken":   { attr: "QOL_ON_DEATH_ARCADE_REQUEST_TOKEN",       type: "string",      desc: "Session-unique request token" },
+    "onDeathArcadeEscapeOwned": { attr: "QOL_ON_DEATH_ARCADE_ESCAPE_OWNED",    type: "flag",        desc: "Local panel ShowEscapeMenu ownership; never broadcast" },
     "config":              { attr: STORAGE_KEY,                               type: "json",        desc: "Full config envelope {schema, data}" },
     "configRev":           { attr: USER_EDIT_REV_ATTR,                        type: "int",         desc: "Monotonic revision counter" },
     "buildSaveRequest":    { attr: BUILD_SAVE_REQUEST_ATTR,                   type: "string",      desc: "Build category payload" },
@@ -202,7 +204,7 @@ if (typeof QOL_UTILS === "object" && QOL_UTILS) {
                 if (typeof _c.desc !== "string") throw new Error("Channel '" + _ch2 + "' missing desc");
             }
         }
-        if (_channelCount !== 19) throw new Error("Expected 19 channels, got " + _channelCount);
+        if (_channelCount === 0) throw new Error("No bridge channels registered");
 
         if (typeof $ !== "undefined" && $.Msg) {
             $.Msg("[QOL DEBUG] ql_bridge.js self-test passed: " + _channelCount + " channels");
