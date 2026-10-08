@@ -311,9 +311,8 @@
                 onSettingsChanged: function () {
                     _tick();
                     var hud = _getHud();
-                    if (hud && QOL.core && QOL.core.hud && QOL.core.hud.applyRootClasses) {
-                        var cfg = ctx.config.view ? ctx.config.view() : ctx.config.all();
-                        QOL.core.hud.applyRootClasses(hud, cfg, _nowMs(), false);
+                    if (hud && QOL.core && QOL.core.hud && QOL.core.hud.refreshRootClasses) {
+                        QOL.core.hud.refreshRootClasses(hud);
                     }
                 }
             };

@@ -101,7 +101,7 @@ test("bottom bar checks its known parent between periodic full-HUD searches", ()
     };
     const cfg = { HUD_BOTTOM_BAR_ENABLED: 1, BOTTOM_BAR_X_OFFSET: 100 };
     const feature = Q.core.FeatureRegistry.getManifest("ql_bottom_bar").create({
-        id: "ql_bottom_bar", config: { all: () => cfg }
+        id: "ql_bottom_bar", config: { view: () => cfg }
     });
     feature.onEnable();
     assert.equal(first.style.x, "100px");
@@ -162,14 +162,17 @@ test("ammo geometry and late text targets survive hideout panel replacement", ()
     assert.equal(text.style.color, Q.core.panel.resolvePaletteColor(3), "selected ammo color survives native rewrites");
     const clip = $.CreatePanel("Panel", hud.root, "clip_status");
     const ring = $.CreatePanel("Panel", clip, "ClipRing");
+    ring.style.transform = "rotateZ(23deg)";
     Q.core.ConfigStore.set("ql_ammo", "AMMO_CLIP_ANGLE", 45);
     hud.clock.advance(600);
-    assert.equal(ring.style.transform, "rotateZ(-45deg)");
+    assert.equal(clip.style.transform, "rotateZ(-45deg)");
+    assert.equal(ring.style.transform, "rotateZ(23deg)", "engine-owned ring geometry is preserved");
     ring.DeleteAsync(0);
     hud.clock.advance(1);
     const newRing = $.CreatePanel("Panel", clip, "ClipRing");
     hud.clock.advance(600);
-    assert.equal(newRing.style.transform, "rotateZ(-45deg)");
+    assert.equal(clip.style.transform, "rotateZ(-45deg)");
+    assert.equal(newRing.style.transform, undefined);
     assert.deepEqual(hud.clock.errors, []);
 });
 

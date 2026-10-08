@@ -1,23 +1,9 @@
-// features/ql_bottom_bar/manifest.js
-// =============================================================================
-// QOLLOCK — Bottom Bar HUD (ability bar and active-item slot geometry)
-// =============================================================================
-// OWNS:        Bottom bar panel styles, active-item slot geometry + currency color wash
-// DOES NOT OWN: Signature/active-item content, purchased items, other HUD panels
-// DEPENDS ON:  QOL.core.FeatureRegistry
-// CONFIG KEYS: HUD_BOTTOM_BAR_ENABLED, BOTTOM_BAR_OPACITY, BOTTOM_BAR_SCALE,
-//              BOTTOM_BAR_X_OFFSET, BOTTOM_BAR_Y_OFFSET, BOTTOM_BAR_WASH_COLOR,
-//              ACTIVE_ITEMS_SCALE, ACTIVE_ITEMS_X_OFFSET, ACTIVE_ITEMS_Y_OFFSET
-// PANEL IDS:   hud_signature, ActiveAbilitiesMenu
-// PATTERN:     Settings-driven with a slow poll for replaced native panels.
-// =============================================================================
-
-(function() {
+// OWNS: Signature bar geometry/visibility, active-item slot geometry and AP leaf color.
+// DOES NOT OWN: Ability/item content, currency values or native slot creation.
+// Source: hud.xml (Hud > .HudCore > AbilitiesContainer; native currency under APContainer).
+(() => {
     "use strict";
-    var FR = QOL.core.FeatureRegistry;
-    if (!FR) { $.Msg("[QOLLock] bottom_bar: FeatureRegistry not found — aborting"); return; }
-
-    FR.register({
+    QOL.core.FeatureRegistry.register({
         id: "ql_bottom_bar",
         enabledByDefault: true,
         settings: [
@@ -31,295 +17,192 @@
             { key: "ACTIVE_ITEMS_X_OFFSET", type: "slider", min: -2000, max: 2000, step: 1, default: 0 },
             { key: "ACTIVE_ITEMS_Y_OFFSET", type: "slider", min: -2000, max: 2000, step: 1, default: 0 }
         ],
-        create: function(ctx) {
-            var _lastSig = "";
-            var _lastPanel = null;
-            var _visibilityOverride = false;
-            var _lastParent = null;
-            var _lastRoot = null;
-            var _nextFullSearchMs = 0;
-            var _lastActiveItemsSig = "";
-            var _lastActiveItemsPanel = null;
-            var _lastActiveItemsParent = null;
-            var _lastActiveItemsRoot = null;
-            var _nextActiveItemsFullSearchMs = 0;
-            var _loop = null;
-            var _offsetXApplied = false;
-            var _offsetYApplied = false;
-            var _activeItemsScaleApplied = false;
-            var _activeItemsOffsetXApplied = false;
-            var _activeItemsOffsetYApplied = false;
+        create(ctx) {
+            const panelAPI = QOL.core.panel;
+            const abilityPath = [{ id: "Hud", optional: true }, { className: "HudCore" }, "AbilitiesContainer"];
+            const barResolver = QOL.panelCache.createIdResolver("hud_signature", { ownerPath: abilityPath });
+            const activeResolver = QOL.panelCache.createIdResolver("ActiveAbilitiesMenu", { ownerPath: abilityPath });
+            const apResolver = QOL.panelCache.createIdResolver("APContainer", { ownerPath: abilityPath });
+            const statsResolver = QOL.panelCache.createIdResolver("StatsAndModsContainer", {
+                ownerPath: [{ id: "Hud", optional: true }, { className: "HudCore" }]
+            });
+            const soulsResolver = QOL.panelCache.createIdResolver("gold_and_ap_container", {
+                ownerPath: [{ id: "Hud", optional: true }, { className: "HudCore" }, "StatsAndModsContainer", "LowerLeft"]
+            });
+            const bar = { panel: null, signature: null, offsets: { x: false, y: false }, applied: new Set() };
+            const activeItems = { panel: null, signature: null, offsets: { x: false, y: false }, applied: new Set() };
+            const barProperties = ["x", "y", "preTransformScale2d", "uiScale", "opacity", "washColor", "visibility"];
+            const activeProperties = ["x", "y", "uiScale"];
+            const currency = new Map();
+            let model = null;
+            let loop = null;
 
-            function _hasNonDefault(cfg) {
-                if (!cfg) return false;
-                var enabled = (cfg.HUD_BOTTOM_BAR_ENABLED === undefined || cfg.HUD_BOTTOM_BAR_ENABLED === true || Number(cfg.HUD_BOTTOM_BAR_ENABLED) === 1);
-                return !enabled ||
-                    Number(cfg.BOTTOM_BAR_OPACITY !== undefined ? cfg.BOTTOM_BAR_OPACITY : 1.0) !== 1.0 ||
-                    Number(cfg.BOTTOM_BAR_SCALE !== undefined ? cfg.BOTTOM_BAR_SCALE : 1.0) !== 1.0 ||
-                    Number(cfg.BOTTOM_BAR_X_OFFSET || 0) !== 0 ||
-                    Number(cfg.BOTTOM_BAR_Y_OFFSET || 0) !== 0 ||
-                    Number(cfg.BOTTOM_BAR_WASH_COLOR || 0) !== 0;
-            }
-
-            function _applyCurrencyColor(root, washColor) {
-                var wc = washColor || "";
-                var sr = root || $.GetContextPanel();
-                if (!sr) return;
-                var ap = sr.FindChildTraverse ? sr.FindChildTraverse("APContainer") : null;
-                var gap = sr.FindChildTraverse ? sr.FindChildTraverse("gold_and_ap_container") : null;
-                var containers = [sr];
-                if (ap) containers.push(ap);
-                if (gap) containers.push(gap);
-
-                var icons = [], amounts = [], infinites = [];
-                for (var ci = 0; ci < containers.length; ci++) {
-                    var c = containers[ci];
-                    if (!c) continue;
-                    try {
-                        if (c.FindChildrenWithClassTraverse) {
-                            icons = icons.concat(c.FindChildrenWithClassTraverse("APCurrencyIcon") || []);
-                            amounts = amounts.concat(c.FindChildrenWithClassTraverse("APCurrencyAmount") || []);
-                        }
-                        if (c.FindChildTraverse) {
-                            var inf = c.FindChildTraverse("hudAPInfinite");
-                            if (inf) infinites.push(inf);
-                        }
-                    } catch(e) {}
+            function readModel() {
+                const cfg = ctx.config.view();
+                const enabled = cfg.HUD_BOTTOM_BAR_ENABLED === undefined || cfg.HUD_BOTTOM_BAR_ENABLED === true || Number(cfg.HUD_BOTTOM_BAR_ENABLED) === 1;
+                const x = Math.round(Number(cfg.BOTTOM_BAR_X_OFFSET)) || 0;
+                const y = Math.round(Number(cfg.BOTTOM_BAR_Y_OFFSET)) || 0;
+                const opacity = isFinite(Number(cfg.BOTTOM_BAR_OPACITY)) ? Number(cfg.BOTTOM_BAR_OPACITY) : 1;
+                const scale = isFinite(Number(cfg.BOTTOM_BAR_SCALE)) ? Number(cfg.BOTTOM_BAR_SCALE) : 1;
+                const washColor = enabled ? panelAPI.resolvePaletteColor(cfg.BOTTOM_BAR_WASH_COLOR) : "";
+                const barStyles = {};
+                if (enabled) {
+                    if (x !== 0) barStyles.x = x + "px";
+                    if (y !== 0) barStyles.y = -y + "px";
+                    // Native hud_signature uses ui-scale: 90%, not 100%.
+                    if (Math.abs(scale - 1) > 0.0001) barStyles.uiScale = Math.round(90 * scale) + "%";
+                    if (Math.abs(opacity - 1) > 0.0001) barStyles.opacity = opacity.toFixed(2);
+                    if (washColor) barStyles.washColor = washColor;
+                } else {
+                    barStyles.visibility = "collapse";
                 }
-                for (var ii = 0; ii < icons.length; ii++)
-                    try { icons[ii].style.washColor = wc; } catch(e) {}
-                for (var ik = 0; ik < infinites.length; ik++)
-                    try { infinites[ik].style.washColor = wc; } catch(e) {}
-                for (var ij = 0; ij < amounts.length; ij++)
-                    try { amounts[ij].style.color = wc; } catch(e) {}
+                const itemScale = QOL.utils.ClampConfigNumber(cfg.ACTIVE_ITEMS_SCALE, 100, 50, 250, true);
+                const itemX = QOL.utils.ClampConfigNumber(cfg.ACTIVE_ITEMS_X_OFFSET, 0, -2000, 2000, true);
+                const itemY = QOL.utils.ClampConfigNumber(cfg.ACTIVE_ITEMS_Y_OFFSET, 0, -2000, 2000, true);
+                const itemStyles = {};
+                if (itemScale !== 100) itemStyles.uiScale = itemScale + "%";
+                if (itemX !== 0) itemStyles.x = itemX + "px";
+                if (itemY !== 0) itemStyles.y = -itemY + "px";
+                return { enabled, barStyles, itemStyles, washColor };
             }
 
-            var SIGNATURE_UI_SCALE_BASE_PCT = 90;
-
-            var _clearStyle = QOL.utils.ClearStyleSafe;
-
-            function _releaseOffset(panel, prop, hadOffset) {
-                if (hadOffset) panel.style[prop] = "0px";
-                _clearStyle(panel, prop);
-            }
-
-            function _findBar(root) {
-                if (!root) return null;
-                // The live panel's parent is authoritative even when the native
-                // bar is replaced. A direct-child check avoids a full HUD walk.
-                if (_lastRoot === root && QOL.utils.IsPanelValid(_lastParent) && _lastParent.FindChild) {
-                    try {
-                        var direct = _lastParent.FindChild("hud_signature");
-                        if (QOL.utils.IsPanelValid(direct) && Date.now() < _nextFullSearchMs) return direct;
-                    } catch(e) {}
+            function clearAbsentStyles(owner, properties, styles) {
+                for (const property of properties) {
+                    if (Object.prototype.hasOwnProperty.call(styles, property)) continue;
+                    if (!owner.applied.has(property)) continue;
+                    // Explicit zero is required by native offset reset behavior.
+                    if (owner.offsets[property]) owner.panel.style[property] = "0px";
+                    QOL.utils.ClearStyleSafe(owner.panel, property);
+                    owner.applied.delete(property);
+                    if (property === "x" || property === "y") owner.offsets[property] = false;
                 }
-                _nextFullSearchMs = Date.now() + 5000;
-                return root.FindChildTraverse ? root.FindChildTraverse("hud_signature") : null;
             }
 
-            function _findActiveItems(root) {
-                if (!root) return null;
-                if (_lastActiveItemsRoot === root && QOL.utils.IsPanelValid(_lastActiveItemsParent) && _lastActiveItemsParent.FindChild) {
-                    try {
-                        var direct = _lastActiveItemsParent.FindChild("ActiveAbilitiesMenu");
-                        if (QOL.utils.IsPanelValid(direct) && Date.now() < _nextActiveItemsFullSearchMs) return direct;
-                    } catch(e) {}
-                }
-                _nextActiveItemsFullSearchMs = Date.now() + 5000;
-                return root.FindChildTraverse ? root.FindChildTraverse("ActiveAbilitiesMenu") : null;
+            function releaseOwner(owner, properties) {
+                if (panelAPI.isAlive(owner.panel)) clearAbsentStyles(owner, properties, {});
+                owner.offsets.x = owner.offsets.y = false;
+                owner.applied.clear();
+                owner.signature = null;
             }
 
-            function _applyActiveItems(root, cfg) {
-                var panel = _findActiveItems(root);
-                if (panel !== _lastActiveItemsPanel) {
-                    _lastActiveItemsPanel = panel;
-                    _lastActiveItemsRoot = root;
-                    try { _lastActiveItemsParent = panel && panel.GetParent ? panel.GetParent() : null; }
-                    catch(e) { _lastActiveItemsParent = null; }
-                    _lastActiveItemsSig = "";
-                    _activeItemsScaleApplied = false;
-                    _activeItemsOffsetXApplied = false;
-                    _activeItemsOffsetYApplied = false;
-                }
-                if (!panel) return;
-
-                var scale = Math.round(Number(cfg.ACTIVE_ITEMS_SCALE !== undefined ? cfg.ACTIVE_ITEMS_SCALE : 100));
-                if (!isFinite(scale)) scale = 100;
-                if (scale < 50) scale = 50;
-                if (scale > 250) scale = 250;
-                var ox = Math.round(Number(cfg.ACTIVE_ITEMS_X_OFFSET || 0)) || 0;
-                var oy = Math.round(Number(cfg.ACTIVE_ITEMS_Y_OFFSET || 0)) || 0;
-                if (ox < -2000) ox = -2000;
-                if (ox > 2000) ox = 2000;
-                if (oy < -2000) oy = -2000;
-                if (oy > 2000) oy = 2000;
-
-                var sig = scale + "|" + ox + "|" + oy;
-                if (_lastActiveItemsSig === sig) return;
-                _lastActiveItemsSig = sig;
-
-                if (scale !== 100) panel.style.uiScale = scale + "%";
-                else if (_activeItemsScaleApplied) _clearStyle(panel, "uiScale");
-                if (ox !== 0) panel.style.x = ox + "px";
-                else if (_activeItemsOffsetXApplied) _releaseOffset(panel, "x", true);
-                if (oy !== 0) panel.style.y = (-oy) + "px";
-                else if (_activeItemsOffsetYApplied) _releaseOffset(panel, "y", true);
-
-                _activeItemsScaleApplied = scale !== 100;
-                _activeItemsOffsetXApplied = ox !== 0;
-                _activeItemsOffsetYApplied = oy !== 0;
+            function bindOwner(owner, current, properties) {
+                if (current === owner.panel) return;
+                releaseOwner(owner, properties);
+                if (owner === bar) panelAPI.setClass(owner.panel, "qol-hidden", false);
+                owner.panel = current;
             }
 
-            function _apply(cfg) {
-                var root = $.GetContextPanel();
-                _applyActiveItems(root, cfg);
-                var active = _hasNonDefault(cfg);
-                var enabled = (cfg.HUD_BOTTOM_BAR_ENABLED === undefined || cfg.HUD_BOTTOM_BAR_ENABLED === true || Number(cfg.HUD_BOTTOM_BAR_ENABLED) === 1);
-                var wcIdx = active && enabled ? (Math.round(Number(cfg.BOTTOM_BAR_WASH_COLOR)) || 0) : 0;
-                var wc = (typeof QOL !== "undefined" && QOL.core && QOL.core.panel && QOL.core.panel.resolvePaletteColor)
-                    ? QOL.core.panel.resolvePaletteColor(wcIdx)
-                    : ((typeof QOL !== "undefined" && QOL.washColorPalette && wcIdx > 0 && wcIdx < QOL.washColorPalette.length) ? QOL.washColorPalette[wcIdx] : "");
+            function renderOwner(owner, properties, styles) {
+                if (!owner.panel || owner.signature !== null) return;
+                clearAbsentStyles(owner, properties, styles);
+                owner.offsets.x = Object.prototype.hasOwnProperty.call(styles, "x");
+                owner.offsets.y = Object.prototype.hasOwnProperty.call(styles, "y");
+                for (const property of Object.keys(styles)) owner.applied.add(property);
+                owner.signature = panelAPI.syncStyles(owner.panel, styles, owner.signature).sig;
+            }
 
-                // Apply currency color BEFORE the panel guard — old feature
-                // applies it unconditionally (ql_feat_bottombar.js:93 before guard at :94).
-                _applyCurrencyColor(root, wc);
+            function releaseCurrency(target, state) {
+                if (panelAPI.isAlive(target)) QOL.utils.ClearStyleSafe(target, state.property);
+            }
 
-                var bp = _findBar(root);
-                if (bp !== _lastPanel) {
-                    if (_visibilityOverride && QOL.utils.IsPanelValid(_lastPanel)) _clearStyle(_lastPanel, "visibility");
-                    _visibilityOverride = false;
-                    _lastPanel = bp;
-                    _lastRoot = root;
-                    try { _lastParent = bp && bp.GetParent ? bp.GetParent() : null; }
-                    catch(e) { _lastParent = null; }
-                    _lastSig = "";
-                    _offsetXApplied = false;
-                    _offsetYApplied = false;
+            function discoverCurrencyContainers(root) {
+                let ap = null;
+                // Signature and active slots share APContainer's verified owner.
+                // Reuse the observed living parent before whole-HUD fallback.
+                for (const owner of [bar, activeItems]) {
+                    if (!panelAPI.isAlive(owner.panel)) continue;
+                    let parent = null;
+                    try { parent = owner.panel.GetParent(); } catch (_) { /* stale owner */ }
+                    ap = panelAPI.findChild(parent, "APContainer");
+                    if (ap) break;
                 }
-                if (!bp) return;
+                if (!ap) ap = apResolver.resolve(root);
+                const stats = statsResolver.resolve(root);
+                const left = panelAPI.findChild(stats, "LowerLeft");
+                const souls = panelAPI.findChild(left, "gold_and_ap_container") || soulsResolver.resolve(root);
+                return [ap, souls];
+            }
 
-                var ox = Math.round(Number(active ? cfg.BOTTOM_BAR_X_OFFSET : 0)) || 0;
-                var oy = Math.round(Number(active ? cfg.BOTTOM_BAR_Y_OFFSET : 0)) || 0;
-                var opNum = active ? Number(cfg.BOTTOM_BAR_OPACITY !== undefined ? cfg.BOTTOM_BAR_OPACITY : 1.0) : 1.0;
-                if (!isFinite(opNum)) opNum = 1.0;
-                var scNum = active ? Number(cfg.BOTTOM_BAR_SCALE !== undefined ? cfg.BOTTOM_BAR_SCALE : 1.0) : 1.0;
-                if (!isFinite(scNum)) scNum = 1.0;
-
-                var op = opNum.toFixed(2);
-                var scText = Math.round(SIGNATURE_UI_SCALE_BASE_PCT * scNum) + "%";
-
-                var sig = ox + "|" + oy + "|" + op + "|" + scText + "|" + wcIdx + "|" + (enabled ? "1" : "0");
-                if (_lastSig === sig) return;
-                _lastSig = sig;
-                if (!enabled) { if (bp.style.visibility !== "collapse") bp.style.visibility = "collapse"; _visibilityOverride = true; }
-                else if (_visibilityOverride) { _clearStyle(bp, "visibility"); _visibilityOverride = false; }
-
-                if (!enabled) {
-                    _releaseOffset(bp, "x", _offsetXApplied);
-                    _releaseOffset(bp, "y", _offsetYApplied);
-                    _offsetXApplied = false;
-                    _offsetYApplied = false;
-                    _clearStyle(bp, "preTransformScale2d");
-                    _clearStyle(bp, "uiScale");
-                    _clearStyle(bp, "opacity");
-                    _clearStyle(bp, "washColor");
-                    if (bp.SetHasClass) bp.SetHasClass("qol-hidden", true);
+            function updateCurrency(root) {
+                if (!model.washColor) {
+                    for (const [target, state] of currency) releaseCurrency(target, state);
+                    currency.clear();
                     return;
                 }
-
-                if (ox !== 0) bp.style.x = ox + "px";
-                else _releaseOffset(bp, "x", _offsetXApplied);
-                if (oy !== 0) bp.style.y = (-oy) + "px";
-                else _releaseOffset(bp, "y", _offsetYApplied);
-                _offsetXApplied = ox !== 0;
-                _offsetYApplied = oy !== 0;
-
-                _clearStyle(bp, "preTransformScale2d");
-
-                if (Math.abs(scNum - 1.0) > 0.0001) bp.style.uiScale = scText;
-                else _clearStyle(bp, "uiScale");
-
-                if (bp.SetHasClass) bp.SetHasClass("qol-hidden", !enabled);
-
-                if (wc) {
-                    if (typeof QOL !== "undefined" && QOL.core && QOL.core.panel && QOL.core.panel.setWashColor) {
-                        QOL.core.panel.setWashColor(bp, wc);
-                    } else {
-                        bp.style.washColor = wc;
-                    }
-                } else {
-                    _clearStyle(bp, "washColor");
+                const sources = new Map();
+                const containers = discoverCurrencyContainers(root);
+                for (const container of containers) {
+                    if (!container) continue;
+                    for (const icon of QOL.utils.FindPanelsByClass(container, "APCurrencyIcon")) sources.set(icon, "washColor");
+                    for (const amount of QOL.utils.FindPanelsByClass(container, "APCurrencyAmount")) sources.set(amount, "color");
+                    const infinite = panelAPI.findTraverse(container, "hudAPInfinite");
+                    if (infinite) sources.set(infinite, "washColor");
                 }
+                for (const [target, state] of currency) {
+                    if (!sources.has(target) || sources.get(target) !== state.property) {
+                        releaseCurrency(target, state);
+                        currency.delete(target);
+                    }
+                }
+                for (const [target, property] of sources) {
+                    const previous = currency.get(target);
+                    const signature = previous ? previous.signature : null;
+                    currency.set(target, { property, signature: panelAPI.syncStyles(target, { [property]: model.washColor }, signature).sig });
+                }
+            }
 
-                if (Math.abs(opNum - 1.0) > 0.0001) bp.style.opacity = op;
-                else _clearStyle(bp, "opacity");
+            function update() {
+                const root = $.GetContextPanel();
+                bindOwner(bar, barResolver.resolve(root), barProperties);
+                bindOwner(activeItems, activeResolver.resolve(root), activeProperties);
+                panelAPI.setClass(bar.panel, "qol-hidden", !model.enabled);
+                renderOwner(bar, barProperties, model.barStyles);
+                // Active-slot geometry remains independently configurable even
+                // when the signature bar itself is hidden.
+                renderOwner(activeItems, activeProperties, model.itemStyles);
+                updateCurrency(root);
+            }
+
+            function resetDiscovery() {
+                barResolver.reset();
+                activeResolver.reset();
+                apResolver.reset();
+                statsResolver.reset();
+                soulsResolver.reset();
+            }
+
+            function refreshSettings() {
+                model = readModel();
+                bar.signature = activeItems.signature = null;
+                resetDiscovery();
+                update();
             }
 
             return {
-                onEnable: function() {
-                    _apply(ctx.config.all());
-                    var S = QOL.core.Scheduler;
-                    _loop = S && S.createPollLoop ? S.createPollLoop(function() {
-                        var root = $.GetContextPanel();
-                        var panel = _findBar(root);
-                        var activeItemsPanel = _findActiveItems(root);
-                        if (panel !== _lastPanel || activeItemsPanel !== _lastActiveItemsPanel) _apply(ctx.config.all());
-                    }, 0.5, ctx.id) : null;
+                onEnable() {
+                    refreshSettings();
+                    loop = QOL.core.Scheduler.createPollLoop(update, 0.5, ctx.id);
                 },
-                onDisable: function() {
-                    if (_visibilityOverride && QOL.utils.IsPanelValid(_lastPanel)) _clearStyle(_lastPanel, "visibility");
-                    _visibilityOverride = false;
-                    if (_loop) { _loop.stop(); _loop = null; }
-                    var S = QOL.core.Scheduler;
-                    if (S) S.cancelAllForFeature(ctx.id);
-                    _lastSig = "";
-                    try {
-                        var root = $.GetContextPanel();
-                        _applyCurrencyColor(root, "");
-                        var bp = root ? root.FindChildTraverse("hud_signature") : null;
-                        if (bp && bp.style) {
-                            _releaseOffset(bp, "x", _offsetXApplied && bp === _lastPanel);
-                            _releaseOffset(bp, "y", _offsetYApplied && bp === _lastPanel);
-                            _clearStyle(bp, "preTransformScale2d");
-                            _clearStyle(bp, "uiScale");
-                            _clearStyle(bp, "opacity");
-                            if (_visibilityOverride) _clearStyle(bp, "visibility");
-                            _clearStyle(bp, "washColor");
-                            var isSupposed = FR && FR.isFeatureSupposedToBeEnabled ? FR.isFeatureSupposedToBeEnabled("ql_bottom_bar") : false;
-                            if (bp.SetHasClass) bp.SetHasClass("qol-hidden", !isSupposed);
-                        }
-                        var activeItems = root ? root.FindChildTraverse("ActiveAbilitiesMenu") : null;
-                        if (activeItems && activeItems.style) {
-                            if (_activeItemsScaleApplied && activeItems === _lastActiveItemsPanel) _clearStyle(activeItems, "uiScale");
-                            if (_activeItemsOffsetXApplied && activeItems === _lastActiveItemsPanel) _releaseOffset(activeItems, "x", true);
-                            if (_activeItemsOffsetYApplied && activeItems === _lastActiveItemsPanel) _releaseOffset(activeItems, "y", true);
-                        }
-                        _lastPanel = null;
-                        _lastParent = null;
-                        _lastRoot = null;
-                        _nextFullSearchMs = 0;
-                        _lastActiveItemsSig = "";
-                        _lastActiveItemsPanel = null;
-                        _lastActiveItemsParent = null;
-                        _lastActiveItemsRoot = null;
-                        _nextActiveItemsFullSearchMs = 0;
-                        _offsetXApplied = false;
-                        _offsetYApplied = false;
-                        _activeItemsScaleApplied = false;
-                        _activeItemsOffsetXApplied = false;
-                        _activeItemsOffsetYApplied = false;
-                    } catch(e) {}
-                },
-                onSettingsChanged: function() { _apply(ctx.config.all()); }
+                onSettingsChanged: refreshSettings,
+                onDisable() {
+                    if (loop) { loop.stop(); loop = null; }
+                    QOL.core.Scheduler.cancelAllForFeature(ctx.id);
+                    releaseOwner(bar, barProperties);
+                    releaseOwner(activeItems, activeProperties);
+                    panelAPI.setClass(bar.panel, "qol-hidden", false);
+                    for (const [target, state] of currency) releaseCurrency(target, state);
+                    currency.clear();
+                    bar.panel = activeItems.panel = model = null;
+                    resetDiscovery();
+                }
             };
         },
-        test: function(ctx) {
+        test() {
             try {
-                var root = $.GetContextPanel();
-                var panel = root ? root.FindChildTraverse("hud_signature") : null;
-                if (!panel) return null;  // Skip — not in a match context
+                const panel = QOL.core.panel.findTraverse($.GetContextPanel(), "hud_signature");
+                if (!panel) return null;
                 return { passed: true, name: "Bottom bar hud_signature panel exists", message: "", assertions: [{ passed: true, name: "hud_signature panel exists" }] };
-            } catch(e) { return { passed: false, name: "Bottom bar panel check", message: (e && e.message ? e.message : String(e)) }; }
+            } catch (e) { return { passed: false, name: "Bottom bar panel check", message: (e && e.message ? e.message : String(e)) }; }
         }
     });
 })();

@@ -190,9 +190,8 @@
                 onSettingsChanged: function() {
                     _update();
                     var root = $.GetContextPanel ? $.GetContextPanel() : null;
-                    if (root && QOL.core && QOL.core.hud && QOL.core.hud.applyRootClasses) {
-                        var cfg = (ctx && ctx.config && ctx.config.all) ? ctx.config.all() : {};
-                        QOL.core.hud.applyRootClasses(root, cfg, Date.now ? Date.now() : (new Date()).getTime(), false);
+                    if (root && QOL.core && QOL.core.hud && QOL.core.hud.refreshRootClasses) {
+                        QOL.core.hud.refreshRootClasses(root);
                     }
                 }
             };

@@ -153,7 +153,7 @@ test("AP infinity has its own selectable surface and previews the existing share
     assert.equal(icon.style.washColor, env.global.QOL_UTILS.ResolveWashColorFromPalette(13));
     assert.equal(ap.style.x, undefined, "selecting AP must not apply the signature bar's offsets");
     activate(env, "QOLCustomizeCancel"); env.clock.advance(1200);
-    assert.equal(icon.style.washColor, "", "main restores the native currency color with an empty wash");
+    assert.ok(!icon.style.washColor, "the owned tint is released so native currency color takes over");
     clean(env);
 });
 

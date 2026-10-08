@@ -47,18 +47,17 @@
                 return c;
             }
 
-            function _apply(cfg) {
+            function _apply() {
                 var root = _getRoot();
                 if (!root) return;
-                if (QOL.core && QOL.core.hud && QOL.core.hud.applyRootClasses) {
-                    var now = (typeof QOL_UTILS !== "undefined" && QOL_UTILS.PerfNowMs) ? QOL_UTILS.PerfNowMs() : Date.now();
-                    QOL.core.hud.applyRootClasses(root, cfg, now, false);
+                if (QOL.core && QOL.core.hud && QOL.core.hud.refreshRootClasses) {
+                    QOL.core.hud.refreshRootClasses(root);
                 }
             }
 
             return {
                 onEnable: function () {
-                    _apply(ctx.config.all ? ctx.config.all() : {});
+                    _apply();
                 },
                 onDisable: function () {
                     var root = _getRoot();
@@ -75,7 +74,7 @@
                     }
                 },
                 onSettingsChanged: function () {
-                    _apply(ctx.config.all ? ctx.config.all() : {});
+                    _apply();
                     if (typeof QOL !== "undefined" && QOL.updateChecker && typeof QOL.updateChecker.onSettingsChanged === "function") {
                         try { QOL.updateChecker.onSettingsChanged(); } catch (_) {}
                     }

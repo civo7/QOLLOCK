@@ -271,8 +271,8 @@
                 onSettingsChanged: function() {
                     _styleSig = "";
                     var root = $.GetContextPanel ? $.GetContextPanel() : null;
-                    if (root && QOL.core && QOL.core.hud && QOL.core.hud.applyRootClasses) {
-                        QOL.core.hud.applyRootClasses(root, ctx.config.all(), Date.now ? Date.now() : (new Date()).getTime(), false);
+                    if (root && QOL.core && QOL.core.hud && QOL.core.hud.refreshRootClasses) {
+                        QOL.core.hud.refreshRootClasses(root);
                     }
                     _tick();
                 }

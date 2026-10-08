@@ -158,6 +158,7 @@ function runBottomBar(cfg) {
     const panel = recordingPanel({
         id: "hud_signature",
         IsValid: () => true,
+        GetParent: () => h.doc.root,
         SetHasClass: () => {},
         FindChildTraverse: () => null,
         FindChildrenWithClassTraverse: () => [],
@@ -185,6 +186,7 @@ function runBottomBar(cfg) {
             id: "ql_bottom_bar",
             config: {
                 all: () => fullCfg,
+                view: () => fullCfg,
                 get: (k) => fullCfg[k],
                 set: (k, v) => { fullCfg[k] = v; }
             },

@@ -18,6 +18,8 @@ test("catalog covers current visual manifest controls, with explicit compatibili
     const excludedKeys = new Set([
         // These masters are derived by the existing threshold normalizers.
         "ENABLE_COLORED_HEALTHBAR", "ENABLE_ENEMY_COLORED_HEALTHBAR", "ENABLE_ALLY_COLORED_HEALTHBAR",
+        // Retained for saved-config compatibility; placement now uses Customize offsets.
+        "STATS_POSITION_SIDE",
         // Split Alt/Tab fields own current map sizing; this is a legacy alias.
         "MINIMAP_LARGE_SIZE", "ENABLE_PERF_DEBUG", "ENABLE_PERF_DEBUG_DETAIL"
     ]);
@@ -86,8 +88,8 @@ test("legacy root styles, threshold aliases and target-shape runtime receive dra
     for (let tick = 0; tick < 3; tick++) { session.publish(); clock.advance(800); } // Keep the editor lease alive across periodic class synchronization.
     assert.equal(hud.root.BHasClass("red_diamond_active"), true);
     session.close(); hud.root.RemoveClass("QOLCustomizeActive"); clock.advance(2000);
-    assert.equal(chat.style.x, "0px"); assert.equal(report.style.x, "0px");
-    assert.equal(Number(shape.style.opacity), 1);
+    assert.equal(chat.style.x, "0px"); assert.equal(report.style.x, undefined);
+    assert.equal(shape.style.opacity, undefined, "cancel releases the owned opacity to native target styling");
     assert.equal(hud.root.BHasClass("red_diamond_active"), false);
     assert.deepEqual(env.clock.errors, []);
 });

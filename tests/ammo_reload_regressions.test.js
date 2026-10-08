@@ -20,7 +20,8 @@ test("magazine rotation keeps both native half-rings together across hero layout
     const first = addClipHalf($, hud.root, "clip_status");
     Q.core.ConfigStore.set("ql_ammo", "AMMO_CLIP_ANGLE", 45);
     hud.clock.advance(600);
-    assert.equal(first.Children()[0].style.transform, "rotateZ(-45deg)");
+    assert.equal(first.style.transform, "rotateZ(-45deg)");
+    assert.equal(first.Children()[0].style.transform, undefined, "native ring transforms stay engine-owned");
 
     first.DeleteAsync(0);
     hud.clock.advance(1);
@@ -49,8 +50,8 @@ test("magazine rotation keeps both native half-rings together across hero layout
     hud.clock.advance(1);
     const standardAgain = addClipHalf($, hud.root, "clip_status");
     hud.clock.advance(600);
-    assert.equal(standardAgain.style.transform || "", "");
-    assert.equal(standardAgain.Children()[0].style.transform, "rotateZ(-45deg)");
+    assert.equal(standardAgain.style.transform, "rotateZ(-45deg)");
+    assert.equal(standardAgain.Children()[0].style.transform, undefined);
     assert.deepEqual(hud.clock.errors, []);
 });
 

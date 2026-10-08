@@ -8,16 +8,13 @@
 // CONFIG KEYS: HUD_TOP_BAR_ENABLED, TOP_BAR_OPACITY, TOP_BAR_SCALE,
 //              TOP_BAR_X_OFFSET, TOP_BAR_Y_OFFSET
 // PANEL ID:    TopBar
-// PATTERN:     Polled at 0.5Hz — HUD visibility flips during match (spectating,
+// PATTERN:     Polled every 0.5 seconds — HUD visibility flips during match (spectating,
 //              escape menu, hideout) require re-evaluation every tick.
 // =============================================================================
 
-(function() {
+(() => {
     "use strict";
-    var FR = QOL.core.FeatureRegistry;
-    if (!FR) { $.Msg("[QOLLock] topbar: FeatureRegistry not found — aborting"); return; }
-
-    FR.register({
+    QOL.core.FeatureRegistry.register({
         id: "ql_topbar",
         enabledByDefault: true,
         settings: [
@@ -54,154 +51,114 @@
             { key: "TOP_BAR_X_OFFSET", type: "slider", min: -2000, max: 2000, step: 1, default: 0 },
             { key: "TOP_BAR_Y_OFFSET", type: "slider", min: -2000, max: 2000, step: 1, default: 0 }
         ],
-        create: function(ctx) {
-            var _lastSig = "";
-            var _lastPanel = null;
-            var _visibilityOverride = false;
-            var _loop = null;
-            var _offsetXApplied = false;
-            var _offsetYApplied = false;
+        create(ctx) {
+            const panelAPI = QOL.core.panel;
+            // hud.xml: Hud > .HudCore > TopBar.
+            const resolver = QOL.panelCache.createIdResolver("TopBar", {
+                ownerPath: [{ id: "Hud", optional: true }, { className: "HudCore" }]
+            });
+            const ownedStyles = ["x", "y", "preTransformScale2d", "uiScale", "opacity", "visibility"];
+            const applied = new Set();
+            let panel = null;
+            let model = null;
+            let signature = null;
+            let visible = null;
+            let loop = null;
+            const appliedOffsets = { x: false, y: false };
 
-            function _clamp(v, lo, hi) {
-                var n = Number(v);
-                if (!isFinite(n)) return lo;
-                if (n < lo) return lo;
-                if (n > hi) return hi;
-                return n;
-            }
-
-            var _clearStyle = QOL.utils.ClearStyleSafe;
-
-            function _releaseOffset(panel, prop, hadOffset) {
-                if (hadOffset) panel.style[prop] = "0px";
-                _clearStyle(panel, prop);
-            }
-
-            function _hasNonDefault(cfg) {
-                if (!cfg) return false;
-                var enabled = (cfg.HUD_TOP_BAR_ENABLED === undefined || cfg.HUD_TOP_BAR_ENABLED === true || Number(cfg.HUD_TOP_BAR_ENABLED) === 1);
-                return !enabled ||
-                    Number(cfg.TOP_BAR_OPACITY !== undefined ? cfg.TOP_BAR_OPACITY : 1.0) !== 1.0 ||
-                    Number(cfg.TOP_BAR_SCALE !== undefined ? cfg.TOP_BAR_SCALE : 1.0) !== 1.0 ||
-                    Number(cfg.TOP_BAR_X_OFFSET || 0) !== 0 ||
-                    Number(cfg.TOP_BAR_Y_OFFSET || 0) !== 0;
-            }
-
-            function _apply(cfg) {
-                var root = $.GetContextPanel();
-                var topBar = root.FindChildTraverse("TopBar");
-                if (!topBar) return;
-                if (topBar !== _lastPanel) {
-                    if (_visibilityOverride && QOL.utils.IsPanelValid(_lastPanel)) _clearStyle(_lastPanel, "visibility");
-                    _visibilityOverride = false;
-                    _lastPanel = topBar;
-                    _lastSig = "";
-                    _offsetXApplied = false;
-                    _offsetYApplied = false;
-                }
-
-                // Visibility gate: if the top bar is hidden in spectator/replay mode, don't apply styles.
-                var hudVisible = true;
-                try {
-                    if (typeof QOL !== "undefined" && QOL.isHudVisibleForTopBarRuntime) {
-                        hudVisible = QOL.isHudVisibleForTopBarRuntime(root, topBar);
-                    }
-                } catch(e) {}
-
-                var active = _hasNonDefault(cfg);
-                var enabled = (cfg.HUD_TOP_BAR_ENABLED === undefined || cfg.HUD_TOP_BAR_ENABLED === true || Number(cfg.HUD_TOP_BAR_ENABLED) === 1);
-                var ox = Math.round(_clamp(active ? cfg.TOP_BAR_X_OFFSET : 0, -2000, 2000));
-                var oy = Math.round(_clamp(active ? cfg.TOP_BAR_Y_OFFSET : 0, -2000, 2000));
-                var opNum = active ? Number(cfg.TOP_BAR_OPACITY !== undefined ? cfg.TOP_BAR_OPACITY : 1.0) : 1.0;
-                if (!isFinite(opNum)) opNum = 1.0;
-                var scNum = active ? Number(cfg.TOP_BAR_SCALE !== undefined ? cfg.TOP_BAR_SCALE : 1.0) : 1.0;
-                if (!isFinite(scNum)) scNum = 1.0;
-
-                var op = opNum.toFixed(2);
-                var sc = scNum.toFixed(2);
-
-                if (topBar.SetHasClass) topBar.SetHasClass("qol-hidden", !enabled);
-
-                var sig = ox + "|" + oy + "|" + op + "|" + sc + "|" + (enabled ? "1" : "0") + "|" + (hudVisible ? "1" : "0") + "|" + (active ? "1" : "0");
-                if (_lastSig === sig) return;
-                _lastSig = sig;
-                if (!enabled) { if (topBar.style.visibility !== "collapse") topBar.style.visibility = "collapse"; _visibilityOverride = true; }
-                else if (_visibilityOverride) { _clearStyle(topBar, "visibility"); _visibilityOverride = false; }
-
-                if (enabled && active && hudVisible) {
-                    if (ox !== 0) topBar.style.x = ox + "px";
-                    else _releaseOffset(topBar, "x", _offsetXApplied);
-                    if (oy !== 0) topBar.style.y = (-oy) + "px";
-                    else _releaseOffset(topBar, "y", _offsetYApplied);
-                    _offsetXApplied = ox !== 0;
-                    _offsetYApplied = oy !== 0;
-
-                    _clearStyle(topBar, "preTransformScale2d");
-                    if (Math.abs(scNum - 1.0) > 0.0001) topBar.style.uiScale = Math.round(scNum * 100) + "%";
-                    else _clearStyle(topBar, "uiScale");
-
-                    if (Math.abs(opNum - 1.0) > 0.0001) {
-                        try { topBar.style.opacity = op; } catch(e) {}
-                    } else {
-                        _clearStyle(topBar, "opacity");
-                    }
+            function readModel(cfg) {
+                const enabled = cfg.HUD_TOP_BAR_ENABLED === undefined || cfg.HUD_TOP_BAR_ENABLED === true || Number(cfg.HUD_TOP_BAR_ENABLED) === 1;
+                const x = Math.round(Math.max(-2000, Math.min(2000, Number(cfg.TOP_BAR_X_OFFSET) || 0)));
+                const y = Math.round(Math.max(-2000, Math.min(2000, Number(cfg.TOP_BAR_Y_OFFSET) || 0)));
+                const opacity = isFinite(Number(cfg.TOP_BAR_OPACITY)) ? Number(cfg.TOP_BAR_OPACITY) : 1;
+                const scale = isFinite(Number(cfg.TOP_BAR_SCALE)) ? Number(cfg.TOP_BAR_SCALE) : 1;
+                const styles = {};
+                if (enabled) {
+                    if (x !== 0) styles.x = x + "px";
+                    if (y !== 0) styles.y = -y + "px";
+                    if (Math.abs(scale - 1) > 0.0001) styles.uiScale = Math.round(scale * 100) + "%";
+                    if (Math.abs(opacity - 1) > 0.0001) styles.opacity = opacity.toFixed(2);
                 } else {
-                    _releaseOffset(topBar, "x", _offsetXApplied);
-                    _releaseOffset(topBar, "y", _offsetYApplied);
-                    _offsetXApplied = false;
-                    _offsetYApplied = false;
-                    _clearStyle(topBar, "preTransformScale2d");
-                    _clearStyle(topBar, "uiScale");
-                    _clearStyle(topBar, "opacity");
+                    styles.visibility = "collapse";
+                }
+                return { enabled, styles };
+            }
+
+            function clearAbsentStyles(target, styles) {
+                for (const property of ownedStyles) {
+                    if (Object.prototype.hasOwnProperty.call(styles, property)) continue;
+                    if (!applied.has(property)) continue;
+                    // Native offset reset needs an explicit zero before releasing
+                    // the code property; ClearPropertyFromCode alone can retain it.
+                    if (appliedOffsets[property]) target.style[property] = "0px";
+                    QOL.utils.ClearStyleSafe(target, property);
+                    applied.delete(property);
+                    if (property === "x" || property === "y") appliedOffsets[property] = false;
                 }
             }
 
-            function _tick() {
-                try { _apply(ctx.config.all()); } catch(e) {
-                    if (typeof QOL !== "undefined" && QOL.core && QOL.core.Logger) {
-                        QOL.core.Logger.logError("ql_topbar", "_tick: " + (e.message || e));
-                    }
-                    throw e;
+            function release(target) {
+                if (panelAPI.isAlive(target)) {
+                    clearAbsentStyles(target, {});
+                    panelAPI.setClass(target, "qol-hidden", false);
                 }
+                appliedOffsets.x = appliedOffsets.y = false;
+                applied.clear();
+            }
+
+            function update() {
+                const root = $.GetContextPanel();
+                const current = resolver.resolve(root);
+                if (current !== panel) {
+                    release(panel);
+                    panel = current;
+                    signature = visible = null;
+                }
+                if (!panel) return;
+                const nextVisible = QOL.isHudVisibleForTopBarRuntime(root, panel);
+                if (nextVisible !== visible) {
+                    visible = nextVisible;
+                    signature = null;
+                }
+                panelAPI.setClass(panel, "qol-hidden", !model.enabled);
+                if (signature !== null) return;
+                const styles = visible || !model.enabled ? model.styles : {};
+                clearAbsentStyles(panel, styles);
+                // Mark ownership before writes so partial native rejection also
+                // gets reset on disable or a subsequent settings change.
+                appliedOffsets.x = Object.prototype.hasOwnProperty.call(styles, "x");
+                appliedOffsets.y = Object.prototype.hasOwnProperty.call(styles, "y");
+                for (const property of Object.keys(styles)) applied.add(property);
+                signature = panelAPI.syncStyles(panel, styles, signature).sig;
+            }
+
+            function refreshSettings() {
+                model = readModel(ctx.config.view());
+                signature = null;
+                resolver.reset();
+                update();
             }
 
             return {
-                onEnable: function() {
-                    _apply(ctx.config.all());
-                    var S = QOL.core.Scheduler;
-                    _loop = S && S.createPollLoop ? S.createPollLoop(_tick, 0.5, "ql_topbar") : null;
+                onEnable() {
+                    refreshSettings();
+                    loop = QOL.core.Scheduler.createPollLoop(update, 0.5, ctx.id);
                 },
-                onDisable: function() {
-                    if (_visibilityOverride && QOL.utils.IsPanelValid(_lastPanel)) _clearStyle(_lastPanel, "visibility");
-                    _visibilityOverride = false;
-                    if (_loop) { _loop.stop(); _loop = null; }
-                    var S = QOL.core.Scheduler;
-                    if (S) S.cancelAllForFeature("ql_topbar");
-                    _lastSig = "";
-                    var root = $.GetContextPanel ? $.GetContextPanel() : null;
-                    var topBar = root ? root.FindChildTraverse("TopBar") : null;
-                    if (topBar) {
-                        var isSupposed = FR && FR.isFeatureSupposedToBeEnabled ? FR.isFeatureSupposedToBeEnabled("ql_topbar") : false;
-                        if (topBar.SetHasClass) topBar.SetHasClass("qol-hidden", !isSupposed);
-                        _releaseOffset(topBar, "x", _offsetXApplied && topBar === _lastPanel);
-                        _releaseOffset(topBar, "y", _offsetYApplied && topBar === _lastPanel);
-                        _clearStyle(topBar, "preTransformScale2d");
-                        _clearStyle(topBar, "uiScale");
-                        _clearStyle(topBar, "opacity");
-                    }
-                    _lastPanel = null;
-                    _offsetXApplied = false;
-                    _offsetYApplied = false;
-                },
-                onSettingsChanged: function() {
-                    _apply(ctx.config.all());
+                onSettingsChanged: refreshSettings,
+                onDisable() {
+                    if (loop) { loop.stop(); loop = null; }
+                    QOL.core.Scheduler.cancelAllForFeature(ctx.id);
+                    release(panel);
+                    panel = model = null;
+                    signature = visible = null;
+                    resolver.reset();
                 }
             };
         },
-        test: function(ctx) {
+        test() {
             try {
-                var root = $.GetContextPanel();
-                var panel = root ? root.FindChildTraverse("TopBar") : null;
+                const root = $.GetContextPanel();
+                const panel = root ? root.FindChildTraverse("TopBar") : null;
                 if (!panel) return null;  // Skip — not in a match context
                 return { passed: true, name: "Top bar panel exists", message: "", assertions: [{ passed: true, name: "TopBar panel exists" }] };
             } catch(e) { return { passed: false, name: "Top bar panel check", message: (e && e.message ? e.message : String(e)) }; }

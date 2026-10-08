@@ -1,28 +1,20 @@
-// features/ql_target_shapes/manifest.js
-// =============================================================================
-// QOLLOCK — Target Shapes
-// =============================================================================
-// OWNS:        Unit target shape size, opacity, red diamond scaling.
-//              Finds target_shape and qol_hint_target panels via class traversal
-//              and applies crisp uiScale + opacity.
-// DOES NOT OWN: Target shape panels (Valve), red diamond feature gate (core)
-// DEPENDS ON:  QOL.core.FeatureRegistry, QOL.core.Scheduler
-// CONFIG KEYS: ENABLE_RED_DIAMOND, UNIT_TARGET_SIZE, UNIT_TARGET_OPACITY,
-//              UNIT_TARGET_HINT_SIZE
-// CSS:         none (uiScale + SetPanelOpacitySafe only)
-// PATTERN:     Polling (5Hz with panels, 2Hz discovery, 1Hz idle).
-//              Reads the registered red-diamond toggle and current root class.
-// CONFIG SRC:  ctx.config.view() (supports transient presentation drafts)
-// PORTED FROM: features/ql_feat_targetshapes.js (222 lines)
-// =============================================================================
-
-(function() {
+// OWNS: Native target/hint shape size and target opacity code overrides.
+// DOES NOT OWN: Valve target panels, targeting animations or root feature gates.
+// Source: native ability_hud_element_unit_target.css and existing target_shape /
+// qol_hint_target class traversal. Native children remain with Valve.
+(() => {
     "use strict";
-    var FR = QOL.core.FeatureRegistry;
-    if (!FR) { $.Msg("[QOLLock] ql_target_shapes: FeatureRegistry not found — aborting"); return; }
+    const ID = "ql_target_shapes";
+    const clamp = QOL.utils.ClampConfigNumber;
+    const styleTexts = cfg => ({
+        scaleText: (clamp(cfg.UNIT_TARGET_SIZE, 150, 50, 300, true) / 100).toFixed(3),
+        opacityText: clamp(cfg.UNIT_TARGET_OPACITY, 1, 0, 1).toFixed(2),
+        hintScaleText: (clamp(cfg.UNIT_TARGET_HINT_SIZE, 100, 50, 200, true) / 100).toFixed(3)
+    });
+    QOL.getUnitTargetDefaultStyleTexts = () => styleTexts(QOL.buildDefaultConfig());
 
-    FR.register({
-        id: "ql_target_shapes",
+    QOL.core.FeatureRegistry.register({
+        id: ID,
         enabledByDefault: true,
         settings: [
             { key: "ENABLE_RED_DIAMOND", type: "toggle", default: false },
@@ -31,253 +23,123 @@
             { key: "UNIT_TARGET_OPACITY", type: "slider", min: 0, max: 1, step: 0.05, default: 1 },
             { key: "UNIT_TARGET_HINT_SIZE", type: "slider", min: 50, max: 200, step: 5, default: 100 }
         ],
-        create: function(ctx) {
-            var State = QOL.state || (typeof globalThis !== "undefined" && globalThis.State) || {};
-            var Utils = QOL.utils;
-            var SetPanelOpacitySafe = QOL.utils.SetPanelOpacitySafe;
-            var GetUnitTargetDefaultStyleTexts = QOL.getUnitTargetDefaultStyleTexts || function() {
-                return ResolveUnitTargetStyleTexts(QOL.buildDefaultConfig ? QOL.buildDefaultConfig() : {});
-            };
-            QOL.getUnitTargetDefaultStyleTexts = GetUnitTargetDefaultStyleTexts;
+        create(ctx) {
+            const panels = QOL.core.panel;
+            const state = QOL.state;
+            const shapes = new Map();
+            const hints = new Map();
+            let root = null;
+            let model = null;
+            let nextDiscovery = 0;
+            let loop = null;
 
-            var _loop = null;
-            var _root = null;
-            var _cacheInitialized = false;
-
-            // ── Constants (verbatim from old feature) ──
-            var TARGET_SHAPE_DEBUG = false;
-            var TARGET_SHAPE_DEBUG_THROTTLE_MS = 5000;
-
-            // ── Helpers (verbatim from old feature, deduplicated) ──
-
-            function ResolveUnitTargetStyleTexts(cfg) {
-                var unitTargetSize = (cfg && cfg.UNIT_TARGET_SIZE !== undefined && cfg.UNIT_TARGET_SIZE !== null)
-                    ? Math.round(Number(cfg.UNIT_TARGET_SIZE))
-                    : 150;
-                var unitTargetOpacity = (cfg && cfg.UNIT_TARGET_OPACITY !== undefined && cfg.UNIT_TARGET_OPACITY !== null)
-                    ? parseFloat(cfg.UNIT_TARGET_OPACITY)
-                    : 1.0;
-                var unitTargetHintSize = (cfg && cfg.UNIT_TARGET_HINT_SIZE !== undefined && cfg.UNIT_TARGET_HINT_SIZE !== null)
-                    ? Math.round(Number(cfg.UNIT_TARGET_HINT_SIZE))
-                    : 100;
-
-                if (!isFinite(unitTargetSize)) unitTargetSize = 150;
-                if (!isFinite(unitTargetOpacity)) unitTargetOpacity = 1.0;
-                if (!isFinite(unitTargetHintSize)) unitTargetHintSize = 100;
-                if (unitTargetSize < 50) unitTargetSize = 50;
-                if (unitTargetSize > 300) unitTargetSize = 300;
-                if (unitTargetOpacity < 0) unitTargetOpacity = 0;
-                if (unitTargetOpacity > 1) unitTargetOpacity = 1;
-                if (unitTargetHintSize < 50) unitTargetHintSize = 50;
-                if (unitTargetHintSize > 200) unitTargetHintSize = 200;
-
-                return {
-                    scaleText: (unitTargetSize / 100).toFixed(3),
-                    opacityText: unitTargetOpacity.toFixed(2),
-                    hintScaleText: (unitTargetHintSize / 100).toFixed(3)
+            function readModel() {
+                const cfg = ctx.config.view();
+                const styles = styleTexts(cfg);
+                const defaults = QOL.getUnitTargetDefaultStyleTexts();
+                const active = QOL.utils.IsCfgEnabled(cfg, "ENABLE_RED_DIAMOND") ||
+                    Object.keys(defaults).some(key => styles[key] !== defaults[key]);
+                return { active, styles,
+                    shapeStyles: { preTransformScale2d: "1.00, 1.00", uiScale: Math.round(Number(styles.scaleText) * 100) + "%", opacity: styles.opacityText },
+                    hintStyles: { preTransformScale2d: "1.00, 1.00", uiScale: Math.round(Number(styles.hintScaleText) * 100) + "%" }
                 };
             }
 
-            function IsUnitTargetStyleCustomized(cfg) {
-                var style = ResolveUnitTargetStyleTexts(cfg);
-                var def = GetUnitTargetDefaultStyleTexts();
-                return style.scaleText !== def.scaleText || style.opacityText !== def.opacityText || style.hintScaleText !== def.hintScaleText;
+            function release(target, owner) {
+                if (panels.isAlive(target)) for (const property of owner.properties) QOL.utils.ClearStyleSafe(target, property);
+                owner.properties.clear();
+                owner.signature = null;
             }
 
-            function NeedsTargetShapeRuntimeWork(cfg, redDiamondEnabled) {
-                if (!!redDiamondEnabled) return true;
-                if (IsUnitTargetStyleCustomized(cfg)) return true;
-                return !!(
-                    State.targetShapeHadNonDefaultRuntime ||
-                    State.targetShapeStyleSig ||
-                    State.nextTargetShapeRefreshMs ||
-                    (State.targetShapesCache && State.targetShapesCache.length > 0)
-                );
+            function releaseAll() {
+                for (const [target, owner] of shapes) release(target, owner);
+                for (const [target, owner] of hints) release(target, owner);
+                shapes.clear(); hints.clear();
+                nextDiscovery = 0;
+                state.targetShapesCache = [];
+                state.hintContainerCache = [];
+                state.targetShapeHadNonDefaultRuntime = false;
+                state.targetShapeStyleSig = "";
+                state.nextTargetShapeRefreshMs = 0;
+                state.targetShapeDebugLastSig = "";
+                state.targetShapeDebugNextMs = 0;
             }
 
-            function TargetShapeDebugLogThrottled(sig, msg, nowMsDbg) {
-                if (!TARGET_SHAPE_DEBUG) return;
-                var nowDbg = Number(nowMsDbg) || ((typeof QOL_UTILS !== "undefined" && QOL_UTILS.PerfNowMs) ? QOL_UTILS.PerfNowMs() : Date.now());
-                var sameSig = sig && sig === State.targetShapeDebugLastSig;
-                if (sameSig && nowDbg < (State.targetShapeDebugNextMs || 0)) return;
-                State.targetShapeDebugLastSig = sig || "";
-                State.targetShapeDebugNextMs = nowDbg + TARGET_SHAPE_DEBUG_THROTTLE_MS;
-                $.Msg("[QOLLock][TargetShape] " + String(msg || ""));
-            }
-
-            function IsCachedPanelListAlive(list) {
-                if (!list) return false;
-                if (list.length === 0) return true;
-                if (typeof QOL_UTILS !== "undefined" && QOL_UTILS.IsPanelListValid) {
-                    return QOL_UTILS.IsPanelListValid(list);
+            function reconcile(owners, className) {
+                const current = new Set(root.FindChildrenWithClassTraverse(className) || []);
+                for (const [target, owner] of owners) {
+                    if (!current.has(target)) { release(target, owner); owners.delete(target); }
                 }
-                for (var i = 0; i < list.length; i++) {
-                    if (typeof QOL_UTILS !== "undefined" && QOL_UTILS.IsPanelValid) {
-                        if (!QOL_UTILS.IsPanelValid(list[i])) return false;
-                    } else if (!list[i] || (list[i].IsValid && !list[i].IsValid())) {
-                        return false;
-                    }
+                for (const target of current) if (panels.isAlive(target) && !owners.has(target)) {
+                    owners.set(target, { properties: new Set(), signature: null });
                 }
-                return true;
             }
 
-            function ApplyTargetShapeStyles(root, scaleText, opacityText, nowMs, redDiamondEnabledHint, hintScaleText) {
-                var redDiamondActive = !!redDiamondEnabledHint;
-                if (!redDiamondActive && root && root.BHasClass) {
-                    try {
-                        redDiamondActive = !!root.BHasClass("red_diamond_active");
-                    } catch (e0) {
-                        redDiamondActive = false;
-                    }
+            function render(owners, styles) {
+                for (const [target, owner] of owners) {
+                    if (!panels.isAlive(target)) { owners.delete(target); nextDiscovery = 0; continue; }
+                    // A partial rejected write remains owned and is retried.
+                    for (const property of Object.keys(styles)) owner.properties.add(property);
+                    owner.signature = panels.syncStyles(target, styles, owner.signature).sig;
                 }
+            }
 
-                var defaultStyle = GetUnitTargetDefaultStyleTexts();
-                var isDefaultUnitTargetStyle =
-                    !redDiamondActive &&
-                    scaleText === defaultStyle.scaleText &&
-                    opacityText === defaultStyle.opacityText &&
-                    (hintScaleText || "1.000") === defaultStyle.hintScaleText;
-                var needsCleanupPass = isDefaultUnitTargetStyle && !!State.targetShapeHadNonDefaultRuntime;
-
-                if (isDefaultUnitTargetStyle && !needsCleanupPass) {
-                    State.targetShapesCache = [];
-                    State.hintContainerCache = [];
-                    State.targetShapeStyleSig = "";
-                    State.nextTargetShapeRefreshMs = 0;
-                    _cacheInitialized = false;
-                    TargetShapeDebugLogThrottled("default_skip", "default_skip scale=" + scaleText + " opacity=" + opacityText + " red=0", nowMs);
+            function update() {
+                const current = $.GetContextPanel();
+                if (current !== root) { releaseAll(); root = current; }
+                if (!panels.isAlive(root) || !model.active) {
+                    releaseAll();
+                    if (loop) loop.reschedule(1.0);
                     return;
                 }
-
-                var styleSig = scaleText + "|" + opacityText + "|" + (redDiamondActive ? "1" : "0") + "|" + (hintScaleText || "1.000");
-                var styleChanged = (styleSig !== State.targetShapeStyleSig);
-                var cacheValid = _cacheInitialized &&
-                    IsCachedPanelListAlive(State.targetShapesCache) &&
-                    IsCachedPanelListAlive(State.hintContainerCache);
-                var shouldRefreshList = needsCleanupPass || styleChanged || !cacheValid || nowMs >= (State.nextTargetShapeRefreshMs || 0);
-                if (styleSig === State.targetShapeStyleSig && !shouldRefreshList) return;
-
-                if (shouldRefreshList) {
-                    State.targetShapesCache = root.FindChildrenWithClassTraverse("target_shape") || [];
-                    State.hintContainerCache = root.FindChildrenWithClassTraverse("qol_hint_target") || [];
-                    _cacheInitialized = true;
-                    // Empty-cache discovery stays responsive without traversing
-                    // the full HUD every 50-200ms. Live handles invalidate early.
-                    var hasPanels = State.targetShapesCache.length > 0 || State.hintContainerCache.length > 0;
-                    var targetShapeRefreshMs = hasPanels ? 1000 : 500;
-                    State.nextTargetShapeRefreshMs = nowMs + targetShapeRefreshMs;
-                    TargetShapeDebugLogThrottled("refresh|" + (needsCleanupPass ? "cleanup" : "normal") + "|" + String(State.targetShapesCache.length) + "|" + String(targetShapeRefreshMs),
-                        "refresh mode=" + (needsCleanupPass ? "cleanup" : "normal") + " count=" + String(State.targetShapesCache.length) + " styleChanged=" + (styleChanged ? "1" : "0") + " cacheValid=" + (cacheValid ? "1" : "0") + " nextMs=" + String(targetShapeRefreshMs), nowMs);
+                const now = QOL.utils.PerfNowMs();
+                if (now >= nextDiscovery) {
+                    reconcile(shapes, "target_shape"); reconcile(hints, "qol_hint_target");
+                    nextDiscovery = now + (shapes.size || hints.size ? 1000 : 500);
                 }
-
-                var targetShapes = State.targetShapesCache || [];
-                for (var ts = 0; ts < targetShapes.length; ts++) {
-                    var shape = targetShapes[ts];
-                    if (!shape) continue;
-                    if (shape.style.preTransformScale2d !== "1.00, 1.00") shape.style.preTransformScale2d = "1.00, 1.00";
-                    var shapeUiScale = Math.round(Number(scaleText) * 100) + "%";
-                    if (shape.style.uiScale !== shapeUiScale) shape.style.uiScale = shapeUiScale;
-                    SetPanelOpacitySafe(shape, opacityText, 1.0);
-                }
-                var hintContainers = State.hintContainerCache || [];
-                for (var hc = 0; hc < hintContainers.length; hc++) {
-                    var hint = hintContainers[hc];
-                    if (!hint) continue;
-                    if (hint.style.preTransformScale2d !== "1.00, 1.00") hint.style.preTransformScale2d = "1.00, 1.00";
-                    var hintUiScale = Math.round(Number(hintScaleText || "1.000") * 100) + "%";
-                    if (hint.style.uiScale !== hintUiScale) hint.style.uiScale = hintUiScale;
-                }
-                State.targetShapeStyleSig = styleSig;
-                if (!isDefaultUnitTargetStyle) {
-                    State.targetShapeHadNonDefaultRuntime = true;
-                    return;
-                }
-
-                if (needsCleanupPass) {
-                    State.targetShapeHadNonDefaultRuntime = false;
-                    State.targetShapesCache = [];
-                    State.hintContainerCache = [];
-                    State.targetShapeStyleSig = "";
-                    State.nextTargetShapeRefreshMs = 0;
-                    _cacheInitialized = false;
-                    TargetShapeDebugLogThrottled("cleanup_done", "default cleanup completed", nowMs);
-                }
+                render(shapes, model.shapeStyles); render(hints, model.hintStyles);
+                state.targetShapesCache = [...shapes.keys()];
+                state.hintContainerCache = [...hints.keys()];
+                state.targetShapeHadNonDefaultRuntime = true;
+                state.targetShapeStyleSig = Object.values(model.styles).join("|");
+                state.nextTargetShapeRefreshMs = nextDiscovery;
+                if (loop) loop.reschedule(shapes.size || hints.size ? 0.2 : 0.5);
             }
 
-            // ── Main tick (adapted from update function + NeedsTargetShapeRuntimeWork gate) ──
-            function _tick() {
-                var root = _root || $.GetContextPanel(); if (root && !_root) _root = root;
-                const cfg = ctx.config.view();
-
-                // Self-gating (replicates old NeedsTargetShapeRuntimeWork gate)
-                const redDiamondEnabled = Utils.IsCfgEnabled(cfg, "ENABLE_RED_DIAMOND");
-                if (!NeedsTargetShapeRuntimeWork(cfg, redDiamondEnabled)) {
-                    if (_loop) _loop.reschedule(1.0);
-                    // Idle cleanup — reset State to prevent sticky-gate firing
-                    if (State.targetShapeHadNonDefaultRuntime || State.targetShapeStyleSig) {
-                        State.targetShapeHadNonDefaultRuntime = false;
-                        State.targetShapesCache = [];
-                        State.hintContainerCache = [];
-                        State.targetShapeStyleSig = "";
-                        State.nextTargetShapeRefreshMs = 0;
-                        _cacheInitialized = false;
-                    }
-                    return;
-                }
-                if (_loop) _loop.reschedule(0.2);
-
-                var nowMs = Date.now ? Date.now() : (new Date()).getTime();
-                var unitTargetStyle = ResolveUnitTargetStyleTexts(cfg);
-                ApplyTargetShapeStyles(root, unitTargetStyle.scaleText,
-                    unitTargetStyle.opacityText, nowMs, redDiamondEnabled,
-                    unitTargetStyle.hintScaleText);
-                var hasCachedPanels = (State.targetShapesCache && State.targetShapesCache.length > 0) ||
-                    (State.hintContainerCache && State.hintContainerCache.length > 0);
-                if (_loop) _loop.reschedule(hasCachedPanels ? 0.2 : 0.5);
+            function refreshSettings() {
+                model = readModel();
+                nextDiscovery = 0;
+                for (const owner of shapes.values()) owner.signature = null;
+                for (const owner of hints.values()) owner.signature = null;
+                QOL.core.hud.refreshRootClasses($.GetContextPanel());
+                update();
             }
 
             return {
-                onEnable: function() {
-                    var S = QOL.core.Scheduler;
-                    _loop = S && S.createPollLoop ? S.createPollLoop(_tick, 0.2, "ql_target_shapes") : null;
+                onEnable() {
+                    refreshSettings();
+                    loop = QOL.core.Scheduler.createPollLoop(update, model.active ? 0.2 : 1.0, ctx.id);
                 },
-                onDisable: function() {
-                    if (_loop) { _loop.stop(); _loop = null; }
-                    var S = QOL.core.Scheduler; if (S) S.cancelAllForFeature("ql_target_shapes");
-                    State.targetShapeHadNonDefaultRuntime = false;
-                    State.targetShapeStyleSig = "";
-                    State.nextTargetShapeRefreshMs = 0;
-                    State.targetShapesCache = [];
-                    State.hintContainerCache = [];
-                    _cacheInitialized = false;
-                    State.targetShapeDebugLastSig = "";
-                    State.targetShapeDebugNextMs = 0;
-                    _root = null;
-                },
-                onSettingsChanged: function() {
-                    var root = _root || ($.GetContextPanel ? $.GetContextPanel() : null);
-                    if (root && QOL.core && QOL.core.hud && QOL.core.hud.applyRootClasses) {
-                        var cfg = ctx.config.all ? ctx.config.all() : {};
-                        QOL.core.hud.applyRootClasses(root, cfg, Date.now ? Date.now() : (new Date()).getTime(), false);
-                    }
+                onSettingsChanged: refreshSettings,
+                onDisable() {
+                    if (loop) { loop.stop(); loop = null; }
+                    QOL.core.Scheduler.cancelAllForFeature(ctx.id);
+                    releaseAll(); root = model = null;
                 }
             };
         },
-        test: function(ctx) {
+        test() {
             try {
-                var root = $.GetContextPanel();
-                var shapes = root ? (root.FindChildrenWithClassTraverse("target_shape") || []) : [];
-                var hints = root ? (root.FindChildrenWithClassTraverse("qol_hint_target") || []) : [];
-                return {
-                    passed: true,
-                    name: "Target shape panels traversal works",
-                    message: "Found " + shapes.length + " target_shape + " + hints.length + " hint panels",
-                    assertions: [
-                        { passed: true, name: "target_shape traversal succeeded (" + shapes.length + " found)" },
-                        { passed: true, name: "qol_hint_target traversal succeeded (" + hints.length + " found)" }
-                    ]
+                const root = $.GetContextPanel();
+                const shapes = root?.FindChildrenWithClassTraverse("target_shape") || [];
+                const hints = root?.FindChildrenWithClassTraverse("qol_hint_target") || [];
+                return { passed: true, name: "Target shape panels traversal works",
+                    message: `Found ${shapes.length} target_shape + ${hints.length} hint panels`,
+                    assertions: [{ passed: true, name: "Target/hint traversal succeeded" }]
                 };
-            } catch(e) { return { passed: false, name: "Target shape traversal failed", message: (e && e.message ? e.message : String(e)) }; }
+            } catch (error) {
+                return { passed: false, name: "Target shape traversal failed", message: String(error.message || error) };
+            }
         }
     });
 })();
