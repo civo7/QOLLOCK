@@ -31,6 +31,7 @@
             const owners = new Map();
             let root = null;
             let source = null;
+            let scope = null;
             let model = null;
             let nextDiscovery = 0;
             let loop = null;
@@ -53,8 +54,7 @@
                 const size = utils.ClampConfigNumber(cfg.HUD_INDICATOR_SIZE, 18, 10, 60, true);
                 const hideSmall = utils.IsCfgEnabled(cfg, "ENABLE_HIDE_SMALL_NUMBERS");
                 const clean = utils.IsCfgEnabled(cfg, "ENABLE_CLEAN_DAMAGE_INDICATORS");
-                return { size, opacity, hideSmall, active: size !== 18 || opacity !== "1.00" || hideSmall || clean,
-                    signature: [size, opacity, hideSmall ? 1 : 0, clean ? 1 : 0].join("|") };
+                return { size, opacity, hideSmall, active: size !== 18 || opacity !== "1.00" || hideSmall || clean };
             }
 
             function releaseProperty(target, owner, property) {
@@ -70,19 +70,9 @@
             function releaseAll() {
                 for (const [target, owner] of owners) release(target, owner);
                 owners.clear(); nextDiscovery = 0;
-                state.indicatorPanelsCache = [];
-                state.indicatorMetaCache = [];
-                state.lastIndicatorCount = 0;
-                state.lastIndicatorConfigSig = "";
-                state.lastIndicatorHideModesSig = "";
-                if (state.runtimeTaskNextMs) {
-                    delete state.runtimeTaskNextMs.hud_indicator_refresh;
-                    delete state.runtimeTaskNextMs.hud_indicator_panel_cache;
-                }
             }
 
             function discover() {
-                const scope = source || root.FindChildTraverse("gameplay_hud") || root;
                 const current = new Set(scope.FindChildrenWithClassTraverse("HudIndicatorText") || []);
                 for (const [target, owner] of owners) {
                     if (!current.has(target)) { release(target, owner); owners.delete(target); }
@@ -91,7 +81,6 @@
                     owners.set(target, { properties: new Set() });
                 }
                 nextDiscovery = utils.PerfNowMs() + (model.hideSmall ? 700 : 2500);
-                state.indicatorPanelsCache = [...owners.keys()];
             }
 
             function apply(target, owner) {
@@ -112,23 +101,26 @@
             }
 
             function update() {
-                const current = $.GetContextPanel();
+                const current = panels.findHud($.GetContextPanel());
                 if (current !== root) {
                     releaseAll(); resetDiscovery(); root = current; source = null;
                 }
                 if (!panels.isAlive(root) || (!model.active && !state.accountPresetTestActive)) { releaseAll(); return; }
                 const nextSource = resolveSource(root);
                 if (nextSource !== source) { releaseAll(); source = nextSource; }
+                const nextScope = source || root.FindChildTraverse("gameplay_hud") || root;
+                if (nextScope !== scope) { releaseAll(); scope = nextScope; }
                 const now = utils.PerfNowMs();
                 if (now >= nextDiscovery) discover();
                 for (const [target, owner] of owners) {
                     if (!panels.isAlive(target)) { owners.delete(target); nextDiscovery = 0; continue; }
+                    let ancestor = target;
+                    for (let depth = 0; depth < 64 && panels.isAlive(ancestor) && ancestor !== scope; depth++) ancestor = ancestor.GetParent();
+                    if (ancestor !== scope || !target.BHasClass("HudIndicatorText")) {
+                        release(target, owner); owners.delete(target); nextDiscovery = 0; continue;
+                    }
                     apply(target, owner);
                 }
-                state.indicatorMetaCache = [...owners.keys()].map(panel => ({ panel }));
-                state.lastIndicatorCount = owners.size;
-                state.lastIndicatorConfigSig = model.signature;
-                state.lastIndicatorHideModesSig = model.hideSmall ? "1" : "0";
             }
 
             function refreshSettings() {
@@ -146,7 +138,7 @@
                 onDisable() {
                     if (loop) { loop.stop(); loop = null; }
                     QOL.core.Scheduler.cancelAllForFeature(ctx.id);
-                    releaseAll(); resetDiscovery(); root = source = model = null;
+                    releaseAll(); resetDiscovery(); root = source = scope = model = null;
                 }
             };
         },

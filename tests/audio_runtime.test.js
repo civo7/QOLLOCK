@@ -28,7 +28,7 @@ function createAudioRuntime(config) {
     const instance = manifest.create(context);
     instance.onEnable();
     return {
-        Q, context, sounds, root: hud.root, gameClock, instance,
+        Q, context, sounds, root: hud.root, gameClock, instance, hud, global, callback: () => tick,
         sample(seconds) {
             gameClock.text = `${String(Math.floor(seconds / 60)).padStart(2, "0")}:${String(seconds % 60).padStart(2, "0")}`;
             tick();
@@ -42,7 +42,7 @@ for (const hideoutClass of ["connectedToHideout", "InHideout"]) {
             ENABLE_PASSIVE_COOLDOWN: 0, ENABLE_MINIMAP_REMINDER: 1 });
         runtime.sample(105);
         const caption = runtime.root.FindChildTraverse("QOLDL4DCaption");
-        assert.ok(caption && runtime.Q.state.dl4dCaptionVisible);
+        assert.ok(caption && !caption.BHasClass("qol-hidden"));
         const soundCount = runtime.sounds.length;
         let text = runtime.gameClock.text;
         let reads = 0;
@@ -55,7 +55,7 @@ for (const hideoutClass of ["connectedToHideout", "InHideout"]) {
         } });
         runtime.root.AddClass(hideoutClass);
         runtime.sample(285);
-        assert.equal(runtime.Q.state.dl4dCaptionVisible, false);
+        assert.equal(runtime.root.FindChildTraverse("QOLDL4DCaption").BHasClass("qol-hidden"), true);
         assert.equal(caption.text, "");
         assert.equal(runtime.sounds.length, soundCount, "cleanup cannot fall through to another reminder");
         const cleanupWrites = writes;
@@ -65,7 +65,7 @@ for (const hideoutClass of ["connectedToHideout", "InHideout"]) {
         assert.equal(writes, cleanupWrites, "cached hidden caption is not pending cleanup");
         runtime.root.RemoveClass(hideoutClass);
         runtime.sample(285);
-        assert.equal(runtime.Q.state.dl4dCaptionVisible, true);
+        assert.equal(runtime.root.FindChildTraverse("QOLDL4DCaption").BHasClass("qol-hidden"), false);
         assert.equal(runtime.root.FindChildTraverse("QOLDL4DCaption"), caption);
         assert.ok(runtime.sounds.length > soundCount, "normal reminders resume");
     });
@@ -77,7 +77,7 @@ test("disabling DL4D cleans once then returns to idle despite a cached caption",
     runtime.sample(105);
     runtime.context.config.set("ENABLE_DL4D_REMINDERS", false);
     runtime.sample(200);
-    assert.equal(runtime.Q.state.dl4dCaptionVisible, false);
+    assert.equal(runtime.root.FindChildTraverse("QOLDL4DCaption").BHasClass("qol-hidden"), true);
     let reads = 0;
     Object.defineProperty(runtime.gameClock, "text", { get() { reads++; return "03:20"; }, set() {} });
     for (let i = 0; i < 10; i++) runtime.sample(200);
@@ -107,6 +107,53 @@ test("minimap reminder keeps the existing 15-second default", () => {
     runtime.sample(15);
     runtime.sample(30);
     assert.deepEqual(runtime.sounds.map(event => event.time), ["00:15", "00:30"]);
+});
+
+test("audio history stays private and a retired callback cannot clear a new instance's caption", () => {
+    const runtime = createAudioRuntime({ ENABLE_DL4D_REMINDERS: 1, ENABLE_DL4D_CAPTIONS: 1 });
+    runtime.sample(105); const retiredCallback = runtime.callback();
+    const oldCaption = runtime.root.FindChildTraverse("QOLDL4DCaption");
+    runtime.instance.onDisable(); runtime.hud.clock.advance(0);
+    assert.equal(oldCaption.IsValid(), false);
+    const manifest = runtime.Q.core.FeatureRegistry.getManifest("ql_legacy_audio_passive");
+    const next = manifest.create(runtime.Q.core.FeatureRegistry.createContext(manifest.id));
+    next.onEnable(); runtime.sample(105);
+    const caption = runtime.root.FindChildTraverse("QOLDL4DCaption");
+    assert.ok(caption && !caption.BHasClass("qol-hidden"));
+    const soundCount = runtime.sounds.length; retiredCallback();
+    assert.equal(caption.BHasClass("qol-hidden"), false);
+    assert.equal(runtime.sounds.length, soundCount);
+    for (const key of ["lastTime", "lastIntervalAlert", "lastMinimapAlert", "triggeredOneTimers", "dl4dCaptionVisible", "dl4dTriggeredTimes"]) {
+        assert.equal(Object.hasOwn(runtime.Q.state, key), false);
+    }
+    assert.equal(runtime.Q.state.cachedPanels.dl4dCaptionPanel, undefined);
+    next.onDisable(); runtime.hud.clock.advance(0);
+});
+
+test("audio repeats a boundary for a new living HUD without consulting its retired native clock", () => {
+    const runtime = createAudioRuntime({ ENABLE_DL4D_REMINDERS: 1, ENABLE_DL4D_CAPTIONS: 1 });
+    runtime.sample(105); const caption = runtime.root.FindChildTraverse("QOLDL4DCaption");
+    const hud = runtime.global.$.CreatePanel("CitadelHud", null, "Hud");
+    const clock = runtime.global.$.CreatePanel("Label", hud, "HudGameTime"); clock.text = "01:45";
+    runtime.global.$.GetContextPanel = () => hud;
+    runtime.callback()(); runtime.hud.clock.advance(0);
+    assert.equal(caption.IsValid(), false); assert.equal(runtime.root.IsValid(), true);
+    assert.equal(runtime.sounds.length, 2, "new native match generation has an independent announcement ledger");
+    assert.ok(hud.FindChildTraverse("QOLDL4DCaption"));
+    runtime.instance.onDisable(); runtime.hud.clock.advance(0);
+});
+
+test("disabling captions immediately cancels feedback without disabling audio reminders", () => {
+    const runtime = createAudioRuntime({ ENABLE_DL4D_REMINDERS: 1, ENABLE_DL4D_CAPTIONS: 1 });
+    runtime.sample(105); const caption = runtime.root.FindChildTraverse("QOLDL4DCaption");
+    assert.equal(caption.BHasClass("qol-hidden"), false);
+    runtime.context.config.set("ENABLE_DL4D_CAPTIONS", false); runtime.instance.onSettingsChanged();
+    assert.equal(caption.BHasClass("qol-hidden"), true);
+    assert.equal(runtime.Q.core.Scheduler.getWorkSnapshot().some(owner => owner.id === "ql_legacy_audio_passive" && owner.once), false);
+    const count = runtime.sounds.length; runtime.sample(285);
+    assert.equal(runtime.sounds.length, count + 1);
+    assert.equal(caption.BHasClass("qol-hidden"), true);
+    runtime.instance.onDisable(); runtime.hud.clock.advance(0);
 });
 
 for (const lead of [0, 15, 30, 60]) {

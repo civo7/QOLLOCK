@@ -36,6 +36,9 @@ behavior until its owning implementation has been audited.
 - Native chat geometry has one independent owner. Image embedding and translation
   share a read-only native label selector while retaining separate private caches,
   source generations and cleanup; disabling images preserves chat geometry.
+- Audio reminders retain private announcement/caption history across their own
+  lifetime, and damage indicators retain private native-label ownership instead
+  of publishing duplicate mutable cache snapshots.
 
 Frozen main-config fixtures preserve all healthbar variants and both minimap
 scale methods. Published versions, compact layouts and persistent defaults stay

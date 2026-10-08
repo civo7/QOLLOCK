@@ -90,6 +90,12 @@ input/animation, bounded image cleanup, URL matching, partial writes and living
 replacement. Customize cancellation observes both released code styles and
 the neutral native offset written before release.
 
+Audio regressions observe actual caption presentation rather than exported
+private booleans. They cover new HUD announcement history, stale callbacks and
+caption-only disable alongside existing interval/lead-time behavior. Damage
+owner regressions release living moved labels and replaced gameplay scopes
+without waiting for a full discovery scan or publishing duplicate global caches.
+
 `item_mirror_ownership.test.js` exercises current HUD/inventory generations,
 living source/child replacement, partial writes/construction and pending/active
 feedback cancellation. The existing `item_mirror.test.js` still checks discovery,

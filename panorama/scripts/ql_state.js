@@ -67,21 +67,12 @@ var State;
 
     // ── State object ──
     State = {
-        lastTime: -1, 
-        lastIntervalAlert: 0,
-        lastMinimapAlert: 0,
-        triggeredOneTimers: {},
         lastRawConfig: null, 
         lastZoomState: null, 
         cachedPanels: {},
         allBindingsBoxes: [],
         forceRefreshTicks: 0,
         lastItemCount: 0,
-        lastIndicatorCount: 0,
-        lastIndicatorConfigSig: "",
-        lastIndicatorHideModesSig: "",
-        indicatorPanelsCache: [],
-        indicatorMetaCache: [],
         runtimeTaskNextMs: {},
         showBuildIdStyleSig: "",
         showBuildIdLastLabel: null,
@@ -267,10 +258,6 @@ var State;
         healthbarVisDebugLastSig: "",
         healthbarVisDebugNextMs: 0,
         loopErrorNextLogMs: 0,
-        dl4dLastTime: -1,
-        dl4dTriggeredTimes: {},
-        dl4dCaptionToken: 0,
-        dl4dCaptionVisible: false
     };
 
     // ── Publish to QOL namespace ──

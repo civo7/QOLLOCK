@@ -122,3 +122,29 @@ test("damage observes a replaced living source and releases labels that leave it
     assert.equal(current.style.fontSize, undefined); assert.equal(current.style.opacity, undefined);
     env.feature.onDisable(); assert.deepEqual(env.clock.errors, []);
 });
+
+test("damage styling immediately releases a living label moved outside the current source", () => {
+    const env = setup("ql_damage_numbers", { HUD_INDICATOR_SIZE: 30, DAMAGE_NUMBER_OPACITY: 0.5 });
+    const source = env.add(env.root, "HudEventIndicatorsPanel");
+    const label = env.add(source, "Amount", ["HudIndicatorText"], "Label");
+    env.feature.onEnable(); assert.equal(label.style.fontSize, "30px");
+    const retired = env.add(null, "RetiredDamageLabels"); label.SetParent(retired); env.clock.advance(600);
+    assert.equal(label.style.fontSize, undefined); assert.equal(label.style.opacity, undefined);
+    assert.equal(label.IsValid(), true);
+    for (const key of ["indicatorPanelsCache", "indicatorMetaCache", "lastIndicatorCount", "lastIndicatorConfigSig", "lastIndicatorHideModesSig"]) {
+        assert.equal(Object.hasOwn(env.Q.state, key), false);
+    }
+    env.feature.onDisable(); assert.deepEqual(env.clock.errors, []);
+});
+
+test("damage styling binds a new living gameplay scope when the optional event source is absent", () => {
+    const env = setup("ql_damage_numbers", { HUD_INDICATOR_SIZE: 30, DAMAGE_NUMBER_OPACITY: 0.5 });
+    const gameplay = env.add(env.root, "gameplay_hud"), label = env.add(gameplay, "Amount", ["HudIndicatorText"], "Label");
+    env.feature.onEnable(); assert.equal(label.style.fontSize, "30px");
+    gameplay.SetParent(env.add(null, "RetiredGameplay"));
+    const next = env.add(env.root, "gameplay_hud"), current = env.add(next, "Amount", ["HudIndicatorText"], "Label");
+    env.clock.advance(600);
+    assert.equal(label.style.fontSize, undefined); assert.equal(label.style.opacity, undefined);
+    assert.equal(current.style.fontSize, "30px");
+    env.feature.onDisable(); assert.deepEqual(env.clock.errors, []);
+});

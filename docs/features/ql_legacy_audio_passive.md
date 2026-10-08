@@ -17,6 +17,12 @@ pending work. Hideout must remove a visible caption without emitting another
 reminder from a retained clock. Settings changes refresh reminder policy without
 waiting for the next observation poll.
 
+Announcement deduplication, caption tokens and native caption handles belong to
+each feature instance. A new HUD generation resets its private announcement
+history; disabled callbacks cannot mutate a later instance. Disabling captions
+alone cancels visible feedback immediately while preserving reminder audio.
+The manifest does not publish a caption/game-clock cache through shared `State`.
+
 This manifest does not implement Advanced item mirroring; see
 [ql_item_mirror](ql_item_mirror.md). Tests can check emitted sound events, but
 native asset playback requires a repacked client.

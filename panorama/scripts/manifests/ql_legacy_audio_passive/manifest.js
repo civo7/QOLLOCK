@@ -67,10 +67,14 @@
         ],
         create(ctx) {
             const Panel = (QOL.core && QOL.core.panel) ? QOL.core.panel : {};
-            const State = QOL.state || (typeof globalThis !== "undefined" && globalThis.State) || {};
+            const history = { lastTime: -1, lastIntervalAlert: 0, lastMinimapAlert: 0, triggeredOneTimers: {},
+                dl4dLastTime: -1, dl4dTriggeredTimes: {}, dl4dCaptionToken: 0, dl4dCaptionVisible: false };
+            function resetHistory() {
+                history.lastTime = history.dl4dLastTime = -1;
+                history.lastIntervalAlert = history.lastMinimapAlert = 0;
+                history.triggeredOneTimers = {}; history.dl4dTriggeredTimes = {};
+            }
             const IsCfgEnabled = QOL.utils.IsCfgEnabled;
-            const GetCachedPanel = QOL.getCachedPanel;
-            const SetCachedPanel = QOL.setCachedPanel;
             const IsStreetBrawlModeActive = function(r) { return QOL.isStreetBrawlModeActive ? QOL.isStreetBrawlModeActive(r) : false; };
             const IsColorWarningEnabled = function(cfg) { return QOL.isColorWarningEnabled ? QOL.isColorWarningEnabled(cfg) : false; };
 
@@ -92,6 +96,7 @@
             let _captionHideTask = null;
             let _captionPanel = null;
             let _config = null;
+            let _running = false;
 
             // ── Constants (verbatim from old feature) ──
             const INTERNAL_CONFIG = {
@@ -178,7 +183,7 @@
                 let panel = Panel.isAlive(_captionPanel) && _captionPanel.GetParent() === root ? _captionPanel : null;
                 if (!panel && _captionPanel) { Panel.delete(_captionPanel); _captionPanel = null; }
                 if (!panel && root && root.FindChildTraverse) {
-                    panel = root.FindChildTraverse("QOLDL4DCaption") || null;
+                    panel = root.FindChild("QOLDL4DCaption") || null;
                 }
                 if (!panel && root) {
                     panel = $.CreatePanel("Label", root, "QOLDL4DCaption", {
@@ -188,7 +193,7 @@
                 }
                 if (!panel) return null;
                 _captionPanel = panel;
-                SetCachedPanel("dl4dCaptionPanel", panel);
+
                 panel.style.horizontalAlign = "center";
                 panel.style.verticalAlign = "top";
                 panel.style.marginTop = "140px";
@@ -209,14 +214,14 @@
 
             function HideDl4dCaption() {
                 if (_captionHideTask) { _captionHideTask.stop(); _captionHideTask = null; }
-                const panel = Panel.isAlive(_captionPanel) ? _captionPanel : GetCachedPanel("dl4dCaptionPanel");
+                const panel = Panel.isAlive(_captionPanel) ? _captionPanel : null;
                 if (panel) {
                     panel.text = "";
                     panel.style.opacity = "0";
                     if (panel.SetHasClass) panel.SetHasClass("qol-hidden", true); else panel.style.visibility = "collapse";
                 }
-                State.dl4dCaptionVisible = false;
-                State.dl4dCaptionToken++;
+                history.dl4dCaptionVisible = false;
+                history.dl4dCaptionToken++;
             }
 
             function ShowDl4dCaption(root, cfg, text, durationSec) {
@@ -226,46 +231,46 @@
                 panel.text = String(text || "");
                 if (panel.SetHasClass) panel.SetHasClass("qol-hidden", false); else panel.style.visibility = "visible";
                 panel.style.opacity = "0.85";
-                State.dl4dCaptionVisible = true;
-                State.dl4dCaptionToken++;
-                const token = State.dl4dCaptionToken;
+                history.dl4dCaptionVisible = true;
+                history.dl4dCaptionToken++;
+                const token = history.dl4dCaptionToken;
                 let delay = Number(durationSec);
                 if (!isFinite(delay) || delay <= 0) delay = 3.0;
                 if (_captionHideTask) _captionHideTask.stop();
                 _captionHideTask = QOL.core.Scheduler.scheduleOnce(function() {
                     _captionHideTask = null;
-                    if (token !== State.dl4dCaptionToken) return;
+                    if (token !== history.dl4dCaptionToken) return;
                     HideDl4dCaption();
                 }, delay, ctx.id);
             }
 
             function UpdateDl4dReminderRuntime(root, cfg, currentTime, suppressAudio) {
                 if (!IsDl4dReminderRuntimeActive(cfg) || suppressAudio) {
-                    if (State.dl4dCaptionVisible) HideDl4dCaption();
+                    if (history.dl4dCaptionVisible) HideDl4dCaption();
                     if (!IsDl4dReminderRuntimeActive(cfg)) {
-                        State.dl4dLastTime = -1;
-                        State.dl4dTriggeredTimes = {};
+                        history.dl4dLastTime = -1;
+                        history.dl4dTriggeredTimes = {};
                     }
                     return;
                 }
                 if (!isFinite(currentTime) || currentTime <= 0) return;
-                if (State.dl4dLastTime > 30 && currentTime < State.dl4dLastTime - 30) {
-                    State.dl4dTriggeredTimes = {};
+                if (history.dl4dLastTime > 30 && currentTime < history.dl4dLastTime - 30) {
+                    history.dl4dTriggeredTimes = {};
                 }
                 for (let i = 0; i < DL4D_REMINDER_EVENTS.length; i++) {
                     const reminder = DL4D_REMINDER_EVENTS[i];
                     if (!reminder || !isFinite(reminder.time)) continue;
                     const fireKey = String(reminder.time);
-                    if (State.dl4dTriggeredTimes[fireKey]) continue;
+                    if (history.dl4dTriggeredTimes[fireKey]) continue;
                     if (currentTime >= reminder.time && currentTime < (reminder.time + INTERNAL_CONFIG.ALERT_WINDOW)) {
-                        State.dl4dTriggeredTimes[fireKey] = true;
+                        history.dl4dTriggeredTimes[fireKey] = true;
                         if (Number(cfg[reminder.key]) !== 1) continue;
                         ShowDl4dCaption(root, cfg, reminder.caption, reminder.duration);
                         const eventName = ResolveDl4dReminderEventForVolume(reminder.eventBase, cfg);
                         if (eventName) $.DispatchEvent("PlaySoundEffect", eventName);
                     }
                 }
-                State.dl4dLastTime = currentTime;
+                history.dl4dLastTime = currentTime;
             }
 
             function IsAnyAnnouncerReminderTypeEnabled(cfg) {
@@ -281,22 +286,25 @@
 
             // ── Main tick (adapted from UpdateLegacyAudioAndPassiveHudRuntime) ──
             function _tick() {
-                const root = $.GetContextPanel();
+                if (!_running) return;
+                const root = Panel.findHud($.GetContextPanel());
                 if (root !== _root) {
                     HideDl4dCaption();
                     if (_captionPanel) Panel.delete(_captionPanel);
                     _captionPanel = null;
-                    SetCachedPanel("dl4dCaptionPanel", null);
+
                     for (const resolver of clockResolvers) resolver.reset();
                     _root = root;
+                    resetHistory();
                 }
                 const cfg = _config;
+                if (history.dl4dCaptionVisible && Number(cfg.ENABLE_DL4D_CAPTIONS) !== 1) HideDl4dCaption();
 
                 const reminderTypesEnabled = IsAnyAnnouncerReminderTypeEnabled(cfg);
                 const dl4dReminderEnabled = IsDl4dReminderRuntimeActive(cfg);
 
                 // A hidden reusable label does not require more cleanup work.
-                const hasReminderCleanup = !!State.dl4dCaptionVisible;
+                const hasReminderCleanup = !!history.dl4dCaptionVisible;
                 if (!reminderTypesEnabled && !dl4dReminderEnabled && !hasReminderCleanup) {
                     // Stay below the two-second announcer alert window so a
                     // newly enabled reminder cannot miss its first boundary.
@@ -323,10 +331,11 @@
 
                 const parts = clock.text.split(':');
                 const currentTime = (parseInt(parts[0], 10) * 60) + parseInt(parts[1], 10);
-                if (currentTime < State.lastTime) {
-                    State.lastIntervalAlert = 0;
-                    State.lastMinimapAlert = 0;
-                    State.triggeredOneTimers = {};
+                if (!Number.isFinite(currentTime) || currentTime < 0) return;
+                if (currentTime < history.lastTime) {
+                    history.lastIntervalAlert = 0;
+                    history.lastMinimapAlert = 0;
+                    history.triggeredOneTimers = {};
                 }
 
                 // Street brawl check — suppress reminder audio during practice mode
@@ -334,7 +343,7 @@
                 try { suppressReminderAudio = IsStreetBrawlModeActive(root); } catch(e) {}
                 if (suppressReminderAudio) {
                     UpdateDl4dReminderRuntime(root, cfg, currentTime, true);
-                    State.lastTime = currentTime;
+                    history.lastTime = currentTime;
                     return;
                 }
 
@@ -347,10 +356,10 @@
                     const mInterval = cfg.MINIMAP_REMINDER_INTERVAL || 15;
                     const mTarget = Math.floor(currentTime / mInterval) * mInterval;
                     if (currentTime >= mTarget && currentTime < (mTarget + INTERNAL_CONFIG.ALERT_WINDOW)) {
-                        if (State.lastMinimapAlert < mTarget) {
+                        if (history.lastMinimapAlert < mTarget) {
                             const minimapEvent = ResolveAnnouncerEventForVolume("BuffReminder.Minimap", cfg);
                             $.DispatchEvent("PlaySoundEffect", minimapEvent);
-                            State.lastMinimapAlert = mTarget;
+                            history.lastMinimapAlert = mTarget;
                         }
                     }
                 }
@@ -364,13 +373,13 @@
                         const tierEnabled = tierKey ? (Number(cfg[tierKey]) === 1) : (IsCfgEnabled(cfg, "ENABLE_ONE_TIME"));
                         if (!tierEnabled) return;
                         if (currentTime >= alert.time && currentTime < (alert.time + INTERNAL_CONFIG.ALERT_WINDOW)) {
-                            if (!State.triggeredOneTimers[alert.time]) {
+                            if (!history.triggeredOneTimers[alert.time]) {
                                 let oneTimeEvent = (voiceSelection === "Beep")
                                     ? "BuffReminder.Beep"
                                     : (alert.sound + suffix);
                                 oneTimeEvent = ResolveAnnouncerEventForVolume(oneTimeEvent, cfg);
                                 $.DispatchEvent("PlaySoundEffect", oneTimeEvent);
-                                State.triggeredOneTimers[alert.time] = true;
+                                history.triggeredOneTimers[alert.time] = true;
                             }
                         }
                     });
@@ -381,7 +390,7 @@
                     const dynamicFirstAlert = INTERNAL_CONFIG.FIRST_ALERT - bridgeLeadSec;
                     const targetTime = dynamicFirstAlert + (Math.floor((currentTime - dynamicFirstAlert) / INTERNAL_CONFIG.INTERVAL) * INTERNAL_CONFIG.INTERVAL);
                     if (currentTime >= targetTime && currentTime < (targetTime + INTERNAL_CONFIG.ALERT_WINDOW)) {
-                        if (State.lastIntervalAlert < targetTime) {
+                        if (history.lastIntervalAlert < targetTime) {
                             let intervalEvent = "";
                             if (voiceSelection === "Beep") {
                                 intervalEvent = "BuffReminder.Beep";
@@ -391,31 +400,33 @@
                             }
                             intervalEvent = ResolveAnnouncerEventForVolume(intervalEvent, cfg);
                             $.DispatchEvent("PlaySoundEffect", intervalEvent);
-                            State.lastIntervalAlert = targetTime;
+                            history.lastIntervalAlert = targetTime;
                         }
                     }
                 }
-                State.lastTime = currentTime;
+                history.lastTime = currentTime;
             }
 
             return {
                 onEnable() {
+                    _running = true; resetHistory();
                     _config = ctx.config.view();
-                    _root = $.GetContextPanel();
+                    _root = Panel.findHud($.GetContextPanel());
                     const S = QOL.core.Scheduler;
                     _loop = S && S.createPollLoop ? S.createPollLoop(_tick, 0.5, "ql_legacy_audio_passive") : null;
                 },
                 onDisable() {
+                    _running = false;
                     if (_loop) { _loop.stop(); _loop = null; }
                     const S = QOL.core.Scheduler; if (S) S.cancelAllForFeature("ql_legacy_audio_passive");
                     HideDl4dCaption();
-                    State.dl4dCaptionToken = (State.dl4dCaptionToken || 0) + 1;
-                    State.lastTime = -1; State.lastIntervalAlert = 0; State.lastMinimapAlert = 0; State.triggeredOneTimers = {};
-                    State.dl4dLastTime = -1; State.dl4dTriggeredTimes = {};
+                    history.dl4dCaptionToken = (history.dl4dCaptionToken || 0) + 1;
+                    history.lastTime = -1; history.lastIntervalAlert = 0; history.lastMinimapAlert = 0; history.triggeredOneTimers = {};
+                    history.dl4dLastTime = -1; history.dl4dTriggeredTimes = {};
                     if (_captionPanel) Panel.delete(_captionPanel);
                     _captionPanel = null;
                     for (const resolver of clockResolvers) resolver.reset();
-                    SetCachedPanel("dl4dCaptionPanel", null); SetCachedPanel("gameTime", null);
+
                     _root = null;
                     _config = null;
                 },
