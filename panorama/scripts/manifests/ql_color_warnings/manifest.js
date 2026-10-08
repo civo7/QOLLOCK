@@ -61,18 +61,18 @@
         ],
         enabledByDefault: false,
         settings: [
-            { key: "ENABLE_COLORED_HEALTHBAR", type: "toggle", default: false },
-            { key: "ENABLE_COLOR_WARNING_25", type: "toggle", default: false },
-            { key: "ENABLE_COLOR_WARNING_65", type: "toggle", default: false },
-            { key: "ENABLE_COLOR_WARNING_75", type: "toggle", default: false },
-            { key: "ENABLE_ENEMY_COLORED_HEALTHBAR", type: "toggle", default: false },
-            { key: "ENABLE_TOPBAR_ENEMY_HP_WARNING_25", type: "toggle", default: false },
-            { key: "ENABLE_TOPBAR_ENEMY_HP_WARNING_65", type: "toggle", default: false },
-            { key: "ENABLE_TOPBAR_ENEMY_HP_WARNING_75", type: "toggle", default: false },
-            { key: "ENABLE_ALLY_COLORED_HEALTHBAR", type: "toggle", default: false },
-            { key: "ENABLE_TOPBAR_ALLY_HP_WARNING_25", type: "toggle", default: false },
-            { key: "ENABLE_TOPBAR_ALLY_HP_WARNING_65", type: "toggle", default: false },
-            { key: "ENABLE_TOPBAR_ALLY_HP_WARNING_75", type: "toggle", default: false }
+            { key: "ENABLE_COLORED_HEALTHBAR", type: "toggle" },
+            { key: "ENABLE_COLOR_WARNING_25", type: "toggle" },
+            { key: "ENABLE_COLOR_WARNING_65", type: "toggle" },
+            { key: "ENABLE_COLOR_WARNING_75", type: "toggle" },
+            { key: "ENABLE_ENEMY_COLORED_HEALTHBAR", type: "toggle" },
+            { key: "ENABLE_TOPBAR_ENEMY_HP_WARNING_25", type: "toggle" },
+            { key: "ENABLE_TOPBAR_ENEMY_HP_WARNING_65", type: "toggle" },
+            { key: "ENABLE_TOPBAR_ENEMY_HP_WARNING_75", type: "toggle" },
+            { key: "ENABLE_ALLY_COLORED_HEALTHBAR", type: "toggle" },
+            { key: "ENABLE_TOPBAR_ALLY_HP_WARNING_25", type: "toggle" },
+            { key: "ENABLE_TOPBAR_ALLY_HP_WARNING_65", type: "toggle" },
+            { key: "ENABLE_TOPBAR_ALLY_HP_WARNING_75", type: "toggle" }
         ],
         create: function(ctx) {
             // ── QOL delegate wrappers (Pattern 10) ──

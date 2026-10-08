@@ -111,6 +111,20 @@ test("scaffold registration follows canonical existing defaults and ranges witho
     assert.equal(opts.settings[1].default, false);
 });
 
+test("scaffold accepts catalog references and retains explicit validation for new local fields", () => {
+    const opts = options("style-only", ['--settings=[{"key":"SOULS_SCALE","type":"slider"},{"key":"HUD_SOULS_ENABLED","type":"toggle"},{"key":"VOICE_TYPE","type":"dropdown"},{"key":"OFFSET","type":"number","default":3}]']);
+    const source = generate(opts);
+    const env = setup(opts);
+    const declared = JSON.parse(source.match(/settings: (\[[\s\S]*?\]),\s*create/)[1]);
+    assert.deepEqual(declared, opts.settings, "references remain references, while local fields keep their default");
+    const canonical = env.sandbox.global.QOL_DEFAULT_CONFIG;
+    for (const key of ["SOULS_SCALE", "HUD_SOULS_ENABLED", "VOICE_TYPE"]) {
+        assert.equal(env.Q.core.ConfigStore.get(opts.id, key), key === "HUD_SOULS_ENABLED" ? !!canonical[key] : canonical[key]);
+    }
+    assert.equal(env.Q.core.ConfigStore.get(opts.id, "OFFSET"), 3);
+    assert.throws(() => generate(options("style-only", ['--settings=[{"key":"NEW_LOCAL_OFFSET","type":"number"}]'])), /Invalid setting descriptor/);
+});
+
 test("registry unwinds generated styles after a partial enable failure and retries the same feature cleanly", () => {
     const opts = options("style-only");
     const env = setup(opts, source => source.replace("return {};", 'return {x: cfg.OFFSET + "px"};'));

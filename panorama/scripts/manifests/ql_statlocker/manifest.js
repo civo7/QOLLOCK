@@ -21,7 +21,7 @@
         enableKey: "ENABLE_STATLOCKER",
         enabledByDefault: false,
         settings: [
-            { key: "ENABLE_STATLOCKER", type: "toggle", default: false }
+            { key: "ENABLE_STATLOCKER", type: "toggle" }
         ],
         create: function(ctx) {
             var _loop = null;

@@ -7,11 +7,11 @@
         id: "ql_items",
         enabledByDefault: true,
         settings: [
-            { key: "HUD_ITEMS_ENABLED", type: "toggle", default: true },
-            { key: "ITEMS_OPACITY", type: "slider", min: 0, max: 1, step: 0.05, default: 1.0 },
-            { key: "ITEMS_X_OFFSET", type: "slider", min: -2000, max: 2000, step: 1, default: 0 },
-            { key: "ITEMS_Y_OFFSET", type: "slider", min: -2000, max: 2000, step: 1, default: 0 },
-            { key: "ITEMS_WASH_COLOR", type: "palette", default: 0 }
+            { key: "HUD_ITEMS_ENABLED", type: "toggle" },
+            { key: "ITEMS_OPACITY", type: "slider" },
+            { key: "ITEMS_X_OFFSET", type: "slider" },
+            { key: "ITEMS_Y_OFFSET", type: "slider" },
+            { key: "ITEMS_WASH_COLOR", type: "palette" }
         ],
         create(ctx) {
             const panelAPI = QOL.core.panel;

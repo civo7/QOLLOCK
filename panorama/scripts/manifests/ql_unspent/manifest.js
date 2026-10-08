@@ -15,7 +15,7 @@
         enableKey: "ENABLE_UNSPENT_SOULS",
         enabledByDefault: false,
         settings: [
-            { key: "ENABLE_UNSPENT_SOULS", type: "toggle", default: false }
+            { key: "ENABLE_UNSPENT_SOULS", type: "toggle" }
         ],
         create: function(ctx) {
             // Permanently disabled per GameBanana moderator ruling

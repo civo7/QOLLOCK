@@ -7,15 +7,15 @@
         id: "ql_bottom_bar",
         enabledByDefault: true,
         settings: [
-            { key: "HUD_BOTTOM_BAR_ENABLED", type: "toggle", default: true },
-            { key: "BOTTOM_BAR_OPACITY", type: "slider", min: 0, max: 1, step: 0.05, default: 1.0 },
-            { key: "BOTTOM_BAR_SCALE", type: "slider", min: 0.5, max: 1.5, step: 0.05, default: 1.0 },
-            { key: "BOTTOM_BAR_X_OFFSET", type: "slider", min: -2000, max: 2000, step: 1, default: 0 },
-            { key: "BOTTOM_BAR_Y_OFFSET", type: "slider", min: -2000, max: 2000, step: 1, default: 0 },
-            { key: "BOTTOM_BAR_WASH_COLOR", type: "palette", default: 0 },
-            { key: "ACTIVE_ITEMS_SCALE", type: "slider", min: 50, max: 250, step: 1, default: 100 },
-            { key: "ACTIVE_ITEMS_X_OFFSET", type: "slider", min: -2000, max: 2000, step: 1, default: 0 },
-            { key: "ACTIVE_ITEMS_Y_OFFSET", type: "slider", min: -2000, max: 2000, step: 1, default: 0 }
+            { key: "HUD_BOTTOM_BAR_ENABLED", type: "toggle" },
+            { key: "BOTTOM_BAR_OPACITY", type: "slider" },
+            { key: "BOTTOM_BAR_SCALE", type: "slider" },
+            { key: "BOTTOM_BAR_X_OFFSET", type: "slider" },
+            { key: "BOTTOM_BAR_Y_OFFSET", type: "slider" },
+            { key: "BOTTOM_BAR_WASH_COLOR", type: "palette" },
+            { key: "ACTIVE_ITEMS_SCALE", type: "slider" },
+            { key: "ACTIVE_ITEMS_X_OFFSET", type: "slider" },
+            { key: "ACTIVE_ITEMS_Y_OFFSET", type: "slider" }
         ],
         create(ctx) {
             const panelAPI = QOL.core.panel;

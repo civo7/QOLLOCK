@@ -9,11 +9,11 @@
         enableKey: "ENABLE_COMBAT_STATUS",
         enabledByDefault: false,
         settings: [
-            { key: "ENABLE_COMBAT_STATUS", type: "toggle", default: false },
-            { key: "ENABLE_COMBAT_INDICATOR", type: "toggle", default: false },
-            { key: "COMBAT_STATUS_SCALE", type: "slider", min: 50, max: 200, step: 1, default: 100 },
-            { key: "COMBAT_STATUS_X_OFFSET", type: "slider", min: -1000, max: 1000, step: 1, default: 0 },
-            { key: "COMBAT_STATUS_Y_OFFSET", type: "slider", min: -1000, max: 1000, step: 1, default: 0 }
+            { key: "ENABLE_COMBAT_STATUS", type: "toggle" },
+            { key: "ENABLE_COMBAT_INDICATOR", type: "toggle" },
+            { key: "COMBAT_STATUS_SCALE", type: "slider" },
+            { key: "COMBAT_STATUS_X_OFFSET", type: "slider" },
+            { key: "COMBAT_STATUS_Y_OFFSET", type: "slider" }
         ],
         create(ctx) {
             const P = QOL.core.panel;

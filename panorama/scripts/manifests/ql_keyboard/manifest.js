@@ -146,12 +146,12 @@
         enableKey: "ENABLE_KEYBOARD_OVERLAY",
         enabledByDefault: false,
         settings: [
-            { key: "ENABLE_KEYBOARD_OVERLAY", type: "toggle", default: false },
-            { key: "ENABLE_FULL_KEYBOARD_LAYOUT", type: "toggle", default: false },
-            { key: "KEYBOARD_OVERLAY_SCALE", type: "slider", min: 70, max: 150, step: 1, default: 100 },
-            { key: "KEYBOARD_OVERLAY_X_OFFSET", type: "slider", min: -1500, max: 1500, step: 5, default: 0 },
-            { key: "KEYBOARD_OVERLAY_Y_OFFSET", type: "slider", min: -400, max: 1000, step: 5, default: 0 },
-            { key: "KEYBOARD_OVERLAY_WASH_COLOR", type: "palette", default: 0 }
+            { key: "ENABLE_KEYBOARD_OVERLAY", type: "toggle" },
+            { key: "ENABLE_FULL_KEYBOARD_LAYOUT", type: "toggle" },
+            { key: "KEYBOARD_OVERLAY_SCALE", type: "slider" },
+            { key: "KEYBOARD_OVERLAY_X_OFFSET", type: "slider" },
+            { key: "KEYBOARD_OVERLAY_Y_OFFSET", type: "slider" },
+            { key: "KEYBOARD_OVERLAY_WASH_COLOR", type: "palette" }
         ],
         create(ctx) {
             let _loop = null;

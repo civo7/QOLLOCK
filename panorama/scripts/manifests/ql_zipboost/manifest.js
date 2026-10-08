@@ -10,10 +10,10 @@
         enableKey: "ENABLE_ZIP_BOOST",
         enabledByDefault: false,
         settings: [
-            { key: "ENABLE_ZIP_BOOST", type: "toggle", default: false },
-            { key: "ZIP_BOOST_SCALE", type: "slider", min: 50, max: 200, step: 1, default: 100 },
-            { key: "ZIP_BOOST_X_OFFSET", type: "slider", min: -2000, max: 2000, step: 1, default: 0 },
-            { key: "ZIP_BOOST_Y_OFFSET", type: "slider", min: 0, max: 1000, step: 1, default: 0 }
+            { key: "ENABLE_ZIP_BOOST", type: "toggle" },
+            { key: "ZIP_BOOST_SCALE", type: "slider" },
+            { key: "ZIP_BOOST_X_OFFSET", type: "slider" },
+            { key: "ZIP_BOOST_Y_OFFSET", type: "slider" }
         ],
         create(ctx) {
             const P = QOL.core.panel;

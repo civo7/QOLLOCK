@@ -19,10 +19,12 @@ and [adapter](config_adapter.md).
 | `syncFromExternal(data)` | Uses the same atomic load path and returns the changed-key count. |
 
 Accepted schema types are `toggle`, `slider`, `dropdown`, `text`, `palette`,
-`action`, `number`, `buttongroup`, and `multitoggle`. Slider schemas require min/max;
+`action`, `number`, `buttongroup`, and `multitoggle`. Resolved slider schemas require min/max;
 `set` and `load` share finite-number validation and decimal rounding, without
 imposing the compact codec's step. Registered persisted sliders obtain bounds,
-step and decimal precision from the shared settings catalog. UI/wire consistency
+step and decimal precision from the shared settings catalog; their declarations
+omit those repeated values and defaults. Local-only fields require explicit
+defaults and validation metadata. UI/wire consistency
 must still be checked separately. Dropdown options, when provided, are compared by string value.
 Multitoggle options create individual boolean keys in addition to the group key.
 

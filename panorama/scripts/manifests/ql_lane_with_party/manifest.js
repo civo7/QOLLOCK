@@ -23,7 +23,7 @@
         enableKey: "ENABLE_LANE_WITH_PARTY",
         enabledByDefault: false,
         settings: [
-            { key: "ENABLE_LANE_WITH_PARTY", type: "toggle", default: false }
+            { key: "ENABLE_LANE_WITH_PARTY", type: "toggle" }
         ],
         create: function(ctx) {
             var Panel = (QOL.core && QOL.core.panel) ? QOL.core.panel : {};

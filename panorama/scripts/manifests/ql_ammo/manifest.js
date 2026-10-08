@@ -21,16 +21,16 @@
             return false;
         },
         settings: [
-            { key: "ENABLE_AMMO_STATUS", type: "toggle", default: false },
-            { key: "ENABLE_HIDE_MAGAZINE", type: "toggle", default: false },
-            { key: "ENABLE_HIDE_AMMO_ALL", type: "toggle", default: false },
-            { key: "AMMO_PANEL_SCALE", type: "slider", min: 100, max: 300, step: 1, default: 100 },
-            { key: "AMMO_CURRENT_SCALE", type: "slider", min: 100, max: 300, step: 1, default: 100 },
-            { key: "AMMO_TOTAL_SCALE", type: "slider", min: 100, max: 300, step: 1, default: 100 },
-            { key: "AMMO_PANEL_X_OFFSET", type: "slider", min: -2000, max: 2000, step: 5, default: 0 },
-            { key: "AMMO_PANEL_Y_OFFSET", type: "slider", min: -2000, max: 2000, step: 5, default: 0 },
-            { key: "AMMO_CLIP_ANGLE", type: "slider", min: 0, max: 360, step: 1, default: 0 },
-            { key: "AMMO_TEXT_COLOR", type: "palette", default: 0 }
+            { key: "ENABLE_AMMO_STATUS", type: "toggle" },
+            { key: "ENABLE_HIDE_MAGAZINE", type: "toggle" },
+            { key: "ENABLE_HIDE_AMMO_ALL", type: "toggle" },
+            { key: "AMMO_PANEL_SCALE", type: "slider" },
+            { key: "AMMO_CURRENT_SCALE", type: "slider" },
+            { key: "AMMO_TOTAL_SCALE", type: "slider" },
+            { key: "AMMO_PANEL_X_OFFSET", type: "slider" },
+            { key: "AMMO_PANEL_Y_OFFSET", type: "slider" },
+            { key: "AMMO_CLIP_ANGLE", type: "slider" },
+            { key: "AMMO_TEXT_COLOR", type: "palette" }
         ],
         create(ctx) {
             const panelAPI = QOL.core.panel;

@@ -16,6 +16,10 @@ alive even while the native indicator is hidden.
 1. Declare ownership, source evidence, settings and enable policy in the manifest.
    Existing persistent defaults and slider bounds/precision are resolved from the
    shared catalog at registration; feature constants must not redefine their units.
+   Persistent declarations contain their key, type and feature-specific metadata,
+   without copies of catalog defaults or numeric bounds. Local-only fields still
+   declare their own defaults and validation metadata. Native layout baselines and
+   live-data limits are separate from persisted setting metadata.
 2. Keep instance state inside `create(ctx)`. Creating an instance should not
    mutate panels or install callbacks before `onEnable`.
 3. Read `ctx.config.view()` as a live, read-only slice. Derive a settings model
@@ -64,6 +68,9 @@ optionally `--enable-key=DECLARED_TOGGLE`, but follow the entire
 shipping. Registration does not create a persisted control. New persistent
 defaults require the maintainer's decision. Add the printed include before the
 HUD app bootstrap, respecting real helper dependencies and XML separator rules.
+The scaffold validates known settings with the current runtime catalog and emits
+references without duplicated defaults/bounds. New local fields require explicit
+metadata; a missing default on an unknown key is rejected.
 
 ## Migrate existing features
 

@@ -276,16 +276,16 @@
         enableKey: "ENABLE_PASSIVE_COOLDOWN",
         enabledByDefault: false,
         settings: [
-            { key: "ENABLE_PASSIVE_COOLDOWN", type: "toggle", default: false },
-            { key: "ENABLE_OLD_ITEM_COOLDOWNS", type: "toggle", default: false },
-            { key: "ITEM_FILTER_DEF_PASSIVE", type: "toggle", default: true },
-            { key: "ITEM_FILTER_OFF_PASSIVE", type: "toggle", default: true },
-            { key: "ITEM_FILTER_DEF_ACTIVE", type: "toggle", default: false },
-            { key: "ITEM_FILTER_OFF_ACTIVE", type: "toggle", default: false },
-            { key: "PASSIVE_COOLDOWN_SIZE", type: "slider", min: 30, max: 60, step: 1, default: 40 },
-            { key: "PASSIVE_COOLDOWN_Y", type: "slider", min: -50, max: 50, step: 1, default: 0 },
-            { key: "PASSIVE_COOLDOWN_X", type: "slider", min: -50, max: 50, step: 1, default: 0 },
-            { key: "PASSIVE_COOLDOWN_OPACITY", type: "slider", min: 0, max: 1, step: 0.05, default: 0.5 }
+            { key: "ENABLE_PASSIVE_COOLDOWN", type: "toggle" },
+            { key: "ENABLE_OLD_ITEM_COOLDOWNS", type: "toggle" },
+            { key: "ITEM_FILTER_DEF_PASSIVE", type: "toggle" },
+            { key: "ITEM_FILTER_OFF_PASSIVE", type: "toggle" },
+            { key: "ITEM_FILTER_DEF_ACTIVE", type: "toggle" },
+            { key: "ITEM_FILTER_OFF_ACTIVE", type: "toggle" },
+            { key: "PASSIVE_COOLDOWN_SIZE", type: "slider" },
+            { key: "PASSIVE_COOLDOWN_Y", type: "slider" },
+            { key: "PASSIVE_COOLDOWN_X", type: "slider" },
+            { key: "PASSIVE_COOLDOWN_OPACITY", type: "slider" }
         ],
         create: function(ctx) {
             var _loop = null, _overlay = null, _row = null;

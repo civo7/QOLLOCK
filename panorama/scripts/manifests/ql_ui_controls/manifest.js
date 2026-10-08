@@ -26,16 +26,16 @@
         id: FEATURE_ID,
         enabledByDefault: true,
         settings: [
-            { key: "SUPPORT_16_10", type: "toggle", default: false, label: "16:10 Support", description: "Shifts the HUD for better visual support for 16:10 resolutions." },
-            { key: "SUPPORT_4_3", type: "toggle", default: false, label: "4:3 Support", description: "Shifts the HUD for better visual support for 4:3 resolutions." },
-            { key: "ENABLE_HUD_SHIFT", type: "toggle", default: false, label: "21:9 Stream Fix", description: "Slight adjustments to the HUD for better streaming output." },
-            { key: "ENABLE_CENTER_ESC", type: "toggle", default: false, label: "Centered ESC Menu", description: "Centers ESC menu elements to make them easier to access." },
-            { key: "ENABLE_CENTER_FRIENDS_LIST", type: "toggle", default: false, label: "Centered Friends List", description: "Centers friends list area in ESC menu." },
-            { key: "ENABLE_FORCE_TESTING_TOOLS", type: "toggle", default: false, label: "Show Testing Tools", description: "Forcibly shows testing tools at all times." },
-            { key: "ENABLE_HIDE_TESTING_TOOLS", type: "toggle", default: false, label: "Hide Testing Tools", description: "Forcibly hides testing tools at all times." },
-            { key: "ENABLE_HIDE_BEHAVIOR_SUMMARY", type: "toggle", invert: true, default: false, label: "Behavior Summary", description: "Menu when you receive a punishment for breaking game rules." },
-            { key: "ENABLE_LEGACY_COOLDOWNS", type: "toggle", default: false, label: "Legacy Durations", description: "Show cooldown durations on abilities like in older versions." },
-            { key: "ENABLE_UPDATE_CHECKER", type: "toggle", default: true, label: "Update Checker", description: "Check for new QOLLOCK releases when opening settings." }
+            { key: "SUPPORT_16_10", type: "toggle", label: "16:10 Support", description: "Shifts the HUD for better visual support for 16:10 resolutions." },
+            { key: "SUPPORT_4_3", type: "toggle", label: "4:3 Support", description: "Shifts the HUD for better visual support for 4:3 resolutions." },
+            { key: "ENABLE_HUD_SHIFT", type: "toggle", label: "21:9 Stream Fix", description: "Slight adjustments to the HUD for better streaming output." },
+            { key: "ENABLE_CENTER_ESC", type: "toggle", label: "Centered ESC Menu", description: "Centers ESC menu elements to make them easier to access." },
+            { key: "ENABLE_CENTER_FRIENDS_LIST", type: "toggle", label: "Centered Friends List", description: "Centers friends list area in ESC menu." },
+            { key: "ENABLE_FORCE_TESTING_TOOLS", type: "toggle", label: "Show Testing Tools", description: "Forcibly shows testing tools at all times." },
+            { key: "ENABLE_HIDE_TESTING_TOOLS", type: "toggle", label: "Hide Testing Tools", description: "Forcibly hides testing tools at all times." },
+            { key: "ENABLE_HIDE_BEHAVIOR_SUMMARY", type: "toggle", invert: true, label: "Behavior Summary", description: "Menu when you receive a punishment for breaking game rules." },
+            { key: "ENABLE_LEGACY_COOLDOWNS", type: "toggle", label: "Legacy Durations", description: "Show cooldown durations on abilities like in older versions." },
+            { key: "ENABLE_UPDATE_CHECKER", type: "toggle", label: "Update Checker", description: "Check for new QOLLOCK releases when opening settings." }
         ],
         create: function (ctx) {
             function _getRoot() {

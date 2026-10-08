@@ -18,11 +18,11 @@
         id: "ql_topbar",
         enabledByDefault: true,
         settings: [
-            { key: "HUD_TOP_BAR_ENABLED", type: "toggle", default: true },
-            { key: "ENABLE_OBJ_MAP", type: "toggle", default: false, label: "Objective Map", description: "Show a visual indicator in the top bar of the current Guardians, Walkers, and Base." },
-            { key: "ENABLE_MISSING_HERO", type: "toggle", default: false, label: "Missing Hero Opaque", description: "Greys out heros in the top bar when missing on the map." },
-            { key: "ENABLE_OBJ_DMG", type: "toggle", default: false, label: "Objective Damage", description: "Shows the individual player's objective damage in the top bar." },
-            { key: "DISABLE_PLAYER_NAME_BLUR", type: "toggle", invert: true, default: false, label: "Top Bar Background", description: "The world blur behind player names in the top bar." },
+            { key: "HUD_TOP_BAR_ENABLED", type: "toggle" },
+            { key: "ENABLE_OBJ_MAP", type: "toggle", label: "Objective Map", description: "Show a visual indicator in the top bar of the current Guardians, Walkers, and Base." },
+            { key: "ENABLE_MISSING_HERO", type: "toggle", label: "Missing Hero Opaque", description: "Greys out heros in the top bar when missing on the map." },
+            { key: "ENABLE_OBJ_DMG", type: "toggle", label: "Objective Damage", description: "Shows the individual player's objective damage in the top bar." },
+            { key: "DISABLE_PLAYER_NAME_BLUR", type: "toggle", invert: true, label: "Top Bar Background", description: "The world blur behind player names in the top bar." },
             {
                 key: "ENABLE_TOPBAR_ENEMY_HP_WARNING",
                 type: "multitoggle",
@@ -45,11 +45,11 @@
                     { label: "75%", key: "ENABLE_TOPBAR_ALLY_HP_WARNING_75" }
                 ]
             },
-            { key: "ENABLE_URN_DIFF", type: "toggle", default: false },
-            { key: "TOP_BAR_OPACITY", type: "slider", min: 0, max: 1, step: 0.05, default: 1.0 },
-            { key: "TOP_BAR_SCALE", type: "slider", min: 0.5, max: 1.5, step: 0.05, default: 1.0 },
-            { key: "TOP_BAR_X_OFFSET", type: "slider", min: -2000, max: 2000, step: 1, default: 0 },
-            { key: "TOP_BAR_Y_OFFSET", type: "slider", min: -2000, max: 2000, step: 1, default: 0 }
+            { key: "ENABLE_URN_DIFF", type: "toggle" },
+            { key: "TOP_BAR_OPACITY", type: "slider" },
+            { key: "TOP_BAR_SCALE", type: "slider" },
+            { key: "TOP_BAR_X_OFFSET", type: "slider" },
+            { key: "TOP_BAR_Y_OFFSET", type: "slider" }
         ],
         create(ctx) {
             const panelAPI = QOL.core.panel;

@@ -20,8 +20,8 @@
     Q.core.FeatureRegistry.register({
         id: "ql_stamina", enabledByDefault: true,
         settings: [
-            { key: "STAMINA_CHARGE_ANGLE", type: "slider", min: 0, max: 360, step: 1, default: 45 },
-            { key: "STAMINA_CHARGE_COLOR", type: "palette", default: 0 }
+            { key: "STAMINA_CHARGE_ANGLE", type: "slider" },
+            { key: "STAMINA_CHARGE_COLOR", type: "palette" }
         ],
         create(ctx) {
             const colored = new Map();

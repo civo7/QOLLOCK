@@ -23,8 +23,8 @@
         enableKey: "ENABLE_SHOW_BUILD_ID",
         enabledByDefault: false,
         settings: [
-            { key: "ENABLE_SHOW_BUILD_ID", type: "toggle", default: false },
-            { key: "ENABLE_SHOW_BUILD_ID_TITLE", type: "toggle", default: false }
+            { key: "ENABLE_SHOW_BUILD_ID", type: "toggle" },
+            { key: "ENABLE_SHOW_BUILD_ID_TITLE", type: "toggle" }
         ],
         create: (ctx) => {
             let _loop = null;

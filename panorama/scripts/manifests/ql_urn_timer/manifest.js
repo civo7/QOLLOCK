@@ -32,7 +32,7 @@
         enableKey: "ENABLE_URN_TIMER",
         enabledByDefault: false,
         settings: [
-            { key: "ENABLE_URN_TIMER", type: "toggle", default: false }
+            { key: "ENABLE_URN_TIMER", type: "toggle" }
         ],
         create: function(ctx) {
             // ── QOL delegate wrappers (Pattern 10) ──

@@ -51,6 +51,9 @@ native animation/content preservation and independent observers. Scaffold tests
 run generated source against the production registry. `minimap_fixed_icon_geometry.test.js`
 drives Size controls and all corner gestures through Base/Alt/Tab preview and the
 scoped renderer geometry; native map click targets/zoom rendering remain client checks.
+`manifest_settings_catalog.test.js` observes declarations in the actual HUD include
+order and rejects duplicated persistent defaults/bounds, including computed fields
+and multitoggle options. The registered schemas still use the current shared catalog.
 
 `tests/customize_config_compat.test.js` imports frozen legacy compact codes
 generated with the main codec/schema recorded in the fixture, then checks

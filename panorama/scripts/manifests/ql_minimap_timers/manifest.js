@@ -29,16 +29,16 @@
         enableKeys: ["ENABLE_MINIMAP_REJUV_TIMER", "ENABLE_MINIMAP_BUFF_TIMER"],
         enabledByDefault: false,
         settings: [
-            { key: "ENABLE_MINIMAP_REJUV_TIMER", type: "toggle", default: false },
-            { key: "ENABLE_MINIMAP_BUFF_TIMER", type: "toggle", default: false },
-            { key: "ENABLE_MINIMAP_BUFF_TIMER_ON_BRIDGE", type: "toggle", default: false },
-            { key: "ENABLE_MINIMAP_ALWAYS_ON_MID_BOSS", type: "toggle", default: false },
-            { key: "ENABLE_TAB_ZOOM", type: "toggle", default: false },
-            { key: "ENABLE_ALT_ZOOM", type: "toggle", default: false },
-            { key: "MINIMAP_SMALL_SIZE", type: "slider", min: 200, max: 1000, step: 5, default: 400 },
-            { key: "MINIMAP_LARGE_SIZE", type: "slider", min: 400, max: 1200, step: 10, default: 750 },
-            { key: "MINIMAP_LARGE_SIZE_ALT", type: "slider", min: 400, max: 1200, step: 10, default: 750 },
-            { key: "MINIMAP_LARGE_SIZE_TAB", type: "slider", min: 400, max: 1200, step: 10, default: 750 }
+            { key: "ENABLE_MINIMAP_REJUV_TIMER", type: "toggle" },
+            { key: "ENABLE_MINIMAP_BUFF_TIMER", type: "toggle" },
+            { key: "ENABLE_MINIMAP_BUFF_TIMER_ON_BRIDGE", type: "toggle" },
+            { key: "ENABLE_MINIMAP_ALWAYS_ON_MID_BOSS", type: "toggle" },
+            { key: "ENABLE_TAB_ZOOM", type: "toggle" },
+            { key: "ENABLE_ALT_ZOOM", type: "toggle" },
+            { key: "MINIMAP_SMALL_SIZE", type: "slider" },
+            { key: "MINIMAP_LARGE_SIZE", type: "slider" },
+            { key: "MINIMAP_LARGE_SIZE_ALT", type: "slider" },
+            { key: "MINIMAP_LARGE_SIZE_TAB", type: "slider" }
         ],
         create: function(ctx) {
             var Panel = (QOL.core && QOL.core.panel) ? QOL.core.panel : {};

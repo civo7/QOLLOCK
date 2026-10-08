@@ -7,7 +7,7 @@
         id: "ql_cast_failed_hint",
         enableKey: "ENABLE_HIDE_FAILED_HINT",
         enabledByDefault: false,
-        settings: [{ key: "ENABLE_HIDE_FAILED_HINT", type: "toggle", default: false }],
+        settings: [{ key: "ENABLE_HIDE_FAILED_HINT", type: "toggle" }],
         create() {
             const update = () => QOL.core.hud.refreshRootClasses($.GetContextPanel());
             return { onEnable: update, onSettingsChanged: update, onDisable: update };

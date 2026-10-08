@@ -9,13 +9,13 @@
         enableKey: "ENABLE_BETTER_UNSECURED",
         enabledByDefault: false,
         settings: [
-            { key: "ENABLE_BETTER_UNSECURED", type: "toggle", default: false },
-            { key: "UNSECURED_SOULS_HUD_SCALE", type: "slider", min: 50, max: 200, default: 100 },
-            { key: "UNSECURED_SOULS_HUD_X_OFFSET", type: "slider", min: -1000, max: 2000, default: 0 },
-            { key: "UNSECURED_SOULS_HUD_Y_OFFSET", type: "slider", min: 800, max: 2000, default: 1095 },
-            { key: "ENABLE_BETTER_UNSECURED_SHOW_ICON", type: "toggle", default: true },
-            { key: "ENABLE_BETTER_UNSECURED_SHOW_TEXT", type: "toggle", default: false },
-            { key: "ENABLE_BETTER_UNSECURED_SHOW_ICON_TEXT", type: "toggle", default: false }
+            { key: "ENABLE_BETTER_UNSECURED", type: "toggle" },
+            { key: "UNSECURED_SOULS_HUD_SCALE", type: "slider" },
+            { key: "UNSECURED_SOULS_HUD_X_OFFSET", type: "slider" },
+            { key: "UNSECURED_SOULS_HUD_Y_OFFSET", type: "slider" },
+            { key: "ENABLE_BETTER_UNSECURED_SHOW_ICON", type: "toggle" },
+            { key: "ENABLE_BETTER_UNSECURED_SHOW_TEXT", type: "toggle" },
+            { key: "ENABLE_BETTER_UNSECURED_SHOW_ICON_TEXT", type: "toggle" }
         ],
         create(ctx) {
             const P = QOL.core.panel;

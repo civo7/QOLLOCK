@@ -28,13 +28,13 @@
         enableKey: "ENABLE_ON_DEATH_GAMES",
         enabledByDefault: false,
         settings: [
-            { key: "ENABLE_ON_DEATH_GAMES", type: "toggle", default: false },
-            { key: "ON_DEATH_GAME_MINESWEEPER", type: "toggle", default: false },
-            { key: "ON_DEATH_GAME_BLACKJACK", type: "toggle", default: false },
-            { key: "ON_DEATH_GAME_FLAPPY_BAT", type: "toggle", default: false },
-            { key: "ON_DEATH_GAME_GRAVES_TRAINER", type: "toggle", default: false },
-            { key: "ON_DEATH_GAME_ZERGGY_MANIA", type: "toggle", default: false },
-            { key: "ON_DEATH_GAME_WHACK_A_REM", type: "toggle", default: false }
+            { key: "ENABLE_ON_DEATH_GAMES", type: "toggle" },
+            { key: "ON_DEATH_GAME_MINESWEEPER", type: "toggle" },
+            { key: "ON_DEATH_GAME_BLACKJACK", type: "toggle" },
+            { key: "ON_DEATH_GAME_FLAPPY_BAT", type: "toggle" },
+            { key: "ON_DEATH_GAME_GRAVES_TRAINER", type: "toggle" },
+            { key: "ON_DEATH_GAME_ZERGGY_MANIA", type: "toggle" },
+            { key: "ON_DEATH_GAME_WHACK_A_REM", type: "toggle" }
         ],
         create: function(ctx) {
             var Panel = (QOL.core && QOL.core.panel) ? QOL.core.panel : {};

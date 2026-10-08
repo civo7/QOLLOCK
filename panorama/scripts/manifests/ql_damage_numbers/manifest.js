@@ -12,13 +12,13 @@
         id: ID,
         enabledByDefault: true,
         settings: [
-            { key: "DAMAGE_NUMBER_OPACITY", type: "slider", min: 0, max: 1, step: 0.05, default: 1 },
-            { key: "HUD_INDICATOR_SIZE", type: "slider", min: 10, max: 60, step: 1, default: 18 },
-            { key: "ENABLE_CLEAN_DAMAGE_INDICATORS", type: "toggle", default: false },
-            { key: "ENABLE_HIDE_SMALL_NUMBERS", type: "toggle", default: false },
-            { key: "ENABLE_HIDE_TROOPER_DAMAGE", type: "toggle", default: false },
-            { key: "ENABLE_DAMAGE_FOUNTAIN", type: "toggle", default: false },
-            { key: "ENABLE_CUMULATIVE_DMG", type: "toggle", default: false }
+            { key: "DAMAGE_NUMBER_OPACITY", type: "slider" },
+            { key: "HUD_INDICATOR_SIZE", type: "slider" },
+            { key: "ENABLE_CLEAN_DAMAGE_INDICATORS", type: "toggle" },
+            { key: "ENABLE_HIDE_SMALL_NUMBERS", type: "toggle" },
+            { key: "ENABLE_HIDE_TROOPER_DAMAGE", type: "toggle" },
+            { key: "ENABLE_DAMAGE_FOUNTAIN", type: "toggle" },
+            { key: "ENABLE_CUMULATIVE_DMG", type: "toggle" }
         ],
         create(ctx) {
             const panels = QOL.core.panel;

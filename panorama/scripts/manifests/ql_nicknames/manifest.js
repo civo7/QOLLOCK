@@ -7,7 +7,7 @@
         id: "ql_nicknames",
         enableKey: "ENABLE_NICKNAMES",
         enabledByDefault: false,
-        settings: [{ key: "ENABLE_NICKNAMES", type: "toggle", default: false }],
+        settings: [{ key: "ENABLE_NICKNAMES", type: "toggle" }],
         create() {
             const update = () => QOL.core.hud.refreshRootClasses($.GetContextPanel());
             return { onEnable: update, onSettingsChanged: update, onDisable: update };

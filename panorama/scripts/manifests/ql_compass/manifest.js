@@ -190,18 +190,18 @@
         enableKeys: ["ENABLE_COMPASS", "ENABLE_COMPASS_SPEED", "MINIMAP_ROTATE_WITH_PLAYER", "MINIMAP_FLIP"],
         enabledByDefault: false,
         settings: [
-            { key: "ENABLE_COMPASS", type: "toggle", default: false },
-            { key: "ENABLE_SIMPLIFY_COMPASS", type: "toggle", default: false, label: "Minimalist", description: "Simplifies the Compass overlay to its bare elements." },
-            { key: "ENABLE_COMPASS_SPEED", type: "toggle", default: false },
-            { key: "COMPASS_SCALE", type: "slider", min: 50, max: 200, step: 1, default: 100 },
-            { key: "COMPASS_STRETCH_X", type: "slider", min: 50, max: 200, step: 1, default: 100 },
-            { key: "COMPASS_STRETCH_Y", type: "slider", min: 50, max: 200, step: 1, default: 100 },
-            { key: "COMPASS_X_OFFSET", type: "slider", min: -2000, max: 2000, step: 5, default: 0 },
-            { key: "COMPASS_Y_OFFSET", type: "slider", min: -1000, max: 300, step: 5, default: 120 },
-            { key: "COMPASS_SPEED_X_OFFSET", type: "slider", min: -2000, max: 2000, step: 5, default: 0 },
-            { key: "COMPASS_SPEED_Y_OFFSET", type: "slider", min: -2000, max: 2000, step: 5, default: 0 },
-            { key: "MINIMAP_FLIP", type: "toggle", default: false, label: "Flip", description: "Rotates the static minimap 180 degrees." },
-            { key: "MINIMAP_ROTATE_WITH_PLAYER", type: "toggle", default: false, label: "Spinny Mode", description: "Makes the minimap rotate with player view, this is just for fun." }
+            { key: "ENABLE_COMPASS", type: "toggle" },
+            { key: "ENABLE_SIMPLIFY_COMPASS", type: "toggle", label: "Minimalist", description: "Simplifies the Compass overlay to its bare elements." },
+            { key: "ENABLE_COMPASS_SPEED", type: "toggle" },
+            { key: "COMPASS_SCALE", type: "slider" },
+            { key: "COMPASS_STRETCH_X", type: "slider" },
+            { key: "COMPASS_STRETCH_Y", type: "slider" },
+            { key: "COMPASS_X_OFFSET", type: "slider" },
+            { key: "COMPASS_Y_OFFSET", type: "slider" },
+            { key: "COMPASS_SPEED_X_OFFSET", type: "slider" },
+            { key: "COMPASS_SPEED_Y_OFFSET", type: "slider" },
+            { key: "MINIMAP_FLIP", type: "toggle", label: "Flip", description: "Rotates the static minimap 180 degrees." },
+            { key: "MINIMAP_ROTATE_WITH_PLAYER", type: "toggle", label: "Spinny Mode", description: "Makes the minimap rotate with player view, this is just for fun." }
         ],
         create: function (ctx) {
             var _loop = null;

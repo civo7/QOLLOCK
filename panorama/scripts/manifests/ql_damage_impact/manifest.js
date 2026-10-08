@@ -8,11 +8,11 @@
         // Hidden indicators still need replacement discovery.
         enabledByDefault: true,
         settings: [
-            { key: "ENABLE_DAMAGE_IMPACT", type: "toggle", default: true },
-            { key: "DAMAGE_IMPACT_SCALE", type: "slider", min: 0.5, max: 2, step: 0.05, default: 1 },
-            { key: "DAMAGE_IMPACT_OPACITY", type: "slider", min: 0, max: 1, step: 0.05, default: 1 },
-            { key: "DAMAGE_IMPACT_X_OFFSET", type: "slider", min: -1000, max: 1000, step: 1, default: 0 },
-            { key: "DAMAGE_IMPACT_Y_OFFSET", type: "slider", min: -1000, max: 1000, step: 1, default: 0 }
+            { key: "ENABLE_DAMAGE_IMPACT", type: "toggle" },
+            { key: "DAMAGE_IMPACT_SCALE", type: "slider" },
+            { key: "DAMAGE_IMPACT_OPACITY", type: "slider" },
+            { key: "DAMAGE_IMPACT_X_OFFSET", type: "slider" },
+            { key: "DAMAGE_IMPACT_Y_OFFSET", type: "slider" }
         ],
         create(ctx) {
             const P = QOL.core.panel;

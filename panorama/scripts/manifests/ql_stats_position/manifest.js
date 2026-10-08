@@ -9,13 +9,13 @@
     Q.core.FeatureRegistry.register({
         id: "ql_stats_position", enabledByDefault: true, enableKey: "ENABLE_STATS_POSITION",
         settings: [
-            { key: "ENABLE_STATS_POSITION", type: "toggle", default: true },
+            { key: "ENABLE_STATS_POSITION", type: "toggle" },
             // Compatibility-only field: retain old configs without changing native docking.
-            { key: "STATS_POSITION_SIDE", type: "buttongroup", default: 0 },
-            { key: "STATS_POSITION_X_OFFSET", type: "slider", min: -2000, max: 2000, step: 1, default: 0 },
-            { key: "STATS_POSITION_Y_OFFSET", type: "slider", min: -2000, max: 2000, step: 1, default: 0 },
-            { key: "STATS_POSITION_HIDE_NORMAL", type: "toggle", default: false },
-            { key: "STATS_POSITION_HIDE_SCOREBOARD", type: "toggle", default: false }
+            { key: "STATS_POSITION_SIDE", type: "buttongroup" },
+            { key: "STATS_POSITION_X_OFFSET", type: "slider" },
+            { key: "STATS_POSITION_Y_OFFSET", type: "slider" },
+            { key: "STATS_POSITION_HIDE_NORMAL", type: "toggle" },
+            { key: "STATS_POSITION_HIDE_SCOREBOARD", type: "toggle" }
         ],
         create(ctx) {
             const path = [{ id: "Hud", optional: true }, { className: "HudCore" }];

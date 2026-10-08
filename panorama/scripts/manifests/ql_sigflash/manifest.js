@@ -8,7 +8,7 @@
         enableKey: "ENABLE_PASSIVE_COOLDOWN",
         enabledByDefault: false,
         settings: [
-            { key: "ENABLE_PASSIVE_COOLDOWN", type: "toggle", default: false }
+            { key: "ENABLE_PASSIVE_COOLDOWN", type: "toggle" }
         ],
         create(ctx) {
             const panelAPI = QOL.core.panel;

@@ -8,10 +8,10 @@
         // Visibility is a presentation setting; keep discovery alive while hidden.
         enabledByDefault: true,
         settings: [
-            { key: "HUD_SOULS_ENABLED", type: "toggle", default: true },
-            { key: "SOULS_OPACITY", type: "slider", min: 0, max: 1, step: 0.05, default: 1.0 },
-            { key: "SOULS_X_OFFSET", type: "slider", min: -2000, max: 2000, step: 1, default: 0 },
-            { key: "SOULS_Y_OFFSET", type: "slider", min: -2000, max: 2000, step: 1, default: 0 }
+            { key: "HUD_SOULS_ENABLED", type: "toggle" },
+            { key: "SOULS_OPACITY", type: "slider" },
+            { key: "SOULS_X_OFFSET", type: "slider" },
+            { key: "SOULS_Y_OFFSET", type: "slider" }
         ],
         create(ctx) {
             const panelAPI = QOL.core.panel;

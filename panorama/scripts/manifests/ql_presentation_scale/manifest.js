@@ -28,9 +28,9 @@
         id: "ql_presentation_scale",
         enabledByDefault: true,
         settings: elements.flatMap(element => [
-            { key: element.scaleKey, type: "slider", min: 50, max: 200, step: 1, default: 100 },
+            { key: element.scaleKey, type: "slider" },
             ...(positions.has(element.id) ? element.fields.filter(field => field.axis).map(field => ({
-                key: field.key, type: "slider", min: -2000, max: 2000, step: 1, default: 0
+                key: field.key, type: "slider"
             })) : [])
         ]),
         create(ctx) {

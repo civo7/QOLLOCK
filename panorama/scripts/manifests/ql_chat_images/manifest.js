@@ -27,10 +27,10 @@
         enableKey: "ENABLE_IMAGES_IN_CHAT",
         enabledByDefault: false,
         settings: [
-            { key: "ENABLE_IMAGES_IN_CHAT", type: "toggle", default: false },
-            { key: "CHAT_SCALE", type: "slider", min: 50, max: 200, step: 1, default: 100, label: "Size", description: "Adjust size of the in-game chat." },
-            { key: "CHAT_X_OFFSET", type: "slider", min: -1500, max: 1500, step: 5, default: 0, label: "Horizontal Offset", description: "Adjust horizontal position of the in-game chat." },
-            { key: "CHAT_Y_OFFSET", type: "slider", min: -250, max: 800, step: 5, default: 0, label: "Vertical Offset", description: "Adjust vertical position of the in-game chat." }
+            { key: "ENABLE_IMAGES_IN_CHAT", type: "toggle" },
+            { key: "CHAT_SCALE", type: "slider", label: "Size", description: "Adjust size of the in-game chat." },
+            { key: "CHAT_X_OFFSET", type: "slider", label: "Horizontal Offset", description: "Adjust horizontal position of the in-game chat." },
+            { key: "CHAT_Y_OFFSET", type: "slider", label: "Vertical Offset", description: "Adjust vertical position of the in-game chat." }
         ],
         create(ctx) {
             const State = QOL.state || globalThis.State || {};

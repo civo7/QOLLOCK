@@ -160,21 +160,21 @@
             "ENABLE_HERO_PURCHASE_POPUPS"
         ],
         settings: [
-            { key: "ENABLE_SHOP_RECENT_PURCHASES", type: "toggle", default: false },
-            { key: "ENABLE_SHOP_ITEM_NOTIFICATIONS", type: "toggle", default: false },
-            { key: "ENABLE_HERO_PURCHASE_POPUPS", type: "toggle", default: false },
-            { key: "RECENT_PURCHASES_PANEL_X_OFFSET", type: "number", default: 0 },
-            { key: "RECENT_PURCHASES_PANEL_Y_OFFSET", type: "number", default: 0 },
-            { key: "RECENT_PURCHASES_PANEL_OPACITY", type: "number", default: 1.0 },
-            { key: "RECENT_PURCHASES_PANEL_SCALE", type: "number", default: 1.0 },
-            { key: "RECENT_PURCHASES_QUICK_X_OFFSET", type: "number", default: 0 },
-            { key: "RECENT_PURCHASES_QUICK_Y_OFFSET", type: "number", default: 0 },
-            { key: "RECENT_PURCHASES_QUICK_OPACITY", type: "number", default: 1.0 },
-            { key: "RECENT_PURCHASES_QUICK_SCALE", type: "number", default: 1.0 },
-            { key: "RECENT_PURCHASES_QUICK_MAX", type: "number", default: 3 },
-            { key: "RECENT_PURCHASES_QUICK_DISPLAY_SEC", type: "number", default: 5 },
-            { key: "RECENT_PURCHASES_QUICK_REJUV", type: "toggle", default: false },
-            { key: "RECENT_PURCHASES_QUICK_SCOREBOARD", type: "toggle", default: false }
+            { key: "ENABLE_SHOP_RECENT_PURCHASES", type: "toggle" },
+            { key: "ENABLE_SHOP_ITEM_NOTIFICATIONS", type: "toggle" },
+            { key: "ENABLE_HERO_PURCHASE_POPUPS", type: "toggle" },
+            { key: "RECENT_PURCHASES_PANEL_X_OFFSET", type: "number" },
+            { key: "RECENT_PURCHASES_PANEL_Y_OFFSET", type: "number" },
+            { key: "RECENT_PURCHASES_PANEL_OPACITY", type: "number" },
+            { key: "RECENT_PURCHASES_PANEL_SCALE", type: "number" },
+            { key: "RECENT_PURCHASES_QUICK_X_OFFSET", type: "number" },
+            { key: "RECENT_PURCHASES_QUICK_Y_OFFSET", type: "number" },
+            { key: "RECENT_PURCHASES_QUICK_OPACITY", type: "number" },
+            { key: "RECENT_PURCHASES_QUICK_SCALE", type: "number" },
+            { key: "RECENT_PURCHASES_QUICK_MAX", type: "number" },
+            { key: "RECENT_PURCHASES_QUICK_DISPLAY_SEC", type: "number" },
+            { key: "RECENT_PURCHASES_QUICK_REJUV", type: "toggle" },
+            { key: "RECENT_PURCHASES_QUICK_SCOREBOARD", type: "toggle" }
         ],
         create: function(ctx) {
             var _loop = null;

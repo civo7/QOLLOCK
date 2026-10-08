@@ -4,6 +4,37 @@
 // Development tool, never included by Panorama XML. See docs/MANIFEST_STYLE.md.
 const fs = require("node:fs");
 const path = require("node:path");
+const vm = require("node:vm");
+
+let settingCatalog = null;
+function getSettingCatalog() {
+    if (settingCatalog) return settingCatalog;
+    // Use the shipped setting resolver in a data-only isolate. No HUD app,
+    // game model, callbacks or filesystem writes are started here.
+    const context = vm.createContext({ QOL: {}, $: { Msg() {} } });
+    for (const file of ["ql_utils.js", "ql_shared_presets.js", "core/ql_namespace.js", "core/ql_event_bus.js", "core/ql_config_store.js"]) {
+        const sourcePath = path.resolve(__dirname, "..", file);
+        vm.runInContext(fs.readFileSync(sourcePath, "utf8"), context, { filename: sourcePath, timeout: 1000 });
+    }
+    settingCatalog = {
+        defaults: context.QOL_DEFAULT_CONFIG,
+        fields: new Map(context.QOL.settingsFields.map(field => [field.key, field])),
+        resolve: context.QOL.core.ConfigStore.canonicalSetting
+    };
+    return settingCatalog;
+}
+
+function settingDeclaration(setting) {
+    const catalog = getSettingCatalog();
+    const declaration = { ...setting };
+    if (Object.prototype.hasOwnProperty.call(catalog.defaults, setting.key)) {
+        delete declaration.default;
+        if (catalog.fields.has(setting.key) && ["slider", "number"].includes(setting.type)) {
+            for (const key of ["min", "max", "step", "decimals"]) delete declaration[key];
+        }
+    }
+    return declaration;
+}
 
 function parseArgs(args) {
     const positional = [];
@@ -47,8 +78,11 @@ function validate(options) {
     }
     if (options.ownerPath.length && !options.panelId) throw new Error("--owner-path requires --panel-id");
     const keys = new Set();
-    for (const setting of options.settings) {
-        if (!setting || typeof setting.key !== "string" || !setting.key || keys.has(setting.key) || setting.key === "enabled") throw new Error("Setting keys must be unique; enabled is registry-owned");
+    for (const descriptor of options.settings) {
+        if (!descriptor || typeof descriptor.key !== "string" || !descriptor.key || keys.has(descriptor.key) || descriptor.key === "enabled") throw new Error("Setting keys must be unique; enabled is registry-owned");
+        const catalog = getSettingCatalog();
+        const persisted = Object.prototype.hasOwnProperty.call(catalog.defaults, descriptor.key);
+        const setting = catalog.resolve(descriptor);
         if (!["toggle", "slider", "dropdown", "palette", "text", "number"].includes(setting.type) || !Object.prototype.hasOwnProperty.call(setting, "default")) throw new Error(`Invalid setting descriptor: ${setting.key}`);
         if (setting.type === "toggle" && ![true, false, 0, 1].includes(setting.default)) throw new Error(`Toggle default must be boolean: ${setting.key}`);
         if (["slider", "number", "palette"].includes(setting.type) && !Number.isFinite(setting.default)) throw new Error(`Numeric default must be finite: ${setting.key}`);
@@ -56,7 +90,7 @@ function validate(options) {
             !(Number.isFinite(setting.step) && setting.step > 0) || setting.default < setting.min || setting.default > setting.max)) {
             throw new Error(`Slider requires ordered bounds, a positive step and an in-range default: ${setting.key}`);
         }
-        if (setting.type === "dropdown" && (!Array.isArray(setting.options) || !setting.options.length ||
+        if (setting.type === "dropdown" && !(persisted && setting.options === undefined) && (!Array.isArray(setting.options) || !setting.options.length ||
             !setting.options.some(option => String(option) === String(setting.default)))) throw new Error(`Dropdown requires options containing its default: ${setting.key}`);
         if (setting.type === "palette" && (!Number.isInteger(setting.default) || setting.default < 0 || setting.default > 29)) throw new Error(`Palette default must be an index: ${setting.key}`);
         if (setting.type === "text" && typeof setting.default !== "string") throw new Error(`Text default must be a string: ${setting.key}`);
@@ -73,7 +107,7 @@ function generate(options) {
     const styleOnly = options.type === "style-only";
     const needsPoll = !!options.panelId || options.type === "polling";
     const className = `${options.id}_active`;
-    const declaration = options.settings.map(s => `            ${json(s)}`).join(",\n");
+    const declaration = options.settings.map(s => `            ${json(settingDeclaration(s))}`).join(",\n");
     const source = options.panelId
         ? `            const resolver = QOL.panelCache.createIdResolver(${json(options.panelId)}, { retryMs: ${Math.round(options.pollRate * 1000)}, ownerPath: ${json(options.ownerPath)} });\n`
         : "";

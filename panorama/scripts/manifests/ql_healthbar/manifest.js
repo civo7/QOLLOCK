@@ -76,13 +76,13 @@
             "mcLowHealthJiggleActive", "mcHealingWaveActive", "mcHealingWaveCurrentIndex"
         ],
         settings: [
-            { key: "HEALTHBAR_TYPE", type: "dropdown", options: [0,1,2,3,4,5], default: 0 },
-            { key: "ENABLE_MINECRAFT_HEALTH_NUMBERS", type: "toggle", default: false, label: "Health Numbers", description: "Show current / max HP numbers over the Minecraft hearts." },
-            { key: "PLAYER_HEALTHBAR_SCALE", type: "slider", min: 50, max: 200, step: 1, default: 100 },
-            { key: "PLAYER_HEALTHBAR_OPACITY", type: "slider", min: 0, max: 1, step: 0.05, default: 1 },
-            { key: "PLAYER_HEALTHBAR_X_OFFSET", type: "slider", min: -1000, max: 1000, step: 5, default: 0 },
-            { key: "PLAYER_HEALTHBAR_Y_OFFSET", type: "slider", min: -1000, max: 1000, step: 5, default: 0 },
-            { key: "PLAYER_HEALTHBAR_ACCENT_COLOR", type: "palette", default: 0 }
+            { key: "HEALTHBAR_TYPE", type: "dropdown", options: [0,1,2,3,4,5] },
+            { key: "ENABLE_MINECRAFT_HEALTH_NUMBERS", type: "toggle", label: "Health Numbers", description: "Show current / max HP numbers over the Minecraft hearts." },
+            { key: "PLAYER_HEALTHBAR_SCALE", type: "slider" },
+            { key: "PLAYER_HEALTHBAR_OPACITY", type: "slider" },
+            { key: "PLAYER_HEALTHBAR_X_OFFSET", type: "slider" },
+            { key: "PLAYER_HEALTHBAR_Y_OFFSET", type: "slider" },
+            { key: "PLAYER_HEALTHBAR_ACCENT_COLOR", type: "palette" }
         ],
         create: function(ctx) {
             var _loop = null;

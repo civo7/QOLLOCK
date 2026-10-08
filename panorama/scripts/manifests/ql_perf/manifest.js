@@ -27,10 +27,10 @@
         enabledByDefault: false,
         enableKeys: ["ENABLE_PERF_DEBUG", "ENABLE_PERF_DEBUG_DETAIL", "ENABLE_PERF_OVERLAY"],
         settings: [
-            { key: "ENABLE_PERF_DEBUG", type: "toggle", default: false },
-            { key: "ENABLE_PERF_DEBUG_DETAIL", type: "toggle", default: false },
-            { key: "ENABLE_PERF_OVERLAY", type: "toggle", default: false },
-            { key: "PERF_OVERLAY_OPACITY", type: "slider", min: 0.1, max: 1.0, step: 0.05, default: 0.8 }
+            { key: "ENABLE_PERF_DEBUG", type: "toggle" },
+            { key: "ENABLE_PERF_DEBUG_DETAIL", type: "toggle" },
+            { key: "ENABLE_PERF_OVERLAY", type: "toggle" },
+            { key: "PERF_OVERLAY_OPACITY", type: "slider" }
         ],
         create: (ctx) => {
             let _loop = null;

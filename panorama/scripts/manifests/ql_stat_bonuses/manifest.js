@@ -120,10 +120,10 @@
         enableKey: "ENABLE_STAT_BONUSES",
         enabledByDefault: false,
         settings: [
-            { key: "ENABLE_STAT_BONUSES", type: "toggle", default: false },
-            { key: "STAT_BONUSES_SCALE", type: "slider", min: 50, max: 200, step: 1, default: 100 },
-            { key: "STAT_BONUSES_X_OFFSET", type: "slider", min: -1000, max: 1000, step: 1, default: 0 },
-            { key: "STAT_BONUSES_Y_OFFSET", type: "slider", min: 0, max: 1000, step: 1, default: 0 }
+            { key: "ENABLE_STAT_BONUSES", type: "toggle" },
+            { key: "STAT_BONUSES_SCALE", type: "slider" },
+            { key: "STAT_BONUSES_X_OFFSET", type: "slider" },
+            { key: "STAT_BONUSES_Y_OFFSET", type: "slider" }
         ],
         create(ctx) {
             const parentResolver = QOL.panelCache.createIdResolver("gameplay_hud", { retryMs: 500 });

@@ -17,6 +17,9 @@ separate contracts. None automatically creates the others.
    catalog, while ConfigStore maintains one accepted value for every subscriber.
    Keep each declaration's type/meaning consistent; a local copy is not a second
    persistent setting.
+   Omit repeated persistent defaults and numeric bounds from manifests; the shared
+   default map and current field catalog own them. Feature-local fields still need
+   explicit defaults and validation metadata.
 3. **Edit the real tab renderer.** Most tabs register a renderer through
    `QOL.ui.window.registerTabRenderer` and build rows with `QOL.ui.controls`.
    Read an adjacent row in `ui/gameplay_tabs.js`, `config_tab.js`, `audio.js` or

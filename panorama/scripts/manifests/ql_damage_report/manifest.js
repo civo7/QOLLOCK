@@ -9,9 +9,9 @@
         // Offsets also apply while DISABLE_DAMAGE_REPORT is false.
         enabledByDefault: true,
         settings: [
-            { key: "DISABLE_DAMAGE_REPORT", type: "toggle", default: false },
-            { key: "DAMAGE_REPORT_X_OFFSET", type: "slider", min: -1500, max: 1500, step: 1, default: 0, label: "Horizontal Offset" },
-            { key: "DAMAGE_REPORT_Y_OFFSET", type: "slider", min: -1500, max: 200, step: 1, default: 0, label: "Vertical Offset" }
+            { key: "DISABLE_DAMAGE_REPORT", type: "toggle" },
+            { key: "DAMAGE_REPORT_X_OFFSET", type: "slider", label: "Horizontal Offset" },
+            { key: "DAMAGE_REPORT_Y_OFFSET", type: "slider", label: "Vertical Offset" }
         ],
         create(ctx) {
             const P = QOL.core.panel;

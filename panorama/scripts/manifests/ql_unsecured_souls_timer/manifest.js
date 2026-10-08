@@ -42,10 +42,10 @@
         enableKey: "ENABLE_UNSECURED_SOUL_TIMER",
         enabledByDefault: false,
         settings: [
-            { key: "ENABLE_UNSECURED_SOUL_TIMER", type: "toggle", default: false },
-            { key: "UNSECURED_SOUL_TIMER_X_OFFSET", type: "slider", min: -1500, max: 1500, default: 0 },
-            { key: "UNSECURED_SOUL_TIMER_Y_OFFSET", type: "slider", min: -100, max: 1000, default: 0 },
-            { key: "UNSECURED_SOUL_TIMER_SCALE", type: "slider", min: 50, max: 200, default: 100 }
+            { key: "ENABLE_UNSECURED_SOUL_TIMER", type: "toggle" },
+            { key: "UNSECURED_SOUL_TIMER_X_OFFSET", type: "slider" },
+            { key: "UNSECURED_SOUL_TIMER_Y_OFFSET", type: "slider" },
+            { key: "UNSECURED_SOUL_TIMER_SCALE", type: "slider" }
         ],
         create(ctx) {
             const modernResolver = QOL.panelCache.createIdResolver("HudUnsecuredLabel", { retryMs: SEARCH_MS });

@@ -19,8 +19,8 @@
         enableKey: "SHOW_RANK",
         enabledByDefault: false,
         settings: [
-            { key: "SHOW_RANK", type: "toggle", default: false },
-            { key: "SHOW_RANK_TOPBAR", type: "toggle", default: true }
+            { key: "SHOW_RANK", type: "toggle" },
+            { key: "SHOW_RANK_TOPBAR", type: "toggle" }
         ],
         create: function(ctx) {
             var RANK0 = "s2r://panorama/images/ranked/badges/rank0/badge_sm_psd.vtex";

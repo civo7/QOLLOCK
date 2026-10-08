@@ -9,12 +9,10 @@
         enableKeys: ["ENABLE_SIMPLIFY_ABILITY_ICONS", "ENABLE_HIDE_COSMETIC_ABILITY",
             "ENABLE_HIDE_ABILITY_SUGGESTION", "ENABLE_CLEAN_STACKS"],
         settings: [
-            { key: "ENABLE_SIMPLIFY_ABILITY_ICONS", type: "toggle", default: false },
-            { key: "ENABLE_HIDE_COSMETIC_ABILITY", type: "toggle", default: false },
-            { key: "ENABLE_HIDE_ABILITY_SUGGESTION", type: "toggle", invert: true, default: false,
-                label: "Ability Suggestion", description: "Highlighted abilities showing you what you should upgrade depending on build." },
-            { key: "ENABLE_CLEAN_STACKS", type: "toggle", default: false,
-                label: "Clean Stacks", description: "Move ability stacks to bottom-center of ability icon" }
+            { key: "ENABLE_SIMPLIFY_ABILITY_ICONS", type: "toggle" },
+            { key: "ENABLE_HIDE_COSMETIC_ABILITY", type: "toggle" },
+            { key: "ENABLE_HIDE_ABILITY_SUGGESTION", type: "toggle", invert: true, label: "Ability Suggestion", description: "Highlighted abilities showing you what you should upgrade depending on build." },
+            { key: "ENABLE_CLEAN_STACKS", type: "toggle", label: "Clean Stacks", description: "Move ability stacks to bottom-center of ability icon" }
         ],
         create() {
             const update = () => QOL.core.hud.refreshRootClasses($.GetContextPanel());

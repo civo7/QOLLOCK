@@ -24,7 +24,7 @@
         enableKey: "ENABLE_ULT_COOLDOWNS",
         enabledByDefault: false,
         settings: [
-            { key: "ENABLE_ULT_COOLDOWNS", type: "toggle", default: false }
+            { key: "ENABLE_ULT_COOLDOWNS", type: "toggle" }
         ],
         create: function(ctx) {
             var _loop = null;

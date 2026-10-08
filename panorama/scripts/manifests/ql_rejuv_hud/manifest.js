@@ -35,12 +35,12 @@
         enableKeys: ["ENABLE_REJUV_HUD", "ENABLE_BUFF_HUD", "ENABLE_MINIMAP_REJUV_TIMER"],
         enabledByDefault: false,
         settings: [
-            { key: "ENABLE_REJUV_HUD", type: "toggle", default: false },
-            { key: "ENABLE_BUFF_HUD", type: "toggle", default: false },
+            { key: "ENABLE_REJUV_HUD", type: "toggle" },
+            { key: "ENABLE_BUFF_HUD", type: "toggle" },
             // Declared so ConfigStore.load() lets the key into this bucket
             // (load() drops keys absent from the schema) and ctx.config.view()
             // can see it in the tick below.
-            { key: "ENABLE_MINIMAP_REJUV_TIMER", type: "toggle", default: false }
+            { key: "ENABLE_MINIMAP_REJUV_TIMER", type: "toggle" }
         ],
         create: function(ctx) {
             var Panel = (QOL.core && QOL.core.panel) ? QOL.core.panel : {};
