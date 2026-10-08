@@ -445,6 +445,75 @@
         return true;
     };
 
+    // These bridge hosts belong to core projection. PanelCache is loaded after
+    // this file, so allocate scoped resolvers on first use rather than at load.
+    let quickbuyResolver = null, healthBridgeResolver = null;
+    let quickbuyHost = null, healthBridgeHost = null;
+    const retiredQuickbuyHosts = new Set(), retiredHealthHosts = new Set();
+    const quickbuyClasses = ["enhanced_quickbuy_active", "shop_click_to_notify_active"];
+
+    const resolveBridgeHost = (root, kind, force) => {
+        const id = kind === "quickbuy" ? "CitadelHudQuickbuy" : "health_and_abilities_container";
+        let resolver = kind === "quickbuy" ? quickbuyResolver : healthBridgeResolver;
+        if (!resolver && Q.panelCache?.createIdResolver) {
+            resolver = Q.panelCache.createIdResolver(id, { retryMs: 1000,
+                ownerPath: [{ id: "Hud", optional: true }, { className: "HudCore" },
+                    ...(kind === "quickbuy" ? ["StatsAndModsContainer", "LowerLeft"] : ["gameplay_hud"])]
+            });
+            if (kind === "quickbuy") quickbuyResolver = resolver;
+            else healthBridgeResolver = resolver;
+        }
+        const panel = resolver ? resolver.resolve(root, force) : _panelHelpers.findTraverse(root, id);
+        const alias = kind === "quickbuy" ? "quickbuy" : "healthContainer";
+        if (getCachedPanel(alias) !== panel) setCachedPanel(alias, panel);
+        return panel;
+    };
+
+    const releaseBridgeHosts = () => {
+        for (const panel of retiredQuickbuyHosts) {
+            if (!isAlive(panel)) { retiredQuickbuyHosts.delete(panel); continue; }
+            for (const name of quickbuyClasses) _panelHelpers.setClass(panel, name, false);
+            const cleared = QOL_UTILS.SafeSetAttribute(panel, "qol_enhanced_quickbuy_count", "");
+            if (cleared && quickbuyClasses.every(name => !panel.BHasClass(name))) retiredQuickbuyHosts.delete(panel);
+        }
+        for (const panel of retiredHealthHosts) {
+            if (!isAlive(panel) || QOL_UTILS.SafeSetAttribute(panel, "QOL_COLORED_HEALTHBAR", "")) retiredHealthHosts.delete(panel);
+        }
+    };
+
+    const projectNativeBridges = (root, cfg, enhanced, notify, warning, force) => {
+        const quickbuy = resolveBridgeHost(root, "quickbuy", force);
+        const health = resolveBridgeHost(root, "health", force);
+        if (quickbuy !== quickbuyHost) {
+            if (isAlive(quickbuyHost)) retiredQuickbuyHosts.add(quickbuyHost);
+            quickbuyHost = quickbuy;
+        }
+        if (health !== healthBridgeHost) {
+            if (isAlive(healthBridgeHost)) retiredHealthHosts.add(healthBridgeHost);
+            healthBridgeHost = health;
+        }
+        // A host can return before a failed release finishes; current ownership
+        // must win over that retirement record.
+        retiredQuickbuyHosts.delete(quickbuy); retiredHealthHosts.delete(health);
+        releaseBridgeHosts();
+        const count = enhanced ? Math.max(1, Math.min(6, Math.round(Number(cfg?.ENHANCED_QUICKBUY_COUNT) || 3))) : 3;
+        for (const panel of [root, quickbuy]) {
+            if (isAlive(panel) && QOL_UTILS.SafeGetAttribute(panel, "qol_enhanced_quickbuy_count", "") !== String(count)) {
+                QOL_UTILS.SafeSetAttribute(panel, "qol_enhanced_quickbuy_count", String(count));
+            }
+        }
+        if (isAlive(quickbuy)) {
+            _panelHelpers.setClass(quickbuy, "enhanced_quickbuy_active", enhanced);
+            _panelHelpers.setClass(quickbuy, "shop_click_to_notify_active", notify);
+        }
+        if (isAlive(health)) {
+            const value = warning ? "1" : "0";
+            if (QOL_UTILS.SafeGetAttribute(health, "QOL_COLORED_HEALTHBAR", "") !== value) {
+                QOL_UTILS.SafeSetAttribute(health, "QOL_COLORED_HEALTHBAR", value);
+            }
+        }
+    };
+
     const COMBAT_STATUS_ALERT_PROBE_MS = 500;
     const COMBAT_STATUS_PANEL_PROBE_IDLE_MAX_MS = 3000;
     const COMBAT_STATUS_RECOVERY_MS = 3000;
@@ -1230,48 +1299,10 @@
         setPanelClassCached(root, state.rootClassCache, "combat_indicator_active", combatIndicatorActive);
         syncCombatIndicatorHealthbarClasses(root, combatIndicatorActive, combatIndicatorEnabled);
 
-        let quickbuyPanel = getCachedPanel("quickbuy");
-        if (!quickbuyPanel) {
-            quickbuyPanel = root.FindChildTraverse ? root.FindChildTraverse("CitadelHudQuickbuy") : null;
-            setCachedPanel("quickbuy", quickbuyPanel);
-        }
-        if (quickbuyPanel) {
-            if (!state.quickbuyClassCache) {
-                state.quickbuyClassCache = { panel: null, values: {} };
-            }
-            const enhancedQuickbuyCount = enhancedQuickbuyEnabled
-                ? Math.max(1, Math.min(6, Math.round(Number(cfg?.ENHANCED_QUICKBUY_COUNT) || 3)))
-                : 3;
-            setPanelClassCached(quickbuyPanel, state.quickbuyClassCache, "enhanced_quickbuy_active", enhancedQuickbuyEnabled);
-            setPanelClassCached(quickbuyPanel, state.quickbuyClassCache, "shop_click_to_notify_active", quickbuyClickToNotifyEnabled);
-            try {
-                quickbuyPanel.SetAttributeInt("qol_enhanced_quickbuy_count", enhancedQuickbuyCount);
-                root.SetAttributeInt("qol_enhanced_quickbuy_count", enhancedQuickbuyCount);
-            } catch (_) {}
-        } else {
-            state.quickbuyClassCache = null;
-        }
+        projectNativeBridges(root, cfg, enhancedQuickbuyEnabled, quickbuyClickToNotifyEnabled, colorWarningEnabled, shouldApplyStaticClasses);
 
         if (Number(cfg?.ENABLE_HIDE_RELOAD_CIRCLE) === 1 || getCachedPanel("activeReloadProgressBar")) {
             updateReloadCircleExceptionState(root, cfg);
-        }
-
-        const needsHealthContainerWork = colorWarningEnabled || state.coloredHealthbarBridgeValue !== "" || shouldApplyStaticClasses;
-        if (needsHealthContainerWork) {
-            let healthContainer = getCachedPanel("healthContainer");
-            if (!healthContainer) {
-                healthContainer = root.FindChildTraverse ? root.FindChildTraverse("health_and_abilities_container") : null;
-                setCachedPanel("healthContainer", healthContainer);
-            }
-            if (healthContainer?.SetAttributeString) {
-                const coloredHealthbarFlag = colorWarningEnabled ? "1" : "0";
-                if (state.coloredHealthbarBridgeValue !== coloredHealthbarFlag) {
-                    healthContainer.SetAttributeString("QOL_COLORED_HEALTHBAR", coloredHealthbarFlag);
-                    state.coloredHealthbarBridgeValue = coloredHealthbarFlag;
-                }
-            } else if (state.coloredHealthbarBridgeValue !== "") {
-                state.coloredHealthbarBridgeValue = "";
-            }
         }
 
         const abilitiesContainer = resolveAbilitiesContainer(root);

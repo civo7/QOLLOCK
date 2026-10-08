@@ -21,6 +21,14 @@ native item layout belong solely to the passive-cooldown manifest; damage-report
 offsets belong solely to the damage-report manifest. These native owners release
 their code properties independently of shared root-class projection.
 
+Core also owns native quickbuy mode/count projection and the self-warning bridge
+attribute. Their scoped resolvers follow current verified hosts; a living retired
+host releases QOLLOCK classes/attributes without changing native content or
+animation. A new host receives the complete accepted configuration even when its
+values equal the previous generation. Failed writes/retirement remain retryable,
+and the root quickbuy count is published before a conditional native queue exists.
+These presentation/retirement records are private to the core owner.
+
 Use `QOL.core.hud.isInHideout(root)` for the shared two-class predicate.
 Compass, cursor, zipboost, urn timer, Rejuvenator, minimap timers, legacy passive
 audio, item mirror, stat bonuses, stats position and recent purchases call this
