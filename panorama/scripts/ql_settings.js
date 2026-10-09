@@ -114,19 +114,7 @@ function ReadConfigRawFromStorage() {
 // Called from both SyncConfigFromStorage (on load) and SaveAndSync (on save).
 // Normalize functions are provided by ql_config.js as file-scope globals.
 function NormalizeConfig(config, parsed) {
-    MigrateSplitZoomKeys(config, parsed);
-    NormalizeNeutralCampFlags(config, parsed);
-    NormalizeItemCooldownModeConfig(config, parsed);
-    NormalizeAmmoScaleConfig(config, parsed);
-    NormalizeVoiceTypeConfig(config);
-    NormalizeHealthbarTypeConfig(config, parsed);
-    NormalizeColorWarningConfig(config, parsed);
-    NormalizeEnemyColorWarningConfig(config, parsed);
-    NormalizeAllyColorWarningConfig(config, parsed);
-    NormalizeTopbarEnemyHpWarningConfig(config, parsed);
-    NormalizeTopbarAllyHpWarningConfig(config, parsed);
-    NormalizeShopItemNotificationsConfig(config, parsed);
-    NormalizeQuickbuyDependencyConfig(config);
+    return QOL.normalizeConfigFields(config, parsed);
 }
 
 function SyncConfigFromStorage() {
@@ -136,14 +124,7 @@ function SyncConfigFromStorage() {
     var nextConfig = Object.assign({}, QOL_DEFAULT_CONFIG);
     if (raw && raw.length > 0) {
         try {
-            var unwrapped = UnwrapConfigFromStorage(raw);
-            var parsed = (unwrapped && unwrapped.config) ? unwrapped.config : {};
-            for (var key in parsed) {
-                if (nextConfig.hasOwnProperty(key)) {
-                    nextConfig[key] = parsed[key];
-                }
-            }
-            NormalizeConfig(nextConfig, parsed);
+            nextConfig = QOL.parseStoredConfig(raw);
         } catch (e) { $.Msg("[QOLLock][WARN][config] SyncConfigFromStorage parse/merge failed: " + (e && e.message ? e.message : String(e || ""))); }
     }
     MOD_CONFIG = nextConfig;
@@ -287,31 +268,8 @@ function SaveAndSync() {
     settingsSaveQueue.cancel();
     var panel = $.GetContextPanel();
     var root = FindRootPanel();
-    var hud = null;
-    try { hud = (root && root.FindChildTraverse) ? root.FindChildTraverse("Hud") : null; } catch (eHud) { hud = null; }
-    if (!hud && panel && panel.GetParent) {
-        var cur = panel.GetParent();
-        while (cur) {
-            if (cur.id === "Hud" || (cur.paneltype && cur.paneltype === "CitadelHud") || (cur.BHasClass && cur.BHasClass("WindowRoot") && cur !== root)) {
-                hud = cur;
-                break;
-            }
-            cur = (cur.GetParent && typeof cur.GetParent === "function") ? cur.GetParent() : null;
-        }
-    }
-    if (!hud && root && (root.id === "Hud" || (root.paneltype && root.paneltype === "CitadelHud"))) {
-        hud = root;
-    }
-    if (!hud && typeof QOL !== "undefined") {
-        var findHudFn = (QOL.ui && QOL.ui.PanelHelpers && QOL.ui.PanelHelpers.findHud) ||
-                        (QOL.core && QOL.core.PanelHelpers && QOL.core.PanelHelpers.findHud) ||
-                        (QOL.core && QOL.core.panel && QOL.core.panel.findHud) ||
-                        (QOL.core && QOL.core.hud && QOL.core.hud.findHud) ||
-                        QOL.findHud;
-        if (typeof findHudFn === "function") {
-            try { hud = findHudFn(panel) || findHudFn(root) || findHudFn(); } catch(ePh) {}
-        }
-    }
+    var publisher = QOL.core.persistence;
+    var hud = publisher.resolveHudPanel(root);
     NormalizeConfig(MOD_CONFIG, MOD_CONFIG);
     if (typeof globalThis.RefreshActivePresetConfigMarkerBeforeSave === "function") {
         globalThis.RefreshActivePresetConfigMarkerBeforeSave();
@@ -322,7 +280,7 @@ function SaveAndSync() {
         var panels = [panel, root, hud];
         for (var i = 0; i < panels.length; i++) {
             var target = panels[i];
-            if (target && target.GetAttributeString && target.GetAttributeString(STORAGE_KEY, "") !== data) {
+            if (!QOL.core.panel.isAlive(target) || SafeGetAttribute(target, STORAGE_KEY, "") !== data) {
                 alreadyPublished = false;
                 break;
             }
@@ -332,27 +290,12 @@ function SaveAndSync() {
         PublishPaletteColorBridges();
         return;
     }
-    gLastSavedConfigRaw = data;
-    var parseRev = QOL_UTILS.ParseRevisionNumber;
-    var panelRev = (panel && panel.GetAttributeString) ? parseRev(panel.GetAttributeString(USER_EDIT_REV_ATTR, "")) : 0;
-    var rootRev = (root && root.GetAttributeString) ? parseRev(root.GetAttributeString(USER_EDIT_REV_ATTR, "")) : 0;
-    var hudRev = (hud && hud.GetAttributeString) ? parseRev(hud.GetAttributeString(USER_EDIT_REV_ATTR, "")) : 0;
-    var nextRev = Math.max(gUserEditRevision, panelRev, rootRev, hudRev) + 1;
-    gUserEditRevision = nextRev;
-    // Write data + revision as a paired update per panel so an interrupted
-    // save never orphans new data with an old revision number.
-    if (panel && panel.SetAttributeString) {
-        panel.SetAttributeString(STORAGE_KEY, data);
-        panel.SetAttributeString(USER_EDIT_REV_ATTR, String(nextRev));
-    }
-    if (root && root.SetAttributeString) {
-        root.SetAttributeString(STORAGE_KEY, data);
-        root.SetAttributeString(USER_EDIT_REV_ATTR, String(nextRev));
-    }
-    if (hud && hud.SetAttributeString) {
-        try { hud.SetAttributeString(STORAGE_KEY, data); } catch(eHudStorage) { WarnLog("settings", "op failed: " + (eHudStorage && eHudStorage.message ? eHudStorage.message : String(eHudStorage || ""))); }
-        try { hud.SetAttributeString(USER_EDIT_REV_ATTR, String(nextRev)); } catch(eHudRev) { WarnLog("settings", "op failed: " + (eHudRev && eHudRev.message ? eHudRev.message : String(eHudRev || ""))); }
-    }
+    var publication = publisher.writeStorageConfigRawToUi(root, data, {
+        extraPanels: [panel], minimumRevision: gUserEditRevision
+    });
+    gUserEditRevision = publication.revision;
+    if (publication.complete) gLastSavedConfigRaw = data;
+    if (!publication.acceptedCount) return;
     PersistStatlockerProfileState(data, MOD_CONFIG);
     PublishPaletteColorBridges();
     if (QOL.arcade) QOL.arcade.updateBridgePollerState();

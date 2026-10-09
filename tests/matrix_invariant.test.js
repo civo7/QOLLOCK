@@ -289,6 +289,7 @@ test("INVARIANT 4: All 90+ community presets resolve, diff, and serialize into #
         "panorama/scripts/core/ql_namespace.js",
         "panorama/scripts/ql_utils.js",
         "panorama/scripts/core/ql_panel_helpers.js",
+        "panorama/scripts/core/ql_persistence.js",
         "panorama/scripts/ql_shared_presets.js",
         "panorama/scripts/ql_bridge.js",
         "panorama/scripts/ql_config.js",

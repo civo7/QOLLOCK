@@ -205,6 +205,7 @@ test("SUPER TEST 2: Settings Window header, Presets tab click, diff modal, and a
     const scriptsToLoad = [
         "panorama/scripts/core/ql_namespace.js",
         "panorama/scripts/ql_utils.js",
+        "panorama/scripts/core/ql_persistence.js",
         "panorama/scripts/ql_shared_presets.js",
         "panorama/scripts/ql_bridge.js",
         "panorama/scripts/ql_config.js",

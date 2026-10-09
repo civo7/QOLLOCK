@@ -37,21 +37,28 @@ function MergeConfig(config) {
     for (var key in merged) {
         if (config.hasOwnProperty(key)) merged[key] = config[key];
     }
-    MigrateSplitZoomKeys(merged, config);
-    NormalizeNeutralCampTierConfig(merged, config);
-    NormalizeItemCooldownModeConfig(merged, config);
-    NormalizeAmmoScaleConfig(merged, config);
-    NormalizeVoiceTypeConfig(merged);
-    NormalizeHealthbarTypeConfig(merged, config);
-    NormalizeColorWarningConfig(merged, config);
-    NormalizeEnemyColorWarningConfig(merged, config);
-    NormalizeAllyColorWarningConfig(merged, config);
-    NormalizeTopbarEnemyHpWarningConfig(merged, config);
-    NormalizeTopbarAllyHpWarningConfig(merged, config);
-    NormalizeShopItemNotificationsConfig(merged, config);
-    NormalizeQuickbuyDependencyConfig(merged);
-    NormalizeDefaultHeroConfig(merged, config);
+    NormalizeConfigFields(merged, config);
     return merged;
+}
+
+// Shared in-place compatibility chain. Import-only schema migrations remain
+// at the decoding boundary, where the original schema version is known.
+function NormalizeConfigFields(target, source) {
+    MigrateSplitZoomKeys(target, source);
+    NormalizeNeutralCampTierConfig(target, source);
+    NormalizeItemCooldownModeConfig(target, source);
+    NormalizeAmmoScaleConfig(target, source);
+    NormalizeVoiceTypeConfig(target);
+    NormalizeHealthbarTypeConfig(target, source);
+    NormalizeColorWarningConfig(target, source);
+    NormalizeEnemyColorWarningConfig(target, source);
+    NormalizeAllyColorWarningConfig(target, source);
+    NormalizeTopbarEnemyHpWarningConfig(target, source);
+    NormalizeTopbarAllyHpWarningConfig(target, source);
+    NormalizeShopItemNotificationsConfig(target, source);
+    NormalizeQuickbuyDependencyConfig(target);
+    NormalizeDefaultHeroConfig(target, source);
+    return target;
 }
 
 // ── Normalize wrappers (delegate to QOL_SCHEMA_UTILS) ──
@@ -252,6 +259,7 @@ function SafeParseConfig(raw) {
 if (typeof QOL !== "undefined") {
     QOL.buildDefaultConfig = BuildDefaultConfig;
     QOL.mergeConfig = MergeConfig;
+    QOL.normalizeConfigFields = NormalizeConfigFields;
     QOL.safeParseConfig = SafeParseConfig;
     QOL.parseStoredConfig = ParseStoredConfig;
     QOL.getSharedSchemaUtils = GetSharedSchemaUtils;

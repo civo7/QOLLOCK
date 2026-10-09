@@ -4,10 +4,9 @@
 // OWNS:        Low-level panel attribute configuration persistence & caching:
 //              readStorageConfigRawFromUi, writeStorageConfigRawToUi,
 //              getUIRoot, resolveHudPanel.
-// DOES NOT OWN: Config validation (ConfigStore), Schema migration (legacy_3_1_9)
-// DEPENDS ON:  core/ql_namespace.js, core/ql_panel_helpers.js, core/ql_hud.js
-// USED BY:     ql_core.js, ql_app.js, ql_settings_loader.js, feature manifests
-// LOAD ORDER:  7th — after core/ql_hero_probe.js
+// DOES NOT OWN: Config validation/normalization, compact codecs or durable CEF saves.
+// DEPENDS ON:  Shared utilities/namespace and core/ql_panel_helpers.js.
+// USED BY:     HUD and settings contexts; loaded before core/ql_storage_bridge.js.
 // =============================================================================
 
 (function () {
@@ -166,12 +165,12 @@
     /**
      * Persists config string to root and hud panel attributes with paired revision increment.
      */
-    const writeStorageConfigRawToUi = (root, rawText) => {
+    const writeStorageConfigRawToUi = (root, rawText, options = {}) => {
         if (typeof globalThis._TLog === "function") {
             globalThis._TLog("config:WriteToUi", `len=${rawText ? String(rawText).length : 0}`);
         }
-        if (!root || !root.SetAttributeString) {
-            return { raw: String(rawText || ""), revision: 0, count: 0 };
+        if (!isAlive(root) || !root.SetAttributeString) {
+            return { raw: String(rawText || ""), revision: 0, count: 0, acceptedCount: 0, complete: false, failures: [] };
         }
 
         const nextRaw = String(rawText || "");
@@ -179,18 +178,36 @@
         const userEditRevAttr = getUserEditRevAttr();
         const storageKey = getStorageKey();
 
-        let rootRev = 0;
-        let hudRev = 0;
-        try { rootRev = parseRevisionNumber(root.GetAttributeString(userEditRevAttr, "")); } catch (_) { rootRev = 0; }
-        try { hudRev = hud?.GetAttributeString ? parseRevisionNumber(hud.GetAttributeString(userEditRevAttr, "")) : 0; } catch (_) { hudRev = 0; }
-        const nextRevision = Math.max(rootRev, hudRev) + 1;
-
-        try { root.SetAttributeString(storageKey, nextRaw); } catch (e) { logError("persist", `root.SetAttributeString(STORAGE_KEY) failed: ${e?.message || e}`); }
-        try { root.SetAttributeString(userEditRevAttr, String(nextRevision)); } catch (e) { logError("persist", `root.SetAttributeString(USER_EDIT_REV) failed: ${e?.message || e}`); }
-
-        if (hud?.SetAttributeString) {
-            try { hud.SetAttributeString(storageKey, nextRaw); } catch (e) { logError("persist", `hud.SetAttributeString(STORAGE_KEY) failed: ${e?.message || e}`); }
-            try { hud.SetAttributeString(userEditRevAttr, String(nextRevision)); } catch (e) { logError("persist", `hud.SetAttributeString(USER_EDIT_REV) failed: ${e?.message || e}`); }
+        const hosts = [...new Set([root, hud, ...(options.extraPanels || [])])].filter(panel => isAlive(panel) && panel.SetAttributeString);
+        const read = (panel, key) => String(panel.GetAttributeString(key, "") || "");
+        const revisions = hosts.map(panel => { try { return parseRevisionNumber(read(panel, userEditRevAttr)); } catch (_) { return 0; } });
+        const nextRevision = Math.max(parseRevisionNumber(options.minimumRevision), ...revisions) + 1;
+        const revisionText = String(nextRevision), failures = [];
+        let acceptedCount = 0;
+        for (const panel of hosts) {
+            let previousRaw, previousRevision, phase = "read";
+            try {
+                previousRaw = read(panel, storageKey);
+                previousRevision = read(panel, userEditRevAttr);
+                phase = "payload";
+                if (panel.SetAttributeString(storageKey, nextRaw) === false || read(panel, storageKey) !== nextRaw) throw Error("payload rejected");
+                phase = "revision";
+                if (panel.SetAttributeString(userEditRevAttr, revisionText) === false || read(panel, userEditRevAttr) !== revisionText) throw Error("revision rejected");
+                acceptedCount++;
+            } catch (error) {
+                // Native attributes are not an atomic transaction. Restore the
+                // previous pair when possible and report rejected rollback too.
+                let rolledBack = phase === "read";
+                if (phase !== "read") {
+                    try {
+                        if (read(panel, storageKey) !== previousRaw) panel.SetAttributeString(storageKey, previousRaw);
+                        if (read(panel, userEditRevAttr) !== previousRevision) panel.SetAttributeString(userEditRevAttr, previousRevision);
+                        rolledBack = read(panel, storageKey) === previousRaw && read(panel, userEditRevAttr) === previousRevision;
+                    } catch (_) { rolledBack = false; }
+                }
+                failures.push({ panelId: String(panel.id || ""), phase, rolledBack });
+                logError("persist", `${panel.id || "panel"} config ${phase} failed; rollback=${rolledBack}: ${error?.message || error}`);
+            }
         }
 
         // Native writes can fail independently. Cache actual read-back, never
@@ -208,7 +225,10 @@
         return {
             raw: nextRaw,
             revision: nextRevision,
-            count: hud?.SetAttributeString ? 2 : 1
+            count: hosts.length,
+            acceptedCount,
+            complete: hosts.length > 0 && acceptedCount === hosts.length,
+            failures
         };
     };
 

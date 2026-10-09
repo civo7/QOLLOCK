@@ -1,6 +1,7 @@
 // ql_settings_persistence.js — Config serialization utilities (base64 encoding,
 // compact wire format v2 serialize/deserialize, schema-aware config apply)
-// Extracted from ql_settings.js, Phase 5
+// OWNS: Settings-code encoding/decoding and import diagnostics/UI preference preservation.
+// DOES NOT OWN: Shared normalization, live panel publication or durable CEF storage.
 (function() {
     'use strict';
 
@@ -25,16 +26,11 @@ function DecodeBase64(str) {
     return "";
 }
 
-// ── Compatibility aliases (commit 1.1: redirect to shared module) ──
-// These allow existing code to continue working without changes.
-// They will be replaced with direct QOL_COMPACT_SCHEMA_UTILS.* calls in commit 1.2.
-var COMPACT_SCHEMA_REGISTRY = QOL_COMPACT_SCHEMA_REGISTRY;
-var COMPACT_SCHEMA_WIRE_TO_SEMVER = QOL_COMPACT_SCHEMA_WIRE_TO_SEMVER;
+// Same-context compatibility delegates use the shared frozen compact schema.
 var LATEST_COMPACT_SEMVER = QOL_LATEST_COMPACT_SEMVER;
 function GetCompactSchema(semver)      { return QOL_COMPACT_SCHEMA_UTILS.GetSchema(semver); }
 function GetCompactWireVersion(semver) { return QOL_COMPACT_SCHEMA_UTILS.GetWireVersion(semver); }
 function ResolveCompactSemverFromWireVersion(wv) { return QOL_COMPACT_SCHEMA_UTILS.ResolveSemverFromWire(wv); }
-function AreCompactSemversWireCompatible(a, b) { return QOL_COMPACT_SCHEMA_UTILS.AreSemversWireCompatible(a, b); }
 
 function GetDefaultHeroOptions() {
     if (typeof QOL_COMPACT_DEFAULT_HERO_OPTIONS !== "undefined" && Array.isArray(QOL_COMPACT_DEFAULT_HERO_OPTIONS)) {
@@ -74,7 +70,7 @@ function GetDefaultConfig() {
     return {};
 }
 
-// ── Serialization helpers (remain in ql_settings.js — export/import specific) ──
+// ── Settings-code export/import adapters ──
 
 function GetStepDecimals(step) {
     if (typeof QOL_CODEC === "object" && QOL_CODEC && typeof QOL_CODEC.GetStepDecimals === "function") {
@@ -182,21 +178,8 @@ function ApplyParsedConfig(parsed) {
             MOD_CONFIG[key] = parsed[key];
         }
     }
-    MigrateSplitZoomKeys(MOD_CONFIG, parsed);
-    NormalizeNeutralCampFlags(MOD_CONFIG, parsed);
-    NormalizeItemCooldownModeConfig(MOD_CONFIG, parsed);
-    NormalizeAmmoScaleConfig(MOD_CONFIG, parsed);
-    NormalizeVoiceTypeConfig(MOD_CONFIG);
-    NormalizeHealthbarTypeConfig(MOD_CONFIG, parsed);
-    NormalizeColorWarningConfig(MOD_CONFIG, parsed);
-    NormalizeEnemyColorWarningConfig(MOD_CONFIG, parsed);
-    NormalizeAllyColorWarningConfig(MOD_CONFIG, parsed);
-    NormalizeTopbarEnemyHpWarningConfig(MOD_CONFIG, parsed);
-    NormalizeTopbarAllyHpWarningConfig(MOD_CONFIG, parsed);
-    NormalizeShopItemNotificationsConfig(MOD_CONFIG, parsed);
-    NormalizeQuickbuyDependencyConfig(MOD_CONFIG);
+    QOL.normalizeConfigFields(MOD_CONFIG, parsed);
     NormalizeLanguageSchemaMigration(MOD_CONFIG, parsed, LATEST_COMPACT_SEMVER);
-    NormalizeDefaultHeroConfig(MOD_CONFIG, parsed);
 }
 
 function ClampToSchemaField(value, field) {
@@ -257,19 +240,7 @@ function ApplyParsedConfigWithDiagnostics(parsed, schemaVersion) {
         MOD_CONFIG[key] = nextValue;
         diagnostics.appliedKeys++;
     }
-    MigrateSplitZoomKeys(MOD_CONFIG, parsed);
-    NormalizeNeutralCampFlags(MOD_CONFIG, parsed);
-    NormalizeItemCooldownModeConfig(MOD_CONFIG, parsed);
-    NormalizeAmmoScaleConfig(MOD_CONFIG, parsed);
-    NormalizeVoiceTypeConfig(MOD_CONFIG);
-    NormalizeHealthbarTypeConfig(MOD_CONFIG, parsed);
-    NormalizeColorWarningConfig(MOD_CONFIG, parsed);
-    NormalizeEnemyColorWarningConfig(MOD_CONFIG, parsed);
-    NormalizeAllyColorWarningConfig(MOD_CONFIG, parsed);
-    NormalizeTopbarEnemyHpWarningConfig(MOD_CONFIG, parsed);
-    NormalizeTopbarAllyHpWarningConfig(MOD_CONFIG, parsed);
-    NormalizeShopItemNotificationsConfig(MOD_CONFIG, parsed);
-    NormalizeQuickbuyDependencyConfig(MOD_CONFIG);
+    QOL.normalizeConfigFields(MOD_CONFIG, parsed);
     NormalizeCompassSpeedSchemaMigration(MOD_CONFIG, parsed, schemaVersion || LATEST_COMPACT_SEMVER);
     NormalizeLanguageSchemaMigration(MOD_CONFIG, parsed, schemaVersion || LATEST_COMPACT_SEMVER);
     MOD_CONFIG.DRAG_ENABLED = preservedDragEnabled;

@@ -634,7 +634,10 @@
         if (typeof data !== "string") throw new Error("Stored settings response must be a string");
         const parsed = _parseStoredSettings(data);
         const normalizedRaw = WrapConfigForStorage(parsed);
-        Q.core.persistence.writeStorageConfigRawToUi(state.root, normalizedRaw);
+        const publication = Q.core.persistence.writeStorageConfigRawToUi(state.root, normalizedRaw);
+        if (!publication.acceptedCount || Q.core.persistence.readStorageConfigRawFromUi(state.root) !== normalizedRaw) {
+            throw new Error("Stored settings publication rejected");
+        }
 
         const modCfg = (typeof MOD_CONFIG !== "undefined" && MOD_CONFIG) || globalThis.MOD_CONFIG;
         if (modCfg) {

@@ -688,6 +688,28 @@ test("storage_bridge: invalid restores reject without changing live raw, revisio
     }
 });
 
+test("storage_bridge: rejected native publication cannot replace live config or report an applied restore", async () => {
+    for (const rejectedKey of ["Deadlock_Mod_Settings_v1", "QOL_USER_EDIT_REV"]) {
+        const env = createTestEnvironment(), bridge = env.sandbox.QOL.core.storageBridge;
+        env.fireTitleEvent(bridge.getPanel(), "QOL_BRIDGE_READY:frag1");
+        const fresh = publishEdit(env), before = JSON.stringify(env.sandbox.MOD_CONFIG);
+        const revision = env.rootPanel.GetAttributeString("QOL_USER_EDIT_REV", "");
+        const hud = env.sandbox.QOL.core.persistence.resolveHudPanel(env.rootPanel);
+        for (const host of new Set([env.rootPanel, hud])) {
+            const write = host.SetAttributeString.bind(host);
+            host.SetAttributeString = (key, value) => key === rejectedKey ? false : write(key, value);
+        }
+        const pending = bridge.loadSettings();
+        replyToCurrentRequest(env, env.sandbox.WrapConfigForStorage({ BRIDGE_BUFF_START: 30 }));
+        await assert.rejects(pending, /publication rejected/);
+        assert.equal(env.rootPanel.GetAttributeString("Deadlock_Mod_Settings_v1", ""), fresh);
+        assert.equal(env.rootPanel.GetAttributeString("QOL_USER_EDIT_REV", ""), revision);
+        assert.equal(JSON.stringify(env.sandbox.MOD_CONFIG), before);
+        assert.equal(env.sandbox.State.lastConfig, null);
+        assert.equal(env.clock.errors.length, 0);
+    }
+});
+
 test("storage_bridge: explicit load replaces preceding edits, but missing storage keeps them", async () => {
     const env = createTestEnvironment();
     const bridge = env.sandbox.QOL.core.storageBridge;

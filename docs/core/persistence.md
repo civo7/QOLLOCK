@@ -4,7 +4,22 @@
 
 ## Published configuration
 
-`writeStorageConfigRawToUi(root, raw)` publishes `Deadlock_Mod_Settings_v1` to the root and resolved HUD, with a `QOL_USER_EDIT_REV` one greater than their current maximum. The return value describes the attempted publication; native attribute errors are logged. It is not confirmation of a CEF save.
+`writeStorageConfigRawToUi(root, raw, options?)` publishes `Deadlock_Mod_Settings_v1`
+to the root and resolved HUD. Settings supply their context in `extraPanels`
+and their transient revision floor in `minimumRevision`; duplicate hosts are
+written once. The new `QOL_USER_EDIT_REV` exceeds every selected host's revision
+and the optional floor. The return value retains `raw`, `revision` and attempted
+unique-host `count`, and adds `acceptedCount`, `complete` and per-host `failures`.
+These describe native panel publication, never a durable CEF save.
+
+Each host's payload must succeed and match native readback before its revision
+is written. A rejected revision triggers best-effort restoration of the previous
+pair; rejected rollback is reported. Native attributes do not provide an atomic
+transaction. Successfully published hosts may coexist with rejected hosts, and
+revision precedence selects accepted data. A settings save retries incomplete
+publication instead of caching the attempted payload as fully saved. Storage
+restore cannot replace live config/state when no pair accepts publication or
+the selected native readback differs from the restored payload.
 
 `readStorageConfigRawFromUi(root)` selects available root/HUD data by revision and
 caches the result for that root and HUD identity, with a periodic full-read

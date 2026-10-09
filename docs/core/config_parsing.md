@@ -28,3 +28,12 @@ extended exports; historical compact exports retain their existing meaning.
 `SafeParseConfig(raw)` remains the legacy HUD parsing entry point. Its error recovery can clear the context panel's corrupt configuration and report a defaults fallback. Asynchronous bridge operations must use `ParseStoredConfig` instead, because an unsuccessful restore must preserve the live session.
 
 `MergeConfig` starts with defaults, overlays recognized values, and applies the established compatibility normalizers, including split minimap zoom, ammo scales, cooldown modes, healthbar type, and warning settings. Successful JSON parsing alone does not establish valid storage data; envelope shape and the recognized setting values are checked before bridge publication.
+
+`NormalizeConfigFields(target, source)`, also `QOL.normalizeConfigFields`, owns
+the shared in-place compatibility chain used by `MergeConfig`, settings load/save
+and settings-code import. Import-only language/compass migrations stay in the
+settings adapter where the original schema version is available. Current control
+diagnostics and preserved UI preferences remain separate from HUD merging.
+Settings load uses the same side-effect-free parser rather than a second raw
+envelope merge. Compatibility names delegate to these owners; compact layouts,
+schema/release versions and persistent defaults are unchanged.

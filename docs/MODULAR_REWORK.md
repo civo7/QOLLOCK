@@ -207,9 +207,11 @@ Final settings ownership status and remaining checks:
   cancelable hover/hide/tracking/settle tasks are implemented. Scroll suppression,
   coordinates and metadata localization remain; client input checks are pending.
 - `ql_settings.js`, `ql_settings_persistence.js` and `core/ql_persistence.js`:
-  finish the shared normalization/publication-boundary audit, including current
-  config access, paired native revisions, rejected writes and compatibility
-  delegates. Frozen configs remain the acceptance baseline.
+  settings load/save/import and HUD merging share one normalization chain.
+  Panel publication has one owner, unique hosts, paired readback checks,
+  reported best-effort rollback and incomplete-save retries. Restore requires
+  accepted native publication before replacing config/state. Frozen configs
+  remain the acceptance baseline; restart durability requires client checks.
 - Run the complete final offline gate and report the precise native checks still
   requiring maintainer compilation/repacking. Arcade games are excluded from this
   rewrite by the maintainer's current request.

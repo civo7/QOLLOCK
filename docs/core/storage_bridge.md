@@ -10,6 +10,12 @@ Each realm owns a direct child `CitadelHTMLPanel` named `QOLStorageBridge` and i
 
 ## Transport
 
+Settings restore validates the payload before native publication and checks
+accepted panel-pair/readback evidence before replacing live configuration or
+reporting an applied load. Rejected native publication leaves config/state
+untouched. See [panel persistence](persistence.md) for partial-host failure and
+best-effort rollback limits; a panel publication is not a CEF acknowledgment.
+
 Commands are serialized through a FIFO queue and sent by changing the HTTPS page's fragment: `SetURL(BRIDGE_URL + "#" + encodeURIComponent(JSON.stringify({ q, f, a })))`. Each message has a unique string `q`; `f` selects `save`, `saveChunk`, `load`, `next`, or `remove`, and `a` carries the existing operation arguments. Keys and outbound values remain UTF-8 Base64. Fragment changes fire `hashchange` without reloading the page or sending the payload to the server. The page ignores a fragment present at initial load, so navigation cannot replay an old request. Deadlock's HTTPS-only `SetURL` filter no longer permits script injection or local-file fallbacks.
 
 Readiness requires `QOL_BRIDGE_READY:frag1`, identifying fragment protocol version 1. A plain `QOL_BRIDGE_READY` comes from an old cached page and must not release queued commands. The bridge logs the unsupported page once and retries the bare HTTPS URL after one second, allowing the hosted service worker to activate. These retries share the startup watchdog's five-attempt limit; exhaustion fails remaining queued requests. Duplicate ready titles are harmless. Responses arrive through `HTMLTitle` as `QOL_RES:` JSON; request IDs reject stale replies and response sequence numbers suppress duplicate chunk titles.
