@@ -137,6 +137,99 @@ test("crate and tunnel overlays follow a living replaced viewport and retry mark
     e.clean();
 });
 
+function directMinimap(e) {
+    e.Q.core.App.shutdown(); e.sandbox.eval("Math.random = () => 0;");
+    e.configure({ ENABLE_MINIMAP_CRATE_OVERLAY: 1, ENABLE_MINIMAP_REM_TUNNELS: 1, MINIMAP_SMALL_SIZE: 600 });
+    e.Q.minimapCrateData = { dl_midtown: { crates: [[0.25, 0.75], [0.8, 0.2], [0.5, 0.5]] } };
+    const cfg = e.Q.core.ConfigStore.view("ql_minimap_runtime"), callbacks = new Map();
+    let reads = 0;
+    const create = () => e.Q.core.FeatureRegistry.getManifest("ql_minimap_runtime").create({
+        id: "ql_minimap_runtime", config: { view() { reads++; return cfg; } },
+        events: { on(name, fn) { callbacks.set(name, fn); }, off(name, fn) { if (callbacks.get(name) === fn) callbacks.delete(name); } }
+    });
+    return { feature: create(), create, cfg, callbacks, reads: () => reads };
+}
+
+test("crate ownership retires moved markers and shrinking data without rebuilding unaffected children", () => {
+    const e = fixture(), { feature } = directMinimap(e); feature.onEnable();
+    const crates = e.viewport.FindChild("minimap_overlay_root"), markers = crates.FindChild("minimap_markers");
+    const moved = markers.GetChild(0), retained = markers.GetChild(1), removed = markers.GetChild(2);
+    moved.SetParent(e.orphan); removed.SetParent(e.orphan); e.clock.advance(150);
+    assert.equal(moved.IsValid(), false); assert.equal(removed.IsValid(), false);
+    assert.equal(markers.GetChildCount(), 3); assert.equal(markers.FindChild("QOLMinimapCrateMarker1"), retained);
+    const nextRemoved = markers.FindChild("QOLMinimapCrateMarker2"); nextRemoved.SetParent(e.orphan);
+    e.Q.minimapCrateData = { dl_midtown: { crates: [[0.3, 0.4]] } }; e.clock.advance(150);
+    assert.equal(retained.IsValid(), false); assert.equal(nextRemoved.IsValid(), false);
+    assert.equal(markers.GetChildCount(), 1); assert.equal(markers.GetChild(0).style.position, "30% 40% 0");
+    const last = markers.GetChild(0); last.SetParent(e.orphan); feature.onDisable(); e.clock.advance(20);
+    assert.equal(last.IsValid(), false); assert.equal(crates.IsValid(), false); assert.equal(e.renderer.IsValid(), true); e.clean();
+});
+
+test("minimap hides partial crate and tunnel trees until construction and styles recover", () => {
+    const e = fixture(), { feature } = directMinimap(e), create = e.$.CreatePanel;
+    let reject = true;
+    e.$.CreatePanel = (type, parent, id, properties) => {
+        if (id === "QOLMinimapCrateMarker1" && reject) throw Error("modeled missing marker");
+        const panel = create(type, parent, id, properties);
+        if (id === "tunnel_overlay" || id === "QOLMinimapCrateMarker0") panel.style = new Proxy(panel.style, {
+            set(target, key, value) {
+                if (reject && (key === "opacity" || key === "position")) throw Error("modeled partial minimap style");
+                target[key] = value; return true;
+            }
+        });
+        return panel;
+    };
+    feature.onEnable();
+    const crates = e.viewport.FindChild("minimap_overlay_root"), tunnel = e.viewport.FindChild("tunnel_overlay");
+    assert.equal(crates.BHasClass("qol-hidden"), true); assert.equal(tunnel.BHasClass("qol-hidden"), true);
+    assert.equal(tunnel.BHasClass("tunnel_locked_on"), false);
+    reject = false; e.clock.advance(150);
+    assert.equal(crates.BHasClass("qol-hidden"), false); assert.equal(tunnel.BHasClass("qol-hidden"), false);
+    assert.equal(crates.FindChild("minimap_markers").GetChildCount(), 3);
+    assert.equal(crates.FindChild("minimap_markers").GetChild(0).style.position, "25% 75% 0");
+    feature.onDisable(); e.clock.advance(20); e.$.CreatePanel = create; e.clean();
+});
+
+test("minimap derives settings through active hooks and stopped callbacks cannot revive presentation", () => {
+    const e = fixture(), { feature, cfg, callbacks, reads } = directMinimap(e); feature.onEnable();
+    const scoreboard = callbacks.get("engine:scoreboard_toggle"); e.clock.advance(600); assert.equal(reads(), 1);
+    cfg.MINIMAP_SMALL_SIZE = 800; feature.onSettingsChanged(); assert.equal(e.host.style.uiScale, "200%");
+    feature.onDisable(); e.clock.advance(20);
+    assert.equal(callbacks.size, 0); assert.equal(e.host.style.uiScale, undefined);
+    feature.onSettingsChanged(); scoreboard(); e.clock.advance(1500);
+    assert.equal(e.viewport.FindChild("minimap_overlay_root"), null); assert.equal(e.viewport.FindChild("tunnel_overlay"), null);
+    assert.equal(e.host.style.uiScale, undefined);
+    assert.equal(e.Q.core.Scheduler.getWorkSnapshot().some(record => record.id === "ql_minimap_runtime"), false); e.clean();
+});
+
+test("minimap rapid replacement waits for queued previous trees and leaves one current overlay", () => {
+    const e = fixture(), { feature, create } = directMinimap(e); feature.onEnable();
+    const old = e.viewport.FindChild("minimap_overlay_root"), moved = old.FindChildTraverse("QOLMinimapCrateMarker1");
+    moved.SetParent(e.orphan); feature.onDisable();
+    const replacement = create(); replacement.onEnable();
+    assert.equal(e.viewport.FindChild("minimap_overlay_root"), old); assert.equal(old.visible, false);
+    e.clock.advance(150);
+    assert.equal(old.IsValid(), false); assert.equal(moved.IsValid(), false);
+    assert.equal(e.viewport.Children().filter(panel => panel.id === "minimap_overlay_root").length, 1);
+    assert.equal(e.viewport.Children().filter(panel => panel.id === "tunnel_overlay").length, 1);
+    replacement.onDisable(); e.clock.advance(20); e.clean();
+});
+
+test("minimap releases a still living old HUD while waiting for the current native scene", () => {
+    const e = fixture(), { feature } = directMinimap(e); e.host.style.transform = "native host transform"; feature.onEnable();
+    const old = e.viewport.FindChild("minimap_overlay_root"), moved = old.FindChildTraverse("QOLMinimapCrateMarker0"); moved.SetParent(e.orphan);
+    e.doc.root = e.add(null, "LoadingRoot"); e.clock.advance(150);
+    assert.equal(old.IsValid(), false); assert.equal(moved.IsValid(), false); assert.equal(e.root.IsValid(), true);
+    assert.equal(e.host.style.uiScale, undefined); assert.equal(e.host.style.transform, "native host transform");
+    assert.equal(e.doc.root.GetChildCount(), 0);
+    const root = e.add(null, "Hud", "CitadelHud"), core = e.add(root, ""); core.AddClass("HudCore");
+    const gameplay = e.add(core, "gameplay_hud"), clamp = e.add(gameplay, ""); clamp.AddClass("clamp_width");
+    const host = e.add(clamp, "minimap_persp"), viewport = e.add(host, "minimap_container"), inner = e.add(viewport, "HudMinimapContainer");
+    e.add(inner, "hud_minimap"); e.doc.root = root; e.clock.advance(150);
+    assert.equal(host.style.uiScale, "150%"); assert.ok(viewport.FindChild("minimap_overlay_root"));
+    assert.equal(e.viewport.FindChild("minimap_overlay_root"), null); feature.onDisable(); e.clock.advance(20); e.clean();
+});
+
 test("fixed-icon objective bridge positions share Base/Alt/Tab size and Alt precedence", () => {
     const e = fixture();
     e.configure({ ENABLE_MINIMAP_BUFF_TIMER: 1, ENABLE_MINIMAP_BUFF_TIMER_ON_BRIDGE: 1,

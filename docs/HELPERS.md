@@ -12,7 +12,7 @@ which numeric label, or which live HUD instance is authoritative.
 | Validate a native handle | `QOL_UTILS.IsPanelValid(panel)` or `QOL.core.panel.isAlive(panel)` | `ql_utils.js`; same function via aliases, including `QOL.utils.IsPanelValid`. |
 | Validate a panel list | `QOL_UTILS.IsPanelListValid(list)` | Empty lists are false; distinguish an empty cached result separately if needed. |
 | Create / delete panels | `QOL.core.panel.create(type, parent, id, properties)` / `QOL.core.panel.delete(panel)` | `core/ql_panel_helpers.js`; deletion is asynchronous. |
-| Own a created overlay tree | `QOL.core.panel.createOwnedTree()` | Instance-local `child(parent, type, id, properties?)`, `sweep()`, `clear()` and `dispose()`. IDs must be unique within the tree and exclusively QOL-created. See [panel API](core/panel_helpers.md). |
+| Own a created overlay tree | `QOL.core.panel.createOwnedTree()` | Instance-local `child(parent, type, id, properties?)`, `sweep()`, `remove(id)`, `clear()` and `dispose()`. IDs must be unique within the tree and exclusively QOL-created. See [panel API](core/panel_helpers.md). |
 | Find a known direct-child ID | `QOL.core.panel.findChild(parent, id)` | Does not search arbitrary descendants. |
 | Find a known descendant ID | `QOL.core.panel.findTraverse(root, id)` | Supply the narrowest authoritative root; duplicate IDs in other subtrees are possible. |
 | Find descendants by class | `QOL_UTILS.FindPanelsByClass(root, className)` / `QOL_UTILS.FindFirstPanelByClass(root, className)` | Native class traversal; the latter filters for valid handles. |

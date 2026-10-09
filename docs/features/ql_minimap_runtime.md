@@ -26,6 +26,16 @@ owned tint/opacity/range overrides; tunnel and crate panels belong to the
 current anchor generation. Missing native sources are retried without treating
 a live cached handle as evidence that the current map still contains it.
 
+Settings are derived in lifecycle hooks; the active poll samples native view
+state without rebuilding the configuration model. Stopped settings/event hooks
+cannot recreate presentation or polling. Current HUD replacement releases the
+previous presentation, and temporary loading roots cannot own map overlays.
+Crate and tunnel trees use complete created-child ownership, including markers
+moved outside their container. Crate data replacement reuses unchanged indices
+and retires removed branches. Partial construction or style writes stay hidden
+until a later active poll succeeds; rapid re-enable waits for previous queued
+trees to retire rather than adopting them.
+
 Objective overlays consume the separate [phase producer](ql_objective_timers.md).
 Their fixed-icon bridge surface and placement use the same Base/Alt/Tab size
 and view precedence as this owner. Ordinary map scaling retains the logical

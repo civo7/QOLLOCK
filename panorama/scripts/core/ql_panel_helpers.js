@@ -306,7 +306,7 @@
         };
         const clear = () => { for (const id of [...nodes.keys()].reverse()) discard(id); sweep(); };
         const dispose = () => { clear(); retired.clear(); };
-        return { child, sweep, clear, dispose };
+        return { child, sweep, remove: discard, clear, dispose };
     };
 
     // ql_utils.js is loaded first in every context that includes panel helpers.

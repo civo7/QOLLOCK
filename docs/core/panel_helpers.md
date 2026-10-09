@@ -35,10 +35,12 @@ object is exposed as `QOL.core.panel`, `QOL.core.PanelHelpers`, and
 ## Styles and ownership
 
 `createOwnedTree()` returns `child(parent, type, id, properties?)`, `sweep()`,
-`clear()` and `dispose()`. Each nonempty ID must be unique within that instance
+`remove(id)`, `clear()` and `dispose()`. Each nonempty ID must be unique within that instance
 and reserved for QOL-created content; never use this helper to adopt native
 panels. Child reconciliation retains expected ancestry, so moved children are
-still retired with their former owner. `sweep()` releases moved/replaced nodes
+still retired with their former owner. `remove(id)` retires one recorded branch,
+including its moved descendants, while retaining unrelated branches; unknown
+IDs are ignored. `sweep()` releases moved/replaced nodes
 and retries pending asynchronous deletion; `clear()` retires all nodes while
 retaining deletion retries. Final `dispose()` also drops those retry records.
 Partial construction can be retried through the same child calls. A new

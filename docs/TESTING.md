@@ -68,6 +68,11 @@ one warning owner; objective timers consume a scalar rejuvenator snapshot.
 These checks complement the frozen-main compatibility matrix and do not replace
 client validation of native animation, composition, input or timing.
 
+The map lifecycle suite also exercises partial crate/tunnel construction, moved
+markers, shrinking coordinate data, queued previous trees, stopped hooks and
+still-living HUD replacement. The shared tree suite checks targeted branch
+retirement without touching unrelated created branches or native IDs.
+
 The information-owner tests also retire every moved Rift/Crosshair Stats child,
 exercise rapid re-enable before asynchronous deletion, and replace a still-live
 HUD without inheriting old source/model bindings. Same-HUD topbar replacement

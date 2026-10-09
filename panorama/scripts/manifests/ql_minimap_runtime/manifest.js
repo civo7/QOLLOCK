@@ -1,4 +1,6 @@
-// Minimap content owns native decoration and overlays; geometry owns viewport presentation.
+// OWNS: Native minimap decoration, created crate/tunnel trees and settings model.
+// DOES NOT OWN: Native map data, objective phases or compass rotation/flip.
+// Viewport presentation remains with geometry.js; created overlay IDs are QOL-only.
 (() => {
     "use strict";
     const Q = globalThis.QOL;
@@ -52,9 +54,11 @@
             const canvasResolver = Q.panelCache.createIdResolver("canvas");
             const renderResolver = Q.panelCache.createIdResolver("map_render");
             const owned = new Map();
+            const tree = P.createOwnedTree();
             const fields = new Map(Q.settingsFields.map(field => [field.key, field]));
             let loop = null;
             let currentRate = 0;
+            let active = false, model = null, rootOwner = null;
             let anchor = null, renderer = null, canvas = null, mapRender = null;
             let tunnel = null, crates = null, markers = null;
             let crateData = null;
@@ -111,7 +115,7 @@
             }
 
             function releaseOverlays() {
-                for (const panel of [tunnel, crates]) if (P.isAlive(panel)) P.delete(panel);
+                tree.clear();
                 for (const panel of [tunnel, crates, markers, ...markerPanels]) owned.delete(panel);
                 tunnel = crates = markers = null;
                 markerPanels = [];
@@ -142,42 +146,51 @@
             }
 
             function ensure(parent, panelId, previous) {
-                const current = P.findChild(parent, panelId);
-                if (previous !== current && P.isAlive(previous)) { owned.delete(previous); P.delete(previous); }
-                const panel = current || P.create("Panel", parent, panelId);
-                if (P.isAlive(panel)) { panel.hittest = false; panel.hittestchildren = false; }
+                const panel = tree.child(parent, "Panel", panelId);
+                if (previous !== panel) owned.delete(previous);
                 return panel;
             }
 
             function renderTunnel(view) {
                 if (!view.tunnels) { P.setClass(tunnel, "tunnel_locked_on", false); show(tunnel, false); return; }
                 tunnel = ensure(anchor, "tunnel_overlay", tunnel);
-                style(tunnel, { backgroundImage: 'url("s2r://panorama/images/minimap/base/mm_tunnel_overlay_png_png.vtex")',
+                const ready = style(tunnel, { backgroundImage: 'url("s2r://panorama/images/minimap/base/mm_tunnel_overlay_png_png.vtex")',
                     backgroundSize: "100% 100%", backgroundRepeat: "no-repeat", backgroundPosition: "center", opacity: view.tunnelOpacity.toFixed(2) });
-                P.setClass(tunnel, "tunnel_locked_on", true);
-                show(tunnel, true);
+                P.setClass(tunnel, "tunnel_locked_on", ready);
+                show(tunnel, ready);
             }
 
             function renderCrates(model) {
                 if (!model.crates) { show(crates, false); return; }
                 const next = ensure(anchor, "minimap_overlay_root", crates);
-                if (next !== crates) { crates = next; markers = null; crateData = null; }
+                if (next !== crates) {
+                    for (const panel of [crates, markers, ...markerPanels]) owned.delete(panel);
+                    crates = next; markers = null; markerPanels = []; crateData = null; crateReady = false;
+                }
                 const nextMarkers = ensure(crates, "minimap_markers", markers);
-                if (nextMarkers !== markers) { markers = nextMarkers; crateData = null; }
-                if (!P.isAlive(markers)) return;
+                if (nextMarkers !== markers) {
+                    for (const panel of [markers, ...markerPanels]) owned.delete(panel);
+                    markers = nextMarkers; markerPanels = []; crateData = null; crateReady = false;
+                }
+                if (!P.isAlive(markers)) { show(crates, false); return; }
                 // Map API remains unverified; retain the shipped Midtown table.
                 const data = Q.minimapCrateData || (typeof CRATE_DATA === "object" ? CRATE_DATA : null);
                 const points = data?.dl_midtown?.crates || (Array.isArray(data?.dl_midtown) ? data.dl_midtown : []);
                 if (crateData !== points) crateCoordinates = points.map(point => [Number(Array.isArray(point) ? point[0] : point.u), Number(Array.isArray(point) ? point[1] : point.v)])
                     .filter(point => point.every(Number.isFinite));
                 const coordinates = crateCoordinates;
-                if (crateData !== points || markerPanels.length !== coordinates.length || markerPanels.some(panel => !P.isAlive(panel) || panel.GetParent?.() !== markers)) {
-                    for (const panel of markerPanels) owned.delete(panel);
-                    markers.RemoveAndDeleteChildren();
-                    markerPanels = coordinates.map(() => P.create("Panel", markers, "", { class: "minimap_marker", hittest: false, hittestchildren: false }));
-                    crateData = points;
-                    crateReady = false;
+                if (crateData !== points) crateReady = false;
+                crateData = points;
+                for (let index = coordinates.length; index < markerPanels.length; index++) {
+                    owned.delete(markerPanels[index]); tree.remove("QOLMinimapCrateMarker" + index);
                 }
+                markerPanels = coordinates.map((point, index) => {
+                    const previous = markerPanels[index];
+                    const panel = tree.child(markers, "Panel", "QOLMinimapCrateMarker" + index, { class: "minimap_marker" });
+                    if (previous !== panel) { owned.delete(previous); crateReady = false; }
+                    return panel;
+                });
+                if (markerPanels.some(panel => !P.isAlive(panel))) { crateReady = false; show(crates, false); return; }
                 if (!crateReady) {
                     crateReady = true;
                     coordinates.forEach(([x, y], index) => {
@@ -187,7 +200,7 @@
                         }) && crateReady;
                     });
                 }
-                show(crates, true);
+                show(crates, crateReady);
             }
 
             function renderRange(size) {
@@ -222,31 +235,38 @@
             }
 
             function update() {
-                const root = $.GetContextPanel();
-                if (!P.isAlive(root)) return;
+                if (!active) return;
+                const root = P.findHud($.GetContextPanel());
+                if (root !== rootOwner) { releasePresentation(); rootOwner = root; }
+                tree.sweep();
+                if (!P.isAlive(root) || (root.id !== "Hud" && root.paneltype !== "CitadelHud")) { releasePresentation(); return; }
                 const host = discover(root);
                 if (!P.isAlive(host)) { show(tunnel, false); show(crates, false); return; }
-                const model = readModel();
                 const alt = model.alt && (hasClass(host, "gDetailView") || Q.core.hud.isClassActive("gDetailView"));
                 const tab = model.tab && Q.core.hud.isScoreboardOpen(root, host);
                 render(model, alt ? model.altView : tab ? model.tabView : model.base);
             }
 
             function syncLoop() {
-                const model = readModel();
+                if (!active) return;
                 // rate-exempt: native doorway ranges and Alt view require smooth refresh.
                 const rate = model.alt || Math.abs(model.base.size - 400) >= 0.5 ? 0.05 : 0.5;
                 if (loop && currentRate !== rate) { loop.stop(); loop = null; }
                 if (!loop) { currentRate = rate; loop = Q.core.Scheduler.createPollLoop(update, rate, id); }
             }
 
-            function scoreboardRefresh() { Q.core.Scheduler.scheduleOnce(update, 0, ctx.id || id); }
+            function scoreboardRefresh() { if (active) Q.core.Scheduler.scheduleOnce(update, 0, ctx.id || id); }
 
             function release() {
+                active = false;
                 ctx.events?.off("engine:scoreboard_toggle", scoreboardRefresh);
                 if (loop) { loop.stop(); loop = null; }
                 currentRate = 0;
                 Q.core.Scheduler.cancelAllForFeature(id);
+                releasePresentation(); tree.dispose(); model = rootOwner = null;
+            }
+
+            function releasePresentation() {
                 geometry.release();
                 P.setClass(renderer, "minimalist_minimap_active", false);
                 for (const panel of owned.keys()) releasePanel(panel);
@@ -256,10 +276,16 @@
                 canvasResolver.reset(); renderResolver.reset();
             }
 
+            function refresh() {
+                model = readModel();
+                geometry.resetDiscovery(); canvasResolver.reset(); renderResolver.reset();
+                syncLoop(); update();
+            }
+
             return {
-                onEnable() { ctx.events?.on("engine:scoreboard_toggle", scoreboardRefresh); syncLoop(); update(); },
+                onEnable() { active = true; ctx.events?.on("engine:scoreboard_toggle", scoreboardRefresh); refresh(); },
                 onDisable: release,
-                onSettingsChanged() { geometry.resetDiscovery(); canvasResolver.reset(); renderResolver.reset(); syncLoop(); update(); }
+                onSettingsChanged: refresh
             };
         },
         test() {

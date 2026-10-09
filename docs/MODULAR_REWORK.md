@@ -123,6 +123,11 @@ behavior until its owning implementation has been audited.
   previous IDs and guards inactive hooks. Current HUD replacement resets its
   private estimate, and cleanup no longer depends on writing retired text;
   native radial signals and the established smoothing remain unchanged.
+- Minimap content derives settings in lifecycle hooks and binds the current HUD;
+  stopped hooks cannot revive polling. Crates/tunnels own their complete trees,
+  including moved markers and shrinking coordinate data. Partial construction
+  and style failures remain hidden until retry; native geometry, Fixed Icon Size
+  and the shipped map-coordinate source remain with their existing owners.
 
 Frozen main-config fixtures preserve all healthbar variants and both minimap
 scale methods. Published versions, compact layouts and persistent defaults stay

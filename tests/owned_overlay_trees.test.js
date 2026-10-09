@@ -114,3 +114,17 @@ test("owned tree retries failed deletion and retires moved descendants after par
     reject = false; tree.sweep(); env.clock.advance(20); assert.equal(child.IsValid(), false);
     assert.equal(native.IsValid(), true); assert.equal(overlay.IsValid(), false); tree.dispose(); assert.deepEqual(env.clock.errors, []);
 });
+
+test("owned tree removes one branch including moved descendants without touching siblings or native IDs", () => {
+    const env = fixture(owners[0]), tree = env.Q.core.panel.createOwnedTree();
+    const native = env.add(env.root, "NativeParent"), foreign = env.add(native, "NativeChild");
+    const overlay = tree.child(native, "Panel", "QOLRemoveRoot");
+    const branch = tree.child(overlay, "Panel", "QOLRemoveBranch");
+    const moved = tree.child(branch, "Label", "QOLRemoveMoved"), sibling = tree.child(overlay, "Label", "QOLRemoveSibling");
+    moved.SetParent(env.add(null, "DetachedBranch"));
+    tree.remove("NativeChild"); tree.remove("QOLRemoveBranch"); env.clock.advance(20);
+    assert.equal(branch.IsValid(), false); assert.equal(moved.IsValid(), false);
+    assert.equal(overlay.IsValid(), true); assert.equal(sibling.IsValid(), true); assert.equal(foreign.IsValid(), true);
+    assert.equal(tree.child(overlay, "Label", "QOLRemoveSibling"), sibling);
+    tree.dispose(); env.clock.advance(20); assert.equal(sibling.IsValid(), false); assert.deepEqual(env.clock.errors, []);
+});
