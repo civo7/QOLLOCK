@@ -200,9 +200,9 @@ live publication/durable-save boundary remain separate.
 
 The final settings pass has these concrete remaining ownership checks:
 
-- `ql_settings_previews.js`: replace per-preview retained native handles and
-  token-only hide callbacks with complete created-tree and cancelable deadline
-  ownership; preserve each preview's geometry, localization and feature gates.
+- `ql_settings_previews.js`: complete created-tree ownership and cancelable,
+  context-bound hide deadlines are implemented. Family-specific geometry and
+  feature gates remain in render paths; client layout checks remain pending.
 - `ql_settings_tooltips.js`: reconcile partially created/replaced/moved children,
   retire delayed hover/tracking work through context/host replacement and preserve
   scroll suppression, coordinates and metadata localization.

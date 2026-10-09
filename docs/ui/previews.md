@@ -8,6 +8,23 @@ The QOLLOCK settings window provides realtime visual previews for HUD elements w
 
 Settings previews are implemented in `panorama/scripts/ql_settings_previews.js` and exposed via `QOL.preview` (and `Q.preview`).
 
+All preview families share an instance-owned created tree and one constructor
+path. Child handles reconcile on each request, including partial creation,
+live replacement and reparenting. Crosshair sample rows and keyboard sample keys
+belong to the complete tree. Unfinished trees remain hidden until a later request
+succeeds. Gameplay geometry, config detection, feature gates and live-anchor
+calculations remain family-specific.
+
+Each family owns at most one hide deadline. A newer request cancels the prior
+handle (including zero); callback identity guards contain failed cancellation.
+Deadlines retain their original context and panel generation and cannot hide
+another context's new preview. Expiry retires the family's complete tree.
+`hideAll()` cancels all deadlines and retires every created child, including moved
+children. A living context replacement also retires the old tree. `dispose()`
+performs final cleanup. Rapid recreation waits for queued old trees to retire,
+preserving the shared helper's ownership rule. Rendering/coordinates still need
+maintainer client verification.
+
 ```
 ┌─────────────────────────────────────────────────────────┐
 │                    Settings UI Action                   │
@@ -40,7 +57,8 @@ ShowZipBoostPreview()  ShowCompassPreview()   ShowSpeedPreview()
 ## 2. Public API (`QOL.preview`)
 
 - **`showForConfigId(configId)`**: Dispatches preview creation or update for the given configuration key.
-- **`hideAll()`**: Immediately hides all active preview panels across all categories.
+- **`hideAll()`**: Cancels pending hides and retires all owned preview trees.
+- **`dispose()`**: Final cleanup of preview trees and deadline ownership.
 - **`wirePreviewToggleButton(buttonPanel)`**: Attaches event listeners and active state styling to the preview master switch (`MOD_CONFIG.PREVIEWS_ENABLED`).
 - **Config Identification Helpers**:
   - `isMinimapPreviewConfig(configId)`
