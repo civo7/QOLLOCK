@@ -37,7 +37,6 @@ panorama/
     ├── ql_config.js                        # Config merge, normalize, parse, migration (328 lines)
     ├── ql_core.js                          # Main runtime — boot sequence, dispatch loop, non-extracted code
     ├── ql_settings.js                      # Settings UI (not yet using QOL.import())
-    ├── ql_perf_overlay.js                  # Performance overlay (not yet using QOL.import())
     ├── ql_recent_purchases_data.js         # Static data for recent purchases
     ├── ql_minimap_crate_data.js            # Static data for minimap crates
     ├── core/                                  # Phase 1: New infrastructure (8 modules)
@@ -107,7 +106,7 @@ panorama/
 ### Load Order (from hud.xml)
 ```
 ql_utils.js → ql_shared_presets.js → ql_bridge.js → ql_state.js → ql_panelcache.js → ql_config.js →
-ql_recent_purchases_data.js → ql_minimap_crate_data.js → ql_perf_overlay.js →
+ql_recent_purchases_data.js → ql_minimap_crate_data.js →
 ql_feat_buildbridge.js → ql_core.js → features/*.js (36 files; order-independent)
 ```
 
@@ -172,7 +171,9 @@ QOL.register("featureName", {
 });
 ```
 
-**Backward compat:** `QOL_*` bare globals are still exported for consumers that haven't migrated yet (`ql_settings.js`, `ql_perf_overlay.js`). The compat block is at `ql_core.js` lines 23710+.
+Use the current [architecture map](ARCHITECTURE.md) and active XML includes for
+callback/context exports. Performance display modules are private owners under
+`manifests/ql_perf`; the former singleton renderer and `ql_core.js` are removed.
 
 ### Feature File Pattern
 

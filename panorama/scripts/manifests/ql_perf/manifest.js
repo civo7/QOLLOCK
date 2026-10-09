@@ -1,28 +1,8 @@
-// manifests/ql_perf/manifest.js
-// =============================================================================
-// QOLLOCK — Performance Diagnostics & Overlay
-// =============================================================================
-// OWNS:        Performance debug tracking, detailed console logs, and HUD overlay.
-// DOES NOT OWN: Low-level scheduling or frame measurement (Scheduler, perf_overlay)
-// DEPENDS ON:  QOL.core.FeatureRegistry, QOL.core.Scheduler
-// CONFIG KEYS: ENABLE_PERF_DEBUG, ENABLE_PERF_DEBUG_DETAIL, ENABLE_PERF_OVERLAY,
-//              PERF_OVERLAY_OPACITY
-// PATTERN:     Polling (5Hz = 0.2s). Drives QOL_PERF_OVERLAY and periodic console logs.
-// =============================================================================
-
+// OWNS: Performance collection enable policy, console reporting and private overlay/model lifetime.
+// DOES NOT OWN: Scheduler samples or engine frame timings. Displayed reports describe callback work.
 (() => {
     "use strict";
-
-    const FR = QOL.core && QOL.core.FeatureRegistry;
-    if (!FR) {
-        $.Msg("[QOLLock] perf: FeatureRegistry not found — aborting");
-        return;
-    }
-
-    const PERF_FLUSH_INTERVAL_MS = 5000;
-    const TOP_COUNT = 8;
-
-    FR.register({
+    QOL.core.FeatureRegistry.register({
         id: "ql_perf",
         enabledByDefault: false,
         enableKeys: ["ENABLE_PERF_DEBUG", "ENABLE_PERF_DEBUG_DETAIL", "ENABLE_PERF_OVERLAY"],
@@ -32,128 +12,77 @@
             { key: "ENABLE_PERF_OVERLAY", type: "toggle" },
             { key: "PERF_OVERLAY_OPACITY", type: "slider" }
         ],
-        create: (ctx) => {
-            let _loop = null;
-            let _lastFlushMs = 0;
-
-            const _getState = () => {
-                return (typeof QOL !== "undefined" && QOL.state) ? QOL.state :
-                       ((typeof State !== "undefined" && State) ? State :
-                       ((typeof globalThis !== "undefined" && globalThis.State) ? globalThis.State : {}));
-            };
-
-            const _flushConsolePerf = (perfStats, detailed) => {
-                const now = Date.now ? Date.now() : (new Date()).getTime();
-                if (now - _lastFlushMs < PERF_FLUSH_INTERVAL_MS) return;
-                _lastFlushMs = now;
-
-                const stats = perfStats || {};
+        create(ctx) {
+            const state = QOL.state, U = QOL.utils, P = QOL.core.panel;
+            const overlay = QOL.features.performanceOverlay.create(), history = QOL.features.performanceModel.create();
+            let model = null, root = null, loop = null, enabled = false, lastFlush = null;
+            function readModel() {
+                const cfg = ctx.config.view();
+                const detailed = U.IsCfgEnabled(cfg, "ENABLE_PERF_DEBUG_DETAIL");
+                const console = detailed || U.IsCfgEnabled(cfg, "ENABLE_PERF_DEBUG");
+                const shown = U.IsCfgEnabled(cfg, "ENABLE_PERF_OVERLAY");
+                return { detailed, console, shown,
+                    opacity: U.ClampConfigNumber(cfg.PERF_OVERLAY_OPACITY, 0.75, 0.3, 1, false).toFixed(2) };
+            }
+            function report(stats, now) {
+                if (lastFlush !== null && now - lastFlush < 5000) return;
+                lastFlush = now;
                 const keys = Object.keys(stats);
-                if (keys.length === 0) {
-                    $.Msg("[QOLLock][Perf] (collecting samples...)");
-                    return;
-                }
-
+                if (!keys.length) { $.Msg("[QOLLock][Perf] (collecting samples...)"); return; }
                 keys.sort((a, b) => {
-                    const ea = stats[a], eb = stats[b];
-                    const avgA = (ea && ea.count > 0) ? (ea.total / ea.count) : 0;
-                    const avgB = (eb && eb.count > 0) ? (eb.total / eb.count) : 0;
-                    return avgB - avgA;
+                    const average = entry => entry && entry.count > 0 ? entry.total / entry.count : 0;
+                    return average(stats[b]) - average(stats[a]);
                 });
-
-                const topKeys = keys.slice(0, TOP_COUNT);
                 const parts = [];
-                for (let i = 0; i < topKeys.length; i++) {
-                    const k = topKeys[i];
-                    const e = stats[k];
-                    if (!e || e.count <= 0) continue;
-                    const avg = (e.total / e.count).toFixed(2);
-                    if (detailed) {
-                        parts.push(`${k}=${avg}ms (n=${e.count} max=${e.max ? e.max.toFixed(1) : "0.0"} slow=${e.slow || 0})`);
-                    } else {
-                        parts.push(`${k}=${avg}ms`);
-                    }
+                for (const key of keys.slice(0, 8)) {
+                    const entry = stats[key];
+                    if (!entry || entry.count <= 0) continue;
+                    const average = (entry.total / entry.count).toFixed(2);
+                    parts.push(key + "=" + average + "ms" + (model.detailed ?
+                        " (n=" + entry.count + " max=" + (entry.max ? entry.max.toFixed(1) : "0.0") + " slow=" + (entry.slow || 0) + ")" : ""));
                 }
-                if (parts.length > 0) {
-                    $.Msg(`[QOLLock][Perf] ${parts.join(" | ")}`);
+                if (parts.length) $.Msg("[QOLLock][Perf] " + parts.join(" | "));
+            }
+            function update() {
+                if (!enabled) return;
+                const nextRoot = P.findHud($.GetContextPanel());
+                if (root !== nextRoot) { overlay.clear(); history.reset(); lastFlush = null; root = nextRoot; }
+                const now = U.PerfNowMs(), stats = state.perfStats || {};
+                if (model.shown) {
+                    const content = history.build(stats, now);
+                    overlay.render(root, model.opacity, content);
+                    for (const alert of content.alerts) $.Msg(alert);
                 }
-            };
-
-            const _tick = () => {
-                const root = $.GetContextPanel();
-                const state = _getState();
-                const cfg = (ctx && ctx.config && ctx.config.all) ? ctx.config.all() : (state.lastConfig || {});
-
-                const consoleDebug = !!(cfg && (cfg.ENABLE_PERF_DEBUG === true || Number(cfg.ENABLE_PERF_DEBUG) === 1));
-                const detailed = !!(cfg && (cfg.ENABLE_PERF_DEBUG_DETAIL === true || Number(cfg.ENABLE_PERF_DEBUG_DETAIL) === 1));
-                const consoleEnabled = consoleDebug || detailed;
-                const overlayEnabled = !!(cfg && (cfg.ENABLE_PERF_OVERLAY === true || Number(cfg.ENABLE_PERF_OVERLAY) === 1));
-
-                state.perfEnabled = consoleEnabled || overlayEnabled;
-                state.perfDetailed = detailed;
-                if (typeof QOL !== "undefined" && QOL.state) {
-                    QOL.state.perfEnabled = state.perfEnabled;
-                    QOL.state.perfDetailed = state.perfDetailed;
-                }
-                if (!state.perfStats) state.perfStats = {};
-
-                const perfOverlay = (typeof globalThis !== "undefined" && globalThis.QOL_PERF_OVERLAY) ? globalThis.QOL_PERF_OVERLAY :
-                                  ((typeof window !== "undefined" && window.QOL_PERF_OVERLAY) ? window.QOL_PERF_OVERLAY : null);
-
-                if (perfOverlay && typeof perfOverlay.UpdateOverlay === "function") {
-                    perfOverlay.UpdateOverlay(root, cfg, state.perfStats);
-                }
-
-                if (consoleEnabled) {
-                    _flushConsolePerf(state.perfStats, detailed);
-                }
-            };
-
+                if (model.console) report(stats, now);
+            }
+            function refresh() {
+                const previous = model; model = readModel();
+                state.perfEnabled = enabled && (model.console || model.shown);
+                state.perfDetailed = enabled && model.detailed;
+                if (!model.shown) { overlay.clear(); history.reset(); }
+                if (previous && previous.console !== model.console) lastFlush = null;
+                if (loop) loop.reschedule(model.shown ? 0.2 : 1.0);
+                update();
+            }
             return {
-                onEnable: () => {
-                    const Scheduler = QOL.core.Scheduler;
-                    if (Scheduler && Scheduler.createPollLoop) {
-                        _loop = Scheduler.createPollLoop(_tick, 0.2, "ql_perf");
-                    }
-                    _tick();
+                onEnable() {
+                    enabled = true; refresh();
+                    loop = QOL.core.Scheduler.createPollLoop(update, model.shown ? 0.2 : 1.0, ctx.id);
                 },
-                onDisable: () => {
-                    if (_loop) {
-                        _loop.stop();
-                        _loop = null;
-                    }
-                    const state = _getState();
-                    state.perfEnabled = false;
-                    state.perfDetailed = false;
-                    if (typeof QOL !== "undefined" && QOL.state) {
-                        QOL.state.perfEnabled = false;
-                        QOL.state.perfDetailed = false;
-                    }
-                    const perfOverlay = (typeof globalThis !== "undefined" && globalThis.QOL_PERF_OVERLAY) ? globalThis.QOL_PERF_OVERLAY :
-                                      ((typeof window !== "undefined" && window.QOL_PERF_OVERLAY) ? window.QOL_PERF_OVERLAY : null);
-                    if (perfOverlay && typeof perfOverlay.UpdateOverlay === "function") {
-                        perfOverlay.UpdateOverlay($.GetContextPanel(), { ENABLE_PERF_OVERLAY: 0 }, state.perfStats || {});
-                    }
-                },
-                onSettingsChanged: (_payload) => {
-                    _tick();
+                onSettingsChanged: refresh,
+                onDisable() {
+                    enabled = false;
+                    if (loop) loop.stop(); loop = null;
+                    state.perfEnabled = state.perfDetailed = false;
+                    overlay.clear(); history.reset(); model = root = lastFlush = null;
                 }
             };
         },
-        test: (_ctx) => {
-            try {
-                const perfOverlay = (typeof globalThis !== "undefined" && globalThis.QOL_PERF_OVERLAY) ? globalThis.QOL_PERF_OVERLAY :
-                                  ((typeof window !== "undefined" && window.QOL_PERF_OVERLAY) ? window.QOL_PERF_OVERLAY : null);
-                const hasOverlayModule = !!(perfOverlay && typeof perfOverlay.UpdateOverlay === "function");
-                return {
-                    passed: hasOverlayModule,
-                    name: "Perf overlay module available",
-                    message: hasOverlayModule ? "" : "QOL_PERF_OVERLAY missing or invalid",
-                    assertions: [{ passed: hasOverlayModule, name: "QOL_PERF_OVERLAY.UpdateOverlay is function" }]
-                };
-            } catch (e) {
-                return { passed: false, name: "Perf manifest check", message: (e && e.message ? e.message : String(e)) };
-            }
+        test() {
+            const available = typeof QOL.features.performanceOverlay?.create === "function" &&
+                typeof QOL.features.performanceModel?.create === "function";
+            return { passed: available, name: "Performance display owners available", message: "",
+                assertions: [{ passed: available, name: "Private model and renderer factories exist" }] };
         }
     });
 })();

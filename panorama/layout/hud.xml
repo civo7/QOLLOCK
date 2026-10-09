@@ -53,7 +53,6 @@
 		<!-- ==== End QOLLOCK customization preview ==== -->
 		<include src="s2r://panorama/scripts/ql_recent_purchases_data.vjs_c" />
 		<include src="s2r://panorama/scripts/ql_minimap_crate_data.vjs_c" />
-		<include src="s2r://panorama/scripts/ql_perf_overlay.vjs_c" />
 		<include src="s2r://panorama/scripts/tools/qol_dump_tree.vjs_c" />
 		<include src="s2r://panorama/scripts/manifests/ql_cast_failed_hint/manifest.vjs_c" />
 		<include src="s2r://panorama/scripts/manifests/ql_mouse_cursor/manifest.vjs_c" />
@@ -122,7 +121,11 @@
 		<include src="s2r://panorama/scripts/manifests/ql_healthbar/variants/fg.vjs_c" />
 		<include src="s2r://panorama/scripts/manifests/ql_healthbar/variants/mc.vjs_c" />
 		<include src="s2r://panorama/scripts/manifests/ql_healthbar/manifest.vjs_c" />
+		<!-- ==== QOLLOCK performance display owners ==== -->
+		<include src="s2r://panorama/scripts/manifests/ql_perf/model.vjs_c" />
+		<include src="s2r://panorama/scripts/manifests/ql_perf/overlay.vjs_c" />
 		<include src="s2r://panorama/scripts/manifests/ql_perf/manifest.vjs_c" />
+		<!-- ==== End QOLLOCK performance display owners ==== -->
 		<include src="s2r://panorama/scripts/manifests/ql_show_build_id/manifest.vjs_c" />
 		<include src="s2r://panorama/scripts/core/ql_app.vjs_c" />
 	</scripts>

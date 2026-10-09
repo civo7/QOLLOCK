@@ -105,6 +105,11 @@ Native target tests also release living moved shapes and class-recycled hints on
 the render cadence, retain unrelated properties and exercise replacement through
 a real `CitadelHud` fixture. Private caches are not published to shared State.
 
+`performance_owner_lifecycle.test.js` covers private report/renderer generations,
+reactive collection flags/opacity, preserved Scheduler samples, partial writes/
+construction, native label replacement, registry cleanup and rolling reports.
+These are callback-data checks, not native frame/rendering performance results.
+
 `item_mirror_ownership.test.js` exercises current HUD/inventory generations,
 living source/child replacement, partial writes/construction and pending/active
 feedback cancellation. The existing `item_mirror.test.js` still checks discovery,

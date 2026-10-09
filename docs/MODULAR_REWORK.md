@@ -48,6 +48,9 @@ behavior until its owning implementation has been audited.
 - Target/hint rendering no longer exports private caches or accepts meaningless
   core invalidation writes. Unused shared fields left by retired implementations
   are removed after checking current consumers; real cross-owner snapshots remain.
+- Performance diagnostics separate private report/model and native renderer
+  lifetimes from the Scheduler collector. Living replacement and disabled overlays
+  release owned panels without clearing shared samples or benchmark state.
 
 Frozen main-config fixtures preserve all healthbar variants and both minimap
 scale methods. Published versions, compact layouts and persistent defaults stay

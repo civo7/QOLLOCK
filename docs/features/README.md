@@ -60,7 +60,7 @@ tables, CSS values, test history or general verification caveats into it.
 | [ql_reload_cooldown](../../panorama/scripts/manifests/ql_reload_cooldown/manifest.js) | Reload countdown estimated from native radial progress; [source/label lifetime](ql_reload_cooldown.md), icon/circle hiding settings. |
 | [ql_item_mirror](../../panorama/scripts/manifests/ql_item_mirror/manifest.js) | Advanced item cooldown matching/mirroring; not a replacement for Basic mode styling. |
 | [ql_healthbar](../../panorama/scripts/manifests/ql_healthbar/manifest.js) | Numeric healthbar-type dispatcher plus shared/variant modules; PLAYER_HEALTHBAR_* settings. |
-| [ql_perf](../../panorama/scripts/manifests/ql_perf/manifest.js) | Scheduler diagnostics/overlay; not a measurement of total engine frame time. |
+| [ql_perf](ql_perf.md) | Private report/overlay owners observing Scheduler samples; not a measurement of total engine frame time. |
 | [ql_show_build_id](../../panorama/scripts/manifests/ql_show_build_id/manifest.js) | Read and display selected shop build metadata; unrelated to settings storage. |
 
 ## Settings-only utility
