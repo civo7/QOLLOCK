@@ -1,9 +1,8 @@
-// OWNS: Combat status overlay layout, private phase history and owned labels.
-// DOES NOT OWN: Native combat detection or the independent healthbar combat indicator.
-// Detection is delegated to core.hud; disabling this overlay leaves indicator history intact.
+// OWNS: Text combat-status overlay, private phase history and created panel tree.
+// DOES NOT OWN: Native combat evidence or independent healthbar indicator classes.
+// Source/parent: hud.xml HudCore > gameplay_hud; combat evidence delegates to core/hud.
 (() => {
     "use strict";
-    const RECOVERY_MS = 3000;
     QOL.core.FeatureRegistry.register({
         id: "ql_combat_status",
         enableKey: "ENABLE_COMBAT_STATUS",
@@ -15,100 +14,100 @@
             { key: "COMBAT_STATUS_Y_OFFSET", type: "slider" }
         ],
         create(ctx) {
-            const P = QOL.core.panel;
-            const hud = QOL.core.hud;
-            let loop = null, overlay = null, model = null, signature = null;
-            let stateLabel = null, timerLabel = null;
+            const P = QOL.core.panel, hud = QOL.core.hud;
+            const resolver = QOL.panelCache.createIdResolver("gameplay_hud", {
+                ownerPath: [{ id: "Hud", optional: true }, { className: "HudCore" }]
+            });
+            const owned = new Set(), retired = new Set();
+            let running = false, root = null, parent = null, model = null, loop = null;
+            let overlay = null, stateLabel = null, timerLabel = null, signature = null;
             let lastCombatMs = null, combatStartMs = null, signalActive = false;
-
-            function readModel() {
+            function resetPhase() { lastCombatMs = combatStartMs = null; signalActive = false; }
+            function remove(panel) {
+                if (P.isAlive(panel)) { P.setVisible(panel, false); P.delete(panel); retired.add(panel); }
+                owned.delete(panel);
+            }
+            function clearOverlay() {
+                for (const panel of [...owned].reverse()) remove(panel);
+                overlay = stateLabel = timerLabel = parent = signature = null;
+            }
+            function release() { clearOverlay(); resetPhase(); resolver.reset(); root = null; }
+            function child(owner, id, current, type) {
+                if (!P.isAlive(owner)) return null;
+                const next = P.findChild(owner, id);
+                if (current && current !== next) remove(current);
+                if (P.isAlive(next) && retired.has(next)) return null;
+                // IDs are exclusively QOL-created. A new instance must not adopt
+                // a previous instance's tree already queued for asynchronous deletion.
+                if (P.isAlive(next) && !owned.has(next)) { remove(next); return null; }
+                const panel = next || P.create(type, owner, id, { hittest: "false", hittestchildren: "false" });
+                if (P.isAlive(panel)) owned.add(panel);
+                return panel;
+            }
+            function ensure(currentParent) {
+                for (const panel of retired) {
+                    if (!P.isAlive(panel)) retired.delete(panel); else P.delete(panel);
+                }
+                if (parent !== currentParent || (P.isAlive(overlay) && overlay.GetParent() !== currentParent)) clearOverlay();
+                parent = currentParent;
+                const previous = overlay;
+                overlay = child(parent, "QOLCombatStatusOverlay", overlay, "Panel");
+                if (overlay !== previous) signature = null;
+                stateLabel = child(overlay, "QOLCombatStatusState", stateLabel, "Label");
+                timerLabel = child(overlay, "QOLCombatStatusTimer", timerLabel, "Label");
+                return P.isAlive(overlay) && P.isAlive(stateLabel) && P.isAlive(timerLabel);
+            }
+            function phase(now) {
+                const signal = hud.isCombatSignalActive(root) === true;
+                if (signal) { if (!signalActive || combatStartMs === null) combatStartMs = now; lastCombatMs = now; }
+                signalActive = signal;
+                const elapsed = lastCombatMs === null ? Infinity : now - lastCombatMs;
+                const recovering = !signal && lastCombatMs !== null && elapsed <= 3000;
+                if (!signal && !recovering) combatStartMs = null;
+                return { signal, recovering,
+                    state: signal ? "IN COMBAT" : recovering ? "RECOVERING" : "OUT OF COMBAT",
+                    timer: signal ? (Math.max(0, now - combatStartMs) / 1000).toFixed(1) + "s" :
+                        recovering ? (Math.max(0, 3000 - elapsed) / 1000).toFixed(1) + "s" : "--" };
+            }
+            function update() {
+                if (!running) return;
+                const currentRoot = P.findHud($.GetContextPanel());
+                if (root !== currentRoot) { release(); root = currentRoot; }
+                if (!P.isAlive(root) || (root.id !== "Hud" && root.paneltype !== "CitadelHud") || !model.enabled) { clearOverlay(); resetPhase(); return; }
+                const currentParent = resolver.resolve(root);
+                if (!P.isAlive(currentParent)) { clearOverlay(); resetPhase(); return; }
+                const next = phase(QOL.utils.PerfNowMs());
+                if (!ensure(currentParent)) return;
+                signature = P.syncStyles(overlay, model.styles, signature).sig;
+                P.setClass(overlay, "qol-hidden", false);
+                P.setClass(overlay, "phase_combat", next.signal);
+                P.setClass(overlay, "phase_recover", next.recovering);
+                P.setClass(overlay, "phase_idle", !next.signal && !next.recovering);
+                if (stateLabel.text !== next.state) stateLabel.text = next.state;
+                if (timerLabel.text !== next.timer) timerLabel.text = next.timer;
+            }
+            function refresh() {
                 const cfg = ctx.config.view();
-                return { enabled: Number(cfg.ENABLE_COMBAT_STATUS) === 1, styles: {
+                model = { enabled: QOL.utils.IsCfgEnabled(cfg, "ENABLE_COMBAT_STATUS"), styles: {
                     uiScale: Math.round(Number(cfg.COMBAT_STATUS_SCALE) || 100) + "%",
                     marginLeft: (Math.round(Number(cfg.COMBAT_STATUS_X_OFFSET)) || 0) + "px",
                     marginBottom: (165 + (Math.round(Number(cfg.COMBAT_STATUS_Y_OFFSET)) || 0)) + "px",
                     visibility: "visible"
                 } };
+                hud.refreshRootClasses($.GetContextPanel()); update();
             }
-
-            function release(resetTracking = true) {
-                P.delete(overlay);
-                overlay = null; stateLabel = null; timerLabel = null; signature = null;
-                if (resetTracking) { lastCombatMs = null; combatStartMs = null; signalActive = false; }
-            }
-
-            function ensureOverlay(root) {
-                const parent = hud.getGameplayHudPanel(root);
-                if (!P.isAlive(parent)) return false;
-                if (!P.isAlive(overlay) || overlay.GetParent() !== parent) {
-                    release(false);
-                    overlay = P.findChild(parent, "QOLCombatStatusOverlay") ||
-                        P.create("Panel", parent, "QOLCombatStatusOverlay", { hittest: "false", hittestchildren: "false" });
-                }
-                if (!P.isAlive(overlay)) return false;
-                stateLabel = P.findChild(overlay, "QOLCombatStatusState") || P.create("Label", overlay, "QOLCombatStatusState");
-                timerLabel = P.findChild(overlay, "QOLCombatStatusTimer") || P.create("Label", overlay, "QOLCombatStatusTimer");
-                return P.isAlive(stateLabel) && P.isAlive(timerLabel);
-            }
-
-            function update() {
-                const root = $.GetContextPanel();
-                if (!P.isAlive(root) || !model || !model.enabled || !hud.isCustomHudContextActive(root)) {
-                    release();
-                    return;
-                }
-                if (!ensureOverlay(root)) return;
-                signature = P.syncStyles(overlay, model.styles, signature).sig;
-                P.setClass(overlay, "qol-hidden", false);
-
-                const now = QOL.utils.PerfNowMs();
-                const combatSignal = hud.isCombatSignalActive(root, now) === true;
-                if (combatSignal) {
-                    if (!signalActive || combatStartMs === null) combatStartMs = now;
-                    lastCombatMs = now;
-                }
-                signalActive = combatSignal;
-                const recentCombatMs = lastCombatMs === null ? Infinity : now - lastCombatMs;
-                const recovering = !combatSignal && lastCombatMs !== null && recentCombatMs <= RECOVERY_MS;
-                if (!combatSignal && !recovering) combatStartMs = null;
-                P.setClass(overlay, "phase_combat", combatSignal);
-                P.setClass(overlay, "phase_recover", recovering);
-                P.setClass(overlay, "phase_idle", !combatSignal && !recovering);
-
-                const stateText = combatSignal ? "IN COMBAT" : recovering ? "RECOVERING" : "OUT OF COMBAT";
-                const timerText = combatSignal ? (Math.max(0, now - combatStartMs) / 1000).toFixed(1) + "s" :
-                    recovering ? (Math.max(0, RECOVERY_MS - recentCombatMs) / 1000).toFixed(1) + "s" : "--";
-                if (stateLabel.text !== stateText) stateLabel.text = stateText;
-                if (timerLabel.text !== timerText) timerLabel.text = timerText;
-            }
-
-            function refreshSettings() {
-                model = readModel();
-                QOL.core.hud.refreshRootClasses($.GetContextPanel());
-                update();
-            }
-
             return {
-                onEnable() {
-                    refreshSettings();
-                    loop = QOL.core.Scheduler.createPollLoop(update, 0.2, ctx.id);
-                },
-                onSettingsChanged: refreshSettings,
-                onDisable() {
-                    if (loop) { loop.stop(); loop = null; }
-                    release();
-                    model = null;
-                }
+                onEnable() { running = true; refresh(); loop = QOL.core.Scheduler.createPollLoop(update, 0.2, ctx.id); },
+                onSettingsChanged: refresh,
+                onDisable() { running = false; if (loop) loop.stop(); loop = null; release(); model = null; retired.clear(); }
             };
         },
         test() {
-            try {
-                const gp = QOL.core.panel.findTraverse($.GetContextPanel(), "gameplay_hud");
-                return { passed: !!gp, name: "Combat status anchor panel exists", message: gp ? "" : "gameplay_hud not found",
-                    assertions: [{ passed: !!gp, name: "gameplay_hud panel exists" }] };
-            } catch (e) {
-                return { passed: false, name: "Combat status panel check", message: e.message || String(e) };
-            }
+            const root = QOL.core.panel.findHud($.GetContextPanel());
+            const parent = QOL.core.panel.findTraverse(root, "gameplay_hud");
+            if (!parent) return null;
+            return { passed: true, name: "Combat status anchor panel exists", message: "",
+                assertions: [{ passed: true, name: "gameplay_hud panel exists" }] };
         }
     });
 })();

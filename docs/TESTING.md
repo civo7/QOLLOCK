@@ -135,6 +135,12 @@ The status/indicator regression observes visible phases and class state rather
 than modifying private history through shared State. Native visuals/timing remain
 maintainer client checks.
 
+`combat_status_owner.test.js` exercises the text readout through its lifecycle:
+late native gameplay, reactive geometry, living parent/label replacement, retained
+same-HUD phase history, reset on a new HUD, partial construction/styles and stopped
+hooks. The registry failure case verifies both UI and work cleanup; indicator
+independence remains covered by the combined status/indicator regression.
+
 `item_mirror_ownership.test.js` exercises current HUD/inventory generations,
 living source/child replacement, partial writes/construction and pending/active
 feedback cancellation. The existing `item_mirror.test.js` still checks discovery,

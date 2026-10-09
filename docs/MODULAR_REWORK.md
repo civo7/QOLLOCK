@@ -68,6 +68,10 @@ behavior until its owning implementation has been audited.
   mode observations follow current native sources; private core class records
   retire old living owners and retry partial ability writes. The unconsumed
   legacy cooldown attribute bridge is removed while its CSS settings remain.
+- Text combat status owns all created children and a scoped gameplay parent;
+  moving/replacing labels retires the previous children, new HUDs reset phase
+  history, and stopped hooks cannot recreate the readout. Same-HUD replacement
+  retains the observed combat period and partial construction/styles retry.
 
 Frozen main-config fixtures preserve all healthbar variants and both minimap
 scale methods. Published versions, compact layouts and persistent defaults stay

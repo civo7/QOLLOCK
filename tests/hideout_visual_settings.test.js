@@ -323,7 +323,9 @@ test("reload label gets its configured style after replacement", () => {
 test("combat status reapplies layout to a recreated overlay", () => {
     const hud = createHud({ inHideout: true });
     hud.assertLoaded();
-    const Q = hud.sandbox.global.QOL;
+    const { $, QOL: Q } = hud.sandbox.global;
+    const core = $.CreatePanel("Panel", hud.root, ""); core.AddClass("HudCore");
+    $.CreatePanel("Panel", core, "gameplay_hud");
     Q.core.ConfigStore.set("ql_combat_status", "ENABLE_COMBAT_STATUS", true);
     Q.core.ConfigStore.set("ql_combat_status", "COMBAT_STATUS_X_OFFSET", 100);
     hud.clock.advance(500);
