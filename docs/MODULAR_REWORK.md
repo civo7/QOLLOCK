@@ -39,6 +39,9 @@ behavior until its owning implementation has been audited.
 - Audio reminders retain private announcement/caption history across their own
   lifetime, and damage indicators retain private native-label ownership instead
   of publishing duplicate mutable cache snapshots.
+- Keyboard overlay construction, native glyph reconciliation and geometry/color
+  rendering retain private generations; late/replaced glyphs and partial native
+  writes no longer inherit a stale whole-layout signature.
 
 Frozen main-config fixtures preserve all healthbar variants and both minimap
 scale methods. Published versions, compact layouts and persistent defaults stay

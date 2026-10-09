@@ -70,7 +70,6 @@ var State;
         lastRawConfig: null, 
         lastZoomState: null, 
         cachedPanels: {},
-        allBindingsBoxes: [],
         forceRefreshTicks: 0,
         lastItemCount: 0,
         runtimeTaskNextMs: {},
@@ -116,7 +115,6 @@ var State;
         enemyV2BridgeEventLastMs: 0,
         enemyV2AttrBridgeLastSig: "",
         customHudSuppressed: false,
-        keyboardBoxCaches: [],
         bottomBarCurrencyColorStyleSig: "",
         // Paired with the sig above. A colour already applied still has to be
         // re-applied when the HUD rebuilds and the signature panel is a different

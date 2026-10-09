@@ -282,6 +282,8 @@ test("keyboard overlay keeps its wash on a recreated overlay", () => {
     const hud = createHud({ inHideout: true });
     hud.assertLoaded();
     const Q = hud.sandbox.global.QOL;
+    const core = hud.sandbox.global.$.CreatePanel("Panel", hud.root, ""); core.AddClass("HudCore");
+    hud.sandbox.global.$.CreatePanel("Panel", core, "gameplay_hud");
     Q.core.ConfigStore.set("ql_keyboard", "ENABLE_KEYBOARD_OVERLAY", true);
     Q.core.ConfigStore.set("ql_keyboard", "KEYBOARD_OVERLAY_WASH_COLOR", 3);
     hud.clock.advance(500);

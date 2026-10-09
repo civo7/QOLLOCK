@@ -1,38 +1,18 @@
-// features/ql_keyboard/manifest.js
-// =============================================================================
-// QOLLOCK — Keyboard Overlay (key binding display with scale, position, wash color)
-// =============================================================================
-// OWNS:        Keyboard overlay panel creation, layout, and cleanup
-// DOES NOT OWN: Key bindings, input system
-// DEPENDS ON:  QOL.core.FeatureRegistry, QOL.core.Scheduler
-// CONFIG KEYS: ENABLE_KEYBOARD_OVERLAY, ENABLE_FULL_KEYBOARD_LAYOUT,
-//              KEYBOARD_OVERLAY_SCALE, KEYBOARD_OVERLAY_X_OFFSET,
-//              KEYBOARD_OVERLAY_Y_OFFSET, KEYBOARD_OVERLAY_WASH_COLOR
-// PATTERN:     Polling (~5Hz). Creates overlay with child panels.
-// =============================================================================
-
+// OWNS: Private keyboard overlay panels and derived geometry/wash styling.
+// DOES NOT OWN: Native input, bindings, glyph creation or shared HUD CSS gates.
+// SOURCE: Native hud.xml gameplay_hud; retained CitadelBinding actions/layouts.
 (() => {
     "use strict";
-    const FR = QOL.core?.FeatureRegistry;
-    if (!FR) {
-        $.Msg("[QOLLock] keyboard: FeatureRegistry not found — aborting");
-        return;
-    }
-
-    const KEYBOARD_OVERLAY_WASH_COLOR_ATTR = "QOL_KEYBOARD_OVERLAY_WASH_COLOR";
-
-    const isAlive = QOL.utils.IsPanelValid;
-
-    const createKeyboardOverlayKey = (parent, spec) => {
+    const createKeyboardOverlayKey = (createOwned, parent, spec) => {
         if (!parent || !spec) return null;
         if (spec.emptyClass) {
-            const empty = $.CreatePanel("Panel", parent, "");
+            const empty = createOwned("Panel", parent, "");
             empty.AddClass("Key");
             empty.AddClass(spec.emptyClass);
             return empty;
         }
 
-        const binding = $.CreatePanel("CitadelBinding", parent, "", {
+        const binding = createOwned("CitadelBinding", parent, "", {
             action: spec.action,
             glyphstyle: spec.glyphstyle,
             solid: "false"
@@ -42,42 +22,42 @@
         return binding;
     };
 
-    const createKeyboardOverlayRow = (layout, specs) => {
-        const row = $.CreatePanel("Panel", layout, "");
+    const createKeyboardOverlayRow = (createOwned, layout, specs) => {
+        const row = createOwned("Panel", layout, "");
         row.AddClass("KeyboardRow");
         for (let i = 0; i < specs.length; i++) {
-            createKeyboardOverlayKey(row, specs[i]);
+            createKeyboardOverlayKey(createOwned, row, specs[i]);
         }
         return row;
     };
 
-    const buildKeyboardOverlayLayouts = (allBindingsBox) => {
-        const baseLayout = $.CreatePanel("Panel", allBindingsBox, "");
+    const buildKeyboardOverlayLayouts = (createOwned, allBindingsBox) => {
+        const baseLayout = createOwned("Panel", allBindingsBox, "");
         baseLayout.AddClass("KeyboardLayout");
         baseLayout.AddClass("KeyboardLayoutBase");
-        createKeyboardOverlayRow(baseLayout, [
+        createKeyboardOverlayRow(createOwned, baseLayout, [
             { emptyClass: "EmptyKeyWide" },
             { action: "AbilityMelee", glyphstyle: "light", keyClass: "QWERTYKey" },
             { action: "MoveForward", glyphstyle: "light", keyClass: "QWERTYKey" },
             { action: "Attack", glyphstyle: "dark", keyClass: "MouseKey" },
             { action: "ADS", glyphstyle: "dark", keyClass: "MouseKey" }
         ]);
-        createKeyboardOverlayRow(baseLayout, [
+        createKeyboardOverlayRow(createOwned, baseLayout, [
             { action: "Roll", glyphstyle: "light", keyClass: "ShiftKey" },
             { action: "MoveLeft", glyphstyle: "light", keyClass: "ASDFKey" },
             { action: "MoveBackwards", glyphstyle: "light", keyClass: "ASDFKey" },
             { action: "MoveRight", glyphstyle: "light", keyClass: "ASDFKey" },
             { action: "HeldItem", glyphstyle: "light", keyClass: "ASDFKey" }
         ]);
-        createKeyboardOverlayRow(baseLayout, [
+        createKeyboardOverlayRow(createOwned, baseLayout, [
             { action: "Crouch", glyphstyle: "light", keyClass: "CtrlKey" },
             { action: "Mantle", glyphstyle: "light", keyClass: "SpaceKey" }
         ]);
 
-        const fullLayout = $.CreatePanel("Panel", allBindingsBox, "");
+        const fullLayout = createOwned("Panel", allBindingsBox, "");
         fullLayout.AddClass("KeyboardLayout");
         fullLayout.AddClass("KeyboardLayoutFull");
-        createKeyboardOverlayRow(fullLayout, [
+        createKeyboardOverlayRow(createOwned, fullLayout, [
             { emptyClass: "EmptyKey" },
             { action: "Ability1", glyphstyle: "light", keyClass: "QWERTYKey" },
             { action: "Ability2", glyphstyle: "light", keyClass: "QWERTYKey" },
@@ -86,62 +66,35 @@
             { action: "Attack", glyphstyle: "dark", keyClass: "MouseKey" },
             { action: "ADS", glyphstyle: "dark", keyClass: "MouseKey" }
         ]);
-        createKeyboardOverlayRow(fullLayout, [
+        createKeyboardOverlayRow(createOwned, fullLayout, [
             { action: "Scoreboard", glyphstyle: "light", keyClass: "TabKey" },
             { action: "AbilityMelee", glyphstyle: "light", keyClass: "QWERTYKey" },
             { action: "MoveForward", glyphstyle: "light", keyClass: "QWERTYKey" },
             { action: "Cosmetic1", glyphstyle: "light", keyClass: "QWERTYKey" },
             { action: "Reload", glyphstyle: "light", keyClass: "QWERTYKey" }
         ]);
-        createKeyboardOverlayRow(fullLayout, [
+        createKeyboardOverlayRow(createOwned, fullLayout, [
             { emptyClass: "EmptyKeyWide" },
             { action: "MoveLeft", glyphstyle: "light", keyClass: "ASDFKey" },
             { action: "MoveBackwards", glyphstyle: "light", keyClass: "ASDFKey" },
             { action: "MoveRight", glyphstyle: "light", keyClass: "ASDFKey" },
             { action: "HeldItem", glyphstyle: "light", keyClass: "ASDFKey" }
         ]);
-        createKeyboardOverlayRow(fullLayout, [
+        createKeyboardOverlayRow(createOwned, fullLayout, [
             { action: "Roll", glyphstyle: "light", keyClass: "ShiftKey" },
             { action: "Item1", glyphstyle: "light", keyClass: "ZXCVKey" },
             { action: "Item2", glyphstyle: "light", keyClass: "ZXCVKey" },
             { action: "Item3", glyphstyle: "light", keyClass: "ZXCVKey" },
             { action: "Item4", glyphstyle: "light", keyClass: "ZXCVKey" }
         ]);
-        createKeyboardOverlayRow(fullLayout, [
+        createKeyboardOverlayRow(createOwned, fullLayout, [
             { action: "Crouch", glyphstyle: "light", keyClass: "CtrlKey" },
             { action: "ExtraInfo", glyphstyle: "light", keyClass: "AltKey" },
             { action: "Mantle", glyphstyle: "light", keyClass: "SpaceKey" }
         ]);
     };
 
-    const isPanelListValid = (list) => {
-        if (!list || list.length === 0) return false;
-        for (let i = 0; i < list.length; i++) {
-            if (!isAlive(list[i])) return false;
-        }
-        return true;
-    };
-
-    const getKeyboardCachedPanels = (cache, allBindingsBox, fieldName, className) => {
-        let list = cache[fieldName];
-        if (!isPanelListValid(list)) {
-            list = allBindingsBox.FindChildrenWithClassTraverse(className) || [];
-            cache[fieldName] = list;
-        }
-        return list;
-    };
-
-    const resetKeyboardOverlayCaches = () => {
-        const state = QOL.state || globalThis.State;
-        if (state) state.keyboardBoxCaches = [];
-    };
-
-    // Expose on QOL namespace for compatibility
-    QOL.buildKeyboardOverlayLayouts = buildKeyboardOverlayLayouts;
-    QOL.getKeyboardCachedPanels = getKeyboardCachedPanels;
-    QOL.resetKeyboardOverlayCaches = resetKeyboardOverlayCaches;
-
-    FR.register({
+    QOL.core.FeatureRegistry.register({
         id: "ql_keyboard",
         enableKey: "ENABLE_KEYBOARD_OVERLAY",
         enabledByDefault: false,
@@ -154,235 +107,136 @@
             { key: "KEYBOARD_OVERLAY_WASH_COLOR", type: "palette" }
         ],
         create(ctx) {
-            let _loop = null;
-            let _washSig = "";
-            let _washPanel = null;
-            let _boxCaches = null;
+            const P = QOL.core.panel, U = QOL.utils;
+            // Native hud.xml: Hud > .HudCore > gameplay_hud. Never create in a menu root.
+            const gameplay = QOL.panelCache.createIdResolver("gameplay_hud", { retryMs: 500,
+                ownerPath: [{ id: "Hud", optional: true }, { className: "HudCore" }] });
+            const styles = new Map();
+            let generation = null, model = null, loop = null, enabled = false;
 
-            const getPanel = QOL.getCachedPanel;
-            const setPanel = QOL.setCachedPanel;
-            const getGameplayHud = (root) => {
-                try { if (QOL.getGameplayHudPanel) return QOL.getGameplayHudPanel(root); } catch (_) {}
-                return root;
-            };
+            function readModel() {
+                const cfg = ctx.config.view();
+                const full = U.IsCfgEnabled(cfg, "ENABLE_FULL_KEYBOARD_LAYOUT");
+                const scale = U.ClampConfigNumber(cfg.KEYBOARD_OVERLAY_SCALE, 100, 70, 150, true) / 100;
+                const x = U.ClampConfigNumber(cfg.KEYBOARD_OVERLAY_X_OFFSET, 0, -1500, 1500, true);
+                const y = U.ClampConfigNumber(cfg.KEYBOARD_OVERLAY_Y_OFFSET, 0, -400, 1000, true);
+                const size = value => Math.max(1, Math.round(value * scale)) + "px";
+                const mouseSize = Math.max(1, Math.round(20 * Math.max(1, scale))) + "px";
+                return { wash: U.ResolveWashColorFromPalette(U.ReadKeyboardOverlayWashColorIndex(cfg)),
+                    box: { uiScale: "100%", marginLeft: (full ? 70 : 150) + "px", marginBottom: "300px",
+                        x: x + "px", y: -y + "px", width: "fit-children" },
+                    widths: { TabKey: size(53), SpaceKey: size(full ? 133 : 192), ShiftKey: size(80),
+                        AltKey: size(60), CtrlKey: size(60), EmptyKeyWide: size(full ? 60 : 80) },
+                    key: { width: size(40), height: size(40), margin: "2px" },
+                    label: { fontSize: Math.max(1, Math.round(16 * Math.max(1, scale))) + "px", lineHeight: "0px" },
+                    mouse: { width: mouseSize, height: mouseSize, backgroundTextureSize: mouseSize + " " + mouseSize }
+                };
+            }
 
-            const readWashIdx = (cfg) => {
-                try { if (QOL.readKeyboardOverlayWashColorIndex) return QOL.readKeyboardOverlayWashColorIndex(cfg); } catch (_) {}
-                const Utils = typeof QOL_UTILS !== "undefined" ? QOL_UTILS : QOL.utils;
-                if (Utils?.ReadPaletteColorIndexWithPanelAttr) {
-                    return Utils.ReadPaletteColorIndexWithPanelAttr(cfg, "KEYBOARD_OVERLAY_WASH_COLOR", KEYBOARD_OVERLAY_WASH_COLOR_ATTR, "");
+            function releaseProperty(panel, owner, key) {
+                if (!P.isAlive(panel) || P.clearStyleProperty(panel, key)) owner.properties.delete(key);
+            }
+
+            function releaseStyles(panel, owner) {
+                for (const key of [...owner.properties]) releaseProperty(panel, owner, key);
+                owner.signature = null;
+                if (!owner.properties.size) styles.delete(panel);
+            }
+
+            function retire() {
+                for (const [panel, owner] of styles) releaseStyles(panel, owner);
+                if (!generation) return;
+                // Track each created panel: reparented children are still our responsibility.
+                for (const panel of [...generation.owned.keys()].reverse()) P.delete(panel);
+                generation = null;
+            }
+
+            function isCurrent(parent) {
+                if (!generation || generation.parent !== parent) return false;
+                for (const [panel, expectedParent] of generation.owned) {
+                    if (!P.isAlive(panel) || panel.GetParent() !== expectedParent) return false;
                 }
-                return Number(cfg?.KEYBOARD_OVERLAY_WASH_COLOR) || 0;
-            };
+                return true;
+            }
 
-            const resolveWash = (idx) => {
-                try { if (QOL.resolveWashColorFromPalette) return QOL.resolveWashColorFromPalette(idx); } catch (_) {}
-                const Utils = typeof QOL_UTILS !== "undefined" ? QOL_UTILS : QOL.utils;
-                if (Utils?.ResolveWashColorFromPalette) {
-                    return Utils.ResolveWashColorFromPalette(idx);
-                }
-                return "";
-            };
-
-            const setWashSafe = (panel, color) => {
-                try { if (QOL.setWashColorSafe) return QOL.setWashColorSafe(panel, color); } catch (_) {}
-                if (panel?.style) {
-                    try { panel.style.washColor = color || "none"; } catch (_) {}
-                }
-            };
-
-            const getBoxCache = (box) => {
-                if (!_boxCaches) _boxCaches = [];
-                const next = [];
-                let found = null;
-                for (let i = 0; i < _boxCaches.length; i++) {
-                    const e = _boxCaches[i];
-                    if (!e || !isAlive(e.box)) continue;
-                    if (e.box === box) found = e;
-                    next.push(e);
-                }
-                _boxCaches = next;
-                if (found) return found;
-                const created = { box, keyPanels: null, glyphLabels: null, mouseGlyphs: null, lastStyleSig: "" };
-                _boxCaches.push(created);
-                return created;
-            };
-
-            const applyLayout = (allBindingsBox, cfg) => {
-                if (!allBindingsBox) return;
-                let kbScale = (cfg.KEYBOARD_OVERLAY_SCALE == null) ? 100 : Math.round(cfg.KEYBOARD_OVERLAY_SCALE);
-                let kbOffsetX = (cfg.KEYBOARD_OVERLAY_X_OFFSET == null) ? 0 : Math.round(cfg.KEYBOARD_OVERLAY_X_OFFSET);
-                let kbOffsetY = (cfg.KEYBOARD_OVERLAY_Y_OFFSET == null) ? 0 : Math.round(cfg.KEYBOARD_OVERLAY_Y_OFFSET);
-                const kbFullLayout = Number(cfg.ENABLE_FULL_KEYBOARD_LAYOUT) === 1;
-                const kbBaseMarginLeft = kbFullLayout ? 70 : 150;
-                const kbBaseMarginBottom = 300;
-                if (kbScale < 70) kbScale = 70;
-                if (kbScale > 150) kbScale = 150;
-                if (kbOffsetX < -1500) kbOffsetX = -1500;
-                if (kbOffsetX > 1500) kbOffsetX = 1500;
-                if (kbOffsetY < -400) kbOffsetY = -400;
-                if (kbOffsetY > 1000) kbOffsetY = 1000;
-
-                const styleSig = `${kbFullLayout ? "1" : "0"}|${kbScale}|${kbOffsetX}|${kbOffsetY}`;
-                const cache = getBoxCache(allBindingsBox);
-                if (cache.lastStyleSig === styleSig) return;
-
-                const kbScaleFactor = kbScale / 100;
-                const scaledHeight = Math.max(1, Math.round(40 * kbScaleFactor));
-                const scaledGap = 2;
-                const labelScaleFactor = kbScale > 100 ? kbScaleFactor : 1;
-                const scaledLabelSize = Math.max(1, Math.round(16 * labelScaleFactor));
-                const scaledMouseGlyphSize = Math.max(1, Math.round(20 * labelScaleFactor));
-
-                allBindingsBox.style.uiScale = "100%";
-                allBindingsBox.style.marginLeft = `${kbBaseMarginLeft}px`;
-                allBindingsBox.style.marginBottom = `${kbBaseMarginBottom}px`;
-                allBindingsBox.style.x = `${kbOffsetX}px`;
-                allBindingsBox.style.y = `${-kbOffsetY}px`;
-                allBindingsBox.style.width = "fit-children";
-
-                const keyPanels = getKeyboardCachedPanels(cache, allBindingsBox, "keyPanels", "Key");
-                for (let ki = 0; ki < keyPanels.length; ki++) {
-                    const kp = keyPanels[ki];
-                    if (!kp) continue;
-                    let bw = 40;
-                    if (kp.BHasClass("TabKey")) bw = 53;
-                    else if (kp.BHasClass("SpaceKey")) bw = kbFullLayout ? 133 : 192;
-                    else if (kp.BHasClass("ShiftKey")) bw = 80;
-                    else if (kp.BHasClass("AltKey") || kp.BHasClass("CtrlKey")) bw = 60;
-                    else if (kp.BHasClass("EmptyKeyWide")) bw = kbFullLayout ? 60 : 80;
-                    kp.style.width = `${Math.max(1, Math.round(bw * kbScaleFactor))}px`;
-                    kp.style.height = `${scaledHeight}px`;
-                    kp.style.margin = `${scaledGap}px`;
-                }
-                const glyphs = getKeyboardCachedPanels(cache, allBindingsBox, "glyphLabels", "Label");
-                for (let gi = 0; gi < glyphs.length; gi++) {
-                    if (!glyphs[gi]) continue;
-                    glyphs[gi].style.fontSize = `${scaledLabelSize}px`;
-                    glyphs[gi].style.lineHeight = "0px";
-                }
-                const mice = getKeyboardCachedPanels(cache, allBindingsBox, "mouseGlyphs", "MouseButtonGlyph");
-                for (let mi = 0; mi < mice.length; mi++) {
-                    if (!mice[mi]) continue;
-                    mice[mi].style.width = `${scaledMouseGlyphSize}px`;
-                    mice[mi].style.height = `${scaledMouseGlyphSize}px`;
-                    mice[mi].style.backgroundTextureSize = `${scaledMouseGlyphSize}px ${scaledMouseGlyphSize}px`;
-                }
-                cache.lastStyleSig = styleSig;
-            };
-
-            const ensureOverlay = (root) => {
-                let overlayRoot = getPanel("keyboardOverlayRoot");
-                if (!isAlive(overlayRoot)) {
-                    overlayRoot = root?.FindChildTraverse ? root.FindChildTraverse("QOLKeyboardOverlayRoot") : null;
-                    if (!overlayRoot) {
-                        const parent = getGameplayHud(root);
-                        if (!parent) return null;
-                        overlayRoot = $.CreatePanel("Panel", parent, "QOLKeyboardOverlayRoot", {
-                            hittest: "false", hittestchildren: "false"
-                        });
-                    }
-                    setPanel("keyboardOverlayRoot", overlayRoot);
-                }
-                if (!overlayRoot) return null;
-                let allBindingsBox = getPanel("keyboardOverlayBox");
-                if (!isAlive(allBindingsBox)) {
-                    allBindingsBox = overlayRoot.FindChildTraverse ? overlayRoot.FindChildTraverse("AllBindingsBox") : null;
-                    if (!allBindingsBox) {
-                        allBindingsBox = $.CreatePanel("Panel", overlayRoot, "AllBindingsBox", {
-                            "class": "AllBindingsScope", hittest: "false", hittestchildren: "false"
-                        });
-                        buildKeyboardOverlayLayouts(allBindingsBox);
-                    }
-                    setPanel("keyboardOverlayBox", allBindingsBox);
-                }
-                return allBindingsBox;
-            };
-
-            const removeOverlay = (root) => {
-                let overlayRoot = getPanel("keyboardOverlayRoot");
-                if (!isAlive(overlayRoot) && root?.FindChildTraverse) {
-                    overlayRoot = root.FindChildTraverse("QOLKeyboardOverlayRoot");
-                }
-                if (isAlive(overlayRoot)) {
-                    try { overlayRoot.DeleteAsync(0); } catch (_) {}
-                }
-                setPanel("keyboardOverlayRoot", null);
-                setPanel("keyboardOverlayBox", null);
-                _washSig = "";
-                _washPanel = null;
-                _boxCaches = null;
-                resetKeyboardOverlayCaches();
-                const state = QOL.state || globalThis.State;
-                if (state) {
-                    state.keyboardOverlayWashSig = "";
-                    state.allBindingsBoxes = [];
-                }
-            };
-
-            const _tick = () => {
+            function ensure(parent) {
+                if (isCurrent(parent)) return true;
+                retire();
+                if (!P.isAlive(parent)) return false;
+                // DeleteAsync is deferred; wait for our retired root to leave before reusing its ID.
+                if (P.isAlive(parent.FindChild("QOLKeyboardOverlayRoot"))) return false;
+                generation = { parent, owned: new Map(), overlay: null, box: null, keys: [] };
+                const createOwned = (type, owner, id, properties) => {
+                    const panel = $.CreatePanel(type, owner, id, properties);
+                    if (!P.isAlive(panel)) throw new Error("Keyboard overlay panel creation failed");
+                    generation.owned.set(panel, owner);
+                    return panel;
+                };
                 try {
-                    const root = $.GetContextPanel();
-                    if (!root) return;
-                    const cfg = ctx.config.view();
-
-                    if (Number(cfg?.ENABLE_KEYBOARD_OVERLAY) === 1) {
-                        const allBindingsBox = ensureOverlay(root);
-                        const state = QOL.state || globalThis.State;
-                        if (state) {
-                            state.allBindingsBoxes = allBindingsBox ? [allBindingsBox] : [];
-                        }
-
-                        // Wash color
-                        const overlayRoot = getPanel("keyboardOverlayRoot");
-                        const washIdx = readWashIdx(cfg);
-                        const washColor = resolveWash(washIdx);
-                        const washStr = washColor || "";
-                        if (isAlive(overlayRoot) && (_washSig !== washStr || _washPanel !== overlayRoot)) {
-                            setWashSafe(overlayRoot, washColor);
-                            _washSig = washStr;
-                            _washPanel = overlayRoot;
-                            if (state) state.keyboardOverlayWashSig = washStr;
-                        }
-
-                        if (allBindingsBox) applyLayout(allBindingsBox, cfg);
-                    } else {
-                        if (getPanel("keyboardOverlayRoot")) {
-                            removeOverlay(root);
-                        } else {
-                            _boxCaches = null;
-                            resetKeyboardOverlayCaches();
-                            const state = QOL.state || globalThis.State;
-                            if (state) state.allBindingsBoxes = [];
-                        }
-                    }
-                } catch (e) {
-                    QOL.core?.Logger?.logError?.("ql_keyboard", `_tick: ${e?.message || e}`);
-                    throw e;
+                    generation.overlay = createOwned("Panel", parent, "QOLKeyboardOverlayRoot", {
+                        hittest: "false", hittestchildren: "false" });
+                    generation.box = createOwned("Panel", generation.overlay, "AllBindingsBox", {
+                        "class": "AllBindingsScope", hittest: "false", hittestchildren: "false" });
+                    buildKeyboardOverlayLayouts(createOwned, generation.box);
+                    generation.keys = [...generation.owned.keys()].filter(panel => panel.BHasClass("Key"));
+                    return true;
+                } catch (error) {
+                    retire();
+                    throw error;
                 }
-            };
+            }
 
+            function render() {
+                const desired = new Map();
+                desired.set(generation.overlay, model.wash ? { washColor: model.wash } : {});
+                desired.set(generation.box, model.box);
+                for (const key of generation.keys) {
+                    const width = Object.keys(model.widths).find(name => key.BHasClass(name));
+                    desired.set(key, width ? { ...model.key, width: model.widths[width] } : model.key);
+                }
+                // Native KeyboardLetter/ModifierCombinerLabel are Label types, not a "Label" class.
+                // CitadelBinding creates/replaces their glyph tree after our own construction.
+                const stack = generation.box.Children().map(panel => ({ panel, depth: 0 }));
+                while (stack.length) {
+                    const { panel, depth } = stack.pop();
+                    if (!P.isAlive(panel)) continue;
+                    if (panel.paneltype === "Label") desired.set(panel, model.label);
+                    if (panel.BHasClass("MouseButtonGlyph")) desired.set(panel, { ...desired.get(panel), ...model.mouse });
+                    if (depth < 64) for (const child of panel.Children()) stack.push({ panel: child, depth: depth + 1 });
+                }
+                for (const [panel, owner] of styles) if (!desired.has(panel)) releaseStyles(panel, owner);
+                for (const [panel, next] of desired) {
+                    let owner = styles.get(panel);
+                    if (!owner) { owner = { properties: new Set(), signature: null }; styles.set(panel, owner); }
+                    for (const key of [...owner.properties]) if (!(key in next)) {
+                        releaseProperty(panel, owner, key); owner.signature = null;
+                    }
+                    // Attempted properties stay owned even when native setters reject one write.
+                    for (const key of Object.keys(next)) owner.properties.add(key);
+                    owner.signature = P.syncStyles(panel, next, owner.signature).sig;
+                }
+            }
+
+            function update() {
+                if (!enabled) return;
+                const parent = gameplay.resolve(P.findHud($.GetContextPanel()));
+                if (ensure(parent)) render();
+            }
+
+            function refresh() { model = readModel(); if (enabled) update(); }
             return {
-                onEnable() {
-                    _boxCaches = null;
-                    const S = QOL.core?.Scheduler;
-                    _loop = S?.createPollLoop ? S.createPollLoop(_tick, 0.2, "ql_keyboard") : null;
-                },
+                onEnable() { enabled = true; refresh(); loop = QOL.core.Scheduler.createPollLoop(update, 0.2, ctx.id); },
+                onSettingsChanged: refresh,
                 onDisable() {
-                    if (_loop) { _loop.stop(); _loop = null; }
-                    const root = $.GetContextPanel();
-                    removeOverlay(root);
-                    _boxCaches = null;
-                },
-                onSettingsChanged() {
-                    _boxCaches = null;
-                    _tick();
+                    enabled = false;
+                    if (loop) loop.stop(); loop = null;
+                    retire(); gameplay.reset(); model = null;
                 }
             };
         },
-        test(ctx) {
+        test() {
             try {
-                const hud = QOL.core?.panel?.findHud ? QOL.core.panel.findHud() : null;
+                const hud = QOL.core.panel.findHud($.GetContextPanel());
                 if (!hud) return null;
                 return {
                     passed: true,
