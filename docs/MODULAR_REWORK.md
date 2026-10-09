@@ -51,6 +51,10 @@ behavior until its owning implementation has been audited.
 - Performance diagnostics separate private report/model and native renderer
   lifetimes from the Scheduler collector. Living replacement and disabled overlays
   release owned panels without clearing shared samples or benchmark state.
+- Urn/networth difference has one manifest owner for current native sources and
+  its created readout. Pure parsing/display rules retain native formats and
+  late-match thresholds; core no longer runs a second content writer or publishes
+  overlay caches. The existing persisted toggle and player-total fallback remain.
 
 Frozen main-config fixtures preserve all healthbar variants and both minimap
 scale methods. Published versions, compact layouts and persistent defaults stay

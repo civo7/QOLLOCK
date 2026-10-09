@@ -350,7 +350,7 @@ test("central geometry observes canonical objective/urn changes and live timer r
     assert.equal(feed.style.marginTop, "90px");
     env.Q.core.ConfigStore.set("ql_topbar", "ENABLE_OBJ_MAP", true);
     assert.equal(feed.style.marginTop, "242px", "shared observer hook applies immediately");
-    env.Q.core.ConfigStore.set("ql_topbar", "ENABLE_URN_DIFF", true);
+    env.Q.core.ConfigStore.set("ql_urn_tracker", "ENABLE_URN_DIFF", true);
     assert.equal(feed.style.marginTop, "302px");
     env.Q.core.FeatureRegistry.shutdown(); env.clock.advance(0); env.clean();
 });

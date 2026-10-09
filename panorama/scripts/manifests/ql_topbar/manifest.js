@@ -45,7 +45,6 @@
                     { label: "75%", key: "ENABLE_TOPBAR_ALLY_HP_WARNING_75" }
                 ]
             },
-            { key: "ENABLE_URN_DIFF", type: "toggle" },
             { key: "TOP_BAR_OPACITY", type: "slider" },
             { key: "TOP_BAR_SCALE", type: "slider" },
             { key: "TOP_BAR_X_OFFSET", type: "slider" },

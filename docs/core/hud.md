@@ -21,6 +21,13 @@ native item layout belong solely to the passive-cooldown manifest; damage-report
 offsets belong solely to the damage-report manifest. These native owners release
 their code properties independently of shared root-class projection.
 
+Urn/networth difference content belongs to `ql_urn_tracker`; core only projects
+its CSS gate. The manifest owns source reconciliation and its created readout;
+there are no core mutation exports or shared `State` caches for that overlay.
+Native team scores take precedence when both exist; otherwise the retained
+per-player string gold bindings supply totals. Hideout/disable retire created UI,
+without mutating native score labels. This is separate from the rift timer.
+
 Target/hint geometry belongs solely to `ql_target_shapes`. Core projects its CSS
 gates but does not mutate that instance's discovery/signature caches. The target
 owner derives settings in hooks and reconciles moved/replaced native children.

@@ -72,6 +72,10 @@
 		<include src="s2r://panorama/scripts/manifests/ql_ui_controls/manifest.vjs_c" />
 		<include src="s2r://panorama/scripts/manifests/ql_unsecured_souls_timer/manifest.vjs_c" />
 		<include src="s2r://panorama/scripts/manifests/ql_urn_timer/manifest.vjs_c" />
+		<!-- ==== QOLLOCK independent urn difference owner ==== -->
+		<include src="s2r://panorama/scripts/manifests/ql_urn_tracker/model.vjs_c" />
+		<include src="s2r://panorama/scripts/manifests/ql_urn_tracker/manifest.vjs_c" />
+		<!-- ==== End QOLLOCK independent urn difference owner ==== -->
 		<include src="s2r://panorama/scripts/manifests/ql_on_death_arcade/manifest.vjs_c" />
 		<!-- ==== QOLLOCK: minimap geometry and runtime ==== -->
 		<include src="s2r://panorama/scripts/manifests/ql_minimap_runtime/geometry.vjs_c" />

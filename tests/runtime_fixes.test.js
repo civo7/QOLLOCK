@@ -69,33 +69,23 @@ test("QOL.ensureMinimapOverlayAnchor resolves minimap container or persp", () =>
 });
 
 test("Urn Tracker overlay creation, state calculation, and root classes", () => {
-    const hud = sim.createHud();
+    const hud = sim.createHud({ inHideout: false });
     hud.assertLoaded();
     const Q = hud.sandbox.global.QOL;
     const $ = hud.sandbox.global.$;
     const hudModule = Q.core.hud;
 
-    assert.strictEqual(typeof hudModule.ensureUrnTrackerOverlay, "function", "ensureUrnTrackerOverlay must exist");
-    assert.strictEqual(typeof hudModule.updateUrnTrackerOverlay, "function", "updateUrnTrackerOverlay must exist");
-    assert.strictEqual(typeof hudModule.needsUrnTrackerRuntimeWork, "function", "needsUrnTrackerRuntimeWork must exist");
-    assert.strictEqual(typeof hudModule.computeUrnTrackerState, "function", "computeUrnTrackerState must exist");
-
-    // Create TopBar panel in tree
+    Q.core.App.shutdown();
+    Q.core.ConfigAdapter.loadFromFlat({ ...hud.sandbox.evalJson("QOL.buildDefaultConfig()"), ENABLE_URN_DIFF: 1 });
     const root = hud.root;
     const topBar = $.CreatePanel("Panel", root, "TopBar");
     const networth = $.CreatePanel("Panel", topBar, "TeamNetworth");
     networth.AddClass("TeamNetworth");
-
-    // Test overlay creation
-    const panel = hudModule.ensureUrnTrackerOverlay(root);
+    Q.core.FeatureRegistry.enable("ql_urn_tracker");
+    const panel = root.FindChildTraverse("UrnTracker");
     assert.ok(panel, "UrnTracker overlay panel must be created");
-    assert.strictEqual(panel.id, "UrnTracker", "Panel id must be UrnTracker");
-
-    const label = panel.FindChildTraverse("UrnTrackerLabel");
-    assert.ok(label, "UrnTrackerLabel must exist inside UrnTracker");
-
-    const icon = panel.FindChildTraverse("UrnTrackerSoulIcon");
-    assert.ok(icon, "UrnTrackerSoulIcon must exist inside UrnTracker");
+    assert.ok(panel.FindChild("UrnTrackerLabel"));
+    assert.ok(panel.FindChild("UrnTrackerSoulIcon"));
 
     // Test root class urn_diff_disabled
     hudModule.applyRootClasses(root, { ENABLE_URN_DIFF: 0 }, Date.now(), false);

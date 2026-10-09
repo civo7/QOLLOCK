@@ -110,6 +110,12 @@ reactive collection flags/opacity, preserved Scheduler samples, partial writes/
 construction, native label replacement, registry cleanup and rolling reports.
 These are callback-data checks, not native frame/rendering performance results.
 
+`urn_tracker_runtime.test.js` drives the private urn-difference lifecycle, including
+native/legacy source priority, late/moved/class-recycled sources, living HUD and
+readout replacements, partial construction/text writes and registry cleanup. Pure
+parsing/display cases retain native number formats and match-time thresholds.
+Native networth binding timing and readout presentation remain client checks.
+
 `item_mirror_ownership.test.js` exercises current HUD/inventory generations,
 living source/child replacement, partial writes/construction and pending/active
 feedback cancellation. The existing `item_mirror.test.js` still checks discovery,

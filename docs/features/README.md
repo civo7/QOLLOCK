@@ -29,6 +29,7 @@ tables, CSS values, test history or general verification caveats into it.
 | [ql_ui_controls](../../panorama/scripts/manifests/ql_ui_controls/manifest.js) | Global layout/support classes and UI settings metadata; not the control factory module. |
 | [ql_unsecured_souls_timer](../../panorama/scripts/manifests/ql_unsecured_souls_timer/manifest.js) | Estimated unsecured-souls conversion countdown, separate from the amount overlay. |
 | [ql_urn_timer](../../panorama/scripts/manifests/ql_urn_timer/manifest.js) | Urn/rift state and spawn-window display derived from game clock/minimap signals; preserve state and source identity. |
+| [ql_urn_tracker](../../panorama/scripts/manifests/ql_urn_tracker/manifest.js) | Urn/networth difference, native total selection and private readout lifetime; separate from the rift timer and topbar geometry. |
 | [ql_on_death_arcade](../../panorama/scripts/manifests/ql_on_death_arcade/manifest.js) | [Respawn/request/menu coordination](ql_on_death_arcade.md); games execute in the settings context. |
 | [ql_minimap_runtime](../../panorama/scripts/manifests/ql_minimap_runtime/manifest.js) | Base/Alt/Tab geometry, opacity, crates, tunnels and minimap presentation. |
 | [ql_recent_purchases](../../panorama/scripts/manifests/ql_recent_purchases/manifest.js) | Shop filters, floating purchase feed and top-bar purchase popups. |

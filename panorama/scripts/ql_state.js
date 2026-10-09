@@ -80,12 +80,6 @@ var State;
             signalActive: false,
             nextAlertProbeMs: 0
         },
-        urnTrackerDisplayMode: "",
-        urnTrackerLastClass: "",
-        urnTrackerLastText: "",
-        urnTrackerNextSampleMs: 0,
-        urnTrackerNextPanelSearchMs: 0,
-        urnTrackerCachedState: null,
         rejuvState: null,
         accountPresetTestActive: false,
         rootClassCache: { panel: null, values: {} },
