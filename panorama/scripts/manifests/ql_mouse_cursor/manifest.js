@@ -11,9 +11,18 @@
         enabledByDefault: false,
         settings: [],
         create(ctx) {
+            const tree = P.createOwnedTree(), retiredRoots = new Set();
             const loaderResolver = Q.panelCache.createIdResolver("StartupLoader");
             const escapeResolver = Q.panelCache.createIdResolver("EscapeMenu");
-            let rootOwner = null, overlay = null, image = null, imageBound = false, signature = null, loop = null;
+            let active = false, rootOwner = null, overlay = null, image = null, imageBound = false, signature = null, loop = null;
+
+            const releaseRootClasses = () => {
+                for (const root of retiredRoots) {
+                    if (!P.isAlive(root)) { retiredRoots.delete(root); continue; }
+                    P.setClass(root, "qol_custom_cursor_replace_active", false);
+                    try { if (!root.BHasClass("qol_custom_cursor_replace_active")) retiredRoots.delete(root); } catch (_) {}
+                }
+            };
 
             const readContext = root => {
                 if (Q.core.hud.isInHideout(root) || loaderResolver.resolve(root)?.BHasClass("Active")) return false;
@@ -23,13 +32,14 @@
                 return P.isAlive(escape) && escape.visible !== false && escape.style.visibility !== "collapse";
             };
             const hide = () => {
-                P.setClass(rootOwner, "qol_custom_cursor_replace_active", false);
+                if (P.isAlive(rootOwner)) retiredRoots.add(rootOwner);
+                releaseRootClasses();
                 P.setClass(overlay, "qol-hidden", true);
                 signature = null;
             };
             const release = () => {
                 hide();
-                P.delete(overlay);
+                tree.clear();
                 rootOwner = overlay = image = null;
                 imageBound = false;
                 signature = null;
@@ -37,23 +47,19 @@
                 escapeResolver.reset();
             };
             const ensureOverlay = root => {
-                const current = P.findChild(root, "QOLGameplayMouseCursor");
+                tree.sweep();
+                const current = tree.child(root, "Panel", "QOLGameplayMouseCursor");
                 if (current !== overlay || !P.isAlive(overlay)) {
-                    P.delete(overlay);
-                    overlay = current || P.create("Panel", root, "QOLGameplayMouseCursor", { hittest: "false", hittestchildren: "false" });
+                    overlay = current;
                     image = null;
                     imageBound = false;
                     signature = null;
-                    if (P.isAlive(overlay)) {
-                        overlay.hittest = false;
-                        overlay.hittestchildren = false;
-                    }
                 }
                 if (!P.isAlive(overlay)) return false;
                 P.setClass(overlay, "QOLGameplayMouseCursor", true);
-                const child = P.findChild(overlay, "QOLGameplayMouseCursorImage");
+                const child = tree.child(overlay, "Image", "QOLGameplayMouseCursorImage");
                 if (child !== image || !P.isAlive(image)) {
-                    image = child || P.create("Image", overlay, "QOLGameplayMouseCursorImage");
+                    image = child;
                     imageBound = false;
                 }
                 if (!P.isAlive(image)) return false;
@@ -66,10 +72,12 @@
                 return true;
             };
             const update = () => {
+                if (!active) return;
                 try {
-                const root = $.GetContextPanel();
+                releaseRootClasses();
+                const root = P.findHud($.GetContextPanel());
                 if (root !== rootOwner) { release(); rootOwner = root; }
-                if (!P.isAlive(root) || !readContext(root) || typeof GameUI === "undefined" ||
+                if (!P.isAlive(root) || (root.id !== "Hud" && root.paneltype !== "CitadelHud") || !readContext(root) || typeof GameUI === "undefined" ||
                     typeof GameUI.GetCursorPosition !== "function") { hide(); return; }
                 const position = GameUI.GetCursorPosition();
                 if (!Number.isFinite(position?.x) || !Number.isFinite(position?.y)) { hide(); return; }
@@ -80,7 +88,9 @@
                 }, signature).sig;
                 if (signature === null) { hide(); return; }
                 P.setClass(overlay, "qol-hidden", false);
+                if (overlay.BHasClass("qol-hidden")) { hide(); return; }
                 P.setClass(root, "qol_custom_cursor_replace_active", true);
+                if (!root.BHasClass("qol_custom_cursor_replace_active")) hide();
                 } catch (error) {
                     hide();
                     throw error;
@@ -88,14 +98,17 @@
             };
             return {
                 onEnable() {
+                    active = true;
                     // rate-exempt: 20Hz cursor tracking uses native pointer coordinates.
                     loop = Q.core.Scheduler.createPollLoop(update, 0.05, ctx.id || "ql_mouse_cursor");
                 },
                 onSettingsChanged: update,
                 onDisable() {
+                    active = false;
                     if (loop) loop.stop();
                     loop = null;
                     release();
+                    tree.dispose(); retiredRoots.clear();
                 }
             };
         },

@@ -45,6 +45,8 @@ Partial construction can be retried through the same child calls. A new
 instance retires an existing foreign tree instead of adopting UI that the
 previous instance may already have queued for deletion. Default creation
 properties disable hit testing on each child.
+Owned false hit-test flags are also reconciled through native properties; a
+partial flag write keeps the node recorded for retry and cleanup.
 
 Native parent discovery, active-instance guards, content/history, style
 signatures and schedules remain the manifest's responsibilities. This helper

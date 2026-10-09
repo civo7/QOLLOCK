@@ -293,9 +293,15 @@
             // A rapid re-enable can still find the previous instance's tree
             // before DeleteAsync finishes. Never adopt that pending deletion.
             if (isPanelAlive(next) && (!nodes.has(id) || retired.has(next))) { retire(next); return null; }
-            const panel = isPanelAlive(next) ? next : safeCreatePanel(type, parent, id, properties || { hittest: "false", hittestchildren: "false" });
+            const creation = { hittest: "false", hittestchildren: "false", ...properties };
+            const panel = isPanelAlive(next) ? next : safeCreatePanel(type, parent, id, creation);
             if (!isPanelAlive(panel)) return null;
             if (!nodes.has(id)) nodes.set(id, { panel, parent });
+            // Keep the owned node recorded before potentially failing native
+            // property writes; later reconciliation retries these flags.
+            for (const key of ["hittest", "hittestchildren"]) {
+                if ((creation[key] === false || creation[key] === "false") && panel[key] !== false) panel[key] = false;
+            }
             return panel;
         };
         const clear = () => { for (const id of [...nodes.keys()].reverse()) discard(id); sweep(); };

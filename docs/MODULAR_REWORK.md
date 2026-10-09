@@ -91,6 +91,10 @@ behavior until its owning implementation has been audited.
 - The optional pre-commit template shares the complete canonical offline gate.
   Retired grep validators for removed core/import/feature layouts are removed;
   CSS/XML changes no longer bypass that template's checks.
+- The custom cursor owns both its container and image through the shared tree
+  helper. Active-instance guards, current HUD binding and retryable root-class
+  release preserve native pointer fallback during construction/render failures
+  and rapid re-enable; stopped hooks cannot create cursor UI.
 
 Frozen main-config fixtures preserve all healthbar variants and both minimap
 scale methods. Published versions, compact layouts and persistent defaults stay

@@ -95,6 +95,12 @@ input/animation, bounded image cleanup, URL matching, partial writes and living
 replacement. Customize cancellation observes both released code styles and
 the neutral native offset written before release.
 
+Cursor regressions in `ui_runtime_owners.test.js` use the active lifecycle rather
+than constructing UI through stopped hooks. They cover owned-image retirement,
+foreign/pending tree deletion, image/coordinate failures, rapid re-enable and
+retryable root-class release across living HUD generations. Native pointer
+appearance, coordinates and menu interaction remain client checks.
+
 Audio regressions observe actual caption presentation rather than exported
 private booleans. They cover new HUD announcement history, stale callbacks and
 caption-only disable alongside existing interval/lead-time behavior. Damage
