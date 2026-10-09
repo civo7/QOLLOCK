@@ -185,10 +185,11 @@
             const rendererResolver = QOL.panelCache.createIdResolver("hud_minimap");
             const fallbackRenderResolver = QOL.panelCache.createIdResolver("map_render");
             const gameplayResolver = QOL.panelCache.createIdResolver("gameplay_hud", { ownerPath: ownerPath.slice(0, 2) });
-            const hudResolver = QOL.panelCache.createIdResolver("Hud");
             const imageResolver = QOL.panelCache.createIdResolver("MainImage");
             const settingsFields = new Map(QOL.settingsFields.map(field => [field.key, field]));
             const layoutStyles = new Map();
+            const overlays = P.createOwnedTree();
+            let active = false, model = null, rootOwner = null;
             let minimapScope = null;
             let rotationOwned = false;
             let _loop = null;
@@ -312,28 +313,23 @@
             let _localPlayerPanelScanBackoffMs = 0;
 
             function _getHud() {
-                const context = $.GetContextPanel();
-                if (context?.id === "Hud" || context?.paneltype === "CitadelHud") return context;
-                return hudResolver.resolve(context) || P.findHud(context);
-            }
-
-            function _getGameplayHud(hud) {
-                return gameplayResolver.resolve(hud) || hud;
+                return P.findHud($.GetContextPanel());
             }
 
             const _isInHideout = QOL.core.hud.isInHideout;
 
             function _ensureCompassOverlay(hud) {
-                const parent = _getGameplayHud(hud);
-                if (!_isAlive(parent)) return null;
+                const parent = gameplayResolver.resolve(hud);
+                if (!_isAlive(parent)) { _releaseOverlay(); return null; }
+                if ((_isAlive(_compassRoot) && _compassRoot.GetParent() !== parent) ||
+                    (_isAlive(_speedRoot) && _speedRoot.GetParent() !== parent)) _releaseOverlay();
                 const ensure = (owner, type, id, previous) => {
-                    const current = P.findChild(owner, id);
+                    const current = overlays.child(owner, type, id);
                     if (current !== previous) {
-                        if (_isAlive(previous)) P.delete(previous);
                         layoutStyles.delete(previous);
                         _lastRenderedHeadingDeg = null;
                     }
-                    return current || P.create(type, owner, id);
+                    return current;
                 };
                 _compassRoot = ensure(parent, "Panel", "QOLCompassRoot", _compassRoot);
                 _compassBox = ensure(_compassRoot, "Panel", "QOLCompassBox", _compassBox);
@@ -352,7 +348,18 @@
                     ticks.push(tick);
                 }
                 _compassTicks = ticks;
+                if (![_compassRoot, _compassBox, _compassTicksContainer, _compassNeedle, _compassFadeLeft,
+                    _compassFadeRight, _compassReadout, _compassDegree, _speedRoot, _speedLabel, ...ticks].every(_isAlive)) {
+                    _hideCompassOverlay(); return null;
+                }
                 return _compassRoot;
+            }
+
+            function _releaseOverlay() {
+                _hideCompassOverlay(); overlays.clear();
+                _compassRoot = _compassBox = _compassTicksContainer = _compassNeedle = _compassFadeLeft = _compassFadeRight = null;
+                _compassReadout = _compassDegree = _speedRoot = _speedLabel = null;
+                _compassTicks = []; layoutStyles.clear(); _resetCompassRuntimeState();
             }
 
             function _nextScanBackoff(currentBackoff, baseCooldownMs) {
@@ -766,8 +773,16 @@
             }
 
             function _tick() {
-                let hud = _getHud();
-                if (!hud) return;
+                if (!active) return;
+                const hud = _getHud();
+                if (hud !== rootOwner) {
+                    _releaseOverlay(); _releaseMinimapRuntime(); gameplayResolver.reset(); resetSamples(); rootOwner = hud;
+                    _inHideout = false;
+                }
+                if (!_isAlive(hud) || (hud.id !== "Hud" && hud.paneltype !== "CitadelHud")) {
+                    _releaseOverlay(); _releaseMinimapRuntime(); return;
+                }
+                overlays.sweep();
 
                 if (_isInHideout(hud)) {
                     _hideCompassOverlay();
@@ -778,7 +793,7 @@
                 }
                 _inHideout = false;
 
-                const cfg = readModel();
+                const cfg = model;
                 const hasWork = cfg.compass || cfg.speed || cfg.spin || cfg.flip;
 
                 if (!hasWork) {
@@ -796,32 +811,32 @@
                 _updateMinimapRotate(hud, cfg, nowMs);
             }
 
+            function refresh() {
+                model = readModel();
+                if (!active) return;
+                _tick();
+                const hud = _getHud();
+                if (_isAlive(hud)) QOL.core.hud.refreshRootClasses(hud);
+            }
+
             return {
                 onEnable() {
+                    active = true; model = readModel(); _tick();
                     let S = QOL.core && QOL.core.Scheduler;
                     if (S && S.createPollLoop) {
                         _loop = S.createPollLoop(_tick, COMPASS_INTERVAL_SEC, FEATURE_ID);
                     }
                 },
                 onDisable() {
+                    active = false;
                     if (_loop) { _loop.stop(); _loop = null; }
-                    _hideCompassOverlay();
+                    _releaseOverlay(); overlays.dispose();
                     _releaseMinimapRuntime();
-                    for (const panel of [_compassRoot, _speedRoot]) if (_isAlive(panel)) P.delete(panel);
-                    _compassRoot = _compassBox = _compassTicksContainer = _compassNeedle = _compassFadeLeft = _compassFadeRight = null;
-                    _compassReadout = _compassDegree = _speedRoot = _speedLabel = null;
-                    _compassTicks = [];
-                    layoutStyles.clear(); gameplayResolver.reset(); hudResolver.reset(); imageResolver.reset();
+                    gameplayResolver.reset(); imageResolver.reset(); model = rootOwner = null;
                     _resetCompassRuntimeState();
                     _inHideout = false;
                 },
-                onSettingsChanged() {
-                    _tick();
-                    let hud = _getHud();
-                    if (hud && QOL.core && QOL.core.hud && QOL.core.hud.refreshRootClasses) {
-                        QOL.core.hud.refreshRootClasses(hud);
-                    }
-                }
+                onSettingsChanged: refresh
             };
         },
         test: function (ctx) {

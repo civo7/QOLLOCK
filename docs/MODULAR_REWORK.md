@@ -114,6 +114,11 @@ behavior until its owning implementation has been audited.
   retry, living HUD replacements release the previous readout, and stopped hooks
   cannot recreate it. Existing parsing, native title fallback and hideout support
   remain; disable now removes the tree instead of retaining an inert writer.
+- Compass/speed readouts derive settings reactively and own both complete trees,
+  including moved ticks/labels. Native gameplay is required for those readouts;
+  current HUD replacement releases previous native rotation/flip and sampling
+  bindings. Partial construction and queued previous instances cannot expose
+  incomplete or retired readouts; heading/speed calibration remains unchanged.
 
 Frozen main-config fixtures preserve all healthbar variants and both minimap
 scale methods. Published versions, compact layouts and persistent defaults stay

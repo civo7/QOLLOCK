@@ -141,6 +141,9 @@ Native networth binding timing and readout presentation remain client checks.
 tree, stopped settings hooks, hidden partial construction, immediate re-enable,
 loading roots and living HUD/native-clock replacement. Existing geometry tests
 retain both minimap scale methods and Base/Alt/Tab bridge placement.
+The compass cases also retire every created tick/readout child, contain inactive
+hooks, wait for both queued previous trees, recover hidden partial construction,
+and reset native rotation/flip/motion bindings across living HUD replacement.
 
 `build_id_owner_lifecycle.test.js` checks existing parsing and native title
 fallback, reactive settings, late/live source and parent replacement, current HUD

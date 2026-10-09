@@ -726,6 +726,9 @@ test("ql_compass standalone speed offset updates without compass offset change",
     const hud = sim.createHud({ inHideout: false });
     hud.assertLoaded();
     const Q = hud.sandbox.global.QOL;
+    const $ = hud.sandbox.global.$;
+    const core = $.CreatePanel("Panel", hud.root, ""); core.AddClass("HudCore");
+    $.CreatePanel("Panel", core, "gameplay_hud");
 
     const feat = Q.core.FeatureRegistry.getManifest("ql_compass");
     assert.ok(feat, "ql_compass must be registered");

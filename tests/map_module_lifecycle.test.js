@@ -272,6 +272,82 @@ function localPlayer(e, renderer, degrees, position = "50% 50% 0px") {
     return { player, image };
 }
 
+function directCompass(e, settings = {}) {
+    e.Q.core.App.shutdown();
+    e.configure({ ENABLE_COMPASS: 1, ENABLE_COMPASS_SPEED: 1, ...settings });
+    let reads = 0;
+    const config = { view() { reads++; return e.Q.core.ConfigStore.view("ql_compass"); } };
+    const create = () => e.Q.core.FeatureRegistry.getManifest("ql_compass").create({ id: "ql_compass", config });
+    return { feature: create(), create, reads: () => reads };
+}
+
+test("compass owns every moved tick/readout child and contains inactive settings hooks", () => {
+    const e = fixture(), source = localPlayer(e, e.renderer, 40), { feature, reads } = directCompass(e);
+    feature.onSettingsChanged(); assert.equal(e.gameplay.FindChild("QOLCompassRoot"), null);
+    feature.onEnable();
+    const compass = e.gameplay.FindChild("QOLCompassRoot"), speed = e.gameplay.FindChild("QOLSpeedRoot");
+    const children = [...createdTimerChildren(compass), ...createdTimerChildren(speed)]; assert.equal(children.length, 25);
+    for (const panel of children) panel.SetParent(e.orphan);
+    e.clock.advance(150); for (const panel of children) assert.equal(panel.IsValid(), false, panel.id);
+    assert.equal(compass.FindChildTraverse("QOLCompassDegree").text, "40°");
+    e.clock.advance(1500); assert.equal(reads(), 2, "idle settings derivation is independent of native sampling");
+    const moved = compass.FindChildTraverse("QOLCompassTick0"); moved.SetParent(e.orphan);
+    feature.onDisable(); feature.onSettingsChanged(); e.clock.advance(150);
+    assert.equal(moved.IsValid(), false); assert.equal(compass.IsValid(), false); assert.equal(speed.IsValid(), false);
+    assert.equal(e.gameplay.FindChild("QOLCompassRoot"), null); assert.equal(source.image.style.preTransformRotate2d, "40deg"); e.clean();
+});
+
+test("compass rapid re-enable waits for both queued trees without reviving their former panels", () => {
+    const e = fixture(); localPlayer(e, e.renderer, 45); const { feature, create } = directCompass(e);
+    feature.onEnable(); const compass = e.gameplay.FindChild("QOLCompassRoot"), speed = e.gameplay.FindChild("QOLSpeedRoot");
+    feature.onDisable(); const next = create(); next.onEnable(); next.onSettingsChanged();
+    assert.equal(compass.visible, false); assert.equal(speed.visible, false);
+    e.clock.advance(150); assert.equal(compass.IsValid(), false); assert.equal(speed.IsValid(), false);
+    assert.equal(e.gameplay.Children().filter(panel => panel.id === "QOLCompassRoot").length, 1);
+    assert.equal(e.gameplay.Children().filter(panel => panel.id === "QOLSpeedRoot").length, 1);
+    assert.equal(e.gameplay.FindChildTraverse("QOLCompassDegree").text, "45°");
+    next.onDisable(); e.clock.advance(20); e.clean();
+});
+
+test("compass partial tree construction hides both readouts and recovers independently of native rotation", () => {
+    const e = fixture(); localPlayer(e, e.renderer, 40);
+    const { feature } = directCompass(e, { MINIMAP_ROTATE_WITH_PLAYER: 1 }), create = e.$.CreatePanel; let reject = true;
+    e.$.CreatePanel = (...args) => {
+        if (args[2] === "QOLCompassTick0" && reject) throw Error("modeled pending tick");
+        return create(...args);
+    };
+    feature.onEnable(); const compass = e.gameplay.FindChild("QOLCompassRoot"), speed = e.gameplay.FindChild("QOLSpeedRoot");
+    assert.equal(compass.style.visibility, "collapse"); assert.equal(speed.style.visibility, "collapse");
+    assert.equal(compass.FindChildTraverse("QOLCompassTick0"), null); assert.ok(e.renderer.style.preTransformRotate2d);
+    reject = false; e.clock.advance(150); assert.equal(compass.style.visibility, "visible"); assert.equal(speed.style.visibility, "visible");
+    assert.equal(compass.FindChildTraverse("QOLCompassDegree").text, "40°");
+    feature.onDisable(); e.clock.advance(20); assert.equal(e.renderer.style.preTransformRotate2d, undefined); e.$.CreatePanel = create; e.clean();
+});
+
+test("compass waits for gameplay and releases living old HUD/native rotation before binding new sources", () => {
+    const e = fixture(); localPlayer(e, e.renderer, 40);
+    const external = e.add(null, "RetiredGameplay"), core = e.gameplay.GetParent(); e.gameplay.SetParent(external);
+    const { feature } = directCompass(e, { MINIMAP_ROTATE_WITH_PLAYER: 1, MINIMAP_FLIP: 1 }); feature.onEnable();
+    assert.equal(e.root.FindChildTraverse("QOLCompassRoot"), null); e.gameplay.SetParent(core); e.clock.advance(1200);
+    const compass = e.gameplay.FindChild("QOLCompassRoot"); assert.ok(compass); assert.ok(e.renderer.style.preTransformRotate2d);
+    e.doc.root = e.add(null, "LoadingRoot"); e.add(e.doc.root, "gameplay_hud"); e.clock.advance(150);
+    assert.equal(compass.IsValid(), false); assert.equal(e.doc.root.FindChild("QOLCompassRoot"), null);
+    assert.equal(e.renderer.style.preTransformRotate2d, undefined); assert.equal(e.renderer.BHasClass("qol_minimap_flip_active"), false);
+    e.doc.root = e.add(null, "Hud", "CitadelHud");
+    const nextCore = e.add(e.doc.root, ""); nextCore.AddClass("HudCore"); const gameplay = e.add(nextCore, "gameplay_hud");
+    const clamp = e.add(gameplay, ""); clamp.AddClass("clamp_width"); const host = e.add(clamp, "minimap_persp");
+    const viewport = e.add(host, "minimap_container"), inner = e.add(viewport, "HudMinimapContainer"), renderer = e.add(inner, "hud_minimap");
+    localPlayer(e, renderer, 60); feature.onSettingsChanged();
+    assert.equal(gameplay.FindChildTraverse("QOLCompassDegree").text, "60°");
+    assert.equal(gameplay.FindChildTraverse("QOLSpeedLabel").text, "--"); assert.equal(renderer.style.preTransformRotate2d, "30.00deg");
+    e.clock.advance(150); assert.equal(gameplay.FindChildTraverse("QOLSpeedLabel").text, "0");
+    assert.equal(renderer.BHasClass("qol_minimap_flip_active"), false, "spin rotation already includes the configured flip");
+    e.Q.core.ConfigStore.set("ql_compass", "MINIMAP_ROTATE_WITH_PLAYER", false); feature.onSettingsChanged();
+    assert.equal(renderer.BHasClass("qol_minimap_flip_active"), true); assert.equal(e.root.IsValid(), true);
+    feature.onDisable(); e.clock.advance(20); assert.equal(renderer.style.preTransformRotate2d, undefined);
+    assert.equal(renderer.BHasClass("qol_minimap_flip_active"), false); e.clean();
+});
+
 test("compass preserves native rotation until Spinny Mode owns it and retries failed rotation", () => {
     const e = fixture();
     e.renderer.style.preTransformRotate2d = "17deg";

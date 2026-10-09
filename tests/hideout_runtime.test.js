@@ -90,6 +90,9 @@ test("Minecraft raw animation stops when its source disappears before the next H
 });
 
 function minimapTree(env) {
+    let core = env.root.FindChildrenWithClassTraverse("HudCore")[0];
+    if (!core) { core = env.$.CreatePanel("Panel", env.root, ""); core.AddClass("HudCore"); }
+    if (!core.FindChild("gameplay_hud")) env.$.CreatePanel("Panel", core, "gameplay_hud");
     const container = env.$.CreatePanel("Panel", env.root, "minimap_container");
     const map = env.$.CreatePanel("Panel", container, "hud_minimap");
     const player = env.$.CreatePanel("Panel", map, "");
