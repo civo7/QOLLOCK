@@ -90,6 +90,10 @@ not compile/repack or change installed addons. After a maintainer build, verify
 native testing controls, practice-area visibility and the force/hide settings in
 the client. Offline gates cover source loading, existing CSS contracts and API
 usage, not this native rendering/input check.
+
+The offline XML-composition profiler also resolves overrides from the current
+checkout, falling back to extracted native layouts when a source is retired;
+removing an override must not silently remove that subtree from its model.
 Also verify the friends count in the party button slot, party invites, menu
 opening and party-code context-menu behavior after the party XML retirement.
 Verify both target hint branches, Improved Hint, target-size/opacity controls and

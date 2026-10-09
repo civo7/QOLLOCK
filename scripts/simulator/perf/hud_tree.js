@@ -72,7 +72,7 @@ const COMPOSITION = [
     // and it declares the containers everything else mounts under
     // (gameplay_hud, TopBar, AbilitiesContainer, reticle_status, ...), so it
     // must come first.
-    { file: "hud.xml", mod: true, mount: "Hud" },
+    { file: "hud.xml", mount: "Hud" },
 
     // Vanilla in-match chrome the mod does not ship a patched copy of.
     { file: "hud_minimap.xml", mount: "gameplay_hud" },
@@ -86,20 +86,21 @@ const COMPOSITION = [
     { file: "citadel_hud_player_level.xml", mount: "gameplay_hud" },
     { file: "citadel_hud_subtitles.xml", mount: "Hud" },
 
-    // The mod's patched copies of layouts it does override.
-    { file: "citadel_hud_top_bar.xml", mod: true, mount: "TopBar" },
-    { file: "hud_gold_and_ap_container.xml", mod: true, mount: "gameplay_hud" },
-    { file: "hud_health_container.xml", mod: true, mount: "gameplay_hud" },
-    { file: "hud_health.xml", mod: true, mount: "hud_health_bars" },
-    { file: "citadel_hud_hero_shop.xml", mod: true, mount: "Hud" },
-    { file: "citadel_hud_hero_builds.xml", mod: true, mount: "Hud" },
-    { file: "hud_quickbuy.xml", mod: true, mount: "gameplay_hud" },
-    { file: "ability_hud_element_unit_target.xml", mod: true, mount: "AbilitiesContainer" },
-    { file: "hud_paused.xml", mod: true, mount: "Hud" },
+    // Resolve each layout from the current checkout, or the native extract
+    // when no override exists. Retiring an override must not remove its subtree.
+    { file: "citadel_hud_top_bar.xml", mount: "TopBar" },
+    { file: "hud_gold_and_ap_container.xml", mount: "gameplay_hud" },
+    { file: "hud_health_container.xml", mount: "gameplay_hud" },
+    { file: "hud_health.xml", mount: "hud_health_bars" },
+    { file: "citadel_hud_hero_shop.xml", mount: "Hud" },
+    { file: "citadel_hud_hero_builds.xml", mount: "Hud" },
+    { file: "hud_quickbuy.xml", mount: "gameplay_hud" },
+    { file: "ability_hud_element_unit_target.xml", mount: "AbilitiesContainer" },
+    { file: "hud_paused.xml", mount: "Hud" },
 
     // Twelve players in the top bar — the teamfight multiplier the bug reports
     // are about. The mod's patched per-player layout, once per player.
-    { file: "citadel_hud_top_bar_player.xml", mod: true, mount: "TopBar", count: 12 },
+    { file: "citadel_hud_top_bar_player.xml", mount: "TopBar", count: 12 },
 
     // Ability buttons: 4 abilities plus the weapon, for the local player.
     { file: "citadel_hud_ability_button.xml", mount: "AbilitiesContainer", count: 5 },
@@ -115,7 +116,7 @@ const COMPOSITION = [
     { file: "ability_hud_elements/element_circular_progress.xml", mount: "AbilitiesContainer", count: 4 },
 
     // Item slots the shop/quickbuy churn through.
-    { file: "hud_quickbuy_entry.xml", mod: true, mount: "CitadelHudQuickbuy", count: 8 },
+    { file: "hud_quickbuy_entry.xml", mount: "CitadelHudQuickbuy", count: 8 },
 
     // Modifier/buff icons — one per active buff, and a teamfight has many.
     { file: "hud_modifiers_entry_center.xml", mount: "gameplay_hud", count: 16 },
@@ -270,9 +271,10 @@ function materialize(doc, parent, nodes, { suffix = "", dedupeIds = false } = {}
  * @param {number}   [opts.damageNumbers=24]  floating combat text panels
  * @param {number}   [opts.dataFeed=6]        kill-feed entries
  * @param {number}   [opts.chatLines=8]
+ * @param {string}   [opts.vanillaLayout]     extracted native layout directory
  * @returns {{panels:number, notes:string[], byLayout:object}}
  */
-function buildMatchHud(doc, { players = 12, damageNumbers = 24, dataFeed = 6, chatLines = 8 } = {}) {
+function buildMatchHud(doc, { players = 12, damageNumbers = 24, dataFeed = 6, chatLines = 8, vanillaLayout = VANILLA_LAYOUT } = {}) {
     const notes = [];
     const byLayout = {};
     const hud = doc.root;
@@ -287,10 +289,11 @@ function buildMatchHud(doc, { players = 12, damageNumbers = 24, dataFeed = 6, ch
     };
 
     for (const spec of COMPOSITION) {
-        const dir = spec.mod ? MOD_LAYOUT : VANILLA_LAYOUT;
-        const xml = readSafe(path.join(dir, spec.file));
+        const modFile = path.join(MOD_LAYOUT, spec.file);
+        const mod = fs.existsSync(modFile);
+        const xml = readSafe(mod ? modFile : path.join(vanillaLayout, spec.file));
         if (xml === null) {
-            notes.push(`layout not found: ${spec.mod ? "mod" : "vanilla"}/${spec.file}`);
+            notes.push(`layout not found: ${mod ? "mod" : "vanilla"}/${spec.file}`);
             continue;
         }
         const nodes = parseLayout(xml);

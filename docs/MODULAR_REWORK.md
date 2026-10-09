@@ -149,6 +149,10 @@ behavior until its owning implementation has been audited.
   re-enable and rejected moved-child deletion no longer strand the overlay;
   partial renders/loading-root lookalikes stay hidden while native bindings,
   glyph content and both action layouts remain with their existing owners.
+- The XML-composition profiler selects current mod sources or native fallback
+  directly, so retiring an override does not omit its native subtree from the
+  model. A duplicate mod-owned composition flag list is removed; missing native
+  sources still produce explicit notes, and captured-hierarchy replay is unchanged.
 
 Frozen main-config fixtures preserve all healthbar variants and both minimap
 scale methods. Published versions, compact layouts and persistent defaults stay

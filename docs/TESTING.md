@@ -355,6 +355,11 @@ These tools count operations and expose JavaScript exceptions under the supplied
 model. They cannot establish which calls the live engine makes or the cost of a
 rendered frame. An id absent from XML/JavaScript can still be created by C++.
 
+The profiler composition regression uses a temporary native-layout fixture to
+verify current override precedence, fallback after XML retirement and explicit
+missing-source notes. It does not depend on a developer's local game extract;
+actual XML composition still needs that extract for native layouts.
+
 The preferred full hierarchy source is the standalone HUD-Dumper native Debugger
 export. See [capture testing](CAPTURE_TESTING.md) for importing its receiver JSON,
 scope/fidelity checks and the dependency audit. The audit derives active HUD
