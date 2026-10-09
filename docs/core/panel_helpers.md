@@ -14,6 +14,7 @@ object is exposed as `QOL.core.panel`, `QOL.core.PanelHelpers`, and
 | `create(type, parent, id, properties)`, `createPanel(...)` | Guard parent validity and catch creation errors; return panel or null. |
 | `delete(panel)`, `deletePanel(panel)` | Schedule `DeleteAsync(0)` on a valid panel; catch deletion errors. |
 | `createOwnedTree()` | Own exclusively QOL-created IDs through instance-local child reconciliation and complete tree retirement. See below. |
+| `createNativeStyleOwner({resetValues}?)` | Own attempted native code properties/classes with readback invalidation and retried retirement. Does not create/delete panels or discover sources. See below. |
 | `findHud(preferredRoot)` | Search context/ancestors for Hud; no-argument calls cache real HUD matches per context, never loading-root fallbacks. Can return the context/top root as a fallback, so this alone does not prove active gameplay. |
 | `findRoot(panel?)` | Walk ancestors of the supplied panel, defaulting to the current context; return null on native traversal failure. |
 | `findChild(parent, id)` | Safe native `FindChild` wrapper for direct children. |
@@ -33,6 +34,28 @@ object is exposed as `QOL.core.panel`, `QOL.core.PanelHelpers`, and
 | `washColorPalette` | Exported palette array (not a function). |
 
 ## Styles and ownership
+
+`createNativeStyleOwner()` returns `apply(panel, styles, classes?)`,
+`retain(panels)` and `clear()`. These return whether the requested writes or
+retirement completed. Supply desired maps to `apply`; properties/classes removed
+from those maps are released. `retain` releases tracked handles absent from the
+supplied iterable; `clear` releases all. Only attempted fields are owned, including
+partially rejected writes. Unrelated native properties/classes remain untouched.
+Classes must be reserved for the caller's presentation; retiring a class removes
+it rather than restoring an earlier native membership.
+
+Successful style maps cache actual native readback as well as their desired
+signature, avoiding redundant writes after string normalization and reapplying
+after native feedback overwrites. Optional caller-supplied `resetValues` writes
+neutral values before strict native property clearing. Rejected retirement remains
+recorded, with one cleanup-only scheduled retry until successful or destroyed.
+This retry may finish after feature disable; it never derives settings or reapplies
+presentation. Private property/class leases prevent an old retiring instance from
+clearing fields claimed by a new instance. Reapplication in the same instance also
+cancels a field's retirement intent. Discovery, current-HUD selection, settings,
+active guards and presentation polling remain the caller's responsibilities.
+This contract is used by inventory and stats placement; it is separate from
+created-tree ownership and specialized native animation restoration.
 
 `createOwnedTree()` returns `child(parent, type, id, properties?)`, `sweep()`,
 `remove(id)`, `clear()` and `dispose()`. Each nonempty ID must be unique within that instance

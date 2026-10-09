@@ -229,6 +229,11 @@ including partial factory/enable failures. It does not cancel unrelated raw
 schedule handle: use explicit null-state tracking where you own cancellation.
 Token-guard delayed callbacks when cancellation alone cannot prevent stale work.
 
+The shared native-style owner has a separate cleanup-only retry for rejected
+retirement. It may finish after feature disable, without reading settings or
+reapplying presentation, and protects fields claimed by a new instance. See
+[panel helpers](docs/core/panel_helpers.md); this is not a second feature poll loop.
+
 Scheduler stops a loop when its captured native context is invalid. Ten
 consecutive observed poll errors cause registry auto-disable; a successful tick
 after errors resets the streak. Do not hide unexpected exceptions inside a

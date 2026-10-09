@@ -18,14 +18,11 @@
             const resolver = QOL.panelCache.createIdResolver("StatsAndModsContainer", {
                 ownerPath: [{ id: "Hud", optional: true }, { className: "HudCore" }]
             });
-            const ownedStyles = ["x", "y", "washColor", "visibility"];
-            const applied = new Set();
-            const children = new Map();
+            const styles = panelAPI.createNativeStyleOwner({ resetValues: { x: "0px", y: "0px", washColor: "transparent" } });
             let panel = null;
-            let signature = null;
             let model = null;
             let loop = null;
-            let washApplied = false;
+            let active = false;
 
             function readModel() {
                 const cfg = ctx.config.view();
@@ -42,18 +39,8 @@
                 return { enabled, opacity, styles };
             }
 
-            function releaseWash() {
-                if (washApplied && panelAPI.isAlive(panel)) {
-                    // Empty strings are not a Panorama color. Restore neutral
-                    // multiplication before releasing the previous code tint.
-                    panel.style.washColor = "transparent";
-                    QOL.utils.ClearStyleSafe(panel, "washColor");
-                }
-                washApplied = false;
-            }
-
-            function discoverContainer() {
-                const owner = resolver.resolve($.GetContextPanel());
+            function discoverContainer(root) {
+                const owner = resolver.resolve(root);
                 if (!owner) return null;
                 const left = panelAPI.findChild(owner, "LowerLeft");
                 const native = panelAPI.findChild(left, "ModsContainer");
@@ -61,23 +48,6 @@
                 // Preserve class-based compatibility for layouts not matching
                 // current hud.xml, scoped to the discovered native stats owner.
                 return QOL.utils.FindFirstPanelByClass(owner, "ModsContainer");
-            }
-
-            function releaseChild(target) {
-                if (children.get(target)?.owned && panelAPI.isAlive(target)) QOL.utils.ClearStyleSafe(target, "opacity");
-            }
-
-            function release() {
-                for (const target of children.keys()) releaseChild(target);
-                children.clear();
-                releaseWash();
-                if (!panelAPI.isAlive(panel)) { applied.clear(); return; }
-                for (const property of applied) {
-                    if (property === "x" || property === "y") panel.style[property] = "0px";
-                    QOL.utils.ClearStyleSafe(panel, property);
-                }
-                applied.clear();
-                panelAPI.setClass(panel, "qol-hidden", false);
             }
 
             function discoverChildren() {
@@ -90,70 +60,40 @@
                 return sources;
             }
 
-            function renderChildren(sources) {
-                for (const target of children.keys()) {
-                    if (!sources.has(target)) { releaseChild(target); children.delete(target); }
-                }
-                for (const [target, opacity] of sources) {
-                    if (!panelAPI.isAlive(target)) continue;
-                    const previous = children.get(target);
-                    if (opacity === null) {
-                        if (!previous || previous.opacity !== null) releaseChild(target);
-                        children.set(target, { opacity, signature: "native", owned: false });
-                    } else {
-                        const sig = previous && previous.opacity === opacity ? previous.signature : null;
-                        children.set(target, { opacity, owned: true, signature: panelAPI.syncStyles(target, { opacity }, sig).sig });
-                    }
-                }
-            }
-
             function update() {
-                const current = discoverContainer();
-                if (current !== panel) {
-                    release();
-                    panel = current;
-                    signature = null;
-                }
-                if (!panel) return;
-                panelAPI.setClass(panel, "qol-hidden", !model.enabled);
-                if (signature === null) {
-                    // Opacity belongs to leaf icons/graph; applying it on the
-                    // container as well would multiply the configured opacity.
-                    if (!model.styles.washColor) releaseWash();
-                    else washApplied = true;
-                    for (const property of ownedStyles) {
-                        if (!applied.has(property) || property in model.styles) continue;
-                        if (property === "x" || property === "y") panel.style[property] = "0px";
-                        QOL.utils.ClearStyleSafe(panel, property);
-                        applied.delete(property);
-                    }
-                    for (const property of Object.keys(model.styles)) applied.add(property);
-                    signature = panelAPI.syncStyles(panel, model.styles, signature).sig;
-                }
+                if (!active) return;
+                const root = panelAPI.findHud($.GetContextPanel());
+                panel = panelAPI.isAlive(root) && (root.id === "Hud" || root.paneltype === "CitadelHud") ? discoverContainer(root) : null;
+                if (!panel) { styles.clear(); return; }
+                const sources = discoverChildren();
+                styles.retain([panel, ...sources.keys()]);
+                styles.apply(panel, model.styles, { "qol-hidden": !model.enabled });
                 // Native icons are conditional and can appear without a settings
-                // change. Keep membership discovery alive at the existing cadence.
-                renderChildren(discoverChildren());
+                // change. Opacity belongs to leaves, so it is never multiplied
+                // again by applying it to the inventory container.
+                for (const [target, opacity] of sources) styles.apply(target, opacity === null ? {} : { opacity });
             }
 
             function refreshSettings() {
+                if (!active) return;
                 model = readModel();
-                signature = null;
                 resolver.reset();
                 update();
             }
 
             return {
                 onEnable() {
+                    active = true;
                     refreshSettings();
                     loop = QOL.core.Scheduler.createPollLoop(update, 1.0, ctx.id);
                 },
                 onSettingsChanged: refreshSettings,
                 onDisable() {
+                    active = false;
                     if (loop) { loop.stop(); loop = null; }
                     QOL.core.Scheduler.cancelAllForFeature(ctx.id);
-                    release();
+                    styles.clear();
                     panel = model = null;
-                    signature = null;
                     resolver.reset();
                 }
             };

@@ -36,6 +36,15 @@ the maintainer's compilation and client checks remain required.
 
 ## Focused release regressions
 
+`native_style_owner.test.js` covers attempted-property/class ownership, native
+readback normalization and overwrite, rejected writes/neutral resets/clears,
+destroyed sources, cleanup completion after disposal and immediate re-enable
+leases. `inventory_stats_owner_lifetime.test.js` applies that contract to the
+production inventory/stats owners: living HUD replacement, loading roots, late
+and moved leaves, preserved native opacity, idle settings reads and stopped hooks.
+Rejected clears also finish after their presentation loops stop. These checks do
+not establish native rendering or input behavior.
+
 `stamina_rotation_owner.test.js` checks native-zero degree presentation through
 the ordinary control and Customize input/slider/steppers/history/reset while
 preserving the published stored field. Native-owner cases cover color-only

@@ -171,6 +171,13 @@ native transforms, follows current HUD/ring generations and retries rejected
 restoration of living retired pips/transforms while active. Stopped hooks cannot
 reapply rotation. Persistent defaults, schema layouts and saved values are unchanged.
 
+Inventory and stats placement share native style/class ownership instead of
+duplicating applied-property bookkeeping. Attempted writes remain tracked through
+rejected clears, living source replacement and disable; cleanup-only retries
+cannot overwrite a new instance's claims. Current HUD selection, reactive settings
+and native inventory leaf opacity stay with their manifests. Other native style
+owners still require the same audit before using this contract.
+
 ## Remaining implementation and audit
 
 1. Audit already modernized owners for remaining shared mutable bookkeeping,

@@ -3,7 +3,8 @@
 // =============================================================================
 // OWNS:        Safe panel utility functions: isPanelAlive, findHud, syncStyles,
 //              safeCreatePanel, safeDeletePanel, setClass, setVisible and
-//              instance-local ownership of exclusively QOL-created trees.
+//              ownership of attempted native styles/classes and exclusively
+//              QOL-created trees.
 //              isPanelAlive uses typeof check (not truthy) — mandatory for
 //              correct destroyed-panel detection.
 // DOES NOT OWN: Panel caching (PanelCache), feature lifecycle (FeatureRegistry)
@@ -151,6 +152,131 @@
         } catch (_) {
             return false;
         }
+    };
+
+    const nativeStyleLeases = new Map();
+    // Own only attempted code properties/classes; native discovery and lifetime
+    // remain with each caller. Rejected cleanup stays recorded for the next pass.
+    const createNativeStyleOwner = ({ resetValues = {} } = {}) => {
+        const records = new Map();
+        const resets = { ...resetValues };
+        const identity = {};
+        let pending = null, generation = 0;
+        const claim = (panel, key) => {
+            if (!nativeStyleLeases.has(panel)) nativeStyleLeases.set(panel, new Map());
+            nativeStyleLeases.get(panel).set(key, identity);
+        };
+        const held = (panel, key) => nativeStyleLeases.get(panel)?.get(key) === identity;
+        const drop = (panel, key) => {
+            const leases = nativeStyleLeases.get(panel);
+            if (leases?.get(key) === identity) leases.delete(key);
+            if (leases && !leases.size) nativeStyleLeases.delete(panel);
+        };
+        const cancelCleanup = () => {
+            generation++;
+            if (pending !== null) {
+                try { $.CancelScheduled(pending); } catch (_) {}
+                pending = null;
+            }
+        };
+        const clearProperty = (panel, record, property) => {
+            try {
+                if (held(panel, "style:" + property)) {
+                    if (Object.prototype.hasOwnProperty.call(resets, property)) panel.style[property] = resets[property];
+                    if (!clearStyleProperty(panel, property)) return false;
+                    drop(panel, "style:" + property);
+                }
+                record.properties.delete(property);
+                record.signature = null;
+                return true;
+            } catch (_) { return false; }
+        };
+        const reconcileClass = (panel, name, value) => {
+            setClass(panel, name, value);
+            try { return panel.BHasClass(name) === value; } catch (_) { return false; }
+        };
+        const cleanup = (panel) => {
+            const record = records.get(panel);
+            if (!record) return true;
+            if (!isPanelAlive(panel)) { records.delete(panel); nativeStyleLeases.delete(panel); return true; }
+            let complete = true;
+            for (const property of record.properties) {
+                if (!record.wantedProperties.has(property) && !clearProperty(panel, record, property)) complete = false;
+            }
+            for (const name of record.classes) {
+                if (record.wantedClasses.has(name)) continue;
+                const key = "class:" + name;
+                if (!held(panel, key) || reconcileClass(panel, name, false)) {
+                    record.classes.delete(name); drop(panel, key);
+                } else complete = false;
+            }
+            if (!record.properties.size && !record.classes.size) records.delete(panel);
+            return complete;
+        };
+        const retryCleanup = () => {
+            if (pending !== null || typeof $.Schedule !== "function") return;
+            const token = generation;
+            pending = $.Schedule(0.25, () => {
+                if (token !== generation) return;
+                pending = null;
+                let complete = true;
+                for (const panel of records.keys()) if (!cleanup(panel)) complete = false;
+                if (!complete) retryCleanup();
+            });
+        };
+        const release = (panel) => {
+            const record = records.get(panel);
+            if (!record) return true;
+            record.wantedProperties.clear(); record.wantedClasses.clear();
+            return cleanup(panel);
+        };
+        const apply = (panel, styles, classes = {}) => {
+            if (!isPanelAlive(panel)) { release(panel); return false; }
+            const properties = Object.keys(styles), names = Object.keys(classes);
+            let record = records.get(panel);
+            if (!record && !properties.length && !names.length) return true;
+            if (!record) {
+                record = { properties: new Set(), classes: new Set(), wantedProperties: new Set(), wantedClasses: new Set(), signature: null, readback: new Map() };
+                records.set(panel, record);
+            }
+            record.wantedProperties = new Set(properties); record.wantedClasses = new Set(names);
+            let complete = cleanup(panel);
+            if (!complete) retryCleanup();
+            records.set(panel, record);
+            for (const name of names) {
+                record.classes.add(name);
+                claim(panel, "class:" + name);
+                if (!reconcileClass(panel, name, !!classes[name])) complete = false;
+            }
+            let previous = record.signature;
+            try {
+                for (const property of properties) {
+                    if (panel.style[property] !== record.readback.get(property)) previous = null;
+                }
+            } catch (_) { previous = null; }
+            // Record ownership before a partial native write can fail.
+            for (const property of properties) { record.properties.add(property); claim(panel, "style:" + property); }
+            record.signature = syncStyles(panel, styles, previous).sig;
+            if (record.signature === null) complete = false;
+            else {
+                record.readback.clear();
+                try {
+                    for (const property of properties) record.readback.set(property, panel.style[property]);
+                } catch (_) { record.signature = null; complete = false; }
+            }
+            if (!record.properties.size && !record.classes.size) records.delete(panel);
+            return complete;
+        };
+        const retain = (panels) => {
+            const current = new Set(panels);
+            let complete = true;
+            for (const panel of records.keys()) if (!current.has(panel) && !release(panel)) complete = false;
+            if (!complete) retryCleanup();
+            else if (!records.size) cancelCleanup();
+            return complete;
+        };
+        const clear = () => retain([]);
+        return { apply, retain, clear };
     };
 
     const findRoot = (panel) => {
@@ -345,6 +471,7 @@
         delete: safeDeletePanel,
         deletePanel: safeDeletePanel,
         createOwnedTree,
+        createNativeStyleOwner,
         findRoot,
         findHud,
         findChild,

@@ -25,6 +25,7 @@ which numeric label, or which live HUD instance is authoritative.
 | Reassert one style | `QOL_UTILS.SetStyleSafe(panel, property, value)` | Use when a native owner may overwrite the value; do not make deliberate reassertion conditional. |
 | Normalize opacity / clear style | `QOL_UTILS.SetPanelOpacitySafe(panel, value, fallback)` / `QOL.core.panel.clearStyleProperty(panel, property)` | Opacity clamps and formats; clearing uses native ClearPropertyFromCode. |
 | Apply a style map | `QOL.core.panel.syncStyles(panel, styles, lastSig)` | Caller owns signature and invalidation; writes the whole map when signature changes. |
+| Own native code styles/classes | `QOL.core.panel.createNativeStyleOwner(options?)` | Instance `apply(panel, styles, classes?)`, `retain(panels)` and `clear()` track attempted writes, native readback and rejected retirement. Caller selects sources and optional neutral `resetValues`; see [panel API](core/panel_helpers.md). |
 | Set a class / visibility | `QOL.core.panel.setClass(panel, className, active)` / `QOL.core.panel.setVisible(panel, visible)` | Class setter compares before writing; visible setter does not. |
 | Resolve a palette color | `QOL.core.panel.normalizePaletteIndex(value)` / `QOL.core.panel.resolvePaletteColor(value)` | Both delegate to `QOL_UTILS`; read the palette from the leaf utility. |
 | Cache a handle / list | `QOL.panelCache.getPanel(key)` / `QOL.panelCache.setPanel(key, panel)` / `QOL.panelCache.getList(key)` / `QOL.panelCache.setList(key, list)` | `ql_panelcache.js`; getters reject invalid handles/lists. |

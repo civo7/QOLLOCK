@@ -50,6 +50,15 @@ child reconciliation releases living moved children and avoids adopting an old
 instance's pending asynchronous deletion. Keep native parent selection and
 history rules in the manifest; see [panel helpers](core/panel_helpers.md).
 
+For matching native style/class ownership, reuse
+`core.panel.createNativeStyleOwner()` rather than forgetting rejected clears.
+Inventory and stats placement are current callers. Keep source selection and
+neutral reset policy in the manifest. The helper tracks attempted writes and
+readback, releases removed fields and living retired sources, and protects a new
+instance from old cleanup. Its scheduled work after disable only finishes failed
+retirement; it cannot revive presentation. Specialized native animation ownership
+still requires its existing restoration contract.
+
 ## Generate a starting point
 
 Run from the repository root, for example (shell quoting varies):

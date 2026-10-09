@@ -21,19 +21,8 @@
             const path = [{ id: "Hud", optional: true }, { className: "HudCore" }];
             const active = Q.panelCache.createIdResolver("hudActivePlayerStats", { ownerPath: path });
             const legacy = Q.panelCache.createIdResolver("hudPlayerStats", { ownerPath: [...path, "StatsAndModsContainer", "LowerLeft"] });
-            const applied = new Set();
-            let panel = null, signature = null, model = null, loop = null;
-            function clear(target, property) {
-                if (!applied.has(property) || !P.isAlive(target)) return;
-                if (property === "x" || property === "y") target.style[property] = "0px";
-                Q.utils.ClearStyleSafe(target, property);
-                applied.delete(property);
-            }
-            function release() {
-                for (const property of applied) clear(panel, property);
-                applied.clear();
-                signature = null;
-            }
+            const styles = P.createNativeStyleOwner({ resetValues: { x: "0px", y: "0px" } });
+            let model = null, loop = null, running = false;
             function readModel() {
                 const cfg = ctx.config.view();
                 return {
@@ -44,36 +33,37 @@
                 };
             }
             function update() {
-                const root = Q.core.hud.findHud();
-                const current = Q.presentation.chooseStatsPanel(legacy.resolve(root), active.resolve(root));
-                if (current !== panel) { release(); panel = current; }
+                if (!running) return;
+                const root = P.findHud($.GetContextPanel());
+                const panel = P.isAlive(root) && (root.id === "Hud" || root.paneltype === "CitadelHud")
+                    ? Q.presentation.chooseStatsPanel(legacy.resolve(root), active.resolve(root)) : null;
+                styles.retain([panel]);
                 if (!P.isAlive(panel)) return;
                 const hidden = Q.core.hud.isScoreboardOpen(root) ? model.hideScoreboard : model.hideNormal;
-                const styles = {};
-                if (model.x) styles.x = model.x + "px";
-                if (model.y) styles.y = -model.y + "px";
-                if (hidden) styles.opacity = "0";
-                for (const property of applied) {
-                    if (!Object.prototype.hasOwnProperty.call(styles, property)) { clear(panel, property); signature = null; }
-                }
-                for (const property of Object.keys(styles)) applied.add(property);
-                signature = P.syncStyles(panel, styles, signature).sig;
+                const properties = {};
+                if (model.x) properties.x = model.x + "px";
+                if (model.y) properties.y = -model.y + "px";
+                if (hidden) properties.opacity = "0";
+                styles.apply(panel, properties);
             }
             function refreshSettings() {
-                model = readModel(); signature = null;
+                if (!running) return;
+                model = readModel();
                 active.reset(); legacy.reset(); update();
             }
             return {
                 onEnable() {
+                    running = true;
                     refreshSettings();
                     ctx.events.on("engine:scoreboard_toggle", update);
                     loop = Q.core.Scheduler.createPollLoop(update, 1.0, ctx.id);
                 },
                 onSettingsChanged: refreshSettings,
                 onDisable() {
+                    running = false;
                     ctx.events.off("engine:scoreboard_toggle", update);
                     if (loop) loop.stop();
-                    loop = null; release(); panel = null; model = null;
+                    loop = null; styles.clear(); model = null;
                     active.reset(); legacy.reset();
                 }
             };
