@@ -2,7 +2,8 @@
 // QOLLOCK — core/ql_panel_helpers.js
 // =============================================================================
 // OWNS:        Safe panel utility functions: isPanelAlive, findHud, syncStyles,
-//              safeCreatePanel, safeDeletePanel, setClass, setVisible.
+//              safeCreatePanel, safeDeletePanel, setClass, setVisible and
+//              instance-local ownership of exclusively QOL-created trees.
 //              isPanelAlive uses typeof check (not truthy) — mandatory for
 //              correct destroyed-panel detection.
 // DOES NOT OWN: Panel caching (PanelCache), feature lifecycle (FeatureRegistry)
@@ -253,6 +254,55 @@
         }
     };
 
+    // Instance-local ownership of exclusively QOL-created IDs. Native parent
+    // selection, content, signatures and scheduling stay with the caller.
+    const createOwnedTree = () => {
+        const nodes = new Map(), retired = new Set();
+        const retire = panel => {
+            if (!isPanelAlive(panel)) return;
+            setVisible(panel, false);
+            safeDeletePanel(panel);
+            retired.add(panel);
+        };
+        const discard = id => {
+            const record = nodes.get(id);
+            if (!record) return;
+            nodes.delete(id);
+            // Expected ancestry tracks children even after native reparenting.
+            for (const [childId, child] of [...nodes]) {
+                if (child.parent === record.panel) discard(childId);
+            }
+            retire(record.panel);
+        };
+        const sweep = () => {
+            for (const [id, record] of [...nodes]) {
+                if (!isPanelAlive(record.panel) || !isPanelAlive(record.parent) ||
+                    findChild(record.parent, id) !== record.panel) discard(id);
+            }
+            for (const panel of retired) {
+                if (!isPanelAlive(panel)) retired.delete(panel);
+                else safeDeletePanel(panel);
+            }
+        };
+        const child = (parent, type, id, properties) => {
+            if (!id) return null;
+            const next = findChild(parent, id);
+            const previous = nodes.get(id);
+            if (previous && (previous.panel !== next || previous.parent !== parent)) discard(id);
+            if (!isPanelAlive(parent)) return null;
+            // A rapid re-enable can still find the previous instance's tree
+            // before DeleteAsync finishes. Never adopt that pending deletion.
+            if (isPanelAlive(next) && (!nodes.has(id) || retired.has(next))) { retire(next); return null; }
+            const panel = isPanelAlive(next) ? next : safeCreatePanel(type, parent, id, properties || { hittest: "false", hittestchildren: "false" });
+            if (!isPanelAlive(panel)) return null;
+            if (!nodes.has(id)) nodes.set(id, { panel, parent });
+            return panel;
+        };
+        const clear = () => { for (const id of [...nodes.keys()].reverse()) discard(id); sweep(); };
+        const dispose = () => { clear(); retired.clear(); };
+        return { child, sweep, clear, dispose };
+    };
+
     // ql_utils.js is loaded first in every context that includes panel helpers.
     const QOL_WASH_COLOR_PALETTE = QOL_UTILS.QOL_WASH_COLOR_PALETTE;
     const normalizePaletteIndex = QOL_UTILS.NormalizePaletteColorIndex;
@@ -286,6 +336,7 @@
         createPanel: safeCreatePanel,
         delete: safeDeletePanel,
         deletePanel: safeDeletePanel,
+        createOwnedTree,
         findRoot,
         findHud,
         findChild,

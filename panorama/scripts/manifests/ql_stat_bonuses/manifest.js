@@ -1,6 +1,7 @@
 // OWNS: Golden-statue/boon stat readout, source caches and owned overlay labels.
 // DOES NOT OWN: Native stat calculations, shop widgets or tooltip content.
 // Explicit native Golden Statues/Boons rows take precedence over derived values.
+// Overlay parent: native hud.xml HudCore > gameplay_hud.
 (() => {
     "use strict";
     const P = QOL.core.panel;
@@ -126,10 +127,13 @@
             { key: "STAT_BONUSES_Y_OFFSET", type: "slider" }
         ],
         create(ctx) {
-            const parentResolver = QOL.panelCache.createIdResolver("gameplay_hud", { retryMs: 500 });
+            const tree = P.createOwnedTree();
+            const parentResolver = QOL.panelCache.createIdResolver("gameplay_hud", {
+                retryMs: 500, ownerPath: [{ id: "Hud", optional: true }, { className: "HudCore" }]
+            });
             const statsResolvers = ["HeroStatsDisplay", "HeroStatsWeapon", "CitadelHudHeroShop"].map(id =>
                 QOL.panelCache.createIdResolver(id, { retryMs: 1500 }));
-            let loop = null, rootOwner = null, model = null, overlay = null, signature = null, statsOwner = null;
+            let running = false, loop = null, rootOwner = null, model = null, overlay = null, signature = null, statsOwner = null;
             let nextTooltipScanMs = 0, lastShopOpen = null;
             const labels = new Map(), sources = new Map(), goldenValues = new Map();
 
@@ -143,7 +147,7 @@
             }
 
             function release(resetSources = true) {
-                P.delete(overlay);
+                tree.clear();
                 overlay = null; signature = null; labels.clear();
                 if (resetSources) {
                     rootOwner = null; statsOwner = null; nextTooltipScanMs = 0; lastShopOpen = null;
@@ -154,18 +158,19 @@
             }
 
             function ensureOverlay(root) {
+                tree.sweep();
                 const parent = parentResolver.resolve(root);
                 if (!P.isAlive(parent)) { release(false); return false; }
                 if (!P.isAlive(overlay) || overlay.GetParent() !== parent) {
                     release(false);
-                    overlay = P.findChild(parent, "QOLStatBonusesOverlay") ||
-                        P.create("Panel", parent, "QOLStatBonusesOverlay", { hittest: "false", hittestchildren: "false" });
                 }
+                overlay = tree.child(parent, "Panel", "QOLStatBonusesOverlay");
                 if (!P.isAlive(overlay)) return false;
-                const title = P.findChild(overlay, "QOLStatBonusesTitle") || P.create("Label", overlay, "QOLStatBonusesTitle");
+                const title = tree.child(overlay, "Label", "QOLStatBonusesTitle");
+                if (!P.isAlive(title)) return false;
                 if (title && title.text !== "Stat Bonuses (Golden Statues)") title.text = "Stat Bonuses (Golden Statues)";
                 for (const def of STAT_DEFS) {
-                    const label = P.findChild(overlay, def.labelId) || P.create("Label", overlay, def.labelId);
+                    const label = tree.child(overlay, "Label", def.labelId);
                     if (!P.isAlive(label)) return false;
                     P.setClass(label, "QOLStatBonusesLine", true);
                     labels.set(def.key, label);
@@ -214,8 +219,9 @@
             }
 
             function update() {
-                const root = $.GetContextPanel();
-                if (!P.isAlive(root) || !model || !model.enabled) { release(); return; }
+                if (!running) return;
+                const root = P.findHud($.GetContextPanel());
+                if (!P.isAlive(root) || (root.id !== "Hud" && root.paneltype !== "CitadelHud") || !model.enabled) { release(); return; }
                 if (rootOwner !== root) { release(); rootOwner = root; }
                 if (QOL.core.hud.isInHideout(root)) {
                     P.setClass(overlay, "qol-hidden", true);
@@ -256,14 +262,17 @@
 
             return {
                 onEnable() {
+                    running = true;
                     refreshSettings();
                     loop = QOL.core.Scheduler.createPollLoop(update, 0.2, ctx.id);
                 },
                 onSettingsChanged: refreshSettings,
                 onDisable() {
+                    running = false;
                     if (loop) { loop.stop(); loop = null; }
                     release();
                     model = null;
+                    tree.dispose();
                 }
             };
         },

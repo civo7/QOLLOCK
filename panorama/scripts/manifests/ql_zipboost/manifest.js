@@ -1,6 +1,7 @@
 // OWNS: Zip Boost overlay, cooldown/ready/active state and ready flash.
 // DOES NOT OWN: Native hints, status effects or the zipline ability itself.
 // A visible ready hint is readiness evidence, never active-boost evidence.
+// Overlay parent: native hud.xml HudCore > gameplay_hud.
 (() => {
     "use strict";
     const SEARCH_MS = 1500;
@@ -18,12 +19,15 @@
         create(ctx) {
             const P = QOL.core.panel;
             const H = QOL.core.hud;
-            const gameplayResolver = QOL.panelCache.createIdResolver("gameplay_hud", { retryMs: SEARCH_MS });
+            const gameplayResolver = QOL.panelCache.createIdResolver("gameplay_hud", {
+                retryMs: SEARCH_MS, ownerPath: [{ id: "Hud", optional: true }, { className: "HudCore" }]
+            });
+            const tree = P.createOwnedTree();
             const hintResolvers = ["citadel_ability_zipline_boost_", "citadel_ability_zipline_boost"].map(id =>
                 QOL.panelCache.createIdResolver(id, { retryMs: SEARCH_MS }));
             const effectsResolver = QOL.panelCache.createIdResolver("StatusEffects", { retryMs: SEARCH_MS });
             const rootEffectsResolver = QOL.panelCache.createIdResolver("StatusEffects", { retryMs: SEARCH_MS });
-            let loop = null, model = null, overlay = null, titleLabel = null, stateLabel = null, signature = null;
+            let running = false, rootOwner = null, loop = null, model = null, overlay = null, titleLabel = null, stateLabel = null, signature = null;
             let source = null, sourceScope = null, fallbackSource = null, statusEffects = null, nextSourceSearchMs = 0;
             let activeEndMs = 0, cooldownEndMs = 0, wasInUse = false, lastState = null, readyFlashUntilMs = 0;
 
@@ -80,10 +84,10 @@
             }
 
             function release(resetTracking = true) {
-                P.delete(overlay);
+                tree.clear();
                 overlay = null; titleLabel = null; stateLabel = null; signature = null;
                 if (resetTracking) {
-                    source = null; sourceScope = null; fallbackSource = null; statusEffects = null; nextSourceSearchMs = 0;
+                    rootOwner = null; source = null; sourceScope = null; fallbackSource = null; statusEffects = null; nextSourceSearchMs = 0;
                     gameplayResolver.reset(); effectsResolver.reset(); rootEffectsResolver.reset();
                     for (const resolver of hintResolvers) resolver.reset();
                     activeEndMs = 0; cooldownEndMs = 0; wasInUse = false; lastState = null; readyFlashUntilMs = 0;
@@ -91,24 +95,26 @@
             }
 
             function ensureOverlay(root) {
+                tree.sweep();
                 const parent = gameplayResolver.resolve(root);
-                if (!P.isAlive(parent)) { release(); return false; }
+                if (!P.isAlive(parent)) { release(false); return false; }
                 if (!P.isAlive(overlay) || overlay.GetParent() !== parent) {
                     release(false);
-                    overlay = P.findChild(parent, "QOLZipBoostOverlay") ||
-                        P.create("Panel", parent, "QOLZipBoostOverlay", { hittest: "false", hittestchildren: "false" });
                 }
+                overlay = tree.child(parent, "Panel", "QOLZipBoostOverlay");
                 if (!P.isAlive(overlay)) return false;
-                if (!P.findChild(overlay, "QOLZipBoostIcon")) P.create("Panel", overlay, "QOLZipBoostIcon");
-                const text = P.findChild(overlay, "QOLZipBoostTextContainer") || P.create("Panel", overlay, "QOLZipBoostTextContainer");
-                titleLabel = P.findChild(text, "QOLZipBoostLabel") || P.create("Label", text, "QOLZipBoostLabel");
-                stateLabel = P.findChild(text, "QOLZipBoostState") || P.create("Label", text, "QOLZipBoostState");
-                return P.isAlive(titleLabel) && P.isAlive(stateLabel);
+                const icon = tree.child(overlay, "Panel", "QOLZipBoostIcon");
+                const text = tree.child(overlay, "Panel", "QOLZipBoostTextContainer");
+                titleLabel = tree.child(text, "Label", "QOLZipBoostLabel");
+                stateLabel = tree.child(text, "Label", "QOLZipBoostState");
+                return P.isAlive(icon) && P.isAlive(titleLabel) && P.isAlive(stateLabel);
             }
 
             function update() {
-                const root = $.GetContextPanel();
-                if (!P.isAlive(root) || !model || !model.enabled || !H.isCustomHudContextActive(root)) { release(); return; }
+                if (!running) return;
+                const root = P.findHud($.GetContextPanel());
+                if (!P.isAlive(root) || (root.id !== "Hud" && root.paneltype !== "CitadelHud") || !model.enabled) { release(); return; }
+                if (rootOwner !== root) { release(); rootOwner = root; }
                 if (!ensureOverlay(root)) return;
                 const inHideout = H.isInHideout(root);
                 P.setClass(overlay, "qol-hidden", inHideout);
@@ -162,14 +168,17 @@
 
             return {
                 onEnable() {
+                    running = true;
                     refreshSettings();
                     loop = QOL.core.Scheduler.createPollLoop(update, 0.4, ctx.id);
                 },
                 onSettingsChanged: refreshSettings,
                 onDisable() {
+                    running = false;
                     if (loop) { loop.stop(); loop = null; }
                     release();
                     model = null;
+                    tree.dispose();
                 }
             };
         },

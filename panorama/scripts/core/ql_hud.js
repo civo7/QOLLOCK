@@ -218,13 +218,6 @@
         return topBar;
     };
 
-    const getGameplayHudPanel = (root) => {
-        if (!root?.FindChildTraverse) return root || null;
-        return root.FindChildTraverse(PANEL_ID_GAMEPLAY_HUD) || root;
-    };
-
-    const isCustomHudContextActive = () => true;
-
     const readPanelOpacityMaybe = (panel) => {
         if (!panel || !isAlive(panel) || !panel.style) return NaN;
         const rawOpacity = panel.style.opacity;
@@ -945,8 +938,6 @@
         getPanelClassTokens,
         panelHasClassToken,
         getHighestRejuvChargeTokenOnPanel,
-        getGameplayHudPanel,
-        isCustomHudContextActive,
         isHudVisibleForTopBarRuntime,
         isGameplayHudShown,
         isColorWarningEnabled,
@@ -991,8 +982,6 @@
     Q.getPanelClassTokens = getPanelClassTokens;
     Q.panelHasClassToken = panelHasClassToken;
     Q.getHighestRejuvChargeTokenOnPanel = getHighestRejuvChargeTokenOnPanel;
-    Q.getGameplayHudPanel = getGameplayHudPanel;
-    Q.isCustomHudContextActive = isCustomHudContextActive;
     Q.isHudVisibleForTopBarRuntime = isHudVisibleForTopBarRuntime;
     Q.isColorWarningEnabled = isColorWarningEnabled;
     Q.isCombatSignalActive = isCombatSignalActive;

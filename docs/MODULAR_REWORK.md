@@ -76,6 +76,11 @@ behavior until its owning implementation has been audited.
   empty dispatch registry and its ID translation table are removed; historical
   configuration parsers/codecs remain independent and the offline profiler
   attributes active polls through Scheduler.
+- Created combat/zip/unsecured/stat readouts share an instance-local tree helper
+  for complete child ownership and asynchronous retirement. Native parent and
+  source/history rules remain explicit in each manifest; loading roots no longer
+  become fallback gameplay anchors. Stopped hooks cannot recreate UI, and new
+  HUDs reset private observation history.
 
 Frozen main-config fixtures preserve all healthbar variants and both minimap
 scale methods. Published versions, compact layouts and persistent defaults stay

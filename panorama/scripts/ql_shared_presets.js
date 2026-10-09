@@ -2300,7 +2300,6 @@ try { if (typeof globalThis !== "undefined") globalThis.QOL = QOL; } catch(e) { 
     QOL.isPanelVisibleMaybe = function() { return false; };
     QOL.isPanelListValid = function() { return false; };
     QOL.getUIRoot = function() { return null; };
-    QOL.getGameplayHudPanel = function() { return null; };
     QOL.perfNowMs = function() { return Date.now ? Date.now() : (new Date()).getTime(); };
     QOL.perfStart = function() {};
     QOL.perfEnd = function() {};

@@ -2,6 +2,7 @@
 // DOES NOT OWN: Native soul conversion, native amount labels or Better Unsecured state.
 // Sources and danger classes follow verified current/legacy native HUD contracts.
 // This timer intentionally stays active in hideout and hero testing.
+// Overlay parent: native hud.xml HudCore > gameplay_hud.
 (() => {
     "use strict";
     const P = QOL.core.panel;
@@ -48,11 +49,15 @@
             { key: "UNSECURED_SOUL_TIMER_SCALE", type: "slider" }
         ],
         create(ctx) {
+            const tree = P.createOwnedTree();
+            const parentResolver = QOL.panelCache.createIdResolver("gameplay_hud", {
+                retryMs: SEARCH_MS, ownerPath: [{ id: "Hud", optional: true }, { className: "HudCore" }]
+            });
             const modernResolver = QOL.panelCache.createIdResolver("HudUnsecuredLabel", { retryMs: SEARCH_MS });
             const goldResolver = QOL.panelCache.createIdResolver("gold_and_ap_container", { retryMs: SEARCH_MS });
             const amountResolver = QOL.panelCache.createIdResolver("hudDeathGoldLabel", { retryMs: SEARCH_MS });
             const rootAmountResolver = QOL.panelCache.createIdResolver("hudDeathGoldLabel", { retryMs: SEARCH_MS });
-            let loop = null, rootOwner = null, model = null, overlay = null, stateLabel = null, signature = null;
+            let running = false, loop = null, rootOwner = null, model = null, overlay = null, stateLabel = null, signature = null;
             let source = null, fallbackSource = null, nextSourceSearchMs = 0;
             let lastSouls = -1, lastSampleMs = 0, rateEma = 0, rateUpdateMs = 0, etaEndMs = 0;
 
@@ -71,11 +76,12 @@
             }
 
             function release(resetSource = true) {
-                P.delete(overlay);
+                tree.clear();
                 overlay = null; stateLabel = null; signature = null;
                 if (resetSource) {
                     source = null; fallbackSource = null; nextSourceSearchMs = 0; rootOwner = null;
                     modernResolver.reset(); goldResolver.reset(); amountResolver.reset(); rootAmountResolver.reset();
+                    parentResolver.reset();
                     resetSamples();
                 }
             }
@@ -94,21 +100,20 @@
             }
 
             function ensureOverlay(root) {
-                const parent = QOL.core.hud.getGameplayHudPanel(root);
-                if (!P.isAlive(parent)) return false;
+                tree.sweep();
+                const parent = parentResolver.resolve(root);
+                if (!P.isAlive(parent)) { release(false); return false; }
                 if (!P.isAlive(overlay) || overlay.GetParent() !== parent) {
                     release(false);
-                    overlay = P.findChild(parent, "QOLUnsecuredSoulsOverlay") ||
-                        P.create("Panel", parent, "QOLUnsecuredSoulsOverlay", { hittest: "false", hittestchildren: "false" });
                 }
+                overlay = tree.child(parent, "Panel", "QOLUnsecuredSoulsOverlay");
                 if (!P.isAlive(overlay)) return false;
-                if (!P.findChild(overlay, "QOLUnsecuredSoulsIcon")) P.create("Panel", overlay, "QOLUnsecuredSoulsIcon");
-                const text = P.findChild(overlay, "QOLUnsecuredSoulsTextContainer") ||
-                    P.create("Panel", overlay, "QOLUnsecuredSoulsTextContainer");
-                const title = P.findChild(text, "QOLUnsecuredSoulsLabel") || P.create("Label", text, "QOLUnsecuredSoulsLabel");
+                const icon = tree.child(overlay, "Panel", "QOLUnsecuredSoulsIcon");
+                const text = tree.child(overlay, "Panel", "QOLUnsecuredSoulsTextContainer");
+                const title = tree.child(text, "Label", "QOLUnsecuredSoulsLabel");
                 if (P.isAlive(title) && title.text !== "Unsecured Souls") title.text = "Unsecured Souls";
-                stateLabel = P.findChild(text, "QOLUnsecuredSoulsState") || P.create("Label", text, "QOLUnsecuredSoulsState");
-                return P.isAlive(stateLabel);
+                stateLabel = tree.child(text, "Label", "QOLUnsecuredSoulsState");
+                return P.isAlive(icon) && P.isAlive(title) && P.isAlive(stateLabel);
             }
 
             function sample(souls, now) {
@@ -144,8 +149,9 @@
             }
 
             function update() {
-                const root = $.GetContextPanel();
-                if (!P.isAlive(root) || !model || !model.enabled || !QOL.core.hud.isCustomHudContextActive(root)) { release(); return; }
+                if (!running) return;
+                const root = P.findHud($.GetContextPanel());
+                if (!P.isAlive(root) || (root.id !== "Hud" && root.paneltype !== "CitadelHud") || !model.enabled) { release(); return; }
                 if (rootOwner !== root) { release(); rootOwner = root; }
                 if (!ensureOverlay(root)) return;
                 P.setClass(overlay, "qol-hidden", false);
@@ -174,14 +180,17 @@
 
             return {
                 onEnable() {
+                    running = true;
                     model = readModel();
                     loop = QOL.core.Scheduler.createPollLoop(update, 0.2, ctx.id);
                 },
                 onSettingsChanged: refreshSettings,
                 onDisable() {
+                    running = false;
                     if (loop) { loop.stop(); loop = null; }
                     release();
                     model = null;
+                    tree.dispose();
                 }
             };
         },

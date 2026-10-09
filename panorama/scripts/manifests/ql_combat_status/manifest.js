@@ -18,43 +18,25 @@
             const resolver = QOL.panelCache.createIdResolver("gameplay_hud", {
                 ownerPath: [{ id: "Hud", optional: true }, { className: "HudCore" }]
             });
-            const owned = new Set(), retired = new Set();
+            const tree = P.createOwnedTree();
             let running = false, root = null, parent = null, model = null, loop = null;
             let overlay = null, stateLabel = null, timerLabel = null, signature = null;
             let lastCombatMs = null, combatStartMs = null, signalActive = false;
             function resetPhase() { lastCombatMs = combatStartMs = null; signalActive = false; }
-            function remove(panel) {
-                if (P.isAlive(panel)) { P.setVisible(panel, false); P.delete(panel); retired.add(panel); }
-                owned.delete(panel);
-            }
             function clearOverlay() {
-                for (const panel of [...owned].reverse()) remove(panel);
+                tree.clear();
                 overlay = stateLabel = timerLabel = parent = signature = null;
             }
             function release() { clearOverlay(); resetPhase(); resolver.reset(); root = null; }
-            function child(owner, id, current, type) {
-                if (!P.isAlive(owner)) return null;
-                const next = P.findChild(owner, id);
-                if (current && current !== next) remove(current);
-                if (P.isAlive(next) && retired.has(next)) return null;
-                // IDs are exclusively QOL-created. A new instance must not adopt
-                // a previous instance's tree already queued for asynchronous deletion.
-                if (P.isAlive(next) && !owned.has(next)) { remove(next); return null; }
-                const panel = next || P.create(type, owner, id, { hittest: "false", hittestchildren: "false" });
-                if (P.isAlive(panel)) owned.add(panel);
-                return panel;
-            }
             function ensure(currentParent) {
-                for (const panel of retired) {
-                    if (!P.isAlive(panel)) retired.delete(panel); else P.delete(panel);
-                }
+                tree.sweep();
                 if (parent !== currentParent || (P.isAlive(overlay) && overlay.GetParent() !== currentParent)) clearOverlay();
                 parent = currentParent;
                 const previous = overlay;
-                overlay = child(parent, "QOLCombatStatusOverlay", overlay, "Panel");
+                overlay = tree.child(parent, "Panel", "QOLCombatStatusOverlay");
                 if (overlay !== previous) signature = null;
-                stateLabel = child(overlay, "QOLCombatStatusState", stateLabel, "Label");
-                timerLabel = child(overlay, "QOLCombatStatusTimer", timerLabel, "Label");
+                stateLabel = tree.child(overlay, "Label", "QOLCombatStatusState");
+                timerLabel = tree.child(overlay, "Label", "QOLCombatStatusTimer");
                 return P.isAlive(overlay) && P.isAlive(stateLabel) && P.isAlive(timerLabel);
             }
             function phase(now) {
@@ -99,7 +81,7 @@
             return {
                 onEnable() { running = true; refresh(); loop = QOL.core.Scheduler.createPollLoop(update, 0.2, ctx.id); },
                 onSettingsChanged: refresh,
-                onDisable() { running = false; if (loop) loop.stop(); loop = null; release(); model = null; retired.clear(); }
+                onDisable() { running = false; if (loop) loop.stop(); loop = null; release(); model = null; tree.dispose(); }
             };
         },
         test() {

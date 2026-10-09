@@ -44,6 +44,12 @@ alive even while the native indicator is hidden.
    removes owned classes/panels, and resets discovery and signatures. Cleanup
    must also work after partial enable failure.
 
+For exclusively QOL-created overlay trees, reuse
+`core.panel.createOwnedTree()` instead of tracking only the upper panel. Its
+child reconciliation releases living moved children and avoids adopting an old
+instance's pending asynchronous deletion. Keep native parent selection and
+history rules in the manifest; see [panel helpers](core/panel_helpers.md).
+
 ## Generate a starting point
 
 Run from the repository root, for example (shell quoting varies):

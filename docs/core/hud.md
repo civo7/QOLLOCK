@@ -73,6 +73,13 @@ Do not duplicate the predicate through two `isClassActive` calls or legacy
 fallbacks. Feature-specific intro/visibility rules remain separate, and the
 unsecured-souls timer intentionally has no hideout suppression.
 
+The former always-true custom-context predicate and gameplay-root fallback are
+removed. Content owners resolve their verified native parents and wait when
+those parents are absent; a menu/loading root is not a gameplay anchor. Zip
+boost, unsecured readouts, stat bonuses and combat text own their complete
+created trees through the panel helper, including moved children and rapid
+disable/re-enable generations. New HUDs reset their private observation history.
+
 ## Combat HUD visibility
 
 `isGameplayHudShown(root)` is separate from the hideout connection predicate and

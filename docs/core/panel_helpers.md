@@ -13,6 +13,7 @@ object is exposed as `QOL.core.panel`, `QOL.core.PanelHelpers`, and
 | `isAlive(panel)`, `isPanelAlive(panel)` | Aliases of `QOL_UTILS.IsPanelValid`: false for absent, invalid, or throwing handles. |
 | `create(type, parent, id, properties)`, `createPanel(...)` | Guard parent validity and catch creation errors; return panel or null. |
 | `delete(panel)`, `deletePanel(panel)` | Schedule `DeleteAsync(0)` on a valid panel; catch deletion errors. |
+| `createOwnedTree()` | Own exclusively QOL-created IDs through instance-local child reconciliation and complete tree retirement. See below. |
 | `findHud(preferredRoot)` | Search context/ancestors for Hud; no-argument calls cache real HUD matches per context, never loading-root fallbacks. Can return the context/top root as a fallback, so this alone does not prove active gameplay. |
 | `findRoot(panel?)` | Walk ancestors of the supplied panel, defaulting to the current context; return null on native traversal failure. |
 | `findChild(parent, id)` | Safe native `FindChild` wrapper for direct children. |
@@ -32,6 +33,22 @@ object is exposed as `QOL.core.panel`, `QOL.core.PanelHelpers`, and
 | `washColorPalette` | Exported palette array (not a function). |
 
 ## Styles and ownership
+
+`createOwnedTree()` returns `child(parent, type, id, properties?)`, `sweep()`,
+`clear()` and `dispose()`. Each nonempty ID must be unique within that instance
+and reserved for QOL-created content; never use this helper to adopt native
+panels. Child reconciliation retains expected ancestry, so moved children are
+still retired with their former owner. `sweep()` releases moved/replaced nodes
+and retries pending asynchronous deletion; `clear()` retires all nodes while
+retaining deletion retries. Final `dispose()` also drops those retry records.
+Partial construction can be retried through the same child calls. A new
+instance retires an existing foreign tree instead of adopting UI that the
+previous instance may already have queued for deletion. Default creation
+properties disable hit testing on each child.
+
+Native parent discovery, active-instance guards, content/history, style
+signatures and schedules remain the manifest's responsibilities. This helper
+does not establish gameplay availability or run a controller loop.
 
 `syncStyles` compares signatures, not each property against its current value.
 Retain its returned signature only for the same panel instance; reset it when the

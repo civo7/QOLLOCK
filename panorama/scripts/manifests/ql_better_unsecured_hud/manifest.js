@@ -1,6 +1,7 @@
 // OWNS: Unsecured amount/icon/text mirror and component-size presentation.
 // DOES NOT OWN: Native soul labels, their feedback classes or decay tracking.
 // Offsets retain their established convention: X right, Y down from the saved native baseline.
+// Native hud.xml places StatsAndModsContainer and gameplay_hud under HudCore.
 (() => {
     "use strict";
     const SEARCH_MS = 2000;
@@ -19,10 +20,17 @@
         ],
         create(ctx) {
             const P = QOL.core.panel;
+            const tree = P.createOwnedTree();
+            const parentResolver = QOL.panelCache.createIdResolver("StatsAndModsContainer", {
+                retryMs: SEARCH_MS, ownerPath: [{ id: "Hud", optional: true }, { className: "HudCore" }]
+            });
+            const gameplayResolver = QOL.panelCache.createIdResolver("gameplay_hud", {
+                retryMs: SEARCH_MS, ownerPath: [{ id: "Hud", optional: true }, { className: "HudCore" }]
+            });
             const goldResolver = QOL.panelCache.createIdResolver("gold_and_ap_container", { retryMs: SEARCH_MS });
             const amountResolver = QOL.panelCache.createIdResolver("hudDeathGoldLabel", { retryMs: SEARCH_MS });
             const rootAmountResolver = QOL.panelCache.createIdResolver("hudDeathGoldLabel", { retryMs: SEARCH_MS });
-            let loop = null, rootOwner = null, model = null, overlay = null, signature = null;
+            let running = false, loop = null, rootOwner = null, model = null, overlay = null, signature = null;
             let container = null, source = null, mirror = null, icon = null, text = null, nextSearchMs = 0;
 
             function readModel() {
@@ -64,37 +72,38 @@
             }
 
             function release(resetSource = true) {
-                P.delete(overlay);
+                tree.clear();
                 overlay = null; mirror = null; icon = null; text = null; signature = null;
                 if (resetSource) {
                     container = null; source = null; nextSearchMs = 0; rootOwner = null;
                     goldResolver.reset(); amountResolver.reset(); rootAmountResolver.reset();
+                    parentResolver.reset(); gameplayResolver.reset();
                 }
             }
 
             function ensureOverlay(root) {
-                const parent = P.findTraverse(root, "StatsAndModsContainer") || QOL.core.hud.getGameplayHudPanel(root);
-                if (!P.isAlive(parent)) return false;
+                tree.sweep();
+                const parent = parentResolver.resolve(root) || gameplayResolver.resolve(root);
+                if (!P.isAlive(parent)) { release(false); return false; }
                 if (!P.isAlive(overlay) || overlay.GetParent() !== parent) {
                     release(false);
-                    overlay = P.findChild(parent, "QOLBetterUnsecuredOverlay") ||
-                        P.create("Panel", parent, "QOLBetterUnsecuredOverlay", { hittest: "false", hittestchildren: "false" });
                 }
+                overlay = tree.child(parent, "Panel", "QOLBetterUnsecuredOverlay");
                 if (!P.isAlive(overlay)) return false;
-                icon = P.findChild(overlay, "QOLBetterUnsecuredMirrorIcon") || P.create("Panel", overlay, "QOLBetterUnsecuredMirrorIcon");
-                mirror = P.findChild(overlay, "QOLBetterUnsecuredMirrorLabel") || P.create("Label", overlay, "QOLBetterUnsecuredMirrorLabel");
-                text = P.findChild(overlay, "QOLBetterUnsecuredMirrorText") || P.create("Label", overlay, "QOLBetterUnsecuredMirrorText");
+                icon = tree.child(overlay, "Panel", "QOLBetterUnsecuredMirrorIcon");
+                mirror = tree.child(overlay, "Label", "QOLBetterUnsecuredMirrorLabel");
+                text = tree.child(overlay, "Label", "QOLBetterUnsecuredMirrorText");
                 for (const child of [icon, mirror, text]) {
                     if (!P.isAlive(child)) return false;
-                    child.hittest = false; child.hittestchildren = false;
                 }
                 P.setClass(mirror, "death_penalty_gold", true);
                 return true;
             }
 
             function update() {
-                const root = $.GetContextPanel();
-                if (!P.isAlive(root) || !model || !model.enabled) { release(); return; }
+                if (!running) return;
+                const root = P.findHud($.GetContextPanel());
+                if (!P.isAlive(root) || (root.id !== "Hud" && root.paneltype !== "CitadelHud") || !model.enabled) { release(); return; }
                 if (rootOwner !== root) { release(); rootOwner = root; }
                 const now = QOL.utils.PerfNowMs();
                 if ((container && !P.isAlive(container)) || now >= nextSearchMs) {
@@ -128,14 +137,17 @@
 
             return {
                 onEnable() {
+                    running = true;
                     refreshSettings();
                     loop = QOL.core.Scheduler.createPollLoop(update, 0.2, ctx.id);
                 },
                 onSettingsChanged: refreshSettings,
                 onDisable() {
+                    running = false;
                     if (loop) { loop.stop(); loop = null; }
                     release();
                     model = null;
+                    tree.dispose();
                 }
             };
         },
