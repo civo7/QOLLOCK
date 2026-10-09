@@ -128,3 +128,16 @@ test("owned tree removes one branch including moved descendants without touching
     assert.equal(tree.child(overlay, "Label", "QOLRemoveSibling"), sibling);
     tree.dispose(); env.clock.advance(20); assert.equal(sibling.IsValid(), false); assert.deepEqual(env.clock.errors, []);
 });
+
+test("owned tree sweep reports current topology loss without invalidating surviving nodes for deletion retries", () => {
+    const env = fixture(owners[0]), tree = env.Q.core.panel.createOwnedTree();
+    const overlay = tree.child(env.root, "Panel", "QOLSweepRoot"), child = tree.child(overlay, "Label", "QOLSweepChild");
+    assert.equal(tree.sweep(), true);
+    const remove = child.DeleteAsync.bind(child); let reject = true;
+    child.DeleteAsync = delay => { if (reject) throw Error("modeled queued deletion failure"); remove(delay); };
+    child.SetParent(env.add(null, "MovedSweepChild"));
+    assert.equal(tree.sweep(), false); assert.equal(child.visible, false); assert.equal(overlay.IsValid(), true);
+    assert.equal(tree.sweep(), true); reject = false; assert.equal(tree.sweep(), true);
+    env.clock.advance(20); assert.equal(child.IsValid(), false);
+    tree.dispose(); env.clock.advance(20); assert.deepEqual(env.clock.errors, []);
+});

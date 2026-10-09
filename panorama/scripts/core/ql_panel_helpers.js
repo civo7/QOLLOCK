@@ -275,6 +275,7 @@
             retire(record.panel);
         };
         const sweep = () => {
+            const previousSize = nodes.size;
             for (const [id, record] of [...nodes]) {
                 if (!isPanelAlive(record.panel) || !isPanelAlive(record.parent) ||
                     findChild(record.parent, id) !== record.panel) discard(id);
@@ -283,6 +284,7 @@
                 if (!isPanelAlive(panel)) retired.delete(panel);
                 else safeDeletePanel(panel);
             }
+            return nodes.size === previousSize;
         };
         const child = (parent, type, id, properties) => {
             if (!id) return null;

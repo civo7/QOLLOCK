@@ -112,7 +112,8 @@
             const gameplay = QOL.panelCache.createIdResolver("gameplay_hud", { retryMs: 500,
                 ownerPath: [{ id: "Hud", optional: true }, { className: "HudCore" }] });
             const styles = new Map();
-            let generation = null, model = null, loop = null, enabled = false;
+            const tree = P.createOwnedTree();
+            let generation = null, model = null, loop = null, enabled = false, root = null;
 
             function readModel() {
                 const cfg = ctx.config.view();
@@ -145,40 +146,40 @@
 
             function retire() {
                 for (const [panel, owner] of styles) releaseStyles(panel, owner);
-                if (!generation) return;
-                // Track each created panel: reparented children are still our responsibility.
-                for (const panel of [...generation.owned.keys()].reverse()) P.delete(panel);
+                tree.clear();
                 generation = null;
             }
 
-            function isCurrent(parent) {
-                if (!generation || generation.parent !== parent) return false;
-                for (const [panel, expectedParent] of generation.owned) {
-                    if (!P.isAlive(panel) || panel.GetParent() !== expectedParent) return false;
-                }
-                return true;
-            }
-
             function ensure(parent) {
-                if (isCurrent(parent)) return true;
+                const stable = tree.sweep();
+                if (stable && generation && generation.parent === parent) return true;
                 retire();
                 if (!P.isAlive(parent)) return false;
-                // DeleteAsync is deferred; wait for our retired root to leave before reusing its ID.
-                if (P.isAlive(parent.FindChild("QOLKeyboardOverlayRoot"))) return false;
-                generation = { parent, owned: new Map(), overlay: null, box: null, keys: [] };
+                // Retire foreign previous generations too. Merely waiting for
+                // a living old root would prevent this owner from ever mounting.
+                if (P.isAlive(P.findChild(parent, "QOLKeyboardOverlayRoot"))) {
+                    tree.child(parent, "Panel", "QOLKeyboardOverlayRoot");
+                    return false;
+                }
+                generation = { parent, overlay: null, box: null, keys: [] };
+                const created = [];
+                let childIndex = 0;
                 const createOwned = (type, owner, id, properties) => {
-                    const panel = $.CreatePanel(type, owner, id, properties);
+                    // These IDs identify only QOL-created rows/keys/layouts.
+                    // CitadelBinding still owns its native glyph descendants.
+                    const panel = tree.child(owner, type, id || "QOLKeyboardOverlayChild" + childIndex++, properties);
                     if (!P.isAlive(panel)) throw new Error("Keyboard overlay panel creation failed");
-                    generation.owned.set(panel, owner);
+                    created.push(panel);
                     return panel;
                 };
                 try {
                     generation.overlay = createOwned("Panel", parent, "QOLKeyboardOverlayRoot", {
                         hittest: "false", hittestchildren: "false" });
+                    P.setVisible(generation.overlay, false);
                     generation.box = createOwned("Panel", generation.overlay, "AllBindingsBox", {
                         "class": "AllBindingsScope", hittest: "false", hittestchildren: "false" });
                     buildKeyboardOverlayLayouts(createOwned, generation.box);
-                    generation.keys = [...generation.owned.keys()].filter(panel => panel.BHasClass("Key"));
+                    generation.keys = created.filter(panel => panel.BHasClass("Key"));
                     return true;
                 } catch (error) {
                     retire();
@@ -187,6 +188,7 @@
             }
 
             function render() {
+                let ready = true;
                 const desired = new Map();
                 desired.set(generation.overlay, model.wash ? { washColor: model.wash } : {});
                 desired.set(generation.box, model.box);
@@ -210,16 +212,22 @@
                     if (!owner) { owner = { properties: new Set(), signature: null }; styles.set(panel, owner); }
                     for (const key of [...owner.properties]) if (!(key in next)) {
                         releaseProperty(panel, owner, key); owner.signature = null;
+                        ready = !owner.properties.has(key) && ready;
                     }
                     // Attempted properties stay owned even when native setters reject one write.
                     for (const key of Object.keys(next)) owner.properties.add(key);
                     owner.signature = P.syncStyles(panel, next, owner.signature).sig;
+                    ready = owner.signature !== null && ready;
                 }
+                if (generation.overlay.visible !== ready) P.setVisible(generation.overlay, ready);
             }
 
             function update() {
                 if (!enabled) return;
-                const parent = gameplay.resolve(P.findHud($.GetContextPanel()));
+                const current = P.findHud($.GetContextPanel());
+                if (root !== current) { retire(); gameplay.reset(); root = current; }
+                if (!P.isAlive(root) || (root.id !== "Hud" && root.paneltype !== "CitadelHud")) { retire(); return; }
+                const parent = gameplay.resolve(root);
                 if (ensure(parent)) render();
             }
 
@@ -230,7 +238,7 @@
                 onDisable() {
                     enabled = false;
                     if (loop) loop.stop(); loop = null;
-                    retire(); gameplay.reset(); model = null;
+                    retire(); tree.dispose(); gameplay.reset(); model = root = null;
                 }
             };
         },

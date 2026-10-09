@@ -144,6 +144,11 @@ behavior until its owning implementation has been audited.
   the permanently collapsed Fortitude zero block and its unused rules are
   removed. The shared scale canvas, all healthbar variants and native value
   bindings remain supplied by their current owners.
+- Keyboard creation/retirement uses the shared complete-tree helper instead of a
+  second private ownership implementation. Foreign previous roots, queued
+  re-enable and rejected moved-child deletion no longer strand the overlay;
+  partial renders/loading-root lookalikes stay hidden while native bindings,
+  glyph content and both action layouts remain with their existing owners.
 
 Frozen main-config fixtures preserve all healthbar variants and both minimap
 scale methods. Published versions, compact layouts and persistent defaults stay

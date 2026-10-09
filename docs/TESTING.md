@@ -121,6 +121,11 @@ without waiting for a full discovery scan or publishing duplicate global caches.
 reactive geometry/palette/custom RGB, Label-type glyph discovery, living owner
 replacement, partial style/construction failures, disable and registry cleanup.
 Native binding/glyph composition and key press visuals remain client checks.
+Keyboard regressions also retire foreign previous roots, exercise re-enable
+before asynchronous deletion, retry moved created-child deletion while preserving
+moved native glyph content, and keep loading-root lookalikes/partial renders hidden.
+The shared tree suite verifies its topology result independently of pending
+deletion retries, allowing complete layouts to use one ownership scan.
 
 Native target tests release living moved shapes and recycled native hint scopes
 on the render cadence, retain unrelated properties and exercise replacement

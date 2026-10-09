@@ -75,11 +75,23 @@ test("keyboard retries partial glyph/wash writes and suppresses successful idle 
     const overlay = env.overlay();
     overlay.style = new Proxy({}, { set(target, key, value) { writes++; if (key === "washColor" && reject) throw Error("native wash pending"); target[key] = value; return true; } });
     env.cfg.KEYBOARD_OVERLAY_WASH_COLOR = 5; env.feature.onSettingsChanged(); assert.equal(overlay.style.washColor, undefined);
+    assert.equal(overlay.visible, false);
     const label = env.add(env.box(), "KeyboardLetter", [], "Label");
     label.style = new Proxy({}, { set(target, key, value) { writes++; if (key === "fontSize" && reject) throw Error("native glyph pending"); target[key] = value; return true; } });
     env.clock.advance(250); assert.equal(label.style.fontSize, undefined);
     reject = false; env.clock.advance(250); assert.equal(overlay.style.washColor, "#ff6f61"); assert.equal(label.style.fontSize, "16px");
+    assert.equal(overlay.visible, true);
     const stableWrites = writes; env.clock.advance(2000); assert.equal(writes, stableWrites);
+    env.feature.onDisable(); env.clock.advance(20); assert.deepEqual(env.clock.errors, []);
+});
+
+test("keyboard keeps a failed wash reset hidden until native clearing succeeds", () => {
+    const env = setup({ KEYBOARD_OVERLAY_WASH_COLOR: 4 }); env.feature.onEnable();
+    const overlay = env.overlay(), clear = overlay.ClearPropertyFromCode.bind(overlay); let reject = true;
+    overlay.ClearPropertyFromCode = property => property === "wash-color" && reject ? false : clear(property);
+    env.cfg.KEYBOARD_OVERLAY_WASH_COLOR = 0; env.feature.onSettingsChanged();
+    assert.equal(overlay.style.washColor, "#ff3b47"); assert.equal(overlay.visible, false);
+    reject = false; env.clock.advance(350); assert.equal(overlay.style.washColor, undefined); assert.equal(overlay.visible, true);
     env.feature.onDisable(); env.clock.advance(20); assert.deepEqual(env.clock.errors, []);
 });
 
@@ -108,7 +120,7 @@ test("keyboard repairs a missing/reparented owned layout and cleans every moved 
 test("keyboard cleans partial construction before retry and failed registry enable leaves no overlay or callbacks", () => {
     const env = setup(); let reject = true; const create = env.$.CreatePanel;
     env.$.CreatePanel = (type, ...args) => { if (type === "CitadelBinding" && reject) throw Error("binding creation pending"); return create(type, ...args); };
-    assert.throws(() => env.feature.onEnable(), /binding creation pending/); env.clock.advance(20); assert.equal(env.overlay(), null);
+    assert.throws(() => env.feature.onEnable(), /Keyboard overlay panel creation failed/); env.clock.advance(20); assert.equal(env.overlay(), null);
     reject = false; env.feature.onEnable(); assert.ok(env.overlay()); env.feature.onDisable(); env.clock.advance(20);
     reject = true;
     env.Q.core.FeatureRegistry.enable("ql_keyboard");
@@ -127,4 +139,46 @@ test("keyboard waits for gameplay and ignores obsolete shared caches and helper 
     for (const key of ["allBindingsBoxes", "keyboardBoxCaches", "keyboardOverlayWashSig"]) assert.equal(Object.hasOwn(env.Q.state, key), false);
     for (const key of ["buildKeyboardOverlayLayouts", "getKeyboardCachedPanels", "resetKeyboardOverlayCaches"]) assert.equal(Object.hasOwn(env.Q, key), false);
     env.feature.onDisable(); env.clock.advance(20); assert.equal(foreign.IsValid(), true); assert.equal(foreign.style.x, "20px"); assert.deepEqual(env.clock.errors, []);
+});
+
+test("keyboard retires a foreign previous root and waits for queued deletion during immediate re-enable", () => {
+    const env = setup(), old = env.add(env.gameplay, "QOLKeyboardOverlayRoot");
+    const child = env.add(old, "PreviousKeyboardChild"); env.feature.onEnable();
+    assert.equal(env.overlay(), old); assert.equal(old.visible, false);
+    env.clock.advance(350); assert.equal(old.IsValid(), false); assert.equal(child.IsValid(), false);
+    const current = env.overlay(); assert.ok(current); assert.equal(current.visible, true);
+    env.feature.onDisable(); env.feature.onEnable(); assert.equal(env.overlay(), current); assert.equal(current.visible, false);
+    env.clock.advance(350); assert.equal(current.IsValid(), false);
+    assert.equal(env.gameplay.Children().filter(panel => panel.id === "QOLKeyboardOverlayRoot").length, 1);
+    assert.equal(env.box().FindChildrenWithClassTraverse("KeyboardLayoutBase").length, 1);
+    assert.equal(env.box().FindChildrenWithClassTraverse("KeyboardLayoutFull").length, 1);
+    env.feature.onDisable(); env.clock.advance(20); env.feature.onSettingsChanged(); env.clock.advance(600);
+    assert.equal(env.overlay(), null); assert.deepEqual(env.clock.errors, []);
+});
+
+test("keyboard retries moved created-child deletion while preserving moved native glyph content", () => {
+    const env = setup({ KEYBOARD_OVERLAY_SCALE: 150 }); env.feature.onEnable();
+    const key = env.box().FindChildrenWithClassTraverse("Key").find(panel => panel.paneltype === "CitadelBinding");
+    const glyph = env.add(key, "KeyboardLetter", [], "Label"); glyph.style.color = "#ABCDEF";
+    env.clock.advance(350); assert.equal(glyph.style.fontSize, "24px");
+    const detached = env.add(null, "MovedKeyboardContent"); glyph.SetParent(detached); key.SetParent(detached);
+    const remove = key.DeleteAsync.bind(key); let reject = true;
+    key.DeleteAsync = delay => { if (reject) throw Error("modeled created-key deletion failure"); remove(delay); };
+    env.clock.advance(700);
+    assert.equal(key.IsValid(), true); assert.equal(key.visible, false); assert.ok(env.overlay());
+    assert.equal(glyph.IsValid(), true); assert.equal(glyph.style.fontSize, undefined); assert.equal(glyph.style.color, "#ABCDEF");
+    reject = false; env.clock.advance(350); assert.equal(key.IsValid(), false); assert.equal(glyph.IsValid(), true);
+    env.feature.onDisable(); env.clock.advance(20); assert.deepEqual(env.clock.errors, []);
+});
+
+test("keyboard rejects a loading-root gameplay lookalike and mounts only the current real HUD", () => {
+    const env = setup(); env.feature.onEnable(); const old = env.overlay();
+    env.doc.root = env.add(null, "LoadingRoot");
+    const loadingCore = env.add(env.doc.root, "", ["HudCore"]), loadingGameplay = env.add(loadingCore, "gameplay_hud");
+    env.clock.advance(350); assert.equal(old.IsValid(), false); assert.equal(loadingGameplay.FindChild("QOLKeyboardOverlayRoot"), null);
+    const root = env.add(null, "Hud", [], "CitadelHud"), core = env.add(root, "", ["HudCore"]), gameplay = env.add(core, "gameplay_hud");
+    env.doc.root = root; env.clock.advance(350);
+    assert.ok(gameplay.FindChild("QOLKeyboardOverlayRoot")); assert.equal(env.root.IsValid(), true); assert.equal(env.overlay(), null);
+    env.feature.onDisable(); env.clock.advance(20); assert.equal(gameplay.FindChild("QOLKeyboardOverlayRoot"), null);
+    assert.deepEqual(env.clock.errors, []);
 });
