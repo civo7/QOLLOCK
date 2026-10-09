@@ -34,3 +34,16 @@ test("documented validity aliases reject stale and throwing native handles", () 
     assert.equal(valid({ IsValid: true }), false);
     assert.equal(valid({ IsValid: () => true }), true);
 });
+
+test("settings shared exports preserve actual panel helpers without fabricating HUD state or cache APIs", () => {
+    const { global: g } = require("./load_settings_environment")();
+    assert.equal(g.QOL.utils, g.QOL_UTILS);
+    assert.equal(g.QOL.isPanelVisibleMaybe, g.QOL.core.panel.isVisible);
+    assert.equal(g.QOL.state, undefined);
+    assert.equal(g.QOL.getCachedPanel, undefined);
+    assert.equal(g.QOL.resolveCachedPanel, undefined);
+    const panel = g.$.CreatePanel("Panel", g.$.GetContextPanel(), "ActualSettingsPanel");
+    assert.equal(g.QOL.isPanelVisibleMaybe(panel), true);
+    panel.visible = false;
+    assert.equal(g.QOL.isPanelVisibleMaybe(panel), false);
+});

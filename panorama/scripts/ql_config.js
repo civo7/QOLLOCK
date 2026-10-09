@@ -5,7 +5,7 @@
 // No IIFE — file-scope definitions like ql_shared_presets.js so both contexts
 // can access the functions as bare globals.
 //
-// Functions also published to QOL.* namespace for feature files using QOL.import().
+// Functions also published to QOL.* for direct namespace access.
 //
 // Dependencies: ql_shared_presets.js must be loaded before this file
 //   - QOL_DEFAULT_CONFIG (bare global, 256 default key/value pairs)
@@ -247,7 +247,7 @@ function SafeParseConfig(raw) {
 }
 
 // ── Publish to QOL namespace ──
-// These are the symbols that feature files can import via QOL.import([...]).
+// Retained same-context delegates share the parser implementation.
 
 if (typeof QOL !== "undefined") {
     QOL.buildDefaultConfig = BuildDefaultConfig;

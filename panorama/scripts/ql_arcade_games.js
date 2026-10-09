@@ -4,9 +4,7 @@
 (function() {
     'use strict';
 
-    // ── QOL.import() for settings context (ql_utils.js loads before ql_shared_presets.js) ──
-    var _deps = QOL.import(["utils"]);
-    var Utils = _deps.utils;
+    const Utils = QOL.utils;
 
     // Dependencies injected by ql_settings.js at init time
     var _Localize, _PrepareModal, _WarnLog, _FindRoot;

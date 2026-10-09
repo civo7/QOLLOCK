@@ -5,8 +5,7 @@
 (function() {
     'use strict';
 
-    var _deps = QOL.import(["utils"]);
-    var Utils = _deps.utils;
+    const Utils = QOL.utils;
     var WarnLog = QOL_UTILS.WarnLog;
 
     // ── Helper functions for preview panel DOM, context & styles ──

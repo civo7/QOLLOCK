@@ -535,6 +535,6 @@ var CRATE_DATA = {
 // Backward compatibility alias for newer references.
 var MINIMAP_CRATE_DATA = CRATE_DATA;
 
-// Phase 4.3: Publish to QOL namespace for QOL.import() access.
+// Publish the shared crate catalog for direct namespace access.
 if (typeof QOL !== "undefined") QOL.minimapCrateData = CRATE_DATA;
 

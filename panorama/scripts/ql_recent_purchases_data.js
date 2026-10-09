@@ -3739,5 +3739,5 @@
         "홀리데이": "url(\"s2r://panorama/images/heroes/astro_sm_psd.vtex\")"
     };
 
-// Phase 4.3: Publish to QOL namespace for QOL.import() access.
+// Publish the shared purchase catalog for direct namespace access.
 if (typeof QOL !== "undefined") QOL.recentPurchasesIcons = MOD_ICONS;

@@ -59,28 +59,6 @@
     Q.core.app = Q.core.app || {};
     Q.core.App = Q.core.app;
 
-    // Resilient QOL.import fallback for transitional features
-    if (!Q.import) {
-        Q.import = (names) => {
-            const out = {};
-            if (!Array.isArray(names)) return out;
-            for (const k of names) {
-                if (k === "state") {
-                    out.state = Q.state || (typeof State !== "undefined" ? State : {});
-                } else if (k === "utils") {
-                    out.utils = (typeof QOL_UTILS !== "undefined" ? QOL_UTILS : {});
-                } else if (k === "getCachedPanel") {
-                    out.getCachedPanel = key => Q.panelCache?.getPanel(key) || null;
-                } else if (k === "setCachedPanel") {
-                    out.setCachedPanel = (key, val) => Q.panelCache?.setPanel(key, val);
-                } else {
-                    out[k] = Q[k];
-                }
-            }
-            return out;
-        };
-    }
-
     // Mark as initialized so subsequent loads are no-ops
     Q.core.__initialized = true;
 

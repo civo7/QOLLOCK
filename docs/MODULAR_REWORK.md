@@ -85,6 +85,9 @@ behavior until its owning implementation has been audited.
   unconsumed signature/shop/build loader implementations and shared confirmation
   fields are removed. Compact/envelope codec adapters remain pure and preserve
   historical decoding, without UI-action or loader-queue ownership.
+- Settings consumers use explicit utility exports. Transitional import layers
+  and settings-side HUD/cache stubs are removed; shared data publication no
+  longer overwrites real panel helpers or fabricates gameplay APIs.
 
 Frozen main-config fixtures preserve all healthbar variants and both minimap
 scale methods. Published versions, compact layouts and persistent defaults stay

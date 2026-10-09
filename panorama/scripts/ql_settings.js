@@ -8,9 +8,8 @@ var MOD_CONFIG = Object.assign({}, QOL_DEFAULT_CONFIG);
 // to ensure they always see the current config. Read-only from their perspective.
 QOL.getSettingsConfig = function() { return MOD_CONFIG; };
 
-// ── QOL.import() for settings context (ql_utils.js now loaded via hud_escape_menu.xml) ──
-var _deps = QOL.import(["utils"]);
-var Utils = _deps.utils;
+// hud_escape_menu.xml loads utilities and their shared namespace before settings.
+var Utils = QOL.utils;
 var SafeLog = QOL_UTILS.SafeLog;
 var SafeGetAttribute = QOL_UTILS.SafeGetAttribute;
 var SafeSetAttribute = QOL_UTILS.SafeSetAttribute;
