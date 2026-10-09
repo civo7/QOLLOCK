@@ -21,6 +21,10 @@ native item layout belong solely to the passive-cooldown manifest; damage-report
 offsets belong solely to the damage-report manifest. These native owners release
 their code properties independently of shared root-class projection.
 
+Target/hint geometry belongs solely to `ql_target_shapes`. Core projects its CSS
+gates but does not mutate that instance's discovery/signature caches. The target
+owner derives settings in hooks and reconciles moved/replaced native children.
+
 Native chat visibility/geometry belongs to the independent `ql_chat_geometry`
 manifest. Core does not apply/reset chat transforms; image and translation
 owners share only the read-only native label selector in `ql_chat_messages.js`.

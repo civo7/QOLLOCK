@@ -134,7 +134,7 @@ are compatibility guards, not evidence that browser APIs are available in HUD.
 | `panorama/scripts/core/ql_panel_helpers.js` | Shared panel creation, lookup, styling and cleanup APIs |
 | `panorama/scripts/core/ql_hud.js`, `ql_hero_probe.js` | HUD/player discovery and current-player/hero evidence |
 | `panorama/scripts/core/ql_chat_messages.js`, `manifests/ql_chat_geometry/` | Read-only native chat label selection and independent native chat geometry; image/translation manifests own message children |
-| `panorama/scripts/ql_state.js`, `ql_panelcache.js` | Existing shared runtime state and typed caches; not persistent user settings |
+| `panorama/scripts/ql_state.js`, `ql_panelcache.js` | Shared runtime contracts and compatibility cache access; private feature bookkeeping stays in its owner and is not persistent user settings |
 | `panorama/scripts/manifests/<id>/manifest.js` | Gameplay feature config declaration and lifecycle implementation |
 | `panorama/scripts/manifests/ql_healthbar/` | One dispatcher plus shared code and five variant implementations |
 | `panorama/scripts/ql_settings.js` | Mutable settings-side `MOD_CONFIG`, module dependency injection and bootstrap |

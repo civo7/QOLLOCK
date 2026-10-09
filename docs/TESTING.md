@@ -101,6 +101,10 @@ reactive geometry/palette/custom RGB, Label-type glyph discovery, living owner
 replacement, partial style/construction failures, disable and registry cleanup.
 Native binding/glyph composition and key press visuals remain client checks.
 
+Native target tests also release living moved shapes and class-recycled hints on
+the render cadence, retain unrelated properties and exercise replacement through
+a real `CitadelHud` fixture. Private caches are not published to shared State.
+
 `item_mirror_ownership.test.js` exercises current HUD/inventory generations,
 living source/child replacement, partial writes/construction and pending/active
 feedback cancellation. The existing `item_mirror.test.js` still checks discovery,

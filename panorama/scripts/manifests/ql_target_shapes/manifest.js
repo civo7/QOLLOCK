@@ -11,7 +11,6 @@
         opacityText: clamp(cfg.UNIT_TARGET_OPACITY, 1, 0, 1).toFixed(2),
         hintScaleText: (clamp(cfg.UNIT_TARGET_HINT_SIZE, 100, 50, 200, true) / 100).toFixed(3)
     });
-    QOL.getUnitTargetDefaultStyleTexts = () => styleTexts(QOL.buildDefaultConfig());
 
     QOL.core.FeatureRegistry.register({
         id: ID,
@@ -25,7 +24,7 @@
         ],
         create(ctx) {
             const panels = QOL.core.panel;
-            const state = QOL.state;
+            const defaults = styleTexts(QOL.buildDefaultConfig());
             const shapes = new Map();
             const hints = new Map();
             let root = null;
@@ -36,7 +35,6 @@
             function readModel() {
                 const cfg = ctx.config.view();
                 const styles = styleTexts(cfg);
-                const defaults = QOL.getUnitTargetDefaultStyleTexts();
                 const active = QOL.utils.IsCfgEnabled(cfg, "ENABLE_RED_DIAMOND") ||
                     Object.keys(defaults).some(key => styles[key] !== defaults[key]);
                 return { active, styles,
@@ -56,13 +54,6 @@
                 for (const [target, owner] of hints) release(target, owner);
                 shapes.clear(); hints.clear();
                 nextDiscovery = 0;
-                state.targetShapesCache = [];
-                state.hintContainerCache = [];
-                state.targetShapeHadNonDefaultRuntime = false;
-                state.targetShapeStyleSig = "";
-                state.nextTargetShapeRefreshMs = 0;
-                state.targetShapeDebugLastSig = "";
-                state.targetShapeDebugNextMs = 0;
             }
 
             function reconcile(owners, className) {
@@ -75,9 +66,14 @@
                 }
             }
 
-            function render(owners, styles) {
+            function render(owners, styles, className) {
                 for (const [target, owner] of owners) {
                     if (!panels.isAlive(target)) { owners.delete(target); nextDiscovery = 0; continue; }
+                    let ancestor = target;
+                    for (let depth = 0; depth < 64 && panels.isAlive(ancestor) && ancestor !== root; depth++) ancestor = ancestor.GetParent();
+                    if (ancestor !== root || !target.BHasClass(className)) {
+                        release(target, owner); owners.delete(target); nextDiscovery = 0; continue;
+                    }
                     // A partial rejected write remains owned and is retried.
                     for (const property of Object.keys(styles)) owner.properties.add(property);
                     owner.signature = panels.syncStyles(target, styles, owner.signature).sig;
@@ -85,7 +81,7 @@
             }
 
             function update() {
-                const current = $.GetContextPanel();
+                const current = panels.findHud($.GetContextPanel());
                 if (current !== root) { releaseAll(); root = current; }
                 if (!panels.isAlive(root) || !model.active) {
                     releaseAll();
@@ -97,12 +93,7 @@
                     reconcile(shapes, "target_shape"); reconcile(hints, "qol_hint_target");
                     nextDiscovery = now + (shapes.size || hints.size ? 1000 : 500);
                 }
-                render(shapes, model.shapeStyles); render(hints, model.hintStyles);
-                state.targetShapesCache = [...shapes.keys()];
-                state.hintContainerCache = [...hints.keys()];
-                state.targetShapeHadNonDefaultRuntime = true;
-                state.targetShapeStyleSig = Object.values(model.styles).join("|");
-                state.nextTargetShapeRefreshMs = nextDiscovery;
+                render(shapes, model.shapeStyles, "target_shape"); render(hints, model.hintStyles, "qol_hint_target");
                 if (loop) loop.reschedule(shapes.size || hints.size ? 0.2 : 0.5);
             }
 

@@ -45,6 +45,9 @@ behavior until its owning implementation has been audited.
 - Native hero-testing layout is supplied by the game; the identical override and
   unreachable JavaScript extension are removed while its active CSS/settings
   behavior remains. Incremental packaging retires their former compiled artifacts.
+- Target/hint rendering no longer exports private caches or accepts meaningless
+  core invalidation writes. Unused shared fields left by retired implementations
+  are removed after checking current consumers; real cross-owner snapshots remain.
 
 Frozen main-config fixtures preserve all healthbar variants and both minimap
 scale methods. Published versions, compact layouts and persistent defaults stay

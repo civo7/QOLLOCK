@@ -1235,11 +1235,7 @@
                 ["shop_item_notifications_active", Number(cfg?.ENABLE_SHOP_ITEM_NOTIFICATIONS) === 1]
             ];
 
-            const redDiamondChanged = setPanelClassCached(root, rc, "red_diamond_active", redDiamondEnabled);
-            if (redDiamondChanged) {
-                state.targetShapeStyleSig = "";
-                state.nextTargetShapeRefreshMs = 0;
-            }
+            setPanelClassCached(root, rc, "red_diamond_active", redDiamondEnabled);
 
             for (const [cls, active] of staticRules) {
                 setPanelClassCached(root, rc, cls, active);

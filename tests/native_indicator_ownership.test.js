@@ -60,7 +60,7 @@ test("target retries rejected writes, releases the old live HUD and cleans up di
     old.style = new Proxy({}, { set(target, key, value) { if (key === "opacity" && reject) throw Error("temporary native failure"); target[key] = value; return true; } });
     env.feature.onEnable(); assert.equal(old.style.opacity, undefined);
     reject = false; env.clock.advance(300); assert.equal(old.style.opacity, "0.30");
-    const nextRoot = env.add(env.doc.absRoot, "ReplacementHud");
+    const nextRoot = env.add(env.doc.absRoot, "Hud", [], "CitadelHud");
     const replacement = env.add(nextRoot, "TargetFixture", ["target_shape"]);
     env.doc.root = nextRoot; env.clock.advance(300);
     assert.equal(old.style.uiScale, undefined); assert.equal(old.style.opacity, undefined);
@@ -68,6 +68,21 @@ test("target retries rejected writes, releases the old live HUD and cleans up di
     env.feature.onDisable(); env.clock.advance(3000);
     for (const property of ["uiScale", "preTransformScale2d", "opacity"]) assert.equal(replacement.style[property], undefined);
     assert.deepEqual(env.clock.errors, []);
+});
+
+test("target geometry releases living moved shapes and class-recycled hints before the full discovery cadence", () => {
+    const env = setup("ql_target_shapes", { UNIT_TARGET_SIZE: 225, UNIT_TARGET_HINT_SIZE: 140 });
+    const shape = env.add(env.root, "TargetFixture", ["target_shape"]), hint = env.add(env.root, "HintFixture", ["qol_hint_target"]);
+    shape.style.color = "#ABCDEF"; hint.style.x = "13px";
+    env.feature.onEnable(); assert.equal(shape.style.uiScale, "225%"); assert.equal(hint.style.uiScale, "140%");
+    shape.SetParent(env.add(null, "RetiredTarget")); hint.RemoveClass("qol_hint_target"); env.clock.advance(300);
+    assert.equal(shape.style.uiScale, undefined); assert.equal(hint.style.uiScale, undefined);
+    assert.equal(shape.style.color, "#ABCDEF"); assert.equal(hint.style.x, "13px");
+    for (const key of ["targetShapesCache", "hintContainerCache", "targetShapeStyleSig", "nextTargetShapeRefreshMs", "targetShapeHadNonDefaultRuntime"]) {
+        assert.equal(Object.hasOwn(env.Q.state, key), false);
+    }
+    assert.equal(Object.hasOwn(env.Q, "getUnitTargetDefaultStyleTexts"), false);
+    env.feature.onDisable(); assert.deepEqual(env.clock.errors, []);
 });
 
 test("damage styling preserves cumulative typography and native fades while cleaning every owned property on disable", () => {
