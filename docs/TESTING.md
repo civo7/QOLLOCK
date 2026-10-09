@@ -151,6 +151,11 @@ isolation, partial construction/style/text failures, queued previous trees and
 registry cleanup. Preset bridge and hideout regressions retain the current
 readout behavior. Native metadata binding and composition remain client checks.
 
+Reload-owner regressions also check queued previous IDs before deletion runs,
+stopped hooks, moved labels whose text setter rejects cleanup, and fresh
+estimates after living HUD/loading-scope replacement. Existing tests retain
+both radial directions and native clip/class preservation.
+
 `shared_panel_cache.test.js` covers shared typed/compatibility storage, public
 resolution after living moves, root/ID-scoped discovery misses, equal-revision
 configuration across living generations, current UI-root selection and rejected

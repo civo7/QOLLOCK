@@ -84,6 +84,8 @@
             const localProgressResolver = resolver("attack_delayed_progress_bar");
             const fallbackProgressResolver = resolver("attack_delayed_progress_bar");
             const estimate = createEstimate();
+            const tree = P.createOwnedTree();
+            let running = false, rootOwner = null;
             let reticle = null, progress = null, label = null, model = null, signature = null, loop = null;
 
             function readModel() {
@@ -108,8 +110,7 @@
             }
 
             function retireLabel() {
-                renderText("");
-                P.delete(label);
+                tree.clear();
                 label = null; signature = null;
             }
 
@@ -121,22 +122,20 @@
             }
 
             function ensureLabel() {
-                if (P.isAlive(label) && label.GetParent() === reticle && P.findChild(reticle, LABEL_ID) === label) return true;
-                retireLabel();
-                // The label is exclusively dynamic. Do not adopt a previous
-                // instance's generation, which may be queued for DeleteAsync.
-                P.delete(P.findChild(reticle, LABEL_ID));
-                label = P.create("Label", reticle, LABEL_ID, { hittest: "false", hittestchildren: "false" });
+                const previous = label;
+                label = tree.child(reticle, "Label", LABEL_ID);
+                if (previous !== label) signature = null;
                 if (!P.isAlive(label)) return false;
-                label.hittest = false;
-                label.hittestchildren = false;
-                label.style.visibility = "collapse";
+                if (previous !== label) label.style.visibility = "collapse";
                 return true;
             }
 
             function update(force = false) {
+                if (!running) return;
                 const hud = P.findHud($.GetContextPanel());
-                if (!model?.enabled || !P.isAlive(hud)) {
+                if (hud !== rootOwner) { releaseSources(); rootOwner = hud; }
+                tree.sweep();
+                if (!model?.enabled || !P.isAlive(hud) || (hud.id !== "Hud" && hud.paneltype !== "CitadelHud")) {
                     releaseSources();
                     loop?.reschedule(IDLE_SECONDS);
                     return;
@@ -177,13 +176,15 @@
 
             return {
                 onEnable() {
+                    running = true;
                     refreshSettings();
                     loop = QOL.core.Scheduler.createPollLoop(update, ACTIVE_SECONDS, ctx.id);
                 },
                 onSettingsChanged: refreshSettings,
                 onDisable() {
+                    running = false;
                     if (loop) { loop.stop(); loop = null; }
-                    releaseSources(); model = null;
+                    releaseSources(); tree.dispose(); model = rootOwner = null;
                 }
             };
         },

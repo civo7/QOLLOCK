@@ -119,6 +119,10 @@ behavior until its owning implementation has been audited.
   current HUD replacement releases previous native rotation/flip and sampling
   bindings. Partial construction and queued previous instances cannot expose
   incomplete or retired readouts; heading/speed calibration remains unchanged.
+- Reload Countdown uses the shared created-label lifetime, waits for pending
+  previous IDs and guards inactive hooks. Current HUD replacement resets its
+  private estimate, and cleanup no longer depends on writing retired text;
+  native radial signals and the established smoothing remain unchanged.
 
 Frozen main-config fixtures preserve all healthbar variants and both minimap
 scale methods. Published versions, compact layouts and persistent defaults stay

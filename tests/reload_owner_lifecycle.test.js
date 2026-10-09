@@ -159,11 +159,15 @@ test("reload retries partial label creation and reads the native style attribute
 
 test("reload disable and rapid re-enable retire old labels and all scheduled updates", () => {
     const env = fixture();
+    const createPanel = env.$.CreatePanel; let creations = 0;
+    env.$.CreatePanel = (...args) => { if (args[2] === "QOLReloadCooldownText") creations++; return createPanel(...args); };
     const { reticle, bar } = env.addSource(); env.clip(bar, 240);
     const first = env.create(); first.onEnable(); env.clock.advance(0);
     const oldLabel = env.label(reticle);
     first.onDisable();
-    const second = env.create(); second.onEnable(); env.clock.advance(0);
+    const second = env.create(); second.onEnable(); second.onSettingsChanged();
+    assert.equal(creations, 1, "no new label is created while the old ID awaits deletion"); assert.equal(oldLabel.visible, false);
+    env.clock.advance(0);
     assert.equal(oldLabel.IsValid(), false);
     const current = env.label(reticle);
     assert.ok(current?.IsValid());
@@ -172,4 +176,31 @@ test("reload disable and rapid re-enable retire old labels and all scheduled upd
     second.onDisable(); env.clock.advance(2000);
     assert.equal(env.label(reticle), null);
     assert.deepEqual(env.clock.errors, []);
+});
+
+test("reload stopped hooks cannot create labels and cleanup survives a rejected owned-text setter", () => {
+    const env = fixture(), { reticle, bar } = env.addSource(); env.clip(bar, 240);
+    const feature = env.create(); feature.onSettingsChanged(); assert.equal(env.label(reticle), null);
+    feature.onEnable(); env.clock.advance(0); env.sample(bar, 230);
+    const label = env.label(reticle); label.SetParent(env.retired);
+    Object.defineProperty(label, "text", { configurable: true, get() { return "2"; }, set() { throw Error("retired text rejects writes"); } });
+    assert.doesNotThrow(() => feature.onDisable()); feature.onSettingsChanged(); env.clock.advance(1000);
+    assert.equal(label.IsValid(), false); assert.equal(env.label(reticle), null);
+    assert.equal(bar.BHasClass("has_active_reload"), true); assert.deepEqual(env.clock.errors, []);
+});
+
+test("reload releases a living HUD and loading scope before starting an independent estimate", () => {
+    const env = fixture(), first = env.addSource(); env.clip(first.bar, 240);
+    const feature = env.create(); feature.onEnable(); env.clock.advance(0); env.sample(first.bar, 230);
+    const previous = env.label(first.reticle); assert.equal(previous.text, "2");
+    env.doc.root = env.$.CreatePanel("Panel", null, "LoadingRoot");
+    const fake = env.$.CreatePanel("Panel", env.doc.root, "reticle_status"), fakeProgress = env.$.CreatePanel("Panel", fake, "attack_delayed_progress_bar");
+    fakeProgress.AddClass("reloading"); env.clip(fakeProgress, 120); env.clock.advance(50);
+    assert.equal(previous.IsValid(), false); assert.equal(env.label(fake), null); assert.equal(first.bar.IsValid(), true);
+    env.doc.root = env.$.CreatePanel("CitadelHud", null, "Hud");
+    const reticle = env.$.CreatePanel("Panel", env.doc.root, "reticle_status"), bar = env.$.CreatePanel("Panel", reticle, "attack_delayed_progress_bar");
+    bar.AddClass("reloading"); env.clip(bar, 100); feature.onSettingsChanged();
+    assert.equal(env.label(reticle).text, ""); env.clock.advance(500);
+    assert.equal(env.label(reticle).text, ""); env.sample(bar, 90); assert.equal(env.label(reticle).text, "0.5");
+    feature.onDisable(); env.clock.advance(0); assert.equal(env.label(reticle), null); assert.deepEqual(env.clock.errors, []);
 });
