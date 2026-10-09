@@ -110,6 +110,8 @@ after line-ending normalization. Its former JavaScript extension had no active
 include or XML callbacks and is removed. CSS extensions still apply to the native
 layout. See [native layout ownership](docs/NATIVE_LAYOUTS.md) before removing a
 layout: many native entry points are created by C++ rather than another mod XML.
+The party layout also remains native: its placement extension uses the game's
+existing `citadel_party.css` include rather than an extra XML stylesheet include.
 
 Panorama provides `$.CreatePanel`, `$.Schedule`, native panel methods and event
 APIs. Do not assume DOM `window`/`document`, `fetch`, `XMLHttpRequest`, WebSockets,

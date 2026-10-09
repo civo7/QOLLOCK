@@ -546,6 +546,9 @@ try {
         # Native hero-testing XML is no longer overridden; its inactive JS had no include.
         "panorama\layout\hud_hero_testing.vxml_c",
         "panorama\scripts\ql_hero_testing.vjs_c",
+        # Party placement now extends the native stylesheet, without an XML override.
+        "panorama\layout\citadel_party.vxml_c",
+        "panorama\styles\qollock_party.vcss_c",
         # Performance display is now loaded through its manifest-owned modules.
         "panorama\scripts\ql_perf_overlay.vjs_c",
         # Disabled after build 10725 changed the native leaderboard snippet contract.

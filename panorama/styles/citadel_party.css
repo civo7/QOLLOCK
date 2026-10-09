@@ -1,4 +1,5 @@
-/* QOLLOCK party-layout overrides. */
+/* Native party controls/animations stay in the extracted baseline. */
+@import url("s2r://panorama/styles/base/citadel_party.vcss_c");
 
 /* The friends count and party-settings button are mutually exclusive. Overlay
    the count in the button's native slot instead of leaving it below the row. */

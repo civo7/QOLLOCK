@@ -1,0 +1,323 @@
+/* Prettified by Source 2 Viewer - https://valveresourceformat.github.io */
+
+CitadelParty
+{
+	flow-children: down;
+}
+
+.PartyList
+{
+	flow-children: right;
+}
+
+.PartyMembersSection
+{
+	flow-children: down;
+	margin-right: 4px;
+}
+
+.PartyMembersSection #PartyMembersList
+{
+	flow-children: left;
+	padding: 16px 8px;
+	margin-top: 6px;
+}
+
+.PartyMember
+{
+	flow-children: down;
+	width: 52px;
+	height: 52px;
+	padding: 6px;
+}
+
+.PartyMember #AvatarImage
+{
+	width: 100%;
+	height: 100%;
+	border-radius: 50%;
+	transition-property: opacity, brightness, border;
+	transition-duration: 0.15s;
+	transition-timing-function: ease-in-out;
+}
+
+.PartyMember #HeroImage
+{
+	width: 46%;
+	height: 46%;
+	margin-bottom: -4px;
+	margin-left: -4px;
+	vertical-align: bottom;
+	border-radius: 50%;
+	img-shadow: 0px 0px 8px #000000cc;
+	visibility: collapse;
+}
+
+.PartyMember .EmptyImage
+{
+	width: 100%;
+	height: 100%;
+	border-radius: 50%;
+	tooltip-position: bottom;
+	opacity: .4;
+	border: 2px solid #FFFFFF22;
+	background-color: #262424;
+	background-image: url("s2r://panorama/images/icons/icon_player.vsvg");
+	background-img-opacity: 0.4;
+	opacity-mask: url("s2r://panorama/images/main_menu/text_speckle_mask_main_psd.vtex") 0.7;
+	opacity-mask-scale: 100% 200%;
+	wash-color: #77736B;
+	background-size: 50% 50%;
+	background-repeat: no-repeat;
+	background-position: center;
+	visibility: collapse;
+}
+
+.ShowEscapeMenu .PartyMember .EmptyImage
+{
+	opacity: 1;
+}
+
+.PartyMember .EmptyImage:hover
+{
+	opacity: 1;
+	brightness: 2;
+}
+
+.PartyMember.Empty #AvatarImage,.PartyMember.Empty #HeroImage,.PartyMember.Empty #UserName
+{
+	visibility: collapse;
+}
+
+.PartyMember.Empty .EmptyImage
+{
+	visibility: visible;
+}
+
+.PartyMember.Invited
+{
+	saturation: 0.5;
+	animation-name: InvitePulseScale;
+	animation-duration: 2s;
+	animation-timing-function: ease-in-out;
+	animation-iteration-count: infinite;
+}
+
+.PartyMember.Invited #AvatarImage
+{
+	border: 2px solid ominousGreen;
+	wash-color: #222222aa;
+	animation-name: InviteGlow;
+	animation-duration: 2s;
+	animation-timing-function: ease-in-out;
+	animation-iteration-count: infinite;
+}
+
+#LocalPlayer.PartyMember
+{
+	width: 64px;
+	height: 64px;
+	margin-left: 0px;
+	margin-top: 16px;
+	margin-right: 16px;
+}
+
+#JoinCreateParty
+{
+	width: 36px;
+	height: 36px;
+	margin-top: 30px;
+	margin-right: 2px;
+	horizontal-align: left;
+	vertical-align: top;
+	wash-color: #77736B;
+	tooltip-position: bottom;
+	background-image: url("s2r://panorama/images/icons/icon_party_settings.vsvg");
+	background-size: contain;
+	background-repeat: no-repeat;
+	background-position: center;
+	transition-property: opacity, brightness;
+	transition-duration: 0.15s;
+	transition-timing-function: ease-in-out;
+	opacity: 0;
+}
+
+.ShowEscapeMenu #JoinCreateParty
+{
+	opacity: .3;
+}
+
+.ShowEscapeMenu #JoinCreateParty:disabled
+{
+	opacity: 0;
+}
+
+.ShowEscapeMenu #JoinCreateParty:hover:enabled
+{
+	brightness: 2;
+	opacity: 1;
+}
+
+.FriendsCountContainer
+{
+	width: 76px;
+	flow-children: none;
+	horizontal-align: right;
+	margin: 12px 16px 0px 0px;
+}
+
+.FriendsCount
+{
+	flow-children: right;
+	horizontal-align: center;
+	overflow: noclip;
+	visibility: collapse;
+	opacity-mask: url("s2r://panorama/images/main_menu/text_speckle_mask_main_psd.vtex") 0.7;
+	opacity-mask-scale: 100% 200%;
+	transition-property: opacity;
+	transition-duration: .1s;
+	transition-timing-function: ease-out;
+	opacity: 0.2;
+}
+
+.ShowEscapeMenu .FriendsCount
+{
+	opacity: 0;
+}
+
+.connectedToHideout .HasFriendsInGame .FriendsCount
+{
+	visibility: visible;
+}
+
+.FriendCountIncreased .FriendsCount
+{
+	animation-name: FriendsCountBounce;
+	animation-duration: 0.32s;
+	animation-timing-function: ease-in-out;
+}
+
+.FriendsCount .FriendsIcon
+{
+	width: 24px;
+	height: 24px;
+	vertical-align: middle;
+	wash-color: offWhite;
+	margin-right: 4px;
+	margin-top: 2px;
+	horizontal-align: right;
+	background-image: url("s2r://panorama/images/icons/icon_steam_friend.vsvg");
+	background-size: contain;
+	background-repeat: no-repeat;
+	background-position: center;
+}
+
+.FriendsCount .PlayWithFriendsCount
+{
+	color: offWhite;
+	font-family: numericBlock;
+	text-transform: uppercase;
+	margin-top: 2px;
+	vertical-align: middle;
+	font-size: 32px;
+}
+
+@keyframes 'FriendsCountBounce'
+{
+	0%
+	{
+		transform: scale3d( 1.0, 1.0, 1.0 );
+	}
+	
+	20%
+	{
+		transform: scale3d( 1.2, 1.2, 1.2 );
+	}
+	
+	100%
+	{
+		transform: scale3d( 1.0, 1.0, 1.0 );
+	}
+	
+}
+
+.PlayWithFriends,.PlayWithFriendsCount
+{
+	font-size: 20px;
+	color: #E4D5BF;
+	font-weight: black;
+	text-transform: uppercase;
+	vertical-align: center;
+	margin-top: -4px;
+}
+
+.PlayWithFriends:hover,.PlayWithFriendsCount:hover
+{
+	brightness: 2;
+}
+
+.PlayWithFriends
+{
+	margin-left: 6px;
+	margin-top: 0px;
+	color: #747068;
+	font-family: block;
+}
+
+@keyframes 'InvitePulse'
+{
+	0%
+	{
+		border: 1px solid #0c6a3f;
+	}
+	
+	50%
+	{
+		border: 2px solid #C3FBE2;
+	}
+	
+	100%
+	{
+		border: 1px solid #0c6a3f;
+	}
+	
+}
+
+@keyframes 'InvitePulseScale'
+{
+	0%
+	{
+		transform: scale3d( .88, .88, .88 );
+	}
+	
+	50%
+	{
+		transform: scale3d( 1.16, 1.16, 1.16 );
+	}
+	
+	100%
+	{
+		transform: scale3d( .88, .88, .88 );
+	}
+	
+}
+
+@keyframes 'InviteGlow'
+{
+	0%
+	{
+		box-shadow: 0px 0px 4px ominousGreen&22;
+	}
+	
+	50%
+	{
+		box-shadow: 0px 0px 12px deeplyOminousGreen&44;
+	}
+	
+	100%
+	{
+		box-shadow: 0px 0px 4px ominousGreen&22;
+	}
+	
+}
+

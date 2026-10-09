@@ -128,6 +128,10 @@ behavior until its owning implementation has been audited.
   including moved markers and shrinking coordinate data. Partial construction
   and style failures remain hidden until retry; native geometry, Fixed Icon Size
   and the shipped map-coordinate source remain with their existing owners.
+- Party placement extends the native stylesheet instead of retaining a full XML
+  copy solely for one stylesheet include. Native hierarchy, bindings/callbacks
+  and baseline animations remain supplied by the game; stale packed outputs
+  are retired by the maintainer pipeline.
 
 Frozen main-config fixtures preserve all healthbar variants and both minimap
 scale methods. Published versions, compact layouts and persistent defaults stay
