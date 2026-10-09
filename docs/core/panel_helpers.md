@@ -54,8 +54,8 @@ presentation. Private property/class leases prevent an old retiring instance fro
 clearing fields claimed by a new instance. Reapplication in the same instance also
 cancels a field's retirement intent. Discovery, current-HUD selection, settings,
 active guards and presentation polling remain the caller's responsibilities.
-This contract is used by inventory and stats placement; it is separate from
-created-tree ownership and specialized native animation restoration.
+Inventory, souls, stats placement and top/bottom bar geometry use this contract;
+it is separate from created-tree ownership and specialized native animation restoration.
 
 `createOwnedTree()` returns `child(parent, type, id, properties?)`, `sweep()`,
 `remove(id)`, `clear()` and `dispose()`. Each nonempty ID must be unique within that instance

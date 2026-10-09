@@ -52,7 +52,7 @@ history rules in the manifest; see [panel helpers](core/panel_helpers.md).
 
 For matching native style/class ownership, reuse
 `core.panel.createNativeStyleOwner()` rather than forgetting rejected clears.
-Inventory and stats placement are current callers. Keep source selection and
+Inventory, souls, stats placement and top/bottom bars are current callers. Keep source selection and
 neutral reset policy in the manifest. The helper tracks attempted writes and
 readback, releases removed fields and living retired sources, and protects a new
 instance from old cleanup. Its scheduled work after disable only finishes failed

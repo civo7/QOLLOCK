@@ -45,6 +45,14 @@ and moved leaves, preserved native opacity, idle settings reads and stopped hook
 Rejected clears also finish after their presentation loops stop. These checks do
 not establish native rendering or input behavior.
 
+`souls_bars_owner_lifetime.test.js` applies the shared native style contract to
+souls and top/bottom bars: current HUD replacement, failed style/class retirement,
+loading roots, stopped hooks, production-registry rapid re-enable and native
+feedback overwrites without redundant idle writes. Currency tint follows late,
+moved and recycled-role leaves within its verified containers. Hidden signature
+geometry/tint and independently configured active slots remain separate; native
+scale baselines and topbar visibility transitions retain their existing regressions.
+
 `stamina_rotation_owner.test.js` checks native-zero degree presentation through
 the ordinary control and Customize input/slider/steppers/history/reset while
 preserving the published stored field. Native-owner cases cover color-only

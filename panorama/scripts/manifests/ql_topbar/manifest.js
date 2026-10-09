@@ -1,4 +1,4 @@
-// features/ql_topbar/manifest.js
+// manifests/ql_topbar/manifest.js
 // =============================================================================
 // QOLLOCK — Top Bar HUD (position, scale, opacity, visibility)
 // =============================================================================
@@ -56,14 +56,10 @@
             const resolver = QOL.panelCache.createIdResolver("TopBar", {
                 ownerPath: [{ id: "Hud", optional: true }, { className: "HudCore" }]
             });
-            const ownedStyles = ["x", "y", "preTransformScale2d", "uiScale", "opacity", "visibility"];
-            const applied = new Set();
-            let panel = null;
+            const styles = panelAPI.createNativeStyleOwner({ resetValues: { x: "0px", y: "0px" } });
             let model = null;
-            let signature = null;
-            let visible = null;
             let loop = null;
-            const appliedOffsets = { x: false, y: false };
+            let active = false;
 
             function readModel(cfg) {
                 const enabled = cfg.HUD_TOP_BAR_ENABLED === undefined || cfg.HUD_TOP_BAR_ENABLED === true || Number(cfg.HUD_TOP_BAR_ENABLED) === 1;
@@ -83,73 +79,36 @@
                 return { enabled, styles };
             }
 
-            function clearAbsentStyles(target, styles) {
-                for (const property of ownedStyles) {
-                    if (Object.prototype.hasOwnProperty.call(styles, property)) continue;
-                    if (!applied.has(property)) continue;
-                    // Native offset reset needs an explicit zero before releasing
-                    // the code property; ClearPropertyFromCode alone can retain it.
-                    if (appliedOffsets[property]) target.style[property] = "0px";
-                    QOL.utils.ClearStyleSafe(target, property);
-                    applied.delete(property);
-                    if (property === "x" || property === "y") appliedOffsets[property] = false;
-                }
-            }
-
-            function release(target) {
-                if (panelAPI.isAlive(target)) {
-                    clearAbsentStyles(target, {});
-                    panelAPI.setClass(target, "qol-hidden", false);
-                }
-                appliedOffsets.x = appliedOffsets.y = false;
-                applied.clear();
-            }
-
             function update() {
-                const root = $.GetContextPanel();
-                const current = resolver.resolve(root);
-                if (current !== panel) {
-                    release(panel);
-                    panel = current;
-                    signature = visible = null;
-                }
+                if (!active) return;
+                const root = panelAPI.findHud($.GetContextPanel());
+                const panel = panelAPI.isAlive(root) && (root.id === "Hud" || root.paneltype === "CitadelHud") ? resolver.resolve(root) : null;
+                styles.retain([panel]);
                 if (!panel) return;
-                const nextVisible = QOL.isHudVisibleForTopBarRuntime(root, panel);
-                if (nextVisible !== visible) {
-                    visible = nextVisible;
-                    signature = null;
-                }
-                panelAPI.setClass(panel, "qol-hidden", !model.enabled);
-                if (signature !== null) return;
-                const styles = visible || !model.enabled ? model.styles : {};
-                clearAbsentStyles(panel, styles);
-                // Mark ownership before writes so partial native rejection also
-                // gets reset on disable or a subsequent settings change.
-                appliedOffsets.x = Object.prototype.hasOwnProperty.call(styles, "x");
-                appliedOffsets.y = Object.prototype.hasOwnProperty.call(styles, "y");
-                for (const property of Object.keys(styles)) applied.add(property);
-                signature = panelAPI.syncStyles(panel, styles, signature).sig;
+                const visible = QOL.isHudVisibleForTopBarRuntime(root, panel);
+                styles.apply(panel, visible || !model.enabled ? model.styles : {}, { "qol-hidden": !model.enabled });
             }
 
             function refreshSettings() {
+                if (!active) return;
                 model = readModel(ctx.config.view());
-                signature = null;
                 resolver.reset();
                 update();
             }
 
             return {
                 onEnable() {
+                    active = true;
                     refreshSettings();
                     loop = QOL.core.Scheduler.createPollLoop(update, 0.5, ctx.id);
                 },
                 onSettingsChanged: refreshSettings,
                 onDisable() {
+                    active = false;
                     if (loop) { loop.stop(); loop = null; }
                     QOL.core.Scheduler.cancelAllForFeature(ctx.id);
-                    release(panel);
-                    panel = model = null;
-                    signature = visible = null;
+                    styles.clear();
+                    model = null;
                     resolver.reset();
                 }
             };

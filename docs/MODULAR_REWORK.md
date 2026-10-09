@@ -171,12 +171,14 @@ native transforms, follows current HUD/ring generations and retries rejected
 restoration of living retired pips/transforms while active. Stopped hooks cannot
 reapply rotation. Persistent defaults, schema layouts and saved values are unchanged.
 
-Inventory and stats placement share native style/class ownership instead of
+Inventory, souls, stats placement and top/bottom bars share native style/class ownership instead of
 duplicating applied-property bookkeeping. Attempted writes remain tracked through
 rejected clears, living source replacement and disable; cleanup-only retries
 cannot overwrite a new instance's claims. Current HUD selection, reactive settings
-and native inventory leaf opacity stay with their manifests. Other native style
-owners still require the same audit before using this contract.
+and native inventory leaf opacity stay with their manifests. Topbar native
+visibility gates, signature scale baseline and independently configured active
+slots stay intact; AP tint follows its current leaves and their presentation roles.
+Other native style owners still require the same audit before using this contract.
 
 ## Remaining implementation and audit
 

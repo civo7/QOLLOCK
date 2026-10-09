@@ -18,23 +18,10 @@
             const resolver = QOL.panelCache.createIdResolver("gold_and_ap_container", {
                 ownerPath: [{ id: "Hud", optional: true }, { className: "HudCore" }, "StatsAndModsContainer", "LowerLeft"]
             });
-            const ownedStyles = ["x", "y", "opacity", "visibility"];
-            const applied = new Set();
-            let panel = null;
-            let signature = null;
+            const styles = panelAPI.createNativeStyleOwner({ resetValues: { x: "0px", y: "0px" } });
             let model = null;
             let loop = null;
-            const offsets = { x: false, y: false };
-
-            function clearOwnedStyle(target, property) {
-                if (!applied.has(property)) return;
-                // Native layout can retain the last resolved offset after a
-                // code-property clear. Zero the owned offset before releasing it.
-                if (offsets[property]) target.style[property] = "0px";
-                QOL.utils.ClearStyleSafe(target, property);
-                applied.delete(property);
-                if (property === "x" || property === "y") offsets[property] = false;
-            }
+            let active = false;
 
             function readModel() {
                 const cfg = ctx.config.view();
@@ -55,53 +42,34 @@
                 return { enabled, styles };
             }
 
-            function release(target) {
-                if (panelAPI.isAlive(target)) {
-                    for (const property of ownedStyles) clearOwnedStyle(target, property);
-                    panelAPI.setClass(target, "qol-hidden", false);
-                }
-                applied.clear();
-                offsets.x = offsets.y = false;
-            }
-
             function update() {
-                const current = resolver.resolve(QOL.core.hud.findHud());
-                if (current !== panel) {
-                    release(panel);
-                    panel = current;
-                    signature = null;
-                }
-                if (!panel || signature !== null) return;
-                for (const property of ownedStyles) {
-                    if (!Object.prototype.hasOwnProperty.call(model.styles, property)) clearOwnedStyle(panel, property);
-                }
-                offsets.x = Object.prototype.hasOwnProperty.call(model.styles, "x");
-                offsets.y = Object.prototype.hasOwnProperty.call(model.styles, "y");
-                for (const property of Object.keys(model.styles)) applied.add(property);
-                signature = panelAPI.syncStyles(panel, model.styles, signature).sig;
-                panelAPI.setClass(panel, "qol-hidden", !model.enabled);
+                if (!active) return;
+                const root = panelAPI.findHud($.GetContextPanel());
+                const panel = panelAPI.isAlive(root) && (root.id === "Hud" || root.paneltype === "CitadelHud") ? resolver.resolve(root) : null;
+                styles.retain([panel]);
+                if (panel) styles.apply(panel, model.styles, { "qol-hidden": !model.enabled });
             }
 
             function refreshSettings() {
+                if (!active) return;
                 model = readModel();
-                signature = null;
                 resolver.reset();
                 update();
             }
 
             return {
                 onEnable() {
+                    active = true;
                     refreshSettings();
                     loop = QOL.core.Scheduler.createPollLoop(update, 1.0, ctx.id);
                 },
                 onSettingsChanged: refreshSettings,
                 onDisable() {
+                    active = false;
                     if (loop) { loop.stop(); loop = null; }
                     QOL.core.Scheduler.cancelAllForFeature(ctx.id);
-                    release(panel);
-                    panel = null;
+                    styles.clear();
                     model = null;
-                    signature = null;
                     resolver.reset();
                 }
             };
