@@ -22,6 +22,13 @@ that mode alongside its preview count and click-to-notify setting. Shop event
 bursts share one managed deferred refresh, cancelled with the discovery poll on
 disable.
 
+Permanent shop stat children remain declared in `citadel_hud_hero_shop.xml`.
+Their normal appearance follows the shop's existing `gShopOpen` listener through
+`CitadelHudHeroShop.gShopOpen` selectors; armor/tech/weapon component XML copies
+are unnecessary. Native component layouts keep their detail-view listeners and
+bound values. Simplification and stat visibility still use their existing
+settings and stylesheet owners, with no additional polling or listeners.
+
 The [quickbuy companion](../../panorama/scripts/hud_quickbuy_total_summary.js)
 runs under `hud_quickbuy.xml`, outside the HUD JavaScript context and its
 Scheduler. It owns one raw polling callback at a time. A queue event

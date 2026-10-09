@@ -136,6 +136,10 @@ behavior until its owning implementation has been audited.
   existing IDs/classes; the class-only unit-target XML override is removed.
   Native bindings/animations and unrelated hint containers stay untouched, and
   inactive hooks/loading roots cannot acquire native geometry overrides.
+- Shop stat appearance uses the existing native shop class listener. Three
+  armor/tech/weapon XML copies containing only a listener extension are removed;
+  native component content/detail-view bindings, permanent shop stat children
+  and normal/simplified styling retain their owners.
 
 Frozen main-config fixtures preserve all healthbar variants and both minimap
 scale methods. Published versions, compact layouts and persistent defaults stay

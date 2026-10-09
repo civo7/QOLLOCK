@@ -8,7 +8,7 @@ CitadelModifiedAbilities
 	width: 100%;
 }
 
-.gShopOpen #SpiritValueContainer
+CitadelHudHeroShop.gShopOpen #SpiritValueContainer
 {
 	flow-children: right;
 	padding: 0px;
@@ -20,7 +20,7 @@ CitadelModifiedAbilities
 	visibility: collapse;
 }
 
-.gShopOpen #StatContainer_TechPower
+CitadelHudHeroShop.gShopOpen #StatContainer_TechPower
 {
 	width: 54%;
 	height: 30px;

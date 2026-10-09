@@ -551,6 +551,10 @@ try {
         "panorama\styles\qollock_party.vcss_c",
         # Target hints now resolve the native snippet instead of added XML classes.
         "panorama\layout\ability_hud_element_unit_target.vxml_c",
+        # Shop stats use the shop's existing listener and native component layouts.
+        "panorama\layout\citadel_hero_stats_armor_panel.vxml_c",
+        "panorama\layout\citadel_hero_stats_tech_panel.vxml_c",
+        "panorama\layout\citadel_hero_stats_weapon_panel.vxml_c",
         # Performance display is now loaded through its manifest-owned modules.
         "panorama\scripts\ql_perf_overlay.vjs_c",
         # Disabled after build 10725 changed the native leaderboard snippet contract.
