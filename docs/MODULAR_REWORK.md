@@ -164,6 +164,13 @@ class writes are reconciled; context destruction/reload retires callbacks and
 deferred work. Filtering preserves native visible flags, and the clear button
 uses its existing stylesheet gate instead of a conflicting visible-property write.
 
+Stamina rotation uses native-zero degrees in both UI paths and a shared conversion
+at the presentation boundary for the published legacy field. The renderer no
+longer treats that encoding sentinel as a native angle; it preserves observed
+native transforms, follows current HUD/ring generations and retries rejected
+restoration of living retired pips/transforms while active. Stopped hooks cannot
+reapply rotation. Persistent defaults, schema layouts and saved values are unchanged.
+
 ## Remaining implementation and audit
 
 1. Audit already modernized owners for remaining shared mutable bookkeeping,

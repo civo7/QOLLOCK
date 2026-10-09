@@ -153,6 +153,16 @@ the editor and ordinary gameplay controls. Visibility controls distinguish hidin
 enabling custom layout or a magazine indicator.
 Range feedback localizes the complete `Use a number from {min} to {max}.`
 source key before substituting the displayed numeric limits.
+
+Stamina Rotation displays an additional angle from the current native layout:
+zero leaves the native transform unchanged. `ql_customize_data.js` owns the
+shared `toDisplayValue`/`fromDisplayValue` conversion used by the inspector,
+ordinary slider and stamina renderer. The published `STAMINA_CHARGE_ANGLE` field
+retains its legacy no-op sentinel for existing configs; rendering a control does
+not rewrite it. This sentinel is not evidence that the engine rotates the native
+container by that angle. Default/color-only presentation releases the transform
+override, and custom rotation composes with the observed native transform.
+
 Numeric entries use current field metadata; supported
 color entries use [tagged RGB](../core/custom_colors.md). Missing conditional
 panels keep their controls available through All elements or a scoped action.

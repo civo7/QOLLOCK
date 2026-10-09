@@ -1594,6 +1594,8 @@
             // The UI shape can have a different range/step from the wire field.
             const wireField = SLIDER_WIRE_FIELDS[configId];
             const valueField = wireField || { min, max, step };
+            const displayValue = value => Q.presentation?.toDisplayValue ? Q.presentation.toDisplayValue(configId, value) : Number(value);
+            const storedValue = value => Q.presentation?.fromDisplayValue ? Q.presentation.fromDisplayValue(configId, value) : Number(value);
             const commitValue = (rawValue) => {
                 const lower = Math.max(min, valueField.min);
                 const upper = Math.min(max, valueField.max);
@@ -1601,12 +1603,12 @@
                 const lastIndex = Math.floor((upper - valueField.min) / valueField.step + 1e-9);
                 const index = Math.max(firstIndex, Math.min(lastIndex,
                     Math.round((rawValue - valueField.min) / valueField.step)));
-                return Number((valueField.min + index * valueField.step).toFixed(8));
+                return storedValue(Number((valueField.min + index * valueField.step).toFixed(8)));
             };
 
             const formatSliderInputValue = (value) => {
                 if (value === undefined || value === null || !isFinite(Number(value))) value = 0;
-                const numeric = Number(value);
+                const numeric = displayValue(value);
                 if (isOpacitySlider) {
                     const pct = Math.round(Math.max(0, Math.min(1, numeric)) * 100);
                     return String(pct) + "%";
@@ -1632,7 +1634,7 @@
 
             slider.min = isFloat ? min * 100 : min;
             slider.max = isFloat ? max * 100 : max;
-            slider.value = isFloat ? modCfg[configId] * 100 : modCfg[configId];
+            slider.value = displayValue(modCfg[configId]) * (isFloat ? 100 : 1);
             const input = $.CreatePanel("TextEntry", sliderValueGroup, "");
             input.AddClass("ValueInput");
             input.text = formatSliderInputValue(modCfg[configId]);
@@ -1658,7 +1660,7 @@
                     return;
                 }
                 modCfg[configId] = commitValue(rawVal);
-                slider.value = modCfg[configId] * (isFloat ? 100 : 1);
+                slider.value = displayValue(modCfg[configId]) * (isFloat ? 100 : 1);
                 input.text = formatSliderInputValue(modCfg[configId]);
                 input.RemoveClass("ValueSavedFlash");
                 input.AddClass("ValueSavedFlash");
@@ -1684,10 +1686,10 @@
                 nextVal = Math.max(Number(min), Math.min(Number(max), nextVal));
                 if (isFloat) {
                     nextVal = parseFloat(nextVal.toFixed(2));
-                    slider.value = nextVal * 100;
+                    slider.value = displayValue(nextVal) * 100;
                 } else {
                     nextVal = Math.round(nextVal);
-                    slider.value = nextVal;
+                    slider.value = displayValue(nextVal);
                 }
                 input.text = formatSliderInputValue(nextVal);
                 if (checkbox) checkbox.qolRefreshTitleCheckbox();

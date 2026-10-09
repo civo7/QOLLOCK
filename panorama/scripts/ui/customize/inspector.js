@@ -42,15 +42,21 @@
         };
         const opacityField = field => /Opacity$/.test(field.label);
         const multiplier = field => opacityField(field) || (field.label === "Scale" && Q.presentation.wireFields.get(field.key).max <= 10) ? 100 : 1;
-        const display = (field, value) => String(Number((value * multiplier(field)).toFixed(6)));
+        const displayValue = (field, value) => Q.presentation.toDisplayValue(field.key, value);
+        const storedValue = (field, value) => Q.presentation.fromDisplayValue(field.key, value);
+        const display = (field, value) => String(Number((displayValue(field, value) * multiplier(field)).toFixed(6)));
         const unit = field => field.unit || (field.key === "PASSIVE_COOLDOWN_SIZE" ? "" :
             field.key === "UNIT_TARGET_SIZE" || field.key === "UNIT_TARGET_HINT_SIZE" ? "%" :
             field.axis || field.label === "Size" ? "px" :
             opacityField(field) || /Scale|Ammo|Width|Height/.test(field.label) ? "%" : field.label === "Rotation" ? "°" : "");
         const read = (field, input) => {
             const text = String(input.text).trim();
-            return field.type === "color" || field.type === "palette" ? QOL_UTILS.EncodeHexColor(text) :
-                (/^[+-]?(?:\d+(?:[.,]\d+)?|[.,]\d+)$/.test(text) ? Number(text.replace(",", ".")) / multiplier(field) : NaN);
+            if (field.type === "color" || field.type === "palette") return QOL_UTILS.EncodeHexColor(text);
+            if (!/^[+-]?(?:\d+(?:[.,]\d+)?|[.,]\d+)$/.test(text)) return NaN;
+            const value = Number(text.replace(",", ".")) / multiplier(field);
+            // Validate displayed rotation before wrapping its compatibility field.
+            if (field.key === "STAMINA_CHARGE_ANGLE" && (value < 0 || value > 360)) return NaN;
+            return storedValue(field, value);
         };
         const header = P.create("Panel", parent, "QOLCustomizeSelectionHeader");
         header.AddClass("QOLCustomizeSelectionHeader");
@@ -172,7 +178,7 @@
                     slider.min = Math.round(wire.min * mult);
                     slider.max = Math.round(wire.max * mult);
                 }
-                slider.value = Math.round(Number(session.value(field.key)) * mult);
+                slider.value = Math.round(displayValue(field, session.value(field.key)) * mult);
 
                 const decrease = button(controlHost, "QOLCustomizeDecrease_" + field.key, "−", () => adjust(-1));
                 decrease.AddClass("QOLCustomizeStepper");
@@ -209,7 +215,7 @@
             if (slider) {
                 slider.SetPanelEvent("onvaluechanged", () => {
                     if (!valid() || syncing) return;
-                    const raw = Number(slider.value) / mult;
+                    const raw = storedValue(field, Number(slider.value) / mult);
                     const norm = Q.presentation.normalize(field.key, raw);
                     if (norm !== null && norm !== session.value(field.key)) {
                         input.text = display(field, norm);
@@ -231,9 +237,9 @@
                 const typed = read(field, input);
                 const value = Number.isFinite(typed) ? typed : Number(session.value(field.key));
                 const step = wire ? wire.step : 1;
-                const nextVal = value + direction * step;
+                const nextVal = storedValue(field, displayValue(field, value) + direction * step);
                 if (slider && P.isAlive(slider)) {
-                    slider.value = Math.round(nextVal * mult);
+                    slider.value = Math.round(displayValue(field, nextVal) * mult);
                 }
                 if (commit({ [field.key]: nextVal })) changed();
             }
@@ -241,7 +247,7 @@
                 if (!valid() || !P.isAlive(input)) return;
                 if (!isColor && slider && P.isAlive(slider)) {
                     const typed = read(field, input);
-                    if (Number.isFinite(typed)) slider.value = Math.round(typed * mult);
+                    if (Number.isFinite(typed)) slider.value = Math.round(displayValue(field, typed) * mult);
                 }
                 if (commit()) changed();
             };
@@ -260,7 +266,7 @@
                     if (!valid()) return;
                     if (!isColor && slider && P.isAlive(slider)) {
                         const typed = read(field, input);
-                        if (Number.isFinite(typed)) slider.value = Math.round(typed * mult);
+                        if (Number.isFinite(typed)) slider.value = Math.round(displayValue(field, typed) * mult);
                     }
                     if (commit({}, true)) changed({ preserveInput: true });
                 });
@@ -275,7 +281,7 @@
                     error.visible = false;
                 }
                 if (!isColor && slider && P.isAlive(slider)) {
-                    const targetVal = Math.round(Number(value) * mult);
+                    const targetVal = Math.round(displayValue(field, value) * mult);
                     if (Math.round(Number(slider.value)) !== targetVal) {
                         slider.value = targetVal;
                     }

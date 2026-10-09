@@ -43,6 +43,13 @@
     ];
     const fieldMap = new Map();
     const wireFields = new Map(Q.settingsFields.map(field => [field.key, field]));
+    // The published stamina field uses legacy 45 as its no-op sentinel.
+    // Presentation uses an actual delta from native layout, with zero as no-op.
+    // Keep this conversion at the shared boundary instead of inventing a native angle.
+    const toDisplayValue = (key, value) => key === "STAMINA_CHARGE_ANGLE"
+        ? QOL_UTILS.NormalizeDegrees360(Number(value) - 45) : Number(value);
+    const fromDisplayValue = (key, value) => key === "STAMINA_CHARGE_ANGLE"
+        ? QOL_UTILS.NormalizeDegrees360(Number(value) + 45) : Number(value);
     function register(additions) {
         for (const element of additions) {
             if (elements.some(existing => existing.id === element.id)) throw new Error("Duplicate customization owner: " + element.id);
@@ -117,7 +124,7 @@
         ? Q.core.panel.findChild(target, "HudStatBlock") || target : target;
     const hasFrame = element => element.frame !== false && (element.frame === true || canDrag(element) || !!resizeField(element));
     const field = (key, label, type, extra = {}) => Object.assign({ key, label, ...(type ? { type } : {}) }, extra);
-    Q.presentation = { elements, fieldMap, wireFields, normalize, resolve, findPath, register, canDrag, resizeField, hasFrame, chooseStatsPanel, scaleTarget,
+    Q.presentation = { elements, fieldMap, wireFields, normalize, resolve, findPath, register, canDrag, resizeField, hasFrame, chooseStatsPanel, scaleTarget, toDisplayValue, fromDisplayValue,
         paths: { core, lower, abilities, crosshair, gameplay: [...core, "gameplay_hud"] },
         fields: { geometry, opacity, toggle, color, field } };
 })();

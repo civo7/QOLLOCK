@@ -36,6 +36,14 @@ the maintainer's compilation and client checks remain required.
 
 ## Focused release regressions
 
+`stamina_rotation_owner.test.js` checks native-zero degree presentation through
+the ordinary control and Customize input/slider/steppers/history/reset while
+preserving the published stored field. Native-owner cases cover color-only
+no-op rotation, living ring/HUD replacement, rejected writes/restores, native
+transform overwrite, loading roots and stopped hooks. Existing native feedback
+state tests remain; actual ring orientation/pivot and recharge/drain animations
+require client verification after compilation/repacking.
+
 `ui_friends.test.js` exercises the escape-context search owner against late and
 living replaced lists, late/changed native names, rejected class writes and
 retirement, repeated initialization, retired callbacks, script reload and context

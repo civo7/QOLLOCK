@@ -1,4 +1,4 @@
-// Relative stamina rotation and ready/drained pip border color.
+// Native-relative stamina rotation and ready/drained pip border color.
 // Preserve main's native baseline and feedback contract (11e0434).
 // Source: element_charges.xml; captured crosshair > dash > charges_container.
 (() => {
@@ -24,23 +24,25 @@
             { key: "STAMINA_CHARGE_COLOR", type: "palette" }
         ],
         create(ctx) {
-            const colored = new Map();
-            let panel = null, signature = null, model = null, loop = null;
-            let nativeTransform = "", rotationApplied = false;
-            function releaseRotation() {
-                if (rotationApplied && P.isAlive(panel)) {
-                    if (nativeTransform) panel.style.transform = nativeTransform;
-                    else QOL_UTILS.ClearStyleSafe(panel, "transform");
-                }
-                rotationApplied = false;
-                signature = null;
+            const colored = new Map(), rotations = new Map();
+            let panel = null, root = null, model = null, loop = null, active = false;
+            function releaseColor(target) {
+                if (!P.isAlive(target) || P.clearStyleProperty(target, "borderColor")) colored.delete(target);
+            }
+            function releaseRotation(target) {
+                const record = rotations.get(target);
+                if (!record) return;
+                if (!P.isAlive(target)) { rotations.delete(target); return; }
+                try {
+                    if (record.nativeTransform) target.style.transform = record.nativeTransform;
+                    else if (!P.clearStyleProperty(target, "transform")) return;
+                    rotations.delete(target);
+                } catch (_) { /* Retain a rejected native restore for retry. */ }
             }
             function release() {
-                for (const target of colored.keys()) QOL_UTILS.ClearStyleSafe(target, "borderColor");
-                colored.clear();
-                releaseRotation();
+                for (const target of colored.keys()) releaseColor(target);
+                for (const target of rotations.keys()) releaseRotation(target);
                 panel = null;
-                nativeTransform = "";
             }
             function renderColor() {
                 const targets = new Set();
@@ -53,7 +55,7 @@
                     for (const target of QOL_UTILS.FindPanelsByClass(panel, "charge_drained")) targets.add(target);
                 }
                 for (const target of colored.keys()) {
-                    if (!targets.has(target)) { QOL_UTILS.ClearStyleSafe(target, "borderColor"); colored.delete(target); }
+                    if (!targets.has(target)) releaseColor(target);
                 }
                 for (const target of targets) {
                     // Native state changes can replace a code-written border.
@@ -62,37 +64,46 @@
                 }
             }
             function update() {
-                if (!model.active) { release(); return; }
-                const current = findCharges($.GetContextPanel());
+                if (!active) return;
+                const currentRoot = P.findHud($.GetContextPanel());
+                if (currentRoot !== root) { release(); root = currentRoot; }
+                if (!model.active || !P.isAlive(root) || (root.id !== "Hud" && root.paneltype !== "CitadelHud")) { release(); return; }
+                const current = findCharges(root);
                 if (current !== panel) {
                     release(); panel = current;
-                    if (panel) {
-                        const value = String(panel.style.transform || "");
-                        nativeTransform = value === "none" ? "" : value;
-                    }
                 }
+                for (const target of rotations.keys()) if (target !== panel) releaseRotation(target);
                 if (!P.isAlive(panel)) return;
-                if (!model.rotation) releaseRotation();
+                if (!model.rotation) releaseRotation(panel);
                 else {
-                    const transform = (nativeTransform ? nativeTransform + " " : "") + "rotateZ(" + model.rotation + "deg)";
-                    rotationApplied = true;
-                    signature = P.syncStyles(panel, { transform }, signature).sig;
+                    let record = rotations.get(panel);
+                    if (!record) {
+                        const value = String(panel.style.transform || "");
+                        record = { nativeTransform: value === "none" ? "" : value, signature: null, readback: null };
+                        rotations.set(panel, record);
+                    }
+                    const transform = (record.nativeTransform ? record.nativeTransform + " " : "") + "rotateZ(" + model.rotation + "deg)";
+                    const previous = String(panel.style.transform || "") === record.readback ? record.signature : null;
+                    record.signature = P.syncStyles(panel, { transform }, previous).sig;
+                    if (record.signature !== null) record.readback = String(panel.style.transform || "");
                 }
                 renderColor();
             }
             function refreshSettings() {
+                if (!active) return;
                 const cfg = ctx.config.view();
                 const raw = Math.round(Number(cfg.STAMINA_CHARGE_ANGLE));
-                const angle = QOL_UTILS.NormalizeDegrees360(Number.isFinite(raw) ? raw : 45);
+                const stored = Number.isFinite(raw) ? raw : QOL_DEFAULT_CONFIG.STAMINA_CHARGE_ANGLE;
+                const rotation = QOL_UTILS.ShortestDegreesDelta(0, Q.presentation.toDisplayValue("STAMINA_CHARGE_ANGLE", stored));
                 const color = P.resolvePaletteColor(cfg.STAMINA_CHARGE_COLOR);
-                model = { active: angle !== 45 || !!color, color, rotation: angle - 45 };
-                signature = null;
+                model = { active: !!rotation || !!color, color, rotation };
+                for (const record of rotations.values()) record.signature = null;
                 update();
             }
             return {
-                onEnable() { refreshSettings(); loop = Q.core.Scheduler.createPollLoop(update, 0.5, ctx.id); },
+                onEnable() { active = true; refreshSettings(); loop = Q.core.Scheduler.createPollLoop(update, 0.5, ctx.id); },
                 onSettingsChanged: refreshSettings,
-                onDisable() { if (loop) loop.stop(); loop = null; release(); model = null; }
+                onDisable() { active = false; if (loop) loop.stop(); loop = null; release(); root = model = null; }
             };
         },
         test() {
