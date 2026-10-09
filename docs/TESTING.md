@@ -36,6 +36,13 @@ the maintainer's compilation and client checks remain required.
 
 ## Focused release regressions
 
+`ui_friends.test.js` exercises the escape-context search owner against late and
+living replaced lists, late/changed native names, rejected class writes and
+retirement, repeated initialization, retired callbacks, script reload and context
+destruction. It checks the actual clear-button CSS gate and preservation of
+native visible flags. The model does not establish native friends-panel creation,
+input routing or button rendering.
+
 Customize regressions exercise draft publication separately from canonical
 settings, Apply/Cancel, acknowledged saves, cleanup, measured frame geometry,
 drag proxies and corner resizing. Run `node --test tests/ui_customize.test.js

@@ -158,6 +158,12 @@ Frozen main-config fixtures preserve all healthbar variants and both minimap
 scale methods. Published versions, compact layouts and persistent defaults stay
 unchanged, apart from the already approved native-origin AP/stamina offsets.
 
+The escape-context friends search has one controller for native source selection,
+handlers, filter classes and retries. Living replacement, late names and rejected
+class writes are reconciled; context destruction/reload retires callbacks and
+deferred work. Filtering preserves native visible flags, and the clear button
+uses its existing stylesheet gate instead of a conflicting visible-property write.
+
 ## Remaining implementation and audit
 
 1. Audit already modernized owners for remaining shared mutable bookkeeping,

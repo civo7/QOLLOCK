@@ -123,3 +123,19 @@ Because layout is purely declarative:
 `MarkConfigDirty()` in `panorama/scripts/ql_settings.js` records a persistence edit generation immediately, before its 0.3-second debounced `SaveAndSync()`. A pending CEF restore can therefore detect a slider change even while the updated configuration has not been published to panel attributes. Immediate `SaveAndSync()` writes continue to advance the normal configuration revision.
 
 `hud_escape_menu.xml` loads `core/ql_persistence.js` before `core/ql_storage_bridge.js`. The settings realm shares the root/HUD revision protocol without loading the HUD feature registry. See `docs/core/persistence.md` and `docs/core/storage_bridge.md` for the restore guards and disk-save acknowledgment contract.
+
+## 7. Native friends search
+
+`ui/friends.js` owns the search controls added by `friends_list.xml`, in the
+escape-menu JavaScript context. It resolves the input, clear button and categories
+from one native `CitadelFriendsList` branch. Repeated initialization shares one
+managed retry loop; late/replaced controls and newly bound names are reconciled
+until that escape context is destroyed or detached. Reload/disposal retires the
+previous controller and makes its callbacks inert.
+
+Filtering owns only `QOLFriendSearchHidden` classes; it preserves native entry
+visibility and keeps unknown names readable. The clear action uses the existing
+`showSearchClearButton` stylesheet gate. Retired living entries release their
+filter classes, with failed release retried during the active lifetime. The
+native list/categories/name bindings and controls remain engine-owned. Search,
+clear-button appearance and native list replacement require client verification.

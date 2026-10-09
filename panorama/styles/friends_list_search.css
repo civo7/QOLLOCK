@@ -30,3 +30,8 @@
 	visibility: visible;
 }
 
+.QOLFriendSearchHidden
+{
+	visibility: collapse;
+}
+
