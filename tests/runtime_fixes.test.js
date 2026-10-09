@@ -395,11 +395,13 @@ test("ql_minimap_timers standard mode positioning respects 40px bottom offset an
 
     // Only buff timer active: single slot offset applied to the right (+152px)
     cfg = { ...cfg, ENABLE_MINIMAP_REJUV_TIMER: 0 };
+    instance.onSettingsChanged();
     hud.clock.advance(500);
     assert.strictEqual(overlay.style.marginLeft, "152px", "Single buff timer shifted right to preserve slot");
 
     // Only rejuv timer active: single slot offset applied to the left (-152px)
     cfg = { ...cfg, ENABLE_MINIMAP_BUFF_TIMER: 0, ENABLE_MINIMAP_REJUV_TIMER: 1 };
+    instance.onSettingsChanged();
     hud.clock.advance(500);
     assert.strictEqual(overlay.style.marginLeft, "-152px", "Single rejuv timer shifted left to preserve slot");
 
@@ -540,6 +542,7 @@ test("ql_minimap_timers maintains calibrated base coordinates across minimap sca
 
     // Docked at bottom when ENABLE_MINIMAP_ALWAYS_ON_MID_BOSS: 0 under 550px minimap
     cfg = { ...cfg, ENABLE_MINIMAP_ALWAYS_ON_MID_BOSS: 0 };
+    instance.onSettingsChanged();
     hud.clock.advance(500);
     assert.strictEqual(rejuvTimer.style.verticalAlign, "bottom", "Mid boss timer when not in pit must dock at bottom");
     assert.strictEqual(rejuvTimer.style.marginBottom, "40px", "Mid boss timer bottom offset must remain 40px base");

@@ -137,6 +137,11 @@ and loading roots with similar native IDs. Pure parsing/display cases retain
 native number formats and match-time thresholds.
 Native networth binding timing and readout presentation remain client checks.
 
+`map_module_lifecycle.test.js` also exercises the timer owner's complete created
+tree, stopped settings hooks, hidden partial construction, immediate re-enable,
+loading roots and living HUD/native-clock replacement. Existing geometry tests
+retain both minimap scale methods and Base/Alt/Tab bridge placement.
+
 `shared_panel_cache.test.js` covers shared typed/compatibility storage, public
 resolution after living moves, root/ID-scoped discovery misses, equal-revision
 configuration across living generations, current UI-root selection and rejected

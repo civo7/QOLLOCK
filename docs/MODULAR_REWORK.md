@@ -105,6 +105,10 @@ behavior until its owning implementation has been audited.
   construction stays hidden, rapid re-enable waits for prior asynchronous
   deletion, and loading roots do not become display parents. Native networth
   parsing and shared Scheduler collection remain independent of panel lifetime.
+- Minimap objective timers derive geometry settings reactively and use complete
+  created-child ownership. Partial construction, moved labels/icons, retired
+  callbacks and rapid re-enable no longer leave or revive orphaned timer trees;
+  current HUD/native clock rebinding preserves fixed-icon Base/Alt/Tab geometry.
 
 Frozen main-config fixtures preserve all healthbar variants and both minimap
 scale methods. Published versions, compact layouts and persistent defaults stay

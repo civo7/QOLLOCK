@@ -1,4 +1,5 @@
-// Objective overlays own their panels; Rejuvenator phase data belongs to ql_rejuv_hud.
+// OWNS: Objective overlay tree, settings-derived geometry and native minimap bindings.
+// DOES NOT OWN: Rejuvenator phases, native objective classes or minimap scaling.
 (() => {
     "use strict";
     const Q = globalThis.QOL;
@@ -35,7 +36,9 @@
         create(ctx) {
             const hostResolver = Q.panelCache.createIdResolver("minimap_persp", { ownerPath });
             const fallbackResolver = Q.panelCache.createIdResolver("minimap_container");
+            const tree = P.createOwnedTree();
             const signatures = new Map();
+            let active = false, model = null, rootOwner = null;
             let host = null, anchor = null, renderer = null, panels = null;
             let loop = null, unsubscribeSecond = null;
 
@@ -59,7 +62,7 @@
             }
 
             function releaseOverlay() {
-                if (P.isAlive(panels?.root)) P.delete(panels.root);
+                tree.clear();
                 panels = null;
                 signatures.clear();
             }
@@ -77,18 +80,18 @@
             }
 
             function child(parent, type, panelId, classes = [], properties) {
-                const panel = P.findChild(parent, panelId) || P.create(type, parent, panelId, properties);
+                const panel = tree.child(parent, type, panelId, properties);
                 if (!P.isAlive(panel)) return null;
-                panel.hittest = false;
-                panel.hittestchildren = false;
                 for (const className of classes) P.setClass(panel, className, true);
                 return panel;
             }
 
             function ensureOverlay() {
+                tree.sweep();
                 if (panels && P.findChild(anchor, "QOLMinimapTimersRoot") !== panels.root) releaseOverlay();
                 const overlay = child(anchor, "Panel", "QOLMinimapTimersRoot");
                 if (!overlay) return null;
+                if (panels?.root !== overlay) show(overlay, false);
                 const next = { root: overlay };
                 for (const [prefix, suffix, image] of [
                     ["buff", "Buff", "icon_powerup.svg"], ["left", "BuffBridgeLeft", "icon_powerup.svg"],
@@ -100,11 +103,10 @@
                     });
                     next[prefix + "Time"] = child(next[prefix], "Label", "QOLMinimap" + suffix + "Time", ["QOLMinimapTimerLabel"]);
                 }
-                if (Object.values(next).some(panel => !P.isAlive(panel))) { panels = next; return null; }
-                if (panels) for (const key of Object.keys(next)) if (next[key] !== panels[key] && P.isAlive(panels[key])) P.delete(panels[key]);
                 if (!panels || Object.keys(next).some(key => next[key] !== panels[key])) signatures.clear();
                 panels = next;
-                if (overlay.MoveChildBefore) overlay.MoveChildBefore(next.rejuv, next.buff);
+                if (Object.values(next).some(panel => !P.isAlive(panel))) { hide(); return null; }
+                if (overlay.MoveChildBefore && overlay.GetChild(0) !== next.rejuv) overlay.MoveChildBefore(next.rejuv, next.buff);
                 return panels;
             }
 
@@ -212,32 +214,47 @@
             }
 
             function update() {
-                const root = $.GetContextPanel();
-                const model = readModel();
-                if (!P.isAlive(root) || Q.core.hud.isInHideout(root) || Q.isStreetBrawlModeActive?.(root) || !model.buff && !model.rejuv) {
+                if (!active) return;
+                const root = P.findHud($.GetContextPanel());
+                if (root !== rootOwner) {
+                    releaseOverlay(); resetSources(); rootOwner = root;
+                }
+                if (!P.isAlive(root) || (root.id !== "Hud" && root.paneltype !== "CitadelHud")) { releaseOverlay(); return; }
+                if (Q.core.hud.isInHideout(root) || Q.isStreetBrawlModeActive?.(root) || !model.buff && !model.rejuv) {
+                    tree.sweep();
                     hide(); return;
                 }
                 if (!discover(root)) { hide(); return; }
                 render(model, observe(root, model));
             }
 
+            function resetSources() {
+                host = anchor = renderer = null;
+                hostResolver.reset(); fallbackResolver.reset();
+            }
+
+            function refresh() {
+                model = readModel();
+                hostResolver.reset(); fallbackResolver.reset();
+                update();
+            }
+
             function release() {
+                active = false;
                 if (unsubscribeSecond) { unsubscribeSecond(); unsubscribeSecond = null; }
                 if (loop) { loop.stop(); loop = null; }
                 releaseOverlay();
-                host = anchor = renderer = null;
-                hostResolver.reset();
-                fallbackResolver.reset();
+                resetSources(); tree.dispose(); model = rootOwner = null;
             }
 
             return {
                 onEnable() {
-                    update();
+                    active = true; refresh();
                     unsubscribeSecond = Q.core.time.subscribeGameSecond(update, 1);
                     loop = Q.core.Scheduler.createPollLoop(update, 0.3, id);
                 },
                 onDisable: release,
-                onSettingsChanged() { hostResolver.reset(); fallbackResolver.reset(); update(); }
+                onSettingsChanged: refresh
             };
         },
         test() {

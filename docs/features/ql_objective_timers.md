@@ -13,6 +13,14 @@ The minimap rejuvenator toggle also enables the producer when its HUD toggles
 are off; root presentation classes govern those HUD panels independently.
 Hideout, Street Brawl, disable and a new match reset the published phase.
 
+The minimap timer instance derives geometry settings in its settings hooks and
+reconciles native objective/clock evidence at its existing cadence. It waits for
+the current real HUD and owns every created child through the shared tree
+helper. Partial construction stays hidden; moved children and prior instances
+awaiting asynchronous deletion are retired. Stopped settings hooks cannot
+recreate timer UI. The native map and the producer's scalar snapshot remain
+outside that tree's ownership.
+
 Capture countdowns distinguish missing native sources from explicit cleared
 signals. Source replacement must not terminate a running capture merely because
 the new charge subtree has not appeared. Native charge tokens and the native

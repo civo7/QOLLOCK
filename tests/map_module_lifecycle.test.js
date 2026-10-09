@@ -167,9 +167,16 @@ test("objective timers rebind individual living labels and native anchors, and d
     const plate = overlay.FindChild("QOLMinimapBuffBridgeLeftTimer");
     const oldLabel = plate.FindChild("QOLMinimapBuffBridgeLeftTime");
     oldLabel.SetParent(e.orphan);
-    const label = e.add(plate, "QOLMinimapBuffBridgeLeftTime", "Label");
-    onceFailStyle(label, "fontSize");
-    e.clock.advance(700);
+    const foreign = e.add(plate, "QOLMinimapBuffBridgeLeftTime", "Label");
+    const create = e.$.CreatePanel; let failures;
+    e.$.CreatePanel = (...args) => {
+        const panel = create(...args);
+        if (panel.id === "QOLMinimapBuffBridgeLeftTime") failures = onceFailStyle(panel, "fontSize");
+        return panel;
+    };
+    e.clock.advance(1000);
+    const label = plate.FindChild("QOLMinimapBuffBridgeLeftTime");
+    assert.equal(foreign.IsValid(), false); assert.notEqual(label, foreign); assert.ok(failures() >= 2);
     assert.equal(label.style.fontSize, "11px");
     assert.match(label.text, /^\d+:\d{2}$/);
     assert.equal(oldLabel.IsValid(), false);
@@ -182,7 +189,80 @@ test("objective timers rebind individual living labels and native anchors, and d
     e.Q.core.FeatureRegistry.disable("ql_minimap_timers");
     e.clock.advance(1);
     assert.equal(replacement.IsValid(), false);
+    e.$.CreatePanel = create;
     e.clean();
+});
+
+function directTimer(e) {
+    e.Q.core.App.shutdown();
+    e.configure({ ENABLE_MINIMAP_BUFF_TIMER: 1, ENABLE_MINIMAP_BUFF_TIMER_ON_BRIDGE: 1 });
+    const config = { view: () => e.Q.core.ConfigStore.view("ql_minimap_timers") };
+    const create = () => e.Q.core.FeatureRegistry.getManifest("ql_minimap_timers").create({ id: "ql_minimap_timers", config });
+    return { feature: create(), create };
+}
+function createdTimerChildren(overlay) {
+    const children = [], queue = overlay.Children();
+    while (queue.length) { const panel = queue.shift(); children.push(panel); queue.push(...panel.Children()); }
+    return children;
+}
+
+test("objective timer hooks cannot construct UI outside their active lifetime and retire every moved child", () => {
+    const e = fixture(), { feature } = directTimer(e);
+    feature.onSettingsChanged(); assert.equal(e.viewport.FindChild("QOLMinimapTimersRoot"), null);
+    feature.onEnable(); const overlay = e.viewport.FindChild("QOLMinimapTimersRoot");
+    const children = createdTimerChildren(overlay); assert.equal(children.length, 12);
+    for (const panel of children) panel.SetParent(e.orphan);
+    e.clock.advance(650); for (const panel of children) assert.equal(panel.IsValid(), false, panel.id);
+    assert.match(e.viewport.FindChildTraverse("QOLMinimapBuffBridgeLeftTime").text, /^\d+:\d{2}$/);
+    const moved = e.viewport.FindChildTraverse("QOLMinimapBuffBridgeRightIcon"); moved.SetParent(e.orphan);
+    feature.onDisable(); feature.onSettingsChanged(); e.clock.advance(650);
+    assert.equal(moved.IsValid(), false); assert.equal(e.viewport.FindChild("QOLMinimapTimersRoot"), null);
+    assert.equal(e.renderer.IsValid(), true); assert.equal(e.viewport.IsValid(), true); e.clean();
+});
+
+test("objective timers keep partial construction hidden and retire its moved children", () => {
+    const e = fixture(), { feature } = directTimer(e), create = e.$.CreatePanel; let reject = true;
+    e.$.CreatePanel = (...args) => {
+        if (args[2] === "QOLMinimapBuffBridgeRightTime" && reject) throw Error("modeled late label");
+        return create(...args);
+    };
+    feature.onEnable(); const overlay = e.viewport.FindChild("QOLMinimapTimersRoot");
+    assert.equal(overlay.BHasClass("qol-hidden"), true);
+    assert.equal(overlay.FindChildTraverse("QOLMinimapBuffBridgeRightTime"), null);
+    const moved = overlay.FindChildTraverse("QOLMinimapBuffBridgeLeftIcon"); moved.SetParent(e.orphan);
+    reject = false; e.clock.advance(650); assert.equal(moved.IsValid(), false);
+    assert.equal(overlay.BHasClass("qol-hidden"), false);
+    assert.match(overlay.FindChildTraverse("QOLMinimapBuffBridgeRightTime").text, /^\d+:\d{2}$/);
+    feature.onDisable(); e.clock.advance(20); assert.equal(overlay.IsValid(), false); e.$.CreatePanel = create; e.clean();
+});
+
+test("objective timers wait for queued previous trees during immediate re-enable", () => {
+    const e = fixture(), { feature, create } = directTimer(e); feature.onEnable();
+    const previous = e.viewport.FindChild("QOLMinimapTimersRoot"); feature.onDisable();
+    const next = create(); next.onEnable(); next.onSettingsChanged(); assert.equal(previous.visible, false);
+    e.clock.advance(650); assert.equal(previous.IsValid(), false);
+    const current = e.viewport.FindChild("QOLMinimapTimersRoot"); assert.ok(current); assert.notEqual(current, previous);
+    assert.equal(current.BHasClass("qol-hidden"), false); assert.equal(e.viewport.Children().filter(panel => panel.id === current.id).length, 1);
+    next.onDisable(); e.clock.advance(20); assert.equal(current.IsValid(), false); e.clean();
+});
+
+test("objective timers release a living HUD and loading roots before rebinding current native clocks", () => {
+    const e = fixture(), { feature } = directTimer(e); feature.onEnable();
+    const previous = e.viewport.FindChild("QOLMinimapTimersRoot"), moved = previous.FindChildTraverse("QOLMinimapRejuvTime");
+    moved.SetParent(e.orphan);
+    e.doc.root = e.add(null, "LoadingRoot"); const fake = e.add(e.doc.root, "minimap_container");
+    feature.onSettingsChanged(); e.clock.advance(350);
+    assert.equal(previous.IsValid(), false); assert.equal(moved.IsValid(), false);
+    assert.equal(fake.FindChild("QOLMinimapTimersRoot"), null); assert.equal(e.root.IsValid(), true);
+    e.doc.root = e.add(null, "Hud", "CitadelHud");
+    const core = e.add(e.doc.root, ""); core.AddClass("HudCore");
+    const top = e.add(core, "TopBar"); e.add(top, "GameTime", "Label").text = "12:00";
+    const gameplay = e.add(core, "gameplay_hud"), clamp = e.add(gameplay, ""); clamp.AddClass("clamp_width");
+    const host = e.add(clamp, "minimap_persp"), viewport = e.add(host, "minimap_container");
+    const inner = e.add(viewport, "HudMinimapContainer"); e.add(inner, "hud_minimap");
+    e.clock.advance(650); const current = viewport.FindChild("QOLMinimapTimersRoot");
+    assert.ok(current); assert.equal(current.FindChildTraverse("QOLMinimapBuffBridgeLeftTime").text, "3:00");
+    feature.onDisable(); e.clock.advance(20); assert.equal(current.IsValid(), false); e.clean();
 });
 
 function localPlayer(e, renderer, degrees, position = "50% 50% 0px") {
