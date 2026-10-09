@@ -50,9 +50,6 @@
     let _voiceActorValueLabel = null;
 
     let _activeAnchor = null;
-    let _hideTimer = null;
-    let _showTimer = null;
-    let _trackTimer = null;
     let _lastVisibleTime = 0;
     let _suppressUntilMs = 0;
     let _lastAnchorLocalY = NaN;
@@ -271,71 +268,105 @@
     // -------------------------------------------------------------------------
     // Tooltip DOM Management
     // -------------------------------------------------------------------------
+    const P = Q.core.panel;
+    const tooltipTree = P.createOwnedTree();
+    const deadlines = new Map();
+    let lifetimeOwner = null;
+    const cancelTask = kind => {
+        const task = deadlines.get(kind);
+        deadlines.delete(kind);
+        if (task && task.handle !== null) { try { $.CancelScheduled(task.handle); } catch (_) {} }
+    };
+    const currentOwner = () => {
+        try {
+            const context = $.GetContextPanel();
+            return { context, host: getHost(), window: P.findTraverse(context, "SettingsWindow") };
+        } catch (_) { return { context: null, host: null, window: null }; }
+    };
+    const sameOwner = (a, b) => a && b && a.context === b.context && a.host === b.host && a.window === b.window;
+    const currentScope = owner => owner && isAlive(owner.context) && isAlive(owner.host) && sameOwner(owner, currentOwner());
+    const anchorInScope = (anchor, owner) => {
+        try {
+            if (!isAlive(anchor) || !isDescendantOf(anchor, owner.context)) return false;
+            for (let node = anchor, depth = 0; isAlive(node) && depth < 64; node = node.GetParent(), depth++) {
+                if (node.id === "SettingsWindow") return node === owner.window;
+                if (node === owner.context) return true;
+            }
+        } catch (_) {}
+        return false;
+    };
+    const retireTooltip = () => {
+        P.setClass(_panel, "Visible", false);
+        tooltipTree.clear();
+        _panel = _bodyLabel = _perfPrefixLabel = _perfValueLabel = _creatorPrefixLabel = _creatorValueLabel = null;
+        _voiceAuthorPrefixLabel = _voiceAuthorValueLabel = _voiceActorPrefixLabel = _voiceActorValueLabel = null;
+    };
+    const bindOwner = () => {
+        const next = currentOwner();
+        if (!sameOwner(lifetimeOwner, next)) {
+            hideRowTooltip(); retireTooltip(); lifetimeOwner = next;
+            _lastVisibleTime = 0;
+            _suppressUntilMs = 0;
+        }
+        return currentScope(next) ? lifetimeOwner : null;
+    };
+    const scheduleTask = (kind, delay, callback, anchor = null) => {
+        cancelTask(kind);
+        const owner = lifetimeOwner;
+        if (!currentScope(owner)) return;
+        const task = { handle: null };
+        deadlines.set(kind, task);
+        try { task.handle = $.Schedule(delay, () => {
+            if (deadlines.get(kind) !== task) return;
+            deadlines.delete(kind);
+            if (lifetimeOwner !== owner) return;
+            if (!currentScope(owner) || (anchor && !anchorInScope(anchor, owner))) {
+                hideRowTooltip(); retireTooltip(); lifetimeOwner = null; return;
+            }
+            try { callback(); }
+            catch (error) {
+                hideRowTooltip(); retireTooltip();
+                QOL_UTILS.WarnLog("settings", "tooltip failed: " + (error?.message || String(error)));
+            }
+        }); } catch (error) {
+            deadlines.delete(kind);
+            hideRowTooltip(); retireTooltip();
+            QOL_UTILS.WarnLog("settings", "tooltip schedule failed: " + (error?.message || String(error)));
+        }
+    };
     const ensureTooltipPanel = () => {
-        const host = getHost();
-        if (!host) return null;
-
-        if (isAlive(_panel) && typeof _panel.GetParent === "function" && _panel.GetParent() !== host) {
-            try { _panel.DeleteAsync(0); } catch (_) {}
-            _panel = null;
-            _bodyLabel = null;
-            _perfPrefixLabel = null;
-            _perfValueLabel = null;
-            _creatorPrefixLabel = null;
-            _creatorValueLabel = null;
-            _voiceAuthorPrefixLabel = null;
-            _voiceAuthorValueLabel = null;
-            _voiceActorPrefixLabel = null;
-            _voiceActorValueLabel = null;
-        }
-
-        if (!isAlive(_panel)) {
-            _panel = $.CreatePanel("Panel", host, "QOLSettingsRowFloatingTooltip");
-            _panel.AddClass("QOLCustomRowTooltip");
-            _panel.hittest = false;
-            _panel.hittestchildren = false;
-
-            _bodyLabel = $.CreatePanel("Label", _panel, "QOLSettingsRowFloatingTooltipText");
-            _bodyLabel.AddClass("QOLCustomRowTooltipText");
-
-            const perfRow = $.CreatePanel("Panel", _panel, "QOLSettingsRowFloatingTooltipPerfRow");
-            perfRow.AddClass("QOLCustomRowTooltipPerfRow");
-            _perfPrefixLabel = $.CreatePanel("Label", perfRow, "QOLSettingsRowFloatingTooltipPerfPrefix");
-            _perfPrefixLabel.AddClass("QOLCustomRowTooltipPerfPrefix");
-            _perfPrefixLabel.text = localize("FPS Impact:", true);
-            _perfValueLabel = $.CreatePanel("Label", perfRow, "QOLSettingsRowFloatingTooltipPerfValue");
-            _perfValueLabel.AddClass("QOLCustomRowTooltipPerfValue");
-
-            const creatorRow = $.CreatePanel("Panel", _panel, "QOLSettingsRowFloatingTooltipCreatorRow");
-            creatorRow.AddClass("QOLCustomRowTooltipCreatorRow");
-            _creatorPrefixLabel = $.CreatePanel("Label", creatorRow, "QOLSettingsRowFloatingTooltipCreatorPrefix");
-            _creatorPrefixLabel.AddClass("QOLCustomRowTooltipCreatorPrefix");
-            _creatorPrefixLabel.text = localize("Created By:", true);
-            _creatorValueLabel = $.CreatePanel("Label", creatorRow, "QOLSettingsRowFloatingTooltipCreatorValue");
-            _creatorValueLabel.AddClass("QOLCustomRowTooltipCreatorValue");
-
-            const voiceAuthorRow = $.CreatePanel("Panel", _panel, "QOLSettingsRowFloatingTooltipVoiceMetaAuthorRow");
-            voiceAuthorRow.AddClass("QOLCustomRowTooltipVoiceMetaRow");
-            _voiceAuthorPrefixLabel = $.CreatePanel("Label", voiceAuthorRow, "QOLSettingsRowFloatingTooltipVoiceMetaAuthorPrefix");
-            _voiceAuthorPrefixLabel.AddClass("QOLCustomRowTooltipVoiceMetaPrefix");
-            _voiceAuthorPrefixLabel.text = localize("Author:", true);
-            _voiceAuthorValueLabel = $.CreatePanel("Label", voiceAuthorRow, "QOLSettingsRowFloatingTooltipVoiceMetaAuthorValue");
-            _voiceAuthorValueLabel.AddClass("QOLCustomRowTooltipVoiceMetaAuthorValue");
-
-            const voiceActorRow = $.CreatePanel("Panel", _panel, "QOLSettingsRowFloatingTooltipVoiceMetaActorRow");
-            voiceActorRow.AddClass("QOLCustomRowTooltipVoiceMetaRow");
-            _voiceActorPrefixLabel = $.CreatePanel("Label", voiceActorRow, "QOLSettingsRowFloatingTooltipVoiceMetaActorPrefix");
-            _voiceActorPrefixLabel.AddClass("QOLCustomRowTooltipVoiceMetaPrefix");
-            _voiceActorPrefixLabel.text = localize("Voice Actor:", true);
-            _voiceActorValueLabel = $.CreatePanel("Label", voiceActorRow, "QOLSettingsRowFloatingTooltipVoiceMetaActorValue");
-            _voiceActorValueLabel.AddClass("QOLCustomRowTooltipVoiceMetaActorValue");
-        }
+        const owner = bindOwner();
+        if (!owner) return null;
+        tooltipTree.sweep();
+        let ready = true;
+        const node = (type, suffix, parent, cls) => {
+            const panel = tooltipTree.child(parent, type, "QOLSettingsRowFloatingTooltip" + suffix);
+            if (!isAlive(panel)) { ready = false; return null; }
+            P.setClass(panel, cls, true);
+            if (!panel.BHasClass(cls)) ready = false;
+            return panel;
+        };
+        try {
+            _panel = node("Panel", "", owner.host, "QOLCustomRowTooltip");
+            if (!_panel) return null;
+            _bodyLabel = node("Label", "Text", _panel, "QOLCustomRowTooltipText");
+            const perf = node("Panel", "PerfRow", _panel, "QOLCustomRowTooltipPerfRow");
+            _perfPrefixLabel = node("Label", "PerfPrefix", perf, "QOLCustomRowTooltipPerfPrefix");
+            _perfValueLabel = node("Label", "PerfValue", perf, "QOLCustomRowTooltipPerfValue");
+            const creator = node("Panel", "CreatorRow", _panel, "QOLCustomRowTooltipCreatorRow");
+            _creatorPrefixLabel = node("Label", "CreatorPrefix", creator, "QOLCustomRowTooltipCreatorPrefix");
+            _creatorValueLabel = node("Label", "CreatorValue", creator, "QOLCustomRowTooltipCreatorValue");
+            const author = node("Panel", "VoiceMetaAuthorRow", _panel, "QOLCustomRowTooltipVoiceMetaRow");
+            _voiceAuthorPrefixLabel = node("Label", "VoiceMetaAuthorPrefix", author, "QOLCustomRowTooltipVoiceMetaPrefix");
+            _voiceAuthorValueLabel = node("Label", "VoiceMetaAuthorValue", author, "QOLCustomRowTooltipVoiceMetaAuthorValue");
+            const actor = node("Panel", "VoiceMetaActorRow", _panel, "QOLCustomRowTooltipVoiceMetaRow");
+            _voiceActorPrefixLabel = node("Label", "VoiceMetaActorPrefix", actor, "QOLCustomRowTooltipVoiceMetaPrefix");
+            _voiceActorValueLabel = node("Label", "VoiceMetaActorValue", actor, "QOLCustomRowTooltipVoiceMetaActorValue");
+        } catch (_) { ready = false; }
+        if (!ready) { P.setClass(_panel, "Visible", false); return null; }
         return _panel;
     };
 
-    // -------------------------------------------------------------------------
-    // Deterministic Positioning (Zero Ticks, No Overlaps)
-    // -------------------------------------------------------------------------
     const positionTooltip = (anchor) => {
         if (!isAlive(_panel) || !isAlive(anchor)) return;
         const host = _panel.GetParent ? _panel.GetParent() : null;
@@ -571,15 +602,10 @@
         return changed;
     };
 
-    const stopTracking = () => {
-        if (_trackTimer) {
-            $.CancelScheduled(_trackTimer);
-            _trackTimer = null;
-        }
-    };
+    const stopTracking = () => cancelTask("track");
 
     const tickTracking = () => {
-        _trackTimer = null;
+        if (!tooltipTree.sweep()) { hideRowTooltip(); return; }
         if (!isVisible()) return;
         const anchor = _activeAnchor;
         if (!isAlive(anchor)) {
@@ -612,46 +638,36 @@
         }
 
         positionTooltip(anchor);
-        _trackTimer = $.Schedule(TRACK_INTERVAL_SEC, tickTracking);
+        scheduleTask("track", TRACK_INTERVAL_SEC, tickTracking, _activeAnchor);
     };
 
     const ensureTracking = () => {
-        if (_trackTimer) return;
-        _trackTimer = $.Schedule(TRACK_INTERVAL_SEC, tickTracking);
+        if (deadlines.has("track")) return;
+        scheduleTask("track", TRACK_INTERVAL_SEC, tickTracking, _activeAnchor);
     };
 
     // -------------------------------------------------------------------------
     // Show / Hide Lifecycle
     // -------------------------------------------------------------------------
-    const cancelHide = () => {
-        if (_hideTimer) {
-            $.CancelScheduled(_hideTimer);
-            _hideTimer = null;
-        }
-    };
-
-    const cancelShow = () => {
-        if (_showTimer) {
-            $.CancelScheduled(_showTimer);
-            _showTimer = null;
-        }
-    };
+    const cancelHide = () => cancelTask("hide");
+    const cancelShow = () => cancelTask("show");
 
     const isVisible = () => {
         if (!isAlive(_panel) || !_panel.BHasClass) return false;
-        return !!_panel.BHasClass("Visible");
+        try { return !!_panel.BHasClass("Visible"); } catch (_) { return false; }
     };
 
     const hideRowTooltip = () => {
         cancelShow();
         cancelHide();
         stopTracking();
+        cancelTask("settle");
         _activeAnchor = null;
         _hoverCursorY = NaN;
         _lastX = NaN;
         _lastY = NaN;
         if (isAlive(_panel)) {
-            _panel.SetHasClass("Visible", false);
+            P.setClass(_panel, "Visible", false);
             _lastVisibleTime = Date.now();
         }
     };
@@ -659,13 +675,12 @@
     const hideTooltipDeferred = (_reason) => {
         cancelShow();
         cancelHide();
-        _hideTimer = $.Schedule(DEFER_HIDE_SEC, () => {
-            _hideTimer = null;
+        scheduleTask("hide", DEFER_HIDE_SEC, () => {
             hideRowTooltip();
         });
     };
 
-    const executeShow = (anchor, perfTier, bodyText, createdBy, options) => {
+    const renderTooltip = (anchor, perfTier, bodyText, createdBy, options) => {
         cancelHide();
         const panel = ensureTooltipPanel();
         if (!panel || !isAlive(anchor)) return;
@@ -714,15 +729,24 @@
         ensureTracking();
 
         // Frame 0 layout settle check
-        $.Schedule(0.0, () => {
+        scheduleTask("settle", 0.0, () => {
             if (_activeAnchor === anchor && isVisible()) {
                 positionTooltip(anchor);
             }
-        });
+        }, anchor);
+    };
+
+    const executeShow = (...args) => {
+        try { renderTooltip(...args); }
+        catch (error) {
+            hideRowTooltip(); retireTooltip();
+            QOL_UTILS.WarnLog("settings", "tooltip failed: " + (error?.message || String(error)));
+        }
     };
 
     const showRowTooltip = (anchor, _perfText, bodyText, perfTier, createdBy, options) => {
-        if (!isAlive(anchor)) return;
+        const owner = bindOwner();
+        if (!owner || !anchorInScope(anchor, owner)) return;
 
         if (!hasMeaningfulContent(perfTier, bodyText, createdBy, options)) {
             hideRowTooltip();
@@ -746,8 +770,7 @@
         if (isSuppressed()) {
             cancelShow();
             const delaySec = Math.max(COLD_HOVER_DELAY_SEC, ((_suppressUntilMs - Date.now()) / 1000) + 0.02);
-            _showTimer = $.Schedule(delaySec, () => {
-                _showTimer = null;
+            scheduleTask("show", delaySec, () => {
                 if (!isAlive(anchor) || isSuppressed()) return;
                 if (didScrollChange()) {
                     suppressForMs(SCROLL_SUPPRESS_MS);
@@ -757,7 +780,7 @@
                     if (!isPanelVisibleInList(anchor, settingsList, host)) return;
                 }
                 executeShow(anchor, perfTier, bodyText, createdBy, options);
-            });
+            }, anchor);
             return;
         }
 
@@ -768,8 +791,7 @@
             executeShow(anchor, perfTier, bodyText, createdBy, options);
         } else {
             cancelShow();
-            _showTimer = $.Schedule(COLD_HOVER_DELAY_SEC, () => {
-                _showTimer = null;
+            scheduleTask("show", COLD_HOVER_DELAY_SEC, () => {
                 if (!isAlive(anchor) || isSuppressed()) return;
                 if (didScrollChange()) {
                     suppressForMs(SCROLL_SUPPRESS_MS);
@@ -779,7 +801,7 @@
                     if (!isPanelVisibleInList(anchor, settingsList, host)) return;
                 }
                 executeShow(anchor, perfTier, bodyText, createdBy, options);
-            });
+            }, anchor);
         }
     };
 
@@ -1023,6 +1045,7 @@
     Q.tooltip = {
         showRowTooltip,
         hideRowTooltip,
+        dispose() { hideRowTooltip(); retireTooltip(); tooltipTree.dispose(); lifetimeOwner = null; },
         hideTooltipDeferred,
         cancelHide,
         isVisible,

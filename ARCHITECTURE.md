@@ -482,7 +482,8 @@ Previews are settings-owned, not the gameplay overlay. They can remain useful
 where gameplay features are suppressed. Their host scaling/live-anchor fallback
 logic does not prove pixel-perfect alignment at every resolution.
 
-`QOL.tooltip` owns tooltip reuse, deferred hide and row tooltip behavior.
+`QOL.tooltip` owns tooltip reuse, deferred hide and row tooltip behavior; see
+[tooltip ownership](docs/ui/tooltips.md).
 Preserve scroll suppression and coordinate conversion. Closing QOLLOCK settings
 is not the same as resuming Deadlock; the shell's close path preserves the native
 escape menu. The manual visual walkthrough has temporary-setting restoration and

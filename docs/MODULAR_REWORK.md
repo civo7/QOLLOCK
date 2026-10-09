@@ -198,14 +198,14 @@ live publication/durable-save boundary remain separate.
    frozen compatibility fixtures. After maintainer compilation/repacking,
    perform the native visual/input, gameplay-transition and restart checks.
 
-The final settings pass has these concrete remaining ownership checks:
+Final settings ownership status and remaining checks:
 
 - `ql_settings_previews.js`: complete created-tree ownership and cancelable,
   context-bound hide deadlines are implemented. Family-specific geometry and
   feature gates remain in render paths; client layout checks remain pending.
-- `ql_settings_tooltips.js`: reconcile partially created/replaced/moved children,
-  retire delayed hover/tracking work through context/host replacement and preserve
-  scroll suppression, coordinates and metadata localization.
+- `ql_settings_tooltips.js`: complete created-tree reconciliation and guarded,
+  cancelable hover/hide/tracking/settle tasks are implemented. Scroll suppression,
+  coordinates and metadata localization remain; client input checks are pending.
 - `ql_settings.js`, `ql_settings_persistence.js` and `core/ql_persistence.js`:
   finish the shared normalization/publication-boundary audit, including current
   config access, paired native revisions, rejected writes and compatibility
