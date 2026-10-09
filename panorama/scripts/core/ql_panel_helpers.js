@@ -384,6 +384,18 @@
     // selection, content, signatures and scheduling stay with the caller.
     const createOwnedTree = () => {
         const nodes = new Map(), retired = new Set();
+        // One immediate-child snapshot per parent/pass preserves FindChild's
+        // first-ID priority without N separate sibling walks for N markers.
+        const indexChildren = parent => {
+            const index = new Map();
+            if (!isPanelAlive(parent)) return index;
+            try {
+                for (const panel of parent.Children()) {
+                    if (isPanelAlive(panel) && !index.has(panel.id)) index.set(panel.id, panel);
+                }
+            } catch (_) { index.clear(); }
+            return index;
+        };
         const retire = panel => {
             if (!isPanelAlive(panel)) return;
             setVisible(panel, false);
@@ -402,9 +414,11 @@
         };
         const sweep = () => {
             const previousSize = nodes.size;
+            const parents = new Map();
             for (const [id, record] of [...nodes]) {
+                if (!parents.has(record.parent)) parents.set(record.parent, indexChildren(record.parent));
                 if (!isPanelAlive(record.panel) || !isPanelAlive(record.parent) ||
-                    findChild(record.parent, id) !== record.panel) discard(id);
+                    parents.get(record.parent).get(id) !== record.panel) discard(id);
             }
             for (const panel of retired) {
                 if (!isPanelAlive(panel)) retired.delete(panel);
@@ -412,9 +426,8 @@
             }
             return nodes.size === previousSize;
         };
-        const child = (parent, type, id, properties) => {
+        const ensureChild = (parent, type, id, properties, next) => {
             if (!id) return null;
-            const next = findChild(parent, id);
             const previous = nodes.get(id);
             if (previous && (previous.panel !== next || previous.parent !== parent)) discard(id);
             if (!isPanelAlive(parent)) return null;
@@ -432,9 +445,18 @@
             }
             return panel;
         };
+        const child = (parent, type, id, properties) => ensureChild(parent, type, id, properties, findChild(parent, id));
+        const children = (parent, type, entries) => {
+            const index = indexChildren(parent);
+            return entries.map(({ id, properties }) => {
+                const panel = ensureChild(parent, type, id, properties, index.get(id) || null);
+                if (panel) index.set(id, panel);
+                return panel;
+            });
+        };
         const clear = () => { for (const id of [...nodes.keys()].reverse()) discard(id); sweep(); };
         const dispose = () => { clear(); retired.clear(); };
-        return { child, sweep, remove: discard, clear, dispose };
+        return { child, children, sweep, remove: discard, clear, dispose };
     };
 
     // ql_utils.js is loaded first in every context that includes panel helpers.

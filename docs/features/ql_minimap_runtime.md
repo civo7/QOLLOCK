@@ -35,6 +35,9 @@ moved outside their container. Crate data replacement reuses unchanged indices
 and retires removed branches. Partial construction or style writes stay hidden
 until a later active poll succeeds; rapid re-enable waits for previous queued
 trees to retire rather than adopting them.
+Sibling crate markers reconcile as one owned-tree batch. Their complete
+ownership checks still run at the active cadence, using one immediate-child
+snapshot per parent instead of one sibling search per marker.
 
 Objective overlays consume the separate [phase producer](ql_objective_timers.md).
 Their fixed-icon bridge surface and placement use the same Base/Alt/Tab size

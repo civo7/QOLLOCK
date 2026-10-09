@@ -184,9 +184,11 @@
                 for (let index = coordinates.length; index < markerPanels.length; index++) {
                     owned.delete(markerPanels[index]); tree.remove("QOLMinimapCrateMarker" + index);
                 }
-                markerPanels = coordinates.map((point, index) => {
+                const nextPanels = tree.children(markers, "Panel", coordinates.map((point, index) => ({
+                    id: "QOLMinimapCrateMarker" + index, properties: { class: "minimap_marker" }
+                })));
+                markerPanels = nextPanels.map((panel, index) => {
                     const previous = markerPanels[index];
-                    const panel = tree.child(markers, "Panel", "QOLMinimapCrateMarker" + index, { class: "minimap_marker" });
                     if (previous !== panel) { owned.delete(previous); crateReady = false; }
                     return panel;
                 });

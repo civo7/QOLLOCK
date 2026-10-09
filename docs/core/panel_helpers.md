@@ -58,7 +58,7 @@ Inventory, souls, stats placement and top/bottom bar geometry use this contract;
 it is separate from created-tree ownership and specialized native animation restoration.
 
 `createOwnedTree()` returns `child(parent, type, id, properties?)`, `sweep()`,
-`remove(id)`, `clear()` and `dispose()`. Each nonempty ID must be unique within that instance
+`children(parent, type, entries)`, `remove(id)`, `clear()` and `dispose()`. Each nonempty ID must be unique within that instance
 and reserved for QOL-created content; never use this helper to adopt native
 panels. Child reconciliation retains expected ancestry, so moved children are
 still retired with their former owner. `remove(id)` retires one recorded branch,
@@ -75,6 +75,13 @@ previous instance may already have queued for deletion. Default creation
 properties disable hit testing on each child.
 Owned false hit-test flags are also reconciled through native properties; a
 partial flag write keeps the node recorded for retry and cleanup.
+
+`children()` reconciles a sibling batch of `{id, properties?}` entries and returns
+their panels in entry order, retaining the same ownership/partial-failure rules
+as `child()`. It snapshots immediate children once per call; `sweep()` also
+groups recorded nodes by parent. Both preserve the first duplicate-ID match
+and detect moved/replaced nodes without a separate sibling search per marker.
+Snapshots are local to that synchronous pass and are never retained across polls.
 
 Native parent discovery, active-instance guards, content/history, style
 signatures and schedules remain the manifest's responsibilities. This helper

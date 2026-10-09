@@ -116,6 +116,10 @@ the baseline's complete config input is published unchanged to the other runtime
 The default scenario uses baseline defaults; `--expanded` enables the same
 prefix-selected toggles as `profile_hud.js`, and `--enable KEY[=VALUE],...` selects
 additional values. Git refs are local: this command does not fetch.
+`--warmup-ms` sets the same warm-up in both runs. Compare the usual early window
+with a longer warm-up when a capture cannot supply identity/native bindings:
+late owner-discovery deadlines can still fall inside the usual measured window.
+Do not silently mix warm-up windows or present a static startup replay as FPS.
 
 Reports retain both raw snapshots, source identities, config/tree fingerprints,
 warm-up and sample duration, callback/registry errors and enabled-owner changes.

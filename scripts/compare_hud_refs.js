@@ -64,11 +64,12 @@ function assess(before, after) {
     return { validInputs: !issues.length, issues: [...new Set(issues)], coverage, rates };
 }
 
-function compare({ beforeRef = "main", afterRef = "working-tree", seconds = 20, capturedTree = null, enableAll = false, configOverrides = {} } = {}) {
+function compare({ beforeRef = "main", afterRef = "working-tree", seconds = 20, warmupMs = 8000, capturedTree = null, enableAll = false, configOverrides = {} } = {}) {
     if (!Number.isFinite(seconds) || seconds <= 0) throw new Error("--seconds must be positive");
+    if (!Number.isFinite(warmupMs) || warmupMs < 0) throw new Error("--warmup-ms must be nonnegative");
     if (capturedTree) inspectCapture(capturedTree, { requireHud: true });
     const beforeRuntime = runtimeAt(beforeRef), afterRuntime = runtimeAt(afterRef);
-    const opts = { capturedTree, enableAll, configOverrides: { HEALTHBAR_TYPE: 0, ...configOverrides } };
+    const opts = { capturedTree, warmupMs, enableAll, configOverrides: { HEALTHBAR_TYPE: 0, ...configOverrides } };
     const first = createProfiledHud({ ...opts, runtimeSources: beforeRuntime.sources });
     const before = measure(first, seconds, beforeRuntime.identity);
     // The baseline's complete input is published unchanged in both runtimes.
@@ -94,7 +95,7 @@ function main() {
     }
     const result = compare({
         beforeRef: arg("before", "main"), afterRef: arg("after", "working-tree"),
-        seconds: Number(arg("seconds", 20)), enableAll: args.includes("--expanded"), configOverrides,
+        seconds: Number(arg("seconds", 20)), warmupMs: Number(arg("warmup-ms", 8000)), enableAll: args.includes("--expanded"), configOverrides,
         capturedTree: treePath ? JSON.parse(fs.readFileSync(treePath, "utf8")) : null
     });
     const output = arg("output", null);

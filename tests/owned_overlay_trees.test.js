@@ -141,3 +141,36 @@ test("owned tree sweep reports current topology loss without invalidating surviv
     env.clock.advance(20); assert.equal(child.IsValid(), false);
     tree.dispose(); env.clock.advance(20); assert.deepEqual(env.clock.errors, []);
 });
+
+test("owned sibling batches and sweep remain linear while detecting live moves and duplicate replacements", () => {
+    const env = fixture(owners[0]), tree = env.Q.core.panel.createOwnedTree();
+    const parent = env.add(env.root, "MarkerBatch"), detached = env.add(null, "OldMarkers");
+    const entries = Array.from({ length: 400 }, (_, i) => ({ id: "QOLMarker" + i }));
+    const first = tree.children(parent, "Panel", entries);
+    assert.equal(first.length, 400);
+    let searches = 0, snapshots = 0;
+    const find = parent.FindChild.bind(parent), children = parent.Children.bind(parent);
+    parent.FindChild = id => { searches++; return find(id); };
+    parent.Children = () => { snapshots++; return children(); };
+    for (let i = 0; i < 20; i++) {
+        assert.equal(tree.sweep(), true);
+        const next = tree.children(parent, "Panel", entries);
+        assert.ok(next.every((panel, j) => panel === first[j]));
+    }
+    assert.equal(searches, 0, "steady-state batch must not walk siblings for every ID");
+    assert.equal(snapshots, 40, "one linear snapshot per parent/pass");
+    first[200].SetParent(detached);
+    const duplicate = env.add(parent, "QOLMarker0"); parent.MoveChildBefore(duplicate, first[0]);
+    assert.equal(tree.sweep(), false);
+    assert.equal(first[0].visible, false);
+    assert.equal(first[200].visible, false, "moved owned markers still retire");
+    const partial = tree.children(parent, "Panel", entries);
+    assert.equal(partial[0], null, "foreign replacement is retired, never adopted");
+    env.clock.advance(20);
+    const recovered = tree.children(parent, "Panel", entries);
+    assert.ok(recovered.every(panel => panel && panel.IsValid()));
+    assert.notEqual(recovered[0], first[0]); assert.notEqual(recovered[200], first[200]);
+    tree.dispose(); env.clock.advance(20);
+    assert.equal(parent.IsValid(), true);
+    assert.ok(recovered.every(panel => !panel.IsValid()));
+});
