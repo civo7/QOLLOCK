@@ -147,6 +147,11 @@ replacement, every moved child, partial construction/styles, deletion retry,
 stopped hooks and rapid registry re-enable. Existing overlay tests retain timer
 sampling, source selection, native content and component/offset behavior.
 
+`hero_evidence_scope.test.js` checks requested-root isolation, late/live pawn
+sources, conflicting native classes and contained pregame read failures. FG
+portrait regressions retain reveal priority, mapped assets and native healthbar
+behavior; frozen compact/envelope tests retain historical config decoding.
+
 `item_mirror_ownership.test.js` exercises current HUD/inventory generations,
 living source/child replacement, partial writes/construction and pending/active
 feedback cancellation. The existing `item_mirror.test.js` still checks discovery,

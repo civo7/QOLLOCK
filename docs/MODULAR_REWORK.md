@@ -81,6 +81,10 @@ behavior until its owning implementation has been audited.
   source/history rules remain explicit in each manifest; loading roots no longer
   become fallback gameplay anchors. Stopped hooks cannot recreate UI, and new
   HUDs reset private observation history.
+- Hero observation retains the two read-only native evidence paths used by FG;
+  unconsumed signature/shop/build loader implementations and shared confirmation
+  fields are removed. Compact/envelope codec adapters remain pure and preserve
+  historical decoding, without UI-action or loader-queue ownership.
 
 Frozen main-config fixtures preserve all healthbar variants and both minimap
 scale methods. Published versions, compact layouts and persistent defaults stay

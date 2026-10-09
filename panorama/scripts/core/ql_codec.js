@@ -1,14 +1,6 @@
-// =============================================================================
-// QOLLOCK — core/ql_codec.js
-// =============================================================================
-// OWNS:        Build category payload compact binary codec (v2 wire format),
-//              Base64/Base64Url transforms, token packaging, and loader queueing.
-// DOES NOT OWN: Full config schema migration (legacy_3_1_9), UI rendering.
-// DEPENDS ON:  core/ql_namespace.js, ql_shared_presets.js (QOL_CODEC, schema registry)
-// USED BY:     ql_core.js, manifests/ql_build_payload, manifests/ql_build_storage,
-//              validate_compact_schema.js
-// LOAD ORDER:  After core/ql_persistence.js
-// =============================================================================
+// OWNS: Pure adapters for the shared historical compact/envelope codecs.
+// DOES NOT OWN: UI/build actions, loader queues, persistence or runtime State.
+// Shared schemas/wire versions remain unchanged; current tools use core.codec.
 
 (function () {
     "use strict";
@@ -23,8 +15,6 @@
     }
 
     Q.core = Q.core || {};
-
-    const getState = () => (Q.state || (typeof State !== "undefined" ? State : {}));
 
     const getDefaults = () => {
         if (typeof Q.buildDefaultConfig === "function") {
@@ -64,21 +54,6 @@
         const utils = getSchemaUtils();
         if (utils?.ResolveSemverFromWire) return utils.ResolveSemverFromWire(wireVersion);
         return getCompactWireToSemver()[wireVersion] || getLatestCompactSemver();
-    };
-
-    const BUILD_CATEGORY_PAYLOAD_UI_ACTION_COOLDOWN_MS = 100;
-    const BUILD_CATEGORY_PAYLOAD_TOKEN_REGEX = /^\[QOL-(\d+-\d+-\d+)\]:([A-Za-z0-9\-_]+)$/i;
-    const BUILD_CORRUPT_REPAIR_PENDING_ATTR = "QOL_CORRUPT_REPAIR_PENDING";
-    const BUILD_SAVE_REQUEST_ATTR = "QOL_BUILD_SAVE_REQUEST";
-    const BUILD_SAVE_STATE_ATTR = "QOL_BUILD_SAVE_STATE";
-    const BUILD_SAVE_MSG_ATTR = "QOL_BUILD_SAVE_MSG";
-    const BUILD_SAVE_TOKEN_ATTR = "QOL_BUILD_SAVE_TOKEN";
-
-    const getPayloadExportPrefix = () => {
-        const semver = (typeof QOL_SCHEMA_SEMVER === "string" && QOL_SCHEMA_SEMVER.length > 0)
-            ? QOL_SCHEMA_SEMVER
-            : "4.0.0";
-        return `[QOL-${semver.replace(/\./g, "-")}]:`;
     };
 
     // ── Base64 / Base64Url transforms ──
@@ -204,108 +179,6 @@
         throw new Error("Build payload deserializer unavailable");
     };
 
-    const buildDefaultPayloadToken = (cfg) => {
-        const defaults = getDefaults();
-        const payloadConfig = Object.assign({}, defaults);
-
-        const defaultHero = (typeof Q.getConfiguredDefaultHeroId === "function")
-            ? Q.getConfiguredDefaultHeroId(cfg)
-            : (cfg && cfg.DEFAULT_HERO ? String(cfg.DEFAULT_HERO) : "");
-
-        if (defaultHero && defaultHero.length > 0) {
-            payloadConfig.DEFAULT_HERO = defaultHero;
-        }
-        const compact = serializeBuildPayloadCompact(payloadConfig);
-        const encoded = buildPayloadToBase64Url(compact);
-        if (!encoded || encoded.length === 0) return "";
-        return getPayloadExportPrefix() + encoded;
-    };
-
-    // ── Loader Queueing & Actions ──
-
-    const queueBuildSaveRequestFromLoader = (root, payloadText, nowMs) => {
-        if (!root?.SetAttributeString) return "";
-        const payload = payloadText ? String(payloadText).replace(/\s+/g, "") : "";
-        if (!payload || !BUILD_CATEGORY_PAYLOAD_TOKEN_REGEX.test(payload)) return "";
-
-        let existingState = "";
-        try { existingState = String(root.GetAttributeString(BUILD_SAVE_STATE_ATTR, "") || ""); } catch (_) {}
-        if (existingState === "pending") {
-            let existingToken = "";
-            try { existingToken = String(root.GetAttributeString(BUILD_SAVE_TOKEN_ATTR, "") || ""); } catch (_) {}
-            return existingToken;
-        }
-        const now = Number(nowMs) || (Date.now ? Date.now() : (new Date()).getTime());
-        const token = `startup_${now}_${Math.floor(Math.random() * 1000000)}`;
-        root.SetAttributeString(BUILD_SAVE_REQUEST_ATTR, payload);
-        root.SetAttributeString(BUILD_SAVE_TOKEN_ATTR, token);
-        root.SetAttributeString(BUILD_SAVE_MSG_ATTR, "queued");
-        root.SetAttributeString(BUILD_SAVE_STATE_ATTR, "pending");
-        return token;
-    };
-
-    const shouldRunBuildCategoryPayloadUiAction = (nowMs, stateField, cooldownMs) => {
-        if (!stateField || stateField.length === 0) return true;
-        const now = Number(nowMs) || (Date.now ? Date.now() : (new Date()).getTime());
-        const state = getState();
-        const nextMs = Number(state[stateField]) || 0;
-        if (now < nextMs) return false;
-        let cd = Number(cooldownMs);
-        if (!Number.isFinite(cd) || cd < 0) cd = BUILD_CATEGORY_PAYLOAD_UI_ACTION_COOLDOWN_MS;
-        state[stateField] = now + cd;
-        return true;
-    };
-
-    const resetBuildCategoryPayloadProbeInitState = () => {
-        const state = getState();
-        state.buildCategoryPayloadHeroProbeInitAttempted = false;
-        state.buildCategoryPayloadHeroProbeInitStage = "";
-        state.buildCategoryPayloadHeroProbeInitNextMs = 0;
-        state.buildCategoryPayloadHeroProbeInitRetries = 0;
-        state.buildCategoryPayloadHeroProbeInitCreateAttempts = 0;
-        state.buildCategoryPayloadHeroProbeInitCreateVerifyUntilMs = 0;
-    };
-
-    const setStartupCorruptRepairPending = (root, pending) => {
-        if (!root?.SetAttributeString) return;
-        try {
-            root.SetAttributeString(BUILD_CORRUPT_REPAIR_PENDING_ATTR, pending ? "1" : "");
-        } catch (_) {}
-    };
-
-    const BUILD_CATEGORY_PAYLOAD_TOKEN_EXTRACT_REGEX = /^\[QOL-\d+-\d+-\d+\]:([A-Za-z0-9\-_]+)$/i;
-
-    const extractBuildCategoryPayloadToken = (rawText) => {
-        if (!rawText) return "";
-        const normalized = String(rawText).replace(/\s+/g, "");
-        if (!normalized || normalized.length === 0) return "";
-        const match = normalized.match(BUILD_CATEGORY_PAYLOAD_TOKEN_EXTRACT_REGEX);
-        if (!match || !match[1]) return "";
-        return String(match[1]);
-    };
-
-    const isBrowseBuildsPopupOpen = (root) => {
-        if (!root?.FindChildTraverse) return false;
-        const ids = ["PopupBuildBrowser", "BrowseBuilds", "HeroBuildSelector"];
-        const isAlive = QOL_UTILS.IsPanelValid;
-        for (let i = 0; i < ids.length; i++) {
-            let panel = null;
-            try { panel = root.FindChildTraverse(ids[i]); } catch (_) { panel = null; }
-            if (panel && isAlive(panel) && panel.visible !== false) return true;
-        }
-        return false;
-    };
-
-    const tryOpenBuildBrowserPopup = (root) => {
-        if (isBrowseBuildsPopupOpen(root)) return true;
-        try {
-            if (typeof CitadelOpenBuildBrowser === "function") {
-                CitadelOpenBuildBrowser(1);
-            }
-        } catch (_) {}
-        return isBrowseBuildsPopupOpen(root);
-    };
-
     const codecApi = {
         decodeBase64: buildPayloadDecodeBase64,
         encodeBase64: buildPayloadEncodeBase64,
@@ -313,14 +186,6 @@
         toBase64Url: buildPayloadToBase64Url,
         serializeBuildPayloadCompact,
         deserializeBuildPayloadCompact,
-        buildDefaultPayloadToken,
-        extractBuildCategoryPayloadToken,
-        isBrowseBuildsPopupOpen,
-        tryOpenBuildBrowserPopup,
-        queueBuildSaveRequestFromLoader,
-        shouldRunBuildCategoryPayloadUiAction,
-        resetBuildCategoryPayloadProbeInitState,
-        setStartupCorruptRepairPending,
         getSchema,
         getWireVersion,
         resolveSemverFromWire,
@@ -332,20 +197,6 @@
     };
 
     Q.core.codec = codecApi;
-
-    // Backward-compat delegates on QOL root
-    Q.serializeBuildPayloadCompact = serializeBuildPayloadCompact;
-    Q.deserializeBuildPayloadCompact = deserializeBuildPayloadCompact;
-    Q.buildDefaultPayloadToken = buildDefaultPayloadToken;
-    Q.buildPayloadFromBase64Url = buildPayloadFromBase64Url;
-    Q.buildPayloadToBase64Url = buildPayloadToBase64Url;
-    Q.extractBuildCategoryPayloadToken = extractBuildCategoryPayloadToken;
-    Q.isBrowseBuildsPopupOpen = isBrowseBuildsPopupOpen;
-    Q.tryOpenBuildBrowserPopup = tryOpenBuildBrowserPopup;
-    Q.queueBuildSaveRequestFromLoader = queueBuildSaveRequestFromLoader;
-    Q.shouldRunBuildCategoryPayloadUiAction = shouldRunBuildCategoryPayloadUiAction;
-    Q.resetBuildCategoryPayloadProbeInitState = resetBuildCategoryPayloadProbeInitState;
-    Q.setStartupCorruptRepairPending = setStartupCorruptRepairPending;
 
     $.Msg("[QOLLock] core/ql_codec: attached to QOL.core.codec");
 })();

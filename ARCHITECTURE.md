@@ -127,6 +127,7 @@ are compatibility guards, not evidence that browser APIs are available in HUD.
 | `panorama/scripts/core/ql_config_store.js`, `ql_config_adapter.js` | Feature config buckets and flat/bucket conversion |
 | `panorama/scripts/ql_config.js` | Canonical input parsing, normalization and config constants shared with settings |
 | `panorama/scripts/ql_shared_presets.js` | Default values, presets, compact schemas/codecs, shared constants and compatibility exports |
+| `panorama/scripts/core/ql_codec.js` | Pure adapters to shared historical compact/envelope codecs; no UI actions, loader queues or runtime State |
 | `panorama/scripts/core/ql_persistence.js` | Live config publication, revisions/edit stamps and root selection |
 | `panorama/scripts/core/ql_storage_bridge.js` | Embedded HTML/localStorage protocol and asynchronous save/load coordination |
 | `panorama/scripts/ql_bridge.js` | Named cross-context channel descriptors and panel-attribute access |
