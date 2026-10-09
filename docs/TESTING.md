@@ -142,6 +142,12 @@ tree, stopped settings hooks, hidden partial construction, immediate re-enable,
 loading roots and living HUD/native-clock replacement. Existing geometry tests
 retain both minimap scale methods and Base/Alt/Tab bridge placement.
 
+`build_id_owner_lifecycle.test.js` checks existing parsing and native title
+fallback, reactive settings, late/live source and parent replacement, current HUD
+isolation, partial construction/style/text failures, queued previous trees and
+registry cleanup. Preset bridge and hideout regressions retain the current
+readout behavior. Native metadata binding and composition remain client checks.
+
 `shared_panel_cache.test.js` covers shared typed/compatibility storage, public
 resolution after living moves, root/ID-scoped discovery misses, equal-revision
 configuration across living generations, current UI-root selection and rejected

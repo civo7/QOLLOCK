@@ -63,7 +63,7 @@ tables, CSS values, test history or general verification caveats into it.
 | [ql_item_mirror](../../panorama/scripts/manifests/ql_item_mirror/manifest.js) | Advanced item cooldown matching/mirroring; not a replacement for Basic mode styling. |
 | [ql_healthbar](../../panorama/scripts/manifests/ql_healthbar/manifest.js) | Numeric healthbar-type dispatcher plus shared/variant modules; PLAYER_HEALTHBAR_* settings. |
 | [ql_perf](ql_perf.md) | Private report/overlay owners observing Scheduler samples; not a measurement of total engine frame time. |
-| [ql_show_build_id](../../panorama/scripts/manifests/ql_show_build_id/manifest.js) | Read and display selected shop build metadata; unrelated to settings storage. |
+| [ql_show_build_id](ql_show_build_id.md) | Read current native shop build metadata through a private created-tree owner; unrelated to settings storage. |
 
 ## Settings-only utility
 

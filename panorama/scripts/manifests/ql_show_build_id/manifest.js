@@ -1,241 +1,120 @@
-// manifests/ql_show_build_id/manifest.js
-// =============================================================================
-// QOLLOCK — Show Build ID
-// =============================================================================
-// OWNS:        Build ID & title HUD label display for content creators
-// DOES NOT OWN: Build storage logic, hero shop
-// DEPENDS ON:  QOL.core.FeatureRegistry, QOL.core.Scheduler
-// CONFIG KEYS: ENABLE_SHOW_BUILD_ID, ENABLE_SHOW_BUILD_ID_TITLE
-// PATTERN:     Polling (1Hz). Displays build ID under LowerLeft panel.
-// =============================================================================
-
+// OWNS: Selected-build readout, settings model and the created LowerLeft child tree.
+// DOES NOT OWN: Native shop bindings, selected build, shop layout or build storage.
+// Evidence: hud.xml HudCore > StatsAndModsContainer > LowerLeft;
+// citadel_hud_hero_builds.xml SelectedBuildInfoTitle; native SelectedBuildOuter.
 (() => {
     "use strict";
+    const ID = "ql_show_build_id";
+    const SEARCH_MS = 3000;
+    const panelStyles = { marginLeft: "26px", verticalAlign: "bottom", height: "24px", flowChildren: "right", zIndex: "5" };
+    const labelStyles = { whiteSpace: "nowrap", fontSize: "16px", fontWeight: "bold", fontFamily: "oracle, blocky, sans-serif",
+        color: "#FFEFD7", textShadow: "0px 1px 3px 3.0 #000000cc" };
 
-    const FR = QOL.core && QOL.core.FeatureRegistry;
-    if (!FR) {
-        $.Msg("[QOLLock] show_build_id: FeatureRegistry not found — aborting");
-        return;
+    function parse(rawText) {
+        const raw = String(rawText || "").trim();
+        if (!raw) return null;
+        const match = raw.match(/^([\d,]+)(?:\s*-\s*(.*?))?(?:\s*-\s*([\d,]+))?$/);
+        const parts = match ? [match[1], match[2], match[3]] : raw.split(" - ");
+        const id = String(parts[0] || "").replace(/,/g, "").trim();
+        const name = String(parts[1] || "").trim();
+        const version = parseInt(String(parts[2] || "0").replace(/,/g, ""), 10);
+        if (!id || id === "0") return null;
+        return { id, name: name !== "Unknown" ? name : "", visibility: version > 0 || parseInt(id, 10) > 0 ? "Public" : "Private" };
     }
 
-    FR.register({
-        id: "ql_show_build_id",
+    QOL.core.FeatureRegistry.register({
+        id: ID,
         enableKey: "ENABLE_SHOW_BUILD_ID",
         enabledByDefault: false,
-        settings: [
-            { key: "ENABLE_SHOW_BUILD_ID", type: "toggle" },
-            { key: "ENABLE_SHOW_BUILD_ID_TITLE", type: "toggle" }
-        ],
-        create: (ctx) => {
-            let _loop = null;
-            let _lastSig = "";
-            let _isVisible = false;
-            let _lowerLeft = null;
-            let _buildPanel = null;
-            let _buildLabel = null;
-            let _sourcePanel = null;
-            let _nextSourceSearchMs = 0;
+        settings: [{ key: "ENABLE_SHOW_BUILD_ID", type: "toggle" }, { key: "ENABLE_SHOW_BUILD_ID_TITLE", type: "toggle" }],
+        create(ctx) {
+            const P = QOL.core.panel, U = QOL.utils;
+            const lowerResolver = QOL.panelCache.createIdResolver("LowerLeft", {
+                retryMs: SEARCH_MS, ownerPath: [{ id: "Hud", optional: true }, { className: "HudCore" }, "StatsAndModsContainer"]
+            });
+            const sourceResolver = QOL.panelCache.createIdResolver("SelectedBuildInfoTitle", { retryMs: SEARCH_MS, refreshMs: SEARCH_MS });
+            const outerResolver = QOL.panelCache.createIdResolver("SelectedBuildOuter", { retryMs: SEARCH_MS, refreshMs: SEARCH_MS });
+            const nameResolver = QOL.panelCache.createIdResolver("SelectedBuildName", { retryMs: SEARCH_MS, refreshMs: SEARCH_MS });
+            const resolvers = [lowerResolver, sourceResolver, outerResolver, nameResolver];
+            const tree = P.createOwnedTree();
+            let active = false, model = null, loop = null, rootOwner = null, parent = null, panel = null, label = null;
+            let panelSignature = null, labelSignature = null;
 
-            const _isAlive = QOL.utils.IsPanelValid;
-
-            let _namePanel = null;
-
-            const _parseSelectedBuildInfoText = (rawText) => {
-                const raw = String(rawText || "").trim();
-                if (!raw || raw.length === 0) return null;
-                const match = raw.match(/^([\d,]+)(?:\s*-\s*(.*?))?(?:\s*-\s*([\d,]+))?$/);
-                let buildId = "";
-                let buildName = "";
-                let buildVersion = 0;
-
-                if (match) {
-                    buildId = String(match[1] || "").replace(/,/g, "").trim();
-                    buildName = String(match[2] || "").trim();
-                    buildVersion = parseInt(String(match[3] || "0").replace(/,/g, ""), 10);
-                } else {
-                    const parts = raw.split(" - ");
-                    buildId = String(parts[0] || "").replace(/,/g, "").trim();
-                    buildName = String(parts[1] || "").trim();
-                    buildVersion = parseInt(String(parts[2] || "0").replace(/,/g, ""), 10);
-                }
-
-                if (!buildId || buildId === "0") return null;
-                return {
-                    id: buildId,
-                    name: (buildName && buildName !== "Unknown") ? buildName : "",
-                    visibility: (buildVersion > 0 || parseInt(buildId, 10) > 0) ? "Public" : "Private"
-                };
-            };
-
-            const _ensurePanel = (root) => {
-                if (!root || !$.CreatePanel) return null;
-                if (!_isAlive(_lowerLeft)) {
-                    _lowerLeft = root.FindChildTraverse ? root.FindChildTraverse("LowerLeft") : null;
-                }
-                if (!_isAlive(_lowerLeft)) return null;
-
-                if (!_isAlive(_buildPanel)) {
-                    _buildPanel = _lowerLeft.FindChildTraverse ? _lowerLeft.FindChildTraverse("selected_build_info") : null;
-                    if (!_buildPanel) {
-                        try {
-                            _buildPanel = $.CreatePanel("Panel", _lowerLeft, "selected_build_info", { hittest: "false", hittestchildren: "false" });
-                        } catch (_) {
-                            _buildPanel = null;
-                        }
-                    }
-                    _lastSig = "";
-                    _isVisible = false;
-                }
-                if (!_isAlive(_buildPanel)) return null;
-
-                if (!_isAlive(_buildLabel)) {
-                    _buildLabel = _buildPanel.FindChildTraverse ? _buildPanel.FindChildTraverse("build_info") : null;
-                    if (!_buildLabel) {
-                        try {
-                            _buildLabel = $.CreatePanel("Label", _buildPanel, "build_info", { hittest: "false" });
-                        } catch (_) {
-                            _buildLabel = null;
-                        }
-                    }
-                    _lastSig = "";
-                }
-                return _buildLabel ? { panel: _buildPanel, label: _buildLabel } : null;
-            };
-
-            const _collapse = () => {
-                if (!_isVisible && _lastSig === "") return;
-                _isVisible = false;
-                if (_isAlive(_lowerLeft)) {
-                    if (!_isAlive(_buildPanel)) {
-                        _buildPanel = _lowerLeft.FindChildTraverse ? _lowerLeft.FindChildTraverse("selected_build_info") : null;
-                    }
-                    if (_buildPanel && _buildPanel.style) {
-                        _buildPanel.style.visibility = "collapse";
-                    }
-                }
-                _lastSig = "";
-                _namePanel = null;
-            };
-
-            const _tick = () => {
-                const root = $.GetContextPanel();
-                if (!root) return;
-                const cfg = (ctx && ctx.config && ctx.config.all) ? ctx.config.all() : {};
-                const enabled = cfg.ENABLE_SHOW_BUILD_ID === true || Number(cfg.ENABLE_SHOW_BUILD_ID) === 1;
-                if (!enabled) {
-                    _collapse();
-                    return;
-                }
-
-                if (!_isAlive(_sourcePanel)) {
-                    const now = Date.now ? Date.now() : (new Date()).getTime();
-                    if (now < _nextSourceSearchMs) {
-                        _collapse();
-                        return;
-                    }
-                    _sourcePanel = root.FindChildTraverse ? root.FindChildTraverse("SelectedBuildInfoTitle") : null;
-                    if (!_isAlive(_sourcePanel)) {
-                        _nextSourceSearchMs = now + 3000;
-                        _collapse();
-                        return;
-                    }
-                }
-
-                const rawText = (_sourcePanel && typeof _sourcePanel.text === "string") ? _sourcePanel.text : "";
-                const parsed = _parseSelectedBuildInfoText(rawText);
-                if (!parsed) {
-                    _collapse();
-                    return;
-                }
-
-                let buildName = parsed.name;
-                if (!buildName || buildName === "Unknown") {
-                    if (!_isAlive(_namePanel)) {
-                        _namePanel = root.FindChildTraverse ? (root.FindChildTraverse("SelectedBuildOuter") || root.FindChildTraverse("SelectedBuildName")) : null;
-                    }
-                    if (_isAlive(_namePanel)) {
-                        if (_namePanel.BHasClass && _namePanel.BHasClass("SelectedBuildName") && typeof _namePanel.text === "string") {
-                            const t = _namePanel.text.trim();
-                            if (t && !t.startsWith("#")) buildName = t;
-                        } else if (_namePanel.FindChildrenWithClassTraverse) {
-                            const list = _namePanel.FindChildrenWithClassTraverse("SelectedBuildName");
-                            if (list && list.length > 0 && typeof list[0].text === "string") {
-                                const t = list[0].text.trim();
-                                if (t && !t.startsWith("#")) buildName = t;
-                            }
-                        }
-                    }
-                }
-
-                const target = _ensurePanel(root);
-                if (!target) return;
-
-                if (!_isVisible) {
-                    if (target.panel && target.panel.style) target.panel.style.visibility = "visible";
-                    _isVisible = true;
-                }
-
-                const showTitle = cfg.ENABLE_SHOW_BUILD_ID_TITLE === true || Number(cfg.ENABLE_SHOW_BUILD_ID_TITLE) === 1;
-                const titlePart = (showTitle && buildName && buildName !== "Unknown") ? " - " + buildName : "";
-                const displayText = `${parsed.visibility} Build: ${parsed.id}${titlePart}`;
-                const sig = `${displayText}|${showTitle ? "1" : "0"}`;
-
-                if (_lastSig === sig) return;
-                _lastSig = sig;
-
-                if (target.panel && target.panel.style) {
-                    target.panel.style.marginLeft = "26px";
-                    target.panel.style.verticalAlign = "bottom";
-                    target.panel.style.height = "24px";
-                    target.panel.style.flowChildren = "right";
-                    target.panel.style.zIndex = "5";
-                }
-                if (target.label && target.label.style) {
-                    try { target.label.text = displayText; } catch (_) {}
-                    try { target.label.html = true; } catch (_) {}
-                    target.label.style.whiteSpace = "nowrap";
-                    target.label.style.fontSize = "16px";
-                    target.label.style.fontWeight = "bold";
-                    target.label.style.fontFamily = "oracle, blocky, sans-serif";
-                    target.label.style.color = "#FFEFD7";
-                    target.label.style.textShadow = "0px 1px 3px 3.0 #000000cc";
-                }
-            };
-
+            function readModel() {
+                const cfg = ctx.config.view();
+                return { enabled: U.IsCfgEnabled(cfg, "ENABLE_SHOW_BUILD_ID"), title: U.IsCfgEnabled(cfg, "ENABLE_SHOW_BUILD_ID_TITLE") };
+            }
+            function hide() {
+                if (P.isAlive(panel)) U.SetStyleIfChanged(panel, "visibility", "collapse");
+            }
+            function releaseTree() {
+                hide(); tree.clear();
+                parent = panel = label = null; panelSignature = labelSignature = null;
+            }
+            function resetSources() { for (const resolver of resolvers) resolver.reset(); }
+            function readName(root) {
+                const owner = outerResolver.resolve(root) || nameResolver.resolve(root);
+                const nativeLabel = P.isAlive(owner) && owner.BHasClass("SelectedBuildName") ? owner :
+                    U.FindFirstPanelByClass(owner, "SelectedBuildName");
+                const name = P.readText(nativeLabel).trim();
+                return name && !name.startsWith("#") && name !== "Unknown" ? name : "";
+            }
+            function readContent(root) {
+                const selected = parse(P.readText(sourceResolver.resolve(root)));
+                if (!selected) return null;
+                const name = model.title ? selected.name || readName(root) : "";
+                return selected.visibility + " Build: " + selected.id + (name ? " - " + name : "");
+            }
+            function ensure(nextParent) {
+                if (!P.isAlive(nextParent)) { releaseTree(); return false; }
+                if (parent !== nextParent) releaseTree();
+                parent = nextParent;
+                const previousPanel = panel, previousLabel = label;
+                panel = tree.child(parent, "Panel", "selected_build_info");
+                if (panel !== previousPanel) { panelSignature = null; hide(); }
+                label = tree.child(panel, "Label", "build_info");
+                if (label !== previousLabel) labelSignature = null;
+                return P.isAlive(panel) && P.isAlive(label);
+            }
+            function render(content) {
+                panelSignature = P.syncStyles(panel, panelStyles, panelSignature).sig;
+                labelSignature = P.syncStyles(label, labelStyles, labelSignature).sig;
+                if (label.html !== true) label.html = true;
+                if (label.text !== content) label.text = content;
+                U.SetStyleIfChanged(panel, "visibility", "visible");
+            }
+            function update() {
+                if (!active) return;
+                const root = P.findHud($.GetContextPanel());
+                if (root !== rootOwner) { releaseTree(); resetSources(); rootOwner = root; }
+                if (!P.isAlive(root) || (root.id !== "Hud" && root.paneltype !== "CitadelHud")) { releaseTree(); return; }
+                tree.sweep();
+                const nextParent = lowerResolver.resolve(root);
+                if (parent && parent !== nextParent) releaseTree();
+                if (!model.enabled) { hide(); return; }
+                const content = readContent(root);
+                if (!content) { hide(); return; }
+                if (ensure(nextParent)) render(content);
+                else hide();
+            }
+            function refresh() { model = readModel(); resetSources(); update(); }
             return {
-                onEnable: () => {
-                    const Scheduler = QOL.core && QOL.core.Scheduler;
-                    if (Scheduler && Scheduler.createPollLoop) {
-                        _loop = Scheduler.createPollLoop(_tick, 1.0, "ql_show_build_id");
-                    }
-                    _tick();
+                onEnable() {
+                    active = true; refresh();
+                    loop = QOL.core.Scheduler.createPollLoop(update, 1.0, ctx.id);
                 },
-                onDisable: () => {
-                    if (_loop) {
-                        _loop.stop();
-                        _loop = null;
-                    }
-                    _collapse();
-                },
-                onSettingsChanged: () => {
-                    _tick();
+                onSettingsChanged: refresh,
+                onDisable() {
+                    active = false;
+                    if (loop) loop.stop(); loop = null;
+                    releaseTree(); tree.dispose(); resetSources(); model = rootOwner = null;
                 }
             };
         },
-        test: (_ctx) => {
-            try {
-                const root = $.GetContextPanel();
-                const lowerLeft = root ? root.FindChildTraverse("LowerLeft") : null;
-                if (!lowerLeft) return null; // Skip — not in a match/hud context
-                return {
-                    passed: true,
-                    name: "LowerLeft panel exists",
-                    message: "",
-                    assertions: [{ passed: true, name: "LowerLeft exists" }]
-                };
-            } catch (e) {
-                return { passed: false, name: "ShowBuildId check", message: (e && e.message ? e.message : String(e)) };
-            }
+        test() {
+            const lower = QOL.core.panel.findTraverse(QOL.core.panel.findHud($.GetContextPanel()), "LowerLeft");
+            if (!lower) return null;
+            return { passed: true, name: "LowerLeft panel exists", message: "", assertions: [{ passed: true, name: "LowerLeft exists" }] };
         }
     });
 })();

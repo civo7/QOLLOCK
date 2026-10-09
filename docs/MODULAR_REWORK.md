@@ -109,6 +109,11 @@ behavior until its owning implementation has been audited.
   created-child ownership. Partial construction, moved labels/icons, retired
   callbacks and rapid re-enable no longer leave or revive orphaned timer trees;
   current HUD/native clock rebinding preserves fixed-icon Base/Alt/Tab geometry.
+- Selected Build ID uses a reactive settings model, current native source/parent
+  resolvers and complete created-tree ownership. Partial content/style failures
+  retry, living HUD replacements release the previous readout, and stopped hooks
+  cannot recreate it. Existing parsing, native title fallback and hideout support
+  remain; disable now removes the tree instead of retaining an inert writer.
 
 Frozen main-config fixtures preserve all healthbar variants and both minimap
 scale methods. Published versions, compact layouts and persistent defaults stay
