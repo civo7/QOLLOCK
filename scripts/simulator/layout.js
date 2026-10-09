@@ -47,8 +47,7 @@ function resolveScriptSrc(src) {
  * layout referencing a deleted script is a real bug we want surfaced loudly,
  * but the caller may want the rest of the list anyway for diagnostics.
  */
-function parseLayoutScripts(layoutPath) {
-    const raw = fs.readFileSync(layoutPath, "utf8");
+function parseLayoutScriptSource(raw, layoutPath, existsAt = fs.existsSync) {
     const stripped = stripXmlComments(raw);
 
     // Narrow to the <scripts> block so a <styles> include can never leak in.
@@ -67,13 +66,17 @@ function parseLayoutScripts(layoutPath) {
         const absPath = resolveScriptSrc(m[1]);
         if (!absPath) continue;
         const line = stripped.slice(0, blockStart + m.index).split("\n").length;
-        const exists = fs.existsSync(absPath);
+        const exists = existsAt(absPath);
         const entry = { src: m[1], absPath, line, exists };
         scripts.push(entry);
         if (!exists) missing.push(entry);
     }
 
     return { scripts, missing, layoutPath };
+}
+
+function parseLayoutScripts(layoutPath) {
+    return parseLayoutScriptSource(fs.readFileSync(layoutPath, "utf8"), layoutPath);
 }
 
 const HUD_LAYOUT = path.join(REPO_ROOT, "panorama", "layout", "hud.xml");
@@ -94,6 +97,7 @@ module.exports = {
     stripXmlComments,
     resolveScriptSrc,
     parseLayoutScripts,
+    parseLayoutScriptSource,
     hudScripts,
     settingsScripts,
 };

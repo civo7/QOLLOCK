@@ -75,44 +75,64 @@
         const hud = P.findHud(root || $.GetContextPanel());
         return P.isAlive(hud) && (hud.id === "Hud" || hud.paneltype === "CitadelHud") ? hud : null;
     }
-    function readHeroFromCrosshair(root) {
-        const crosshair = P.findTraverse(currentHud(root), "crosshair");
-        if (!P.isAlive(crosshair)) return "";
-        // A pawn transition can leave two live dash indicators. Every recognized
-        // class must agree instead of selecting the first alias/panel match.
-        try {
-            const candidates = [crosshair, ...(crosshair.FindChildrenWithClassTraverse("citadel_ability_dash") || [])];
-            let found = "";
-            for (const panel of candidates) {
-                if (!P.isAlive(panel)) continue;
+    function createReader() {
+        // Paths are native hud.xml ownership, with bounded discovery fallback
+        // for older/conditional trees. Only handles are cached, never hero classes.
+        const cache = QOL.panelCache;
+        const crosshairSource = cache.createIdResolver("crosshair", {
+            ownerPath: [{ className: "HudCore" }, "gameplay_hud", "gameplay_hud_alive"]
+        });
+        const pregameSource = cache.createIdResolver("Pregame", { ownerPath: [{ className: "HudTakeovers" }] });
+        const abilitiesSource = cache.createIdResolver("HeroAbilities");
+        function reset() { crosshairSource.reset(); pregameSource.reset(); abilitiesSource.reset(); }
+        function readHeroFromCrosshair(root) {
+            const crosshair = crosshairSource.resolve(currentHud(root));
+            if (!P.isAlive(crosshair)) return "";
+            // A pawn transition can leave two live dash indicators. Every recognized
+            // class must agree instead of selecting the first alias/panel match.
+            try {
+                const candidates = [crosshair, ...(crosshair.FindChildrenWithClassTraverse("citadel_ability_dash") || [])];
+                let found = "";
+                for (const panel of candidates) {
+                    if (!P.isAlive(panel)) continue;
+                    for (const alias of heroAliases) {
+                        if (!panel.BHasClass("hero_" + alias) && !panel.BHasClass(alias)) continue;
+                        const hero = "hero_" + alias;
+                        if (found && found !== hero) return "";
+                        found = hero;
+                    }
+                }
+                return found;
+            } catch (_) { return ""; }
+        }
+        function readHeroFromPregame(root) {
+            const hud = currentHud(root);
+            if (!hud) return "";
+            // A hidden old reveal cannot override the current gameplay pawn. In
+            // hero testing the verified ShowingHero reveal has priority in FG.
+            try {
+                if (!["GameStatePreGame", "GameStatePreGameWait", "connectedToHeroTesting"].some(name => hud.BHasClass(name))) return "";
+                const abilities = abilitiesSource.resolve(pregameSource.resolve(hud));
+                if (!P.isAlive(abilities) || !abilities.BHasClass("ShowingHero")) return "";
+                let found = "";
                 for (const alias of heroAliases) {
-                    if (!panel.BHasClass("hero_" + alias) && !panel.BHasClass(alias)) continue;
+                    if (!abilities.BHasClass("hero_" + alias)) continue;
                     const hero = "hero_" + alias;
                     if (found && found !== hero) return "";
                     found = hero;
                 }
-            }
-            return found;
-        } catch (_) { return ""; }
+                return found;
+            } catch (_) { return ""; }
+        }
+        return { readHeroFromCrosshair, readHeroFromPregame, reset };
     }
-    function readHeroFromPregame(root) {
-        const hud = currentHud(root);
-        if (!hud) return "";
-        // A hidden old reveal cannot override the current gameplay pawn. In
-        // hero testing the verified ShowingHero reveal has priority in FG.
-        try {
-            if (!["GameStatePreGame", "GameStatePreGameWait", "connectedToHeroTesting"].some(name => hud.BHasClass(name))) return "";
-            const abilities = P.findTraverse(P.findTraverse(hud, "Pregame"), "HeroAbilities");
-            if (!P.isAlive(abilities) || !abilities.BHasClass("ShowingHero")) return "";
-            let found = "";
-            for (const alias of heroAliases) {
-                if (!abilities.BHasClass("hero_" + alias)) continue;
-                const hero = "hero_" + alias;
-                if (found && found !== hero) return "";
-                found = hero;
-            }
-            return found;
-        } catch (_) { return ""; }
-    }
-    QOL.core.heroProbe = { readHeroFromCrosshair, readHeroFromPregame };
+    // The core script precedes panelCache in the HUD includes. Compatibility
+    // readers allocate only on first use after HUD boot.
+    let reader = null;
+    function shared() { return reader || (reader = createReader()); }
+    QOL.core.heroProbe = {
+        createReader,
+        readHeroFromCrosshair: root => shared().readHeroFromCrosshair(root),
+        readHeroFromPregame: root => shared().readHeroFromPregame(root)
+    };
 })();

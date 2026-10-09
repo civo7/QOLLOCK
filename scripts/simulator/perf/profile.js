@@ -166,6 +166,8 @@ function createProfiledHud({
     warmupMs = 8000,
     capturedTree = null,
     beforeLoad = null,
+    runtimeSources = null,
+    configInput = null,
 } = {}) {
     const clock = new Clock(1000);
     const doc = new Document(clock);
@@ -210,14 +212,15 @@ function createProfiledHud({
 
     wrapScheduledLoops(sandbox);
 
-    const scripts = layout.hudScripts();
+    const scripts = runtimeSources || layout.hudScripts();
     if (scripts.missing.length > 0) {
         const list = scripts.missing.map((m) => `${m.src} (hud.xml:${m.line})`).join(", ");
         throw new Error(`[profiler] hud.xml references missing scripts: ${list}`);
     }
     silently(() => {
         for (const s of scripts.scripts) {
-            sandbox.load(s.absPath);
+            if (s.source === undefined) sandbox.load(s.absPath);
+            else sandbox.loadSource(s.source, s.absPath);
             if (s.absPath.includes("ql_scheduler")) {
                 wrapPollLoops(sandbox);
             }
@@ -244,9 +247,9 @@ function createProfiledHud({
     // profile on the same code path a real install takes.
     let configApplied = false;
     let configBytes = 0;
-    const inputConfig = makeMaximalConfig(sandbox, configOverrides, enableAll);
+    const inputConfig = configInput ? { ...configInput } : makeMaximalConfig(sandbox, configOverrides, enableAll);
     silently(() => {
-        if (!enableAll && Object.keys(configOverrides).length === 0) return;
+        if (!configInput && !enableAll && Object.keys(configOverrides).length === 0) return;
         const cfg = inputConfig;
         if (!cfg) return;
         const schema = sandbox.eval(
@@ -280,12 +283,13 @@ function createProfiledHud({
         tree,
         counters,
         pollRates,
+        inputConfig,
         meta: {
             players, damageNumbers, configApplied, configBytes,
             configMode: enableAll ? "expanded" : "defaults",
             configOverrides: { ...configOverrides },
             configFingerprint: crypto.createHash("sha256").update(JSON.stringify(inputConfig)).digest("hex"),
-            healthbarType: Number(configOverrides.HEALTHBAR_TYPE) || 0,
+            healthbarType: Number(inputConfig && inputConfig.HEALTHBAR_TYPE) || 0,
             wrappedFeatures, wrappedScheduler, wrappedLoops, warmupMs,
             // Which tree the numbers describe. A modelled run and a captured run are
             // not comparable, so this has to travel with the results.

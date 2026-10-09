@@ -318,6 +318,11 @@ class Sandbox {
             return false;
         }
 
+        return this.loadSource(src, absPath, { trailer });
+    }
+
+    /** Run source read from a Git object without changing the checkout. */
+    loadSource(src, absPath, { trailer = "" } = {}) {
         if (trailer) src = injectIntoIife(src, trailer);
 
         try {

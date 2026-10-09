@@ -101,14 +101,31 @@ node scripts/profile_hud.js --defaults --enable ENABLE_CROSSHAIR_STATS=1
 ```
 
 For before/after comparisons, use the same tree, settings and sample window.
-The historical workflow used:
+Compare complete HUD script sets from local Git revisions without changing the
+checkout, stashing changes or building the mod:
 
 ```
-git stash push -- panorama/      # park your changes, keep the harness
-node scripts/profile_hud.js --seconds 20 --save baseline
-git stash pop
-node scripts/profile_hud.js --seconds 20 --compare baseline
+node scripts/compare_hud_refs.js --before main --after working-tree --tree captures/deadlock_hud_dump.json --healthbar 2 --output comparison.json
+node scripts/compare_hud_refs.js --before main --after HEAD --expanded --seconds 20 --json
 ```
+
+`compare_hud_refs.js` reads each revision's active `hud.xml` includes and their
+source objects. `working-tree` uses current files and records both HEAD and a
+source fingerprint. The same simulator and fixed tree are used for both runs;
+the baseline's complete config input is published unchanged to the other runtime.
+The default scenario uses baseline defaults; `--expanded` enables the same
+prefix-selected toggles as `profile_hud.js`, and `--enable KEY[=VALUE],...` selects
+additional values. Git refs are local: this command does not fetch.
+
+Reports retain both raw snapshots, source identities, config/tree fingerprints,
+warm-up and sample duration, callback/registry errors and enabled-owner changes.
+Unequal inputs, loading failures, missing attribution and runtime errors fail
+the comparison. Added/removed owners are reported explicitly because a modular
+rewrite can split ownership; matching inputs do **not** prove equivalent behavior
+or gameplay coverage across versions. Static captures do not reproduce CSS,
+computed geometry, native bindings or FPS. Read raw counts alongside coverage
+and the existing `--save`/`--compare` reports, rather than interpreting a changed
+owner list as an optimization by itself.
 
 ## What it measures
 

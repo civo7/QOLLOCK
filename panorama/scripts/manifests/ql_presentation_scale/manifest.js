@@ -44,6 +44,11 @@
                     const previous = applied.get(element.id);
                     const percent = Number(cfg[element.scaleKey]);
                     const value = Number.isFinite(percent) ? Math.max(50, Math.min(200, percent)) / 100 : 1;
+                    // Default geometry owns no native override. Discovery (in
+                    // particular dash class traversal) is unnecessary until an
+                    // actual scale/offset needs applying or retiring.
+                    const moved = positions.has(element.id) && element.fields.some(field => field.axis && Number(cfg[field.key]));
+                    if (value === 1 && !moved && !previous) continue;
                     const owner = Q.presentation.resolve(element, root, cfg);
                     const panel = Q.presentation.scaleTarget(element, owner);
                     if (previous && previous.panel !== panel) { clear(previous.panel, previous); applied.delete(element.id); }

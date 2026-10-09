@@ -20,6 +20,28 @@ function owner(env, element) {
     return panel;
 }
 
+test("default presentation geometry skips discovery but later scale changes still apply and retire", () => {
+    const env = load(), q = env.hud.sandbox.global.QOL;
+    q.core.App.shutdown();
+    const cfg = q.buildDefaultConfig(), element = q.presentation.elements.find(item => item.id === "souls");
+    const panel = owner(env, element);
+    const resolve = q.presentation.resolve;
+    const calls = [];
+    q.presentation.resolve = (...args) => { calls.push(args[0].id); return resolve(...args); };
+    const feature = q.core.FeatureRegistry.getManifest("ql_presentation_scale").create({ id: "ql_presentation_scale", config: { view: () => cfg } });
+    feature.onEnable(); env.clock.advance(3000);
+    assert.deepEqual(calls, [], "no scale/offset overrides means no native panel search");
+    cfg.SOULS_SCALE = 151; feature.onSettingsChanged();
+    assert.equal(panel.style.uiScale, "151%");
+    assert.deepEqual(calls, ["souls"]);
+    cfg.SOULS_SCALE = 100; feature.onSettingsChanged();
+    assert.equal(panel.style.uiScale, undefined, "reset still retires the applied native style");
+    calls.length = 0; env.clock.advance(2000);
+    assert.deepEqual(calls, []);
+    feature.onDisable();
+    assert.deepEqual(env.clock.errors, []);
+});
+
 for (const id of ["souls", "items", "stamina", "playerStats", "speed", "ammo", "abilityPoints", "damageReport"]) {
     test(`${id}: scoped scale previews, measures, restores replacements and round-trips`, () => {
         const env = load();

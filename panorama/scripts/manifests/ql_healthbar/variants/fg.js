@@ -74,6 +74,7 @@
         overflow: 'clip', zIndex: '105'
     };
     QOL.healthbar.registerVariant("fg", function() {
+        const probe = QOL.core.heroProbe.createReader();
         const resolver = QOL.panelCache.createIdResolver("health_and_abilities_container", {
             retryMs: 400,
             ownerPath: [{ id: "Hud", optional: true }, { className: "HudCore" }, "gameplay_hud"]
@@ -87,6 +88,7 @@
         hero = '';
         styleSig = null;
         resolver.reset();
+        probe.reset();
     }
 
     function update(root, cfg) {
@@ -111,7 +113,6 @@
         styleSig = P.syncStyles(portrait, portraitStyles, styleSig).sig;
         // The pregame reveal identifies the hero before the crosshair appears.
         // In hero testing it also wins over a crosshair left from the last pawn.
-        const probe = QOL.core.heroProbe;
         const pregameHero = probe.readHeroFromPregame(root);
         const nextHero = pregameHero || probe.readHeroFromCrosshair(root);
         if (!nextHero || !Object.prototype.hasOwnProperty.call(heroIcons, nextHero)) {
