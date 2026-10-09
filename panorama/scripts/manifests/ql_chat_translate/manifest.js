@@ -23,21 +23,66 @@
     var Utils = QOL.utils;
     var IsPanelValid = QOL.utils.IsPanelValid;
     var PerfNowMs = QOL.utils.PerfNowMs;
-    var BuildWatermark = function(c) { return QOL.buildImagesInChatContainerWatermark ? QOL.buildImagesInChatContainerWatermark(c) : ""; };
-    var FindChatMessageLabel = function(p) { return QOL.findChatMessageLabel ? QOL.findChatMessageLabel(p) : null; };
     var TryReadAccountIdFromKnownPartyPath = function(r) { return QOL.tryReadAccountIdFromKnownPartyPath ? QOL.tryReadAccountIdFromKnownPartyPath(r) : ""; };
 
     var ENDPOINT = "http://127.0.0.1:8765/translate.webp";
     var OWNER_ACCOUNT_ID = "841196165";
-    var OWNER_LATCH_ATTR = "QOL_LocalTranslationOwner_v1";
+    // v1 could persist a negative result when the native party binding had not
+    // populated within the startup timeout. Do not trust that stale latch.
+    var OWNER_LATCH_ATTR = "QOL_LocalTranslationOwner_v2";
     var OWNER_RESOLVE_INTERVAL_MS = 250;
-    var OWNER_RESOLVE_TIMEOUT_MS = 15000;
+    var OWNER_RESOLVE_FAST_WINDOW_MS = 15000;
+    var OWNER_RESOLVE_IDLE_INTERVAL_MS = 2000;
     var CYRILLIC_RE = /[\u0400-\u04FF]/;
     var MAX_TEXT_BYTES_APPROX = 480;
     var MAX_CACHED_MESSAGE_PANELS = 256;
     var ACTIVE_SCAN_DELAY_MS = 200;
     var IDLE_SCAN_MAX_DELAY_MS = 2000;
     var TOP_FALLBACK_SCAN_INTERVAL_MS = 2000;
+
+    function FindChatMessageLabelLocal(msgPanel) {
+        if (!msgPanel) return null;
+        var msgText = msgPanel.FindChildTraverse ? msgPanel.FindChildTraverse("MessageText") : null;
+        if (msgText) return msgText;
+        var msgContents = msgPanel.FindChildTraverse ? msgPanel.FindChildTraverse("MessageContents") : null;
+        if (!msgContents || !msgContents.GetChildCount) return null;
+        for (var i = 0; i < msgContents.GetChildCount(); i++) {
+            var child = msgContents.GetChild(i);
+            if (child && child.paneltype === "Label") return child;
+        }
+        return null;
+    }
+
+    function FindChatMessageLabel(msgPanel) {
+        return QOL.findChatMessageLabel
+            ? QOL.findChatMessageLabel(msgPanel)
+            : FindChatMessageLabelLocal(msgPanel);
+    }
+
+    function BuildWatermarkLocal(container) {
+        if (!IsPanelValid(container) || !container.GetChildCount) return "";
+        var childCount = 0;
+        try { childCount = container.GetChildCount(); } catch(eCount) { childCount = 0; }
+        var parts = [String(childCount)];
+        var start = Math.max(0, childCount - 3);
+        for (var i = start; i < childCount; i++) {
+            var child = null;
+            try { child = container.GetChild(i); } catch(eChild) { child = null; }
+            if (!child) { parts.push("-"); continue; }
+            parts.push(String(child.id || ""));
+            var label = child.BHasClass && child.BHasClass("ChatMessage") ? FindChatMessageLabelLocal(child) : null;
+            var text = label && typeof label.text === "string" ? String(label.text).trim() : "";
+            if (text.length > 160) text = text.slice(0, 160);
+            parts.push(text);
+        }
+        return parts.join("|");
+    }
+
+    function BuildWatermark(container) {
+        return QOL.buildImagesInChatContainerWatermark
+            ? QOL.buildImagesInChatContainerWatermark(container)
+            : BuildWatermarkLocal(container);
+    }
 
     function FindHudPanel(root) {
         if (typeof QOL !== "undefined" && QOL.core?.panel?.findHud) return QOL.core.panel.findHud(root);
@@ -87,16 +132,18 @@
             return CommitOwnerMatch(root, persisted, false);
         }
         if (!State.localTranslationOwnerResolveDeadlineMs) {
-            State.localTranslationOwnerResolveDeadlineMs = nowMs + OWNER_RESOLVE_TIMEOUT_MS;
+            State.localTranslationOwnerResolveDeadlineMs = nowMs + OWNER_RESOLVE_FAST_WINDOW_MS;
         }
-        if (nowMs >= State.localTranslationOwnerResolveDeadlineMs) {
-            return CommitOwnerMatch(root, false, true);
-        }
-        if (nowMs < (Number(State.localTranslationOwnerNextCheckMs) || 0)) return false;
-        State.localTranslationOwnerNextCheckMs = nowMs + OWNER_RESOLVE_INTERVAL_MS;
+        if (nowMs < (Number(State.localTranslationOwnerNextCheckMs) || 0)) return null;
+        var resolveInterval = nowMs >= State.localTranslationOwnerResolveDeadlineMs
+            ? OWNER_RESOLVE_IDLE_INTERVAL_MS
+            : OWNER_RESOLVE_INTERVAL_MS;
+        State.localTranslationOwnerNextCheckMs = nowMs + resolveInterval;
         var accountId = "";
         try { accountId = String(TryReadAccountIdFromKnownPartyPath(root) || ""); } catch(eId) { accountId = ""; }
-        if (!accountId) return false;
+        // Missing native account data is unresolved, not evidence that this is
+        // another account. Stay fail-closed while continuing low-rate retries.
+        if (!accountId) return null;
         return CommitOwnerMatch(root, accountId === OWNER_ACCOUNT_ID, true);
     }
 
@@ -297,7 +344,7 @@
                         if (_loop) { _loop.stop(); _loop = null; }
                         return;
                     }
-                    if (!match) return;
+                    if (match !== true) return;
                     UpdateLocalChatTranslation(root, nowMs);
                 } catch(e) {
                     if (logger && logger.logError) {
