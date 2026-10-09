@@ -436,25 +436,23 @@ Panorama ignores, falling back to `squish`.
 - `panel.SetPanelEvent()` — ~130 call sites. Works empirically.
 - `panel.SetImage()` — 47 call sites. Confirmed Image type-specific method.
 
-### QOL.import() gotchas
-- `QOL.import("isCfgEnabled")` returns undefined — use `Utils.IsCfgEnabled`
-- `QOL.import("isPanelValid")` returns undefined — use `Utils.IsPanelValid`
-- `QOL.import("setStyleSafe")` returns undefined — use `Utils.SetStyleSafe`
-- Rule: anything from `ql_utils.js` is on `Utils.*`, not `QOL.*`
-- Run `tools/validate_imports.sh` before committing to catch mismatches.
+### Explicit context dependencies
+
+The transitional `QOL.import` API and settings-side HUD stubs are removed.
+Use the real utility/panel APIs loaded by the current XML context. Consult
+`ARCHITECTURE.md` and `docs/HELPERS.md` before changing helper ownership.
 
 ## Testing Tools
 
-- `setup-hooks.sh` — run once after cloning to install the git pre-commit hook (bridge checker + import validator + smoke test)
+- `npm test` — complete canonical offline gate; see `docs/TESTING.md`.
+- `setup-hooks.sh` — explicit local installation of the optional hook that runs `npm test`.
 - `scripts/git-hooks/pre-commit` — version-controlled hook template (installed by setup-hooks.sh)
-- `tools/check_bridges.sh` — verifies QOL.import() symbols are exported
-- `tools/validate_imports.sh` — verifies QOL.import() symbols exist on QOL namespace
 - `tools/qollock_smoke_test.js` — loads all files in dependency order (Node.js)
 
 ## Claude Code Skills (slash commands)
 
 - `/audit-qollock` — Fan out agents to audit the codebase against Panorama KB
-- `/validate-qollock` — Run smoke test + bridge checker + import validator
+- `/validate-qollock` — Run the current `npm test` gate; historical prompts may require updating.
 - `/review-qollock` — Spawn 2 adversarial reviewers, revise, loop up to 3×
 - `/plan-qollock` — Full plan creation with 4-agent adversarial review
 - `/extract-qollock` — Extract code to a standalone feature file

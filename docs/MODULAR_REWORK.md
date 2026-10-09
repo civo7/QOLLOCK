@@ -88,6 +88,9 @@ behavior until its owning implementation has been audited.
 - Settings consumers use explicit utility exports. Transitional import layers
   and settings-side HUD/cache stubs are removed; shared data publication no
   longer overwrites real panel helpers or fabricates gameplay APIs.
+- The optional pre-commit template shares the complete canonical offline gate.
+  Retired grep validators for removed core/import/feature layouts are removed;
+  CSS/XML changes no longer bypass that template's checks.
 
 Frozen main-config fixtures preserve all healthbar variants and both minimap
 scale methods. Published versions, compact layouts and persistent defaults stay

@@ -6,6 +6,11 @@ API checks and ESLint. It does not run a separate build-storage fuzz command.
 The Node suite limits file concurrency to avoid exhausting memory when multiple
 settings/HUD VM environments run on a machine with many CPU cores.
 
+The optional `scripts/git-hooks/pre-commit` template invokes this same complete
+gate for every commit. It does not maintain another manifest/import validator or
+skip CSS/XML changes. Installing/updating local hooks remains an explicit local
+setup action through `setup-hooks.sh`; source edits do not install them.
+
 Some tests use the panel simulator. They can verify JavaScript behavior under
 that model, but cannot prove real client panel structure, rendering or FPS.
 

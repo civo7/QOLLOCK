@@ -27,5 +27,5 @@ fi
 cp "$HOOK_TEMPLATE" "$HOOK_TARGET"
 chmod +x "$HOOK_TARGET"
 echo "[QOLLOCK] Git pre-commit hook installed."
-echo "  Validates: bridge checker → import validator → smoke test"
+echo "  Validates: npm test (complete offline gate)"
 echo "  Skip with: QOLLOCK_SKIP_HOOKS=true git commit ..."

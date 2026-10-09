@@ -647,8 +647,9 @@ operators at the end of the preceding line: the project enforces this for Valve
 minifier/ASI compatibility. `npm run lint` hides warnings; `lint:all` shows them.
 Do not add a name to the globals list merely to silence a missing dependency.
 
-`scripts/git-hooks/pre-commit` is an additional local check for staged JS, not a
-replacement for the full npm gate. `setup-hooks.sh` installs it; do not silently
+`scripts/git-hooks/pre-commit` is an optional local template that runs the same
+complete `npm test` gate for every commit, including CSS/XML changes. The retired
+grep-based migration checks are removed. `setup-hooks.sh` installs it; do not silently
 install/replace hooks as part of an unrelated code/documentation change.
 
 ### Performance and live-client evidence
