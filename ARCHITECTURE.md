@@ -80,7 +80,7 @@ Node/npm are development tools, not the in-game runtime.
 | Profile page | [citadel_db_page_profile.xml](panorama/layout/citadel_db_page_profile.xml) | Profile-specific callbacks and statlocker behavior |
 | Profile card | [profile_card.xml](panorama/layout/profile_card.xml) | Card-specific rank/statlocker scripts and callbacks |
 | Quickbuy | [hud_quickbuy.xml](panorama/layout/hud_quickbuy.xml) | Quickbuy total-summary script and local panel lifecycle |
-| Hero testing | [hud_hero_testing.xml](panorama/layout/hud_hero_testing.xml) | Sandbox/hero-testing controls and their context-specific APIs |
+| Hero testing | Native game `hud_hero_testing.xml`; [hero_testing_menu.css](panorama/styles/hero_testing_menu.css) | Native sandbox controls; QOLLOCK owns CSS visibility/placement through the HUD settings projector |
 
 The HUD and settings have separate JavaScript contexts. Their `QOL` objects,
 config objects and event buses are not shared memory. Cross-context communication
@@ -103,6 +103,13 @@ load graph: `hudScripts()`, `settingsScripts()` and `parseLayoutScripts(layoutPa
 read actual includes and ignore XML comments. Do not maintain a second hardcoded
 script/feature list. Likewise, stale comments saying “disabled” do not disable an
 active include.
+
+Do not retain a native XML copy with no QOLLOCK changes. The hero-testing layout
+is supplied by the game; its former override was identical to the current extract
+after line-ending normalization. Its former JavaScript extension had no active
+include or XML callbacks and is removed. CSS extensions still apply to the native
+layout. See [native layout ownership](docs/NATIVE_LAYOUTS.md) before removing a
+layout: many native entry points are created by C++ rather than another mod XML.
 
 Panorama provides `$.CreatePanel`, `$.Schedule`, native panel methods and event
 APIs. Do not assume DOM `window`/`document`, `fetch`, `XMLHttpRequest`, WebSockets,

@@ -38,7 +38,6 @@ panorama/
     ├── ql_core.js                          # Main runtime — boot sequence, dispatch loop, non-extracted code
     ├── ql_settings.js                      # Settings UI (not yet using QOL.import())
     ├── ql_perf_overlay.js                  # Performance overlay (not yet using QOL.import())
-    ├── ql_hero_testing.js                  # Hero testing tools
     ├── ql_recent_purchases_data.js         # Static data for recent purchases
     ├── ql_minimap_crate_data.js            # Static data for minimap crates
     ├── core/                                  # Phase 1: New infrastructure (8 modules)

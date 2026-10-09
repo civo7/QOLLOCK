@@ -42,6 +42,9 @@ behavior until its owning implementation has been audited.
 - Keyboard overlay construction, native glyph reconciliation and geometry/color
   rendering retain private generations; late/replaced glyphs and partial native
   writes no longer inherit a stale whole-layout signature.
+- Native hero-testing layout is supplied by the game; the identical override and
+  unreachable JavaScript extension are removed while its active CSS/settings
+  behavior remains. Incremental packaging retires their former compiled artifacts.
 
 Frozen main-config fixtures preserve all healthbar variants and both minimap
 scale methods. Published versions, compact layouts and persistent defaults stay
