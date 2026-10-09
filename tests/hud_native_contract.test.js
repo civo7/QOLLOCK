@@ -54,3 +54,19 @@ test("unit-target styling preserves native CSS hooks without an XML override", (
     assert.match(css, /\.improved_hint_active \.ability_element_unit_target #unscaled_panel > #hint_container/);
     assert.doesNotMatch(css, /qol_hint_target/);
 });
+
+test("native health bars load design tokens through CSS while variant canvases remain in their owning layout", () => {
+    assert.equal(fs.existsSync(path.resolve(__dirname, "../panorama/layout/hud_health.xml")), false);
+    const css = readStyle("hud_health.css");
+    const tokens = css.indexOf('@import url("s2r://panorama/styles/qollock_defines.vcss_c");');
+    const base = css.indexOf('@import url("s2r://panorama/styles/base/hud_health.vcss_c");');
+    assert.ok(tokens >= 0 && base > tokens);
+    assert.doesNotMatch(css, /cd_icons|fort_cd|fortitude_img/);
+    for (const gate of ["colored_healthbar_active", "minimalist_healthbar_active", "budhud_healthbar_active", "fg_healthbar_active"]) {
+        assert.ok(css.includes(gate), gate);
+    }
+    const container = readLayout("hud_health_container.xml");
+    assert.match(container, /id="QOLHealthbarGeometry"/); assert.match(container, /id="MinecraftHeartsRoot"/);
+    assert.match(container, /<CitadelHudHealth id="hud_health_bars"/);
+    assert.match(container, /text="\{i:r:current_health\}"/); assert.match(container, /text="\/ \{i:r:total_health\}"/);
+});

@@ -140,6 +140,10 @@ behavior until its owning implementation has been audited.
   armor/tech/weapon XML copies containing only a listener extension are removed;
   native component content/detail-view bindings, permanent shop stat children
   and normal/simplified styling retain their owners.
+- Native bars use the game's health layout and the existing stylesheet extension;
+  the permanently collapsed Fortitude zero block and its unused rules are
+  removed. The shared scale canvas, all healthbar variants and native value
+  bindings remain supplied by their current owners.
 
 Frozen main-config fixtures preserve all healthbar variants and both minimap
 scale methods. Published versions, compact layouts and persistent defaults stay

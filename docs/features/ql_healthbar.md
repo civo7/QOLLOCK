@@ -6,6 +6,12 @@
 [hero probe](../core/hero_probe.md) are separate owners. Read the active HUD
 includes before changing their load order.
 
+The game supplies the native `hud_health.xml` bar layout. QOLLOCK's
+`hud_health.css` imports its design tokens before the extracted base stylesheet;
+the former XML extension only supplied that token include and an inactive,
+collapsed Fortitude zero label. Its markup/styles are removed. The container
+override still supplies variant canvases and native health/number bindings.
+
 `HEALTHBAR_TYPE` selects numeric modes 0–5. The dispatcher must tear down the
 previous variant's owned panels, classes, schedules and inline styles when the
 mode changes or turns off. Shared accent and position cleanup can still matter

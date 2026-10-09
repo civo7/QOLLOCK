@@ -555,6 +555,8 @@ try {
         "panorama\layout\citadel_hero_stats_armor_panel.vxml_c",
         "panorama\layout\citadel_hero_stats_tech_panel.vxml_c",
         "panorama\layout\citadel_hero_stats_weapon_panel.vxml_c",
+        # Native bars need no XML extension for the removed inactive Fortitude block.
+        "panorama\layout\hud_health.vxml_c",
         # Performance display is now loaded through its manifest-owned modules.
         "panorama\scripts\ql_perf_overlay.vjs_c",
         # Disabled after build 10725 changed the native leaderboard snippet contract.
