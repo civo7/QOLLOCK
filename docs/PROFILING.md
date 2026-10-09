@@ -113,9 +113,11 @@ node scripts/profile_hud.js --seconds 20 --compare baseline
 ## What it measures
 
 Instrumented operations made by the simulated mod are charged to the feature
-on the stack at the time — old-system features via their registry `update`, new
-manifests via `Scheduler.createPollLoop`, and the mod's own scheduled loops by
-callback name. Anything else lands in `<unattributed>`.
+on the stack at the time: manifests via `Scheduler.createPollLoop`, and the
+mod's own scheduled loops by callback name. Anything else lands in
+`<unattributed>`. The former empty dispatch registry is removed. Reports retain
+`meta.wrappedFeatures` as zero for archived report compatibility; active poll
+attribution requires `meta.wrappedScheduler`.
 
 Custom JavaScript walks through `Children()`/`GetChild()` and uninstrumented
 APIs do not contribute native-search visit counts. This is not total JS work.

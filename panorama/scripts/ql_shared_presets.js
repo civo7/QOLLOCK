@@ -2203,77 +2203,6 @@ QOL_COMPACT_SCHEMA_UTILS.AreSemversWireCompatible = function(expectedSemver, res
 }
 
 // ==========================================================================
-// QOL_FEATURE_REGISTRY — feature registration for the core dispatch loop
-// ==========================================================================
-// Each QOLLOCK feature registers itself via QOL_REGISTER_FEATURE(name, descriptor).
-// The core loop (ql_core.js) iterates the registry to determine which features
-// to run each tick, assign them to scheduler phases and offset buckets, and
-// dispatch them with per-feature error isolation.
-//
-// Descriptor shape:
-//   {
-//     configKeys: string[],  // config keys this feature reads (for gate caching)
-//     bucket: number,        // 0-7, which FEATURE_OFFSET_BUCKET_N_MS slot
-//     phase: number,         // 0-4 for 5-phase scheduler, -1 for always-run
-//     gate: function(cfg, hideoutConnected, featureState) → bool,
-//     update: function(root, cfg, nowMs, State, hideoutConnected),
-//     cleanup: function(root, cfg, State) | null,  // optional on→off cleanup
-//     stateKeys: string[]    // which State fields this feature initializes/owns
-//   }
-//
-// Registration is idempotent — calling twice with the same name is a no-op.
-// Features that haven't been extracted yet can register inline from ql_core.js
-// using the same interface, participating in registry-based dispatch while
-// still living in the main file.
-// ==========================================================================
-var QOL_FEATURE_REGISTRY = {};
-var QOL_REGISTER_FEATURE = function(name, descriptor) {
-    if (!name || typeof name !== "string") {
-        if (typeof $ !== "undefined" && $.Msg) {
-            $.Msg("[QOLLock] ERROR: QOL_REGISTER_FEATURE called without a valid name");
-        }
-        return;
-    }
-    if (QOL_FEATURE_REGISTRY.hasOwnProperty(name)) return; // idempotent
-    if (!descriptor || typeof descriptor !== "object") {
-        if (typeof $ !== "undefined" && $.Msg) {
-            $.Msg("[QOLLock] ERROR: QOL_REGISTER_FEATURE('" + name + "') missing descriptor");
-        }
-        return;
-    }
-    if (!Array.isArray(descriptor.configKeys)) {
-        if (typeof $ !== "undefined" && $.Msg) {
-            $.Msg("[QOLLock] ERROR: QOL_REGISTER_FEATURE('" + name + "') missing configKeys array");
-        }
-        return;
-    }
-    if (typeof descriptor.update !== "function") {
-        if (typeof $ !== "undefined" && $.Msg) {
-            $.Msg("[QOLLock] ERROR: QOL_REGISTER_FEATURE('" + name + "') missing update function");
-        }
-        return;
-    }
-    var bucket = Number(descriptor.bucket);
-    if (!isFinite(bucket) || bucket < 0 || bucket > 7) bucket = 0;
-    var phase = Number(descriptor.phase);
-    if (!isFinite(phase) || phase < -1) phase = -1;
-
-    QOL_FEATURE_REGISTRY[name] = {
-        configKeys: descriptor.configKeys.slice(),
-        bucket: bucket,
-        phase: phase,
-        gate: (typeof descriptor.gate === "function") ? descriptor.gate : function() { return true; },
-        update: descriptor.update,
-        cleanup: (typeof descriptor.cleanup === "function") ? descriptor.cleanup : null,
-        stateKeys: Array.isArray(descriptor.stateKeys) ? descriptor.stateKeys.slice() : [],
-        requiresRoot: descriptor.requiresRoot === true,
-        gateKey: (typeof descriptor.gateKey === "string" && descriptor.gateKey.length > 0) ? descriptor.gateKey : name,
-        perfLabel: (typeof descriptor.perfLabel === "string" && descriptor.perfLabel.length > 0) ? descriptor.perfLabel : ("loop." + name),
-        postUpdate: (typeof descriptor.postUpdate === "function") ? descriptor.postUpdate : null
-    };
-};
-
-// ==========================================================================
 // QOL bridge namespace — shared module system
 // ==========================================================================
 // ql_utils.js publishes to QOL.utils
@@ -2281,10 +2210,6 @@ var QOL_REGISTER_FEATURE = function(name, descriptor) {
 // Feature files use QOL.import(["state","utils",...]) instead of typeof guards
 // ==========================================================================
 var QOL = (typeof QOL !== "undefined") ? QOL : {};
-
-// Re-home the feature registry on the namespace
-QOL.featureRegistry = QOL_FEATURE_REGISTRY;
-QOL.register = QOL_REGISTER_FEATURE;
 
 // Attach QOL_UTILS (loaded before us by ql_utils.js) to the namespace
 if (typeof QOL_UTILS !== "undefined") {

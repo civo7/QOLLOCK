@@ -11,12 +11,9 @@
 // ATTRIBUTION MECHANISM
 //
 // Poll wrapping is installed immediately after ql_scheduler loads, before app
-// boot can allocate default-enabled loops. Legacy updates are wrapped after load.
+// boot can allocate default-enabled loops.
 //
-//   * Old system — every entry in QOL_FEATURE_REGISTRY has its `update` replaced
-//     by a wrapper that pushes "feat:<name>" onto the attribution stack. The
-//     core dispatch loop calls these, so per-feature cost falls out directly.
-//   * New system — QOL.core.Scheduler.createPollLoop is replaced by a version
+//   * QOL.core.Scheduler.createPollLoop is replaced by a version
 //     that wraps the callback with "mf:<featureId>". Every manifest's poll loop
 //     goes through it (raw $.Schedule is banned in feature code), so manifests
 //     are covered too.
@@ -79,36 +76,6 @@ function makeMaximalConfig(sandbox, overrides = {}, enableAll = true) {
     }
     Object.assign(cfg, overrides);
     return cfg;
-}
-
-/**
- * Wrap every registered old-system feature's update() for attribution.
- * Returns the number wrapped, so a zero can be reported as a harness failure
- * rather than silently producing an empty profile.
- */
-function wrapOldFeatures(sandbox) {
-    return sandbox.eval(`
-        (function () {
-            if (typeof QOL_FEATURE_REGISTRY === "undefined" || !QOL_FEATURE_REGISTRY) return 0;
-            var n = 0;
-            for (var name in QOL_FEATURE_REGISTRY) {
-                if (!Object.prototype.hasOwnProperty.call(QOL_FEATURE_REGISTRY, name)) continue;
-                var entry = QOL_FEATURE_REGISTRY[name];
-                if (!entry || typeof entry.update !== "function" || entry.__profWrapped) continue;
-                (function (entry, name) {
-                    var inner = entry.update;
-                    entry.update = function () {
-                        __profEnter("feat:" + name);
-                        try { return inner.apply(this, arguments); }
-                        finally { __profExit(); }
-                    };
-                    entry.__profWrapped = true;
-                })(entry, name);
-                n++;
-            }
-            return n;
-        })()
-    `);
 }
 
 /** Wrap Scheduler.createPollLoop so each manifest poll tick is attributed. */
@@ -297,7 +264,7 @@ function createProfiledHud({
         configApplied = true;
     });
 
-    const wrappedFeatures = wrapOldFeatures(sandbox);
+    const wrappedFeatures = 0; // Archived report field; no legacy dispatcher remains.
     const wrappedScheduler = wrapPollLoops(sandbox);
     const wrappedLoops = wrapScheduledLoops(sandbox);
 
@@ -342,7 +309,7 @@ function createProfiledHud({
             const lines = [];
             lines.push(`tree: ${tree.panels} panels`);
             if (tree.notes.length > 0) lines.push(`tree notes:\n  ${tree.notes.join("\n  ")}`);
-            lines.push(`features wrapped: ${wrappedFeatures}, scheduler wrapped: ${wrappedScheduler}`);
+            lines.push(`scheduler wrapped: ${wrappedScheduler}`);
             lines.push(`clock: ${clock.now()}ms, ${clock.pendingCount()} pending`);
             if (clock.errors.length > 0) {
                 lines.push(`scheduled-callback errors (${clock.errors.length}):`);

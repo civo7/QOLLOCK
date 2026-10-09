@@ -147,7 +147,7 @@ test("healthbar: reset hands every property back to CSS", () => {
 // ── Bottom bar (#hud_signature) ─────────────────────────────────────────────
 //
 // Driven through the registered feature rather than a helper, because the bottom
-// bar has no shared style module — the write is inline in its update().
+// bar has no shared style module — the manifest owns its native style writes.
 
 const BB_DEFAULTS = {
     HUD_BOTTOM_BAR_ENABLED: 1,
@@ -160,7 +160,6 @@ const BB_DEFAULTS = {
 function runBottomBar(cfg) {
     const h = boot();
     const QOL = h.sandbox.global.QOL;
-    const entry = h.sandbox.global.QOL_FEATURE_REGISTRY && h.sandbox.global.QOL_FEATURE_REGISTRY.bottomBarRuntime;
 
     const panel = recordingPanel({
         id: "hud_signature",
@@ -170,15 +169,6 @@ function runBottomBar(cfg) {
         FindChildTraverse: () => null,
         FindChildrenWithClassTraverse: () => [],
     });
-
-    if (entry) {
-        // The feature resolves the panel through the cache, so seed it there and skip
-        // needing #hud_signature to exist in the modelled tree.
-        QOL.setCachedPanel("bottomBarPanel", panel);
-        QOL.state.bottomBarRuntimeStyleSig = "";
-        entry.update(h.doc.root, Object.assign({}, BB_DEFAULTS, cfg), 1000);
-        return panel;
-    }
 
     const FR = QOL.core && QOL.core.FeatureRegistry;
     const manifest = FR && FR.getManifest && FR.getManifest("ql_bottom_bar");
@@ -204,7 +194,7 @@ function runBottomBar(cfg) {
         return panel;
     }
 
-    assert.fail("neither bottomBarRuntime nor ql_bottom_bar manifest is registered");
+    assert.fail("ql_bottom_bar manifest is not registered");
 }
 
 test("bottom bar: default config forces nothing on #hud_signature", () => {

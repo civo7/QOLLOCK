@@ -4,8 +4,8 @@ Source: `panorama/scripts/core/ql_config_adapter.js`; export `QOL.core.ConfigAda
 Requires ConfigStore. Shared defaults come from `ql_shared_presets.js`, not a
 `legacy/ql_config_defaults.js` file.
 
-- `loadFromFlat(flatConfig, enableKeyMap)` builds feature ownership from the
-  transitional registry plus current manifests: setting keys, enable keys and
+- `loadFromFlat(flatConfig, enableKeyMap)` builds feature ownership from
+  current manifests: setting keys, enable keys and
   multitoggle option keys. A shared key can reach several feature buckets.
 - Coercion combines registered toggle keys with compatibility name rules;
   numeric 0/1 toggles become booleans. Do not infer every key's type solely from
@@ -20,6 +20,10 @@ Requires ConfigStore. Shared defaults come from `ql_shared_presets.js`, not a
   and converts booleans back to numeric 0/1, excluding retired `DEFAULT_HERO`.
   It is not an arbitrary unknown-key preservation/export mechanism. ConfigStore
   maintains one accepted value across all shared-key subscribers.
+
+The former empty dispatch registry and its ID translation table are removed.
+Historical flat/compact input remains supported by the shared parser and codecs;
+import compatibility does not depend on recreating retired runtime owners.
 
 `loadFromFlat` processes a copy of its supplied object, zeroing `ENABLE_MIN_SOULS`
 and `ENABLE_UNSPENT_SOULS` and removing `DEFAULT_HERO`. It also forces the two retired

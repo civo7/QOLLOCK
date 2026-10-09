@@ -104,7 +104,7 @@ function report(snap, meta, tree, opts) {
     out.push(`HUD tree        : ${tree.panels} panels (${meta.treeSource === "captured" ? "captured from the game" : "modelled from layout XML — see docs/PROFILING.md"})`);
     out.push(`sample          : ${secs}s of virtual game time (after ${meta.warmupMs / 1000}s warm-up)`);
     out.push(`config          : ${meta.configMode} (${fmt(meta.configBytes)} bytes stored); not every feature/variant is exercised`);
-    out.push(`attribution     : ${meta.wrappedFeatures} old-system features wrapped, scheduler ${meta.wrappedScheduler ? "wrapped" : "NOT WRAPPED"}`);
+    out.push(`attribution     : scheduler ${meta.wrappedScheduler ? "wrapped" : "NOT WRAPPED"}`);
     if (tree.notes.length > 0) {
         out.push("");
         out.push("tree construction notes (affects fidelity — read these):");
@@ -327,9 +327,8 @@ function main() {
         enableAll: !has("defaults"),
     });
 
-    // The legacy registry may be empty after a migration to manifests. The
-    // Scheduler wrapper must still be present to attribute their poll loops.
-    if (h.meta.wrappedFeatures === 0 && !h.meta.wrappedScheduler) {
+    // Active manifest poll loops require Scheduler attribution.
+    if (!h.meta.wrappedScheduler) {
         process.stderr.write("[profiler] FATAL: no feature callbacks could be wrapped.\n");
         process.stderr.write(h.diagnose() + "\n");
         process.exit(2);

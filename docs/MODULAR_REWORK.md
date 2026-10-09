@@ -72,6 +72,10 @@ behavior until its owning implementation has been audited.
   moving/replacing labels retires the previous children, new HUDs reset phase
   history, and stopped hooks cannot recreate the readout. Same-HUD replacement
   retains the observed combat period and partial construction/styles retry.
+- Runtime registration and flat-key ownership use current manifests alone. The
+  empty dispatch registry and its ID translation table are removed; historical
+  configuration parsers/codecs remain independent and the offline profiler
+  attributes active polls through Scheduler.
 
 Frozen main-config fixtures preserve all healthbar variants and both minimap
 scale methods. Published versions, compact layouts and persistent defaults stay

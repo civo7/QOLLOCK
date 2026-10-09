@@ -34,7 +34,7 @@ FEATURE_PUBLICATIONS=$(grep -ohP 'QOL\.\K[a-zA-Z0-9]+(?=\s*=)' features/ql_feat_
 UTILS_SYMBOLS="IsCfgEnabled IsPanelValid IsPanelListValid SetStyleSafe ClearStyleSafe SetPanelOpacitySafe NormalizeOpacityNumber NormalizeHudOffsetNumber NormalizeHudScaleNumber FormatHudPx PerfNowMs PushUnique FindFirstPanelByClass FindAncestorWithClass HasClassInHierarchy SetPanelVisibility SafeGetAttribute SafeSetAttribute SafeLog DebugLog InfoLog WarnLog ErrorLog ToRgbString BlendRgb SetWashColorSafe ClampConfigNumber"
 
 # Always-present QOL namespace symbols (published by ql_shared_presets.js)
-CORE_ALWAYS="utils state import register featureRegistry defaultConfig presets schemaSemver codec dumpDiagnostics settingsTabs bridge compactSchemaRegistry latestCompactSemver"
+CORE_ALWAYS="utils state import defaultConfig presets schemaSemver codec dumpDiagnostics settingsTabs bridge compactSchemaRegistry latestCompactSemver"
 
 # All valid QOL.* namespace symbols
 ALL_QOL_SYMBOLS="$CORE_ALWAYS $CORE_EXPORTS $QOL_PUBLICATIONS $FEATURE_PUBLICATIONS"
