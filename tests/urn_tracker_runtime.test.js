@@ -95,6 +95,33 @@ test("urn difference releases hideout and disabled UI without mutating native sc
     assert.equal(env.Q.core.Scheduler.getWorkSnapshot().some(owner => owner.id === "ql_urn_tracker"), false);
 });
 
+test("urn difference retires every moved child and never adopts a prior instance awaiting deletion", () => {
+    const env = setup(), top = env.top(), source = env.native(top); env.feature.onEnable();
+    const retired = env.add(null, "RetiredOwnedChildren"), children = env.overlay().Children();
+    for (const panel of children) panel.SetParent(retired);
+    env.clock.advance(350);
+    for (const panel of children) assert.equal(panel.IsValid(), false, panel.id);
+    assert.equal(env.display(), "+33.3%");
+    const previous = env.overlay(), moved = previous.FindChild("UrnTrackerSoulIcon"); moved.SetParent(retired);
+    env.feature.onDisable();
+    let writes = 0;
+    previous.style = new Proxy(previous.style, { set(target, key, value) { writes++; target[key] = value; return true; } });
+    const next = env.Q.core.FeatureRegistry.getManifest("ql_urn_tracker").create({ id: "ql_urn_tracker", config: { view: () => env.cfg } });
+    next.onEnable(); next.onSettingsChanged(); assert.equal(writes, 0); assert.equal(previous.visible, false);
+    env.clock.advance(350); assert.equal(previous.IsValid(), false); assert.equal(moved.IsValid(), false);
+    assert.notEqual(env.overlay(), previous); assert.equal(env.display(), "+33.3%");
+    assert.equal(source.friendly.IsValid(), true); assert.equal(source.enemy.text, "2k");
+    next.onDisable(); env.clock.advance(20); assert.equal(env.overlay(), null); assert.deepEqual(env.clock.errors, []);
+});
+
+test("urn difference waits for a real HUD when a loading root contains similar native IDs", () => {
+    const env = setup(), top = env.top(); env.native(top); env.feature.onEnable(); const previous = env.overlay();
+    env.doc.root = env.add(null, "LoadingRoot"); env.native(env.top()); env.clock.advance(350);
+    assert.equal(previous.IsValid(), false); assert.equal(env.overlay(), null);
+    env.doc.root = env.add(null, "Hud", "CitadelHud"); env.native(env.top(), "1k", "2k"); env.clock.advance(350);
+    assert.equal(env.display(), "-50.0%"); env.stop();
+});
+
 test("urn difference takes its mood threshold from the current living topbar clock", () => {
     const env = setup(), top = env.top(); env.native(top, "100", "88");
     env.add(top, "GameTime", "Label").text = "14:59"; env.feature.onEnable();
@@ -113,7 +140,7 @@ test("urn difference retries partial construction and rejected text without rewr
         if (id === "UrnTrackerLabel") Object.defineProperty(panel, "text", { configurable: true, get() { return text; }, set(value) { writes++; text = value; } });
         return panel;
     };
-    env.feature.onEnable(); assert.equal(env.overlay().FindChild("UrnTrackerSoulIcon"), null);
+    env.feature.onEnable(); assert.equal(env.overlay().FindChild("UrnTrackerSoulIcon"), null); assert.equal(env.overlay().visible, false);
     reject = false; env.clock.advance(350); assert.equal(env.display(), "+33.3%"); assert.equal(writes, 1);
     env.clock.advance(1000); assert.equal(writes, 1);
     const label = env.overlay().FindChild("UrnTrackerLabel"); let rejectText = true;

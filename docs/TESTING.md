@@ -124,12 +124,17 @@ a real `CitadelHud` fixture. Private caches are not published to shared State.
 `performance_owner_lifecycle.test.js` covers private report/renderer generations,
 reactive collection flags/opacity, preserved Scheduler samples, partial writes/
 construction, native label replacement, registry cleanup and rolling reports.
+They also cover complete moved-child retirement, rapid re-enable without
+reviving the previous tree, and loading-root suppression while console
+collection remains enabled.
 These are callback-data checks, not native frame/rendering performance results.
 
 `urn_tracker_runtime.test.js` drives the private urn-difference lifecycle, including
 native/legacy source priority, late/moved/class-recycled sources, living HUD and
-readout replacements, partial construction/text writes and registry cleanup. Pure
-parsing/display cases retain native number formats and match-time thresholds.
+readout replacements, partial construction/text writes and registry cleanup.
+The same tests exercise prior-instance deletion, complete moved-child retirement
+and loading roots with similar native IDs. Pure parsing/display cases retain
+native number formats and match-time thresholds.
 Native networth binding timing and readout presentation remain client checks.
 
 `shared_panel_cache.test.js` covers shared typed/compatibility storage, public

@@ -39,6 +39,33 @@ test("performance renderer follows a new living HUD and replaces reparented owne
     env.feature.onDisable(); env.clock.advance(20); assert.equal(env.overlay(), null); assert.deepEqual(env.clock.errors, []);
 });
 
+test("performance renderer retires every moved child and waits for the previous instance's queued deletion", () => {
+    const env = setup(); env.Q.state.perfStats = { "mf.sample": { count: 2, total: 8, max: 6 } }; env.feature.onEnable();
+    const retired = env.add(null, "RetiredOwnedLabels"), children = env.overlay().Children();
+    for (const panel of children) panel.SetParent(retired);
+    env.clock.advance(250);
+    for (const panel of children) assert.equal(panel.IsValid(), false, panel.id);
+    assert.match(env.body().text, /mf.sample: 8.0ms/);
+    const previous = env.overlay(), moved = env.body(); moved.SetParent(retired); env.feature.onDisable();
+    let writes = 0;
+    previous.style = new Proxy(previous.style, { set(target, key, value) { writes++; target[key] = value; return true; } });
+    const next = env.Q.core.FeatureRegistry.getManifest("ql_perf").create({ id: "ql_perf", config: { view: () => env.cfg } });
+    next.onEnable(); next.onSettingsChanged(); assert.equal(writes, 0); assert.equal(previous.visible, false);
+    env.clock.advance(250); assert.equal(previous.IsValid(), false); assert.equal(moved.IsValid(), false);
+    assert.notEqual(env.overlay(), previous); assert.match(env.body().text, /mf.sample: 8.0ms/);
+    next.onDisable(); env.clock.advance(20); assert.equal(env.overlay(), null); assert.deepEqual(env.clock.errors, []);
+});
+
+test("performance renderer waits for a real HUD while configured console collection stays enabled", () => {
+    const env = setup({ ENABLE_PERF_DEBUG: 1 }); env.feature.onEnable();
+    const previous = env.overlay(), stats = env.Q.state.perfStats;
+    env.doc.root = env.add(null, "LoadingRoot"); env.clock.advance(250);
+    assert.equal(previous.IsValid(), false); assert.equal(env.overlay(), null);
+    assert.equal(env.Q.state.perfEnabled, true); assert.equal(env.Q.state.perfStats, stats);
+    env.doc.root = env.add(null, "Hud", "CitadelHud"); env.clock.advance(250); assert.ok(env.overlay());
+    env.feature.onDisable(); env.clock.advance(20); assert.equal(env.overlay(), null); assert.deepEqual(env.clock.errors, []);
+});
+
 test("performance renderer retries partial construction/style failures and avoids repeated stable writes", () => {
     const env = setup(); const create = env.$.CreatePanel; let reject = true, writes = 0;
     env.$.CreatePanel = (type, parent, id, props) => {
@@ -49,7 +76,7 @@ test("performance renderer retries partial construction/style failures and avoid
         } });
         return panel;
     };
-    env.feature.onEnable(); assert.equal(env.body(), null); assert.ok(env.overlay());
+    env.feature.onEnable(); assert.equal(env.body(), null); assert.ok(env.overlay()); assert.equal(env.overlay().visible, false);
     reject = false; env.clock.advance(250); assert.ok(env.body()); assert.equal(env.overlay().style.opacity, "0.75");
     const stable = writes; env.clock.advance(2000); assert.equal(writes, stable);
     reject = true; env.cfg.PERF_OVERLAY_OPACITY = 0.85; env.feature.onSettingsChanged(); assert.equal(env.overlay().style.opacity, "0.75");
@@ -70,7 +97,7 @@ test("performance partial enable cleanup and registry reboot retire all panels a
     const env = setup(); const factory = env.Q.features.performanceOverlay.create;
     env.Q.features.performanceOverlay.create = () => {
         const renderer = factory();
-        return { clear: renderer.clear, render(...args) { renderer.render(...args); throw Error("modeled enable failure"); } };
+        return { clear: renderer.clear, dispose: renderer.dispose, render(...args) { renderer.render(...args); throw Error("modeled enable failure"); } };
     };
     const registry = env.Q.core.FeatureRegistry;
     registry.enable("ql_perf"); env.clock.advance(20);

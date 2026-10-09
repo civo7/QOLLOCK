@@ -74,7 +74,7 @@
                     enabled = false;
                     if (loop) loop.stop(); loop = null;
                     state.perfEnabled = state.perfDetailed = false;
-                    overlay.clear(); history.reset(); model = root = lastFlush = null;
+                    overlay.dispose(); history.reset(); model = root = lastFlush = null;
                 }
             };
         },

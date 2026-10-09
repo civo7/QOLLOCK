@@ -13,8 +13,12 @@ and cancels its poll; it does not clear Scheduler samples or another benchmark.
 Turning off only the overlay removes that tree while configured console collection
 continues. Settings are derived reactively, including opacity.
 
-The renderer follows the current preferred HUD and direct owned children. A living
-replaced root/label releases its retired panels; late/partially created children and
+The renderer follows the current preferred HUD and waits for a real HUD instead
+of creating display panels in a loading root. Configured console collection stays
+enabled while that display is unavailable. The shared created-tree helper owns
+all children, including moved labels, and retires a previous instance awaiting
+asynchronous deletion instead of adopting it. Partial construction stays hidden.
+A living replaced root/label releases its retired panels; late/partially created children and
 rejected styles retry. Stable text and styles avoid redundant native writes. Each
 new instance has its own display history; a root change resets that history, while
 the live Scheduler sample object remains owned by the Scheduler.
@@ -26,6 +30,7 @@ These are synchronous callback measurements; deferred layout/rendering and total
 engine frame time are outside their scope. See [profiling](../PROFILING.md).
 
 `performance_owner_lifecycle.test.js` covers reactive settings, retained samples,
-living root/label replacement, partial construction/writes, overlay-only disable,
+living root/label replacement, moved children, rapid re-enable, loading-root
+suppression, partial construction/writes, overlay-only disable,
 registry failure/reboot cleanup and rolling report behavior. Native display,
 rendering cost and actual frame performance require a maintainer client build.

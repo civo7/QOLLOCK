@@ -100,6 +100,11 @@ behavior until its owning implementation has been audited.
   generations; Crosshair Stats waits for native gameplay instead of anchoring
   to a loading root. Same-HUD topbar replacement retains the Rift warning
   deadline, and stat filters/native value selection remain unchanged.
+- Urn Difference and the performance renderer use the same complete-tree helper;
+  the duplicate local creation/retirement implementations are removed. Partial
+  construction stays hidden, rapid re-enable waits for prior asynchronous
+  deletion, and loading roots do not become display parents. Native networth
+  parsing and shared Scheduler collection remain independent of panel lifetime.
 
 Frozen main-config fixtures preserve all healthbar variants and both minimap
 scale methods. Published versions, compact layouts and persistent defaults stay

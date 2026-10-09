@@ -14,41 +14,27 @@
             const topResolver = QOL.panelCache.createIdResolver("TopBar", {
                 ownerPath: [{ id: "Hud", optional: true }, { className: "HudCore" }]
             });
-            const owned = new Set(), retired = new Set();
+            const tree = P.createOwnedTree();
             let running = false, enabled = false, loop = null, root = null;
             let parent = null, overlay = null, label = null, icon = null;
 
-            function remove(panel) {
-                if (P.isAlive(panel)) {
-                    if (panel.visible !== false) P.setVisible(panel, false);
-                    P.delete(panel); retired.add(panel);
-                }
-                owned.delete(panel);
-            }
             function clearOverlay() {
-                for (const panel of [...owned].reverse()) remove(panel);
+                tree.clear();
                 parent = overlay = label = icon = null;
             }
             function release() { clearOverlay(); topResolver.reset(); root = null; }
-            function child(owner, id, current, type, className) {
-                if (!P.isAlive(owner)) return null;
-                const next = P.findChild(owner, id);
-                if (current && current !== next) remove(current);
-                if (P.isAlive(next) && retired.has(next)) return null;
-                const panel = next || P.create(type, owner, id, { "class": className, hittest: "false", hittestchildren: "false" });
-                if (P.isAlive(panel)) owned.add(panel);
-                return panel;
+            function hideOverlay() {
+                if (P.isAlive(overlay) && overlay.visible !== false) P.setVisible(overlay, false);
             }
             function ensure(nextParent) {
-                for (const panel of retired) {
-                    if (!P.isAlive(panel)) retired.delete(panel);
-                    else P.delete(panel);
-                }
+                tree.sweep();
                 if (parent !== nextParent || (P.isAlive(overlay) && overlay.GetParent() !== nextParent)) clearOverlay();
                 parent = nextParent;
-                overlay = child(parent, "UrnTracker", overlay, "Panel", "UrnTracker");
-                label = child(overlay, "UrnTrackerLabel", label, "Label", "UrnTrackerLabel");
-                icon = child(overlay, "UrnTrackerSoulIcon", icon, "Panel", "UrnTrackerSoulIcon");
+                const previous = overlay;
+                overlay = tree.child(parent, "Panel", "UrnTracker", { "class": "UrnTracker" });
+                if (previous !== overlay) hideOverlay();
+                label = tree.child(overlay, "Label", "UrnTrackerLabel", { "class": "UrnTrackerLabel" });
+                icon = tree.child(overlay, "Panel", "UrnTrackerSoulIcon", { "class": "UrnTrackerSoulIcon" });
                 return P.isAlive(overlay) && P.isAlive(label) && P.isAlive(icon);
             }
             function readSource(top) {
@@ -73,7 +59,8 @@
                 if (!running) return;
                 const nextRoot = P.findHud($.GetContextPanel());
                 if (root !== nextRoot) { release(); root = nextRoot; }
-                if (!enabled || !P.isAlive(root) || QOL.core.hud.isInHideout(root)) { clearOverlay(); return; }
+                if (!enabled || !P.isAlive(root) || (root.id !== "Hud" && root.paneltype !== "CitadelHud") ||
+                    QOL.core.hud.isInHideout(root)) { clearOverlay(); return; }
                 const top = topResolver.resolve(root);
                 if (!P.isAlive(top)) { clearOverlay(); return; }
                 const nextParent = U.FindFirstPanelByClass(top, "TeamNetworth") || top;
@@ -81,6 +68,7 @@
                 const total = values => values.reduce((sum, panel) => sum + model.parse(panel.text), 0);
                 const result = model.derive(total(source.friendly), total(source.enemy), QOL.core.time.readGameTime(top));
                 if (ensure(nextParent)) render(result);
+                else hideOverlay();
             }
             function refresh() {
                 enabled = U.IsCfgEnabled(ctx.config.view(), "ENABLE_URN_DIFF");
@@ -95,7 +83,7 @@
                 onDisable() {
                     running = enabled = false;
                     if (loop) loop.stop(); loop = null;
-                    release(); retired.clear();
+                    release(); tree.dispose();
                 }
             };
         }
