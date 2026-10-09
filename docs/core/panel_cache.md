@@ -5,8 +5,16 @@ Source: `panorama/scripts/ql_panelcache.js`; export `QOL.panelCache`.
 `getPanel` validates handles; `getList` validates a nonempty array of handles.
 Data entries have no panel validation. Keys share a context-wide namespace.
 
+This is the sole panel-cache storage. `ql_state.js` publishes only shared runtime
+snapshots, without a second panel dictionary or exposed cache internals. The
+retained root `QOL` access names delegate to this cache; `setCachedPanel(key, null)`
+clears that key across categories. Typed callers select their category explicitly.
+Core HUD's bounded-miss resolvers retain private discovery records and publish
+resolved handles here; their miss deadlines reset when the root or ID changes.
+
 `resolve(parent, cacheKey, traverseId)` associates the resolved handle with both
 parent and ID, validates ancestry on reuse, and re-resolves moved/replaced panels.
+It also checks the selected panel against its current direct parent/ID.
 Invalid parents and failed lookups clear that entry. Misses are not backoff-cached.
 `setPanel` invalidates the resolver association. `clear` resets entries and
 associations. Features must clear only their own keys and still invalidate any

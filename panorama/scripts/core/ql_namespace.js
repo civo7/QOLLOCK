@@ -70,11 +70,9 @@
                 } else if (k === "utils") {
                     out.utils = (typeof QOL_UTILS !== "undefined" ? QOL_UTILS : {});
                 } else if (k === "getCachedPanel") {
-                    out.getCachedPanel = Q.getCachedPanel || ((key) => (typeof State !== "undefined" && State.cachedPanels ? State.cachedPanels[key] : null));
+                    out.getCachedPanel = key => Q.panelCache?.getPanel(key) || null;
                 } else if (k === "setCachedPanel") {
-                    out.setCachedPanel = Q.setCachedPanel || ((key, val) => {
-                        if (typeof State !== "undefined" && State.cachedPanels) { State.cachedPanels[key] = val; }
-                    });
+                    out.setCachedPanel = (key, val) => Q.panelCache?.setPanel(key, val);
                 } else {
                     out[k] = Q[k];
                 }

@@ -126,7 +126,7 @@ test("audio history stays private and a retired callback cannot clear a new inst
     for (const key of ["lastTime", "lastIntervalAlert", "lastMinimapAlert", "triggeredOneTimers", "dl4dCaptionVisible", "dl4dTriggeredTimes"]) {
         assert.equal(Object.hasOwn(runtime.Q.state, key), false);
     }
-    assert.equal(runtime.Q.state.cachedPanels.dl4dCaptionPanel, undefined);
+    assert.equal(runtime.Q.panelCache.getPanel("dl4dCaptionPanel"), null);
     next.onDisable(); runtime.hud.clock.advance(0);
 });
 

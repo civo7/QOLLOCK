@@ -121,7 +121,7 @@ test("keyboard cleans partial construction before retry and failed registry enab
 test("keyboard waits for gameplay and ignores obsolete shared caches and helper aliases", () => {
     const env = setup(); env.gameplay.SetParent(env.add(null, "RetiredGameplay"));
     const foreign = env.add(env.root, "ForeignOverlay"); foreign.style.x = "20px";
-    env.Q.state.cachedPanels.keyboardOverlayRoot = foreign; env.Q.state.cachedPanels.keyboardOverlayBox = foreign;
+    env.Q.panelCache.setPanel("keyboardOverlayRoot", foreign); env.Q.panelCache.setPanel("keyboardOverlayBox", foreign);
     env.feature.onEnable(); assert.equal(env.root.FindChild("QOLKeyboardOverlayRoot"), null);
     env.gameplay.SetParent(env.core); env.clock.advance(600); assert.ok(env.overlay());
     for (const key of ["allBindingsBoxes", "keyboardBoxCaches", "keyboardOverlayWashSig"]) assert.equal(Object.hasOwn(env.Q.state, key), false);

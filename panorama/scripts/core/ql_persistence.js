@@ -24,25 +24,6 @@
 
     const isAlive = Q.core.panel.isAlive;
 
-    const getCached = (key) => {
-        if (typeof Q.getCachedPanel === "function") {
-            return Q.getCachedPanel(key);
-        }
-        const state = (Q.state || (typeof State !== "undefined" ? State : null));
-        return state?.cachedPanels?.[key] || null;
-    };
-
-    const setCached = (key, panel) => {
-        if (typeof Q.setCachedPanel === "function") {
-            Q.setCachedPanel(key, panel);
-        } else {
-            const state = (Q.state || (typeof State !== "undefined" ? State : null));
-            if (state?.cachedPanels) {
-                state.cachedPanels[key] = panel;
-            }
-        }
-    };
-
     const getStorageKey = () => {
         if (typeof STORAGE_KEY !== "undefined") return STORAGE_KEY;
         if (typeof QOL_STORAGE_KEY !== "undefined") return QOL_STORAGE_KEY;
@@ -74,55 +55,16 @@
     const parseRevisionNumber = QOL_UTILS.ParseRevisionNumber;
     const EDIT_REV_ATTR = "QOL_CONFIG_EDIT_REV";
 
-    /**
-     * Finds and caches the absolute UI root panel by walking the parent chain.
-     */
-    const getUIRoot = () => {
-        const cached = getCached("uiRoot");
-        if (isAlive(cached)) return cached;
-
-        let p = null;
-        if (Q.core?.panel?.findRoot) {
-            p = Q.core.panel.findRoot();
-        } else {
-            p = typeof $.GetContextPanel === "function" ? $.GetContextPanel() : null;
-            let guard = 0;
-            while (p && p.GetParent && isAlive(p.GetParent()) && guard < 64) {
-                p = p.GetParent();
-                guard++;
-            }
-            if (guard >= 64) {
-                logWarn("ui", "GetUIRoot: parent-chain walk hit guard limit — panel hierarchy may be corrupted");
-            }
-        }
-        setCached("uiRoot", p);
-        return p || null;
-    };
-
-    /**
-     * Resolves the primary #Hud panel relative to the given root (or context).
-     */
-    const resolveHudPanel = (root) => {
-        const cached = getCached("cachedHudPanel");
-        if (isAlive(cached)) return cached;
-
-        let hud = null;
-        if (Q.core?.panel?.findHud) {
-            hud = Q.core.panel.findHud(root);
-        } else if (Q.core.hud?.findHud) {
-            hud = Q.core.hud.findHud();
-        } else if (root?.FindChildTraverse) {
-            try { hud = root.FindChildTraverse("Hud"); } catch (_) { hud = null; }
-        }
-        if (isAlive(hud)) {
-            setCached("cachedHudPanel", hud);
-        }
-        return hud || null;
-    };
+    // Resolve from current context on each access. A live previous root/Hud
+    // may be detached, so handle validity cannot key persistence publication.
+    const getUIRoot = () => Q.core.panel.findRoot();
+    const resolveHudPanel = root => Q.core.panel.findHud(root || $.GetContextPanel());
 
     let _readStorageDiagLogged = false;
     let _writeStorageDiagLogged = false;
     let _cfgCacheRevision = -1;
+    let _cfgCacheRoot = null;
+    let _cfgCacheHud = null;
     let _cfgCacheRaw = "";
     let _cfgCacheFullReadMs = 0;
     const CONFIG_FULL_REREAD_INTERVAL_MS = 2000;
@@ -208,11 +150,13 @@
 
         const nowMs = Date.now ? Date.now() : (new Date()).getTime();
         const backstopDue = (nowMs - _cfgCacheFullReadMs) >= CONFIG_FULL_REREAD_INTERVAL_MS;
-        if (revision === _cfgCacheRevision && _cfgCacheRaw !== "" && !backstopDue) {
+        if (root === _cfgCacheRoot && hud === _cfgCacheHud && revision === _cfgCacheRevision && _cfgCacheRaw !== "" && !backstopDue) {
             return _cfgCacheRaw;
         }
 
         const result = readStorageConfigRawUncached(root, hud, rootRev, hudRev);
+        _cfgCacheRoot = root;
+        _cfgCacheHud = hud;
         _cfgCacheRevision = revision;
         _cfgCacheRaw = result;
         _cfgCacheFullReadMs = nowMs;
@@ -249,9 +193,12 @@
             try { hud.SetAttributeString(userEditRevAttr, String(nextRevision)); } catch (e) { logError("persist", `hud.SetAttributeString(USER_EDIT_REV) failed: ${e?.message || e}`); }
         }
 
-        _cfgCacheRevision = nextRevision;
-        _cfgCacheRaw = nextRaw;
-        _cfgCacheFullReadMs = Date.now ? Date.now() : (new Date()).getTime();
+        // Native writes can fail independently. Cache actual read-back, never
+        // an attempted payload that neither native panel accepted.
+        _cfgCacheRoot = _cfgCacheHud = null;
+        _cfgCacheRevision = -1;
+        _cfgCacheRaw = "";
+        _cfgCacheFullReadMs = 0;
 
         if (!_writeStorageDiagLogged) {
             _writeStorageDiagLogged = true;

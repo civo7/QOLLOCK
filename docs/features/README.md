@@ -67,7 +67,7 @@ tables, CSS values, test history or general verification caveats into it.
 ## Settings-only utility
 
 [Update checker](../../panorama/scripts/ql_update_checker.js) runs from `ql_update_checker.js` in the
-escape-menu context. It is not a 49th HUD manifest. The `ql_ui_controls` manifest
+escape-menu context. It is not a HUD manifest. The `ql_ui_controls` manifest
 contains its setting metadata but does not own the network probe.
 
 ## Focused contracts

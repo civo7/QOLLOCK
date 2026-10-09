@@ -55,6 +55,10 @@ behavior until its owning implementation has been audited.
   its created readout. Pure parsing/display rules retain native formats and
   late-match thresholds; core no longer runs a second content writer or publishes
   overlay caches. The existing persisted toggle and player-total fallback remain.
+- Shared panel caching has one typed storage owner; retained accessor names
+  delegate there. Core lookup misses are private and generation scoped, while
+  panel configuration caches bind both root/HUD identity and actual read-back.
+  Living replacements and rejected publication no longer reuse stale payloads.
 
 Frozen main-config fixtures preserve all healthbar variants and both minimap
 scale methods. Published versions, compact layouts and persistent defaults stay

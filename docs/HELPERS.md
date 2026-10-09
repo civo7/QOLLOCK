@@ -70,6 +70,9 @@ root flags. Native style ownership remains with its feature manifest.
 
 - Cache keys are shared within a script context. Use a feature-specific key or
   explicitly share ownership; never silently replace another feature's entry.
+- Typed and retained compatibility accessors share one storage owner. There is
+  no mutable `State.cachedPanels` mirror; use a typed category rather than writing
+  an internal dictionary. Core HUD discovery misses are private, root/ID scoped.
 - Validity says the handle is live, not that it belongs to the current match,
   player, root, or selection. Clear/rebind your entries on relevant transitions.
 - `getPanel` validates handles without checking ancestry. `resolve` additionally

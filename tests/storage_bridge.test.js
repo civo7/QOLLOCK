@@ -103,16 +103,7 @@ function createTestEnvironment() {
 
     const sandbox = {
         $: mockDollar,
-        QOL: {
-            core: {
-                panel: {
-                    isAlive: (p) => !!(p && p.IsValid && p.IsValid()),
-                    create: (type, parent, id) => mockDollar.CreatePanel(type, parent, id),
-                    findRoot: () => rootPanel,
-                },
-
-            },
-        },
+        QOL: {},
         globalThis: {},
         MOD_CONFIG: {
             LANGUAGE: "english",
@@ -127,7 +118,7 @@ function createTestEnvironment() {
     };
 
     sandbox.globalThis = sandbox;
-    for (const name of ["ql_utils.js", "ql_shared_presets.js", "ql_config.js", "core/ql_persistence.js"]) {
+    for (const name of ["core/ql_namespace.js", "ql_utils.js", "core/ql_panel_helpers.js", "ql_shared_presets.js", "ql_config.js", "core/ql_persistence.js"]) {
         const filename = path.resolve(__dirname, "../panorama/scripts", name);
         vm.runInNewContext(fs.readFileSync(filename, "utf8"), sandbox, { filename });
     }

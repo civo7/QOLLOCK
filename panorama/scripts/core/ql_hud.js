@@ -330,9 +330,7 @@
         const inHideout = isInHideout(root);
         const hiddenUiClasses = (walkthrough || inHideout) ? ["HudTakeoverEnabled"] : ["ShowEscapeMenu", "HudTakeoverEnabled"];
 
-        const hud = (typeof QOL !== "undefined" && QOL.getCachedPanel)
-            ? QOL.getCachedPanel("hudPanel")
-            : (root.FindChildTraverse ? root.FindChildTraverse("Hud") : null);
+        const hud = findHud(root);
 
         if (hasAnyClass(root, hiddenUiClasses)) return false;
         if (hasAnyClass(hud, hiddenUiClasses)) return false;
@@ -350,37 +348,20 @@
             .some(key => Number(cfg?.[key]) === 1);
     };
 
-    const getState = () => (typeof QOL !== "undefined" && QOL.state) ? QOL.state : (typeof State !== "undefined" ? State : { cachedPanels: {} });
-    const getCachedPanel = (key) => (typeof QOL !== "undefined" && QOL.getCachedPanel) ? QOL.getCachedPanel(key) : getState()?.cachedPanels?.[key];
-    const setCachedPanel = (key, p) => {
-        if (typeof QOL !== "undefined" && QOL.setCachedPanel) {
-            QOL.setCachedPanel(key, p);
-        } else {
-            const s = getState();
-            if (!s.cachedPanels) s.cachedPanels = {};
-            s.cachedPanels[key] = p;
-        }
-    };
-
+    const getState = () => Q.state || {};
+    const getCachedPanel = key => Q.panelCache?.getPanel(key) || null;
+    const setCachedPanel = (key, panel) => Q.panelCache?.setPanel(key, panel);
+    const nativeResolvers = new Map();
     const resolveCachedPanel = (root, cacheKey, childId) => {
-        let p = getCachedPanel(cacheKey);
-        if (!isAlive(p)) {
-            const s = getState();
-            if (!s._panelMissBackoff) s._panelMissBackoff = {};
-            const now = Date.now ? Date.now() : (new Date()).getTime();
-            if (s._panelMissBackoff[cacheKey] && now < s._panelMissBackoff[cacheKey]) {
-                return null;
-            }
-            const r = root || findHud();
-            p = r?.FindChildTraverse ? r.FindChildTraverse(childId) : null;
-            if (isAlive(p)) {
-                delete s._panelMissBackoff[cacheKey];
-                setCachedPanel(cacheKey, p);
-            } else {
-                s._panelMissBackoff[cacheKey] = now + 2000;
-            }
+        if (!Q.panelCache) return null;
+        let owner = nativeResolvers.get(cacheKey);
+        if (!owner || owner.id !== childId) {
+            owner = { id: childId, resolver: Q.panelCache.createIdResolver(childId, { retryMs: 2000 }) };
+            nativeResolvers.set(cacheKey, owner);
         }
-        return isAlive(p) ? p : null;
+        const panel = owner.resolver.resolve(root || findHud());
+        if (getCachedPanel(cacheKey) !== panel) setCachedPanel(cacheKey, panel);
+        return panel;
     };
 
     let abilitiesResolver = null;

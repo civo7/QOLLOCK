@@ -116,6 +116,13 @@ readout replacements, partial construction/text writes and registry cleanup. Pur
 parsing/display cases retain native number formats and match-time thresholds.
 Native networth binding timing and readout presentation remain client checks.
 
+`shared_panel_cache.test.js` covers shared typed/compatibility storage, public
+resolution after living moves, root/ID-scoped discovery misses, equal-revision
+configuration across living generations, current UI-root selection and rejected
+publication read-back. These checks model panel attributes, not disk durability.
+Storage-bridge fixtures load the production namespace/panel helpers used by the
+settings context, rather than a partial replacement for their discovery contract.
+
 `item_mirror_ownership.test.js` exercises current HUD/inventory generations,
 living source/child replacement, partial writes/construction and pending/active
 feedback cancellation. The existing `item_mirror.test.js` still checks discovery,

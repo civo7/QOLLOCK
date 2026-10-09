@@ -6,7 +6,13 @@
 
 `writeStorageConfigRawToUi(root, raw)` publishes `Deadlock_Mod_Settings_v1` to the root and resolved HUD, with a `QOL_USER_EDIT_REV` one greater than their current maximum. The return value describes the attempted publication; native attribute errors are logged. It is not confirmation of a CEF save.
 
-`readStorageConfigRawFromUi(root)` selects available root/HUD data by revision and caches the result, with a periodic full-read backstop. `getUIRoot()` and `resolveHudPanel(root)` reuse live cached panels and resolve replacements when cached panels are no longer valid.
+`readStorageConfigRawFromUi(root)` selects available root/HUD data by revision and
+caches the result for that root and HUD identity, with a periodic full-read
+backstop. Equal revisions on a new living generation do not reuse the old payload.
+`getUIRoot()` and `resolveHudPanel(root)` resolve the current context/ancestry rather
+than accepting an old handle merely because it remains valid. Publication
+invalidates the read cache: rejected native writes must not turn an attempted
+payload into apparently accepted data.
 
 ## Edits before a debounced write
 
