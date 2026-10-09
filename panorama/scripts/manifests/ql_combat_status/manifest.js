@@ -1,5 +1,5 @@
 // OWNS: Combat status overlay layout, private phase history and owned labels.
-// DOES NOT OWN: Native combat detection or the shared healthbar combat indicator.
+// DOES NOT OWN: Native combat detection or the independent healthbar combat indicator.
 // Detection is delegated to core.hud; disabling this overlay leaves indicator history intact.
 (() => {
     "use strict";
@@ -10,7 +10,6 @@
         enabledByDefault: false,
         settings: [
             { key: "ENABLE_COMBAT_STATUS", type: "toggle" },
-            { key: "ENABLE_COMBAT_INDICATOR", type: "toggle" },
             { key: "COMBAT_STATUS_SCALE", type: "slider" },
             { key: "COMBAT_STATUS_X_OFFSET", type: "slider" },
             { key: "COMBAT_STATUS_Y_OFFSET", type: "slider" }

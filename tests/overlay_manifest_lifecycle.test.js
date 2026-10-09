@@ -117,12 +117,9 @@ test("damage report offsets have one owner across visible, hidden, replacement a
 test("combat overlay preserves indicator history, recovers owned labels and transitions phases", () => {
     const env = fixture();
     const { Q, hud, gameplay, add, config, find } = env;
-    let signal = true;
-    Q.core.hud.isCombatSignalActive = () => signal;
     const alert = add(gameplay, "InCombatAlert");
-    Q.setCachedPanel("combatStatusAlertPanel", alert);
-    Q.state.combatStatus.lastCombatMs = 500;
-    config({ ENABLE_COMBAT_STATUS: 1, COMBAT_STATUS_SCALE: 150, COMBAT_STATUS_X_OFFSET: 80 });
+    alert.AddClass("Visible");
+    config({ ENABLE_COMBAT_STATUS: 1, ENABLE_COMBAT_INDICATOR: 1, COMBAT_STATUS_SCALE: 150, COMBAT_STATUS_X_OFFSET: 80 });
     const overlay = find("QOLCombatStatusOverlay");
     assert.equal(overlay.style.visibility, "visible");
     assert.equal(overlay.style.uiScale, "150%");
@@ -133,15 +130,19 @@ test("combat overlay preserves indicator history, recovers owned labels and tran
     oldLabel.DeleteAsync(0); hud.clock.advance(250);
     assert.notEqual(find("QOLCombatStatusState"), oldLabel);
     assert.equal(find("QOLCombatStatusState").text, "IN COMBAT");
-    signal = false; hud.clock.advance(250);
+    alert.RemoveClass("Visible"); hud.clock.advance(250);
     assert.equal(overlay.BHasClass("phase_recover"), true);
     assert.equal(find("QOLCombatStatusState").text, "RECOVERING");
     hud.clock.advance(3200);
     assert.equal(overlay.BHasClass("phase_idle"), true);
+    alert.AddClass("Visible"); hud.clock.advance(250);
     Q.core.ConfigStore.set("ql_combat_status", "ENABLE_COMBAT_STATUS", false); hud.clock.advance(1);
     assert.equal(find("QOLCombatStatusOverlay"), null);
-    assert.equal(Q.state.combatStatus.lastCombatMs, 500);
-    assert.equal(Q.getCachedPanel("combatStatusAlertPanel"), alert);
+    assert.equal(hud.root.BHasClass("combat_indicator_active"), true);
+    alert.RemoveClass("Visible"); hud.clock.advance(500);
+    assert.equal(hud.root.BHasClass("combat_indicator_active"), true, "disabling the readout preserves indicator recovery");
+    hud.clock.advance(3200); assert.equal(hud.root.BHasClass("combat_indicator_active"), false);
+    assert.equal(Object.hasOwn(Q.state, "combatStatus"), false);
     assert.equal(alert.IsValid(), true);
     env.clean();
 });

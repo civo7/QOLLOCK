@@ -63,6 +63,11 @@ behavior until its owning implementation has been audited.
   replaces construction fallbacks and notifies ordered consumers when the source
   changes even at the same second. Requested roots cannot inherit another root's
   observed time; the final unsubscribe releases observation and source records.
+- Combat indicator classes/recovery have an independent manifest owner, so
+  disabling the text readout preserves them. Core combat/reload evidence and
+  mode observations follow current native sources; private core class records
+  retire old living owners and retry partial ability writes. The unconsumed
+  legacy cooldown attribute bridge is removed while its CSS settings remain.
 
 Frozen main-config fixtures preserve all healthbar variants and both minimap
 scale methods. Published versions, compact layouts and persistent defaults stay

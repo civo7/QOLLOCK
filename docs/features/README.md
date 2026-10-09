@@ -41,7 +41,8 @@ tables, CSS values, test history or general verification caveats into it.
 | [ql_sigflash](../../panorama/scripts/manifests/ql_sigflash/manifest.js) | Flash on pressing an unavailable signature ability; shares `ENABLE_PASSIVE_COOLDOWN` and has no public Sigflash toggle. |
 | [ql_zipboost](../../panorama/scripts/manifests/ql_zipboost/manifest.js) | Zip boost state/countdown; preserve distinction between hint visibility and active boost. |
 | [ql_spm](../../panorama/scripts/manifests/ql_spm/manifest.js) | Intentionally inactive souls-per-minute compatibility manifest. |
-| [ql_combat_status](../../panorama/scripts/manifests/ql_combat_status/manifest.js) | Combat status/timer and combat indicator settings. |
+| [ql_combat_status](../../panorama/scripts/manifests/ql_combat_status/manifest.js) | Text combat status/timer, independent of the healthbar indicator. |
+| [ql_combat_indicator](../../panorama/scripts/manifests/ql_combat_indicator/manifest.js) | Native healthbar/root indicator classes with private recovery history and source retirement. |
 | [ql_heroshop](../../panorama/scripts/manifests/ql_heroshop/manifest.js) | Shop layout, simplification and quickbuy behavior; quickbuy has a special-context companion. |
 | [ql_keyboard](ql_keyboard.md) | Private keyboard/binding overlay generations and reactive geometry/color; native glyphs remain engine-owned. |
 | [ql_damage_numbers](../../panorama/scripts/manifests/ql_damage_numbers/manifest.js) | Native combat indicator presentation; settings use DAMAGE_NUMBER_OPACITY and HUD_INDICATOR_SIZE. |

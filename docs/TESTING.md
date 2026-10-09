@@ -128,6 +128,13 @@ clock searches. It also covers living verified clock/root replacement, upgrading
 construction fallbacks, equal-second generation notifications, requested-root
 reads and subscription mutation/cancellation.
 
+`core_native_generations.test.js` checks current shop combat evidence, independent
+indicator recovery and retired native targets, living root class release, partial
+ability-class retries, reload exception source replacement and mode observations.
+The status/indicator regression observes visible phases and class state rather
+than modifying private history through shared State. Native visuals/timing remain
+maintainer client checks.
+
 `item_mirror_ownership.test.js` exercises current HUD/inventory generations,
 living source/child replacement, partial writes/construction and pending/active
 feedback cancellation. The existing `item_mirror.test.js` still checks discovery,

@@ -5,16 +5,8 @@ var State;
     "use strict";
     State = {
         lastConfig: null,
-        combatStatus: {
-            lastCombatMs: 0,
-            signalActive: false,
-            nextAlertProbeMs: 0
-        },
         rejuvState: null,
         accountPresetTestActive: false,
-        rootClassCache: { panel: null, values: {} },
-        coreRootStaticSig: "",
-        abilitiesClassCache: { panel: null, values: {} },
         perfEnabled: false,
         perfDetailed: false,
         perfStats: {}

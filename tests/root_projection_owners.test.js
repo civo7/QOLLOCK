@@ -59,7 +59,10 @@ for (const scenario of scenarios) {
 
 test("whole-HUD refresh observes hideout gates and the live combat recovery clock", () => {
     const env = setup();
-    env.Q.state.combatStatus.lastCombatMs = env.clock.now();
+    env.root.AddClass("InCombat");
+    env.Q.core.FeatureRegistry.enable("ql_combat_indicator");
+    env.Q.core.hud.refreshRootClasses(env.root);
+    env.root.RemoveClass("InCombat");
     env.clock.advance(100);
     env.Q.core.hud.refreshRootClasses(env.root);
     assert.equal(env.root.BHasClass("combat_indicator_active"), true, "recent combat uses a real clock in settings refresh");

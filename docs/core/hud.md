@@ -21,6 +21,19 @@ native item layout belong solely to the passive-cooldown manifest; damage-report
 offsets belong solely to the damage-report manifest. These native owners release
 their code properties independently of shared root-class projection.
 
+Core class/signature records remain private. Living root/abilities replacements
+release the previous owner's QOLLOCK classes and receive the accepted config;
+retirement and partial ability-class writes retry. Mode observations bind the
+current supplied HUD instead of inheriting an older live context's cache.
+
+Core reports native combat evidence through a private resolver for the current
+shop alert and the retained root class signals. `ql_combat_indicator` owns
+healthbar/root indicator classes and recovery history independently of the
+`ql_combat_status` text readout. Disabling that readout preserves the indicator;
+each owner releases its own classes/panels/work. Reload-circle exception evidence
+also follows the current native progress source. The former unconsumed legacy
+cooldown attribute writer is removed; working root CSS settings remain.
+
 Urn/networth difference content belongs to `ql_urn_tracker`; core only projects
 its CSS gate. The manifest owns source reconciliation and its created readout;
 there are no core mutation exports or shared `State` caches for that overlay.
