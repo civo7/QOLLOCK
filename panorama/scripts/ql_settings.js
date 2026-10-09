@@ -18,11 +18,7 @@ var WarnLog = QOL_UTILS.WarnLog;
 // Phase 2: Inject arcade dependencies (ql_arcade_games.js loads before ql_settings.js)
 
 function FindRootPanel() {
-    var root = $.GetContextPanel();
-    while (root && root.GetParent && root.GetParent()) {
-        root = root.GetParent();
-    }
-    return root;
+    return QOL.core.panel.findRoot();
 }
 
 if (QOL.arcade && QOL.arcade.init) QOL.arcade.init({
@@ -239,33 +235,56 @@ function PublishPaletteColorBridges() {
     PublishPaletteColorBridge("MINIMAP_ICON_COLOR", MOD_CONFIG.MINIMAP_ICON_COLOR);
 }
 
-// Debounced save: prevents rapid-fire saves during slider drags etc.
-// Uses a token-counter pattern so only the last scheduled flush actually fires.
-var gSaveDebounceToken = 0;
-var SAVE_DEBOUNCE_SEC = 0.3;
+// Settings publication owns one pending debounce, independently of durable CEF
+// saves. Generation and source identity make uncancelled native callbacks inert.
+const settingsSaveQueue = (() => {
+    const delaySec = 0.3;
+    let pending = null, generation = 0;
+    const cancel = () => {
+        generation++;
+        const previous = pending; pending = null;
+        if (previous && previous.handle !== null) {
+            try { $.CancelScheduled(previous.handle); } catch (_) {}
+        }
+    };
+    const isCurrent = record => {
+        try {
+            return QOL.core.panel.isAlive(record.context) && QOL.core.panel.isAlive(record.root) &&
+                $.GetContextPanel() === record.context && FindRootPanel() === record.root;
+        } catch (_) { return false; }
+    };
+    const mark = () => {
+        cancel();
+        const context = $.GetContextPanel(), root = FindRootPanel();
+        if (!QOL.core.panel.isAlive(context) || !QOL.core.panel.isAlive(root)) return;
+        QOL.core.persistence.markConfigEdited(root);
+        const record = { context, root, handle: null, token: generation };
+        pending = record;
+        record.handle = $.Schedule(delaySec, () => {
+            if (record.token !== generation || pending !== record) return;
+            pending = null;
+            if (isCurrent(record)) SaveAndSync();
+        });
+    };
+    const flush = () => {
+        if (!pending) return;
+        const record = pending; cancel();
+        if (isCurrent(record)) SaveAndSync();
+    };
+    return { mark, flush, cancel };
+})();
 
 function MarkConfigDirty() {
-    if (QOL.core && QOL.core.persistence) {
-        QOL.core.persistence.markConfigEdited(FindRootPanel());
-    }
-    var token = ++gSaveDebounceToken;
-    $.Schedule(SAVE_DEBOUNCE_SEC, function() {
-        if (gSaveDebounceToken === token) {
-            gSaveDebounceToken = 0;
-            SaveAndSync();
-        }
-    });
+    settingsSaveQueue.mark();
 }
 
 // Flushes any pending debounced save immediately (e.g. before import/reset).
 function FlushPendingSave() {
-    if (gSaveDebounceToken > 0) {
-        gSaveDebounceToken = 0;
-        SaveAndSync();
-    }
+    settingsSaveQueue.flush();
 }
 
 function SaveAndSync() {
+    settingsSaveQueue.cancel();
     var panel = $.GetContextPanel();
     var root = FindRootPanel();
     var hud = null;

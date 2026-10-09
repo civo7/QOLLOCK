@@ -180,6 +180,12 @@ visibility gates, signature scale baseline and independently configured active
 slots stay intact; AP tint follows its current leaves and their presentation roles.
 Other native style owners still require the same audit before using this contract.
 
+The settings save queue now owns one pending callback with monotonic generation
+and original context/root identity. Flush, repeated edits and direct saves retire
+old timers; delayed work cannot prematurely publish a later edit or an old
+context's settings onto a replacement root. Immediate dirty intent and the existing
+live publication/durable-save boundary remain separate.
+
 ## Remaining implementation and audit
 
 1. Audit already modernized owners for remaining shared mutable bookkeeping,
@@ -191,6 +197,22 @@ Other native style owners still require the same audit before using this contrac
 3. Run the complete offline gate before each logical commit and retain the
    frozen compatibility fixtures. After maintainer compilation/repacking,
    perform the native visual/input, gameplay-transition and restart checks.
+
+The final settings pass has these concrete remaining ownership checks:
+
+- `ql_settings_previews.js`: replace per-preview retained native handles and
+  token-only hide callbacks with complete created-tree and cancelable deadline
+  ownership; preserve each preview's geometry, localization and feature gates.
+- `ql_settings_tooltips.js`: reconcile partially created/replaced/moved children,
+  retire delayed hover/tracking work through context/host replacement and preserve
+  scroll suppression, coordinates and metadata localization.
+- `ql_settings.js`, `ql_settings_persistence.js` and `core/ql_persistence.js`:
+  finish the shared normalization/publication-boundary audit, including current
+  config access, paired native revisions, rejected writes and compatibility
+  delegates. Frozen configs remain the acceptance baseline.
+- Run the complete final offline gate and report the precise native checks still
+  requiring maintainer compilation/repacking. Arcade games are excluded from this
+  rewrite by the maintainer's current request.
 
 Each owner must react immediately to accepted settings, bind replacement and
 late native sources, retry partial writes, preserve unrelated native behavior,

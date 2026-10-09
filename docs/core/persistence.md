@@ -18,6 +18,14 @@ payload into apparently accepted data.
 
 `markConfigEdited(root)` increments the separate `QOL_CONFIG_EDIT_REV` generation on root and HUD. It records user intent immediately, without publishing a new configuration payload. `MarkConfigDirty()` calls it before scheduling the settings UI's debounced `SaveAndSync()`.
 
+The settings save queue owns one pending native callback. Repeated edits cancel
+the previous handle; Flush and direct `SaveAndSync()` retire it before immediate
+publication. Monotonic generations guard callbacks whose native cancellation
+fails, including zero-valued handles. A delayed or flushed callback may publish
+only for its original living settings context/root. Retired-context edits cannot
+be published onto a replacement root by an old timer. This queue coordinates
+live panel publication, not durable storage acknowledgments.
+
 `getConfigChangeStamp(root)` combines root/HUD published revisions and edit generations. It returns `null` for an invalid root. The storage bridge captures both panel identity and this stamp, then compares them before applying an asynchronous restore. This detects both already-published settings and a slider change that has not reached its debounced write yet.
 
 Settings `SaveAndSync()` may skip an unchanged payload only when the settings

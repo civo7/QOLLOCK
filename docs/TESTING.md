@@ -36,6 +36,12 @@ the maintainer's compilation and client checks remain required.
 
 ## Focused release regressions
 
+`settings_save_queue.test.js` loads the actual settings/HUD isolates and verifies
+Flush followed by a new edit, one pending callback during repeated changes,
+direct-save supersession, zero schedule handles, failed cancellation and living
+context replacement. Dirty stamps and serialized root publication remain exercised
+through the production save path; these are not durable CEF-storage checks.
+
 `native_style_owner.test.js` covers attempted-property/class ownership, native
 readback normalization and overwrite, rejected writes/neutral resets/clears,
 destroyed sources, cleanup completion after disposal and immediate re-enable
