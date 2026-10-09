@@ -24,9 +24,13 @@ independent instance-local warning/spawn-window model derived from the observed
 match clock and native minimap capture-point classes. It does not publish shared
 timer state. A native source or topbar replacement rebinds the readout while
 retaining an active warning deadline. A new match or hideout resets that model.
-Its dynamic QOL-created readout is removed on disable or parent replacement.
+Its dynamic QOL-created readout and all tracked children are removed on disable
+or parent replacement, including children moved outside their former container.
+Partial construction stays hidden until reconciliation succeeds.
 Hideout temporarily hides the current readout; re-enable creates a fresh owner
 instead of adopting a generation queued for asynchronous deletion.
+Living HUD replacement resets private clock/source bindings and the warning
+model even when the next HUD reports the same match time.
 
 The production lifecycle regressions in
 [information_manifest_lifecycle.test.js](../../tests/information_manifest_lifecycle.test.js)

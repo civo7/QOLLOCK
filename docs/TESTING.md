@@ -68,6 +68,11 @@ one warning owner; objective timers consume a scalar rejuvenator snapshot.
 These checks complement the frozen-main compatibility matrix and do not replace
 client validation of native animation, composition, input or timing.
 
+The information-owner tests also retire every moved Rift/Crosshair Stats child,
+exercise rapid re-enable before asynchronous deletion, and replace a still-live
+HUD without inheriting old source/model bindings. Same-HUD topbar replacement
+continues the warning deadline; native sources remain alive and unchanged.
+
 `recent_purchases_owner.test.js` exercises production filters, feed and hero
 popups against recycled rows, late purchaser evidence, living native replacement,
 shared geometry and partial writes. Native history remains engine-owned;

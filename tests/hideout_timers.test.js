@@ -86,10 +86,12 @@ test("urn retries a missing timer parent without requiring a clock text change",
     $.CreatePanel("Label", hud.root, "GameTime").text = "12:00";
     const find = hud.root.FindChildTraverse.bind(hud.root);
     let searches = 0;
-    hud.root.FindChildTraverse = id => { if (id === "RiftTimer") searches++; return find(id); };
+    hud.root.FindChildTraverse = id => { if (id === "TopBar") searches++; return find(id); };
     tick();
+    const firstSearches = searches;
+    assert.ok(firstSearches > 0);
     tick();
-    assert.equal(searches, 1);
+    assert.equal(searches, firstSearches, "missing native parent is not rescanned on the next callback");
     assert.equal(find("RiftTimer"), null);
     $.CreatePanel("Panel", hud.root, "TopBar");
     hud.clock.advance(2100);

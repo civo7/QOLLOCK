@@ -74,7 +74,8 @@
             const gameplayResolver = QOL.panelCache.createIdResolver("gameplay_hud", {
                 retryMs: 800, ownerPath: [{ id: "Hud", optional: true }, { className: "HudCore" }]
             });
-            let active = false, model = null, loop = null, overlay = null, overlayParent = null;
+            const tree = P.createOwnedTree();
+            let active = false, rootOwner = null, model = null, loop = null, overlay = null, overlayParent = null;
             const rows = new Map();
             let layoutSignature = null;
             let sourceScopes = {}, sourceParents = {}, discoveryNextMs = {};
@@ -284,27 +285,30 @@
 
             function removeOverlay() {
                 hideOverlay();
-                if (_isAlive(overlay)) P.delete(overlay);
+                tree.clear();
                 overlay = null; overlayParent = null; rows.clear(); layoutSignature = null;
             }
 
             function ensureOverlay(root) {
-                const parent = gameplayResolver.resolve(root) || root;
+                tree.sweep();
+                const parent = gameplayResolver.resolve(root);
+                if (!_isAlive(parent)) { removeOverlay(); return false; }
                 if (overlayParent !== parent || !_isDirectChild(overlay, parent)) {
                     removeOverlay();
                     overlayParent = parent;
-                    overlay = P.findChild(parent, "QOLCrosshairStatsOverlay") ||
-                        P.create("Panel", parent, "QOLCrosshairStatsOverlay", { hittest: "false", hittestchildren: "false" });
                 }
+                const previous = overlay;
+                overlay = tree.child(parent, "Panel", "QOLCrosshairStatsOverlay");
+                if (previous !== overlay) { rows.clear(); layoutSignature = null; }
                 if (!_isAlive(overlay)) return false;
                 let complete = true;
                 for (const def of STAT_DEFS) {
                     const id = "QOLCrosshairStatRow_" + def.key;
-                    const row = P.findChild(overlay, id) || P.create("Panel", overlay, id);
+                    const row = tree.child(overlay, "Panel", id);
                     if (!_isAlive(row)) { complete = false; continue; }
                     P.setClass(row, "QOLCrosshairStatRow", true);
-                    const icon = P.findChild(row, id + "_icon") || P.create("Panel", row, id + "_icon");
-                    const value = P.findChild(row, id + "_value") || P.create("Label", row, id + "_value");
+                    const icon = tree.child(row, "Panel", id + "_icon");
+                    const value = tree.child(row, "Label", id + "_value");
                     if (!_isAlive(icon) || !_isAlive(value)) { complete = false; continue; }
                     for (const name of ["QOLCrosshairStatIcon", "statIcon", "PropertiesIcon", def.icon]) P.setClass(icon, name, true);
                     P.setClass(value, "QOLCrosshairStatValue", true);
@@ -354,10 +358,15 @@
 
             function update() {
                 if (!active || !model) return;
-                const root = $.GetContextPanel();
-                if (!_isAlive(root)) return;
+                const root = P.findHud($.GetContextPanel());
+                if (root !== rootOwner) {
+                    removeOverlay(); _resetDiscovery(); state.sourcePanel = null;
+                    sourceResolver.reset(); gameplayResolver.reset(); rootOwner = root;
+                }
+                if (!_isAlive(root) || (root.id !== "Hud" && root.paneltype !== "CitadelHud")) { removeOverlay(); return; }
                 if (!model.enabled) { removeOverlay(); return; }
                 if (!QOL.core.hud.isGameplayHudShown(root) || QOL.core.hud.isScoreboardOpen(root)) {
+                    tree.sweep();
                     hideOverlay();
                     return;
                 }
@@ -385,6 +394,7 @@
                     removeOverlay(); _resetDiscovery();
                     state.sourcePanel = null; model = null;
                     sourceResolver.reset(); gameplayResolver.reset();
+                    tree.dispose(); rootOwner = null;
                 }
             };
         },

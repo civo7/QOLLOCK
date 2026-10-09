@@ -18,13 +18,14 @@
         settings: [{ key: "ENABLE_URN_TIMER", type: "toggle" }],
         create(ctx) {
             const P = QOL.core.panel;
+            const tree = P.createOwnedTree();
             const time = QOL.core.time;
             const makeResolver = id => QOL.panelCache.createIdResolver(id, { retryMs: 2000, refreshMs: 2000 });
             const mapResolvers = MAP_IDS.map(makeResolver);
             const topResolver = makeResolver("TopBar");
             const legacyTopResolver = makeResolver("CitadelHudTopBar");
             let active = false, enabled = false, loop = null, unsubscribe = null;
-            let root = null, overlay = null, label = null, parent = null, nextPanelSearch = 0;
+            let root = null, overlay = null, label = null, parent = null;
             let state = resetModel();
 
             function resetModel() {
@@ -39,13 +40,13 @@
                 hideOverlay();
                 if (P.isAlive(overlay)) {
                     for (const mode of ["warning", "active", "idle"]) P.setClass(overlay, "rift_" + mode, false);
-                    P.delete(overlay);
                 }
+                tree.clear();
             }
 
             function release() {
                 retireOverlay();
-                overlay = null; label = null; parent = null; nextPanelSearch = 0;
+                overlay = null; label = null; parent = null;
                 for (const resolver of [...mapResolvers, topResolver, legacyTopResolver]) resolver.reset();
             }
 
@@ -98,27 +99,20 @@
             }
 
             function ensureOverlay(currentRoot) {
-                const now = QOL.utils.PerfNowMs();
+                tree.sweep();
                 const top = topResolver.resolve(currentRoot) || legacyTopResolver.resolve(currentRoot);
                 let currentParent = P.isAlive(top) ? QOL.utils.FindFirstPanelByClass(top, "TeamNetworth") : null;
                 if (!currentParent) currentParent = QOL.utils.FindFirstPanelByClass(currentRoot, "TeamNetworth") || top;
                 if (parent !== currentParent || (overlay && (!P.isAlive(overlay) || overlay.GetParent() !== currentParent))) {
-                    retireOverlay(); overlay = null; label = null; parent = currentParent; nextPanelSearch = 0;
+                    retireOverlay(); overlay = null; label = null; parent = currentParent;
                 }
-                if (!P.isAlive(overlay)) {
-                    if (now < nextPanelSearch) return false;
-                    nextPanelSearch = now + 2000;
-                    // This ID is exclusively QOL-created. Retire stale readouts
-                    // rather than adopting a generation queued for deletion.
-                    const existing = P.findTraverse(currentRoot, "RiftTimer");
-                    if (!P.isAlive(currentParent)) return false;
-                    if (P.isAlive(existing)) P.delete(existing);
-                    overlay = P.create("Panel", currentParent, "RiftTimer", { "class": "RiftTimer", hittest: "false", hittestchildren: "false" });
-                    if (!P.isAlive(overlay)) return false;
-                }
-                let icon = P.findChild(overlay, "RiftTimerRiftIcon");
-                if (!icon) icon = P.create("Panel", overlay, "RiftTimerRiftIcon", { "class": "RiftTimerRiftIcon", hittest: "false" });
-                label = P.findChild(overlay, "RiftTimerLabel") || P.create("Label", overlay, "RiftTimerLabel", { "class": "RiftTimerLabel" });
+                if (!P.isAlive(currentParent)) return false;
+                const previous = overlay;
+                overlay = tree.child(currentParent, "Panel", "RiftTimer", { "class": "RiftTimer" });
+                if (!P.isAlive(overlay)) return false;
+                if (previous !== overlay) hideOverlay();
+                const icon = tree.child(overlay, "Panel", "RiftTimerRiftIcon", { "class": "RiftTimerRiftIcon" });
+                label = tree.child(overlay, "Label", "RiftTimerLabel", { "class": "RiftTimerLabel" });
                 return P.isAlive(icon) && P.isAlive(label);
             }
 
@@ -130,18 +124,20 @@
 
             function update() {
                 if (!active) return;
-                const currentRoot = $.GetContextPanel();
+                const currentRoot = P.findHud($.GetContextPanel());
                 if (currentRoot !== root) { release(); root = currentRoot; state = resetModel(); }
-                if (!P.isAlive(root)) return;
+                if (!P.isAlive(root) || (root.id !== "Hud" && root.paneltype !== "CitadelHud")) { release(); state = resetModel(); return; }
                 if (!enabled || QOL.core.hud.isInHideout(root)) {
+                    tree.sweep();
                     hideOverlay(); state = resetModel();
                     for (const resolver of mapResolvers) resolver.reset();
                     return;
                 }
                 const gameSec = time.readObservedGameTime(root);
-                if (gameSec <= 0) { hideOverlay(); return; }
+                if (gameSec <= 0) { tree.sweep(); hideOverlay(); return; }
                 const model = deriveModel(gameSec, readSource(root));
                 if (ensureOverlay(root)) render(model);
+                else hideOverlay();
             }
 
             function refreshSettings() {
@@ -162,6 +158,7 @@
                     if (unsubscribe) { unsubscribe(); unsubscribe = null; }
                     if (loop) { loop.stop(); loop = null; }
                     release(); root = null; state = resetModel();
+                    tree.dispose();
                 }
             };
         },

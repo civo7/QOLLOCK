@@ -95,6 +95,11 @@ behavior until its owning implementation has been audited.
   helper. Active-instance guards, current HUD binding and retryable root-class
   release preserve native pointer fallback during construction/render failures
   and rapid re-enable; stopped hooks cannot create cursor UI.
+- Rift Timer and Crosshair Stats share complete created-child ownership and
+  retire moved children or pending previous instances. Both bind current HUD
+  generations; Crosshair Stats waits for native gameplay instead of anchoring
+  to a loading root. Same-HUD topbar replacement retains the Rift warning
+  deadline, and stat filters/native value selection remain unchanged.
 
 Frozen main-config fixtures preserve all healthbar variants and both minimap
 scale methods. Published versions, compact layouts and persistent defaults stay
