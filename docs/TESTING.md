@@ -122,9 +122,12 @@ reactive geometry/palette/custom RGB, Label-type glyph discovery, living owner
 replacement, partial style/construction failures, disable and registry cleanup.
 Native binding/glyph composition and key press visuals remain client checks.
 
-Native target tests also release living moved shapes and class-recycled hints on
-the render cadence, retain unrelated properties and exercise replacement through
-a real `CitadelHud` fixture. Private caches are not published to shared State.
+Native target tests release living moved shapes and recycled native hint scopes
+on the render cadence, retain unrelated properties and exercise replacement
+through a real `CitadelHud` fixture. They resolve both native duplicate hint IDs,
+reject unrelated same-ID containers, retry late branch children and contain
+stopped hooks/loading roots without added XML classes. Private caches are not
+published to shared State.
 
 `performance_owner_lifecycle.test.js` covers private report/renderer generations,
 reactive collection flags/opacity, preserved Scheduler samples, partial writes/

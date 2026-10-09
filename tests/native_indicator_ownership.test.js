@@ -21,14 +21,28 @@ function setup(id, overrides = {}) {
     return { ...env, Q, $, cfg, feature, add, reads: () => reads };
 }
 
+function nativeTarget(env, parent = env.doc.root) {
+    const root = env.add(parent, "", ["ability_element_unit_target"], "Citadel_AbilityHUDElement_UnitTarget");
+    const instance = env.add(root, "", ["unit_target_instance"]);
+    const unscaled = env.add(instance, "unscaled_panel"), hint = env.add(unscaled, "hint_container");
+    const scaled = env.add(unscaled, "scaled_panel"), scaledHint = env.add(scaled, "hint_container");
+    const shape = env.add(scaled, "", ["target_shape"]);
+    return { root, instance, unscaled, hint, scaled, scaledHint, shape };
+}
+
 test("default target and damage controllers preserve native code styles they never owned", () => {
-    for (const [id, classes] of [["ql_target_shapes", ["target_shape", "qol_hint_target"]], ["ql_damage_numbers", ["HudIndicatorText"]]]) {
+    for (const [id, classes] of [["ql_target_shapes", ["target_shape"]], ["ql_damage_numbers", ["HudIndicatorText"]]]) {
         const env = setup(id);
         const panel = env.add(env.root, "DefaultFixture", classes);
         const native = { uiScale: "78%", preTransformScale2d: "0.6, 0.6", opacity: "0.35", fontSize: "41px" };
         Object.assign(panel.style, native);
+        const hints = id === "ql_target_shapes" ? nativeTarget(env) : null;
+        if (hints) for (const hint of [hints.hint, hints.scaledHint]) Object.assign(hint.style, native);
         env.feature.onEnable(); env.clock.advance(3000); env.feature.onDisable();
         for (const [property, value] of Object.entries(native)) assert.equal(panel.style[property], value, id + "." + property);
+        if (hints) for (const hint of [hints.hint, hints.scaledHint]) for (const [property, value] of Object.entries(native)) {
+            assert.equal(hint.style[property], value, id + ".hint." + property);
+        }
         assert.deepEqual(env.clock.errors, []);
     }
 });
@@ -36,7 +50,7 @@ test("default target and damage controllers preserve native code styles they nev
 test("target settings apply immediately, release removed living owners and restore defaults without overriding native children", () => {
     const env = setup("ql_target_shapes", { UNIT_TARGET_SIZE: 200, UNIT_TARGET_OPACITY: 0.4, UNIT_TARGET_HINT_SIZE: 125 });
     const shape = env.add(env.root, "TargetFixture", ["target_shape"]);
-    const hint = env.add(env.root, "HintFixture", ["qol_hint_target"]);
+    const hint = nativeTarget(env).hint;
     const child = env.add(shape, "DiamondFixture"); child.style.transform = "rotateZ(45deg)";
     shape.style.x = "13px";
     env.feature.onEnable();
@@ -70,12 +84,12 @@ test("target retries rejected writes, releases the old live HUD and cleans up di
     assert.deepEqual(env.clock.errors, []);
 });
 
-test("target geometry releases living moved shapes and class-recycled hints before the full discovery cadence", () => {
+test("target geometry releases living moved shapes and recycled native hint scopes before the full discovery cadence", () => {
     const env = setup("ql_target_shapes", { UNIT_TARGET_SIZE: 225, UNIT_TARGET_HINT_SIZE: 140 });
-    const shape = env.add(env.root, "TargetFixture", ["target_shape"]), hint = env.add(env.root, "HintFixture", ["qol_hint_target"]);
+    const shape = env.add(env.root, "TargetFixture", ["target_shape"]), source = nativeTarget(env), hint = source.hint;
     shape.style.color = "#ABCDEF"; hint.style.x = "13px";
     env.feature.onEnable(); assert.equal(shape.style.uiScale, "225%"); assert.equal(hint.style.uiScale, "140%");
-    shape.SetParent(env.add(null, "RetiredTarget")); hint.RemoveClass("qol_hint_target"); env.clock.advance(300);
+    shape.SetParent(env.add(null, "RetiredTarget")); source.instance.RemoveClass("unit_target_instance"); env.clock.advance(300);
     assert.equal(shape.style.uiScale, undefined); assert.equal(hint.style.uiScale, undefined);
     assert.equal(shape.style.color, "#ABCDEF"); assert.equal(hint.style.x, "13px");
     for (const key of ["targetShapesCache", "hintContainerCache", "targetShapeStyleSig", "nextTargetShapeRefreshMs", "targetShapeHadNonDefaultRuntime"]) {
@@ -83,6 +97,49 @@ test("target geometry releases living moved shapes and class-recycled hints befo
     }
     assert.equal(Object.hasOwn(env.Q, "getUnitTargetDefaultStyleTexts"), false);
     env.feature.onDisable(); assert.deepEqual(env.clock.errors, []);
+});
+
+test("target hint scaling uses both native duplicate IDs and ignores unrelated hint containers without XML classes", () => {
+    const env = setup("ql_target_shapes", { UNIT_TARGET_HINT_SIZE: 140 }), first = nativeTarget(env), second = nativeTarget(env);
+    const unrelated = env.add(env.root, "hint_container", ["qol_hint_target"]); unrelated.style.uiScale = "73%";
+    const binding = env.add(first.hint, "AbilityKeyBinding", [], "CitadelBinding"); binding.style.uiScale = "87%";
+    for (const target of [first, second]) for (const hint of [target.hint, target.scaledHint]) {
+        hint.style.x = "native hint placement"; assert.equal(hint.BHasClass("qol_hint_target"), false);
+    }
+    env.feature.onEnable();
+    for (const target of [first, second]) for (const hint of [target.hint, target.scaledHint]) assert.equal(hint.style.uiScale, "140%");
+    assert.equal(unrelated.style.uiScale, "73%"); assert.equal(binding.style.uiScale, "87%");
+    const result = env.Q.core.FeatureRegistry.getManifest("ql_target_shapes").test(); assert.match(result.message, /4 hint panels/);
+    env.feature.onDisable(); env.clock.advance(300);
+    for (const target of [first, second]) for (const hint of [target.hint, target.scaledHint]) {
+        assert.equal(hint.style.uiScale, undefined); assert.equal(hint.style.x, "native hint placement"); assert.equal(hint.IsValid(), true);
+    }
+    assert.equal(binding.style.uiScale, "87%"); assert.equal(unrelated.style.uiScale, "73%"); assert.deepEqual(env.clock.errors, []);
+});
+
+test("target hint sources follow late and living replacement inside their native unscaled/scaled branches", () => {
+    const env = setup("ql_target_shapes", { UNIT_TARGET_HINT_SIZE: 135 }), source = nativeTarget(env); env.feature.onEnable();
+    const orphan = env.add(null, "RetiredNativeHints"); source.hint.SetParent(orphan); source.scaled.SetParent(orphan);
+    const hint = env.add(source.unscaled, "hint_container"), scaled = env.add(source.unscaled, "scaled_panel");
+    env.clock.advance(800);
+    assert.equal(source.hint.style.uiScale, undefined); assert.equal(source.scaledHint.style.uiScale, undefined);
+    assert.equal(hint.style.uiScale, "135%"); assert.equal(source.hint.IsValid(), true);
+    const late = env.add(scaled, "hint_container"); env.clock.advance(1500); assert.equal(late.style.uiScale, "135%");
+    source.unscaled.SetParent(orphan); env.clock.advance(300);
+    assert.equal(hint.style.uiScale, undefined); assert.equal(late.style.uiScale, undefined);
+    assert.equal(env.reads(), 1); env.feature.onDisable(); assert.deepEqual(env.clock.errors, []);
+});
+
+test("target styling waits for a real HUD and stopped settings hooks cannot restore native overrides", () => {
+    const env = setup("ql_target_shapes", { UNIT_TARGET_HINT_SIZE: 145 }), original = nativeTarget(env); env.feature.onEnable();
+    env.doc.root = env.add(null, "LoadingRoot"); const loading = nativeTarget(env); env.clock.advance(300);
+    assert.equal(original.hint.style.uiScale, undefined); assert.equal(loading.hint.style.uiScale, undefined);
+    env.doc.root = env.add(null, "Hud", [], "CitadelHud"); const current = nativeTarget(env); env.clock.advance(1600);
+    assert.equal(current.hint.style.uiScale, "145%"); assert.equal(current.scaledHint.style.uiScale, "145%");
+    env.feature.onDisable(); env.feature.onSettingsChanged(); env.clock.advance(2000);
+    assert.equal(current.hint.style.uiScale, undefined); assert.equal(current.scaledHint.style.uiScale, undefined);
+    assert.equal(env.Q.core.Scheduler.getWorkSnapshot().some(record => record.id === "ql_target_shapes"), false);
+    assert.deepEqual(env.clock.errors, []);
 });
 
 test("damage styling preserves cumulative typography and native fades while cleaning every owned property on disable", () => {

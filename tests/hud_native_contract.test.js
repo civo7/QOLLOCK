@@ -48,9 +48,9 @@ test("property icons load once in each Panorama context", () => {
     assert.ok(settingsIcons < settingsCrosshair);
 });
 
-test("unit-target override keeps QOLLOCK hooks on the refreshed native snippet", () => {
-    const layout = readLayout("ability_hud_element_unit_target.xml");
-
-    assert.doesNotMatch(layout, /class="stack_count"/);
-    assert.equal((layout.match(/class="qol_hint_target"/g) || []).length, 2);
+test("unit-target styling preserves native CSS hooks without an XML override", () => {
+    assert.equal(fs.existsSync(path.resolve(__dirname, "../panorama/layout/ability_hud_element_unit_target.xml")), false);
+    const css = readStyle("ability_hud_element_unit_target.css");
+    assert.match(css, /\.improved_hint_active \.ability_element_unit_target #unscaled_panel > #hint_container/);
+    assert.doesNotMatch(css, /qol_hint_target/);
 });

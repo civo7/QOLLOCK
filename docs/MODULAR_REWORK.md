@@ -132,6 +132,10 @@ behavior until its owning implementation has been audited.
   copy solely for one stylesheet include. Native hierarchy, bindings/callbacks
   and baseline animations remain supplied by the game; stale packed outputs
   are retired by the maintainer pipeline.
+- Target hint geometry resolves both native snippet branches through their
+  existing IDs/classes; the class-only unit-target XML override is removed.
+  Native bindings/animations and unrelated hint containers stay untouched, and
+  inactive hooks/loading roots cannot acquire native geometry overrides.
 
 Frozen main-config fixtures preserve all healthbar variants and both minimap
 scale methods. Published versions, compact layouts and persistent defaults stay

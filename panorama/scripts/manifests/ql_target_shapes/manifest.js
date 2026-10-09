@@ -1,16 +1,37 @@
 // OWNS: Native target/hint shape size and target opacity code overrides.
 // DOES NOT OWN: Valve target panels, targeting animations or root feature gates.
-// Source: native ability_hud_element_unit_target.css and existing target_shape /
-// qol_hint_target class traversal. Native children remain with Valve.
+// Source: native ability_hud_element_unit_target.xml UnitTarget snippet:
+// .unit_target_instance > unscaled_panel > hint_container / scaled_panel > hint_container.
+// Native target_shape classes and children remain with Valve; no XML hook is required.
 (() => {
     "use strict";
     const ID = "ql_target_shapes";
+    const P = QOL.core.panel;
     const clamp = QOL.utils.ClampConfigNumber;
     const styleTexts = cfg => ({
         scaleText: (clamp(cfg.UNIT_TARGET_SIZE, 150, 50, 300, true) / 100).toFixed(3),
         opacityText: clamp(cfg.UNIT_TARGET_OPACITY, 1, 0, 1).toFixed(2),
         hintScaleText: (clamp(cfg.UNIT_TARGET_HINT_SIZE, 100, 50, 200, true) / 100).toFixed(3)
     });
+
+    function hintSources(root) {
+        const sources = new Map();
+        for (const instance of QOL.utils.FindPanelsByClass(root, "unit_target_instance")) {
+            const surface = P.findChild(instance, "unscaled_panel");
+            for (const parent of [surface, P.findChild(surface, "scaled_panel")]) {
+                const panel = P.findChild(parent, "hint_container");
+                if (P.isAlive(panel)) sources.set(panel, { instance, surface, parent });
+            }
+        }
+        return sources;
+    }
+
+    function currentHint(panel, source) {
+        return P.hasClassToken(source.instance, "unit_target_instance") &&
+            P.findChild(source.instance, "unscaled_panel") === source.surface &&
+            (source.parent === source.surface || P.findChild(source.surface, "scaled_panel") === source.parent) &&
+            P.findChild(source.parent, "hint_container") === panel;
+    }
 
     QOL.core.FeatureRegistry.register({
         id: ID,
@@ -31,6 +52,7 @@
             let model = null;
             let nextDiscovery = 0;
             let loop = null;
+            let active = false;
 
             function readModel() {
                 const cfg = ctx.config.view();
@@ -56,22 +78,22 @@
                 nextDiscovery = 0;
             }
 
-            function reconcile(owners, className) {
-                const current = new Set(root.FindChildrenWithClassTraverse(className) || []);
+            function reconcile(owners, current) {
                 for (const [target, owner] of owners) {
                     if (!current.has(target)) { release(target, owner); owners.delete(target); }
                 }
-                for (const target of current) if (panels.isAlive(target) && !owners.has(target)) {
-                    owners.set(target, { properties: new Set(), signature: null });
+                for (const [target, source] of current) if (panels.isAlive(target)) {
+                    if (!owners.has(target)) owners.set(target, { properties: new Set(), signature: null, source });
+                    else owners.get(target).source = source;
                 }
             }
 
-            function render(owners, styles, className) {
+            function render(owners, styles, matches) {
                 for (const [target, owner] of owners) {
                     if (!panels.isAlive(target)) { owners.delete(target); nextDiscovery = 0; continue; }
                     let ancestor = target;
                     for (let depth = 0; depth < 64 && panels.isAlive(ancestor) && ancestor !== root; depth++) ancestor = ancestor.GetParent();
-                    if (ancestor !== root || !target.BHasClass(className)) {
+                    if (ancestor !== root || !matches(target, owner.source)) {
                         release(target, owner); owners.delete(target); nextDiscovery = 0; continue;
                     }
                     // A partial rejected write remains owned and is retried.
@@ -81,19 +103,22 @@
             }
 
             function update() {
+                if (!active) return;
                 const current = panels.findHud($.GetContextPanel());
                 if (current !== root) { releaseAll(); root = current; }
-                if (!panels.isAlive(root) || !model.active) {
+                if (!panels.isAlive(root) || (root.id !== "Hud" && root.paneltype !== "CitadelHud") || !model.active) {
                     releaseAll();
                     if (loop) loop.reschedule(1.0);
                     return;
                 }
                 const now = QOL.utils.PerfNowMs();
                 if (now >= nextDiscovery) {
-                    reconcile(shapes, "target_shape"); reconcile(hints, "qol_hint_target");
+                    reconcile(shapes, new Map(QOL.utils.FindPanelsByClass(root, "target_shape").map(panel => [panel, null])));
+                    reconcile(hints, hintSources(root));
                     nextDiscovery = now + (shapes.size || hints.size ? 1000 : 500);
                 }
-                render(shapes, model.shapeStyles, "target_shape"); render(hints, model.hintStyles, "qol_hint_target");
+                render(shapes, model.shapeStyles, target => panels.hasClassToken(target, "target_shape"));
+                render(hints, model.hintStyles, currentHint);
                 if (loop) loop.reschedule(shapes.size || hints.size ? 0.2 : 0.5);
             }
 
@@ -108,11 +133,13 @@
 
             return {
                 onEnable() {
+                    active = true;
                     refreshSettings();
                     loop = QOL.core.Scheduler.createPollLoop(update, model.active ? 0.2 : 1.0, ctx.id);
                 },
                 onSettingsChanged: refreshSettings,
                 onDisable() {
+                    active = false;
                     if (loop) { loop.stop(); loop = null; }
                     QOL.core.Scheduler.cancelAllForFeature(ctx.id);
                     releaseAll(); root = model = null;
@@ -123,9 +150,9 @@
             try {
                 const root = $.GetContextPanel();
                 const shapes = root?.FindChildrenWithClassTraverse("target_shape") || [];
-                const hints = root?.FindChildrenWithClassTraverse("qol_hint_target") || [];
+                const hints = hintSources(root);
                 return { passed: true, name: "Target shape panels traversal works",
-                    message: `Found ${shapes.length} target_shape + ${hints.length} hint panels`,
+                    message: `Found ${shapes.length} target_shape + ${hints.size} hint panels`,
                     assertions: [{ passed: true, name: "Target/hint traversal succeeded" }]
                 };
             } catch (error) {

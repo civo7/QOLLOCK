@@ -33,7 +33,7 @@ tables, CSS values, test history or general verification caveats into it.
 | [ql_on_death_arcade](../../panorama/scripts/manifests/ql_on_death_arcade/manifest.js) | [Respawn/request/menu coordination](ql_on_death_arcade.md); games execute in the settings context. |
 | [ql_minimap_runtime](../../panorama/scripts/manifests/ql_minimap_runtime/manifest.js) | Base/Alt/Tab geometry, opacity, crates, tunnels and minimap presentation. |
 | [ql_recent_purchases](../../panorama/scripts/manifests/ql_recent_purchases/manifest.js) | Shop filters, floating purchase feed and top-bar purchase popups. |
-| [ql_target_shapes](../../panorama/scripts/manifests/ql_target_shapes/manifest.js) | Size/opacity of native target and hint shapes, including default-state cleanup. |
+| [ql_target_shapes](../../panorama/scripts/manifests/ql_target_shapes/manifest.js) | Size/opacity of native target shapes and both native hint branches, including default-state cleanup; no XML class extension. |
 | [ql_souls](../../panorama/scripts/manifests/ql_souls/manifest.js) | Native gold/AP container geometry and visibility, not a second economy model. |
 | [ql_stat_bonuses](../../panorama/scripts/manifests/ql_stat_bonuses/manifest.js) | Golden-statue/boon stat bonus readout from native stat sources. |
 | [ql_stats_position](../../panorama/scripts/manifests/ql_stats_position/manifest.js) | Native stats placement and separate normal/scoreboard visibility. |

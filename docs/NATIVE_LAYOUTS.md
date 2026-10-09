@@ -28,14 +28,23 @@ applies the same friends-count placement. The XML override and separate
 `qollock_party.css` are removed; native party members, invites, context-menu
 callbacks and animations continue to belong to the game layout/base stylesheet.
 
+The unit-target XML formerly added `qol_hint_target` to both native hint
+containers. No stylesheet used that class; its only runtime consumer was target
+geometry discovery. That owner now resolves the native `UnitTarget` snippet's
+`.unit_target_instance > unscaled_panel > hint_container` and its second
+`scaled_panel > hint_container` directly. Both branches retain independent size
+application and replacement cleanup; unrelated same-ID hints are excluded.
+The native layout, bindings, snippet creation and targeting animations remain
+with the game, and the class-only XML override is removed.
+
 Remaining layouts include actual native hierarchy/binding changes: healthbar
 canvases and source values, shop purchase evidence, quickbuy input/summary sources,
-profile/card contexts, dashboard cards, friend search and cast-bar/target children.
+profile/card contexts, dashboard cards, friend search and cast-bar children.
 They need an owner-by-owner review before any further XML retirement.
 
 Source deletion does not update an already packed mod. The incremental pipeline's
 stale-artifact list removes the old testing XML/script outputs when the maintainer
-runs it, together with the retired party XML/style; the full builder already
+runs it, together with the retired party XML/style and unit-target XML; the full builder already
 prunes outputs without source files. Agents do
 not compile/repack or change installed addons. After a maintainer build, verify
 native testing controls, practice-area visibility and the force/hide settings in
@@ -43,3 +52,5 @@ the client. Offline gates cover source loading, existing CSS contracts and API
 usage, not this native rendering/input check.
 Also verify the friends count in the party button slot, party invites, menu
 opening and party-code context-menu behavior after the party XML retirement.
+Verify both target hint branches, Improved Hint, target-size/opacity controls and
+ability targeting after the unit-target XML retirement.

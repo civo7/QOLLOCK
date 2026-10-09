@@ -549,6 +549,8 @@ try {
         # Party placement now extends the native stylesheet, without an XML override.
         "panorama\layout\citadel_party.vxml_c",
         "panorama\styles\qollock_party.vcss_c",
+        # Target hints now resolve the native snippet instead of added XML classes.
+        "panorama\layout\ability_hud_element_unit_target.vxml_c",
         # Performance display is now loaded through its manifest-owned modules.
         "panorama\scripts\ql_perf_overlay.vjs_c",
         # Disabled after build 10725 changed the native leaderboard snippet contract.
