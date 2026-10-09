@@ -100,3 +100,56 @@ test("missing game clock backs off full-HUD searches and recovers when the label
     assert.equal(Q.core.time.readGameTime(), 62);
     assert.deepEqual(hud.clock.errors, []);
 });
+
+function nativeClock(env, root, text) {
+    const $ = env.sandbox.global.$;
+    const core = $.CreatePanel("Panel", root, ""); core.AddClass("HudCore");
+    const bar = $.CreatePanel("Panel", core, "TopBar");
+    const container = $.CreatePanel("Panel", bar, ""); container.AddClass("GameClock");
+    const label = $.CreatePanel("Label", container, "GameTime"); label.text = text;
+    return { core, bar, container, label };
+}
+
+test("native clock follows verified living owner and label replacements without a stale fallback", () => {
+    const env = createHud({ inHideout: false }); env.assertLoaded(); const Q = env.sandbox.global.QOL, $ = env.sandbox.global.$;
+    Q.core.App.shutdown(); const first = nativeClock(env, env.root, "7:42");
+    assert.equal(Q.core.time.readGameTime(), 462);
+    first.label.SetParent($.CreatePanel("Panel", null, "RetiredClock"));
+    const replacement = $.CreatePanel("Label", first.container, "GameTime"); replacement.text = "7:43";
+    assert.equal(Q.core.time.readGameTime(), 463); assert.equal(first.label.IsValid(), true);
+    first.core.SetParent($.CreatePanel("Panel", null, "RetiredHudCore")); nativeClock(env, env.root, "7:44");
+    assert.equal(Q.core.time.readGameTime(), 464); assert.equal(first.bar.IsValid(), true);
+    assert.deepEqual(env.clock.errors, []);
+});
+
+test("native clock upgrades a construction fallback when the preferred clock arrives", () => {
+    const env = createHud({ inHideout: false }); env.assertLoaded(); const Q = env.sandbox.global.QOL, $ = env.sandbox.global.$;
+    Q.core.App.shutdown(); const fallback = $.CreatePanel("Label", env.root, "GameTime"); fallback.text = "1:00";
+    assert.equal(Q.core.time.readGameTime(), 60); nativeClock(env, env.root, "2:00");
+    assert.equal(Q.core.time.readGameTime(), 120); assert.equal(fallback.text, "1:00"); assert.deepEqual(env.clock.errors, []);
+});
+
+test("shared second observation rebinds living generations at equal times and keeps listener order", () => {
+    const env = createHud({ inHideout: false }); env.assertLoaded(); const Q = env.sandbox.global.QOL, $ = env.sandbox.global.$;
+    Q.core.App.shutdown(); nativeClock(env, env.root, "2:00");
+    const seen = [], first = Q.core.time.subscribeGameSecond(seconds => seen.push(["model", seconds]), 0);
+    const second = Q.core.time.subscribeGameSecond(seconds => seen.push(["view", seconds]), 1);
+    env.clock.advance(200); assert.deepEqual(seen, [["model", 120], ["view", 120]]); seen.length = 0;
+    const nextRoot = $.CreatePanel("CitadelHud", null, "Hud"); nativeClock(env, nextRoot, "2:00"); env.doc.root = nextRoot;
+    env.clock.advance(200); assert.deepEqual(seen, [["model", 120], ["view", 120]]);
+    const requested = $.CreatePanel("CitadelHud", null, "Hud"); nativeClock(env, requested, "3:00");
+    assert.equal(Q.core.time.readObservedGameTime(requested), 180);
+    seen.length = 0; first(); second(); env.clock.advance(400); assert.deepEqual(seen, []);
+    assert.equal(Q.core.Scheduler.getWorkSnapshot().some(owner => owner.id === "ql_game_time"), false); assert.deepEqual(env.clock.errors, []);
+});
+
+test("second observer tolerates self-unsubscription and waits to dispatch newly added listeners", () => {
+    const env = createHud({ inHideout: false }); env.assertLoaded(); const Q = env.sandbox.global.QOL;
+    Q.core.App.shutdown(); const source = nativeClock(env, env.root, "1:00"), seen = [];
+    let late = null, first = null;
+    first = Q.core.time.subscribeGameSecond(() => { seen.push("first"); first(); late = Q.core.time.subscribeGameSecond(() => seen.push("late")); });
+    const second = Q.core.time.subscribeGameSecond(() => seen.push("second")); env.clock.advance(200);
+    assert.deepEqual(seen, ["first", "second"]);
+    source.label.text = "1:01"; env.clock.advance(200); assert.deepEqual(seen, ["first", "second", "second", "late"]);
+    second(); late(); env.clock.advance(200); assert.deepEqual(env.clock.errors, []);
+});

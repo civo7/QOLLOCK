@@ -59,6 +59,10 @@ behavior until its owning implementation has been audited.
   delegate there. Core lookup misses are private and generation scoped, while
   panel configuration caches bind both root/HUD identity and actual read-back.
   Living replacements and rejected publication no longer reuse stale payloads.
+- Shared game-time observation follows private verified source generations,
+  replaces construction fallbacks and notifies ordered consumers when the source
+  changes even at the same second. Requested roots cannot inherit another root's
+  observed time; the final unsubscribe releases observation and source records.
 
 Frozen main-config fixtures preserve all healthbar variants and both minimap
 scale methods. Published versions, compact layouts and persistent defaults stay

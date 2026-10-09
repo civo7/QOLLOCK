@@ -123,6 +123,11 @@ publication read-back. These checks model panel attributes, not disk durability.
 Storage-bridge fixtures load the production namespace/panel helpers used by the
 settings context, rather than a partial replacement for their discovery contract.
 
+`game_time_sync.test.js` retains synchronized timer updates and bounded missing
+clock searches. It also covers living verified clock/root replacement, upgrading
+construction fallbacks, equal-second generation notifications, requested-root
+reads and subscription mutation/cancellation.
+
 `item_mirror_ownership.test.js` exercises current HUD/inventory generations,
 living source/child replacement, partial writes/construction and pending/active
 feedback cancellation. The existing `item_mirror.test.js` still checks discovery,
