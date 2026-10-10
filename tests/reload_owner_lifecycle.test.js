@@ -51,8 +51,8 @@ test("reload estimate follows both radial directions and retains native clip/cla
     }
 });
 
-test("reload rebinds a still-live reticle and resets the previous estimate", () => {
-    const env = fixture({ RELOAD_COOLDOWN_X_OFFSET: 23, RELOAD_COOLDOWN_Y_OFFSET: 17, RELOAD_COOLDOWN_SIZE: 35 });
+test("reload rebinds a still-live reticle and resets the previous estimate at expanded offsets", () => {
+    const env = fixture({ RELOAD_COOLDOWN_X_OFFSET: 1234, RELOAD_COOLDOWN_Y_OFFSET: -987, RELOAD_COOLDOWN_SIZE: 35 });
     const first = env.addSource();
     env.clip(first.bar, 240);
     const feature = env.create(); feature.onEnable(); env.clock.advance(0);
@@ -65,8 +65,8 @@ test("reload rebinds a still-live reticle and resets the previous estimate", () 
     assert.equal(first.reticle.IsValid(), true);
     assert.equal(oldLabel.IsValid(), false);
     assert.equal(nextLabel.text, "", "new source must establish its own velocity");
-    assert.equal(nextLabel.style.marginLeft, "23px");
-    assert.equal(nextLabel.style.marginTop, "-17px");
+    assert.equal(nextLabel.style.marginLeft, "1234px");
+    assert.equal(nextLabel.style.marginTop, "987px");
     assert.equal(nextLabel.style.fontSize, "35px");
     env.sample(next.bar, 90);
     assert.equal(nextLabel.text, "0.5");

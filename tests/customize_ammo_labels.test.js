@@ -88,3 +88,31 @@ test("label offsets apply and round-trip through the current envelope without ch
     }
     assert.deepEqual(env.doc.eventErrors, []); assert.deepEqual(env.clock.errors, []);
 });
+
+test("Current and Max can shrink independently and Cancel releases font overrides", () => {
+    const env = setup(), g = env.global;
+    assert.equal(g.QOL.ui.customize.start(null, { elementId: "ammoCurrent" }), true);
+    submit(env, "AMMO_CURRENT_SCALE", 50);
+    assert.equal(env.current.style.fontSize, "8px");
+    assert.equal(env.max.style.fontSize, undefined);
+    assert.equal(env.hud.root.BHasClass("qol_free_reticle_placement"), true);
+    activate(env, "QOLCustomizeCancel"); env.clock.advance(1200);
+    assert.equal(env.current.style.fontSize, undefined);
+    assert.equal(env.hud.root.BHasClass("qol_free_reticle_placement"), false);
+    assert.equal(g.QOL.ui.customize.start(null, { elementId: "ammoMax" }), true);
+    submit(env, "AMMO_TOTAL_SCALE", 75);
+    assert.equal(env.max.style.fontSize, "12px");
+    assert.equal(env.current.style.fontSize, undefined);
+    activate(env, "QOLCustomizeReset"); env.clock.advance(1200);
+    assert.equal(env.max.style.fontSize, undefined);
+    activate(env, "QOLCustomizeCancel");
+    const values = { AMMO_CURRENT_SCALE: 50, AMMO_TOTAL_SCALE: 75, AMMO_PANEL_SCALE: 50 };
+    Object.assign(g.MOD_CONFIG, values);
+    const imported = g.QOL.ui.modal.tryApplyImportStringWithDiagnostics(g.QOL.ui.configTab.getCurrentExportSettingsString());
+    assert.equal(imported.ok, true);
+    for (const [key, value] of Object.entries(values)) {
+        assert.equal(imported.candidateConfig[key], value);
+        assert.equal(g.QOL_COMPACT_SCHEMA_REGISTRY["4.0.5"].schema.find(field => field.key === key).min, 100);
+    }
+    assert.deepEqual(env.doc.eventErrors, []); assert.deepEqual(env.clock.errors, []);
+});

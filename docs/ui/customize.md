@@ -206,6 +206,17 @@ native positions inside Ammo. They retain their existing font-size settings and
 inherit the group's shared styling. Max's native label includes the separator;
 moving it does not rewrite engine-owned text. Parent movement edits only group
 offsets. The group inspector also exposes the digit offsets for scoped access.
+Independent font controls allow shrinking as well as enlarging. The legacy
+font alias and historical compact schemas retain their compatibility path;
+new values outside the published range use the settings envelope.
+
+Customized Ammo/Reload geometry projects `qol_free_reticle_placement` on the HUD.
+CSS opens overflow only on the verified gun, gun-data, ammo and reticle layout
+ancestors. It does not change their dimensions, visibility, transforms or the
+progress bars' radial clips. Reset and unavailable owners release the class;
+one active owner cannot remove the overflow needed by the other. This is a
+source-level clipping fix, not proof that native engine culling is absent.
+Confirm distant offsets, normal gun and Tokamak layouts in the client.
 
 The additional opacity controls are owned by `ql_presentation_scale` using its
 existing poll. At the default they own no native opacity override and skip

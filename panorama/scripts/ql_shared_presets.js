@@ -530,9 +530,9 @@ if (typeof QOL_SCHEMA_UTILS.NormalizeAmmoScaleConfig !== "function") {
 
         currentScale = Math.round(currentScale);
         totalScale = Math.round(totalScale);
-        if (currentScale < 100) currentScale = 100;
+        if (currentScale < 50) currentScale = 50;
         if (currentScale > 300) currentScale = 300;
-        if (totalScale < 100) totalScale = 100;
+        if (totalScale < 50) totalScale = 50;
         if (totalScale > 300) totalScale = 300;
 
         configTarget.AMMO_CURRENT_SCALE = currentScale;
@@ -1798,11 +1798,15 @@ var QOL_COMPACT_SCHEMA_4_0_5 = QOL_COMPACT_SCHEMA_UTILS.AppendUniqueSchemaFields
 // cannot represent them. A new compact schema requires maintainer approval.
 var QOL_SETTINGS_FIELDS = QOL_COMPACT_SCHEMA_UTILS.AppendUniqueSchemaFields(
     QOL_COMPACT_SCHEMA_4_0_5.map(field => {
+        if (["AMMO_PANEL_SCALE", "AMMO_CURRENT_SCALE", "AMMO_TOTAL_SCALE"].includes(field.key)) {
+            return Object.assign({}, field, { min: 50 });
+        }
         if (["ITEMS_WASH_COLOR", "STAMINA_CHARGE_COLOR", "AMMO_TEXT_COLOR", "BOTTOM_BAR_WASH_COLOR",
             "KEYBOARD_OVERLAY_WASH_COLOR", "PLAYER_HEALTHBAR_ACCENT_COLOR", "MINIMAP_ICON_COLOR"].includes(field.key)) {
             return Object.assign({}, field, { max: 0x1ffffff });
         }
-        if (["AMMO_PANEL_X_OFFSET", "AMMO_PANEL_Y_OFFSET", "STATS_POSITION_X_OFFSET", "STATS_POSITION_Y_OFFSET"].includes(field.key)) {
+        if (["AMMO_PANEL_X_OFFSET", "AMMO_PANEL_Y_OFFSET", "STATS_POSITION_X_OFFSET", "STATS_POSITION_Y_OFFSET",
+            "RELOAD_COOLDOWN_X_OFFSET", "RELOAD_COOLDOWN_Y_OFFSET"].includes(field.key)) {
             return Object.assign({}, field, { min: -2000, max: 2000, step: 1 });
         }
         if (/^(?:TOP_BAR|BOTTOM_BAR|ACTIVE_ITEMS|SOULS|ITEMS)_[XY]_OFFSET$/.test(field.key)) {

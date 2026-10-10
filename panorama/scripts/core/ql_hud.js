@@ -716,8 +716,18 @@
         const cleanStacksEnabled = Number(cfg?.ENABLE_CLEAN_STACKS) === 1;
         const compassEnabled = Number(cfg?.ENABLE_COMPASS) === 1;
         const compassSpeedEnabled = Number(cfg?.ENABLE_COMPASS_SPEED) === 1;
+        // Only unclamp the verified native reticle ancestors while geometry is
+        // customized. Radial clipping belongs to their progress-bar children.
+        const available = id => !Q.core.FeatureRegistry?.isPresentationAvailable || Q.core.FeatureRegistry.isPresentationAvailable(id);
+        const moved = keys => keys.some(key => Number.isFinite(Number(cfg?.[key])) && Number(cfg[key]) !== 0);
+        const freeReticlePlacement = (available("ql_ammo") && (
+            moved(["AMMO_PANEL_X_OFFSET", "AMMO_PANEL_Y_OFFSET", "AMMO_CURRENT_X_OFFSET", "AMMO_CURRENT_Y_OFFSET", "AMMO_MAX_X_OFFSET", "AMMO_MAX_Y_OFFSET"]) ||
+            ["AMMO_HUD_SCALE", "AMMO_CURRENT_SCALE", "AMMO_TOTAL_SCALE"].some(key => cfg?.[key] != null && Number(cfg[key]) !== 100)
+        )) || (available("ql_reload_cooldown") && Number(cfg?.ENABLE_RELOAD_COOLDOWN) === 1 &&
+            moved(["RELOAD_COOLDOWN_X_OFFSET", "RELOAD_COOLDOWN_Y_OFFSET"]));
 
         const staticSig = [
+            freeReticlePlacement,
             hideoutConnected ? 1 : 0,
             cfg?.ENABLE_AMMO_STATUS,
             cfg?.ENABLE_HIDE_MAGAZINE,
@@ -811,6 +821,7 @@
             const notDevTestMode = cfg?.QOLLOCK_DEV_CORE_ROOT_TEST_MODE !== 1;
 
             const staticRules = [
+                ["qol_free_reticle_placement", freeReticlePlacement],
                 ["hide_ammo_custom", cfg?.ENABLE_AMMO_STATUS === 0],
                 ["hide_magazine_active", cfg?.ENABLE_HIDE_MAGAZINE === 1],
                 ["hide_current_ammo_active", cfg?.ENABLE_HIDE_AMMO_ALL === 1],

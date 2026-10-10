@@ -10,6 +10,19 @@ const OFFSET_KEYS = [
     "STATS_POSITION_X_OFFSET", "STATS_POSITION_Y_OFFSET"
 ];
 
+test("reload offsets use expanded current bounds and preserve the old compact range", () => {
+    const { global: g } = load();
+    const config = { ...g.QOL_DEFAULT_CONFIG, RELOAD_COOLDOWN_X_OFFSET: -1999, RELOAD_COOLDOWN_Y_OFFSET: 1234 };
+    const imported = g.QOL.persistence.deserializeCompactV2(g.QOL.persistence.serializeCompactV2(config));
+    for (const key of ["RELOAD_COOLDOWN_X_OFFSET", "RELOAD_COOLDOWN_Y_OFFSET"]) {
+        const field = g.QOL_SETTINGS_FIELDS.find(field => field.key === key);
+        assert.equal(field.min, -2000); assert.equal(field.max, 2000);
+        assert.equal(imported[key], config[key]);
+        const old = g.QOL_COMPACT_SCHEMA_REGISTRY["4.0.5"].schema.find(field => field.key === key);
+        assert.equal(old.min, -75); assert.equal(old.max, 75);
+    }
+});
+
 test("current ammo and stats offsets use one-pixel precision while published schemas stay frozen", () => {
     const { global: g } = load();
     const currentByKey = new Map(g.QOL_SETTINGS_FIELDS.map(field => [field.key, field]));

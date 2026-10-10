@@ -115,19 +115,19 @@
             function readModel() {
                 const cfg = ctx.config.view();
                 const clamp = (value, min, max) => QOL.utils.ClampConfigNumber(value, min, min, max, true);
-                const current = clamp(cfg.AMMO_CURRENT_SCALE != null ? cfg.AMMO_CURRENT_SCALE : cfg.AMMO_PANEL_SCALE, 100, 300);
-                const total = clamp(cfg.AMMO_TOTAL_SCALE != null ? cfg.AMMO_TOTAL_SCALE : cfg.AMMO_PANEL_SCALE, 100, 300);
+                const current = clamp(cfg.AMMO_CURRENT_SCALE != null ? cfg.AMMO_CURRENT_SCALE : cfg.AMMO_PANEL_SCALE, 50, 300);
+                const total = clamp(cfg.AMMO_TOTAL_SCALE != null ? cfg.AMMO_TOTAL_SCALE : cfg.AMMO_PANEL_SCALE, 50, 300);
                 const color = panelAPI.resolvePaletteColor(cfg.AMMO_TEXT_COLOR);
                 const currentStyles = { fontSize: null, width: null, color: color || null };
                 const totalStyles = { fontSize: null, width: null, marginLeft: null, color: color || null };
                 const infiniteStyles = { color: color || null };
                 if (current !== 100) {
-                    currentStyles.fontSize = Math.max(12, Math.round(16 * current / 100)) + "px";
-                    currentStyles.width = Math.max(24, Math.round(32 * current / 100)) + "px";
+                    currentStyles.fontSize = Math.max(8, Math.round(16 * current / 100)) + "px";
+                    currentStyles.width = Math.max(16, Math.round(32 * current / 100)) + "px";
                 }
                 if (total !== 100) {
-                    totalStyles.fontSize = Math.max(12, Math.round(16 * total / 100)) + "px";
-                    totalStyles.width = Math.max(32, Math.round(50 * total / 100)) + "px";
+                    totalStyles.fontSize = Math.max(8, Math.round(16 * total / 100)) + "px";
+                    totalStyles.width = Math.max(25, Math.round(50 * total / 100)) + "px";
                     totalStyles.marginLeft = Math.max(0, Math.round(2 * total / 100)) + "px";
                 }
                 const groupScale = clamp(cfg.AMMO_HUD_SCALE ?? 100, 50, 200);
@@ -285,6 +285,7 @@
                 clipResolver.reset();
                 update();
                 if (loop) loop.reschedule(model.visualEnabled ? visualInterval : idleInterval);
+                QOL.core.hud.refreshRootClasses(panelAPI.findHud($.GetContextPanel()));
             }
 
             return {

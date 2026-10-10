@@ -10,6 +10,18 @@
    ═══════════════════════════════════════════════════════════ */
 
 @import url("s2r://panorama/styles/base/hud.vcss_c");
+
+/* Customized Ammo/Reload may leave the native 100px reticle and 500px gun.
+ * Open only these layout ancestors; CircularProgressBar radial clips and
+ * native visibility, transforms and dimensions remain authoritative.
+ */
+.qol_free_reticle_placement .ability_element_gun,
+.qol_free_reticle_placement .ability_element_gun #gun_data,
+.qol_free_reticle_placement .ability_element_gun #ammo_panel,
+.qol_free_reticle_placement .ability_element_gun #reticle_status
+{
+    overflow: noclip;
+}
 @import url("s2r://panorama/styles/qollock_global.vcss_c");
 @import url("s2r://panorama/styles/ql_core_styles.vcss_c");
 

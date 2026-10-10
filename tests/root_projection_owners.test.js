@@ -13,6 +13,27 @@ const scenarios = [
     { id: "ql_ui_controls", key: "ENABLE_CENTER_ESC", value: true, ownClass: "center_esc_active" }
 ];
 
+test("reticle overflow projection combines owners and releases unavailable presentation", () => {
+    const env = setup();
+    const registry = env.Q.core.FeatureRegistry;
+    const refresh = () => env.Q.core.hud.refreshRootClasses(env.root);
+    const unclipped = () => env.root.BHasClass("qol_free_reticle_placement");
+    refresh(); assert.equal(unclipped(), false);
+    env.Q.core.ConfigStore.set("ql_ammo", "AMMO_MAX_X_OFFSET", 1000);
+    registry.enable("ql_ammo"); refresh(); assert.equal(unclipped(), true);
+    env.Q.core.ConfigStore.set("ql_reload_cooldown", "ENABLE_RELOAD_COOLDOWN", true);
+    env.Q.core.ConfigStore.set("ql_reload_cooldown", "RELOAD_COOLDOWN_Y_OFFSET", -1500);
+    registry.enable("ql_reload_cooldown");
+    registry.disable("ql_ammo"); refresh();
+    assert.equal(unclipped(), true, "reload retains its overflow when ammo stops");
+    registry.disable("ql_reload_cooldown"); refresh(); assert.equal(unclipped(), false);
+    registry.enable("ql_ammo"); refresh(); assert.equal(unclipped(), true);
+    env.Q.core.ConfigStore.set("ql_ammo", "AMMO_MAX_X_OFFSET", 0);
+    refresh(); assert.equal(unclipped(), false, "native overflow returns without a forced inline style");
+    registry.disable("ql_ammo");
+    assert.deepEqual(env.clock.errors, []);
+});
+
 function setup() {
     const env = createHud({ inHideout: false });
     env.assertLoaded();
