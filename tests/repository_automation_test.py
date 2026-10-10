@@ -7,7 +7,7 @@ import struct
 import tempfile
 import unittest
 import urllib.error
-from unittest.mock import patch
+from unittest.mock import MagicMock, patch
 import zipfile
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -134,6 +134,39 @@ class UpstreamTransportTests(unittest.TestCase):
 
 
 class ReleaseArchiveTests(unittest.TestCase):
+    def test_packaging_preserves_vpk_names_and_includes_notices(self):
+        source, output, root = MagicMock(), MagicMock(), MagicMock()
+        vpk = MagicMock()
+        vpk.name = "QOLLOCK.vpk"
+        vpk.is_file.return_value = True
+        vpk.is_symlink.return_value = False
+        source.glob.return_value = [vpk]
+        (root / "package.json").read_text.return_value = '{"version":"4.0.5"}'
+        with patch.object(release.zipfile, "ZipFile") as constructor, \
+                patch.object(release, "validate", return_value={"version": "4.0.5"}) as validate:
+            result = release.package_vpks(source, output, root)
+        writes = constructor.return_value.__enter__.return_value.write.call_args_list
+        self.assertEqual(writes[0].args, (vpk, "QOLLOCK.vpk"))
+        self.assertEqual(len(writes), 4)
+        validate.assert_called_once_with(output / "QOL-Lock-405.zip", "4.0.5")
+        self.assertEqual(result["version"], "4.0.5")
+
+    def test_packaging_rejects_missing_vpks(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            (root / "package.json").write_text('{"version":"4.0.5"}')
+            with self.assertRaisesRegex(ValueError, "maintainer-built VPK"):
+                release.package_vpks(root, root / "out", root)
+            self.assertFalse((root / "out").exists())
+
+    def test_packaging_rejects_symlinked_vpks(self):
+        source, output, root = MagicMock(), MagicMock(), MagicMock()
+        source.glob.return_value = [MagicMock()]
+        (root / "package.json").read_text.return_value = '{"version":"4.0.5"}'
+        with self.assertRaisesRegex(ValueError, "maintainer-built VPK"):
+            release.package_vpks(source, output, root)
+        output.mkdir.assert_not_called()
+
     def test_archive_name_must_match_package_version(self):
         with self.assertRaisesRegex(ValueError, "Expected archive name"):
             release.validate(Path("QOL-Lock-404.zip"), "4.0.5")

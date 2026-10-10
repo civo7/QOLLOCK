@@ -676,6 +676,19 @@ while ($true) {
                 }
             }
 
+            # Fonts are consumed directly, not compiled by resourcecompiler.
+            # Restore missing staged fonts even when their source hash is cached.
+            if ($file.Extension -ieq '.ttf') {
+                $fontDest = Join-Path $TempGame $relPath
+                if ($hashChanged -or -not (Test-Path -LiteralPath $fontDest)) {
+                    $fontDir = Split-Path $fontDest
+                    if (-not (Test-Path -LiteralPath $fontDir)) {
+                        New-Item -ItemType Directory -Force -Path $fontDir | Out-Null
+                    }
+                    Copy-Item -LiteralPath $file.FullName -Destination $fontDest -Force
+                }
+            }
+
             if ($AllowedExts -contains $file.Extension -and ($needsCopy -or $needsCompile)) {
                 $FilesToCompile.Add($contentDest)
             }

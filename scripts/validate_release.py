@@ -1,4 +1,4 @@
-"""Validate a maintainer-built ZIP without extracting or repacking its VPK."""
+"""Package or validate a release without extracting or repacking its VPKs."""
 
 import argparse
 import hashlib
@@ -7,6 +7,24 @@ from pathlib import Path, PurePosixPath
 import re
 import struct
 import zipfile
+
+
+def package_vpks(source, output, root):
+    version = json.loads((root / "package.json").read_text(encoding="utf-8"))["version"]
+    if not re.fullmatch(r"\d+\.\d+\.\d+", version):
+        raise ValueError("Expected a three-part package version")
+    vpks = sorted(source.glob("*.vpk"))
+    if not vpks or any(not path.is_file() or path.is_symlink() for path in vpks):
+        raise ValueError("Expected regular maintainer-built VPK files")
+    notices = [root / name for name in ("LICENSE", "NOTICE", "THIRD_PARTY_NOTICES.md")]
+    if any(not path.is_file() for path in notices):
+        raise ValueError("Missing distribution notices")
+    output.mkdir(parents=True, exist_ok=True)
+    archive = output / ("QOL-Lock-" + version.replace(".", "") + ".zip")
+    with zipfile.ZipFile(archive, "x", compression=zipfile.ZIP_DEFLATED) as package:
+        for path in vpks + notices:
+            package.write(path, path.name)
+    return validate(archive, version)
 
 
 def validate(archive, version):
@@ -51,8 +69,17 @@ def validate(archive, version):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("archive", type=Path)
+    parser.add_argument("archive", type=Path, nargs="?")
     parser.add_argument("--package", type=Path, default=Path("package.json"))
+    parser.add_argument("--vpks", type=Path, help="Directory containing the prepared VPKs")
+    parser.add_argument("--output", type=Path)
     args = parser.parse_args()
+    if args.vpks:
+        if args.archive or not args.output:
+            parser.error("--vpks requires --output and cannot be combined with an archive")
+        print(json.dumps(package_vpks(args.vpks, args.output, args.package.resolve().parent), indent=2))
+        parser.exit()
+    if not args.archive or args.output:
+        parser.error("Provide an archive, or --vpks with --output")
     version = json.loads(args.package.read_text(encoding="utf-8"))["version"]
     print(json.dumps(validate(args.archive, version), indent=2))
