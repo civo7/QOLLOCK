@@ -582,7 +582,7 @@ is navigation, not evidence of tested gameplay behavior.
   absent from their manifests/defaults.
 - **Update checker:** `ql_update_checker.js` is settings-side, not a registered
   HUD manifest. Public update markers are independent of package/settings
-  versions. Follow the release procedure in [README.md](README.md); ordinary
+  versions. Follow the release procedure in [RELEASING.md](docs/RELEASING.md); ordinary
   code or documentation work does not authorize publishing a marker.
 
 Treat source-declared settings as schema metadata; flat defaults and wire ranges
@@ -773,8 +773,8 @@ canonical source rather than copying them into many documents.
 | [Preset tools](panorama/scripts/tools/presets/README.md) | Historical preset editing utilities; check current script availability |
 | [Local translation helper](tools/local_chat_translation/README.md) | Optional external Python image/translation service |
 
-`MIGRATION_PATTERNS.md`, `docs/design/phase0-canonical-type-mapping.md`, release
-audits and recorded profiler results describe specific migrations/snapshots.
+Historical migration plans and release audits are available in Git history.
+Recorded profiler results describe specific snapshots.
 They are not current API specs or proof that all recorded checks still pass.
 Historical `legacy/ql_config_defaults.js`, `ql_core.js`, old feature paths,
 build-storage instructions and callback signatures must not be copied into new

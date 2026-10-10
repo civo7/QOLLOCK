@@ -1,0 +1,622 @@
+{
+  "repository": "SteamTracking/GameTracking-Deadlock",
+  "commit": "7148202fea070a8cceb1523ee3ca7fc35095f710",
+  "files": {
+    "styles/ability_hud_element_unit_target.css": {
+      "blob": "744fc8cd69fc00090e65af4d09f80cbfd43e9fd0",
+      "destination": "panorama/styles/base/ability_hud_element_unit_target.css",
+      "kind": "css",
+      "auto_sync": true,
+      "local_sha256": "febf15ae7c97a979d0a9f7b1794628474696dbcf870b4b84a3d8f5b2f8b3896b"
+    },
+    "styles/ability_hud_elements/element_button_hint.css": {
+      "blob": "a95feee9ff4f16e5e973c313ac41da5b9c4243ec",
+      "destination": "panorama/styles/base/ability_hud_elements/element_button_hint.css",
+      "kind": "css",
+      "auto_sync": true,
+      "local_sha256": "bbc73d428c4bcb476dae320ed964d959b31f84e5071d78fbcc55f2cdf9ec7fda"
+    },
+    "styles/ability_hud_elements/element_gun.css": {
+      "blob": "acc8903c3e66252a8b21b7199a1fbb35dc4b9725",
+      "destination": "panorama/styles/base/ability_hud_elements/element_gun.css",
+      "kind": "css",
+      "auto_sync": true,
+      "local_sha256": "78004baac7972e12020b432b717d0be9a4d43be1417f418a20321d0c761e2aa4"
+    },
+    "styles/ability_hud_elements/element_progress_bar.css": {
+      "blob": "b608fb56108f670bdfc55cf61634fb6fcae8849d",
+      "destination": "panorama/styles/base/ability_hud_elements/element_progress_bar.css",
+      "kind": "css",
+      "auto_sync": true,
+      "local_sha256": "5c25b2b6c0ffa2f5570dd4b8579c88c863ac163527442fa14ba19ec4f6eb0032"
+    },
+    "styles/ability_hud_elements/element_progress_bar_text.css": {
+      "blob": "62e0e57c2cbac291a0a623b54ad5bacfc00ba0ac",
+      "destination": "panorama/styles/base/ability_hud_elements/element_progress_bar_text.css",
+      "kind": "css",
+      "auto_sync": true,
+      "local_sha256": "5caf566a97e9c45543576fe8a67545f82e86311970230d1ded400048a823deb5"
+    },
+    "styles/ability_property_icons.css": {
+      "blob": "b715a736a8b97f41de4cec5ae638e1637ae14a4e",
+      "destination": "panorama/styles/base/ability_property_icons.css",
+      "kind": "css",
+      "auto_sync": true,
+      "local_sha256": "70593c3ff73f1bd0a12b588fafb123453ba2ef1ba913a041b75b5db9589f5efe"
+    },
+    "styles/citadel_base_styles.css": {
+      "blob": "24137b3525c782d97ea1574599155df4fe2bdf75",
+      "destination": "panorama/styles/base/citadel_base_styles.css",
+      "kind": "css",
+      "auto_sync": false,
+      "local_sha256": "17ad1ddbdee10e6b6e1111c36747c9fdd5dfd172756017ec8dae77ef1d705670"
+    },
+    "styles/citadel_client_status.css": {
+      "blob": "10a7dde0ba87d1b2398f3473b070865abd7da84f",
+      "destination": "panorama/styles/base/citadel_client_status.css",
+      "kind": "css",
+      "auto_sync": true,
+      "local_sha256": "e8aac40141d81cbf0a6b4bc70bffddf40da837f62482a6876c1af85a2657aa8f"
+    },
+    "styles/citadel_db_page_learn.css": {
+      "blob": "a9aa7a8b3996d198723599b2b9f2b42ea6782150",
+      "destination": "panorama/styles/base/citadel_db_page_learn.css",
+      "kind": "css",
+      "auto_sync": true,
+      "local_sha256": "a6c9ab95a9dce53d8a763499f6165ac45a00a53fc170ba2031e3c10092d43da5"
+    },
+    "styles/citadel_db_page_profile.css": {
+      "blob": "e094a8117a7abe4e81ced015880d46dceaced4a5",
+      "destination": "panorama/styles/base/citadel_db_page_profile.css",
+      "kind": "css",
+      "auto_sync": true,
+      "local_sha256": "6368271d72a6afff506a07a1bc15d18ca8ba055b5a13f7a8ef5127d51ec97ad4"
+    },
+    "styles/citadel_db_page_shared.css": {
+      "blob": "93293cccbaa7ea3b21df3c90c049307e51ebf6fa",
+      "destination": "panorama/styles/base/citadel_db_page_shared.css",
+      "kind": "css",
+      "auto_sync": true,
+      "local_sha256": "87b94ee49935436aa0471b147e354447d242138162d82d5fde4e104a0fedeeb2"
+    },
+    "styles/citadel_db_page_training.css": {
+      "blob": "b3eeaa30b11345926e6823171af572360bcf918f",
+      "destination": "panorama/styles/base/citadel_db_page_training.css",
+      "kind": "css",
+      "auto_sync": true,
+      "local_sha256": "f034c7b5ab39357d43aaf3d0f641f1352c6c9c329ea84a4d60abb3f5e85cd698"
+    },
+    "styles/citadel_db_play_menu.css": {
+      "blob": null,
+      "destination": "panorama/styles/base/citadel_db_play_menu.css",
+      "kind": "css",
+      "auto_sync": false,
+      "local_sha256": "2ec54177d4237f0b449f0712d25dc00292a44d63e610bfc39058bfec0891a2f5"
+    },
+    "styles/citadel_hero_stats_panels_shared.css": {
+      "blob": "69ffff035182fdd81e9063fa890e821e50ce32f4",
+      "destination": "panorama/styles/base/citadel_hero_stats_panels_shared.css",
+      "kind": "css",
+      "auto_sync": true,
+      "local_sha256": "9c603ba51a2107fd66f9d6058319217e076254e422b59d80557bd96ae555bc6c"
+    },
+    "styles/citadel_hero_stats_tech_panel.css": {
+      "blob": "0bee8bf51d740273cd9a2566b6df4f732058137a",
+      "destination": "panorama/styles/base/citadel_hero_stats_tech_panel.css",
+      "kind": "css",
+      "auto_sync": true,
+      "local_sha256": "33095d406eff5618632caf5db33c5dee4f80b331ab5b350bcee6f828ac0ec633"
+    },
+    "styles/citadel_hero_stats_weapon_panel.css": {
+      "blob": "37ae983f1bbbfa49e1c3d167d9d7d7af86e98b5e",
+      "destination": "panorama/styles/base/citadel_hero_stats_weapon_panel.css",
+      "kind": "css",
+      "auto_sync": true,
+      "local_sha256": "f80fafadc4a4da6fb6790710a7beff1a7219da0071ffdac98179711970168992"
+    },
+    "styles/citadel_hud_ability_button_hint.css": {
+      "blob": "1b1e38bca2939436b84283493c5aad811994f74f",
+      "destination": "panorama/styles/base/citadel_hud_ability_button_hint.css",
+      "kind": "css",
+      "auto_sync": true,
+      "local_sha256": "c2805673a9ddc57ea2ff6e5e27780a96e9af911b09dc31955b34b5ae6e9ba9b9"
+    },
+    "styles/citadel_hud_ability_upgrade_pips.css": {
+      "blob": "4b163544d03eb67075bbf8edd54befe253f277a4",
+      "destination": "panorama/styles/base/citadel_hud_ability_upgrade_pips.css",
+      "kind": "css",
+      "auto_sync": true,
+      "local_sha256": "a6cc2195030013035ddf13563b447068286cb35f2ba9d50a18bad516d2391320"
+    },
+    "styles/citadel_hud_active_mods.css": {
+      "blob": "783bcfd268d2d23c34a3c0e17a979d90fd5cfb47",
+      "destination": "panorama/styles/base/citadel_hud_active_mods.css",
+      "kind": "css",
+      "auto_sync": true,
+      "local_sha256": "989253ff5f2e509efdc033fdd3883857d138aac65c867f1a7f3e92a450f1b4d5"
+    },
+    "styles/citadel_hud_active_player_stats.css": {
+      "blob": "55409f1a7c8a88166b915b2ab8f19299fa3472b8",
+      "destination": "panorama/styles/base/citadel_hud_active_player_stats.css",
+      "kind": "css",
+      "auto_sync": true,
+      "local_sha256": "b462918a424f05aeef12cb1100110c66c03ec4e738ef02327c0246d402764a20"
+    },
+    "styles/citadel_hud_hero_builds.css": {
+      "blob": "51b8a01fb11b08a0489384833ddb9b927f2cfad5",
+      "destination": "panorama/styles/base/citadel_hud_hero_builds.css",
+      "kind": "css",
+      "auto_sync": true,
+      "local_sha256": "84d7bddfd365312b83c163a7927adcfa81caeeb785118e0720946822a61b224b"
+    },
+    "styles/citadel_hud_hero_shop.css": {
+      "blob": "4705802035b257d692126cf279c13d80d3bff462",
+      "destination": "panorama/styles/base/citadel_hud_hero_shop.css",
+      "kind": "css",
+      "auto_sync": false,
+      "local_sha256": "f6bf904f78864daac78b826690a289e947f1d8e9d51bae676cdabf33e428523e"
+    },
+    "styles/citadel_hud_item_bar_graph.css": {
+      "blob": "305fb7dc960b268e691f4f095d2634741881796b",
+      "destination": "panorama/styles/base/citadel_hud_item_bar_graph.css",
+      "kind": "css",
+      "auto_sync": true,
+      "local_sha256": "dd848b2a40cd842b8d876e9fd2097c49be2ad159503306096d01e51fa068f40c"
+    },
+    "styles/citadel_hud_player_level.css": {
+      "blob": "cde6f196ad20b9090633a300fa5bcb08123b8e86",
+      "destination": "panorama/styles/base/citadel_hud_player_level.css",
+      "kind": "css",
+      "auto_sync": true,
+      "local_sha256": "e4e78fd90c6e82f9285194e5774daaaa13b4ef9d38948c42d7f418dd073f614e"
+    },
+    "styles/citadel_hud_shop_quickbuy.css": {
+      "blob": "0e7dbd187b1af249c45760601c53c5c5d32a08d8",
+      "destination": "panorama/styles/base/citadel_hud_shop_quickbuy.css",
+      "kind": "css",
+      "auto_sync": true,
+      "local_sha256": "c79239711d0d87880439fe5ba18a82332d26404beb7d144920b7bf2446674584"
+    },
+    "styles/citadel_hud_top_bar.css": {
+      "blob": "25ec8871acbc65625657b2cd32797b3b4bd26bd0",
+      "destination": "panorama/styles/base/citadel_hud_top_bar.css",
+      "kind": "css",
+      "auto_sync": true,
+      "local_sha256": "1af2e6fc951831efd54dc0ecba035f628a4ce0e9c7f3f73e493ee6e2a1e1d897"
+    },
+    "styles/citadel_hud_top_bar_chat.css": {
+      "blob": "af33735f260b1749201d9ae2ba7fa0df974efb7e",
+      "destination": "panorama/styles/base/citadel_hud_top_bar_chat.css",
+      "kind": "css",
+      "auto_sync": true,
+      "local_sha256": "3cdc0088d43a599f03376926572f6729042ad558aec03495fcbd2e5b1aef95df"
+    },
+    "styles/citadel_modified_attribute_label.css": {
+      "blob": "205359f17fbb8cbee2b9dec55581e9e81dd6538e",
+      "destination": "panorama/styles/base/citadel_modified_attribute_label.css",
+      "kind": "css",
+      "auto_sync": true,
+      "local_sha256": "73a58f862939c93c943efed100d6f3f624b1658f6e838cf44e8306fbbb59b2f8"
+    },
+    "styles/citadel_party.css": {
+      "blob": "43fc98c7a2c4dfcc76ce90270efb708536f66f70",
+      "destination": "panorama/styles/base/citadel_party.css",
+      "kind": "css",
+      "auto_sync": true,
+      "local_sha256": "ea43923772adea087abbed6b5bc3f686ec1e12fe0f9aadd430ace0356bdb5f07"
+    },
+    "styles/citadel_shop_mod_icon.css": {
+      "blob": "7e1d147e709a68c375c9b45d1e2df85c651c1e1e",
+      "destination": "panorama/styles/base/citadel_shop_mod_icon.css",
+      "kind": "css",
+      "auto_sync": true,
+      "local_sha256": "748d908325cbeec84ea9e0c2eff05048ba26bd8700b77330c48f4a5e4355258b"
+    },
+    "styles/citadel_shop_mod_view.css": {
+      "blob": "1b2ad28274f9c4e42bb9e12865a1f73b175bbb47",
+      "destination": "panorama/styles/base/citadel_shop_mod_view.css",
+      "kind": "css",
+      "auto_sync": true,
+      "local_sha256": "b913755fe2190ecc3f3a989110d40d82701f6a6abd6799732c0b8084dfeb71b7"
+    },
+    "styles/citadel_shop_mods_build.css": {
+      "blob": "d777986de0c20e22c4e0bd8e12d873fc8292ad39",
+      "destination": "panorama/styles/base/citadel_shop_mods_build.css",
+      "kind": "css",
+      "auto_sync": true,
+      "local_sha256": "ad693e891bd4336ca8eeece5e2ee991d1c48582652ef7073806b7445fdb14c49"
+    },
+    "styles/citadel_shop_mods_build_category.css": {
+      "blob": "a5173e3f0265f798304c7f50c7d518efcd0e3a44",
+      "destination": "panorama/styles/base/citadel_shop_mods_build_category.css",
+      "kind": "css",
+      "auto_sync": true,
+      "local_sha256": "52f11af14503fe9b01a63cfcecdc8c46ce4ca5d74e64920d05b7a9a45688367f"
+    },
+    "styles/citadel_shop_mods_filtered.css": {
+      "blob": "1d221307f9e1e30adb999867f02ca9fb29361dc7",
+      "destination": "panorama/styles/base/citadel_shop_mods_filtered.css",
+      "kind": "css",
+      "auto_sync": false,
+      "local_sha256": "a55b863b287aba2501b500a2c4b4b18497ba0a652191f6b115ef5b2fc83e4775"
+    },
+    "styles/citadel_shop_mods_list.css": {
+      "blob": "0bb9cad79015ff2f67b0892322012623498ee285",
+      "destination": "panorama/styles/base/citadel_shop_mods_list.css",
+      "kind": "css",
+      "auto_sync": true,
+      "local_sha256": "e43d65650e6c81819fd1c9920cc1f396064bd4de2d5f58d3bd022d78e2b520a6"
+    },
+    "styles/citadel_shop_mods_recommended.css": {
+      "blob": "be731dffcd8d2ecf63bcd51a99d814bc636ac8b7",
+      "destination": "panorama/styles/base/citadel_shop_mods_recommended.css",
+      "kind": "css",
+      "auto_sync": true,
+      "local_sha256": "b85d06f8e540cd1901a3eecf6ee4642e85e43c42729b639801a8b493305862c8"
+    },
+    "styles/citadel_status_effect.css": {
+      "blob": "8b093dd1a7fe551b3a5b735812886b3bc3d9380f",
+      "destination": "panorama/styles/base/citadel_status_effect.css",
+      "kind": "css",
+      "auto_sync": true,
+      "local_sha256": "39b5d742f5453b90420a639e928d3382302826df85e179443399f06396d61d29"
+    },
+    "styles/citadel_ui_ability_order.css": {
+      "blob": "b2f75f0f5c0a887670c4992a8a671bcde40e4299",
+      "destination": "panorama/styles/base/citadel_ui_ability_order.css",
+      "kind": "css",
+      "auto_sync": true,
+      "local_sha256": "50351eb96010fb4716be1a5117eda3e5d29a91e7b3afc9e46a629ee3c95338e5"
+    },
+    "styles/citadel_ui_binding.css": {
+      "blob": "db25da72f3d1443f0284567cae2adfc5022ffc98",
+      "destination": "panorama/styles/base/citadel_ui_binding.css",
+      "kind": "css",
+      "auto_sync": true,
+      "local_sha256": "1b3c6e74f6420f98df36f14a26915ba43608447af431ec5973cc69025b7da029"
+    },
+    "styles/citadel_ui_build_tag.css": {
+      "blob": "fbbd90934e472fa739ad5b4dba80fc6621506c4e",
+      "destination": "panorama/styles/base/citadel_ui_build_tag.css",
+      "kind": "css",
+      "auto_sync": true,
+      "local_sha256": "793d945c1ecfa7a9dad2c904b75c394e04e2ab3e1086eb30055e348b9f2e1dd1"
+    },
+    "styles/citadel_ui_keyboard_glyph.css": {
+      "blob": "62001d30cab7fb41b795d2a8d4f776f165046f0a",
+      "destination": "panorama/styles/base/citadel_ui_keyboard_glyph.css",
+      "kind": "css",
+      "auto_sync": true,
+      "local_sha256": "3fd5555c9daf2eac21b4e9c9b32dbfd7b730e519dc3d81d761279ad56a2d65e9"
+    },
+    "styles/citadel_ui_modified_abilities_panel.css": {
+      "blob": "79afe624f9bc9fc5bc16d5c19f37a4ce19e470f7",
+      "destination": "panorama/styles/base/citadel_ui_modified_abilities_panel.css",
+      "kind": "css",
+      "auto_sync": true,
+      "local_sha256": "7a9f1442c0375fdd5db4afd2d803189ef487555ebd7bb8bc7b000f96c4e1611c"
+    },
+    "styles/citadel_ui_modified_stats_panel.css": {
+      "blob": "4d285052021a13febf28c2f95989ee9e0ee8fb8d",
+      "destination": "panorama/styles/base/citadel_ui_modified_stats_panel.css",
+      "kind": "css",
+      "auto_sync": true,
+      "local_sha256": "86aaeb9d7ec8daf804edd609a92175a145bf4b4039b3bb6fe020072586f20d7d"
+    },
+    "styles/citadel_ui_shop_filters.css": {
+      "blob": "056d9ff96b318ae8812ef28538a4cffa1f0ce31d",
+      "destination": "panorama/styles/base/citadel_ui_shop_filters.css",
+      "kind": "css",
+      "auto_sync": false,
+      "local_sha256": "8ae10b24b6ad49bec54aa0a26927bfef4679526c53888ad067bed274f5110d1b"
+    },
+    "styles/dashboard.css": {
+      "blob": "194d9c124739c2e7d5e348c7ed385786f77a2dfe",
+      "destination": "panorama/styles/base/dashboard.css",
+      "kind": "css",
+      "auto_sync": true,
+      "local_sha256": "46613a154595bfc6ca4276b5856eff52409d08cd5573a2354e75b99267ba845b"
+    },
+    "styles/hero_testing_menu.css": {
+      "blob": "e7cd435f133532f1141ae7dd0a9e29a666547943",
+      "destination": "panorama/styles/base/hero_testing_menu.css",
+      "kind": "css",
+      "auto_sync": true,
+      "local_sha256": "e8b1d4ea71b4821329cd7d7e8e72afc854eb0eb1b1ecfbc30b85042e38339acd"
+    },
+    "styles/hud.css": {
+      "blob": "0d3a11cd051d9cddbcebd0a27d0df5fc8deebfbf",
+      "destination": "panorama/styles/base/hud.css",
+      "kind": "css",
+      "auto_sync": true,
+      "local_sha256": "b6a9a69b1b3c93f5ea457945d4eb01504f2126ebdda2147effd825ae2e7e728f"
+    },
+    "styles/hud_abilities.css": {
+      "blob": "a0a5551225eb0cbd204a0bddee008e942af4b5d3",
+      "destination": "panorama/styles/base/hud_abilities.css",
+      "kind": "css",
+      "auto_sync": true,
+      "local_sha256": "f09a252ba8053ccf4d1cd1e00872d36006168d6efecfe2bc0c53fc0df7442a5e"
+    },
+    "styles/hud_ability_icon.css": {
+      "blob": "4af77f25452934966b0024dfcdfbf18ac7067ba4",
+      "destination": "panorama/styles/base/hud_ability_icon.css",
+      "kind": "css",
+      "auto_sync": true,
+      "local_sha256": "639892da16d71cf0faf36cf0d6a099a32d6b728e113582a24ad477425ecc0337"
+    },
+    "styles/hud_ability_icon_active.css": {
+      "blob": "880c21cf13db04516b28e7d4b3f3c556643c8084",
+      "destination": "panorama/styles/base/hud_ability_icon_active.css",
+      "kind": "css",
+      "auto_sync": true,
+      "local_sha256": "ba9133f1c09a780bacc09f9c933623ddb063923670fa23c4db87ec83663a7197"
+    },
+    "styles/hud_ability_icon_passive.css": {
+      "blob": "f4f1698a54019dc2680b8fd49ecda880c2444136",
+      "destination": "panorama/styles/base/hud_ability_icon_passive.css",
+      "kind": "css",
+      "auto_sync": true,
+      "local_sha256": "762402705007a527ef706ea891839548b98df8aa20eea16f0f6d14a89500544a"
+    },
+    "styles/hud_ability_resource.css": {
+      "blob": "8c0c5c4a28869ebfda9be177781bd39d385e8302",
+      "destination": "panorama/styles/base/hud_ability_resource.css",
+      "kind": "css",
+      "auto_sync": true,
+      "local_sha256": "34ac748659844ba5fab86fa6b79eed4292122baa7547287806a6aeda6356b043"
+    },
+    "styles/hud_common.css": {
+      "blob": "14fca5d54fc69fa88e08efb36f9ec8b2d7cd5cdf",
+      "destination": "panorama/styles/base/hud_common.css",
+      "kind": "css",
+      "auto_sync": true,
+      "local_sha256": "697d360d93d42a8138fb43aa6ff63a81ce1b68ecb6fd6a3c96d45e9531ef91d9"
+    },
+    "styles/hud_damage_report.css": {
+      "blob": "5d2866932a1829bbc1ddfc6fff428828133fb326",
+      "destination": "panorama/styles/base/hud_damage_report.css",
+      "kind": "css",
+      "auto_sync": true,
+      "local_sha256": "9b1b9f09920682e21e441c0a6113745101a59ea5a37f1e45d0a8c49c00c5fe98"
+    },
+    "styles/hud_escape_menu.css": {
+      "blob": "5961116837f548832ede8a21062ce1228ff72adb",
+      "destination": "panorama/styles/base/hud_escape_menu.css",
+      "kind": "css",
+      "auto_sync": true,
+      "local_sha256": "97d39a062e623c1824037c12646c8156ec0c26423ab6276bd9d1019466fe9db3"
+    },
+    "styles/hud_event_indicator.css": {
+      "blob": "352bc444b6199d3723baae4b67a1d3ace0efc857",
+      "destination": "panorama/styles/base/hud_event_indicator.css",
+      "kind": "css",
+      "auto_sync": true,
+      "local_sha256": "d0de727681fcb9cf691a724ecfd2179f752bc9712491df615cf83628e5df0aa6"
+    },
+    "styles/hud_gold_and_ap_container.css": {
+      "blob": "ea2e5e544080a1a8875b0ee86b2fbfe60fcb9363",
+      "destination": "panorama/styles/base/hud_gold_and_ap_container.css",
+      "kind": "css",
+      "auto_sync": true,
+      "local_sha256": "7aebd3f1019d4cfdb39caddcaa3da8c103000d3917d9404a8f640c55acda4158"
+    },
+    "styles/hud_health.css": {
+      "blob": "96b708926f6aa61b4d8d55838ebcb64d0c759fbb",
+      "destination": "panorama/styles/base/hud_health.css",
+      "kind": "css",
+      "auto_sync": true,
+      "local_sha256": "c2cb8025f192a252489e251131662f3409571608de78d67dbe968da72db0ad92"
+    },
+    "styles/hud_health_container.css": {
+      "blob": "9ce7acc8c9e27bda79c9554db8778bb672ae5c9b",
+      "destination": "panorama/styles/base/hud_health_container.css",
+      "kind": "css",
+      "auto_sync": true,
+      "local_sha256": "23e01a2f857205e89dbf1de1ed46e43d6c2ff08df10b79b12e83f97d3d299036"
+    },
+    "styles/hud_minimap.css": {
+      "blob": "f9c1c7e27f110e5c0d0128091854ad896327683e",
+      "destination": "panorama/styles/base/hud_minimap.css",
+      "kind": "css",
+      "auto_sync": true,
+      "local_sha256": "6962ebf4c4a82b3e97f4989b0ff525fc0855631aa669585063d871ad8781bb9f"
+    },
+    "styles/hud_modifiers.css": {
+      "blob": "2eb94f53a78f107b941c6fff78d918333fdb4337",
+      "destination": "panorama/styles/base/hud_modifiers.css",
+      "kind": "css",
+      "auto_sync": true,
+      "local_sha256": "ba988dbad7cf5e7b848ffdd36f4a0b1915e93a9fb2f1b56a74ef231ace11277a"
+    },
+    "styles/hud_modifiers_center.css": {
+      "blob": "ced9aa5abea1da8eec21086e34bcc09c57e546a3",
+      "destination": "panorama/styles/base/hud_modifiers_center.css",
+      "kind": "css",
+      "auto_sync": true,
+      "local_sha256": "de6698774317d290d01caa38ac6b0a8d180c5bcc4a756ccf43713b973d589bf2"
+    },
+    "styles/hud_paused.css": {
+      "blob": "6e46614aee2ee610bab768d197e72eee5ab737ee",
+      "destination": "panorama/styles/base/hud_paused.css",
+      "kind": "css",
+      "auto_sync": true,
+      "local_sha256": "64cef7fc0cdca637b2850f94a74826cd5219722bd8054ede91317e6c2015b980"
+    },
+    "styles/hud_quickbuy.css": {
+      "blob": "620246fed12c8d06c3f9fe232f43eaf795a83222",
+      "destination": "panorama/styles/base/hud_quickbuy.css",
+      "kind": "css",
+      "auto_sync": true,
+      "local_sha256": "a2cb199f7f9e26047dd3dd15d5be1166e3f07cdd3a58d08893b13886ee45169b"
+    },
+    "styles/hud_quickbuy_entry.css": {
+      "blob": "da51f4d8a3ced530050fe68406142425495e9862",
+      "destination": "panorama/styles/base/hud_quickbuy_entry.css",
+      "kind": "css",
+      "auto_sync": true,
+      "local_sha256": "812054dd8b133fe912c653c5b82f9b94fbe6d43a3becfb4bdd322eebb5741377"
+    },
+    "styles/npc_icons.css": {
+      "blob": "8aa70a89571d1db3e638961ab681a1f0467abc2b",
+      "destination": "panorama/styles/base/npc_icons.css",
+      "kind": "css",
+      "auto_sync": true,
+      "local_sha256": "6ae277914ac8171f5355957a8e8e30d01b5677743edf68b4dadab758d100f9d0"
+    },
+    "styles/profile_card.css": {
+      "blob": "d79c101f2a99eaf383b93f46d8ec28a4065bc3ab",
+      "destination": "panorama/styles/base/profile_card.css",
+      "kind": "css",
+      "auto_sync": true,
+      "local_sha256": "d23ecea92d6583696fe817f490ee271d9d1875951c3d9ffc80707df0c712b0ec"
+    },
+    "styles/unit_status_icons.css": {
+      "blob": "ac8c926a6750b5af04cfdc0ca18c5594dc394c6e",
+      "destination": "panorama/styles/base/unit_status_icons.css",
+      "kind": "css",
+      "auto_sync": true,
+      "local_sha256": "d8e16d6299861e006927be5eb4178849aeff9556900ab1c1f3b5454b6222999c"
+    },
+    "styles/unit_status_v2.css": {
+      "blob": "23b26b30257c51d8ac930e52c6f72f6503492b09",
+      "destination": "panorama/styles/base/unit_status_v2.css",
+      "kind": "css",
+      "auto_sync": true,
+      "local_sha256": "f96084f11a941d7671154496c13a3026ac43c1ec15bdf9d013947748ec5351ad"
+    },
+    "layout/ability_hud_elements/element_progress_bar_text.xml": {
+      "blob": "50a5460022136433f1701043d9430aac11798f4b",
+      "destination": "panorama/layout/ability_hud_elements/element_progress_bar_text.xml",
+      "kind": "xml",
+      "auto_sync": false,
+      "local_sha256": "63ac4b7a96026a8dfcdf40567ab89c6acc0f87125a368d62edb382221cc9fc3a"
+    },
+    "layout/citadel_db_page_learn.xml": {
+      "blob": "818bf156b4dcbc5c20028576cc0229cba110aaa0",
+      "destination": "panorama/layout/citadel_db_page_learn.xml",
+      "kind": "xml",
+      "auto_sync": false,
+      "local_sha256": "aee92298ba3e3e03078ebd1da7d0048fe949582c3cb9e0689be8699ef554b126"
+    },
+    "layout/citadel_db_page_profile.xml": {
+      "blob": "1eae42045507a8b0ac9e92895d62a59a05b60f68",
+      "destination": "panorama/layout/citadel_db_page_profile.xml",
+      "kind": "xml",
+      "auto_sync": false,
+      "local_sha256": "1272bd484edabf653724d24602e0a116d9dc87c3fc576a26b31c6f607a66c485"
+    },
+    "layout/citadel_db_page_training.xml": {
+      "blob": "d7c78aff8bfcf692de0d9800eee24478f24e1513",
+      "destination": "panorama/layout/citadel_db_page_training.xml",
+      "kind": "xml",
+      "auto_sync": false,
+      "local_sha256": "3b93c5c5051f4f6faf67e4ab1c61e5198ee0e58bbaeb168a89eba5894360de69"
+    },
+    "layout/citadel_db_play_menu.xml": {
+      "blob": null,
+      "destination": "panorama/layout/citadel_db_play_menu.xml",
+      "kind": "xml",
+      "auto_sync": false,
+      "local_sha256": "d7c43f443ca5b10cd13c6f1097361dfabb43b6767ca7f06d25d9f92ca83964a5"
+    },
+    "layout/citadel_hud_hero_builds.xml": {
+      "blob": "664bd4779098caaffdb9838a31013af6e573957c",
+      "destination": "panorama/layout/citadel_hud_hero_builds.xml",
+      "kind": "xml",
+      "auto_sync": false,
+      "local_sha256": "09cd3bd1a94dd3c43f654a0937724cd9b5ca25b53c3cfb8f4c72ddd8fdf71238"
+    },
+    "layout/citadel_hud_hero_shop.xml": {
+      "blob": "c2c212816dac4c7deadb68b1c800346578ef7ae7",
+      "destination": "panorama/layout/citadel_hud_hero_shop.xml",
+      "kind": "xml",
+      "auto_sync": false,
+      "local_sha256": "271ad23984ebec92139fdfe0d390c135803f1433dbc53eda785445d75a0ffbdc"
+    },
+    "layout/citadel_hud_top_bar.xml": {
+      "blob": "f441faed14c8b81b492ee33cd18d5e3067524d8b",
+      "destination": "panorama/layout/citadel_hud_top_bar.xml",
+      "kind": "xml",
+      "auto_sync": false,
+      "local_sha256": "a1a55e808bceb1c72ea4c647c08db79ca646473b6ebf97dbe184c3c263544a42"
+    },
+    "layout/citadel_hud_top_bar_player.xml": {
+      "blob": "e0b0f1154be7b503aa9ef63190e3dce6963b47ca",
+      "destination": "panorama/layout/citadel_hud_top_bar_player.xml",
+      "kind": "xml",
+      "auto_sync": false,
+      "local_sha256": "38c284d6d255088e61afebe5e9754a1818b31fd8cf3d124529fe5a36f6000e05"
+    },
+    "layout/friends_list.xml": {
+      "blob": "e17c9365bff2610ec4ff47277c2542ab7fb70d75",
+      "destination": "panorama/layout/friends_list.xml",
+      "kind": "xml",
+      "auto_sync": false,
+      "local_sha256": "40b3812628bc821d3bcc89c6768def06501c7d22e30c1a55dcbc43a480c6e24d"
+    },
+    "layout/hud.xml": {
+      "blob": "6d71bb5251d79308dac1e0b471e67b8e1c6b1669",
+      "destination": "panorama/layout/hud.xml",
+      "kind": "xml",
+      "auto_sync": false,
+      "local_sha256": "5e176d5a70f883162a0bedf2761cf12d6e6a7d838d350ddb2a6f5c2a2f476060"
+    },
+    "layout/hud_escape_menu.xml": {
+      "blob": "504b76d61d2ea5329be2b1c6d0b1c74fc59fad9d",
+      "destination": "panorama/layout/hud_escape_menu.xml",
+      "kind": "xml",
+      "auto_sync": false,
+      "local_sha256": "2bf88c2dac9812c31f81b2e44fc737920e1f9c5f9d1928d94aa6370e2bafc420"
+    },
+    "layout/hud_gold_and_ap_container.xml": {
+      "blob": "3108abc836c70c9918647eb758c5f394b5db9916",
+      "destination": "panorama/layout/hud_gold_and_ap_container.xml",
+      "kind": "xml",
+      "auto_sync": false,
+      "local_sha256": "5dbf537c7906804f9d19befea2a29a01ed1be6ba7eba57630309172cbacd6026"
+    },
+    "layout/hud_health_container.xml": {
+      "blob": "22381fcd80dcbaea1580abf9b329e560019cbdb6",
+      "destination": "panorama/layout/hud_health_container.xml",
+      "kind": "xml",
+      "auto_sync": false,
+      "local_sha256": "39f659cf72400d386432243848e8ec2001b4a5ba7673d0940ae5446d34adee25"
+    },
+    "layout/hud_paused.xml": {
+      "blob": "fcfbf11eed544b621017d29e1b5ff6f330601670",
+      "destination": "panorama/layout/hud_paused.xml",
+      "kind": "xml",
+      "auto_sync": false,
+      "local_sha256": "4c38d6ebb4aea0953920d18f9ee62e582450656bd48d6f4f5be131fd8393daf5"
+    },
+    "layout/hud_quickbuy.xml": {
+      "blob": "54984096d70b313c8c1dd8badf9320cde27ce417",
+      "destination": "panorama/layout/hud_quickbuy.xml",
+      "kind": "xml",
+      "auto_sync": false,
+      "local_sha256": "069ecf2101317612eff5c0a960c713ac70841c4f5e0b0f1162e6fcf9c33d853f"
+    },
+    "layout/hud_quickbuy_entry.xml": {
+      "blob": "bbfffcc76ec9eba663b617312415b780c4f69735",
+      "destination": "panorama/layout/hud_quickbuy_entry.xml",
+      "kind": "xml",
+      "auto_sync": false,
+      "local_sha256": "713969ee78a3a4f5ea37c618ca7147bd54dc4c68054f2290d04247dcaa37f2cc"
+    },
+    "layout/players_list_entry.xml": {
+      "blob": "488ec7b2efe608ed9a44adf3de1668b5b1b71ec7",
+      "destination": "panorama/layout/players_list_entry.xml",
+      "kind": "xml",
+      "auto_sync": false,
+      "local_sha256": "43f60a0faf7e7356c458dcc4819fa3c5e08baa3bc844cb7569c28c00d36ea0ac"
+    },
+    "layout/profile_card.xml": {
+      "blob": "e45956ed2c1625ddb248793154bc1c0a0083ce99",
+      "destination": "panorama/layout/profile_card.xml",
+      "kind": "xml",
+      "auto_sync": false,
+      "local_sha256": "f8a39ef0384a451e92c9489c1eabdd3f0af69200128c6471424fa6d3463d6238"
+    }
+  }
+}
