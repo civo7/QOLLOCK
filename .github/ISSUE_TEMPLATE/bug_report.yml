@@ -1,0 +1,44 @@
+name: Bug report
+description: Report a problem with the mod.
+title: "[Bug] "
+body:
+  - type: input
+    id: version
+    attributes:
+      label: QOLLOCK version
+      placeholder: e.g. 4.0.5
+    validations:
+      required: true
+  - type: textarea
+    id: problem
+    attributes:
+      label: What happened?
+      description: Describe the problem and what you expected instead.
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to reproduce
+      description: Include the affected settings and whether it happens in a match, sandbox or menu.
+      placeholder: |
+        1.
+        2.
+        3.
+    validations:
+      required: true
+  - type: input
+    id: display
+    attributes:
+      label: Resolution and display settings
+      placeholder: e.g. 1920x1080, 16:9
+  - type: textarea
+    id: other-mods
+    attributes:
+      label: Other installed mods
+      description: List other HUD/UI mods, or write None.
+  - type: textarea
+    id: evidence
+    attributes:
+      label: Screenshots, video or additional details
+      description: Attach images or a recording for visual problems. Remove private information from logs or exported settings.

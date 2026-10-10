@@ -4,7 +4,7 @@
 settings context through `hud_escape_menu.xml`, not as a HUD manifest.
 `QOL_UPDATE_MARKER` identifies the public release independently of package
 and settings-schema versions. Follow the
-[public release procedure](../../README.md#publishing-a-public-release) before
+[public release procedure](../RELEASING.md#publish-a-prepared-release) before
 changing or publishing a marker.
 
 The checker loads a marker image through a Panorama Image panel, not browser

@@ -25,20 +25,6 @@
 					</Panel>
 				</Panel>
 			</Panel>
-			<Panel id="VoiceLines" class="playOptionContainer" onactivate="CitadelShowHeroVOTestPage()">
-				<Panel class="cardBorder" />
-				<Panel class="playOptionTop">
-					<Panel class="buttonImage">
-						<Panel class="VoiceLinesGlyph" />
-					</Panel>
-				</Panel>
-				<Panel class="playOptionBottom">
-					<Panel class="bottomOptionContainer">
-						<Label class="playLabel" text="#menu_voicelines" />
-						<Label class="playDesc" text="#menu_voicelines_desc" />
-					</Panel>
-				</Panel>
-			</Panel>
 			<!-- ============================================================= -->
 			<!-- QOLLOCK CUSTOM: News Dashboard Card -->
 			<!-- ============================================================= -->
@@ -68,9 +54,9 @@
 				</Panel>
 			</Panel>
 			<!-- ============================================================= -->
-			<!-- QOLLOCK CUSTOM: Hero Voting & Library Cards -->
+			<!-- QOLLOCK CUSTOM: Hero Voting & Voice Lines -->
 			<!-- ============================================================= -->
-			<Panel id="HeroVoting" class="playOptionContainer playOptionContainerXS">
+			<Panel id="HeroVoting" class="playOptionContainer playOptionContainerXS" onactivate="CitadelShowHeroReleaseVotePage(1)">
 				<Panel class="cardBorder" />
 				<Panel class="playOptionTop">
 					<Panel class="buttonImage" />
@@ -82,15 +68,17 @@
 					</Panel>
 				</Panel>
 			</Panel>
-			<Panel id="LibraryButton" class="playOptionContainer playOptionContainerXS" onactivate="CitadelShowBookLibraryPage()">
+			<Panel id="VoiceLines" class="playOptionContainer playOptionContainerXS" onactivate="CitadelShowHeroVOTestPage()">
 				<Panel class="cardBorder" />
 				<Panel class="playOptionTop">
-					<Panel class="buttonImage" />
+					<Panel class="buttonImage">
+						<Panel class="VoiceLinesGlyph" />
+					</Panel>
 				</Panel>
 				<Panel class="playOptionBottom">
 					<Panel class="bottomOptionContainer">
-						<Label class="playLabel" text="#Citadel_Library_Title" />
-						<Label class="playDesc" text="#Citadel_Library_Welcome" />
+						<Label class="playLabel" text="#menu_voicelines" />
+						<Label class="playDesc" text="#menu_voicelines_desc" />
 					</Panel>
 				</Panel>
 			</Panel>

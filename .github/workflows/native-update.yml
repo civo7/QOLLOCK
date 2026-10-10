@@ -1,0 +1,120 @@
+name: Review native resource updates
+run-name: QOLLOCK native update ${{ github.event.client_payload.sha || inputs.upstream_sha || 'latest' }}
+
+on:
+  repository_dispatch:
+    types: [game-update]
+  workflow_dispatch:
+    inputs:
+      upstream_sha:
+        description: GameTracking commit SHA (empty selects latest)
+        required: false
+        type: string
+      dry_run:
+        description: Preview the report without pushing, creating a PR or notifying Discord
+        required: false
+        default: true
+        type: boolean
+  schedule:
+    - cron: '37 * * * *'
+
+permissions:
+  contents: write
+  pull-requests: write
+
+concurrency:
+  group: qollock-native-update
+  cancel-in-progress: false
+
+jobs:
+  review:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      GH_TOKEN: ${{ github.token }}
+      BASE_BRANCH: ${{ github.event.repository.default_branch }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.repository.default_branch }}
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: npm
+      - name: Check watched upstream files
+        id: sync
+        env:
+          UPSTREAM_SHA: ${{ github.event.client_payload.sha || inputs.upstream_sha }}
+          DRY_RUN: ${{ inputs.dry_run || false }}
+        run: |
+          args=()
+          if [[ "$DRY_RUN" == 'true' ]]; then args+=(--dry-run); fi
+          python scripts/upstream_sync.py --sha "$UPSTREAM_SHA" "${args[@]}"
+      - name: Check whether this update was already proposed
+        if: steps.sync.outputs.changed == 'true'
+        id: proposed
+        run: |
+          previous=$(git show origin/codex/native-resource-update:upstream.json 2>/dev/null | jq -r '.fingerprint' || true)
+          url=$(gh pr list --head codex/native-resource-update --base "$BASE_BRANCH" --state open --json url --jq '.[0].url // empty')
+          if [[ "$previous" == "${{ steps.sync.outputs.fingerprint }}" && -n "$url" ]]; then
+            echo 'duplicate=true' >> "$GITHUB_OUTPUT"
+          else
+            echo 'duplicate=false' >> "$GITHUB_OUTPUT"
+          fi
+          if [[ -n "$url" ]]; then
+            echo "$url" > .upstream-review/pr-url.txt
+            body=$(gh pr view "$url" --json body --jq '.body')
+            if [[ "$body" == *"<!-- notified:${{ steps.sync.outputs.fingerprint }} -->"* ]]; then
+              echo 'notified=true' >> "$GITHUB_OUTPUT"
+            fi
+          fi
+      - name: Verify changed sources
+        if: steps.sync.outputs.changed == 'true' && steps.proposed.outputs.duplicate != 'true'
+        run: |
+          npm ci
+          npm test
+          python -m unittest discover -s tests -p '*_automation_test.py'
+          node --test tests/updater_worker.test.mjs
+      - name: Keep the changed-file bundle
+        if: steps.sync.outputs.changed == 'true' && (steps.proposed.outputs.duplicate != 'true' || steps.proposed.outputs.notified != 'true')
+        uses: actions/upload-artifact@v4
+        with:
+          name: changed-native-resources
+          path: .upstream-review/
+          include-hidden-files: true
+          if-no-files-found: error
+      - name: Prepare or update one review PR
+        if: steps.sync.outputs.changed == 'true' && steps.proposed.outputs.duplicate != 'true' && inputs.dry_run != true
+        run: |
+          branch=codex/native-resource-update
+          git switch -C "$branch"
+          git config user.name 'Predi-i'
+          git config user.email 'Predi-i@users.noreply.github.com'
+          git add panorama/styles/base upstream.json
+          git commit -m 'chore: review updated native resources'
+          git push --force-with-lease origin "$branch"
+          url=$(gh pr list --head "$branch" --base "$BASE_BRANCH" --state open --json url --jq '.[0].url // empty')
+          if [[ -z "$url" ]]; then
+            url=$(gh pr create --head "$branch" --base "$BASE_BRANCH" --title 'Review updated native resources' --body-file .upstream-review/report.md)
+          else
+            gh pr edit "$url" --body-file .upstream-review/report.md
+          fi
+          echo "$url" > .upstream-review/pr-url.txt
+      - name: Notify the developer channel
+        if: steps.sync.outputs.changed == 'true' && steps.proposed.outputs.notified != 'true' && inputs.dry_run != true
+        id: notify
+        env:
+          DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_DEV_WEBHOOK_URL }}
+          RUN_URL: https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        run: python scripts/notify_native_update.py
+      - name: Record acknowledged notification
+        if: steps.notify.outputs.sent == 'true'
+        run: |
+          url=$(cat .upstream-review/pr-url.txt)
+          gh pr view "$url" --json body --jq '.body' > .upstream-review/notified-report.md
+          echo '<!-- notified:${{ steps.sync.outputs.fingerprint }} -->' >> .upstream-review/notified-report.md
+          gh pr edit "$url" --body-file .upstream-review/notified-report.md
