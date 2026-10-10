@@ -131,8 +131,13 @@
             const parentResolver = QOL.panelCache.createIdResolver("gameplay_hud", {
                 retryMs: 500, ownerPath: [{ id: "Hud", optional: true }, { className: "HudCore" }]
             });
-            const statsResolvers = ["HeroStatsDisplay", "HeroStatsWeapon", "CitadelHudHeroShop"].map(id =>
-                QOL.panelCache.createIdResolver(id, { retryMs: 1500 }));
+            const statsResolvers = [
+                QOL.panelCache.createIdResolver("HeroStatsDisplay", { retryMs: 3000 }),
+                QOL.panelCache.createIdResolver("HeroStatsWeapon", { retryMs: 3000 }),
+                QOL.panelCache.createIdResolver("CitadelHudHeroShop", {
+                    retryMs: 1500, ownerPath: [{ id: "Hud", optional: true }, { className: "HudCore" }]
+                })
+            ];
             let running = false, loop = null, rootOwner = null, model = null, overlay = null, signature = null, statsOwner = null;
             let nextTooltipScanMs = 0, lastShopOpen = null;
             const labels = new Map(), sources = new Map(), goldenValues = new Map();
@@ -200,7 +205,7 @@
                     record.panel = P.findTraverse(statsOwner, id);
                     if (record.panel) break;
                 }
-                record.delay = record.panel ? 0 : Math.min(record.delay ? record.delay * 2 : 500, 1500);
+                record.delay = record.panel ? 0 : Math.min(record.delay ? record.delay * 2 : 500, 3000);
                 record.nextSearchMs = now + (record.panel ? 1500 : record.delay);
                 if (previous && record.panel !== previous) goldenValues.delete(def.key);
                 sources.set(def.key, record);
@@ -211,7 +216,7 @@
                 if (now < nextTooltipScanMs) return;
                 const breakdown = P.findTraverse(root, BREAKDOWN_ID);
                 const valid = likelyBreakdown(breakdown);
-                nextTooltipScanMs = now + (valid ? 250 : 1500);
+                nextTooltipScanMs = now + (valid ? 250 : 3000);
                 if (!valid) return;
                 const value = breakdownValue(breakdown);
                 const key = statKeyForPanel(breakdown);

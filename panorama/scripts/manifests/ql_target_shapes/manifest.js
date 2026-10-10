@@ -51,8 +51,25 @@
             let root = null;
             let model = null;
             let nextDiscovery = 0;
+            let nextBroadDiscovery = 0;
+            let targetScope = null;
+            let broadShapes = new Map(), broadHints = new Map();
             let loop = null;
             let active = false;
+
+            function findTargetScope(hud) {
+                // hud.xml and the Debugger capture verify these direct children.
+                // The dynamic host may be missing, so avoid a full-HUD ID miss here.
+                let core = null;
+                try {
+                    core = (hud.Children() || []).find(panel => panels.isAlive(panel) &&
+                        panels.hasClassToken(panel, "HudCore"));
+                } catch (_) { return null; }
+                const gameplay = panels.findChild(core, "gameplay_hud");
+                const alive = panels.findChild(gameplay, "gameplay_hud_alive");
+                const crosshair = panels.findChild(alive, "crosshair");
+                return panels.findChild(crosshair, "unit_target_container");
+            }
 
             function readModel() {
                 const cfg = ctx.config.view();
@@ -75,7 +92,9 @@
                 for (const [target, owner] of shapes) release(target, owner);
                 for (const [target, owner] of hints) release(target, owner);
                 shapes.clear(); hints.clear();
-                nextDiscovery = 0;
+                broadShapes.clear(); broadHints.clear();
+                nextDiscovery = nextBroadDiscovery = 0;
+                targetScope = null;
             }
 
             function reconcile(owners, current) {
@@ -113,8 +132,24 @@
                 }
                 const now = QOL.utils.PerfNowMs();
                 if (now >= nextDiscovery) {
-                    reconcile(shapes, new Map(QOL.utils.FindPanelsByClass(root, "target_shape").map(panel => [panel, null])));
-                    reconcile(hints, hintSources(root));
+                    const scope = findTargetScope(root);
+                    if (scope !== targetScope) {
+                        targetScope = scope;
+                        nextBroadDiscovery = 0;
+                    }
+                    if (now >= nextBroadDiscovery) {
+                        broadShapes = new Map(QOL.utils.FindPanelsByClass(root, "target_shape").map(panel => [panel, null]));
+                        broadHints = hintSources(root);
+                        nextBroadDiscovery = now + (scope ? 3000 : 500);
+                    }
+                    const currentShapes = new Map(broadShapes);
+                    const currentHints = new Map(broadHints);
+                    if (scope) {
+                        for (const panel of QOL.utils.FindPanelsByClass(scope, "target_shape")) currentShapes.set(panel, null);
+                        for (const [panel, source] of hintSources(scope)) currentHints.set(panel, source);
+                    }
+                    reconcile(shapes, currentShapes);
+                    reconcile(hints, currentHints);
                     nextDiscovery = now + (shapes.size || hints.size ? 1000 : 500);
                 }
                 render(shapes, model.shapeStyles, target => panels.hasClassToken(target, "target_shape"));

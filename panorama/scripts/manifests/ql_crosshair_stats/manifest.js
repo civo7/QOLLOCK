@@ -164,7 +164,7 @@
             function _getSourceContainer(st, source, def, owners, nowMs) {
                 let c = st.sourceContainers[def.key];
                 const preferred = sourceScopes[SOURCE_OWNER[def.key]];
-                if (_isDirectChild(c, sourceParents[def.key]) && _belongsToSource(c, source) && _findChild(sourceParents[def.key], def.id) === c) {
+                if (_isDirectChild(c, sourceParents[def.key]) && _belongsToSource(c, source)) {
                     // A compatibility result must not mask a row later created
                     // at its verified path (old native generations may stay alive).
                     let current = null;

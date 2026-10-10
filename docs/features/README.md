@@ -33,9 +33,9 @@ tables, CSS values, test history or general verification caveats into it.
 | [ql_on_death_arcade](../../panorama/scripts/manifests/ql_on_death_arcade/manifest.js) | [Respawn/request/menu coordination](ql_on_death_arcade.md); games execute in the settings context. |
 | [ql_minimap_runtime](../../panorama/scripts/manifests/ql_minimap_runtime/manifest.js) | Base/Alt/Tab geometry, opacity, crates, tunnels and minimap presentation. |
 | [ql_recent_purchases](../../panorama/scripts/manifests/ql_recent_purchases/manifest.js) | Shop filters, floating purchase feed and top-bar purchase popups. |
-| [ql_target_shapes](../../panorama/scripts/manifests/ql_target_shapes/manifest.js) | Size/opacity of native target shapes and both native hint branches, including default-state cleanup; no XML class extension. |
+| [ql_target_shapes](../../panorama/scripts/manifests/ql_target_shapes/manifest.js) | Size/opacity of native target shapes and both native hint branches, including default-state cleanup; no XML class extension. The verified unit-target host is checked on each discovery tick; out-of-path additions can take up to 3 seconds to appear while that host exists. |
 | [ql_souls](../../panorama/scripts/manifests/ql_souls/manifest.js) | Native gold/AP container geometry and visibility, not a second economy model. |
-| [ql_stat_bonuses](../../panorama/scripts/manifests/ql_stat_bonuses/manifest.js) | Golden-statue/boon stat bonus readout from native stat sources. |
+| [ql_stat_bonuses](../../panorama/scripts/manifests/ql_stat_bonuses/manifest.js) | Golden-statue/boon stat bonus readout from native stat sources. Missing source owners, stat rows and tooltip breakdowns retry within 3 seconds; detached rows are rechecked on the next poll, while still-attached rows use periodic discovery. |
 | [ql_stats_position](../../panorama/scripts/manifests/ql_stats_position/manifest.js) | Native stats placement and separate normal/scoreboard visibility. |
 | [ql_damage_impact](../../panorama/scripts/manifests/ql_damage_impact/manifest.js) | Native directional damage indicator styling. |
 | [ql_sigflash](../../panorama/scripts/manifests/ql_sigflash/manifest.js) | Flash on pressing an unavailable signature ability; shares `ENABLE_PASSIVE_COOLDOWN` and has no public Sigflash toggle. |
