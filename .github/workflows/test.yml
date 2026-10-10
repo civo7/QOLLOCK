@@ -25,3 +25,14 @@ jobs:
           python-version: '3.12'
       - run: python -m unittest discover -s tests -p '*_automation_test.py'
       - run: node --test tests/updater_worker.test.mjs
+  compiler:
+    runs-on: windows-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - name: Check isolated builder logic on Windows PowerShell 5.1
+        shell: powershell
+        run: ./build_mod/tests/build_mod_regression.ps1
+      - name: Check isolated builder logic on PowerShell 7
+        shell: pwsh
+        run: ./build_mod/tests/build_mod_regression.ps1

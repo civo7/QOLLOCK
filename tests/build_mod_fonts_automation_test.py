@@ -14,10 +14,36 @@ POWERSHELL = shutil.which("pwsh") or shutil.which("powershell")
 
 @unittest.skipUnless(POWERSHELL, "PowerShell is required for isolated staging checks")
 class FontStagingTests(unittest.TestCase):
+    def test_qollock_filter_excludes_root_development_tooling(self):
+        script = (ROOT / "build_mod/build_mod.ps1").read_text(encoding="utf-8")
+        start = script.index("        $ContentRoots =")
+        end = script.index("        $CurrentFiles =", start)
+        block = script[start:end]
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            for relative in ("panorama/scripts/runtime.js", "sounds/voice.wav",
+                             "soundevents/voice.vsndevts", "scripts/tool.js",
+                             "node_modules/example/index.js", "panorama/.hidden/tool.js"):
+                path = root / relative
+                path.parent.mkdir(parents=True, exist_ok=True)
+                path.write_text("filter fixture", encoding="utf-8")
+            command = "$ErrorActionPreference = 'Stop'; $ModSourcePath = (Get-Item -LiteralPath $env:FONT_TEST_ROOT).FullName; " + block + """
+                if (@($SourceFiles).Count -ne 3) {
+                    throw ('Unexpected source roots: ' + @($SourceFiles).Count + '; root=' + $ModSourcePath + '; files=' + ($SourceFiles.FullName -join ','))
+                }
+                if (@($SourceFiles | Where-Object { $_.Name -eq 'tool.js' }).Count) {
+                    throw 'Development scripts included'
+                }
+            """
+            result = subprocess.run([POWERSHELL, "-NoProfile", "-NonInteractive", "-Command", command],
+                                    env=dict(os.environ, FONT_TEST_ROOT=str(root)),
+                                    capture_output=True, text=True, timeout=30)
+            self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+
     def test_fonts_are_copied_updated_and_restored_without_compilation(self):
         script = (ROOT / "build_mod/build_mod.ps1").read_text(encoding="utf-8")
-        start = script.index("            if ($file.Extension -ieq '.ttf') {")
-        end = script.index("            if ($AllowedExts", start)
+        start = script.index("            if ($DirectExts -contains $file.Extension) {")
+        end = script.index("            if ($AutoVtexSourceExts", start)
         block = script[start:end]
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)
@@ -29,6 +55,7 @@ class FontStagingTests(unittest.TestCase):
                 $file = Get-Item -LiteralPath (Join-Path $env:FONT_TEST_ROOT 'Mojang-Regular.ttf')
                 $TempGame = Join-Path $env:FONT_TEST_ROOT 'staging'
                 $relPath = 'panorama/fonts/Mojang-Regular.ttf'
+                $DirectExts = @('.ttf')
                 $hashChanged = $false
             """ + block + """
                 $dest = Join-Path $TempGame $relPath
