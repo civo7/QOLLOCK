@@ -22,8 +22,6 @@ notices must be preserved.
 ## Other bundled materials
 
 The `Mojang-*.ttf` files under `panorama/fonts/` are Minecraft fonts from Mojang.
-Deadlock for Dummies recordings under `sounds/dl4d/` and the Rem Tunnels Overlay
-are credited to [oGeorge](https://gamebanana.com/members/5260464).
 
 The maintainer reports that permission to use contributed materials was obtained
 from their authors. Permission to include material does not replace its original
