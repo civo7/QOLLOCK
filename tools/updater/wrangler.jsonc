@@ -1,0 +1,13 @@
+{
+  "$schema": "https://raw.githubusercontent.com/cloudflare/workers-sdk/main/packages/wrangler/config-schema.json",
+  "name": "qollock-native-watcher",
+  "account_id": "fa170b68e028c03e55971ade77fecc13",
+  "main": "worker.mjs",
+  "compatibility_date": "2026-10-10",
+  "workers_dev": true,
+  "triggers": { "crons": ["*/10 * * * *"] },
+  "vars": { "ENABLED": "false" },
+  "kv_namespaces": [
+    { "binding": "STATE_KV", "id": "d5bfed05d1d84baf85895fa58ed6d870" }
+  ]
+}

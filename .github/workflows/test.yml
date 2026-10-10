@@ -20,3 +20,8 @@ jobs:
           cache: npm
       - run: npm ci
       - run: npm test
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: python -m unittest discover -s tests -p '*_automation_test.py'
+      - run: node --test tests/updater_worker.test.mjs

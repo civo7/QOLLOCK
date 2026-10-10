@@ -9,6 +9,9 @@ node_modules/
 .tmp_*
 scripts/tmp_*.ps1
 *.log
+.upstream-review/
+scripts/__pycache__/
+tests/__pycache__/
 
 # Local backup/restore scratch folders (if created inside repo)
 _restore_*/
