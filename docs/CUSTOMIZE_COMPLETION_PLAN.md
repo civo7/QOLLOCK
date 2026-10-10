@@ -20,6 +20,10 @@ acceptance are separate states. No item below claims native rendering or FPS.
 - Conditional Shop/NavPanel overflow release, preserving history scroll masks.
 - Keyboard uses expanded pixel bounds without changing its fixed layout
   margins; Combat Status uses the same fixed-baseline x/y adapter as overlays.
+- Recent Purchases reads direct row labels/icon in one sibling snapshot while
+  retaining nested compatibility; notification cadence and deadlines are unchanged.
+- Audio prefers the verified native clock path; the unsecured timer avoids
+  duplicate root searches when no gold container exists.
 
 ## Movement investigation
 
@@ -60,8 +64,8 @@ an instruction to duplicate more panels for geometry.
   nonzero positions against the previous build before declaring visual parity.
 - Complete the inspector/theme/localization visual pass, including control
   ordering, units, small typography and Basic/Advanced capabilities.
-- Audit remaining missing-source Timer/Audio discovery, chat image embedding,
-  Recent Purchases and populated Active Stats. Preserve replacement and short
+- Continue the chat image and populated Active Stats audit; assess remaining
+  Timer/Audio compatibility misses and purchase hero-card discovery. Preserve replacement and short
   transient source detection; do not trade correctness for lower counters.
 - Compare matched populated-source profiles with Customize open/closed and
   transition scenarios. Counter reductions are not frame-time improvements.

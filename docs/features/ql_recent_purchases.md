@@ -13,6 +13,12 @@ by the existing `HeroNameHidden` labels and native `HeroBadge.heroid` evidence.
 Living replacements of the shop, purchase container, top bar, card or hero identity
 release the retired generation and invalidate its pending work.
 
+The current purchase snippet's labels and icon are direct row children. Each
+observation snapshots those siblings once and reads their current values; no
+leaf handles are retained across polls. Nested compatibility layouts still use
+the existing class traversal fallback. Purchase observation frequency, late
+hero completion, event deduplication and notification deadlines are unchanged.
+
 The engine owns `RecentPurchasesContainer` and its purchase rows. The mod
 may read and style them but must not delete or cap native history. Disable clears
 owned native code styles and filter/icon classes, then removes only mod-created

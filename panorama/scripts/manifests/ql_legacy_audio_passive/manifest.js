@@ -78,7 +78,12 @@
             const IsStreetBrawlModeActive = function(r) { return QOL.isStreetBrawlModeActive ? QOL.isStreetBrawlModeActive(r) : false; };
             const IsColorWarningEnabled = function(cfg) { return QOL.isColorWarningEnabled ? QOL.isColorWarningEnabled(cfg) : false; };
 
-            const clockResolvers = ["HudGameTime", "GameTime"].map(id => QOL.panelCache.createIdResolver(id));
+            const clockResolvers = [
+                QOL.panelCache.createIdResolver("GameTime", {
+                    ownerPath: [{ id: "Hud", optional: true }, { className: "HudCore" }, "TopBar", { className: "GameClock" }]
+                }),
+                QOL.panelCache.createIdResolver("HudGameTime")
+            ];
             function EnsureGameTimePanelCache(root) {
                 for (const resolver of clockResolvers) {
                     const panel = resolver.resolve(root);

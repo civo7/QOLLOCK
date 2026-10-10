@@ -80,6 +80,35 @@ test("shop geometry releases defaults to CSS without touching native feedback", 
     env.stop(); env.clean();
 });
 
+test("purchase rows use direct native leaves and observe replacements without caching stale text", () => {
+    const env = fixture();
+    const first = env.purchase();
+    let traversals = 0;
+    const traverse = first.row.FindChildrenWithClassTraverse.bind(first.row);
+    first.row.FindChildrenWithClassTraverse = name => { traversals++; return traverse(name); };
+    env.start();
+    assert.equal(traversals, 0, "populated direct rows need no repeated per-leaf subtree search");
+    const replacement = env.add(first.row, "", ["recentModPurchaseName"], "Label"); replacement.text = "Extra Health";
+    first.labels.recentModPurchaseName.SetParent(env.retired);
+    first.labels.recentTimePurchased.text = "01:01";
+    env.clock.advance(250);
+    assert.equal(env.entries().length, 1);
+    assert.equal(traversals, 0);
+    env.stop(); env.clean();
+});
+
+test("nested compatibility purchase leaves still notify and accept late hero text", () => {
+    const env = fixture(); env.start();
+    const source = env.purchase();
+    const wrapper = env.add(source.row, "CompatibilityContents");
+    for (const panel of [...Object.values(source.labels), source.icon]) panel.SetParent(wrapper);
+    source.labels.recentModPurchaserHero.text = "";
+    env.clock.advance(250); assert.equal(env.entries().length, 1);
+    source.labels.recentModPurchaserHero.text = "BEBOP";
+    env.clock.advance(250); assert.equal(env.entries().length, 1, "late hero text cannot replay the purchase");
+    env.stop(); env.clean();
+});
+
 test("still-live shop replacement releases native styles, icons, filters and controls", () => {
     const env = fixture({ RECENT_PURCHASES_PANEL_X_OFFSET: 27, RECENT_PURCHASES_PANEL_OPACITY: 0.3 });
     const old = env.purchase();

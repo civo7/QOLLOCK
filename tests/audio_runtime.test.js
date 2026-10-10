@@ -169,3 +169,20 @@ for (const lead of [0, 15, 30, 60]) {
         assert.deepEqual(reloaded.sounds.map(event => event.time), expected);
     });
 }
+
+test("audio reads the verified native GameClock path and immediately follows a living label replacement", () => {
+    const runtime = createAudioRuntime({ ENABLE_INTERVAL: 1, BRIDGE_BUFF_START: 0 });
+    const add = (parent, id, type = "Panel") => runtime.global.$.CreatePanel(type, parent, id);
+    const core = add(runtime.root, ""); core.AddClass("HudCore");
+    const top = add(core, "TopBar"), clock = add(top, ""); clock.AddClass("GameClock");
+    const first = add(clock, "GameTime", "Label"); first.text = "05:00";
+    let reminders = 0;
+    runtime.global.$.DispatchEvent = name => { if (name === "PlaySoundEffect") reminders++; };
+    Object.defineProperty(runtime.gameClock, "text", { configurable: true, get() { throw Error("retired compatibility clock must not be read"); } });
+    runtime.callback()(); assert.equal(reminders, 1);
+    first.SetParent(add(null, "RetiredClock"));
+    const replacement = add(clock, "GameTime", "Label"); replacement.text = "10:00";
+    runtime.callback()(); assert.equal(reminders, 2);
+    runtime.instance.onDisable(); runtime.hud.clock.advance(0);
+    assert.deepEqual(runtime.hud.clock.errors, []);
+});

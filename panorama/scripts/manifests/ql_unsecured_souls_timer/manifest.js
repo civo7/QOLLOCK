@@ -90,7 +90,7 @@
                 const modern = modernResolver.resolve(root);
                 if (modern) return modern;
                 const gold = goldResolver.resolve(root);
-                const amount = amountResolver.resolve(gold || root) || rootAmountResolver.resolve(root);
+                const amount = gold ? amountResolver.resolve(gold) || rootAmountResolver.resolve(root) : rootAmountResolver.resolve(root);
                 if (amount) return amount;
                 if (now >= nextSourceSearchMs) {
                     fallbackSource = findFallbackSource(root, gold);

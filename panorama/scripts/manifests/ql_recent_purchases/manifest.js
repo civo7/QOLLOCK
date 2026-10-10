@@ -37,6 +37,21 @@
         const labels = row.FindChildrenWithClassTraverse(className);
         return labels.length ? P.readText(labels[0]).trim() : "";
     }
+    const PURCHASE_TEXT_PARTS = ["recentModPurchaseName", "recentTimePurchased", "recentModPurchaserHero"];
+    const PURCHASE_SHOP_PARTS = [...PURCHASE_TEXT_PARTS, "mod_icon"];
+    function purchaseParts(row, includeIcon) {
+        // RecentPurchase XML places these leaves directly under the row.
+        // Snapshot siblings once; never retain native handles across polls.
+        const names = includeIcon ? PURCHASE_SHOP_PARTS : PURCHASE_TEXT_PARTS;
+        const parts = {};
+        for (const child of row.Children()) {
+            if (!P.isAlive(child)) continue;
+            for (const name of names) if (!parts[name] && child.BHasClass(name)) parts[name] = child;
+        }
+        // Retain compatibility with nested layouts and partially-created rows.
+        for (const name of names) if (!parts[name]) parts[name] = row.FindChildrenWithClassTraverse(name)[0] || null;
+        return parts;
+    }
     function belongsTo(panel, owner) {
         for (let depth = 0; P.isAlive(panel) && depth < 64; depth++) {
             if (panel === owner) return true;
@@ -198,10 +213,12 @@
             }
             function readPurchases() {
                 if (!P.isAlive(container)) return [];
-                return container.FindChildrenWithClassTraverse("recentPurchase").filter(P.isAlive).map(row => ({
-                    row, name: purchaseText(row, "recentModPurchaseName"), time: purchaseText(row, "recentTimePurchased"),
-                    hero: purchaseText(row, "recentModPurchaserHero"), classes: PURCHASE_CLASSES.filter(cls => row.BHasClass(cls))
-                }));
+                return container.FindChildrenWithClassTraverse("recentPurchase").filter(P.isAlive).map(row => {
+                    const parts = purchaseParts(row, model.shop);
+                    return { row, name: P.readText(parts.recentModPurchaseName).trim(), time: P.readText(parts.recentTimePurchased).trim(),
+                        hero: P.readText(parts.recentModPurchaserHero).trim(), icon: parts.mod_icon,
+                        classes: PURCHASE_CLASSES.filter(cls => row.BHasClass(cls)) };
+                });
             }
             function filterContext() {
                 return {
@@ -274,7 +291,7 @@
                     for (const purchase of purchases) {
                         nativeClass(purchase.row, "filterHidden", filters.some(filter => filterHides(filter, purchase, context)));
                         usedClasses.add(purchase.row);
-                        const icon = purchase.row.FindChildrenWithClassTraverse("mod_icon")[0];
+                        const icon = purchase.icon;
                         const image = imageMap[purchase.name];
                         if (!P.isAlive(icon) || !image) continue;
                         const complete = renderStyles(nativeStyles, icon, { backgroundImage: image, washColor: "none" }, true);

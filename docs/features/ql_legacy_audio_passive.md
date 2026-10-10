@@ -17,6 +17,12 @@ pending work. Hideout must remove a visible caption without emitting another
 reminder from a retained clock. Settings changes refresh reminder policy without
 waiting for the next observation poll.
 
+Clock discovery prefers the verified `Hud > .HudCore > TopBar > .GameClock >
+GameTime` path and revalidates it on every observation. Root-level `GameTime`
+and the legacy `HudGameTime` remain compatibility sources. Missing-source retry
+and reminder observation cadence are unchanged; a replacement on the verified
+path is selected immediately, without consulting a retired compatibility clock.
+
 Announcement deduplication, caption tokens and native caption handles belong to
 each feature instance. A new HUD generation resets its private announcement
 history; disabled callbacks cannot mutate a later instance. Disabling captions
