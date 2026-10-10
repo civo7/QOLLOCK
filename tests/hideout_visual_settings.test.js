@@ -331,13 +331,13 @@ test("combat status reapplies layout to a recreated overlay", () => {
     hud.clock.advance(500);
     const first = hud.root.FindChildTraverse("QOLCombatStatusOverlay");
     assert.ok(first);
-    assert.equal(first.style.marginLeft, "100px");
+    assert.equal(first.style.x, "100px");
     first.DeleteAsync(0);
     hud.clock.advance(500);
     const replacement = hud.root.FindChildTraverse("QOLCombatStatusOverlay");
     assert.ok(replacement);
     assert.notEqual(replacement, first);
-    assert.equal(replacement.style.marginLeft, "100px");
+    assert.equal(replacement.style.x, "100px");
     assert.deepEqual(hud.clock.errors, []);
 });
 

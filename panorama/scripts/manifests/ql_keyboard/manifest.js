@@ -119,8 +119,8 @@
                 const cfg = ctx.config.view();
                 const full = U.IsCfgEnabled(cfg, "ENABLE_FULL_KEYBOARD_LAYOUT");
                 const scale = U.ClampConfigNumber(cfg.KEYBOARD_OVERLAY_SCALE, 100, 70, 150, true) / 100;
-                const x = U.ClampConfigNumber(cfg.KEYBOARD_OVERLAY_X_OFFSET, 0, -1500, 1500, true);
-                const y = U.ClampConfigNumber(cfg.KEYBOARD_OVERLAY_Y_OFFSET, 0, -400, 1000, true);
+                const x = Math.round(Number(cfg.KEYBOARD_OVERLAY_X_OFFSET)) || 0;
+                const y = Math.round(Number(cfg.KEYBOARD_OVERLAY_Y_OFFSET)) || 0;
                 const size = value => Math.max(1, Math.round(value * scale)) + "px";
                 const mouseSize = Math.max(1, Math.round(20 * Math.max(1, scale))) + "px";
                 return { wash: U.ResolveWashColorFromPalette(U.ReadKeyboardOverlayWashColorIndex(cfg)),

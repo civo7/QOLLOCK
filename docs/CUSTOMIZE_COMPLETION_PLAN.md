@@ -18,6 +18,8 @@ acceptance are separate states. No item below claims native rendering or FPS.
 - Expanded pixel bounds for owned overlays and shop/purchase surfaces; own
   overlays use x/y over fixed baselines rather than offset-sized margins.
 - Conditional Shop/NavPanel overflow release, preserving history scroll masks.
+- Keyboard uses expanded pixel bounds without changing its fixed layout
+  margins; Combat Status uses the same fixed-baseline x/y adapter as overlays.
 
 ## Movement investigation
 
@@ -52,7 +54,7 @@ an instruction to duplicate more panels for geometry.
 
 ## Remaining implementation
 
-- Inspect remaining native Keyboard/minimap/healthbar bounds and percentage
+- Inspect remaining native minimap/healthbar/chat/damage bounds and percentage
   cooldown placement. Keep legacy units and defaults; do not open scroll masks.
 - Confirm native geometry for changed offset adapters and compare saved
   nonzero positions against the previous build before declaring visual parity.

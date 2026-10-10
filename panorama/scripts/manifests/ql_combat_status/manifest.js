@@ -72,8 +72,8 @@
                 const cfg = ctx.config.view();
                 model = { enabled: QOL.utils.IsCfgEnabled(cfg, "ENABLE_COMBAT_STATUS"), styles: {
                     uiScale: Math.round(Number(cfg.COMBAT_STATUS_SCALE) || 100) + "%",
-                    marginLeft: (Math.round(Number(cfg.COMBAT_STATUS_X_OFFSET)) || 0) + "px",
-                    marginBottom: (165 + (Math.round(Number(cfg.COMBAT_STATUS_Y_OFFSET)) || 0)) + "px",
+                    x: (Math.round(Number(cfg.COMBAT_STATUS_X_OFFSET)) || 0) + "px",
+                    y: -(Math.round(Number(cfg.COMBAT_STATUS_Y_OFFSET)) || 0) + "px",
                     visibility: "visible"
                 } };
                 hud.refreshRootClasses($.GetContextPanel()); update();

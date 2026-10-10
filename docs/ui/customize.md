@@ -218,7 +218,7 @@ one active owner cannot remove the overflow needed by the other. This is a
 source-level clipping fix, not proof that native engine culling is absent.
 Confirm distant offsets, normal gun and Tokamak layouts in the client.
 
-Feature-created Reload, Zip Boost, Stat Bonuses, Active Stats, Compass/Speed
+Feature-created Reload, Zip Boost, Stat Bonuses, Active Stats, Combat Status, Compass/Speed
 and unsecured overlays apply offsets through x/y over their fixed baseline.
 Offset changes no longer enlarge their margins and consume layout space.
 Better Unsecured retains its stored down-positive default-relative adapter;

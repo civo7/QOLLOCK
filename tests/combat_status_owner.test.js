@@ -18,8 +18,9 @@ test("combat text owner waits for native gameplay and derives reactive geometry 
     const env = setup(); env.feature.onEnable(); assert.equal(env.overlay(), null);
     env.gameplay(); env.clock.advance(250); assert.equal(env.label("QOLCombatStatusState").text, "OUT OF COMBAT");
     env.cfg.COMBAT_STATUS_SCALE = 150; env.cfg.COMBAT_STATUS_X_OFFSET = 80; env.cfg.COMBAT_STATUS_Y_OFFSET = 40;
-    env.feature.onSettingsChanged(); assert.equal(env.overlay().style.uiScale, "150%"); assert.equal(env.overlay().style.marginLeft, "80px");
-    assert.equal(env.overlay().style.marginBottom, "205px"); env.clock.advance(500); assert.equal(env.reads(), 2); env.stop();
+    env.feature.onSettingsChanged(); assert.equal(env.overlay().style.uiScale, "150%"); assert.equal(env.overlay().style.x, "80px");
+    assert.equal(env.overlay().style.y, "-40px"); assert.equal(env.overlay().style.marginBottom, undefined);
+    env.clock.advance(500); assert.equal(env.reads(), 2); env.stop();
 });
 
 test("combat text owner retires living moved labels and preserves same-HUD phase history across gameplay replacement", () => {

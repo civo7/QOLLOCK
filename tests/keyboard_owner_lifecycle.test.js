@@ -31,14 +31,14 @@ function setup(overrides = {}) {
 }
 
 test("keyboard keeps both native binding layouts and reacts to geometry/palette/RGB settings without idle config reads", () => {
-    const env = setup({ KEYBOARD_OVERLAY_SCALE: 150, KEYBOARD_OVERLAY_X_OFFSET: 75, KEYBOARD_OVERLAY_Y_OFFSET: 80, KEYBOARD_OVERLAY_WASH_COLOR: 4 });
+    const env = setup({ KEYBOARD_OVERLAY_SCALE: 150, KEYBOARD_OVERLAY_X_OFFSET: -1999, KEYBOARD_OVERLAY_Y_OFFSET: -1999, KEYBOARD_OVERLAY_WASH_COLOR: 4 });
     env.feature.onEnable();
     const box = env.box(), base = box.FindChildrenWithClassTraverse("KeyboardLayoutBase")[0], full = box.FindChildrenWithClassTraverse("KeyboardLayoutFull")[0];
     const actions = layout => layout.FindChildrenWithClassTraverse("Key").filter(panel => panel.paneltype === "CitadelBinding").map(panel => env.bindingActions.get(panel));
     assert.deepEqual(actions(base), ["AbilityMelee", "MoveForward", "Attack", "ADS", "Roll", "MoveLeft", "MoveBackwards", "MoveRight", "HeldItem", "Crouch", "Mantle"]);
     assert.deepEqual(actions(full), ["Ability1", "Ability2", "Ability3", "Ability4", "Attack", "ADS", "Scoreboard", "AbilityMelee", "MoveForward", "Cosmetic1", "Reload", "MoveLeft", "MoveBackwards", "MoveRight", "HeldItem", "Roll", "Item1", "Item2", "Item3", "Item4", "Crouch", "ExtraInfo", "Mantle"]);
     assert.equal(base.Children().length, 3); assert.equal(full.Children().length, 5);
-    assert.equal(box.style.marginLeft, "150px"); assert.equal(box.style.x, "75px"); assert.equal(box.style.y, "-80px");
+    assert.equal(box.style.marginLeft, "150px"); assert.equal(box.style.x, "-1999px"); assert.equal(box.style.y, "1999px");
     assert.equal(base.FindChildrenWithClassTraverse("SpaceKey")[0].style.width, "288px");
     assert.equal(env.overlay().style.washColor, "#ff3b47");
     Object.assign(env.cfg, { ENABLE_FULL_KEYBOARD_LAYOUT: true, KEYBOARD_OVERLAY_SCALE: 70, KEYBOARD_OVERLAY_WASH_COLOR: env.Q.utils.EncodeHexColor("#010203") });

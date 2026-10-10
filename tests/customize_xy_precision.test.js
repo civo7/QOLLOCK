@@ -26,7 +26,7 @@ test("reload offsets use expanded current bounds and preserve the old compact ra
 test("full-HUD overlay and shop offsets round-trip outside their historic limits", () => {
     const { global: g } = load();
     const config = { ...g.QOL_DEFAULT_CONFIG };
-    const keys = ["CROSSHAIR_STATS", "COMPASS", "COMPASS_SPEED", "ZIP_BOOST", "STAT_BONUSES", "UNSECURED_SOUL_TIMER",
+    const keys = ["CROSSHAIR_STATS", "COMPASS", "COMPASS_SPEED", "ZIP_BOOST", "STAT_BONUSES", "COMBAT_STATUS", "KEYBOARD_OVERLAY", "UNSECURED_SOUL_TIMER",
         "UNSECURED_SOULS_HUD", "RECENT_PURCHASES_QUICK", "RECENT_PURCHASES_PANEL"]
         .flatMap(prefix => [prefix + "_X_OFFSET", prefix + "_Y_OFFSET"]).concat(["SHOP_OFFSET_X", "SHOP_OFFSET_Y"]);
     const oldFields = g.QOL_COMPACT_SCHEMA_REGISTRY["4.0.5"].schema;
