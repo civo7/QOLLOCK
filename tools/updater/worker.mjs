@@ -3,7 +3,7 @@ const upstream = "SteamTracking/GameTracking-Deadlock";
 const stateKey = "QOLLOCK_NATIVE_WATCHER_V1";
 
 async function github(repository, path, token, options = {}) {
-    const response = await fetch(`https://api.github.com/repos/${repository}/${path}`, {
+    const response = await fetch(`https://api.github.com/repos/${repository}${path ? '/' + path : ''}`, {
         ...options,
         headers: { Authorization: `Bearer ${token}`, Accept: "application/vnd.github+json",
             "User-Agent": "QOLLOCK-Native-Watcher", ...options.headers }

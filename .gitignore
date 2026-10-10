@@ -10,6 +10,9 @@ node_modules/
 scripts/tmp_*.ps1
 *.log
 .upstream-review/
+.wrangler/
+tools/updater/.dev.vars*
+tools/updater/.env*
 scripts/__pycache__/
 tests/__pycache__/
 

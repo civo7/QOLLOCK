@@ -78,10 +78,11 @@ the bundle in the current Actions run before attempting delivery again.
 `tools/updater/worker.mjs` checks every ten minutes and triggers the same review
 workflow when enabled. No secrets are stored in its configuration.
 The checked-in config identifies the project account and its dedicated `STATE_KV`
-namespace; those identifiers are not credentials. The watcher remains disabled.
-Before activation, set the
+namespace; those identifiers are not credentials. The project watcher is enabled
+after the repository workflow and its GitHub credentials have been verified.
+For a new deployment, first set `ENABLED` to `false` and configure the
 Worker secret `GITHUB_PAT` with access to dispatch workflows/read the source
-repository, and set `ENABLED` to `true`.
+repository. Verify readiness, then set `ENABLED` to `true`.
 
 Publish `upstream.json` and `native-update.yml` on the repository's default branch
 before enabling the watcher. Its public status response exposes only readiness

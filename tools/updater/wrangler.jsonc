@@ -6,7 +6,7 @@
   "compatibility_date": "2026-10-10",
   "workers_dev": true,
   "triggers": { "crons": ["*/10 * * * *"] },
-  "vars": { "ENABLED": "false" },
+  "vars": { "ENABLED": "true" },
   "kv_namespaces": [
     { "binding": "STATE_KV", "id": "d5bfed05d1d84baf85895fa58ed6d870" }
   ]

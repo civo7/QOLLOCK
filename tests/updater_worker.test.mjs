@@ -77,7 +77,7 @@ test("preflight validates GitHub access without dispatching or writing state", a
     t.after(() => { globalThis.fetch = previousFetch; });
     globalThis.fetch = async (url, options = {}) => {
         assert.equal(options.method, undefined);
-        if (url.endsWith("/QOLLOCK/")) return Response.json({ permissions: { push: true } });
+        if (url.endsWith("/QOLLOCK")) return Response.json({ permissions: { push: true } });
         if (url.includes("contents/upstream.json")) return Response.json({
             content: btoa(JSON.stringify({ ...manifest, repository: "SteamTracking/GameTracking-Deadlock" }))
         });
