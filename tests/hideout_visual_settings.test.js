@@ -147,12 +147,12 @@ test("ammo geometry and late text targets survive hideout panel replacement", ()
     Q.core.ConfigStore.set("ql_ammo", "AMMO_PANEL_X_OFFSET", 100);
     Q.core.ConfigStore.set("ql_ammo", "AMMO_TEXT_COLOR", 3);
     hud.clock.advance(600);
-    assert.equal(first.style.x, "100px");
+    assert.equal(first.style.marginLeft, "100px");
     first.DeleteAsync(0);
     hud.clock.advance(1);
     const replacement = $.CreatePanel("Panel", hud.root, "ammo_panel");
     hud.clock.advance(600);
-    assert.equal(replacement.style.x, "100px");
+    assert.equal(replacement.style.marginLeft, "100px");
     const text = $.CreatePanel("Label", replacement, "AmmoText");
     text.AddClass("weapon_ammo");
     hud.clock.advance(600);

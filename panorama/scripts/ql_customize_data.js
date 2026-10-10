@@ -25,7 +25,18 @@
         { id: "abilityPoints", name: "Ability Points", path: [...abilities, "APContainer"], frame: true,
             note: "Color is shared with Bottom Bar.",
             fields: [...geometry("AP_"), { key: "BOTTOM_BAR_WASH_COLOR", label: "Color", type: "palette" }] },
-        { id: "ammo", name: "Ammo", path: [...crosshair, "gun", "gun_data", "ammo_panel"], fields: [
+        { id: "ammo", name: "Ammo", path: [...crosshair, "gun", "gun_data", "ammo_panel"],
+            resolve(hud) {
+                const gun = findPath(hud, [...crosshair, "gun", "gun_data"]) || Q.core.panel.findTraverse(hud, "gun_data");
+                return Q.core.panel.findChild(gun, "ammo_panel") || Q.core.panel.findChild(gun, "clip_status") ||
+                    Q.core.panel.findChild(gun, "clip_status_mirrored");
+            },
+            measurePanels(target) {
+                const gun = Q.core.panel.isAlive(target) ? target.GetParent() : null;
+                return ["ammo_panel", "clip_status", "clip_status_mirrored"]
+                    .map(id => Q.core.panel.findChild(gun, id)).filter(Q.core.panel.isAlive);
+            },
+            fields: [
             { key: "ENABLE_AMMO_STATUS", label: "Magazine indicator", type: "toggle" }, { key: "ENABLE_HIDE_MAGAZINE", label: "Hide total ammo", type: "toggle" },
             { key: "ENABLE_HIDE_AMMO_ALL", label: "Hide current ammo", type: "toggle" },
             ...geometry("AMMO_PANEL_"), { key: "AMMO_PANEL_SCALE", label: "Current Ammo", hidden: true }, { key: "AMMO_CURRENT_SCALE", label: "Current Ammo" },
@@ -135,7 +146,7 @@
         ? Q.core.panel.findChild(target, "HudStatBlock") || target : target;
     const hasFrame = element => element.frame !== false && (element.frame === true || canDrag(element) || !!resizeField(element));
     const field = (key, label, type, extra = {}) => Object.assign({ key, label, ...(type ? { type } : {}) }, extra);
-    Q.presentation = { elements, fieldMap, wireFields, normalize, resolve, findPath, register, canDrag, resizeField, hasFrame, chooseStatsPanel, scaleTarget, toDisplayValue, fromDisplayValue,
+    Q.presentation = { elements, fieldMap, wireFields, normalize, resolve, findPath, register, canDrag, resizeField, hasFrame, chooseStatsPanel, scaleTarget, toDisplayValue, fromDisplayValue, displayBounds,
         paths: { core, lower, abilities, crosshair, gameplay: [...core, "gameplay_hud"] },
         fields: { geometry, opacity, toggle, color, field } };
 })();

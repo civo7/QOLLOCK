@@ -437,6 +437,7 @@ test("ammo uses native gun breadcrumbs, retries text/container writes and releas
     env.clock.advance(600);
     assert.equal(current.style.fontSize, "24px");
     assert.equal(current.style.color, env.Q.core.panel.resolvePaletteColor(13));
+    assert.equal(ammo.style.marginLeft, "37px");
     assert.equal(clip.style.transform, "rotateZ(-45deg)");
     assert.equal(ring.style.transform, "rotateZ(23deg)");
     const detached = env.$.CreatePanel("Panel", null, "DetachedFixture");
@@ -461,8 +462,9 @@ test("ammo uses native gun breadcrumbs, retries text/container writes and releas
     assert.equal(rootSearches, 0, "both gun owners use the verified direct path");
     env.feature.onDisable();
     env.clock.advance(1100);
-    assert.equal(ammo.style.x, "0px");
-    assert.equal(ammo.style.y, "80px");
+    assert.equal(ammo.style.x, undefined);
+    assert.equal(ammo.style.y, undefined);
+    assert.equal(ammo.style.marginLeft, undefined);
     assert.equal(ammo.style.opacity, undefined);
     assert.equal(infinite.style.color, undefined);
     assert.equal(infinite.style.width, "17px");

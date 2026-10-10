@@ -12,7 +12,7 @@
             if (!cfg) return false;
             const isTrue = value => value === true || value === 1 || String(value) === "true";
             if (isTrue(cfg.ENABLE_AMMO_STATUS) || isTrue(cfg.ENABLE_HIDE_MAGAZINE) || isTrue(cfg.ENABLE_HIDE_AMMO_ALL)) return true;
-            for (const key of ["AMMO_CURRENT_SCALE", "AMMO_TOTAL_SCALE", "AMMO_PANEL_SCALE"]) {
+            for (const key of ["AMMO_CURRENT_SCALE", "AMMO_TOTAL_SCALE", "AMMO_PANEL_SCALE", "AMMO_HUD_SCALE"]) {
                 if (cfg[key] != null && Number(cfg[key]) !== 100) return true;
             }
             for (const key of ["AMMO_PANEL_X_OFFSET", "AMMO_PANEL_Y_OFFSET", "AMMO_CLIP_ANGLE", "AMMO_TEXT_COLOR"]) {
@@ -25,6 +25,7 @@
             { key: "ENABLE_HIDE_MAGAZINE", type: "toggle" },
             { key: "ENABLE_HIDE_AMMO_ALL", type: "toggle" },
             { key: "AMMO_PANEL_SCALE", type: "slider" },
+            { key: "AMMO_HUD_SCALE", type: "slider" },
             { key: "AMMO_CURRENT_SCALE", type: "slider" },
             { key: "AMMO_TOTAL_SCALE", type: "slider" },
             { key: "AMMO_PANEL_X_OFFSET", type: "slider" },
@@ -38,10 +39,10 @@
                 "gameplay_hud", "gameplay_hud_alive", "crosshair", "gun", "gun_data"];
             const ammoResolver = QOL.panelCache.createIdResolver("ammo_panel", { retryMs: 500, ownerPath: gunPath });
             const clipResolver = QOL.panelCache.createIdResolver("clip_status", { retryMs: 500, ownerPath: gunPath });
+            const geometry = panelAPI.createNativeStyleOwner({ resetValues: { x: "0px", y: "0px" } });
             const texts = new Map();
             const clips = new Map();
             let panel = null;
-            let signature = null;
             let model = null;
             let loop = null;
             const pips = { owner: null, children: [], maximum: 0, current: -1, color: "" };
@@ -124,11 +125,19 @@
                     totalStyles.width = Math.max(32, Math.round(50 * total / 100)) + "px";
                     totalStyles.marginLeft = Math.max(0, Math.round(2 * total / 100)) + "px";
                 }
+                const groupScale = clamp(cfg.AMMO_HUD_SCALE ?? 100, 50, 200);
+                const xOffset = clamp(cfg.AMMO_PANEL_X_OFFSET, -2000, 2000);
+                const yOffset = clamp(cfg.AMMO_PANEL_Y_OFFSET, -2000, 2000);
                 return { visualEnabled: Number(cfg.ENABLE_AMMO_STATUS) === 1, angle: clamp(cfg.AMMO_CLIP_ANGLE, 0, 360), currentStyles, totalStyles, infiniteStyles,
-                    styles: {
-                        x: clamp(cfg.AMMO_PANEL_X_OFFSET, -2000, 2000) + "px",
-                        y: (80 - clamp(cfg.AMMO_PANEL_Y_OFFSET, -2000, 2000)) + "px",
-                        preTransformScale2d: "1.00, 1.00", opacity: "1.00"
+                    clipStyles: {
+                        ...(groupScale !== 100 ? { uiScale: groupScale + "%" } : {}),
+                        ...(xOffset ? { x: xOffset + "px" } : {}),
+                        ...(yOffset ? { y: -yOffset + "px" } : {})
+                    },
+                    panelStyles: {
+                        ...(xOffset ? { marginLeft: xOffset + "px" } : {}),
+                        ...(yOffset ? { marginTop: -yOffset + "px" } : {}),
+                        ...(groupScale !== 100 ? { uiScale: groupScale + "%" } : {})
                     }
                 };
             }
@@ -141,11 +150,7 @@
             function releaseMain() {
                 for (const [target, state] of texts) releaseText(target, state.properties);
                 texts.clear();
-                if (!panelAPI.isAlive(panel)) return;
-                // Preserve the established ammo baseline on release.
-                panelAPI.syncStyles(panel, { x: "0px", y: "80px", preTransformScale2d: "1.00, 1.00" }, null);
-                QOL.utils.ClearStyleSafe(panel, "opacity");
-                panelAPI.setClass(panel, "qol-hidden", false);
+                if (panelAPI.isAlive(panel)) panelAPI.setClass(panel, "qol-hidden", false);
             }
 
             function discoverTexts() {
@@ -222,6 +227,7 @@
                 }
                 for (const [target, source] of sources) {
                     const previous = clips.get(target);
+                    geometry.apply(target, model.clipStyles);
                     panelAPI.setClass(target, "qol-ammo-visual-enabled", model.visualEnabled);
                     panelAPI.setClass(target, "qol-ammo-visual-disabled", !model.visualEnabled);
                     if (model.angle === 0) {
@@ -245,14 +251,14 @@
                 if (current !== panel) {
                     releaseMain();
                     panel = current;
-                    signature = null;
                 }
                 const clipSources = discoverClips(root);
                 renderClips(clipSources);
                 renderPips(clipSources);
+                geometry.retain([panel, ...clipSources.keys()]);
                 if (!panel) return;
                 panelAPI.setClass(panel, "qol-hidden", false);
-                signature = panelAPI.syncStyles(panel, model.styles, signature).sig;
+                geometry.apply(panel, model.panelStyles);
                 renderTexts(discoverTexts());
                 // Native ammo state may recolor retained labels between ticks.
                 if (model.currentStyles.color) for (const target of texts.keys()) {
@@ -262,7 +268,6 @@
 
             function refreshSettings() {
                 model = readModel();
-                signature = null;
                 ammoResolver.reset();
                 clipResolver.reset();
                 update();
@@ -282,8 +287,8 @@
                     releasePips();
                     for (const [target, state] of clips) releaseClip(target, state);
                     clips.clear();
+                    geometry.clear();
                     panel = model = null;
-                    signature = null;
                     ammoResolver.reset();
                     clipResolver.reset();
                 }

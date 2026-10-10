@@ -31,6 +31,8 @@ test("Bug 1 & 2: ql_ammo enables when slider is customized and neutral scale rel
     // Create dummy ammo panel in the DOM
     const root = hud.root;
     const ap = hud.sandbox.global.$.CreatePanel("Panel", root, "ammo_panel");
+    ap.style.x = "50%";
+    ap.style.y = "85px";
     const labelCurrent = hud.sandbox.global.$.CreatePanel("Label", ap, "current");
     labelCurrent.AddClass("weapon_ammo");
     const labelMax = hud.sandbox.global.$.CreatePanel("Label", ap, "max");
@@ -71,8 +73,10 @@ test("Bug 1 & 2: ql_ammo enables when slider is customized and neutral scale rel
 
     assert.strictEqual(FR.isEnabled("ql_ammo"), false, "ql_ammo should be disabled when all settings neutral");
     assert.ok(!labelCurrent.style.fontSize);
-    assert.strictEqual(ap.style.x, "0px");
-    assert.strictEqual(ap.style.y, "80px");
+    assert.strictEqual(ap.style.marginLeft, undefined);
+    assert.strictEqual(ap.style.marginTop, undefined);
+    assert.strictEqual(ap.style.x, "50%");
+    assert.strictEqual(ap.style.y, "85px");
 });
 
 test("Bug 3: setupSettingsWindowDragging attaches drag handles to header without rail toggle button", () => {

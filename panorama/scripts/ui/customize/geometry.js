@@ -113,6 +113,7 @@
     function frameBox(element, target, host) {
         const P = Q.core.panel;
         if (!alive(target)) return null;
+        if (typeof element.measurePanels === "function") return union(element.measurePanels(target), host);
         if (target.id === "TopBar") {
             // Native TopBar and PlayersContainer deliberately span the screen.
             // Only content from the extracted citadel_hud_top_bar*.xml is used.

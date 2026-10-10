@@ -54,7 +54,7 @@ tables, CSS values, test history or general verification caveats into it.
 | [ql_rejuv_hud](../../panorama/scripts/manifests/ql_rejuv_hud/manifest.js) | Rejuvenator/bridge-buff state and HUD; publishes `State.rejuvState` consumed by minimap timers. |
 | [ql_minimap_timers](../../panorama/scripts/manifests/ql_minimap_timers/manifest.js) | Minimap objective overlays; consume `State.rejuvState` instead of running another phase engine. |
 | [ql_legacy_audio_passive](../../panorama/scripts/manifests/ql_legacy_audio_passive/manifest.js) | Announcer, DL4D and minimap reminder audio; Basic cooldown layout belongs to ql_passive_cooldown. |
-| [ql_ammo](../../panorama/scripts/manifests/ql_ammo/manifest.js) | Ammo digits/ring geometry, visibility and palette; customized values can enable it without the master toggle. Read defaults from source. |
+| [ql_ammo](../../panorama/scripts/manifests/ql_ammo/manifest.js) | Ammo digits and sibling-ring overall scale/offsets, text size, visibility and palette; customized values can enable it without the master toggle. Native digit placement and ring-child transforms remain intact. Read defaults from source. |
 | [ql_bottom_bar](../../panorama/scripts/manifests/ql_bottom_bar/manifest.js) | Signature/AP/bottom HUD layout, active-item slot geometry and wash palette. |
 | [ql_items](../../panorama/scripts/manifests/ql_items/manifest.js) | Native inventory layout, opacity and wash color; late/replaced icons need reapplication. |
 | [ql_stamina](../../panorama/scripts/manifests/ql_stamina/manifest.js) | Stamina charge rotation/wash; distinguish stamina ring from colliding ability IDs. |

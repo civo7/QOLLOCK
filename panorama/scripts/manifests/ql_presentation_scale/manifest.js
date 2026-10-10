@@ -4,7 +4,7 @@
     "use strict";
     const Q = QOL;
     const P = Q.core.panel;
-    const owners = ["souls", "items", "stamina", "playerStats", "speed", "ammo", "abilityPoints", "damageReport"];
+    const owners = ["souls", "items", "stamina", "playerStats", "speed", "abilityPoints", "damageReport"];
     const elements = owners.map(id => Q.presentation.elements.find(element => element.id === id));
     const positions = new Set(["abilityPoints", "stamina"]);
     const clear = (panel, record) => {

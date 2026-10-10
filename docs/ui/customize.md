@@ -167,7 +167,7 @@ Numeric entries use current field metadata; supported
 color entries use [tagged RGB](../core/custom_colors.md). Missing conditional
 panels keep their controls available through All elements or a scoped action.
 Children without independent offsets inherit
-their parent's placement. Souls, items, stamina, compact stats, speed, ammo, AP and damage report have
+their parent's placement. Souls, items, stamina, compact stats, speed, AP and damage report have
 independent overall scales, applied by `ql_presentation_scale` through `ui-scale`.
 It multiplies the verified CSS baseline for the current mode and releases its
 override at default, disable or owner replacement; content, rotations and
@@ -195,8 +195,12 @@ Shop, reload, item cooldowns and base/Alt/Tab minimap corners reuse their existi
 scale/size fields.
 Ammo's legacy panel-scale key aliases current-ammo font size, so it remains
 accepted by the session but is hidden from the inspector; the current and total
-ammo controls remain available. Overall ammo resizing uses a separate scale for
-the complete group, including the magazine, without changing those text sizes.
+ammo controls remain available. `ql_ammo` applies the separate overall scale and
+offsets to the digits and sibling magazine rings, including mirrored ring-only
+layouts, without changing those text sizes or the crosshair. Scaling each sibling
+retains the native distance between them. Digit offsets use margins to preserve
+native positioning rules, and default geometry releases the code overrides.
+The Ammo frame measures the union of these surfaces rather than the gun wrapper.
 
 Magnets align viewport/neighbor edges and centers in canvas units. Guides appear
 only when acknowledged native bounds meet the proposed alignment; clamped or

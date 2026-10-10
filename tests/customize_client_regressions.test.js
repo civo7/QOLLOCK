@@ -197,11 +197,13 @@ test("ammo moves beyond its old box, resets its native baseline and round-trips 
     const gameplay = add(env, core, "gameplay_hud");
     const crosshair = add(env, add(env, gameplay, "gameplay_hud_alive"), "crosshair");
     const ammo = rect(add(env, add(env, add(env, crosshair, "gun"), "gun_data"), "ammo_panel"), 85, 20);
+    ammo.style.x = "50%"; ammo.style.y = "85px";
     g.QOL.ui.customize.start(); activate(env, "QOLCustomizeSelect_ammo");
     const frame = env.em.FindChildTraverse("QOLCustomizeFrame_ammo");
     const proxy = startDrag(env, frame); proxy.actualxoffset -= 900; proxy.actualyoffset += 350;
     g.$.DispatchEvent("DragEnd", frame, frame); env.clock.advance(1200);
-    assert.equal(ammo.style.x, "-900px"); assert.equal(ammo.style.y, "430px");
+    assert.equal(ammo.style.marginLeft, "-900px"); assert.equal(ammo.style.marginTop, "350px");
+    assert.equal(ammo.style.x, "50%"); assert.equal(ammo.style.y, "85px");
     g.QOL.core.storageBridge.saveSettings = (_config, callback) => callback(null);
     activate(env, "QOLCustomizeApply"); env.clock.advance(500);
     const parsed = g.QOL.ui.modal.tryApplyImportStringWithDiagnostics(g.QOL.ui.configTab.getCurrentExportSettingsString());
@@ -210,6 +212,7 @@ test("ammo moves beyond its old box, resets its native baseline and round-trips 
     const historic = g.QOL_COMPACT_SCHEMA_REGISTRY["4.0.5"].schema.find(field => field.key === "AMMO_PANEL_X_OFFSET");
     assert.equal(historic.min, -200); assert.equal(historic.max, 200);
     g.QOL.ui.customize.start(); activate(env, "QOLCustomizeSelect_ammo"); activate(env, "QOLCustomizeReset"); env.clock.advance(1200);
-    assert.equal(ammo.style.x, "0px"); assert.equal(ammo.style.y, "80px");
+    assert.equal(ammo.style.marginLeft, undefined); assert.equal(ammo.style.marginTop, undefined);
+    assert.equal(ammo.style.x, "50%"); assert.equal(ammo.style.y, "85px");
     activate(env, "QOLCustomizeCancel"); clean(env);
 });

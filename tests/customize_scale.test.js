@@ -86,7 +86,7 @@ for (const id of ["souls", "items", "stamina", "playerStats", "speed", "ammo", "
         const imported = g.QOL.ui.modal.tryApplyImportStringWithDiagnostics(g.QOL.ui.configTab.getCurrentExportSettingsString());
         assert.equal(imported.ok, true);
         assert.equal(imported.candidateConfig[key], 151);
-        env.hud.sandbox.global.QOL.core.FeatureRegistry.disable("ql_presentation_scale");
+        env.hud.sandbox.global.QOL.core.FeatureRegistry.disable(id === "ammo" ? "ql_ammo" : "ql_presentation_scale");
         assert.equal(panel.style.preTransformScale2d, undefined);
         assert.equal(panel.style.uiScale, undefined);
         assert.deepEqual(env.doc.eventErrors, []);
