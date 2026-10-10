@@ -91,8 +91,10 @@
                     showDebuffs: Number(cfg.CROSSHAIR_STATS_SHOW_DEBUFFS) === 1,
                     rows: new Set(STAT_DEFS.filter(def => Number(cfg[def.cfg]) === 1).map(def => def.key)),
                     styles: {
-                        marginLeft: (BASE_X + number("CROSSHAIR_STATS_X_OFFSET", 0)) + "px",
-                        marginTop: (BASE_Y - number("CROSSHAIR_STATS_Y_OFFSET", 0)) + "px",
+                        marginLeft: BASE_X + "px",
+                        marginTop: BASE_Y + "px",
+                        x: number("CROSSHAIR_STATS_X_OFFSET", 0) + "px",
+                        y: -number("CROSSHAIR_STATS_Y_OFFSET", 0) + "px",
                         uiScale: number("CROSSHAIR_STATS_SCALE", 100) + "%",
                         opacity: Math.max(0, Math.min(1, number("CROSSHAIR_STATS_OPACITY", 1))).toFixed(2)
                     }

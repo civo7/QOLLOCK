@@ -656,7 +656,7 @@
 
             function renderLayout(model) {
                 const visible = model.compass ? "visible" : "collapse";
-                sync(_compassRoot, { visibility: visible, marginTop: Math.round(model.appliedY) + "px", marginLeft: Math.round(model.x) + "px",
+                sync(_compassRoot, { visibility: visible, marginTop: "120px", x: Math.round(model.x) + "px", y: Math.round(model.appliedY - 120) + "px",
                     preTransformScale2d: "1.00, 1.00", uiScale: model.scale + "%", width: model.width + "px", height: "fit-children", overflow: "noclip" });
                 sync(_compassBox, { width: model.width + "px", height: model.height + "px", visibility: visible });
                 sync(_compassReadout, { width: "100%", height: "40px", flowChildren: "none" });
@@ -667,7 +667,7 @@
                 const speedBaseX = model.compass ? model.x : 0;
                 const speedBaseY = model.compass ? model.appliedY + model.height + 14 : 120;
                 sync(_speedRoot, { visibility: model.speed ? "visible" : "collapse", width: (model.compass ? model.width : 200) + "px",
-                    marginLeft: Math.round(speedBaseX + model.speedX) + "px", marginTop: Math.round(speedBaseY - model.speedY) + "px" });
+                    x: Math.round(speedBaseX + model.speedX) + "px", y: Math.round(speedBaseY - 120 - model.speedY) + "px" });
             }
 
             function _updateCompass(hud, cfg, nowMs) {

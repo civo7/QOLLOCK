@@ -57,7 +57,7 @@ test("Customize typed values, slider, stepper, Undo, Reset, and Cancel preserve 
         const input = env.em.FindChildTraverse("QOLCustomize_" + key);
         const slider = env.em.FindChildTraverse("QOLCustomizeSlider_" + key);
         assert.ok(input); assert.ok(slider);
-        assert.equal(slider.min, baseline - 2000); assert.equal(slider.max, baseline - 800);
+        assert.equal(slider.min, -2000); assert.equal(slider.max, 2000);
         input.text = String(displayValue); input._fire("oninputsubmit");
         apply(env);
         assert.equal(g.MOD_CONFIG[key], baseline + rawDelta);

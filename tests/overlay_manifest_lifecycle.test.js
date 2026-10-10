@@ -163,7 +163,8 @@ test("zip boost distinguishes a ready hint from active buff and preserves cooldo
     const overlay = find("QOLZipBoostOverlay");
     assert.notEqual(overlay, first);
     assert.equal(overlay.style.uiScale, "150%");
-    assert.equal(overlay.style.marginLeft, "-440px");
+    assert.equal(overlay.style.x, "80px"); assert.equal(overlay.style.y, "-60px");
+    assert.equal(overlay.style.marginLeft, undefined);
     assert.equal(find("QOLZipBoostState").text, "COOLDOWN 42s");
     const buff = add(effects, "status_citadel_ability_zipline_boost"); hud.clock.advance(500);
     assert.equal(overlay.BHasClass("in_use"), true);
@@ -191,12 +192,13 @@ test("better unsecured retains component scale, down-positive offsets and legacy
     const caption = label(native, "hudUnsecuredLabel", "Native caption");
     const defaults = hud.sandbox.global.QOL_DEFAULT_CONFIG;
     config({ ENABLE_BETTER_UNSECURED: 1, UNSECURED_SOULS_HUD_SCALE: 200,
-        UNSECURED_SOULS_HUD_X_OFFSET: defaults.UNSECURED_SOULS_HUD_X_OFFSET + 50,
-        UNSECURED_SOULS_HUD_Y_OFFSET: defaults.UNSECURED_SOULS_HUD_Y_OFFSET + 30,
+        UNSECURED_SOULS_HUD_X_OFFSET: 1999,
+        UNSECURED_SOULS_HUD_Y_OFFSET: defaults.UNSECURED_SOULS_HUD_Y_OFFSET - 1999,
         ENABLE_BETTER_UNSECURED_SHOW_ICON: 0, ENABLE_BETTER_UNSECURED_SHOW_TEXT: 0,
         ENABLE_BETTER_UNSECURED_SHOW_ICON_TEXT: 1 });
     const overlay = find("QOLBetterUnsecuredOverlay");
-    assert.equal(overlay.style.marginLeft, "165px"); assert.equal(overlay.style.marginBottom, "100px");
+    assert.equal(overlay.style.marginLeft, "115px"); assert.equal(overlay.style.marginBottom, "130px");
+    assert.equal(overlay.style.x, (1999 - defaults.UNSECURED_SOULS_HUD_X_OFFSET) + "px"); assert.equal(overlay.style.y, "-1999px");
     assert.equal(find("QOLBetterUnsecuredMirrorLabel").style.fontSize, "28px");
     assert.equal(find("QOLBetterUnsecuredMirrorIcon").BHasClass("qol-hidden"), false);
     assert.equal(find("QOLBetterUnsecuredMirrorText").BHasClass("qol-hidden"), false);
@@ -220,11 +222,12 @@ test("unsecured timer samples across its minimum interval, resets on gains/sourc
     const top = add(core, "TopBar"); label(top, "GameTime", "0:00");
     const source = label(gameplay, "HudUnsecuredLabel", "1000");
     config({ ENABLE_UNSECURED_SOUL_TIMER: 1, UNSECURED_SOUL_TIMER_SCALE: 200,
-        UNSECURED_SOUL_TIMER_X_OFFSET: -300, UNSECURED_SOUL_TIMER_Y_OFFSET: 70 });
+        UNSECURED_SOUL_TIMER_X_OFFSET: -1999, UNSECURED_SOUL_TIMER_Y_OFFSET: -1501 });
     hud.clock.advance(1);
     const overlay = find("QOLUnsecuredSoulsOverlay");
     const state = find("QOLUnsecuredSoulsState");
-    assert.equal(overlay.style.marginLeft, "-820px"); assert.equal(overlay.style.marginBottom, "180px");
+    assert.equal(overlay.style.x, "-1999px"); assert.equal(overlay.style.y, "1501px");
+    assert.equal(overlay.style.marginBottom, undefined);
     assert.equal(state.style.fontSize, "32px"); assert.equal(state.text, "29s");
     source.text = "990"; hud.clock.advance(200);
     source.text = "980"; hud.clock.advance(200);
@@ -261,7 +264,7 @@ test("stat bonuses preserve integer zeros, react to native values and rebind the
     first.DeleteAsync(0); hud.clock.advance(250);
     const overlay = find("QOLStatBonusesOverlay");
     assert.notEqual(overlay, first);
-    assert.equal(overlay.style.uiScale, "125%"); assert.equal(overlay.style.marginLeft, "-440px");
+    assert.equal(overlay.style.uiScale, "125%"); assert.equal(overlay.style.x, "80px"); assert.equal(overlay.style.y, "-50px");
     assert.equal(find("QOLStatBonusesMaxHealth").text, "Max Health: +350");
     bonus.text = "0"; hud.clock.advance(250); assert.equal(find("QOLStatBonusesMaxHealth").BHasClass("is_zero"), true);
     owner.DeleteAsync(0); hud.clock.advance(1);

@@ -96,8 +96,8 @@
                     styles: {
                         opacity: String(cfg.RELOAD_COOLDOWN_OPACITY),
                         fontSize: Math.round(Number(cfg.RELOAD_COOLDOWN_SIZE)) + "px",
-                        marginLeft: Math.round(Number(cfg.RELOAD_COOLDOWN_X_OFFSET)) + "px",
-                        marginTop: -Math.round(Number(cfg.RELOAD_COOLDOWN_Y_OFFSET)) + "px"
+                        x: Math.round(Number(cfg.RELOAD_COOLDOWN_X_OFFSET)) + "px",
+                        y: -Math.round(Number(cfg.RELOAD_COOLDOWN_Y_OFFSET)) + "px"
                     }
                 };
             }

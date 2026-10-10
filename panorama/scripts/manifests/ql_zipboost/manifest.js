@@ -34,8 +34,8 @@
             function readModel() {
                 const cfg = ctx.config.view();
                 return { enabled: Number(cfg.ENABLE_ZIP_BOOST) === 1, styles: {
-                    marginLeft: (-520 + (Math.round(Number(cfg.ZIP_BOOST_X_OFFSET)) || 0)) + "px",
-                    marginBottom: (20 + (Math.round(Number(cfg.ZIP_BOOST_Y_OFFSET)) || 0)) + "px",
+                    x: (Math.round(Number(cfg.ZIP_BOOST_X_OFFSET)) || 0) + "px",
+                    y: -(Math.round(Number(cfg.ZIP_BOOST_Y_OFFSET)) || 0) + "px",
                     uiScale: Math.round(Number(cfg.ZIP_BOOST_SCALE) || 100) + "%"
                 } };
             }

@@ -82,13 +82,13 @@ for (const owner of owners) {
             if (id === owner.child && failCreate) throw Error("modeled child creation failure");
             const panel = create(type, parent, id, properties);
             if (id === owner.overlay) panel.style = new Proxy(panel.style, { set(target, key, value) {
-                if (key === "marginLeft" && failStyle) throw Error("modeled style failure"); target[key] = value; return true;
+                if (key === "x" && failStyle) throw Error("modeled style failure"); target[key] = value; return true;
             } });
             return panel;
         };
         env.feature.onEnable(); env.clock.advance(500); assert.equal(env.find(owner.child), null);
-        failCreate = false; env.clock.advance(500); assert.ok(env.find(owner.child)); assert.equal(env.overlay().style.marginLeft, undefined);
-        failStyle = false; env.clock.advance(500); assert.match(env.overlay().style.marginLeft, /px$/);
+        failCreate = false; env.clock.advance(500); assert.ok(env.find(owner.child)); assert.equal(env.overlay().style.x, undefined);
+        failStyle = false; env.clock.advance(500); assert.match(env.overlay().style.x, /px$/);
         const created = env.children(); env.stop(); for (const panel of created) assert.equal(panel.IsValid(), false, panel.id);
     });
 

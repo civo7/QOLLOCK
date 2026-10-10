@@ -15,6 +15,9 @@ acceptance are separate states. No item below claims native rendering or FPS.
 - Shrinkable Current/Max fonts and expanded Reload offset metadata.
 - Conditional CSS overflow release on verified Ammo/Reload layout ancestors.
   The original native parents, bindings and radial clips remain intact.
+- Expanded pixel bounds for owned overlays and shop/purchase surfaces; own
+  overlays use x/y over fixed baselines rather than offset-sized margins.
+- Conditional Shop/NavPanel overflow release, preserving history scroll masks.
 
 ## Movement investigation
 
@@ -49,10 +52,10 @@ an instruction to duplicate more panels for geometry.
 
 ## Remaining implementation
 
-- Inspect and expand narrow movement bounds for owned full-HUD overlays and
-  shop/purchase surfaces. Keep legacy pixel/percentage units and defaults.
-- Check margins against distant negative offsets; resolve runtime/editor
-  normalization discrepancies and preserve import/export.
+- Inspect remaining native Keyboard/minimap/healthbar bounds and percentage
+  cooldown placement. Keep legacy units and defaults; do not open scroll masks.
+- Confirm native geometry for changed offset adapters and compare saved
+  nonzero positions against the previous build before declaring visual parity.
 - Complete the inspector/theme/localization visual pass, including control
   ordering, units, small typography and Basic/Advanced capabilities.
 - Audit remaining missing-source Timer/Audio discovery, chat image embedding,

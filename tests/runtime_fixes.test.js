@@ -752,16 +752,16 @@ test("ql_compass standalone speed offset updates without compass offset change",
 
     const speedRoot = hud.root.FindChildTraverse("QOLSpeedRoot");
     assert.ok(speedRoot, "QOLSpeedRoot must exist");
-    assert.strictEqual(speedRoot.style.marginLeft, "0px");
-    assert.strictEqual(speedRoot.style.marginTop, "120px");
+    assert.strictEqual(speedRoot.style.x, "0px");
+    assert.strictEqual(speedRoot.style.y, "0px");
 
     // Change only speed offsets (leave compass offsets completely unchanged)
     cfg = { ...cfg, COMPASS_SPEED_X_OFFSET: 75, COMPASS_SPEED_Y_OFFSET: 30 };
     instance.onSettingsChanged();
     hud.clock.advance(100);
 
-    assert.strictEqual(speedRoot.style.marginLeft, "75px", "Speed root must update marginLeft when speed X offset changes");
-    assert.strictEqual(speedRoot.style.marginTop, "90px", "Speed root must update marginTop when speed Y offset changes");
+    assert.strictEqual(speedRoot.style.x, "75px", "Speed root must update x when speed X offset changes");
+    assert.strictEqual(speedRoot.style.y, "-30px", "Speed root must update y when speed Y offset changes");
 
     instance.onDisable();
 });

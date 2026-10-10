@@ -725,9 +725,13 @@
             ["AMMO_HUD_SCALE", "AMMO_CURRENT_SCALE", "AMMO_TOTAL_SCALE"].some(key => cfg?.[key] != null && Number(cfg[key]) !== 100)
         )) || (available("ql_reload_cooldown") && Number(cfg?.ENABLE_RELOAD_COOLDOWN) === 1 &&
             moved(["RELOAD_COOLDOWN_X_OFFSET", "RELOAD_COOLDOWN_Y_OFFSET"]));
+        const freeShopPlacement = (available("ql_heroshop") && moved(["SHOP_OFFSET_X", "SHOP_OFFSET_Y"])) ||
+            (available("ql_recent_purchases") && Number(cfg?.ENABLE_SHOP_RECENT_PURCHASES) === 1 &&
+                moved(["RECENT_PURCHASES_PANEL_X_OFFSET", "RECENT_PURCHASES_PANEL_Y_OFFSET"]));
 
         const staticSig = [
             freeReticlePlacement,
+            freeShopPlacement,
             hideoutConnected ? 1 : 0,
             cfg?.ENABLE_AMMO_STATUS,
             cfg?.ENABLE_HIDE_MAGAZINE,
@@ -822,6 +826,7 @@
 
             const staticRules = [
                 ["qol_free_reticle_placement", freeReticlePlacement],
+                ["qol_free_shop_placement", freeShopPlacement],
                 ["hide_ammo_custom", cfg?.ENABLE_AMMO_STATUS === 0],
                 ["hide_magazine_active", cfg?.ENABLE_HIDE_MAGAZINE === 1],
                 ["hide_current_ammo_active", cfg?.ENABLE_HIDE_AMMO_ALL === 1],

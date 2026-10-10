@@ -36,8 +36,8 @@
             function readModel() {
                 const cfg = ctx.config.view();
                 const scale = QOL.utils.ClampConfigNumber(cfg.UNSECURED_SOULS_HUD_SCALE, QOL_DEFAULT_CONFIG.UNSECURED_SOULS_HUD_SCALE, 50, 200, true);
-                const x = QOL.utils.ClampConfigNumber(cfg.UNSECURED_SOULS_HUD_X_OFFSET, QOL_DEFAULT_CONFIG.UNSECURED_SOULS_HUD_X_OFFSET, -1000, 2000, true);
-                const y = QOL.utils.ClampConfigNumber(cfg.UNSECURED_SOULS_HUD_Y_OFFSET, QOL_DEFAULT_CONFIG.UNSECURED_SOULS_HUD_Y_OFFSET, 800, 2000, true);
+                const x = Number(cfg.UNSECURED_SOULS_HUD_X_OFFSET);
+                const y = Number(cfg.UNSECURED_SOULS_HUD_Y_OFFSET);
                 const both = Number(cfg.ENABLE_BETTER_UNSECURED_SHOW_ICON_TEXT) === 1;
                 return {
                     enabled: Number(cfg.ENABLE_BETTER_UNSECURED) === 1,
@@ -45,8 +45,9 @@
                     showText: both || Number(cfg.ENABLE_BETTER_UNSECURED_SHOW_TEXT) === 1,
                     fontSize: Math.max(8, Math.min(72, Math.round(14 * scale / 100))) + "px",
                     styles: {
-                        marginLeft: (115 + x - QOL_DEFAULT_CONFIG.UNSECURED_SOULS_HUD_X_OFFSET) + "px",
-                        marginBottom: (130 - (y - QOL_DEFAULT_CONFIG.UNSECURED_SOULS_HUD_Y_OFFSET)) + "px"
+                        marginLeft: "115px", marginBottom: "130px",
+                        x: Math.round(x - QOL_DEFAULT_CONFIG.UNSECURED_SOULS_HUD_X_OFFSET) + "px",
+                        y: Math.round(y - QOL_DEFAULT_CONFIG.UNSECURED_SOULS_HUD_Y_OFFSET) + "px"
                     }
                 };
             }

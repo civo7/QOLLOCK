@@ -310,13 +310,13 @@ test("reload label gets its configured style after replacement", () => {
     hud.clock.advance(600);
     const first = reticle.FindChildTraverse("QOLReloadCooldownText");
     assert.ok(first);
-    assert.equal(first.style.marginLeft, "20px");
+    assert.equal(first.style.x, "20px");
     first.DeleteAsync(0);
     hud.clock.advance(600);
     const replacement = reticle.FindChildTraverse("QOLReloadCooldownText");
     assert.ok(replacement);
     assert.notEqual(replacement, first);
-    assert.equal(replacement.style.marginLeft, "20px");
+    assert.equal(replacement.style.x, "20px");
     assert.deepEqual(hud.clock.errors, []);
 });
 

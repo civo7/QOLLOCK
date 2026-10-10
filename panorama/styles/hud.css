@@ -22,6 +22,15 @@
 {
     overflow: noclip;
 }
+
+/* RecentPurchasesPanel belongs to the narrow native NavPanel. Keep its
+ * scrolling history clipped; open only its verified layout ancestors.
+ */
+.qol_free_shop_placement CitadelHudHeroShop #Shop,
+.qol_free_shop_placement CitadelHudHeroShop #Shop #NavPanel
+{
+    overflow: noclip;
+}
 @import url("s2r://panorama/styles/qollock_global.vcss_c");
 @import url("s2r://panorama/styles/ql_core_styles.vcss_c");
 

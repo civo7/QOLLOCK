@@ -152,8 +152,9 @@ test("crosshair replaces an alive overlay generation with its current layout and
     enableCrosshair(env);
     env.hud.clock.advance(200);
     const first = env.find("QOLCrosshairStatsOverlay");
-    assert.equal(first.style.marginLeft, "160px");
-    assert.equal(first.style.marginTop, "-20px");
+    assert.equal(first.style.marginLeft, "135px");
+    assert.equal(first.style.marginTop, "0px");
+    assert.equal(first.style.x, "25px"); assert.equal(first.style.y, "-20px");
     first.SetParent(env.retired);
     env.hud.clock.advance(100);
     const second = env.find("QOLCrosshairStatsOverlay");

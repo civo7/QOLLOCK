@@ -23,6 +23,29 @@ test("reload offsets use expanded current bounds and preserve the old compact ra
     }
 });
 
+test("full-HUD overlay and shop offsets round-trip outside their historic limits", () => {
+    const { global: g } = load();
+    const config = { ...g.QOL_DEFAULT_CONFIG };
+    const keys = ["CROSSHAIR_STATS", "COMPASS", "COMPASS_SPEED", "ZIP_BOOST", "STAT_BONUSES", "UNSECURED_SOUL_TIMER",
+        "UNSECURED_SOULS_HUD", "RECENT_PURCHASES_QUICK", "RECENT_PURCHASES_PANEL"]
+        .flatMap(prefix => [prefix + "_X_OFFSET", prefix + "_Y_OFFSET"]).concat(["SHOP_OFFSET_X", "SHOP_OFFSET_Y"]);
+    const oldFields = g.QOL_COMPACT_SCHEMA_REGISTRY["4.0.5"].schema;
+    for (let i = 0; i < keys.length; i++) {
+        const key = keys[i];
+        const field = g.QOL_SETTINGS_FIELDS.find(field => field.key === key);
+        const baseline = key === "UNSECURED_SOULS_HUD_Y_OFFSET" ? config[key] : 0;
+        assert.equal(field.min, baseline - 2000); assert.equal(field.max, baseline + 2000); assert.equal(field.step, 1);
+        config[key] = baseline + (i % 2 ? -1999 : 1999);
+    }
+    Object.assign(g.MOD_CONFIG, config);
+    const imported = g.QOL.ui.modal.tryApplyImportStringWithDiagnostics(g.QOL.ui.configTab.getCurrentExportSettingsString());
+    assert.equal(imported.ok, true);
+    for (const key of keys) assert.equal(imported.candidateConfig[key], config[key], key);
+    assert.equal(oldFields.find(field => field.key === "ZIP_BOOST_Y_OFFSET").min, 0);
+    assert.equal(oldFields.find(field => field.key === "UNSECURED_SOULS_HUD_Y_OFFSET").min, 800);
+    assert.equal(oldFields.find(field => field.key === "SHOP_OFFSET_X").max, 500);
+});
+
 test("current ammo and stats offsets use one-pixel precision while published schemas stay frozen", () => {
     const { global: g } = load();
     const currentByKey = new Map(g.QOL_SETTINGS_FIELDS.map(field => [field.key, field]));

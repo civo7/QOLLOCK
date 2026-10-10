@@ -65,8 +65,9 @@ test("reload rebinds a still-live reticle and resets the previous estimate at ex
     assert.equal(first.reticle.IsValid(), true);
     assert.equal(oldLabel.IsValid(), false);
     assert.equal(nextLabel.text, "", "new source must establish its own velocity");
-    assert.equal(nextLabel.style.marginLeft, "1234px");
-    assert.equal(nextLabel.style.marginTop, "987px");
+    assert.equal(nextLabel.style.x, "1234px");
+    assert.equal(nextLabel.style.y, "987px");
+    assert.equal(nextLabel.style.marginLeft, undefined);
     assert.equal(nextLabel.style.fontSize, "35px");
     env.sample(next.bar, 90);
     assert.equal(nextLabel.text, "0.5");

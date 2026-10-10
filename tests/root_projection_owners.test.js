@@ -34,6 +34,24 @@ test("reticle overflow projection combines owners and releases unavailable prese
     assert.deepEqual(env.clock.errors, []);
 });
 
+test("shop overflow projection leaves native scrolling alone and combines geometry owners", () => {
+    const env = setup(), registry = env.Q.core.FeatureRegistry;
+    const refresh = () => env.Q.core.hud.refreshRootClasses(env.root);
+    const unclipped = () => env.root.BHasClass("qol_free_shop_placement");
+    env.Q.core.ConfigStore.set("ql_heroshop", "SHOP_OFFSET_X", 1000);
+    registry.enable("ql_heroshop"); refresh(); assert.equal(unclipped(), true);
+    env.Q.core.ConfigStore.set("ql_recent_purchases", "ENABLE_SHOP_RECENT_PURCHASES", true);
+    env.Q.core.ConfigStore.set("ql_recent_purchases", "RECENT_PURCHASES_PANEL_Y_OFFSET", -1500);
+    registry.enable("ql_recent_purchases");
+    registry.disable("ql_heroshop"); refresh(); assert.equal(unclipped(), true);
+    registry.disable("ql_recent_purchases"); refresh(); assert.equal(unclipped(), false);
+    registry.enable("ql_heroshop"); refresh(); assert.equal(unclipped(), true);
+    env.Q.core.ConfigStore.set("ql_heroshop", "SHOP_OFFSET_X", 0);
+    refresh(); assert.equal(unclipped(), false);
+    registry.disable("ql_heroshop");
+    assert.deepEqual(env.clock.errors, []);
+});
+
 function setup() {
     const env = createHud({ inHideout: false });
     env.assertLoaded();

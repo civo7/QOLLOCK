@@ -218,6 +218,18 @@ one active owner cannot remove the overflow needed by the other. This is a
 source-level clipping fix, not proof that native engine culling is absent.
 Confirm distant offsets, normal gun and Tokamak layouts in the client.
 
+Feature-created Reload, Zip Boost, Stat Bonuses, Active Stats, Compass/Speed
+and unsecured overlays apply offsets through x/y over their fixed baseline.
+Offset changes no longer enlarge their margins and consume layout space.
+Better Unsecured retains its stored down-positive default-relative adapter;
+the editor's displayed Y bounds are symmetric. Current field metadata owns the
+expanded pixel ranges, while historical compact fields stay frozen.
+Shop and purchase-history movement conditionally opens only the native Shop
+and NavPanel layout ancestors; history's scrolling mask remains native.
+Check saved nonzero positions against the previous build: Panorama placement
+can differ between margin offsets and x/y, and offline geometry is insufficient
+to establish pixel-for-pixel native equivalence.
+
 The additional opacity controls are owned by `ql_presentation_scale` using its
 existing poll. At the default they own no native opacity override and skip
 surface discovery; reset/disable releases attempted styles, including rejected

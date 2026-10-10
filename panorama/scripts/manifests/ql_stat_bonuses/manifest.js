@@ -145,8 +145,8 @@
             function readModel() {
                 const cfg = ctx.config.view();
                 return { enabled: Number(cfg.ENABLE_STAT_BONUSES) === 1, styles: {
-                    marginLeft: (-520 + (Math.round(Number(cfg.STAT_BONUSES_X_OFFSET)) || 0)) + "px",
-                    marginBottom: (70 + (Math.round(Number(cfg.STAT_BONUSES_Y_OFFSET)) || 0)) + "px",
+                    x: (Math.round(Number(cfg.STAT_BONUSES_X_OFFSET)) || 0) + "px",
+                    y: -(Math.round(Number(cfg.STAT_BONUSES_Y_OFFSET)) || 0) + "px",
                     uiScale: Math.round(Number(cfg.STAT_BONUSES_SCALE) || 100) + "%"
                 } };
             }

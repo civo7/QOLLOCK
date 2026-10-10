@@ -64,10 +64,10 @@
             function readModel() {
                 const cfg = ctx.config.view();
                 const scale = QOL.utils.ClampConfigNumber(cfg.UNSECURED_SOUL_TIMER_SCALE, QOL_DEFAULT_CONFIG.UNSECURED_SOUL_TIMER_SCALE, 50, 200, true);
-                const x = QOL.utils.ClampConfigNumber(cfg.UNSECURED_SOUL_TIMER_X_OFFSET, QOL_DEFAULT_CONFIG.UNSECURED_SOUL_TIMER_X_OFFSET, -1500, 1500, true);
-                const y = QOL.utils.ClampConfigNumber(cfg.UNSECURED_SOUL_TIMER_Y_OFFSET, QOL_DEFAULT_CONFIG.UNSECURED_SOUL_TIMER_Y_OFFSET, -100, 1000, true);
+                const x = Math.round(Number(cfg.UNSECURED_SOUL_TIMER_X_OFFSET)) || 0;
+                const y = Math.round(Number(cfg.UNSECURED_SOUL_TIMER_Y_OFFSET)) || 0;
                 return { enabled: Number(cfg.ENABLE_UNSECURED_SOUL_TIMER) === 1,
-                    styles: { marginLeft: (-520 + x) + "px", marginBottom: (110 + y) + "px" },
+                    styles: { x: x + "px", y: -y + "px" },
                     fontSize: Math.max(8, Math.min(72, Math.round(16 * scale / 100))) + "px" };
             }
 

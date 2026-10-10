@@ -1801,6 +1801,9 @@ var QOL_SETTINGS_FIELDS = QOL_COMPACT_SCHEMA_UTILS.AppendUniqueSchemaFields(
         if (["AMMO_PANEL_SCALE", "AMMO_CURRENT_SCALE", "AMMO_TOTAL_SCALE"].includes(field.key)) {
             return Object.assign({}, field, { min: 50 });
         }
+        if (/^(?:CROSSHAIR_STATS|COMPASS|COMPASS_SPEED|ZIP_BOOST|STAT_BONUSES|UNSECURED_SOUL_TIMER|UNSECURED_SOULS_HUD|RECENT_PURCHASES_QUICK|RECENT_PURCHASES_PANEL)_[XY]_OFFSET$/.test(field.key) || /^SHOP_OFFSET_[XY]$/.test(field.key)) {
+            return Object.assign({}, field, { min: -2000, max: 2000, step: 1 });
+        }
         if (["ITEMS_WASH_COLOR", "STAMINA_CHARGE_COLOR", "AMMO_TEXT_COLOR", "BOTTOM_BAR_WASH_COLOR",
             "KEYBOARD_OVERLAY_WASH_COLOR", "PLAYER_HEALTHBAR_ACCENT_COLOR", "MINIMAP_ICON_COLOR"].includes(field.key)) {
             return Object.assign({}, field, { max: 0x1ffffff });
@@ -2702,6 +2705,15 @@ var QOL_DEFAULT_CONFIG = {
         ACTIVE_PRESET_NAME: "",
         ENABLE_UPDATE_CHECKER: 1
 };
+
+// Defaults are initialized after the current field catalog. Derive this one
+// historic raw coordinate's bounds here so its display range is symmetric.
+QOL_SETTINGS_FIELDS.forEach(field => {
+    if (field.key === "UNSECURED_SOULS_HUD_Y_OFFSET") {
+        field.min = QOL_DEFAULT_CONFIG.UNSECURED_SOULS_HUD_Y_OFFSET - 2000;
+        field.max = QOL_DEFAULT_CONFIG.UNSECURED_SOULS_HUD_Y_OFFSET + 2000;
+    }
+});
 
 var QOL_PRESETS = {
     "iKaritzu": {
