@@ -29,6 +29,31 @@ does not alter or publish that marker automatically. ZIP validation does not pro
 that its VPK was built from the tagged source; the maintainer verifies that pairing.
 An already published release is rejected rather than silently replaced.
 
+## Maintainer Build Tool
+
+`build_mod/build_mod.bat` opens the standalone builder. Keep
+`build_mod_helpers.ps1` beside `build_mod.ps1` when copying it. Its core is synced
+from Deadlock-Mod-Compiler, with QOLLOCK's game-content roots restricted to
+`panorama`, `soundevents` and `sounds`; root-level development scripts are excluded.
+
+TTF fonts and supported precompiled resources are staged without compilation.
+Changed or removed PNG/TGA inputs requeue texture descriptors, including custom
+ones. Unsupported formats are reported rather than silently omitted.
+This is not a general dependency graph for every Source 2 resource type.
+Addon numbering uses real files and existing valid mod assignments, allocating
+only `pak01` through `pak99`; stale registry entries do not reserve empty slots.
+
+Packing happens separately from the current output. Replacement backs up the
+previous bundle and attempts rollback on failure. If rollback also fails, its
+backup is preserved and the error identifies its location. Split-file replacement
+is not crash-atomic. The build tool remains maintainer-run.
+
+Its isolated offline checks can be run without starting the builder or creating VPKs:
+
+```powershell
+powershell -NoProfile -ExecutionPolicy Bypass -File build_mod/tests/build_mod_regression.ps1
+```
+
 ## Review Upstream Changes
 
 `upstream.json` records the GameTracking commit and native CSS/XML files used by
