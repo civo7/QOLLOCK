@@ -3,20 +3,22 @@
 ## Publish a Prepared Release
 
 The maintainer compiles, repacks and verifies QOLLOCK in Deadlock. CI publishes
-the already prepared ZIP; it never builds or changes the VPK.
+the prepared VPKs inside a ZIP; it never builds or changes the VPKs.
 
 1. Complete the [client checklist](TEST_CHECKLIST.md) for the intended source commit.
 2. Choose the next public marker in [qollock-updates](https://github.com/Predi-i/qollock-updates)
    and set `QOL_UPDATE_MARKER` in `panorama/scripts/ql_update_checker.js` before building.
    Do not change package, schema or marker versions without maintainer authorization.
-3. Compile/repack and prepare a ZIP named from the package version with dots removed:
-   for example, package `4.0.5` uses `QOL-Lock-405.zip`. Include `LICENSE`, `NOTICE`,
-   `THIRD_PARTY_NOTICES.md` and applicable third-party notices with the distribution.
+3. Compile/repack with `build_mod` and verify the resulting VPK in the client.
 4. Create a tag such as `v4.0.5` for the exact source commit. Create a draft GitHub
-   Release for that tag, write its release notes and upload the prepared ZIP.
+   Release for that tag, write its release notes and upload the prepared `.vpk` files.
+   For a split VPK, upload both the `_dir.vpk` and all numbered data archives.
 5. In Actions, run **Publish prepared release** with that tag. This is the explicit
-   publication step: the workflow runs `npm test`, checks the archive name, ZIP
-   integrity and VPK headers, then publishes the existing draft.
+   publication step: the workflow runs `npm test`, packages all uploaded VPKs with
+   `LICENSE`, `NOTICE` and `THIRD_PARTY_NOTICES.md`, checks ZIP integrity and VPK
+   headers, uploads the ZIP, then publishes the existing draft. Package `4.0.5`
+   produces `QOL-Lock-405.zip`; no manual ZIP preparation is needed.
+   Preserve any additional applicable third-party notices with the distribution.
 6. Run **Publish QOLLOCK update marker** in the public marker repository with the
    matching number and `Dry run` off. Confirm its successful completion and update
    the [GameBanana page](https://gamebanana.com/mods/updates/650634).
