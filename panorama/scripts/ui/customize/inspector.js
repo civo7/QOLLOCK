@@ -175,8 +175,9 @@
                 slider = P.create("Slider", sliderContainer, "QOLCustomizeSlider_" + field.key, { direction: "horizontal" });
                 slider.AddClass("HorizontalSlider");
                 if (wire) {
-                    slider.min = Math.round(wire.min * mult);
-                    slider.max = Math.round(wire.max * mult);
+                    const bounds = Q.presentation.displayBounds(field.key, wire.min, wire.max);
+                    slider.min = Math.round(bounds.min * mult);
+                    slider.max = Math.round(bounds.max * mult);
                 }
                 slider.value = Math.round(displayValue(field, session.value(field.key)) * mult);
 
@@ -206,7 +207,9 @@
             }
             const error = label(row, isColor ? "Enter a complete HEX color, such as #AABBCC." : "Use a number from {min} to {max}.");
             if (!isColor && wire) {
-                error.text = error.text.replace("{min}", display(field, wire.min)).replace("{max}", display(field, wire.max));
+                const bounds = Q.presentation.displayBounds(field.key, wire.min, wire.max);
+                error.text = error.text.replace("{min}", String(Number((bounds.min * mult).toFixed(6))))
+                    .replace("{max}", String(Number((bounds.max * mult).toFixed(6))));
             }
             error.AddClass("QOLCustomizeFieldError");
             error.visible = false;
@@ -313,8 +316,10 @@
                 const value = read(field, input);
                 const wire = Q.presentation.wireFields.get(field.key);
                 const color = field.type === "color" || field.type === "palette";
+                const bounds = wire && Q.presentation.displayBounds(field.key, wire.min, wire.max);
+                const shown = Number.isFinite(value) ? displayValue(field, value) : NaN;
                 const invalid = value === null || Q.presentation.normalize(field.key, value) === null ||
-                    (partial && !color && (value < wire.min || value > wire.max));
+                    (partial && !color && (shown < bounds.min || shown > bounds.max));
                 input.SetHasClass("Invalid", invalid);
                 error.visible = invalid;
                 if (invalid) accepted = false;

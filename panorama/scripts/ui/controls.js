@@ -1596,14 +1596,18 @@
             const valueField = wireField || { min, max, step };
             const displayValue = value => Q.presentation?.toDisplayValue ? Q.presentation.toDisplayValue(configId, value) : Number(value);
             const storedValue = value => Q.presentation?.fromDisplayValue ? Q.presentation.fromDisplayValue(configId, value) : Number(value);
+            const lower = Math.max(min, valueField.min);
+            const upper = Math.min(max, valueField.max);
+            const displayBounds = Q.presentation?.displayBounds
+                ? Q.presentation.displayBounds(configId, lower, upper) : { min: lower, max: upper };
             const commitValue = (rawValue) => {
-                const lower = Math.max(min, valueField.min);
-                const upper = Math.min(max, valueField.max);
+                const clampedDisplay = Math.max(displayBounds.min, Math.min(displayBounds.max, Number(rawValue)));
+                const storedRaw = storedValue(clampedDisplay);
                 const firstIndex = Math.ceil((lower - valueField.min) / valueField.step - 1e-9);
                 const lastIndex = Math.floor((upper - valueField.min) / valueField.step + 1e-9);
                 const index = Math.max(firstIndex, Math.min(lastIndex,
-                    Math.round((rawValue - valueField.min) / valueField.step)));
-                return storedValue(Number((valueField.min + index * valueField.step).toFixed(8)));
+                    Math.round((storedRaw - valueField.min) / valueField.step)));
+                return Number((valueField.min + index * valueField.step).toFixed(8));
             };
 
             const formatSliderInputValue = (value) => {
@@ -1632,8 +1636,8 @@
                 return parsed;
             };
 
-            slider.min = isFloat ? min * 100 : min;
-            slider.max = isFloat ? max * 100 : max;
+            slider.min = isFloat ? displayBounds.min * 100 : displayBounds.min;
+            slider.max = isFloat ? displayBounds.max * 100 : displayBounds.max;
             slider.value = displayValue(modCfg[configId]) * (isFloat ? 100 : 1);
             const input = $.CreatePanel("TextEntry", sliderValueGroup, "");
             input.AddClass("ValueInput");
@@ -1683,7 +1687,7 @@
                 if (!row || !row.IsValid || !row.IsValid()) return false;
                 let nextVal = Number(modCfg[configId]);
                 if (!isFinite(nextVal)) nextVal = Number(min);
-                nextVal = Math.max(Number(min), Math.min(Number(max), nextVal));
+                nextVal = Math.max(lower, Math.min(upper, nextVal));
                 if (isFloat) {
                     nextVal = parseFloat(nextVal.toFixed(2));
                     slider.value = displayValue(nextVal) * 100;

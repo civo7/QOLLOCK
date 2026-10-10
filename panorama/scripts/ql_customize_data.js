@@ -47,9 +47,20 @@
     // Presentation uses an actual delta from native layout, with zero as no-op.
     // Keep this conversion at the shared boundary instead of inventing a native angle.
     const toDisplayValue = (key, value) => key === "STAMINA_CHARGE_ANGLE"
-        ? QOL_UTILS.NormalizeDegrees360(Number(value) - 45) : Number(value);
+        ? QOL_UTILS.NormalizeDegrees360(Number(value) - 45)
+        : key === "UNSECURED_SOULS_HUD_Y_OFFSET"
+            ? Number(QOL_DEFAULT_CONFIG.UNSECURED_SOULS_HUD_Y_OFFSET) - Number(value) : Number(value);
     const fromDisplayValue = (key, value) => key === "STAMINA_CHARGE_ANGLE"
-        ? QOL_UTILS.NormalizeDegrees360(Number(value) + 45) : Number(value);
+        ? QOL_UTILS.NormalizeDegrees360(Number(value) + 45)
+        : key === "UNSECURED_SOULS_HUD_Y_OFFSET"
+            ? Number(QOL_DEFAULT_CONFIG.UNSECURED_SOULS_HUD_Y_OFFSET) - Number(value) : Number(value);
+    const displayBounds = (key, min, max) => {
+        // Rotation wraps at 360 degrees; keep its explicit user-facing domain.
+        if (key === "STAMINA_CHARGE_ANGLE") return { min: 0, max: 360 };
+        const first = toDisplayValue(key, min);
+        const second = toDisplayValue(key, max);
+        return { min: Math.min(first, second), max: Math.max(first, second) };
+    };
     function register(additions) {
         for (const element of additions) {
             if (elements.some(existing => existing.id === element.id)) throw new Error("Duplicate customization owner: " + element.id);

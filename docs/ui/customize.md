@@ -225,6 +225,8 @@ in the editor, ordinary controls and gameplay owners. Historical compact schemas
 retain their original bounds. The stats manifest and editor share the same
 visible-owner selection, including the coexisting collapsed legacy stats block.
 Legacy Side values round-trip without changing native docking or exposing a control.
+Better Unsecured Souls presents its vertical offset as up-positive relative to
+the configured default; storage and runtime retain the existing raw coordinate.
 
 `core/ql_customize_preview.js` carries a leased draft through HUD attributes.
 The existing app config poll validates the session stamp and field whitelist,
