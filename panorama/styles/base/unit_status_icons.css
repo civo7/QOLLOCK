@@ -479,6 +479,28 @@ CitadelHudTopBar #StatusEffectsBorder
 	wash-color: StatusIconColor;
 }
 
+.nurse_fear_buildup #StatusEffectInner
+{
+	wash-color: #8a4fd1;
+}
+
+.nurse_fear_buildup .statusEffectImage
+{
+	background-image: url("s2r://panorama/images/hud/abilities/nurse/medicine_bag_psd.vtex");
+	wash-color: StatusIconColor;
+}
+
+.nurse_lifeforce_buildup #StatusEffectInner
+{
+	wash-color: #d6455f;
+}
+
+.nurse_lifeforce_buildup .statusEffectImage
+{
+	background-image: url("s2r://panorama/images/hud/abilities/nurse/needle_psd.vtex");
+	wash-color: StatusIconColor;
+}
+
 .siphon_bullets .statusEffectImage
 {
 	background-image: url("s2r://panorama/images/upgrades/mods_weapon/siphon_bullets_psd.vtex");
@@ -1221,19 +1243,19 @@ CitadelHudTopBar #StatusEffectsBorder
 		pre-transform-scale2d: 1.2, 0.8;
 		brightness: 2;
 	}
-
+	
 	50%
 	{
 		pre-transform-scale2d: 0.95, 1.03;
 		brightness: 1;
 	}
-
+	
 	100%
 	{
 		pre-transform-scale2d: 1, 1;
 		brightness: 1;
 	}
-
+	
 }
 
 .pulse
@@ -1251,19 +1273,19 @@ CitadelHudTopBar #StatusEffectsBorder
 		pre-transform-scale2d: 1.0, 1.1;
 		brightness: 2.0;
 	}
-
+	
 	25%
 	{
 		pre-transform-scale2d: 1.0, 1.0;
 		brightness: 1.05;
 	}
-
+	
 	100%
 	{
 		pre-transform-scale2d: 1.0, 1.0;
 		brightness: 1;
 	}
-
+	
 }
 
 .pulse_radial
@@ -1281,19 +1303,19 @@ CitadelHudTopBar #StatusEffectsBorder
 		pre-transform-scale2d: 1.1, 1.1;
 		brightness: 1.15;
 	}
-
+	
 	50%
 	{
 		pre-transform-scale2d: 0.98, 0.98;
 		brightness: 1.;
 	}
-
+	
 	100%
 	{
 		pre-transform-scale2d: 1;
 		brightness: 1;
 	}
-
+	
 }
 
 .heartbeat
@@ -1311,43 +1333,43 @@ CitadelHudTopBar #StatusEffectsBorder
 		pre-transform-scale2d: 1, 1;
 		brightness: 1;
 	}
-
+	
 	3%
 	{
 		pre-transform-scale2d: 0.7, 1.2;
 		brightness: 1;
 	}
-
+	
 	6%
 	{
 		pre-transform-scale2d: 1.1, 0.8;
 		brightness: 2;
 	}
-
+	
 	9%
 	{
 		pre-transform-scale2d: 0.7, 1.2;
 		brightness: 1;
 	}
-
+	
 	12%
 	{
 		pre-transform-scale2d: 1.1, 0.8;
 		brightness: 2;
 	}
-
+	
 	18%
 	{
 		pre-transform-scale2d: 1, 1;
 		brightness: 1;
 	}
-
+	
 	100%
 	{
 		pre-transform-scale2d: 1, 1;
 		brightness: 1;
 	}
-
+	
 }
 
 .fixated #StatusEffectsBorder

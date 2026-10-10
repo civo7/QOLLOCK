@@ -215,7 +215,7 @@
 @define silencedDebuffColor: #bc1dca;
 @define stunnedDebuffColor: #ff0000;
 @define stunnedColor: #5e3a3a;
-Label
+Label,SyncedFontSizeLabel
 {
 	font-family: sans;
 	color: offWhite;
@@ -2229,42 +2229,42 @@ Button:active
 	{
 		transform: rotateZ(-3deg);
 	}
-
+	
 	25%
 	{
 		transform: rotateZ(-3deg);
 	}
-
+	
 	26%
 	{
 		transform: rotateZ(2deg);
 	}
-
+	
 	50%
 	{
 		transform: rotateZ(2deg);
 	}
-
+	
 	51%
 	{
 		transform: rotateZ(-1deg);
 	}
-
+	
 	75%
 	{
 		transform: rotateZ(-1deg);
 	}
-
+	
 	76%
 	{
 		transform: rotateZ(0deg);
 	}
-
+	
 	100%
 	{
 		transform: rotateZ(0deg);
 	}
-
+	
 }
 
 @keyframes 'UIGroove'
@@ -2274,19 +2274,19 @@ Button:active
 		pre-transform-scale2d: 1;
 		transform: translateX(0px);
 	}
-
+	
 	50%
 	{
 		pre-transform-scale2d: 1.05;
 		transform: translateX(3px) rotateZ(-1deg);
 	}
-
+	
 	100%
 	{
 		pre-transform-scale2d: 1;
 		transform: translateX(0px);
 	}
-
+	
 }
 
 .LinkButton
@@ -2378,17 +2378,17 @@ Button:active
 	{
 		pre-transform-scale2d: 0.95;
 	}
-
+	
 	50%
 	{
 		pre-transform-scale2d: 1.05;
 	}
-
+	
 	100%
 	{
 		pre-transform-scale2d: 0.95;
 	}
-
+	
 }
 
 Label.ProbablyUnlocalizedText
@@ -3392,13 +3392,13 @@ RadioButton:disabled,CitadelSettingsEnum RadioButton:disabled,CitadelSettingsEnu
 		opacity-mask: url("s2r://panorama/images/masks/progress_bar_threshold_01_psd.vtex");
 		opacity-mask-threshold: 100% 0%;
 	}
-
+	
 	100%
 	{
 		opacity-mask: url("s2r://panorama/images/masks/progress_bar_threshold_01_psd.vtex");
 		opacity-mask-threshold: 0% 0%;
 	}
-
+	
 }
 
 @keyframes 'SliderTestThumb'
@@ -3407,12 +3407,12 @@ RadioButton:disabled,CitadelSettingsEnum RadioButton:disabled,CitadelSettingsEnu
 	{
 		position: 0px 0px 0px;
 	}
-
+	
 	100%
 	{
 		position: 325px 0px 0px;
 	}
-
+	
 }
 
 .Slider
@@ -4728,17 +4728,17 @@ CitadelTooltipProfileCard #Contents
 	{
 		transform: translateY(0px);
 	}
-
+	
 	50%
 	{
 		transform: translateY(-4px);
 	}
-
+	
 	100%
 	{
 		transform: translateY(0px);
 	}
-
+	
 }
 
 @keyframes 'SnowballDance'
@@ -4747,17 +4747,17 @@ CitadelTooltipProfileCard #Contents
 	{
 		transform: translateX(0px);
 	}
-
+	
 	50%
 	{
 		transform: translateX(8px) translateY(-3px);
 	}
-
+	
 	100%
 	{
 		transform: translateX(0px);
 	}
-
+	
 }
 
 @keyframes 'SnowballVictimDance'
@@ -4767,19 +4767,19 @@ CitadelTooltipProfileCard #Contents
 		pre-transform-rotate2d: 0deg;
 		wash-color: #c41b1b90;
 	}
-
+	
 	50%
 	{
 		pre-transform-rotate2d: 10deg;
 		wash-color: #c41b1bea;
 	}
-
+	
 	100%
 	{
 		pre-transform-rotate2d: 0deg;
 		wash-color: #c41b1b90;
 	}
-
+	
 }
 
 SimpleContextMenu .ContextMenuBody
@@ -5226,12 +5226,12 @@ NumberEntry .ChangeValueButtons .ChangeValueButton .ChangeValueButtonLabel
 	{
 		pre-transform-rotate2d: 0deg;
 	}
-
+	
 	100%
 	{
 		pre-transform-rotate2d: 360deg;
 	}
-
+	
 }
 
 @keyframes 'RotateInner'
@@ -5240,12 +5240,12 @@ NumberEntry .ChangeValueButtons .ChangeValueButton .ChangeValueButtonLabel
 	{
 		pre-transform-rotate2d: 0deg;
 	}
-
+	
 	100%
 	{
 		pre-transform-rotate2d: 360deg;
 	}
-
+	
 }
 
 @keyframes 'RotateOuter'
@@ -5254,12 +5254,12 @@ NumberEntry .ChangeValueButtons .ChangeValueButton .ChangeValueButtonLabel
 	{
 		pre-transform-rotate2d: 0deg;
 	}
-
+	
 	100%
 	{
 		pre-transform-rotate2d: -360deg;
 	}
-
+	
 }
 
 @keyframes 'WaitingPulse'
@@ -5268,17 +5268,17 @@ NumberEntry .ChangeValueButtons .ChangeValueButton .ChangeValueButtonLabel
 	{
 		pre-transform-scale2d: 1;
 	}
-
+	
 	50%
 	{
 		pre-transform-scale2d: 0.9;
 	}
-
+	
 	100%
 	{
 		pre-transform-scale2d: 1;
 	}
-
+	
 }
 
 @keyframes 'WaitingPulseMid'
@@ -5287,17 +5287,17 @@ NumberEntry .ChangeValueButtons .ChangeValueButton .ChangeValueButtonLabel
 	{
 		pre-transform-scale2d: 1;
 	}
-
+	
 	50%
 	{
 		pre-transform-scale2d: 0.8;
 	}
-
+	
 	100%
 	{
 		pre-transform-scale2d: 1;
 	}
-
+	
 }
 
 @keyframes 'WaitingPulseEye'
@@ -5306,17 +5306,17 @@ NumberEntry .ChangeValueButtons .ChangeValueButton .ChangeValueButtonLabel
 	{
 		pre-transform-scale2d: 1;
 	}
-
+	
 	50%
 	{
 		pre-transform-scale2d: 0.7;
 	}
-
+	
 	100%
 	{
 		pre-transform-scale2d: 1;
 	}
-
+	
 }
 
 @keyframes 'WaitingPulseLight'
@@ -5325,17 +5325,17 @@ NumberEntry .ChangeValueButtons .ChangeValueButton .ChangeValueButtonLabel
 	{
 		pre-transform-scale2d: 1;
 	}
-
+	
 	50%
 	{
 		pre-transform-scale2d: 0.94;
 	}
-
+	
 	100%
 	{
 		pre-transform-scale2d: 1;
 	}
-
+	
 }
 
 @keyframes 'DefaultAnimX'
@@ -5344,17 +5344,17 @@ NumberEntry .ChangeValueButtons .ChangeValueButton .ChangeValueButtonLabel
 	{
 		transform: translateX( 1px );
 	}
-
+	
 	50%
 	{
 		transform: translateY( 1px );
 	}
-
+	
 	100%
 	{
 		transform: translateX( -1px );
 	}
-
+	
 }
 
 @keyframes 'DefaultAnimY'
@@ -5363,17 +5363,17 @@ NumberEntry .ChangeValueButtons .ChangeValueButton .ChangeValueButtonLabel
 	{
 		transform: translateY( 1px );
 	}
-
+	
 	50%
 	{
 		transform: translateX( 1px );
 	}
-
+	
 	100%
 	{
 		transform: translateY( -1px );
 	}
-
+	
 }
 
 @import url("s2r://panorama/styles/split_label.vcss");
@@ -5383,42 +5383,42 @@ NumberEntry .ChangeValueButtons .ChangeValueButton .ChangeValueButtonLabel
 	{
 		transform: rotateZ(-3deg);
 	}
-
+	
 	25%
 	{
 		transform: rotateZ(-3deg);
 	}
-
+	
 	26%
 	{
 		transform: rotateZ(2deg);
 	}
-
+	
 	50%
 	{
 		transform: rotateZ(2deg);
 	}
-
+	
 	51%
 	{
 		transform: rotateZ(-1deg);
 	}
-
+	
 	75%
 	{
 		transform: rotateZ(-1deg);
 	}
-
+	
 	76%
 	{
 		transform: rotateZ(0deg);
 	}
-
+	
 	100%
 	{
 		transform: rotateZ(0deg);
 	}
-
+	
 }
 
 CitadelButton
@@ -5760,3 +5760,4 @@ CitadelButton:disabled:hover Label,CitadelButton.Disabled:hover Label
 	color: #dc3232;
 	font-weight: bold;
 }
+
