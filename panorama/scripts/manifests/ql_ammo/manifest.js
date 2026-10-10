@@ -15,7 +15,8 @@
             for (const key of ["AMMO_CURRENT_SCALE", "AMMO_TOTAL_SCALE", "AMMO_PANEL_SCALE", "AMMO_HUD_SCALE"]) {
                 if (cfg[key] != null && Number(cfg[key]) !== 100) return true;
             }
-            for (const key of ["AMMO_PANEL_X_OFFSET", "AMMO_PANEL_Y_OFFSET", "AMMO_CLIP_ANGLE", "AMMO_TEXT_COLOR"]) {
+            for (const key of ["AMMO_PANEL_X_OFFSET", "AMMO_PANEL_Y_OFFSET", "AMMO_CURRENT_X_OFFSET", "AMMO_CURRENT_Y_OFFSET",
+                "AMMO_MAX_X_OFFSET", "AMMO_MAX_Y_OFFSET", "AMMO_CLIP_ANGLE", "AMMO_TEXT_COLOR"]) {
                 if (cfg[key] != null && Number(cfg[key]) !== 0) return true;
             }
             return false;
@@ -30,6 +31,10 @@
             { key: "AMMO_TOTAL_SCALE", type: "slider" },
             { key: "AMMO_PANEL_X_OFFSET", type: "slider" },
             { key: "AMMO_PANEL_Y_OFFSET", type: "slider" },
+            { key: "AMMO_CURRENT_X_OFFSET", type: "slider" },
+            { key: "AMMO_CURRENT_Y_OFFSET", type: "slider" },
+            { key: "AMMO_MAX_X_OFFSET", type: "slider" },
+            { key: "AMMO_MAX_Y_OFFSET", type: "slider" },
             { key: "AMMO_CLIP_ANGLE", type: "slider" },
             { key: "AMMO_TEXT_COLOR", type: "palette" }
         ],
@@ -128,7 +133,13 @@
                 const groupScale = clamp(cfg.AMMO_HUD_SCALE ?? 100, 50, 200);
                 const xOffset = clamp(cfg.AMMO_PANEL_X_OFFSET, -2000, 2000);
                 const yOffset = clamp(cfg.AMMO_PANEL_Y_OFFSET, -2000, 2000);
+                const textPosition = prefix => {
+                    const x = QOL.utils.ClampConfigNumber(cfg[prefix + "X_OFFSET"], 0, -2000, 2000, true);
+                    const y = QOL.utils.ClampConfigNumber(cfg[prefix + "Y_OFFSET"], 0, -2000, 2000, true);
+                    return { ...(x ? { x: x + "px" } : {}), ...(y ? { y: -y + "px" } : {}) };
+                };
                 return { visualEnabled: Number(cfg.ENABLE_AMMO_STATUS) === 1, angle: clamp(cfg.AMMO_CLIP_ANGLE, 0, 360), currentStyles, totalStyles, infiniteStyles,
+                    currentPosition: textPosition("AMMO_CURRENT_"), maxPosition: textPosition("AMMO_MAX_"),
                     clipStyles: {
                         ...(groupScale !== 100 ? { uiScale: groupScale + "%" } : {}),
                         ...(xOffset ? { x: xOffset + "px" } : {}),
@@ -155,12 +166,12 @@
 
             function discoverTexts() {
                 const sources = new Map();
-                for (const [className, styles] of [["weapon_ammo", model.currentStyles],
-                    ["weapon_ammo_max", model.totalStyles], ["weapon_ammo_infinite", model.infiniteStyles]]) {
+                for (const [className, styles, position] of [["weapon_ammo", model.currentStyles, model.currentPosition],
+                    ["weapon_ammo_max", model.totalStyles, model.maxPosition], ["weapon_ammo_infinite", model.infiniteStyles, {}]]) {
                     for (const target of QOL.utils.FindPanelsByClass(panel, className)) {
                         // Keep native multi-class precedence: a later role may
                         // replace shared properties, without dropping earlier ones.
-                        sources.set(target, Object.assign({}, sources.get(target), styles));
+                        sources.set(target, { styles: Object.assign({}, sources.get(target)?.styles, styles), position });
                     }
                 }
                 return sources;
@@ -170,7 +181,8 @@
                 for (const [target, state] of texts) {
                     if (!sources.has(target)) { releaseText(target, state.properties); texts.delete(target); }
                 }
-                for (const [target, plan] of sources) {
+                for (const [target, { styles: plan, position }] of sources) {
+                    geometry.apply(target, position);
                     const previous = texts.get(target);
                     const properties = Object.keys(plan);
                     const planSignature = properties.map(property => property + "=" + plan[property]).join(";");
@@ -255,11 +267,12 @@
                 const clipSources = discoverClips(root);
                 renderClips(clipSources);
                 renderPips(clipSources);
-                geometry.retain([panel, ...clipSources.keys()]);
+                const textSources = panel ? discoverTexts() : new Map();
+                renderTexts(textSources);
+                geometry.retain([panel, ...clipSources.keys(), ...textSources.keys()]);
                 if (!panel) return;
                 panelAPI.setClass(panel, "qol-hidden", false);
                 geometry.apply(panel, model.panelStyles);
-                renderTexts(discoverTexts());
                 // Native ammo state may recolor retained labels between ticks.
                 if (model.currentStyles.color) for (const target of texts.keys()) {
                     QOL.utils.SetStyleIfChanged(target, "color", model.currentStyles.color);

@@ -201,6 +201,11 @@ layouts, without changing those text sizes or the crosshair. Scaling each siblin
 retains the native distance between them. Digit offsets use margins to preserve
 native positioning rules, and default geometry releases the code overrides.
 The Ammo frame measures the union of these surfaces rather than the gun wrapper.
+Current and Max also have independent digit frames and offsets relative to their
+native positions inside Ammo. They retain their existing font-size settings and
+inherit the group's shared styling. Max's native label includes the separator;
+moving it does not rewrite engine-owned text. Parent movement edits only group
+offsets. The group inspector also exposes the digit offsets for scoped access.
 
 Magnets align viewport/neighbor edges and centers in canvas units. Guides appear
 only when acknowledged native bounds meet the proposed alignment; clamped or

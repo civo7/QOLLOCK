@@ -26,21 +26,22 @@
             note: "Color is shared with Bottom Bar.",
             fields: [...geometry("AP_"), { key: "BOTTOM_BAR_WASH_COLOR", label: "Color", type: "palette" }] },
         { id: "ammo", name: "Ammo", path: [...crosshair, "gun", "gun_data", "ammo_panel"],
-            resolve(hud) {
-                const gun = findPath(hud, [...crosshair, "gun", "gun_data"]) || Q.core.panel.findTraverse(hud, "gun_data");
-                return Q.core.panel.findChild(gun, "ammo_panel") || Q.core.panel.findChild(gun, "clip_status") ||
-                    Q.core.panel.findChild(gun, "clip_status_mirrored");
-            },
+            resolve: resolveAmmo,
             measurePanels(target) {
                 const gun = Q.core.panel.isAlive(target) ? target.GetParent() : null;
                 return ["ammo_panel", "clip_status", "clip_status_mirrored"]
                     .map(id => Q.core.panel.findChild(gun, id)).filter(Q.core.panel.isAlive);
             },
             fields: [
-            { key: "ENABLE_AMMO_STATUS", label: "Magazine indicator", type: "toggle" }, { key: "ENABLE_HIDE_MAGAZINE", label: "Hide total ammo", type: "toggle" },
+            { key: "ENABLE_AMMO_STATUS", label: "Magazine indicator", type: "toggle" }, { key: "ENABLE_HIDE_MAGAZINE", label: "Hide max ammo", type: "toggle" },
             { key: "ENABLE_HIDE_AMMO_ALL", label: "Hide current ammo", type: "toggle" },
             ...geometry("AMMO_PANEL_"), { key: "AMMO_PANEL_SCALE", label: "Current Ammo", hidden: true }, { key: "AMMO_CURRENT_SCALE", label: "Current Ammo" },
-            { key: "AMMO_TOTAL_SCALE", label: "Total Ammo" }, { key: "AMMO_CLIP_ANGLE", label: "Rotation" }, color("AMMO_TEXT_COLOR")
+            { key: "AMMO_TOTAL_SCALE", label: "Max Ammo" },
+            { key: "AMMO_CURRENT_X_OFFSET", label: "Current Horizontal Offset", unit: "px" },
+            { key: "AMMO_CURRENT_Y_OFFSET", label: "Current Vertical Offset", unit: "px" },
+            { key: "AMMO_MAX_X_OFFSET", label: "Max Horizontal Offset", unit: "px" },
+            { key: "AMMO_MAX_Y_OFFSET", label: "Max Vertical Offset", unit: "px" },
+            { key: "AMMO_CLIP_ANGLE", label: "Rotation" }, color("AMMO_TEXT_COLOR")
         ] },
         { id: "stamina", name: "Stamina", path: [...crosshair, "dash", "charges_container"], frame: true, fields: [
             ...geometry("STAMINA_"), { key: "STAMINA_SCALE", label: "Scale", resize: true }, { key: "STAMINA_CHARGE_ANGLE", label: "Rotation" }, color("STAMINA_CHARGE_COLOR")
@@ -88,6 +89,17 @@
         element.scaleKey = prefix + "SCALE";
     }
     nativeElements.find(item => item.id === "stamina").scaleKey = "STAMINA_SCALE";
+    for (const [id, name, prefix, className, sizeKey] of [
+        ["ammoCurrent", "Current Ammo", "AMMO_CURRENT_", "weapon_ammo", "AMMO_CURRENT_SCALE"],
+        ["ammoMax", "Max Ammo", "AMMO_MAX_", "weapon_ammo_max", "AMMO_TOTAL_SCALE"]
+    ]) nativeElements.push({ id, name, group: "Crosshair", path: [...crosshair, "gun", "gun_data", "ammo_panel"],
+        resolve(hud) {
+            const panel = resolveAmmo(hud);
+            return panel?.id === "ammo_panel" ? QOL_UTILS.FindPanelsByClass(panel, className)[0] || null : null;
+        },
+        note: "These labels inherit Ammo's shared styling. Max ammo includes the separator.",
+        fields: [...geometry(prefix), { key: sizeKey, label: "Size", unit: "%", resize: true }]
+    });
     register(nativeElements);
 
     function normalize(key, value) {
@@ -129,6 +141,11 @@
         }
         return (path.length === 1 ? Q.core.panel.findTraverse(hud, leaf) : null) ||
             (element.fallbackPath ? findPath(hud, element.fallbackPath) : null);
+    }
+    function resolveAmmo(hud) {
+        const gun = findPath(hud, [...crosshair, "gun", "gun_data"]) || Q.core.panel.findTraverse(hud, "gun_data");
+        return Q.core.panel.findChild(gun, "ammo_panel") || Q.core.panel.findChild(gun, "clip_status") ||
+            Q.core.panel.findChild(gun, "clip_status_mirrored");
     }
     const canDrag = element => element.fields.some(field => field.axis);
     function chooseStatsPanel(legacy, active) {

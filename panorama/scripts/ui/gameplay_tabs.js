@@ -203,7 +203,7 @@
             createRow(list, "Current", "ENABLE_HIDE_AMMO_ALL", "toggle", null, null, null, [{ invert: true }]);
         }
         if (createRow) {
-            createRow(list, "Total", "ENABLE_HIDE_MAGAZINE", "toggle", null, null, null, [{ invert: true }]);
+            createRow(list, "Max", "ENABLE_HIDE_MAGAZINE", "toggle", null, null, null, [{ invert: true }]);
         }
         if (createSliderRow) {
             createSliderRow(list, "Rotate Magazine", "AMMO_CLIP_ANGLE", "angle_0_360", "Rotate the ammo magazine visualiser.", true);
