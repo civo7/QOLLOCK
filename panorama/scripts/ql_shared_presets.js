@@ -1829,7 +1829,11 @@ var QOL_SETTINGS_FIELDS = QOL_COMPACT_SCHEMA_UTILS.AppendUniqueSchemaFields(
         { key: "AP_Y_OFFSET", min: -2000, max: 2000, step: 1 },
         { key: "STAMINA_X_OFFSET", min: -2000, max: 2000, step: 1 },
         { key: "STAMINA_Y_OFFSET", min: -2000, max: 2000, step: 1 },
-        { key: "DAMAGE_REPORT_SCALE", min: 50, max: 200, step: 1 }
+        { key: "DAMAGE_REPORT_SCALE", min: 50, max: 200, step: 1 },
+        ...["ACTIVE_ITEMS_OPACITY", "AP_OPACITY", "AMMO_HUD_OPACITY", "STAMINA_OPACITY", "STATS_POSITION_OPACITY",
+            "COMPASS_OPACITY", "COMPASS_SPEED_OPACITY", "ZIP_BOOST_OPACITY", "STAT_BONUSES_OPACITY", "COMBAT_STATUS_OPACITY",
+            "UNSECURED_SOUL_TIMER_OPACITY", "UNSECURED_SOULS_HUD_OPACITY", "KEYBOARD_OVERLAY_OPACITY", "DAMAGE_REPORT_OPACITY", "CHAT_OPACITY"]
+            .map(key => ({ key, min: 0, max: 1, step: 0.01 }))
     ]
 );
 
@@ -2418,6 +2422,21 @@ var QOL_DEFAULT_CONFIG = {
         AMMO_CURRENT_Y_OFFSET: 0,
         AMMO_MAX_X_OFFSET: 0,
         AMMO_MAX_Y_OFFSET: 0,
+        ACTIVE_ITEMS_OPACITY: 1,
+        AP_OPACITY: 1,
+        AMMO_HUD_OPACITY: 1,
+        STAMINA_OPACITY: 1,
+        STATS_POSITION_OPACITY: 1,
+        COMPASS_OPACITY: 1,
+        COMPASS_SPEED_OPACITY: 1,
+        ZIP_BOOST_OPACITY: 1,
+        STAT_BONUSES_OPACITY: 1,
+        COMBAT_STATUS_OPACITY: 1,
+        UNSECURED_SOUL_TIMER_OPACITY: 1,
+        UNSECURED_SOULS_HUD_OPACITY: 1,
+        KEYBOARD_OVERLAY_OPACITY: 1,
+        DAMAGE_REPORT_OPACITY: 1,
+        CHAT_OPACITY: 1,
         AP_SCALE: 100,
         AP_X_OFFSET: 0,
         AP_Y_OFFSET: 0,

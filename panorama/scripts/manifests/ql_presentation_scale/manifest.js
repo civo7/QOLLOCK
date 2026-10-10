@@ -1,11 +1,15 @@
-// Overall ui-scale for surfaces whose content is owned by other features.
-// Multiply verified CSS baselines; release overrides at the default.
+// Overall ui-scale and added opacity controls; content keeps its existing owner.
+// Multiply verified scale baselines; release overrides at their default.
 (() => {
     "use strict";
     const Q = QOL;
     const P = Q.core.panel;
-    const owners = ["souls", "items", "stamina", "playerStats", "speed", "abilityPoints", "damageReport"];
-    const elements = owners.map(id => Q.presentation.elements.find(element => element.id === id));
+    const scaled = new Set(["souls", "items", "stamina", "playerStats", "speed", "abilityPoints", "damageReport"]);
+    const opacityOwners = ["activeItems", "abilityPoints", "ammo", "stamina", "playerStats", "compass", "speed", "zipBoost",
+        "statBonuses", "combatStatus", "unsecuredTimer", "unsecuredSouls", "keyboard", "damageReport", "chat"];
+    const elements = [...new Set([...scaled, ...opacityOwners])].map(id => Q.presentation.elements.find(element => element.id === id));
+    const opacityKeys = new Map(opacityOwners.map(id => [id,
+        elements.find(element => element.id === id).fields.find(field => field.label === "Opacity").key]));
     const positions = new Set(["abilityPoints", "stamina"]);
     const clear = (panel, record) => {
         if (!P.isAlive(panel)) return;
@@ -28,29 +32,45 @@
         id: "ql_presentation_scale",
         enabledByDefault: true,
         settings: elements.flatMap(element => [
-            { key: element.scaleKey, type: "slider" },
+            ...(scaled.has(element.id) ? [{ key: element.scaleKey, type: "slider" }] : []),
+            ...(opacityKeys.has(element.id) ? [{ key: opacityKeys.get(element.id), type: "slider" }] : []),
             ...(positions.has(element.id) ? element.fields.filter(field => field.axis).map(field => ({
                 key: field.key, type: "slider"
             })) : [])
         ]),
         create(ctx) {
             const applied = new Map();
+            const opacityStyles = P.createNativeStyleOwner();
             let loop = null;
             function update() {
                 const cfg = ctx.config.view();
                 const root = $.GetContextPanel();
                 const styleRoot = P.findHud(root) || root;
+                const opacityPanels = [];
                 for (const element of elements) {
                     const previous = applied.get(element.id);
-                    const percent = Number(cfg[element.scaleKey]);
+                    const percent = scaled.has(element.id) ? Number(cfg[element.scaleKey]) : 100;
                     const value = Number.isFinite(percent) ? Math.max(50, Math.min(200, percent)) / 100 : 1;
+                    const alpha = opacityKeys.has(element.id)
+                        ? QOL_UTILS.ClampConfigNumber(cfg[opacityKeys.get(element.id)], 1, 0, 1) : 1;
                     // Default geometry owns no native override. Discovery (in
                     // particular dash class traversal) is unnecessary until an
                     // actual scale/offset needs applying or retiring.
                     const moved = positions.has(element.id) && element.fields.some(field => field.axis && Number(cfg[field.key]));
-                    if (value === 1 && !moved && !previous) continue;
+                    if (value === 1 && !moved && !previous && alpha === 1) continue;
                     const owner = Q.presentation.resolve(element, root, cfg);
                     const panel = Q.presentation.scaleTarget(element, owner);
+                    if (alpha !== 1) {
+                        // Stats visibility is owned on the outer wrapper. Apply
+                        // custom opacity only to the compact block, never over
+                        // the wrapper's conditional opacity=0.
+                        const targets = element.id === "playerStats" ? [P.findChild(owner, "HudStatBlock")]
+                            : element.id === "ammo" && P.isAlive(owner) ? element.measurePanels(owner) : [panel];
+                        for (const target of targets.filter(P.isAlive)) {
+                            opacityStyles.apply(target, { opacity: alpha.toFixed(2) });
+                            opacityPanels.push(target);
+                        }
+                    }
                     if (previous && previous.panel !== panel) { clear(previous.panel, previous); applied.delete(element.id); }
                     if (!P.isAlive(panel)) continue;
                     const styles = {};
@@ -72,6 +92,9 @@
                         applied.set(element.id, { panel, styles });
                     }
                 }
+                // Default opacity retires previous code writes without a new
+                // native lookup; rejected clears keep the helper's cleanup retry.
+                opacityStyles.retain(opacityPanels);
             }
             return {
                 onEnable() {
@@ -84,6 +107,7 @@
                     loop = null;
                     for (const record of applied.values()) clear(record.panel, record);
                     applied.clear();
+                    opacityStyles.clear();
                 }
             };
         }

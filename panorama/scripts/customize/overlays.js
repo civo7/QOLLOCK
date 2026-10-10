@@ -19,21 +19,22 @@
             ].map(([suffix, label]) => f("CROSSHAIR_STATS_SHOW_" + suffix, label, "toggle", { hidden: true }))
         ]),
         overlay("compass", "Compass", "QOLCompassRoot", [toggle("ENABLE_COMPASS"), f("ENABLE_SIMPLIFY_COMPASS", "Minimalist", "toggle", { hidden: true }),
-            ...geometry("COMPASS_", true), f("COMPASS_STRETCH_X", "Width"), f("COMPASS_STRETCH_Y", "Height")]),
-        Object.assign(overlay("speed", "Speed", "QOLSpeedRoot", [toggle("ENABLE_COMPASS_SPEED"), ...geometry("COMPASS_SPEED_", true)]), { scaleKey: "COMPASS_SPEED_SCALE" }),
-        overlay("zipBoost", "Zipline Boost", "QOLZipBoostOverlay", [toggle("ENABLE_ZIP_BOOST"), ...geometry("ZIP_BOOST_", true)]),
-        overlay("statBonuses", "Stat Bonuses", "QOLStatBonusesOverlay", [toggle("ENABLE_STAT_BONUSES"), ...geometry("STAT_BONUSES_", true)]),
-        overlay("combatStatus", "Combat Status", "QOLCombatStatusOverlay", [toggle("ENABLE_COMBAT_STATUS"), f("ENABLE_COMBAT_INDICATOR", "Combat Indicator", "toggle", { hidden: true }), ...geometry("COMBAT_STATUS_", true)]),
-        overlay("unsecuredTimer", "Unsecured Souls Timer", "QOLUnsecuredSoulsOverlay", [toggle("ENABLE_UNSECURED_SOUL_TIMER"), ...geometry("UNSECURED_SOUL_TIMER_", true)]),
+            ...geometry("COMPASS_", true), opacity("COMPASS_"), f("COMPASS_STRETCH_X", "Width"), f("COMPASS_STRETCH_Y", "Height")]),
+        Object.assign(overlay("speed", "Speed", "QOLSpeedRoot", [toggle("ENABLE_COMPASS_SPEED"), ...geometry("COMPASS_SPEED_", true), opacity("COMPASS_SPEED_")]), { scaleKey: "COMPASS_SPEED_SCALE" }),
+        overlay("zipBoost", "Zipline Boost", "QOLZipBoostOverlay", [toggle("ENABLE_ZIP_BOOST"), ...geometry("ZIP_BOOST_", true), opacity("ZIP_BOOST_")]),
+        overlay("statBonuses", "Stat Bonuses", "QOLStatBonusesOverlay", [toggle("ENABLE_STAT_BONUSES"), ...geometry("STAT_BONUSES_", true), opacity("STAT_BONUSES_")]),
+        overlay("combatStatus", "Combat Status", "QOLCombatStatusOverlay", [toggle("ENABLE_COMBAT_STATUS"), f("ENABLE_COMBAT_INDICATOR", "Combat Indicator", "toggle", { hidden: true }), ...geometry("COMBAT_STATUS_", true), opacity("COMBAT_STATUS_")]),
+        overlay("unsecuredTimer", "Unsecured Souls Timer", "QOLUnsecuredSoulsOverlay", [toggle("ENABLE_UNSECURED_SOUL_TIMER"), ...geometry("UNSECURED_SOUL_TIMER_", true), opacity("UNSECURED_SOUL_TIMER_")]),
         { id: "unsecuredSouls", name: "Better Unsecured Souls", group: "Overlay", path: [...C.paths.core, "StatsAndModsContainer", "QOLBetterUnsecuredOverlay"],
             fallbackPath: [...gameplay, "QOLBetterUnsecuredOverlay"], fields: [
             toggle("ENABLE_BETTER_UNSECURED"), ...geometry("UNSECURED_SOULS_HUD_", true).map(item => item.axis === "y" ? Object.assign({}, item, { direction: 1 }) : item),
+            opacity("UNSECURED_SOULS_HUD_"),
             f("ENABLE_BETTER_UNSECURED_SHOW_ICON", "Icon", "toggle", { hidden: true }),
             f("ENABLE_BETTER_UNSECURED_SHOW_TEXT", "Text", "toggle", { hidden: true }),
             f("ENABLE_BETTER_UNSECURED_SHOW_ICON_TEXT", "Icon Text", "toggle", { hidden: true })
         ] },
         { id: "keyboard", name: "Keyboard Overlay", group: "Overlay", path: [...gameplay, "QOLKeyboardOverlayRoot", "AllBindingsBox"], fields: [
-            toggle("ENABLE_KEYBOARD_OVERLAY"), f("ENABLE_FULL_KEYBOARD_LAYOUT", "Full Keyboard", "toggle", { hidden: true }), ...geometry("KEYBOARD_OVERLAY_", true),
+            toggle("ENABLE_KEYBOARD_OVERLAY"), f("ENABLE_FULL_KEYBOARD_LAYOUT", "Full Keyboard", "toggle", { hidden: true }), ...geometry("KEYBOARD_OVERLAY_", true), opacity("KEYBOARD_OVERLAY_"),
             f("KEYBOARD_OVERLAY_WASH_COLOR", "Color", "palette")
         ] },
         { id: "reload", name: "Reload Cooldown", group: "Crosshair", path: [...crosshair, "gun", "gun_data", "reticle_status", "QOLReloadCooldownText"], fields: [

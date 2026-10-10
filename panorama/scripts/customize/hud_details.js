@@ -21,9 +21,9 @@
         ], "Healthbar"),
         detail("damageImpact", "Damage Impact", [...core, "damage_impact"], [t("ENABLE_DAMAGE_IMPACT", "Enable"), ...geometry("DAMAGE_IMPACT_", true), opacity("DAMAGE_IMPACT_")], "Crosshair"),
         Object.assign(detail("damageReport", "Damage Report", [...core, "CitadelHudDamageReport"], [
-            f("DISABLE_DAMAGE_REPORT", "Hide", "toggle", { visibility: true, inverted: true }), ...geometry("DAMAGE_REPORT_", true)
+            f("DISABLE_DAMAGE_REPORT", "Hide", "toggle", { visibility: true, inverted: true }), ...geometry("DAMAGE_REPORT_", true), opacity("DAMAGE_REPORT_")
         ]), { scaleKey: "DAMAGE_REPORT_SCALE" }),
-        detail("chat", "Chat", [...core, "Chat"], [t("ENABLE_CHAT", "Enable"), t("ENABLE_IMAGES_IN_CHAT", "Images In Chat"), ...geometry("CHAT_", true)]),
+        detail("chat", "Chat", [...core, "Chat"], [t("ENABLE_CHAT", "Enable"), t("ENABLE_IMAGES_IN_CHAT", "Images In Chat"), ...geometry("CHAT_", true), opacity("CHAT_")]),
         detail("objectives", "Objectives", [...core, "TopBar"], [t("ENABLE_OBJ_MAP", "Objective Map"), t("ENABLE_OBJ_DMG", "Objective Damage"), t("ENABLE_MISSING_HERO", "Missing Hero Opaque")]),
         detail("nicknames", "Nicknames", [...core, "TopBar"], [t("ENABLE_NICKNAMES", "Enable"), t("DISABLE_PLAYER_NAME_BLUR", "Hide Top Bar Background")]),
         detail("ranks", "Ranks", [...core, "TopBar"], [t("SHOW_RANK", "Show Rank"), t("SHOW_RANK_TOPBAR", "Show Rank in Top Bar")]),

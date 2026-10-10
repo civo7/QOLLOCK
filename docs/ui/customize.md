@@ -207,6 +207,16 @@ inherit the group's shared styling. Max's native label includes the separator;
 moving it does not rewrite engine-owned text. Parent movement edits only group
 offsets. The group inspector also exposes the digit offsets for scoped access.
 
+The additional opacity controls are owned by `ql_presentation_scale` using its
+existing poll. At the default they own no native opacity override and skip
+surface discovery; reset/disable releases attempted styles, including rejected
+clears through the shared native-style owner. Ammo opacity reaches its digits
+and available sibling rings; Current/Max inherit it once. Player Stats opacity
+applies to the compact block, preserving conditional hiding on the outer owner.
+These controls never set visibility or replace a feature's content. Custom
+opacity overrides the selected panel's opacity; native CSS opacity transitions
+on that same panel require client verification, while the default releases them.
+
 Magnets align viewport/neighbor edges and centers in canvas units. Guides appear
 only when acknowledged native bounds meet the proposed alignment; clamped or
 delayed offsets do not produce a false guide. Explicit alignment actions use

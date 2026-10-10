@@ -21,10 +21,10 @@
         { id: "items", name: "Items", path: [...lower, "ModsContainer"], fields: [toggle("HUD_ITEMS_ENABLED"), ...geometry("ITEMS_"), opacity("ITEMS_"), color("ITEMS_WASH_COLOR")] },
         { id: "topBar", name: "Top Bar", path: [...core, "TopBar"], fields: [toggle("HUD_TOP_BAR_ENABLED"), ...geometry("TOP_BAR_", true), opacity("TOP_BAR_")] },
         { id: "bottomBar", name: "Bottom Bar", path: [...abilities, "hud_signature"], fields: [toggle("HUD_BOTTOM_BAR_ENABLED"), ...geometry("BOTTOM_BAR_", true), opacity("BOTTOM_BAR_"), { key: "BOTTOM_BAR_WASH_COLOR", label: "Color", type: "palette" }] },
-        { id: "activeItems", name: "Active Items", path: [...abilities, "ActiveAbilitiesMenu"], fields: [...geometry("ACTIVE_ITEMS_", true)] },
+        { id: "activeItems", name: "Active Items", path: [...abilities, "ActiveAbilitiesMenu"], fields: [...geometry("ACTIVE_ITEMS_", true), opacity("ACTIVE_ITEMS_")] },
         { id: "abilityPoints", name: "Ability Points", path: [...abilities, "APContainer"], frame: true,
             note: "Color is shared with Bottom Bar.",
-            fields: [...geometry("AP_"), { key: "BOTTOM_BAR_WASH_COLOR", label: "Color", type: "palette" }] },
+            fields: [...geometry("AP_"), opacity("AP_"), { key: "BOTTOM_BAR_WASH_COLOR", label: "Color", type: "palette" }] },
         { id: "ammo", name: "Ammo", path: [...crosshair, "gun", "gun_data", "ammo_panel"],
             resolve: resolveAmmo,
             measurePanels(target) {
@@ -41,14 +41,14 @@
             { key: "AMMO_CURRENT_Y_OFFSET", label: "Current Vertical Offset", unit: "px" },
             { key: "AMMO_MAX_X_OFFSET", label: "Max Horizontal Offset", unit: "px" },
             { key: "AMMO_MAX_Y_OFFSET", label: "Max Vertical Offset", unit: "px" },
-            { key: "AMMO_CLIP_ANGLE", label: "Rotation" }, color("AMMO_TEXT_COLOR")
+            { key: "AMMO_CLIP_ANGLE", label: "Rotation" }, opacity("AMMO_HUD_"), color("AMMO_TEXT_COLOR")
         ] },
         { id: "stamina", name: "Stamina", path: [...crosshair, "dash", "charges_container"], frame: true, fields: [
-            ...geometry("STAMINA_"), { key: "STAMINA_SCALE", label: "Scale", resize: true }, { key: "STAMINA_CHARGE_ANGLE", label: "Rotation" }, color("STAMINA_CHARGE_COLOR")
+            ...geometry("STAMINA_"), { key: "STAMINA_SCALE", label: "Scale", resize: true }, opacity("STAMINA_"), { key: "STAMINA_CHARGE_ANGLE", label: "Rotation" }, color("STAMINA_CHARGE_COLOR")
         ] },
         { id: "playerStats", name: "Player Stats", path: [...lower, "hudPlayerStats"], fallbackPath: [...core, "hudActivePlayerStats"],
             resolve(hud) { return chooseStatsPanel(findPath(hud, [...lower, "hudPlayerStats"]), findPath(hud, [...core, "hudActivePlayerStats"])); }, fields: [
-            { key: "ENABLE_STATS_POSITION", label: "Custom position", type: "toggle" }, ...geometry("STATS_POSITION_"),
+            { key: "ENABLE_STATS_POSITION", label: "Custom position", type: "toggle" }, ...geometry("STATS_POSITION_"), opacity("STATS_POSITION_"),
             { key: "STATS_POSITION_HIDE_NORMAL", label: "Hide (Normal)", type: "toggle" },
             { key: "STATS_POSITION_HIDE_SCOREBOARD", label: "Hide (Scoreboard)", type: "toggle" }
         ] }
