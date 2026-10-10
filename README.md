@@ -83,16 +83,16 @@ QOLLOCK combines work by its maintainers and the wider Deadlock modding communit
 | Maintainer | Contributions |
 | --- | --- |
 | [civo](https://gamebanana.com/members/5146349), [BreadRollius](https://gamebanana.com/members/4296197) | Maintenance and many contributions |
-| [bytenode](https://gamebanana.com/members/5222690) | Maintenance, Minecraft/Minimalist HP Bar, item buy notifications and more |
-| [Predi_i](https://gamebanana.com/members/5107678) | Maintenance, Bridge Buff Reminder, top-bar nicknames, old ability progress bars, active stats, saving and loading |
+| [bytenode](https://gamebanana.com/members/5222690) | Maintenance, Minecraft/Minimalist HP Bar, Item Buy Notifications and more |
+| [Predi_i](https://gamebanana.com/members/5107678) | Maintenance, Bridge Buff Reminder, Show Nicknames in Top Bar, Old Abilities Progress Bars, Active Stats, Saving & Loading |
 
 | Contributor | Contributions |
 | --- | --- |
 | [bonclide](https://gamebanana.com/members/2408486) | Top Bar Plus |
-| [gyzeh](https://gamebanana.com/members/4868100) | 4:3 support |
+| [gyzeh](https://gamebanana.com/members/4868100) | 4:3 Support |
 | [RizoBoy](https://gamebanana.com/members/4436032) | Library |
-| [Goblin Man Sam](https://gamebanana.com/members/4762321) | Shop stats |
-| [Hanturaya](https://gamebanana.com/members/4577138) | Friends' ranks, stats and account IDs; Mid Boss/Bridge Buff Timer; passive/active icons; Red Diamond |
+| [Goblin Man Sam](https://gamebanana.com/members/4762321) | Show stats in shop |
+| [Hanturaya](https://gamebanana.com/members/4577138) | See Friends Rank, Stats and See Account ID; Mid Boss/Bridge Buff Timer; Always Show Passive Items and Actives Icons; Red Diamond |
 | [Fascilux](https://gamebanana.com/members/4690723) | Keyboard Overlay |
 | [mikoboy](https://gamebanana.com/members/2814130) | Legacy Ammo Crosshair |
 | [wouwei](https://gamebanana.com/members/4788864) | Remove Cumulative Damage |
@@ -106,7 +106,7 @@ QOLLOCK combines work by its maintainers and the wider Deadlock modding communit
 | [oGeorge](https://gamebanana.com/members/5260464) | Deadlock for Dummies, Rem Tunnels Overlay |
 | [lustie_](https://gamebanana.com/members/4872008) | Clean Damage Indicators |
 | [0xluc4s](https://gamebanana.com/members/5229080) | Show Build ID |
-| [BubbleGumXD](https://gamebanana.com/members/5281881) | Save/load system contributions |
+| [BubbleGumXD](https://gamebanana.com/members/5281881) | Save/Load System stuff |
 
 | Announcer contributor | Contributions |
 | --- | --- |
