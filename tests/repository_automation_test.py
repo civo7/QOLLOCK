@@ -70,6 +70,35 @@ class UpstreamReviewTests(unittest.TestCase):
         self.assertEqual(writes, {"base.css": self.new})
         self.assertTrue(updated["files"]["styles/base.css"]["auto_sync"])
 
+    def test_css_merge_preserves_existing_syntax_repair(self):
+        middle = ''.join(f'.s{i} {{ opacity: 1; }}\n' for i in range(10))
+        old = b'Label { color: white; }\n' + middle.encode() + b'.mic { color: rgba(0,0,0,1)); }\n'
+        local = old.replace(b'1));', b'1);')
+        native = old.replace(b'Label {', b'Label,SyncedFontSizeLabel {')
+        self.entry.update(blob=sync.git_blob(old), local_sha256=sync.local_digest(local))
+        (self.root / 'base.css').write_bytes(local)
+        blobs = {sync.git_blob(old): old, sync.git_blob(native): native}
+        changes, writes, updated, _ = sync.plan(self.manifest,
+            {'styles/base.css': sync.git_blob(native)}, blobs.__getitem__, self.root)
+        self.assertEqual(changes[0]['status'], 'CSS merged')
+        self.assertIn(b'Label,SyncedFontSizeLabel', writes['base.css'])
+        self.assertNotIn(b'1));', writes['base.css'])
+        self.assertEqual(updated['files']['styles/base.css']['blob'], sync.git_blob(native))
+
+    def test_invalid_native_css_stays_pending_without_source_writes(self):
+        invalid = b'.Hud { opacity: 0.9)); }\n'
+        self.blobs[sync.git_blob(invalid)] = invalid
+        changes, writes, updated, _ = sync.plan(self.manifest,
+            {'styles/base.css': sync.git_blob(invalid)}, self.blobs.__getitem__, self.root)
+        self.assertIn('CSS source validation failed', changes[0]['reason'])
+        self.assertEqual(writes, {})
+        self.assertEqual(updated['files']['styles/base.css']['blob'], self.entry['blob'])
+
+    def test_css_normalization_preserves_multiline_literal_whitespace(self):
+        first = b'.label { text: "line\n  \nend"; }\n'
+        second = b'.label { text: "line\n\nend"; }\n'
+        self.assertNotEqual(sync.normalized(first), sync.normalized(second))
+
     def test_pending_removal_survives_and_acknowledgement_clears_it(self):
         changes, _, updated, _ = sync.plan(self.manifest, {}, self.blobs.__getitem__, self.root)
         self.assertTrue(changes[0]["removed"])

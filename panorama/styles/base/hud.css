@@ -325,31 +325,31 @@ Button:hover
 		pre-transform-scale2d: 1;
 		transform: translate3d(0px, 0px, 0px) rotateY(9deg);
 	}
-
+	
 	20%
 	{
 		transform: translate3d(0px, -30px, 0px) rotateY(9deg);
 		pre-transform-scale2d: 1.25;
 	}
-
+	
 	40%
 	{
 		transform: translate3d(0px, -30px, 0px) rotateY(9deg);
 		pre-transform-scale2d: 1.20;
 	}
-
+	
 	60%
 	{
 		transform: translate3d(0px, -30px, 0px) rotateY(9deg);
 		pre-transform-scale2d: 1.25;
 	}
-
+	
 	100%
 	{
 		pre-transform-scale2d: 1;
 		transform: translate3d(0px, 0px, 0px) rotateY(9deg);
 	}
-
+	
 }
 
 @keyframes 'healthLow'
@@ -359,31 +359,31 @@ Button:hover
 		pre-transform-scale2d: 1;
 		transform: translate3d(0px, 0px, 0px) rotateY(9deg);
 	}
-
+	
 	30%
 	{
 		transform: translate3d(0px, -0px, 0px) rotateY(15deg);
 		pre-transform-scale2d: 1.3;
 	}
-
+	
 	50%
 	{
 		transform: translate3d(0px, -0px, 0px) rotateY(9deg);
 		pre-transform-scale2d: 1.20;
 	}
-
+	
 	70%
 	{
 		transform: translate3d(0px, -0px, 0px) rotateY(15deg);
 		pre-transform-scale2d: 1.3;
 	}
-
+	
 	100%
 	{
 		pre-transform-scale2d: 1;
 		transform: translate3d(0px, 0px, 0px) rotateY(9deg);
 	}
-
+	
 }
 
 #ability_resource
@@ -505,17 +505,17 @@ CitadelHudModifierIcons
 	{
 		pre-transform-scale2d: 1;
 	}
-
+	
 	50%
 	{
 		pre-transform-scale2d: 1.03;
 	}
-
+	
 	100%
 	{
 		pre-transform-scale2d: 1;
 	}
-
+	
 }
 
 #context_action_container
@@ -816,17 +816,17 @@ CitadelHudModifierIcons
 	{
 		color: rgba(219, 0, 0, 1);
 	}
-
+	
 	50%
 	{
 		color: rgba(255, 150, 150, 1);
 	}
-
+	
 	100%
 	{
 		color: rgba(219, 0, 0, 1);
 	}
-
+	
 }
 
 .out_of_ammo #out_of_ammo_label
@@ -874,17 +874,17 @@ CitadelHudModifierIcons
 	{
 		color: rgba(0, 0, 219, 1);
 	}
-
+	
 	50%
 	{
 		color: rgba(100, 100, 255, 1);
 	}
-
+	
 	100%
 	{
 		color: rgba(0, 0, 219, 1);
 	}
-
+	
 }
 
 .not_enough_mana_for_selected #out_of_mana_label
@@ -937,19 +937,19 @@ CitadelHudModifierIcons
 		background-color: yellow;
 		opacity: 0;
 	}
-
+	
 	50%
 	{
 		transform: rotateZ(5deg);
 		pre-transform-scale2d: 1.2;
 		opacity: 1;
 	}
-
+	
 	100%
 	{
 		transform: rotateZ(0deg);
 	}
-
+	
 }
 
 #cast_failed_box.cast_failed
@@ -1453,17 +1453,17 @@ CitadelHudModifierIcons
 	{
 		opacity: 0.5;
 	}
-
+	
 	50%
 	{
 		opacity: 1;
 	}
-
+	
 	100%
 	{
 		opacity: 0.5;
 	}
-
+	
 }
 
 .ping_arrow_up
@@ -1593,31 +1593,31 @@ CitadelHudModifierIcons
 		opacity: 1;
 		pre-transform-scale2d: 1;
 	}
-
+	
 	59.99%
 	{
 		opacity: 0;
 		pre-transform-scale2d: 2.2;
 	}
-
+	
 	60%
 	{
 		opacity: 0;
 		pre-transform-scale2d: 1;
 	}
-
+	
 	99.99%
 	{
 		opacity: 0;
 		pre-transform-scale2d: 1;
 	}
-
+	
 	100%
 	{
 		opacity: 1;
 		pre-transform-scale2d: 1;
 	}
-
+	
 }
 
 .ping_offscreen.idol #hero_icon
@@ -1686,17 +1686,17 @@ CitadelHudModifierIcons
 	{
 		opacity: 0.5;
 	}
-
+	
 	50%
 	{
 		opacity: 1;
 	}
-
+	
 	100%
 	{
 		opacity: 0.5;
 	}
-
+	
 }
 
 .damage_arrow_icon
@@ -1802,12 +1802,12 @@ CitadelHudModifierIcons
 	{
 		opacity: 0;
 	}
-
+	
 	100%
 	{
 		opacity: 1;
 	}
-
+	
 }
 
 .damage_offscreen.nearDeath #health_bar
@@ -2642,17 +2642,17 @@ CitadelTooltipManager
 	{
 		opacity: 1;
 	}
-
+	
 	50%
 	{
 		opacity: 0.2;
 	}
-
+	
 	100%
 	{
 		opacity: 1;
 	}
-
+	
 }
 
 #APContainer .APUnlockBinding
@@ -2816,57 +2816,57 @@ CitadelTooltipManager
 	{
 		opacity: 0;
 	}
-
+	
 	10%
 	{
 		opacity: 1;
 	}
-
+	
 	20%
 	{
 		opacity: 0;
 	}
-
+	
 	30%
 	{
 		opacity: 1;
 	}
-
+	
 	40%
 	{
 		opacity: 0;
 	}
-
+	
 	50%
 	{
 		opacity: 1;
 	}
-
+	
 	60%
 	{
 		opacity: 0;
 	}
-
+	
 	70%
 	{
 		opacity: 1;
 	}
-
+	
 	80%
 	{
 		opacity: 0;
 	}
-
+	
 	90%
 	{
 		opacity: 1;
 	}
-
+	
 	100%
 	{
 		opacity: 0;
 	}
-
+	
 }
 
 .unlockMessage,.upgradeMessage
@@ -2975,19 +2975,19 @@ CitadelTooltipManager
 		pre-transform-scale2d: 1.2;
 		background-color: deadlockGreen;
 	}
-
+	
 	50%
 	{
 		pre-transform-scale2d: 1;
 		background-color: deadlockGreenDark;
 	}
-
+	
 	100%
 	{
 		pre-transform-scale2d: 1.2;
 		background-color: deadlockGreen;
 	}
-
+	
 }
 
 CitadelHudSandboxTutorial
@@ -3037,19 +3037,19 @@ CitadelHudSandboxTutorial
 		box-shadow: fill rgba(255, 255, 0, 0.35) 0px 0px 12px 4px;
 		pre-transform-scale2d: 1.0;
 	}
-
+	
 	50%
 	{
 		pre-transform-scale2d: 1;
 		box-shadow: fill rgba(255, 255, 0, 0.) 0px 0px 12px 4px;
 	}
-
+	
 	100%
 	{
 		pre-transform-scale2d: 1.0;
 		box-shadow: fill rgba(255, 255, 0, 0.35) 0px 0px 12px 4px;
 	}
-
+	
 }
 
 .teleport_tip
@@ -3212,7 +3212,7 @@ CitadelHudSandboxTutorial
 	margin-bottom: 40px;
 }
 
-#StatsAndModsContainer.gEditingBuilds,.wants_scoreboard #StatsAndModsContainer.gEditingBuilds
+#StatsAndModsContainer.gEditingBuilds,.spec_mode.player_selected #StatsAndModsContainer.gEditingBuilds,.wants_scoreboard #StatsAndModsContainer.gEditingBuilds
 {
 	visibility: collapse;
 }
@@ -3448,7 +3448,7 @@ CitadelZiplineBoostIcon.gShopOpen
 	visibility: visible;
 }
 
-#hudActivePlayerStats.gEditingBuilds
+.spec_mode.player_selected #hudActivePlayerStats.gEditingBuilds,#hudActivePlayerStats.gEditingBuilds
 {
 	visibility: collapse;
 }
@@ -3826,3 +3826,4 @@ CitadelHudSoulAPContainer.ShowGoldAndAPOnHud
 	vertical-align: bottom;
 	width: 300px;
 }
+

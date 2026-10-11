@@ -60,7 +60,10 @@ powershell -NoProfile -ExecutionPolicy Bypass -File build_mod/tests/build_mod_re
 QOLLOCK. It is seeded from committed game resources, not a dirty local extract.
 CSS replacement is allowed when the local source still matches the applied or
 new native baseline, ignoring the Viewer header, line endings and blank-line-only
-formatting changes. Custom CSS and upstream deletions require manual review.
+formatting changes. Disjoint custom CSS edits use three-way merging, retaining
+local repairs/extensions. Every CSS candidate passes the existing source safety
+scanner before being written; this does not verify native CSS grammar. Conflicts,
+invalid source candidates and upstream deletions remain pending for manual review.
 
 **Review native resource updates** runs hourly, on a manual request, or after a
 `game-update` dispatch. It reads complete native Git trees and compares watched

@@ -19,20 +19,20 @@ CitadelHudTopBarChat.gDetailView,CitadelHudTopBarChat.gScoreboardOpen
 		transform: translateX(0px) translateY(0px);
 		opacity: 0;
 	}
-
+	
 	50%
 	{
 		pre-transform-scale2d: 1;
 		transform: translateX(5px) translateY(5px);
 	}
-
+	
 	100%
 	{
 		pre-transform-scale2d: 1;
 		transform: translateX(0px) translateY(0px);
 		opacity: 1;
 	}
-
+	
 }
 
 @keyframes 'ping_repeated'
@@ -41,12 +41,12 @@ CitadelHudTopBarChat.gDetailView,CitadelHudTopBarChat.gScoreboardOpen
 	{
 		pre-transform-scale2d: 1.05;
 	}
-
+	
 	100%
 	{
 		pre-transform-scale2d: 1;
 	}
-
+	
 }
 
 @keyframes 'ping_repeatable_cooldown'
@@ -55,17 +55,17 @@ CitadelHudTopBarChat.gDetailView,CitadelHudTopBarChat.gScoreboardOpen
 	{
 		brightness: 1.6;
 	}
-
+	
 	90%
 	{
 		brightness: 1.6;
 	}
-
+	
 	100%
 	{
 		brightness: 1.0;
 	}
-
+	
 }
 
 @define chatMessageFadeDuration: 0.3s;
@@ -88,7 +88,7 @@ CitadelHudTopBarChat.gDetailView,CitadelHudTopBarChat.gScoreboardOpen
 	opacity: 0.0;
 }
 
-.ChatMessage.PingRepeated #MessageContents
+.ChatMessage.PingRepeated
 {
 	animation-name: ping_repeated;
 	animation-duration: 0.3s;
@@ -128,8 +128,8 @@ CitadelHudTopBarChat.gDetailView,CitadelHudTopBarChat.gScoreboardOpen
 	flow-children: right;
 	horizontal-align: right;
 	vertical-align: bottom;
-	margin-right: -10px;
-	margin-bottom: -7px;
+	margin-right: -9px;
+	margin-bottom: -6px;
 }
 
 .ChatMessage #MessageContents .SubjectWrapper .IconBG
@@ -471,22 +471,22 @@ CitadelHudTopBarChat.gDetailView,CitadelHudTopBarChat.gScoreboardOpen
 	{
 		transform: rotateZ(-1deg) skew(9deg);
 	}
-
+	
 	25%
 	{
 		transform: rotateZ(1deg) skew(3deg);
 	}
-
+	
 	50%
 	{
 		transform: rotateZ(-1deg) skew(7deg);
 	}
-
+	
 	75%
 	{
 		transform: rotateZ(0deg) skew(-5deg);
 	}
-
+	
 }
 
 #TypingAnim
@@ -536,24 +536,24 @@ CitadelHudTopBarChat.gDetailView,CitadelHudTopBarChat.gScoreboardOpen
 		transform: translateY(0px) skew(5deg);
 		opacity: 0.5;
 	}
-
+	
 	30%
 	{
 		transform: translateY(-5px) skew(-15deg);
 		opacity: 1;
 	}
-
+	
 	60%
 	{
 		transform: translateY(0px) skew(5deg);
 		opacity: 0.5;
 	}
-
+	
 	100%
 	{
 		transform: translateY(0px) skew(5deg);
 		opacity: 0.5;
 	}
-
+	
 }
 

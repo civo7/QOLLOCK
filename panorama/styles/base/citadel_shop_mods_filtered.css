@@ -8,6 +8,7 @@ CitadelShopModsFiltered
 	horizontal-align: center;
 	background-size: cover;
 }
+
 CitadelShopModsFiltered #ModsContainer
 {
 	height: 100%;
@@ -107,7 +108,7 @@ CitadelShopModsFiltered .tierRow
 
 .ShowingWeaponOnly CitadelShopModsFiltered .tierRow.EModTier_1 .CostLabel Label
 {
-	font-family: block;
+	font-family: numericBlock;
 	color: shardColor;
 	text-shadow: none;
 }
@@ -129,7 +130,7 @@ CitadelShopModsFiltered .tierRow
 
 .ShowingWeaponOnly CitadelShopModsFiltered .tierRow.EModTier_2 .CostLabel Label
 {
-	font-family: block;
+	font-family: numericBlock;
 	color: shardColor;
 	text-shadow: none;
 	font-size: 26px;
@@ -152,7 +153,7 @@ CitadelShopModsFiltered .tierRow
 
 .ShowingWeaponOnly CitadelShopModsFiltered .tierRow.EModTier_3 .CostLabel Label
 {
-	font-family: block;
+	font-family: numericBlock;
 	color: shardColor;
 	text-shadow: none;
 	font-size: 28px;
@@ -175,7 +176,7 @@ CitadelShopModsFiltered .tierRow
 
 .ShowingWeaponOnly CitadelShopModsFiltered .tierRow.EModTier_4 .CostLabel Label
 {
-	font-family: block;
+	font-family: numericBlock;
 	color: shardColor;
 	text-shadow: none;
 	font-size: 28px;
@@ -198,7 +199,7 @@ CitadelShopModsFiltered .tierRow
 
 .ShowingVitalityOnly CitadelShopModsFiltered .tierRow.EModTier_1 .CostLabel Label
 {
-	font-family: block;
+	font-family: numericBlock;
 	color: shardColor;
 	text-shadow: none;
 }
@@ -220,7 +221,7 @@ CitadelShopModsFiltered .tierRow
 
 .ShowingVitalityOnly CitadelShopModsFiltered .tierRow.EModTier_2 .CostLabel Label
 {
-	font-family: block;
+	font-family: numericBlock;
 	color: shardColor;
 	text-shadow: none;
 	font-size: 26px;
@@ -243,7 +244,7 @@ CitadelShopModsFiltered .tierRow
 
 .ShowingVitalityOnly CitadelShopModsFiltered .tierRow.EModTier_3 .CostLabel Label
 {
-	font-family: block;
+	font-family: numericBlock;
 	color: shardColor;
 	text-shadow: none;
 	font-size: 28px;
@@ -266,7 +267,7 @@ CitadelShopModsFiltered .tierRow
 
 .ShowingVitalityOnly CitadelShopModsFiltered .tierRow.EModTier_4 .CostLabel Label
 {
-	font-family: block;
+	font-family: numericBlock;
 	color: shardColor;
 	text-shadow: none;
 	font-size: 28px;
@@ -289,7 +290,7 @@ CitadelShopModsFiltered .tierRow
 
 .ShowingSpiritOnly CitadelShopModsFiltered .tierRow.EModTier_1 .CostLabel Label
 {
-	font-family: block;
+	font-family: numericBlock;
 	color: shardColor;
 	text-shadow: none;
 }
@@ -311,7 +312,7 @@ CitadelShopModsFiltered .tierRow
 
 .ShowingSpiritOnly CitadelShopModsFiltered .tierRow.EModTier_2 .CostLabel Label
 {
-	font-family: block;
+	font-family: numericBlock;
 	color: shardColor;
 	text-shadow: none;
 	font-size: 26px;
@@ -334,7 +335,7 @@ CitadelShopModsFiltered .tierRow
 
 .ShowingSpiritOnly CitadelShopModsFiltered .tierRow.EModTier_3 .CostLabel Label
 {
-	font-family: block;
+	font-family: numericBlock;
 	color: shardColor;
 	text-shadow: none;
 	font-size: 28px;
@@ -357,7 +358,7 @@ CitadelShopModsFiltered .tierRow
 
 .ShowingSpiritOnly CitadelShopModsFiltered .tierRow.EModTier_4 .CostLabel Label
 {
-	font-family: block;
+	font-family: numericBlock;
 	color: shardColor;
 	text-shadow: none;
 	font-size: 28px;
@@ -512,3 +513,4 @@ CitadelShopModsFiltered VerticalScrollBar .ScrollThumb,CitadelShopModsFiltered H
 {
 	background-color: brandGreen&80;
 }
+
