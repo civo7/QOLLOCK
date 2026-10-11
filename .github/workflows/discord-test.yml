@@ -1,0 +1,44 @@
+name: Test Discord developer webhook
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Send and acknowledge one clearly identified test message
+        env:
+          DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_DEV_WEBHOOK_URL }}
+          RUN_URL: https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        run: |
+          python - <<'PY'
+          import os, sys
+          import urllib.parse
+          sys.path.insert(0, 'scripts')
+          from notify_native_update import request_json, CHANNEL, ROLE
+          webhook = os.environ['DISCORD_WEBHOOK_URL']
+          if not webhook:
+              raise SystemExit('QOLLOCK developer webhook is not configured')
+          parsed = urllib.parse.urlsplit(webhook)
+          if parsed.scheme != 'https' or parsed.hostname not in ('discord.com', 'discordapp.com'):
+              raise SystemExit('Expected a Discord HTTPS webhook')
+          if request_json(webhook).get('channel_id') != CHANNEL:
+              raise SystemExit('Webhook does not belong to the configured QOLLOCK channel')
+          query = [(key, value) for key, value in urllib.parse.parse_qsl(parsed.query) if key != 'wait'] + [('wait', 'true')]
+          url = urllib.parse.urlunsplit(parsed._replace(query=urllib.parse.urlencode(query)))
+          payload = {'content': f'<@&{ROLE}> QOLLOCK Discord delivery test.\nNo game resources or releases were changed.\n' + os.environ['RUN_URL'],
+                     'allowed_mentions': {'parse': [], 'roles': [ROLE]}}
+          message = request_json(url, payload)
+          if message.get('channel_id') != CHANNEL or not message.get('id'):
+              raise SystemExit('Discord did not acknowledge delivery to the QOLLOCK channel')
+          print('Developer-channel delivery acknowledged: ' + message['id'])
+          PY

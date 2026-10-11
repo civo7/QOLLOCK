@@ -118,6 +118,12 @@ marked acknowledged. A later scheduled run retries an unacknowledged notificatio
 the current Actions artifact contains only the report and summary. No live
 notification is sent by offline tests.
 
+To verify the configured secret and live Discord transport, run **Test Discord
+developer webhook**. It uses the notification sender's HTTP helper, checks the
+channel, sends one clearly identified test message with the developer role
+mention and requires Discord's returned message ID/channel. It does not create
+a PR or change game resources/releases.
+
 ## Optional Cloudflare Watcher
 
 `tools/updater/worker.mjs` checks every ten minutes and triggers the same review
