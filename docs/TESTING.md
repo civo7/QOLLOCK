@@ -1,7 +1,7 @@
 # Testing QOLLOCK
 
 The current offline entry point is `npm test` (see `package.json`). It runs HUD
-script loading, the Node regression suite in `tests/`, compact-schema validation,
+script loading, stylesheet source checks, the Node regression suite in `tests/`, compact-schema validation,
 API checks and ESLint. It does not run a separate build-storage fuzz command.
 
 Some tests use the panel simulator. They can verify JavaScript behavior under
@@ -11,6 +11,7 @@ that model, but cannot prove real client panel structure, rendering or FPS.
 
 ```
 node panorama/scripts/tools/qollock_smoke_test.js   # actual hud.xml script order
+npm run check:styles                               # delimiters and selector-list budget
 node scripts/validate_compact_schema.js             # config codec round-trips
 npm run check:api                                  # known game API usage
 npm run lint                                      # JavaScript static checks
@@ -20,6 +21,11 @@ The HUD smoke uses `scripts/simulator/layout.js`, includes `core/ql_app.js`, and
 fails when an included script is missing. It is not a settings-context smoke or
 a runtime behavior test. The schema validator exercises codec round-trips;
 load checks alone cannot catch gameplay or lifecycle bugs.
+
+The stylesheet gate scans every shipped CSS source, including native base
+imports, for mismatched delimiters, unfinished strings/comments and oversized
+selector lists. It does not implement native CSS grammar or compile resources;
+the maintainer's compilation and client checks remain required.
 
 ## Focused release regressions
 

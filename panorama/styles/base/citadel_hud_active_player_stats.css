@@ -127,20 +127,20 @@ CitadelHudActivePlayerStats
 		transform: translateX(0px);
 		opacity: 1;
 	}
-
+	
 	50%
 	{
 		transform: translateX(50px);
 		wash-color: rgb(111, 232, 111);
 		opacity: 1;
 	}
-
+	
 	100%
 	{
 		transform: translateX(0px);
 		opacity: 1;
 	}
-
+	
 }
 
 @keyframes 'debuffApplied'
@@ -149,17 +149,17 @@ CitadelHudActivePlayerStats
 	{
 		transform: translateX(0px);
 	}
-
+	
 	50%
 	{
 		transform: translateX(-5px);
 	}
-
+	
 	100%
 	{
 		transform: translateX(0px);
 	}
-
+	
 }
 
 @keyframes 'positiveGleam'
@@ -168,17 +168,17 @@ CitadelHudActivePlayerStats
 	{
 		brightness: 1;
 	}
-
+	
 	50%
 	{
 		brightness: 1.5;
 	}
-
+	
 	100%
 	{
 		brightness: 1;
 	}
-
+	
 }
 
 @keyframes 'borderGleam'
@@ -187,17 +187,17 @@ CitadelHudActivePlayerStats
 	{
 		border-brush: gradient( linear, 0% 0%, 0% 100%, from( red ), color-stop( 0.5, #ffc74f ), to( #f000) );
 	}
-
+	
 	50%
 	{
 		border-brush: gradient( linear, 0% 0%, 0% 100%, from( red ), color-stop( 0.5, #f000 ), to( #ffc74f) );
 	}
-
+	
 	100%
 	{
 		border-brush: gradient( linear, 0% 0%, 0% 100%, from( #f000 ), color-stop( 0.5, #ffc74f ), to( #f000) );
 	}
-
+	
 }
 
 .miniModifierCore
@@ -459,20 +459,20 @@ CitadelHudActivePlayerStats
 		transform: rotateZ(0deg);
 		pre-transform-scale2d: 1;
 	}
-
+	
 	50%
 	{
 		transform: rotateZ(-3deg);
 		pre-transform-scale2d: 1.5;
 		brightness: 2;
 	}
-
+	
 	100%
 	{
 		transform: rotateZ(0deg);
 		pre-transform-scale2d: 1;
 	}
-
+	
 }
 
 #StatList
@@ -540,6 +540,7 @@ CitadelHudActivePlayerStats
 {
 	text-overflow: shrink;
 	margin-left: -3px;
+	white-space: nowrap;
 }
 
 #CoreStats .miniModifierCore Label

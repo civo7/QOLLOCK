@@ -15,14 +15,25 @@ import urllib.request
 import xml.etree.ElementTree as ET
 
 try:
-    from native_xml_merge import merge_xml
+    from native_xml_merge import merge_text, merge_xml
 except ModuleNotFoundError:
-    from scripts.native_xml_merge import merge_xml
+    from scripts.native_xml_merge import merge_text, merge_xml
 
 ROOT = Path(__file__).resolve().parents[1]
 MANIFEST = ROOT / "upstream.json"
 PREFIX = "game/citadel/pak01_dir/panorama/"
 REPOSITORY = "SteamTracking/GameTracking-Deadlock"
+STYLE_VALIDATOR = Path(__file__).with_name("validate_panorama_styles.js")
+
+
+def validate_css(data):
+    code = "const fs=require('node:fs');const issues=require(process.argv[1]).scanSource(fs.readFileSync(0,'utf8'));" \
+           "process.stdout.write(JSON.stringify(issues));process.exitCode=issues.length?1:0;"
+    result = subprocess.run(["node", "-e", code, str(STYLE_VALIDATOR.resolve())],
+                            input=data, capture_output=True, timeout=30)
+    if result.returncode:
+        issues = json.loads(result.stdout) if result.stdout else []
+        raise ValueError("CSS source validation failed: " + "; ".join(item["message"] for item in issues))
 
 
 def git_blob(data):
@@ -83,8 +94,7 @@ def normalized(data):
     # Ignore blank-line-only Viewer changes, preserving multiline string contents.
     lines, quote, escaped = [], None, False
     for line in text.strip().splitlines():
-        if line.strip() or quote:
-            lines.append(line.rstrip())
+        starts_in_string = quote
         for char in line:
             if escaped:
                 escaped = False
@@ -94,6 +104,8 @@ def normalized(data):
                 quote = None
             elif not quote and char in "\"'":
                 quote = char
+        if line.strip() or starts_in_string:
+            lines.append(line if starts_in_string or quote else line.rstrip())
     return "\n".join(lines)
 
 
@@ -138,16 +150,28 @@ def plan(manifest, index, reader, root, accept_reviews=()):
         elif relative in accept_reviews:
             if entry["kind"] == "xml":
                 ET.fromstring(local)
+            elif entry["kind"] == "css":
+                validate_css(local)
             candidate, status = local, "review accepted"
         elif old_sha == new_sha:
             candidate, status = local, "upstream reverted"
         elif new_sha is None:
             reason = "removed upstream; compatibility review required"
         elif entry["kind"] == "css":
-            if normalized(local) in (normalized(old), normalized(new)):
-                candidate, status = new, "updated"
-            else:
-                reason = "local CSS differs from the native baseline"
+            try:
+                if normalized(local) in (normalized(old), normalized(new)):
+                    candidate, status = new, "updated"
+                elif old_sha:
+                    # Preserve local repairs/extensions while carrying disjoint native changes.
+                    candidate = merge_text(local.decode("utf-8-sig").replace("\r\n", "\n"),
+                                           old.decode("utf-8-sig").replace("\r\n", "\n"),
+                                           new.decode("utf-8-sig").replace("\r\n", "\n")).encode("utf-8")
+                    status = "CSS merged"
+                else:
+                    raise ValueError("no native CSS merge base")
+                validate_css(candidate)
+            except ValueError as error:
+                candidate, status, reason = None, "manual review", str(error)
         elif entry["kind"] == "xml" and old_sha:
             try:
                 candidate = merge_xml(local.decode("utf-8-sig"), old.decode("utf-8-sig"),
