@@ -79,22 +79,32 @@ jobs:
           npm test
           python -m unittest discover -s tests -p '*_automation_test.py'
           node --test tests/updater_worker.test.mjs
-      - name: Keep the changed-file bundle
+      - name: Keep the review report
         if: steps.sync.outputs.changed == 'true' && (steps.proposed.outputs.duplicate != 'true' || steps.proposed.outputs.notified != 'true')
         uses: actions/upload-artifact@v4
         with:
-          name: changed-native-resources
-          path: .upstream-review/
+          name: native-update-report
+          path: |
+            .upstream-review/report.md
+            .upstream-review/summary.json
           include-hidden-files: true
           if-no-files-found: error
       - name: Prepare or update one review PR
         if: steps.sync.outputs.changed == 'true' && steps.proposed.outputs.duplicate != 'true' && inputs.dry_run != true
         run: |
           branch=codex/native-resource-update
+          if git show-ref --verify --quiet "refs/remotes/origin/$branch"; then
+            # A subsequent update must not erase maintainer commits on an open review.
+            unexpected=$(git log "origin/$BASE_BRANCH..origin/$branch" --format=%s | grep -v '^chore: review updated native resources$' || true)
+            if [[ -n "$unexpected" ]]; then
+              echo '::error::The existing review contains manual commits. Merge those fixes into the base branch before regenerating the bot proposal.'
+              exit 1
+            fi
+          fi
           git switch -C "$branch"
           git config user.name 'Predi-i'
           git config user.email 'Predi-i@users.noreply.github.com'
-          git add panorama/styles/base upstream.json
+          git add panorama/styles/base panorama/layout upstream.json
           git commit -m 'chore: review updated native resources'
           git push --force-with-lease origin "$branch"
           url=$(gh pr list --head "$branch" --base "$BASE_BRANCH" --state open --json url --jq '.[0].url // empty')
@@ -107,9 +117,9 @@ jobs:
       - name: Notify the developer channel
         if: steps.sync.outputs.changed == 'true' && steps.proposed.outputs.notified != 'true' && inputs.dry_run != true
         id: notify
+        continue-on-error: true
         env:
           DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_DEV_WEBHOOK_URL }}
-          RUN_URL: https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}
         run: python scripts/notify_native_update.py
       - name: Record acknowledged notification
         if: steps.notify.outputs.sent == 'true'

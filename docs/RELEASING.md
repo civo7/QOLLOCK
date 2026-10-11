@@ -58,8 +58,9 @@ powershell -NoProfile -ExecutionPolicy Bypass -File build_mod/tests/build_mod_re
 
 `upstream.json` records the GameTracking commit and native CSS/XML files used by
 QOLLOCK. It is seeded from committed game resources, not a dirty local extract.
-Automatic CSS replacement is enabled only for baseline copies that initially
-match those resources. A local change or upstream deletion requires manual review.
+CSS replacement is allowed when the local source still matches the applied or
+new native baseline, ignoring the Viewer header, line endings and blank-line-only
+formatting changes. Custom CSS and upstream deletions require manual review.
 
 **Review native resource updates** runs hourly, on a manual request, or after a
 `game-update` dispatch. It reads complete native Git trees and compares watched
@@ -67,7 +68,7 @@ blob IDs, so unrelated DLL changes and incomplete comparison pages cannot create
 false-positive updates. An incomplete native listing fails without source writes.
 
 For a local preview, run `python scripts/upstream_sync.py --dry-run`. It writes
-the report and bundle under `.upstream-review/` without changing the baseline
+the report and summary under `.upstream-review/` without changing the baseline
 manifest or source files.
 Manual Actions runs default to `dry_run`: they keep the review artifact but do
 not push a branch, create a PR or notify Discord. Scheduled and Worker-triggered
@@ -75,14 +76,25 @@ runs use the normal review path.
 
 For relevant changes, the workflow validates the sources and creates or updates
 the bot-owned `codex/native-resource-update` branch and one review PR. It never
-merges the PR. XML overrides are never replaced: the report and ZIP include the
-old/new native resources and diffs for manual integration. Upstream removals do
-not delete local files. Duplicate watched-file fingerprints are suppressed, even
+merges the PR. XML overrides use a three-way text merge followed by structural
+checks that preserve native/mod edits and reject removed, moved, ambiguous or
+changed insertion anchors. Successful merges are source proposals requiring
+compile/repack and client checks. Conflicts remain listed in the review report;
+upstream removals do not delete local files. No resource ZIP is generated.
+Duplicate watched-file fingerprints are suppressed, even
 when unrelated upstream commits arrive while a review is open.
 
-Keep manual fixes on a separate branch; the bot replaces its own proposal branch.
-Review the archive before accepting the baseline advancement, apply required XML
-and CSS fixes, then compile/repack and verify in the client. The existing
+`blob` is the applied/reviewed native base. Unresolved changes retain that base
+and record `pending_blob` (including removals); they remain pending on subsequent
+runs instead of being silently acknowledged. `base_commit` identifies the applied
+revision for changed entries. After resolving a custom override, use
+`python scripts/upstream_sync.py --sha <reviewed-commit> --accept-review <native-path>`
+to acknowledge that specific file. Acknowledgement is an explicit compatibility
+decision; parsing the XML is not client verification.
+
+Keep manual fixes on a separate branch. The bot regenerates its own proposal but
+refuses to replace a branch containing additional manual commits. Apply required
+XML and CSS fixes, then compile/repack and verify in the client. The existing
 [game-update audit](GAME_UPDATE_AUDIT.md) can provide additional ID/class evidence.
 
 Enable **Allow GitHub Actions to create and approve pull requests** in repository
@@ -94,11 +106,14 @@ it does not rely on a bot push triggering the ordinary CI workflow.
 Configure the repository secret `DISCORD_DEV_WEBHOOK_URL` for developer channel
 `1504149536891867207`. Do not commit or paste the webhook URL into documentation.
 The sender checks the webhook channel and permits only role `1558343429077868645`
-to be mentioned. It sends the PR URL and changed-resource ZIP. Large bundles link
-to the Actions artifact instead of exceeding attachment limits. Without a webhook,
+to be mentioned. It sends the PR URL and changed-file list as JSON, without
+attachments, before/after snapshots or diffs. Both requests use an explicit HTTP
+User-Agent. Without a webhook,
 the PR and artifact remain available and the workflow reports delivery as skipped.
-If a previous review exists but notification was not acknowledged, a retry keeps
-the bundle in the current Actions run before attempting delivery again.
+Delivery failure does not fail a successfully prepared source review and is not
+marked acknowledged. A later scheduled run retries an unacknowledged notification;
+the current Actions artifact contains only the report and summary. No live
+notification is sent by offline tests.
 
 ## Optional Cloudflare Watcher
 

@@ -1,8 +1,7 @@
-"""Review changes to QOLLOCK's pinned native resources without rewriting XML."""
+"""Prepare reviewed native resource updates without losing unresolved overrides."""
 
 import argparse
 import base64
-import difflib
 import hashlib
 import http.client
 import json
@@ -13,7 +12,12 @@ import subprocess
 import time
 import urllib.error
 import urllib.request
-import zipfile
+import xml.etree.ElementTree as ET
+
+try:
+    from native_xml_merge import merge_xml
+except ModuleNotFoundError:
+    from scripts.native_xml_merge import merge_xml
 
 ROOT = Path(__file__).resolve().parents[1]
 MANIFEST = ROOT / "upstream.json"
@@ -76,7 +80,21 @@ def read_blob(sha):
 def normalized(data):
     text = data.decode("utf-8-sig").replace("\r\n", "\n")
     text = re.sub(r"^/\* Prettified by Source 2 Viewer[^\n]*\*/\s*", "", text)
-    return "\n".join(line.rstrip() for line in text.strip().splitlines())
+    # Ignore blank-line-only Viewer changes, preserving multiline string contents.
+    lines, quote, escaped = [], None, False
+    for line in text.strip().splitlines():
+        if line.strip() or quote:
+            lines.append(line.rstrip())
+        for char in line:
+            if escaped:
+                escaped = False
+            elif char == "\\" and quote:
+                escaped = True
+            elif quote and char == quote:
+                quote = None
+            elif not quote and char in "\"'":
+                quote = char
+    return "\n".join(lines)
 
 
 def initialize(source):
@@ -100,39 +118,74 @@ def initialize(source):
     return {"repository": REPOSITORY, "commit": sha, "files": entries}
 
 
-def plan(manifest, index, reader, root):
+def plan(manifest, index, reader, root, accept_reviews=()):
     changes, writes = [], {}
     updated = json.loads(json.dumps(manifest))
     contents = {}
     for relative, entry in manifest["files"].items():
         old_sha, new_sha = entry["blob"], index.get(relative)
-        if old_sha == new_sha:
+        if old_sha == new_sha and "pending_blob" not in entry:
             continue
         old = reader(old_sha) if old_sha else b""
         new = reader(new_sha) if new_sha else b""
         destination = root / entry["destination"]
-        local = destination.read_bytes()
-        can_sync = (entry["kind"] == "css" and entry["auto_sync"] and new_sha is not None
-                    and local_digest(local) == entry["local_sha256"])
-        status = "updated" if can_sync else "manual review"
+        local = destination.read_bytes() if destination.is_file() else None
+        next_entry = updated["files"][relative]
+        next_entry.setdefault("base_commit", manifest.get("commit"))
+        candidate, reason, status = None, "", "manual review"
+        if local is None:
+            reason = "local override is missing; retire or restore its manifest entry"
+        elif relative in accept_reviews:
+            if entry["kind"] == "xml":
+                ET.fromstring(local)
+            candidate, status = local, "review accepted"
+        elif old_sha == new_sha:
+            candidate, status = local, "upstream reverted"
+        elif new_sha is None:
+            reason = "removed upstream; compatibility review required"
+        elif entry["kind"] == "css":
+            if normalized(local) in (normalized(old), normalized(new)):
+                candidate, status = new, "updated"
+            else:
+                reason = "local CSS differs from the native baseline"
+        elif entry["kind"] == "xml" and old_sha:
+            try:
+                candidate = merge_xml(local.decode("utf-8-sig"), old.decode("utf-8-sig"),
+                                      new.decode("utf-8-sig")).encode("utf-8")
+                status = "XML merged; client check required"
+            except (ValueError, ET.ParseError) as error:
+                reason = str(error)
+        else:
+            reason = "no native merge base; compatibility review required"
         changes.append({"path": relative, "kind": entry["kind"], "status": status,
-                        "removed": new_sha is None})
+                        "removed": new_sha is None, "reason": reason})
         contents[relative] = (old, new)
-        if can_sync:
-            writes[entry["destination"]] = new
-            updated["files"][relative]["local_sha256"] = local_digest(new)
-        updated["files"][relative]["blob"] = new_sha
-        if entry["kind"] == "css" and not can_sync:
-            updated["files"][relative]["auto_sync"] = False
+        if candidate is not None:
+            if candidate != local:
+                writes[entry["destination"]] = candidate
+            next_entry.update(blob=new_sha, local_sha256=local_digest(candidate))
+            if old_sha != new_sha:
+                next_entry["base_commit"] = None  # Filled with the requested commit by synchronize.
+            if entry["kind"] == "css":
+                next_entry["auto_sync"] = normalized(candidate) == normalized(new)
+            for key in ("pending_blob", "pending_local_sha256"):
+                next_entry.pop(key, None)
+        else:
+            # blob remains the applied/reviewed base, including across later updates.
+            next_entry["pending_blob"] = new_sha
+            next_entry["pending_local_sha256"] = local_digest(local) if local is not None else None
+            if entry["kind"] == "css":
+                next_entry["auto_sync"] = False
     return changes, writes, updated, contents
 
 
 def report(manifest, sha, changes):
     lines = ["# Native resource update", "",
              f"Upstream: `{manifest['commit']}` -> `{sha}`", "",
-             "Only tracked native resources are included. XML overrides are not overwritten.", "",
-             "| File | Action |", "| --- | --- |"]
-    lines += [f"| `{item['path']}` | {item['status']}{' (removed upstream)' if item['removed'] else ''} |"
+             "Only tracked native resources are included. XML merges preserve mod edits and require client checks.", "",
+             "| File | Action | Details |", "| --- | --- | --- |"]
+    lines += [f"| [`{item['path']}`](https://github.com/{REPOSITORY}/blob/{sha}/{PREFIX}{item['path']}) | "
+              f"{item['status']} | {item['reason'].replace('|', '/').replace(chr(10), ' ')} |"
               for item in changes]
     lines += ["", "Review XML changes and any unsynchronized CSS before merging.",
               "A source update is not proof of client compatibility; compile/repack and test in game."]
@@ -140,18 +193,27 @@ def report(manifest, sha, changes):
 
 
 def fingerprint(entries):
-    values = {path: entry["blob"] for path, entry in entries.items()}
+    values = {path: {"blob": entry.get("pending_blob", entry["blob"]),
+                     "pending": "pending_blob" in entry,
+                     "local": entry.get("pending_local_sha256", entry["local_sha256"])}
+              for path, entry in entries.items()}
     return hashlib.sha256(json.dumps(values, sort_keys=True).encode()).hexdigest()
 
 
-def synchronize(sha, output, dry_run=False):
+def synchronize(sha, output, dry_run=False, accept_reviews=()):
     manifest = json.loads(MANIFEST.read_text(encoding="utf-8"))
     if manifest["repository"] != REPOSITORY:
         raise ValueError("Unexpected upstream repository")
     sha = sha or api("commits/master")["sha"]
     if not re.fullmatch(r"[0-9a-f]{40}", sha):
         raise ValueError("Expected a complete upstream commit SHA")
-    changes, writes, updated, contents = plan(manifest, native_index(sha), read_blob, ROOT)
+    unknown = set(accept_reviews) - manifest["files"].keys()
+    if unknown:
+        raise ValueError("Unknown review paths: " + ", ".join(sorted(unknown)))
+    changes, writes, updated, _ = plan(manifest, native_index(sha), read_blob, ROOT, accept_reviews)
+    for entry in updated["files"].values():
+        if "base_commit" in entry and entry["base_commit"] is None:
+            entry["base_commit"] = sha
     output.mkdir(parents=True, exist_ok=True)
     identity = fingerprint(updated["files"])
     summary = {"changed": bool(changes), "upstream_sha": sha, "fingerprint": identity, "changes": changes}
@@ -160,17 +222,6 @@ def synchronize(sha, output, dry_run=False):
         return summary
     text = report(manifest, sha, changes)
     (output / "report.md").write_text(text, encoding="utf-8")
-    with zipfile.ZipFile(output / "changed-resources.zip", "w", zipfile.ZIP_DEFLATED) as archive:
-        archive.writestr("report.md", text)
-        for relative, (old, new) in contents.items():
-            if old:
-                archive.writestr("before/" + relative, old)
-            if new:
-                archive.writestr("after/" + relative, new)
-            diff = difflib.unified_diff(old.decode("utf-8-sig").splitlines(True),
-                                        new.decode("utf-8-sig").splitlines(True),
-                                        fromfile="before/" + relative, tofile="after/" + relative)
-            archive.writestr("diff/" + relative + ".patch", "".join(diff))
     if dry_run:
         return summary
     # Prepare every input and report before touching tracked sources.
@@ -188,13 +239,15 @@ def main():
     parser.add_argument("--sha", default="")
     parser.add_argument("--output", type=Path, default=ROOT / ".upstream-review")
     parser.add_argument("--dry-run", action="store_true", help="Write review artifacts without changing tracked sources")
+    parser.add_argument("--accept-review", action="append", default=[], metavar="NATIVE_PATH",
+                        help="Acknowledge a manually resolved override at the requested upstream revision")
     args = parser.parse_args()
     if args.initialize:
         if MANIFEST.exists():
             raise ValueError("An upstream baseline already exists")
         MANIFEST.write_text(json.dumps(initialize(args.initialize), indent=2) + "\n", encoding="utf-8")
         return
-    summary = synchronize(args.sha, args.output, args.dry_run)
+    summary = synchronize(args.sha, args.output, args.dry_run, args.accept_review)
     if os.environ.get("GITHUB_OUTPUT"):
         with open(os.environ["GITHUB_OUTPUT"], "a", encoding="utf-8") as outputs:
             outputs.write(f"changed={str(summary['changed']).lower()}\n")
