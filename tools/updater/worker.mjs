@@ -79,7 +79,8 @@ export async function check(env) {
     if (latest.sha === state.checked_sha) return { status: "unchanged" };
     const identity = await watchedIdentity(manifest, latest.sha, token);
     const previous = state.identity || JSON.stringify(Object.keys(manifest.files).sort()
-        .map(path => [path, manifest.files[path].blob]));
+        .map(path => [path, Object.hasOwn(manifest.files[path], "pending_blob")
+            ? manifest.files[path].pending_blob : manifest.files[path].blob]));
     if (identity === previous) {
         state.checked_sha = latest.sha;
         state.identity = identity;

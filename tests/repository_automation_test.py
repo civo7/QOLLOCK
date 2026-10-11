@@ -17,6 +17,9 @@ spec.loader.exec_module(sync)
 release_spec = importlib.util.spec_from_file_location("validate_release", ROOT / "scripts/validate_release.py")
 release = importlib.util.module_from_spec(release_spec)
 release_spec.loader.exec_module(release)
+notify_spec = importlib.util.spec_from_file_location("notify_native_update", ROOT / "scripts/notify_native_update.py")
+notify = importlib.util.module_from_spec(notify_spec)
+notify_spec.loader.exec_module(notify)
 
 
 class UpstreamReviewTests(unittest.TestCase):
@@ -52,8 +55,50 @@ class UpstreamReviewTests(unittest.TestCase):
         self.assertEqual(changes[0]["status"], "manual review")
         self.assertEqual(writes, {})
         self.assertFalse(updated["files"]["styles/base.css"]["auto_sync"])
+        self.assertEqual(updated["files"]["styles/base.css"]["blob"], self.entry["blob"])
+        self.assertEqual(updated["files"]["styles/base.css"]["pending_blob"], sync.git_blob(self.new))
+        repeated, repeated_writes, _, _ = sync.plan(updated,
+            {"styles/base.css": sync.git_blob(self.new)}, self.blobs.__getitem__, self.root)
+        self.assertEqual(repeated[0]["status"], "manual review")
+        self.assertEqual(repeated_writes, {})
 
-    def test_xml_is_never_overwritten(self):
+    def test_formatting_only_base_can_recover_disabled_auto_sync(self):
+        self.entry["auto_sync"] = False
+        (self.root / "base.css").write_bytes(b"\n" + self.old + b"\n")
+        _, writes, updated, _ = sync.plan(self.manifest,
+            {"styles/base.css": sync.git_blob(self.new)}, self.blobs.__getitem__, self.root)
+        self.assertEqual(writes, {"base.css": self.new})
+        self.assertTrue(updated["files"]["styles/base.css"]["auto_sync"])
+
+    def test_pending_removal_survives_and_acknowledgement_clears_it(self):
+        changes, _, updated, _ = sync.plan(self.manifest, {}, self.blobs.__getitem__, self.root)
+        self.assertTrue(changes[0]["removed"])
+        repeated, _, _, _ = sync.plan(updated, {}, self.blobs.__getitem__, self.root)
+        self.assertTrue(repeated[0]["removed"])
+        _, _, resolved, _ = sync.plan(updated, {}, self.blobs.__getitem__, self.root, ["styles/base.css"])
+        self.assertNotIn("pending_blob", resolved["files"]["styles/base.css"])
+        self.assertIsNone(resolved["files"]["styles/base.css"]["blob"])
+
+    def test_new_upstream_update_still_uses_last_applied_base(self):
+        (self.root / "base.css").write_bytes(b"custom rule")
+        _, _, pending, _ = sync.plan(self.manifest,
+            {"styles/base.css": sync.git_blob(self.new)}, self.blobs.__getitem__, self.root)
+        third = b".Hud { opacity: 0.8; }\n"
+        self.blobs[sync.git_blob(third)] = third
+        _, _, next_pending, contents = sync.plan(pending,
+            {"styles/base.css": sync.git_blob(third)}, self.blobs.__getitem__, self.root)
+        self.assertEqual(contents["styles/base.css"], (self.old, third))
+        self.assertEqual(next_pending["files"]["styles/base.css"]["blob"], self.entry["blob"])
+
+    def test_missing_local_override_becomes_pending(self):
+        (self.root / "base.css").unlink()
+        changes, writes, updated, _ = sync.plan(self.manifest,
+            {"styles/base.css": sync.git_blob(self.new)}, self.blobs.__getitem__, self.root)
+        self.assertIn("local override is missing", changes[0]["reason"])
+        self.assertEqual(writes, {})
+        self.assertIn("pending_blob", updated["files"]["styles/base.css"])
+
+    def test_invalid_xml_is_never_overwritten(self):
         self.entry["kind"] = "xml"
         changes, writes, _, _ = sync.plan(self.manifest,
             {"styles/base.css": sync.git_blob(self.new)}, self.blobs.__getitem__, self.root)
@@ -88,7 +133,8 @@ class UpstreamReviewTests(unittest.TestCase):
                 patch.object(sync, "read_blob", side_effect=self.blobs.__getitem__):
             summary = sync.synchronize("a" * 40, output, dry_run=True)
         self.assertTrue(summary["changed"])
-        self.assertTrue((output / "changed-resources.zip").exists())
+        self.assertTrue((output / "report.md").exists())
+        self.assertEqual({path.name for path in output.iterdir()}, {"report.md", "summary.json"})
         self.assertEqual(manifest_path.read_bytes(), original)
         self.assertEqual((self.root / "base.css").read_bytes(), self.old)
 
@@ -101,6 +147,87 @@ class UpstreamReviewTests(unittest.TestCase):
         with patch.object(sync, "api", side_effect=response):
             with self.assertRaisesRegex(ValueError, "incomplete"):
                 sync.native_index("a" * 40)
+
+
+class XmlMergeTests(unittest.TestCase):
+    def test_disjoint_native_and_mod_children_survive(self):
+        middle = '<Panel id="spacer" />\n' + ''.join(f'<Panel id="s{i}" />\n' for i in range(10))
+        base = '<root>\n<Panel id="native" />\n' + middle + '</root>\n'
+        local = base.replace('</root>', '<Panel id="mod" />\n</root>')
+        native = base.replace('id="native"', 'id="native" class="updated"')
+        result = sync.merge_xml(local, base, native)
+        self.assertIn('id="mod"', result)
+        self.assertIn('class="updated"', result)
+
+    def test_clean_text_merge_cannot_change_mod_insertion_parent(self):
+        middle = ''.join(f'<Panel id="s{i}" />\n' for i in range(10))
+        base = '<root>\n<Panel id="anchor">\n' + middle + '</Panel>\n</root>\n'
+        local = base.replace('</Panel>', '<Panel id="mod" />\n</Panel>')
+        native = base.replace('id="anchor"', 'id="anchor" class="new-binding-context"')
+        with self.assertRaisesRegex(ValueError, 'insertion parent changed'):
+            sync.merge_xml(local, base, native)
+
+    def test_moved_native_anchor_cannot_carry_mod_changes_silently(self):
+        base = '<root><Panel id="anchor"><Label id="label" text="native" /></Panel></root>'
+        local = base.replace('text="native"', 'text="mod"')
+        native = '<root><Panel id="wrapper">' + base[6:-7] + '</Panel></root>'
+        with self.assertRaises(ValueError):
+            sync.merge_xml(local, base, native)
+
+    def test_ambiguous_sibling_ids_are_rejected(self):
+        source = '<root><Panel id="same" /><Panel id="same" /></root>'
+        with self.assertRaisesRegex(ValueError, 'ambiguous'):
+            sync.merge_xml(source, source, source)
+
+
+class DeveloperNotificationTests(unittest.TestCase):
+    def setUp(self):
+        self.temporary = tempfile.TemporaryDirectory()
+        self.addCleanup(self.temporary.cleanup)
+        self.root = Path(self.temporary.name)
+        (self.root / 'summary.json').write_text(json.dumps({'changed': True, 'changes': [
+            {'path': 'styles/hud.css'}]}))
+        (self.root / 'pr-url.txt').write_text('https://github.com/civo7/QOLLOCK/pull/62')
+
+    def test_json_notification_needs_no_archive_and_mentions_only_configured_role(self):
+        with patch.dict(notify.os.environ, {'DISCORD_WEBHOOK_URL': 'https://discord.com/api/webhooks/1/token'}), \
+                patch.object(notify, 'request_json', side_effect=[{'channel_id': notify.CHANNEL},
+                    {'channel_id': notify.CHANNEL, 'id': 'ack'}]) as request:
+            notify.send(self.root)
+        url, payload = request.call_args.args
+        self.assertIn('wait=true', url)
+        self.assertIn(f'<@&{notify.ROLE}>', payload['content'])
+        self.assertIn('/pull/62', payload['content'])
+        self.assertEqual(payload['allowed_mentions'], {'parse': [], 'roles': [notify.ROLE]})
+        self.assertNotIn('files', payload)
+
+    def test_both_requests_use_explicit_user_agent_and_post_is_json(self):
+        with patch.object(notify.urllib.request, 'urlopen') as request:
+            request.return_value.__enter__.return_value = io.BytesIO(b'{}')
+            notify.request_json('https://discord.com/api/webhooks/1/token', {'content': 'test'})
+        sent = request.call_args.args[0]
+        self.assertEqual(sent.get_header('User-agent'), notify.USER_AGENT)
+        self.assertEqual(sent.get_header('Content-type'), 'application/json')
+        self.assertEqual(json.loads(sent.data), {'content': 'test'})
+
+    def test_http_failure_is_sanitized_and_never_acknowledged(self):
+        secret_url = 'https://discord.com/api/webhooks/1/secret'
+        error = urllib.error.HTTPError(secret_url, 403, 'Forbidden', {}, None)
+        self.addCleanup(error.close)
+        output = self.root / 'github-output'
+        with patch.dict(notify.os.environ, {'DISCORD_WEBHOOK_URL': secret_url, 'GITHUB_OUTPUT': str(output)}), \
+                patch.object(notify.urllib.request, 'urlopen', side_effect=error):
+            with self.assertRaisesRegex(RuntimeError, 'HTTP 403') as raised:
+                notify.send(self.root)
+        self.assertNotIn('secret', str(raised.exception))
+        self.assertFalse(output.exists())
+
+    def test_wrong_channel_cannot_receive_message(self):
+        with patch.dict(notify.os.environ, {'DISCORD_WEBHOOK_URL': 'https://discord.com/api/webhooks/1/token'}), \
+                patch.object(notify, 'request_json', return_value={'channel_id': 'wrong'}) as request:
+            with self.assertRaisesRegex(ValueError, 'channel'):
+                notify.send(self.root)
+        self.assertEqual(request.call_count, 1)
 
 
 class UpstreamTransportTests(unittest.TestCase):
