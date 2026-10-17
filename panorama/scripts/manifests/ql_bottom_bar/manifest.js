@@ -7,7 +7,8 @@
 // DEPENDS ON:  QOL.core.FeatureRegistry
 // CONFIG KEYS: HUD_BOTTOM_BAR_ENABLED, BOTTOM_BAR_OPACITY, BOTTOM_BAR_SCALE,
 //              BOTTOM_BAR_X_OFFSET, BOTTOM_BAR_Y_OFFSET, BOTTOM_BAR_WASH_COLOR,
-//              ACTIVE_ITEMS_SCALE, ACTIVE_ITEMS_X_OFFSET, ACTIVE_ITEMS_Y_OFFSET
+//              ACTIVE_ITEMS_SCALE, ACTIVE_ITEMS_X_OFFSET, ACTIVE_ITEMS_Y_OFFSET,
+//              ENABLE_BETTER_DISABLED_ABILITIES
 // PANEL IDS:   hud_signature, ActiveAbilitiesMenu
 // PATTERN:     Settings-driven with a slow poll for replaced native panels.
 // =============================================================================
@@ -29,7 +30,8 @@
             { key: "BOTTOM_BAR_WASH_COLOR", type: "palette", default: 0 },
             { key: "ACTIVE_ITEMS_SCALE", type: "slider", min: 50, max: 250, step: 1, default: 100 },
             { key: "ACTIVE_ITEMS_X_OFFSET", type: "slider", min: -1500, max: 1500, step: 1, default: 0 },
-            { key: "ACTIVE_ITEMS_Y_OFFSET", type: "slider", min: -500, max: 500, step: 1, default: 0 }
+            { key: "ACTIVE_ITEMS_Y_OFFSET", type: "slider", min: -500, max: 500, step: 1, default: 0 },
+            { key: "ENABLE_BETTER_DISABLED_ABILITIES", type: "toggle", default: false }
         ],
         create: function(ctx) {
             var _lastSig = "";
@@ -48,6 +50,86 @@
             var _activeItemsScaleApplied = false;
             var _activeItemsOffsetXApplied = false;
             var _activeItemsOffsetYApplied = false;
+            var _betterDisabledApplied = false;
+
+            // ---- Better silenced/cursed abilities ---------------------------------
+            // Adds a red-X overlay panel to each ability icon. The CSS (hud_ability_icon.css /
+            // hud_ability_icon_active.css) only shows it while the icon has the native
+            // "disabled" class, so this just creates / removes the panels.
+            var BD_OVERLAY_ID = "QOLDisabledXOverlay";
+            var BD_ICON_CLASS = "qol-better-disabled";
+
+            function _collectAbilityIcons(panel, out, depth) {
+                if (!panel || depth > 10) return;
+                var kids = null;
+                try { kids = panel.Children ? panel.Children() : null; } catch(e) { return; }
+                if (!kids) return;
+                for (var i = 0; i < kids.length; i++) {
+                    var k = kids[i];
+                    if (!k) continue;
+                    var t = "";
+                    try { t = k.paneltype || ""; } catch(e) {}
+                    if (t === "CitadelAbilityIcon" || t === "DraggableAbilityIcon") out.push(k);
+                    else _collectAbilityIcons(k, out, depth + 1);
+                }
+            }
+
+            // Signature ability icons (CitadelAbilityIcon) are taller than the visible circle, so the
+            // overlay is attached to the panel that holds .ability_image to be centered on the circle.
+            // Active items (DraggableAbilityIcon) are sized to the icon, so they use the icon itself.
+            function _overlayHost(icon) {
+                try {
+                    if (icon.paneltype === "CitadelAbilityIcon" && icon.FindChildTraverse) {
+                        var imgs = icon.FindChildrenWithClassTraverse ? icon.FindChildrenWithClassTraverse("ability_image") : null;
+                        var img = imgs && imgs.length ? imgs[0] : null;
+                        var host = img && img.GetParent ? img.GetParent() : null;
+                        if (host && host !== icon) return host;
+                    }
+                } catch(e) {}
+                return icon;
+            }
+
+            function _decorateIcon(icon) {
+                try {
+                    if (icon.FindChildTraverse && icon.FindChildTraverse(BD_OVERLAY_ID)) return;
+                    var overlay = $.CreatePanel("Panel", _overlayHost(icon), BD_OVERLAY_ID);
+                    if (!overlay) return;
+                    overlay.AddClass("disabled_x_overlay");
+                    overlay.hittest = false;
+                    for (var b = 1; b <= 2; b++) {
+                        var bar = $.CreatePanel("Panel", overlay, "");
+                        if (!bar) continue;
+                        bar.AddClass("disabled_x_bar");
+                        bar.AddClass("disabled_x_bar_" + b);
+                        bar.hittest = false;
+                    }
+                    icon.AddClass(BD_ICON_CLASS);
+                } catch(e) {}
+            }
+
+            function _undecorateIcon(icon) {
+                try {
+                    var overlay = icon.FindChildTraverse ? icon.FindChildTraverse(BD_OVERLAY_ID) : null;
+                    if (overlay) overlay.DeleteAsync(0);
+                    icon.RemoveClass(BD_ICON_CLASS);
+                } catch(e) {}
+            }
+
+            function _applyBetterDisabled(root, cfg) {
+                var v = cfg ? cfg.ENABLE_BETTER_DISABLED_ABILITIES : undefined;
+                var on = v === true || String(v) === "true" || Number(v) === 1;
+                if (!on && !_betterDisabledApplied) return;
+                var sr = root || $.GetContextPanel();
+                if (!sr || !sr.FindChildTraverse) return;
+                var icons = [];
+                _collectAbilityIcons(sr.FindChildTraverse("hud_signature"), icons, 0);
+                _collectAbilityIcons(sr.FindChildTraverse("ActiveAbilitiesMenu"), icons, 0);
+                for (var i = 0; i < icons.length; i++) {
+                    if (on) _decorateIcon(icons[i]);
+                    else _undecorateIcon(icons[i]);
+                }
+                _betterDisabledApplied = on;
+            }
 
             function _hasNonDefault(cfg) {
                 if (!cfg) return false;
@@ -172,6 +254,7 @@
             function _apply(cfg) {
                 var root = $.GetContextPanel();
                 _applyActiveItems(root, cfg);
+                _applyBetterDisabled(root, cfg);
                 var active = _hasNonDefault(cfg);
                 var enabled = (cfg.HUD_BOTTOM_BAR_ENABLED === undefined || cfg.HUD_BOTTOM_BAR_ENABLED === true || Number(cfg.HUD_BOTTOM_BAR_ENABLED) === 1);
                 var wcIdx = active && enabled ? (Math.round(Number(cfg.BOTTOM_BAR_WASH_COLOR)) || 0) : 0;
@@ -259,6 +342,7 @@
                         var panel = _findBar(root);
                         var activeItemsPanel = _findActiveItems(root);
                         if (panel !== _lastPanel || activeItemsPanel !== _lastActiveItemsPanel) _apply(ctx.config.all());
+                        else _applyBetterDisabled(root, ctx.config.all());
                     }, 0.5, ctx.id) : null;
                 },
                 onDisable: function() {
@@ -268,6 +352,7 @@
                     _lastSig = "";
                     try {
                         var root = $.GetContextPanel();
+                        _applyBetterDisabled(root, { ENABLE_BETTER_DISABLED_ABILITIES: 0 });
                         _applyCurrencyColor(root, "");
                         var bp = root ? root.FindChildTraverse("hud_signature") : null;
                         if (bp && bp.style) {

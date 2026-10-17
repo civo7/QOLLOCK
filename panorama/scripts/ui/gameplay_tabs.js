@@ -36,6 +36,17 @@
         { label: "Minecraft", value: 5 }
     ];
 
+    const AMMO_CURRENT_FONT_STYLE_OPTIONS = [
+        { label: "Default", value: 0 },
+        { label: "Stylized Ammo", value: 1 }
+    ];
+
+    const AMMO_TOTAL_FONT_STYLE_OPTIONS = [
+        { label: "Default", value: 0 },
+        { label: "Stylized Ammo", value: 1 },
+        { label: "Stylized Alternative", value: 2 }
+    ];
+
     const COLOR_WARNING_THRESHOLD_OPTIONS = [
         { label: "25%", key: "ENABLE_COLOR_WARNING_25" },
         { label: "65%", key: "ENABLE_COLOR_WARNING_65" },
@@ -213,10 +224,16 @@
             createSliderRow(list, "Current Size", "AMMO_CURRENT_SCALE", "size_100_300");
         }
         if (createRow) {
+            createRow(list, "Current Font", "AMMO_CURRENT_FONT_STYLE", "dropdown", null, null, null, AMMO_CURRENT_FONT_STYLE_OPTIONS, "Use the stylized font for the current ammo number. By Specty");
             createRow(list, "Total", "ENABLE_HIDE_MAGAZINE", "toggle", null, null, null, [{ invert: true }]);
         }
         if (createSliderRow) {
             createSliderRow(list, "Total Size", "AMMO_TOTAL_SCALE", "size_100_300");
+        }
+        if (createRow) {
+            createRow(list, "Total Font", "AMMO_TOTAL_FONT_STYLE", "dropdown", null, null, null, AMMO_TOTAL_FONT_STYLE_OPTIONS, "Use the stylized font for the max (total) ammo number. By Specty");
+        }
+        if (createSliderRow) {
             createSliderRow(list, "Horizontal Offset", "AMMO_PANEL_X_OFFSET", "offset_n200_200");
             createSliderRow(list, "Vertical Offset", "AMMO_PANEL_Y_OFFSET", "offset_n200_200");
             createSliderRow(list, "Rotate Magazine", "AMMO_CLIP_ANGLE", "angle_0_360", "Rotate the ammo magazine visualiser.", true);
@@ -305,6 +322,7 @@
                     createRow(sectionParent, "Ability Suggestion", "ENABLE_HIDE_ABILITY_SUGGESTION", "toggle", null, null, null, [{ invert: true }], "On Ability Upgrade");
                     createRow(sectionParent, "Cosmetic Ability", "ENABLE_HIDE_COSMETIC_ABILITY", "toggle", null, null, null, [{ invert: true }], "Snowball or Poster");
                     createRow(sectionParent, "Minimalist Abilities", "ENABLE_SIMPLIFY_ABILITY_ICONS", "toggle", null, null, null, null);
+                    createRow(sectionParent, "Better Silenced/Cursed Abilities", "ENABLE_BETTER_DISABLED_ABILITIES", "toggle", null, null, null, null, "Show a red X and darken abilities that are silenced or cursed. By Specty");
                     createRow(sectionParent, "Clean Stacks", "ENABLE_CLEAN_STACKS", "toggle", null, null, null, null, "Move ability stacks to bottom-center of ability icon");
                     createRow(sectionParent, "Legacy Durations", "ENABLE_LEGACY_COOLDOWNS", "toggle", null, null, null, null, "");
                 }

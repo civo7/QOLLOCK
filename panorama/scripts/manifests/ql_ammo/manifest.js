@@ -8,7 +8,8 @@
 // CONFIG KEYS: ENABLE_AMMO_STATUS, ENABLE_HIDE_MAGAZINE, ENABLE_HIDE_AMMO_ALL,
 //              AMMO_PANEL_SCALE, AMMO_CURRENT_SCALE, AMMO_TOTAL_SCALE,
 //              AMMO_PANEL_X_OFFSET, AMMO_PANEL_Y_OFFSET, AMMO_CLIP_ANGLE,
-//              AMMO_TEXT_COLOR
+//              AMMO_TEXT_COLOR, AMMO_CURRENT_FONT_STYLE (0-1),
+//              AMMO_TOTAL_FONT_STYLE (0-2)
 // PATTERN:     Settings-driven with a slow poll for replaced native panels.
 //              Dual-half heat rings rotate as a pair at their native base angles.
 // =============================================================================
@@ -26,6 +27,8 @@
             if (!cfg) return false;
             var isTrue = function(v) { return v === true || v === 1 || String(v) === "true"; };
             if (isTrue(cfg.ENABLE_AMMO_STATUS) || isTrue(cfg.ENABLE_HIDE_MAGAZINE) || isTrue(cfg.ENABLE_HIDE_AMMO_ALL)) return true;
+            if (cfg.AMMO_CURRENT_FONT_STYLE != null && Number(cfg.AMMO_CURRENT_FONT_STYLE) !== 0) return true;
+            if (cfg.AMMO_TOTAL_FONT_STYLE != null && Number(cfg.AMMO_TOTAL_FONT_STYLE) !== 0) return true;
             if (cfg.AMMO_CURRENT_SCALE != null && Number(cfg.AMMO_CURRENT_SCALE) !== 100) return true;
             if (cfg.AMMO_TOTAL_SCALE != null && Number(cfg.AMMO_TOTAL_SCALE) !== 100) return true;
             if (cfg.AMMO_PANEL_SCALE != null && Number(cfg.AMMO_PANEL_SCALE) !== 100) return true;
@@ -39,6 +42,8 @@
             { key: "ENABLE_AMMO_STATUS", type: "toggle", default: false },
             { key: "ENABLE_HIDE_MAGAZINE", type: "toggle", default: false },
             { key: "ENABLE_HIDE_AMMO_ALL", type: "toggle", default: false },
+            { key: "AMMO_CURRENT_FONT_STYLE", type: "dropdown", default: 0 },
+            { key: "AMMO_TOTAL_FONT_STYLE", type: "dropdown", default: 0 },
             { key: "AMMO_PANEL_SCALE", type: "slider", min: 100, max: 300, step: 1, default: 100 },
             { key: "AMMO_CURRENT_SCALE", type: "slider", min: 100, max: 300, step: 1, default: 100 },
             { key: "AMMO_TOTAL_SCALE", type: "slider", min: 100, max: 300, step: 1, default: 100 },
@@ -271,7 +276,12 @@
                 }
             }
 
-            function _applyChildren(ap, curScale, totScale, textColor) {
+            function _setLabelClass(label, cls, on) {
+                if (QOL.core.panel && QOL.core.panel.setClass) QOL.core.panel.setClass(label, cls, !!on);
+                else if (label.SetHasClass) label.SetHasClass(cls, !!on);
+            }
+
+            function _applyChildren(ap, curScale, totScale, textColor, currentStyle, totalStyle) {
                 var cf = curScale / 100, tf = totScale / 100;
                 var valFont = Math.max(12, Math.round(16 * cf));
                 var valWidth = Math.max(24, Math.round(32 * cf));
@@ -284,6 +294,7 @@
                         if (!vals[vi]) continue;
                         vals[vi].style.fontSize = (curScale === 100) ? null : (valFont + "px");
                         vals[vi].style.width = (curScale === 100) ? null : (valWidth + "px");
+                        _setLabelClass(vals[vi], "qol-ammo-current-stylized", currentStyle === 1);
                         _applyTextColor(vals[vi], textColor);
                     }
                     var maxs = ap.FindChildrenWithClassTraverse("weapon_ammo_max") || [];
@@ -292,6 +303,8 @@
                         maxs[mi].style.fontSize = (totScale === 100) ? null : (maxFont + "px");
                         maxs[mi].style.width = (totScale === 100) ? null : (maxWidth + "px");
                         maxs[mi].style.marginLeft = (totScale === 100) ? null : (maxMl + "px");
+                        _setLabelClass(maxs[mi], "qol-ammo-total-stylized", totalStyle === 1);
+                        _setLabelClass(maxs[mi], "qol-ammo-total-stylized-alt", totalStyle === 2);
                         _applyTextColor(maxs[mi], textColor);
                     }
                     var infs = ap.FindChildrenWithClassTraverse("weapon_ammo_infinite") || [];
@@ -321,11 +334,13 @@
 
                 var hideMagazine = Number(cfg.ENABLE_HIDE_MAGAZINE) === 1;
                 var hideAll = Number(cfg.ENABLE_HIDE_AMMO_ALL) === 1;
+                var currentStyle = Number(cfg.AMMO_CURRENT_FONT_STYLE) || 0;
+                var totalStyle = Number(cfg.AMMO_TOTAL_FONT_STYLE) || 0;
                 var curScale = _clamp(cfg.AMMO_CURRENT_SCALE !== undefined && cfg.AMMO_CURRENT_SCALE !== null ? cfg.AMMO_CURRENT_SCALE : cfg.AMMO_PANEL_SCALE, 100, 300);
                 var totScale = _clamp(cfg.AMMO_TOTAL_SCALE !== undefined && cfg.AMMO_TOTAL_SCALE !== null ? cfg.AMMO_TOTAL_SCALE : cfg.AMMO_PANEL_SCALE, 100, 300);
                 var ox = _clamp(cfg.AMMO_PANEL_X_OFFSET, -200, 200);
                 var oy = _clamp(cfg.AMMO_PANEL_Y_OFFSET, -200, 200);
-                var sig = curScale + "|" + totScale + "|" + ox + "|" + oy + "|" + hideMagazine + "|" + hideAll + "|" + colorIdx;
+                var sig = curScale + "|" + totScale + "|" + ox + "|" + oy + "|" + hideMagazine + "|" + hideAll + "|" + colorIdx + "|" + currentStyle + "|" + totalStyle;
                 var targets = _textTargets(ap);
                 if (_lastMainSig === sig && _samePanels(_lastTextTargets, targets)) {
                     // Ammo state changes can rewrite native label colors without
@@ -338,7 +353,7 @@
                 _lastMainSig = sig;
                 _lastTextTargets = targets;
 
-                _applyChildren(ap, curScale, totScale, textColor);
+                _applyChildren(ap, curScale, totScale, textColor, currentStyle, totalStyle);
                 ap.style.x = ox + "px";
                 ap.style.y = (80 - oy) + "px";
                 ap.style.preTransformScale2d = "1.00, 1.00";

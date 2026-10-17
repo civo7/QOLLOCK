@@ -1,4 +1,4 @@
-/* Prettified by Source 2 Viewer 17.0.0.0 - https://valveresourceformat.github.io */
+/* Prettified by Source 2 Viewer 20.1.0.0 - https://valveresourceformat.github.io */
 
 @import url("s2r://panorama/styles/base/ability_hud_elements/element_gun.vcss_c");
 #clip_status
@@ -6,26 +6,17 @@
 	visibility: visible;
 }
 
-#clip_status.qol-ammo-visual-enabled,
-#clip_status_mirrored.qol-ammo-visual-enabled
+#clip_status.qol-ammo-visual-enabled,#clip_status_mirrored.qol-ammo-visual-enabled
 {
 	visibility: visible !important;
 }
 
-/*
- * Valve separately collapses the foreground that displays the remaining
- * rounds unless the native clip_style_progress_bar class is present. The
- * QOL setting owns its visibility directly so the count remains visible when
- * that native presentation class is absent or replaced with a hero layout.
- */
-#clip_status.qol-ammo-visual-enabled #clip_progress_bar,
-#clip_status_mirrored.qol-ammo-visual-enabled #clip_progress_bar
+#clip_status.qol-ammo-visual-enabled #clip_progress_bar,#clip_status_mirrored.qol-ammo-visual-enabled #clip_progress_bar
 {
 	visibility: visible !important;
 }
 
-.has_bonus_clip #clip_status.qol-ammo-visual-enabled #clip_bonus_progress_bar,
-.has_bonus_clip #clip_status_mirrored.qol-ammo-visual-enabled #clip_bonus_progress_bar
+.has_bonus_clip #clip_status.qol-ammo-visual-enabled #clip_bonus_progress_bar,.has_bonus_clip #clip_status_mirrored.qol-ammo-visual-enabled #clip_bonus_progress_bar
 {
 	visibility: visible !important;
 }
@@ -63,28 +54,13 @@
 	opacity: 1;
 }
 
-/*
- * Keep the magazine ring hidden for the whole reload so it doesn't blink.
- * The base HUD only collapses #clip_status while BOTH `attack_delayed` and
- * `reloading` are set (.attack_delayed.reloading #clip_status). During a
- * per-bullet (shotgun) reload `reloading` stays on but `attack_delayed`
- * cycles once per shell, so between shells the base collapse lifts and our
- * `#clip_status { visibility: visible }` override pops the ring back — the
- * rotated ring flickers in and out. Collapsing on `reloading` alone (which is
- * continuous across the whole reload) keeps it steadily hidden, matching the
- * vanilla "ring hidden while reloading" behaviour.
- */
-.hide_ammo_custom #clip_status,
-.hide_ammo_custom #clip_status_mirrored,
-#clip_status.qol-ammo-visual-disabled,
-#clip_status_mirrored.qol-ammo-visual-disabled
+.hide_ammo_custom #clip_status,.hide_ammo_custom #clip_status_mirrored,#clip_status.qol-ammo-visual-disabled,#clip_status_mirrored.qol-ammo-visual-disabled
 {
 	opacity: 0 !important;
 	visibility: collapse;
 }
 
-.reloading #clip_status,
-.reloading #clip_status_mirrored
+.reloading #clip_status,.reloading #clip_status_mirrored
 {
 	opacity: 0 !important;
 	visibility: collapse !important;
@@ -140,4 +116,53 @@
 .hide_reload_circle_active.hide_reload_circle_exception_active #attack_delayed_progress_bar
 {
 	opacity: 1 !important;
+}
+
+
+/* Ammo font styles. The classes are set directly on the ammo labels by
+   features/ql_ammo/manifest.js from AMMO_CURRENT_FONT_STYLE / AMMO_TOTAL_FONT_STYLE.
+   Current ammo omits "color" on purpose: it equals the default and leaving it out keeps the
+   low-ammo and bonus-clip colors working. */
+
+/* Current ammo: Stylized Ammo */
+.weapon_ammo.qol-ammo-current-stylized
+{
+	font-size: 16px;
+	font-weight: bold;
+	text-shadow: 0px 0px 0px 5.0 offBlack;
+	font-family: numericOracle;
+	text-align: right;
+	vertical-align: bottom;
+	horizontal-align: left;
+	width: 32px;
+	transition-property: color, text-shadow;
+	transition-duration: 0.124s;
+}
+
+/* Max ammo: Stylized Ammo */
+.weapon_ammo_max.qol-ammo-total-stylized
+{
+	font-size: 16px;
+	font-family: numericOracle;
+	color: rgba(255, 255, 255, 0.1);
+	vertical-align: bottom;
+	horizontal-align: left;
+	text-align: left;
+	margin-left: 2px;
+	width: 50px;
+}
+
+/* Max ammo: Stylized Alternative */
+.weapon_ammo_max.qol-ammo-total-stylized-alt
+{
+	font-size: 16px;
+	color: offBlack;
+	text-shadow: 0px 0px 0px 2.0 #aaaaaa;
+	opacity: 0.95;
+	font-weight: bold;
+	vertical-align: bottom;
+	horizontal-align: left;
+	text-align: left;
+	margin-left: 2px;
+	width: 50px;
 }

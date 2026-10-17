@@ -34,7 +34,7 @@
 "use strict";
 
 // Shared preset source-of-truth used by ql_settings.js and ql_core.js.
-var QOL_SCHEMA_SEMVER = "4.0.5";
+var QOL_SCHEMA_SEMVER = "4.0.6";
 var QOL_SCHEMA_WIRE_VERSION = 2;
 
 // ---- Shared storage keys ----
@@ -1792,6 +1792,15 @@ var QOL_COMPACT_SCHEMA_4_0_5 = QOL_COMPACT_SCHEMA_UTILS.AppendUniqueSchemaFields
     ]
 );
 
+// 4.0.6: Font style dropdowns for the current (0-1) and total (0-2) ammo numbers, and the better silenced/cursed ability toggle.
+var QOL_COMPACT_SCHEMA_4_0_6 = QOL_COMPACT_SCHEMA_UTILS.AppendUniqueSchemaFields(
+    QOL_COMPACT_SCHEMA_4_0_5,
+    [
+        { key: "AMMO_CURRENT_FONT_STYLE", min: 0, max: 1, step: 1 },
+        { key: "AMMO_TOTAL_FONT_STYLE", min: 0, max: 2, step: 1 },
+        { key: "ENABLE_BETTER_DISABLED_ABILITIES", min: 0, max: 1, step: 1 }
+    ]
+);
 
 var QOL_LATEST_COMPACT_SEMVER = QOL_SCHEMA_SEMVER;
 
@@ -1830,6 +1839,7 @@ var QOL_LATEST_COMPACT_SEMVER = QOL_SCHEMA_SEMVER;
 //              hide individual modifier rows (firerate, move speed, resists, lifesteal, ...).
 //              All default on.
 // 4.0.5        Active item slot scale and X/Y offsets.
+// 4.0.6        Font style dropdowns for current and total ammo; better silenced/cursed abilities toggle.
 // ==========================================================================
 // Known issue: ENABLE_COLORED_HEALTHBAR appears twice in V24+ schemas
 // (once from V2 base, once from V24 concat). Harmless — the decode
@@ -2089,6 +2099,10 @@ var QOL_COMPACT_SCHEMA_REGISTRY = {
     "4.0.5": {
         wireVersion: QOL_COMPACT_WIRE_VERSION_2_0_1,
         schema: QOL_COMPACT_SCHEMA_4_0_5
+    },
+    "4.0.6": {
+        wireVersion: QOL_COMPACT_WIRE_VERSION_2_0_1,
+        schema: QOL_COMPACT_SCHEMA_4_0_6
     }
 };
 var QOL_COMPACT_SCHEMA_WIRE_TO_SEMVER = (typeof QOL_CODEC === "object" && QOL_CODEC && typeof QOL_CODEC.BuildWireToSemver === "function")
@@ -2457,6 +2471,8 @@ var QOL_DEFAULT_CONFIG = {
         ENABLE_AMMO_STATUS: 0,
         ENABLE_HIDE_AMMO_ALL: 0,
         ENABLE_HIDE_MAGAZINE: 0,
+        AMMO_CURRENT_FONT_STYLE: 0,
+        AMMO_TOTAL_FONT_STYLE: 0,
         AMMO_PANEL_SCALE: 100,
         AMMO_CURRENT_SCALE: 100,
         AMMO_TOTAL_SCALE: 100,
@@ -2677,6 +2693,7 @@ var QOL_DEFAULT_CONFIG = {
         UNIT_TARGET_HINT_SIZE: 100,
         ENABLE_HERO_SCENE_PANEL: 1,
         HUD_BOTTOM_BAR_ENABLED: 1,
+        ENABLE_BETTER_DISABLED_ABILITIES: 0,
         ENABLE_HIDE_FAILED_HINT: 0,
         ENABLE_HIDE_ABILITY_SUGGESTION: 0,
         ENABLE_HIDE_COSMETIC_ABILITY: 0,

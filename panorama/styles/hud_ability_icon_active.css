@@ -1,5 +1,6 @@
-@import url("s2r://panorama/styles/base/hud_ability_icon_active.vcss_c");
+/* Prettified by Source 2 Viewer 20.1.0.0 - https://valveresourceformat.github.io */
 
+@import url("s2r://panorama/styles/base/hud_ability_icon_active.vcss_c");
 .minecraft_healthbar_active DraggableAbilityIcon
 {
 	width: 36px;
@@ -60,4 +61,44 @@
 	padding-top: 2px;
 	width: 110%;
 	text-overflow: shrink;
+}
+
+
+/* Better Silenced/Cursed Abilities (ENABLE_BETTER_DISABLED_ABILITIES). */
+.disabled_x_overlay
+{
+	visibility: collapse;
+	width: 100%;
+	height: 100%;
+	ignore-parent-flow: true;
+	horizontal-align: center;
+	vertical-align: center;
+	z-index: 500;
+}
+
+DraggableAbilityIcon.disabled .disabled_x_overlay
+{
+	visibility: visible;
+}
+
+.disabled_x_bar
+{
+	width: 145%;
+	height: 12px;
+	background-color: #ff1a1a;
+	horizontal-align: center;
+	vertical-align: center;
+	ignore-parent-flow: true;
+	box-shadow: 0px 0px 6px 2px black;
+	border-radius: 3px;
+}
+
+.disabled_x_bar_1
+{
+	transform: rotateZ(45deg);
+}
+
+.disabled_x_bar_2
+{
+	transform: rotateZ(-45deg);
 }
