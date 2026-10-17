@@ -34,7 +34,7 @@
 "use strict";
 
 // Shared preset source-of-truth used by ql_settings.js and ql_core.js.
-var QOL_SCHEMA_SEMVER = "4.0.5";
+var QOL_SCHEMA_SEMVER = "4.0.6";
 var QOL_SCHEMA_WIRE_VERSION = 2;
 
 // ---- Shared storage keys ----
@@ -1791,6 +1791,21 @@ var QOL_COMPACT_SCHEMA_4_0_5 = QOL_COMPACT_SCHEMA_UTILS.AppendUniqueSchemaFields
         { key: "ACTIVE_ITEMS_Y_OFFSET", min: -500, max: 500, step: 1 }
     ]
 );
+// 4.0.6 appends the custom hit marker fields (toggles, sizes, thickness, spacing, palette indexes).
+var QOL_COMPACT_SCHEMA_4_0_6 = QOL_COMPACT_SCHEMA_UTILS.AppendUniqueSchemaFields(
+    QOL_COMPACT_SCHEMA_4_0_5,
+    [
+        { key: "ENABLE_CUSTOM_HITMARKER", min: 0, max: 1, step: 1 },
+        { key: "ENABLE_CUSTOM_HITMARKER_SHADOW", min: 0, max: 1, step: 1 },
+        { key: "ENABLE_CUSTOM_HITMARKER_HIDE_GLOW", min: 0, max: 1, step: 1 },
+        { key: "CUSTOM_HITMARKER_SIZE", min: 4, max: 40, step: 1 },
+        { key: "CUSTOM_HITMARKER_CRIT_SIZE", min: 4, max: 40, step: 1 },
+        { key: "CUSTOM_HITMARKER_THICKNESS", min: 1, max: 8, step: 1 },
+        { key: "CUSTOM_HITMARKER_OFFSET", min: 4, max: 40, step: 1 },
+        { key: "CUSTOM_HITMARKER_COLOR", min: 0, max: 29, step: 1 },
+        { key: "CUSTOM_HITMARKER_CRIT_COLOR", min: 0, max: 29, step: 1 }
+    ]
+);
 
 
 var QOL_LATEST_COMPACT_SEMVER = QOL_SCHEMA_SEMVER;
@@ -1830,6 +1845,7 @@ var QOL_LATEST_COMPACT_SEMVER = QOL_SCHEMA_SEMVER;
 //              hide individual modifier rows (firerate, move speed, resists, lifesteal, ...).
 //              All default on.
 // 4.0.5        Active item slot scale and X/Y offsets.
+// 4.0.6        Custom hit marker: size, crit size, thickness, spacing, colors, outline shadow, crit glow.
 // ==========================================================================
 // Known issue: ENABLE_COLORED_HEALTHBAR appears twice in V24+ schemas
 // (once from V2 base, once from V24 concat). Harmless — the decode
@@ -2089,6 +2105,10 @@ var QOL_COMPACT_SCHEMA_REGISTRY = {
     "4.0.5": {
         wireVersion: QOL_COMPACT_WIRE_VERSION_2_0_1,
         schema: QOL_COMPACT_SCHEMA_4_0_5
+    },
+    "4.0.6": {
+        wireVersion: QOL_COMPACT_WIRE_VERSION_2_0_1,
+        schema: QOL_COMPACT_SCHEMA_4_0_6
     }
 };
 var QOL_COMPACT_SCHEMA_WIRE_TO_SEMVER = (typeof QOL_CODEC === "object" && QOL_CODEC && typeof QOL_CODEC.BuildWireToSemver === "function")
@@ -2688,6 +2708,15 @@ var QOL_DEFAULT_CONFIG = {
         ACTIVE_ITEMS_SCALE: 100,
         ACTIVE_ITEMS_X_OFFSET: 0,
         ACTIVE_ITEMS_Y_OFFSET: 0,
+        ENABLE_CUSTOM_HITMARKER: 0,
+        ENABLE_CUSTOM_HITMARKER_SHADOW: 0,
+        ENABLE_CUSTOM_HITMARKER_HIDE_GLOW: 0,
+        CUSTOM_HITMARKER_SIZE: 20,
+        CUSTOM_HITMARKER_CRIT_SIZE: 20,
+        CUSTOM_HITMARKER_THICKNESS: 2,
+        CUSTOM_HITMARKER_OFFSET: 40,
+        CUSTOM_HITMARKER_COLOR: 0,
+        CUSTOM_HITMARKER_CRIT_COLOR: 0,
         HUD_SOULS_ENABLED: 1,
         SOULS_OPACITY: 1.0,
         SOULS_X_OFFSET: 0,

@@ -78,6 +78,13 @@
                     features: ["ql_passive_cooldown", { id: "ql_item_mirror", hideToggle: true }]
                 },
                 {
+                    title: "Hit Marker",
+                    animatedToggle: true,
+                    enableKey: "ENABLE_CUSTOM_HITMARKER",
+                    description: "Customize the X-shaped hit marker",
+                    features: ["ql_hit_marker"]
+                },
+                {
                     title: "Stamina",
                     features: ["ql_stamina"]
                 },

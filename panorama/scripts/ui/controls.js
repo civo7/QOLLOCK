@@ -77,7 +77,10 @@
         sec_5_60:           { min: 5,   max: 60,   step: 1 },
         volume_0_100:       { min: 0,   max: 100,  step: 1 },
         angle_0_360:        { min: 0,   max: 360,  step: 1 },
-        alert_ms_1_50:      { min: 1,   max: 50,   step: 1 }
+        alert_ms_1_50:      { min: 1,   max: 50,   step: 1 },
+        hitmarker_size_4_40:     { min: 4, max: 40, step: 1 },
+        hitmarker_thickness_1_8: { min: 1, max: 8,  step: 1 },
+        hitmarker_offset_4_40:   { min: 4, max: 40, step: 1 }
     };
 
     // -------------------------------------------------------------------------

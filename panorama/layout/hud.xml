@@ -59,6 +59,7 @@
 		<include src="s2r://panorama/scripts/manifests/ql_ui_controls/manifest.vjs_c" />
 		<include src="s2r://panorama/scripts/manifests/ql_unsecured_souls_timer/manifest.vjs_c" />
 		<include src="s2r://panorama/scripts/manifests/ql_urn_timer/manifest.vjs_c" />
+		<include src="s2r://panorama/scripts/manifests/ql_hit_marker/manifest.vjs_c" />
 		<include src="s2r://panorama/scripts/manifests/ql_on_death_arcade/manifest.vjs_c" />
 		<include src="s2r://panorama/scripts/manifests/ql_minimap_runtime/manifest.vjs_c" />
 		<include src="s2r://panorama/scripts/manifests/ql_recent_purchases/manifest.vjs_c" />

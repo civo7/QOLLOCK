@@ -181,6 +181,25 @@
         }
 
         createSep(list);
+
+        if (createAnimatedToggle) {
+            createAnimatedToggle(list, "Hit Marker", "ENABLE_CUSTOM_HITMARKER", "Customize the X-shaped hit marker: size, thickness, spacing and colors", (sectionParent) => {
+                if (createSliderRow) {
+                    createSliderRow(sectionParent, "Size", "CUSTOM_HITMARKER_SIZE", "hitmarker_size_4_40", "Length of each hit marker line. Default 20");
+                    createSliderRow(sectionParent, "Crit Size", "CUSTOM_HITMARKER_CRIT_SIZE", "hitmarker_size_4_40", "Length of each line on a headshot or crit. Default 20");
+                    createSliderRow(sectionParent, "Thickness", "CUSTOM_HITMARKER_THICKNESS", "hitmarker_thickness_1_8", "Thickness of each hit marker line. Default 2");
+                    createSliderRow(sectionParent, "Spacing", "CUSTOM_HITMARKER_OFFSET", "hitmarker_offset_4_40", "How far the lines sit from the center of the crosshair. Default 40");
+                }
+                if (createRow) {
+                    createRow(sectionParent, "Color", "CUSTOM_HITMARKER_COLOR", "palette", null, null, null, palette, "Choose a preset color for the hit marker.");
+                    createRow(sectionParent, "Crit Color", "CUSTOM_HITMARKER_CRIT_COLOR", "palette", null, null, null, palette, "Choose a preset color for the hit marker on a headshot or crit.");
+                    createRow(sectionParent, "Outline Shadow", "ENABLE_CUSTOM_HITMARKER_SHADOW", "toggle", null, null, null, null, "A soft dark shadow around the hit marker so it stays visible on bright backgrounds.");
+                    createRow(sectionParent, "Crit Glow", "ENABLE_CUSTOM_HITMARKER_HIDE_GLOW", "toggle", null, null, null, [{ invert: true }], "The red glow around the hit marker on a headshot or crit.");
+                }
+            });
+        }
+
+        createSep(list);
         createTitle(list, "Stamina");
         if (createSliderRow) {
             createSliderRow(list, "Rotate", "STAMINA_CHARGE_ANGLE", "angle_0_360", "Rotate the stamina charge indicator.", true);
