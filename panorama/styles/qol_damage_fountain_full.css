@@ -914,7 +914,7 @@
 	
 }
 
-.damage_fountain_active .WindowRoot
+.damage_fountain_active CitadelHudDamageEventIndicator.WindowRoot
 {
 	height: 300px;
 	width: 300px;
@@ -924,7 +924,7 @@
 	overflow: noclip;
 }
 
-.damage_fountain_active .Window
+.damage_fountain_active CitadelHudDamageEventIndicator.Window
 {
 	height: 300px;
 	width: 300px;
