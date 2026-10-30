@@ -23,21 +23,21 @@ CitadelHudModifiers_Entry
 		brightness: 1;
 		opacity: 0;
 	}
-
+	
 	80%
 	{
 		transform: scale3d(0.9, 0.9, 1) rotateZ( 2deg );
 		brightness: 5;
 		opacity: 1;
 	}
-
+	
 	100%
 	{
 		transform: scale3d(1, 1, 1) rotateZ( 0deg );
 		brightness: 1;
 		opacity: 1;
 	}
-
+	
 }
 
 .hud_modifiers
@@ -760,5 +760,35 @@ CitadelHudModifiers_Entry
 .ModifierBarSegment.segment_locked
 {
 	box-shadow: inset #ffffffa0 0px 0px 4px 1px;
+}
+
+.hud_bar_pulse #split_text_container,.hud_bar_pulse #bar_container
+{
+	animation-name: HudBarPulse;
+	animation-duration: 0.8s;
+	animation-timing-function: ease-in-out;
+	animation-iteration-count: infinite;
+}
+
+@keyframes 'HudBarPulse'
+{
+	0%
+	{
+		pre-transform-scale2d: 1.0;
+		brightness: 1.0;
+	}
+	
+	50%
+	{
+		pre-transform-scale2d: 1.08;
+		brightness: 1.8;
+	}
+	
+	100%
+	{
+		pre-transform-scale2d: 1.0;
+		brightness: 1.0;
+	}
+	
 }
 
