@@ -1,6 +1,6 @@
 {
   "repository": "SteamTracking/GameTracking-Deadlock",
-  "commit": "d251cf9d9a796061c90f58724230b7e17b97121b",
+  "commit": "888e0166782181cd7e282ebec9ee8b5ab1b09c28",
   "files": {
     "layout/ability_hud_elements/element_progress_bar_text.xml": {
       "blob": "50a5460022136433f1701043d9430aac11798f4b",
@@ -56,7 +56,10 @@
       "destination": "panorama/layout/citadel_hud_top_bar.xml",
       "kind": "xml",
       "auto_sync": false,
-      "local_sha256": "a1a55e808bceb1c72ea4c647c08db79ca646473b6ebf97dbe184c3c263544a42"
+      "local_sha256": "a1a55e808bceb1c72ea4c647c08db79ca646473b6ebf97dbe184c3c263544a42",
+      "base_commit": "d251cf9d9a796061c90f58724230b7e17b97121b",
+      "pending_blob": "85b4bd0f6bada8406178924aa748fb110bfc9f3a",
+      "pending_local_sha256": "a1a55e808bceb1c72ea4c647c08db79ca646473b6ebf97dbe184c3c263544a42"
     },
     "layout/citadel_hud_top_bar_player.xml": {
       "blob": "e0b0f1154be7b503aa9ef63190e3dce6963b47ca",
@@ -73,12 +76,12 @@
       "local_sha256": "40b3812628bc821d3bcc89c6768def06501c7d22e30c1a55dcbc43a480c6e24d"
     },
     "layout/hud.xml": {
-      "blob": "e84bfc26a394e48c82d2daa10926dfda5bb62e2e",
+      "blob": "fbbcfe1df0a65b1a66c4369b2e3ca0a74fa905e6",
       "destination": "panorama/layout/hud.xml",
       "kind": "xml",
       "auto_sync": false,
-      "local_sha256": "9668a2bf181b08f1952b8cce5dd11fc3e783e8458d9d1a80ec53ccba3d17da83",
-      "base_commit": "0c38f9d31c4905e0fe1a292afe91aa3d01044baf"
+      "local_sha256": "138c17413163c3cc0c0ebac48b71614a0e953ce46a2332b793669d3fec430f8d",
+      "base_commit": "888e0166782181cd7e282ebec9ee8b5ab1b09c28"
     },
     "layout/hud_escape_menu.xml": {
       "blob": "504b76d61d2ea5329be2b1c6d0b1c74fc59fad9d",
@@ -334,11 +337,12 @@
       "local_sha256": "c79239711d0d87880439fe5ba18a82332d26404beb7d144920b7bf2446674584"
     },
     "styles/citadel_hud_top_bar.css": {
-      "blob": "25ec8871acbc65625657b2cd32797b3b4bd26bd0",
+      "blob": "d14a19019016513971994e3fee6ad28b3fcad14f",
       "destination": "panorama/styles/base/citadel_hud_top_bar.css",
       "kind": "css",
       "auto_sync": true,
-      "local_sha256": "1af2e6fc951831efd54dc0ecba035f628a4ce0e9c7f3f73e493ee6e2a1e1d897"
+      "local_sha256": "b3413b7f8f9eb58e09d53f4d9ee9b1e83eea8556270bbedff6cfdca611cf1d4c",
+      "base_commit": "888e0166782181cd7e282ebec9ee8b5ab1b09c28"
     },
     "styles/citadel_hud_top_bar_chat.css": {
       "blob": "5f78381074b00c1408771111ae7b0d2fa07d4134",
@@ -486,12 +490,12 @@
       "base_commit": "d251cf9d9a796061c90f58724230b7e17b97121b"
     },
     "styles/hud.css": {
-      "blob": "55e3cfa96e85fd64fffd4542c3162043b6581e75",
+      "blob": "82a5e7425bffbf7d2b737e4f0458db760581aaaa",
       "destination": "panorama/styles/base/hud.css",
       "kind": "css",
       "auto_sync": true,
-      "local_sha256": "b7a2ff92994cfba8acf7a433dd86d07751aa102ad48069e5d4e00cb859376d16",
-      "base_commit": "0c38f9d31c4905e0fe1a292afe91aa3d01044baf"
+      "local_sha256": "a03c7da80656e70ccb49f097736ba06886914df12904573d207350f9b072ea55",
+      "base_commit": "888e0166782181cd7e282ebec9ee8b5ab1b09c28"
     },
     "styles/hud_abilities.css": {
       "blob": "a0a5551225eb0cbd204a0bddee008e942af4b5d3",
@@ -509,11 +513,12 @@
       "base_commit": "d251cf9d9a796061c90f58724230b7e17b97121b"
     },
     "styles/hud_ability_icon_active.css": {
-      "blob": "880c21cf13db04516b28e7d4b3f3c556643c8084",
+      "blob": "4fc4064eaa9e82b59f4ea0920b4afad40a22f09c",
       "destination": "panorama/styles/base/hud_ability_icon_active.css",
       "kind": "css",
       "auto_sync": true,
-      "local_sha256": "ba9133f1c09a780bacc09f9c933623ddb063923670fa23c4db87ec83663a7197"
+      "local_sha256": "533da11cececb66f114ad1926e50f8a42fcba389fb37c10a4c134fd3c265aa5b",
+      "base_commit": "888e0166782181cd7e282ebec9ee8b5ab1b09c28"
     },
     "styles/hud_ability_icon_passive.css": {
       "blob": "f4f1698a54019dc2680b8fd49ecda880c2444136",
@@ -567,11 +572,12 @@
       "base_commit": "d251cf9d9a796061c90f58724230b7e17b97121b"
     },
     "styles/hud_health.css": {
-      "blob": "96b708926f6aa61b4d8d55838ebcb64d0c759fbb",
+      "blob": "b743e264c3a237bdde13020845880419f7bfc99b",
       "destination": "panorama/styles/base/hud_health.css",
       "kind": "css",
       "auto_sync": true,
-      "local_sha256": "c2cb8025f192a252489e251131662f3409571608de78d67dbe968da72db0ad92"
+      "local_sha256": "4e09c8c70155853f159ce8ae2a67acc47d1a9ccef8034dcc9b1c763719b17f0c",
+      "base_commit": "888e0166782181cd7e282ebec9ee8b5ab1b09c28"
     },
     "styles/hud_health_container.css": {
       "blob": "9ce7acc8c9e27bda79c9554db8778bb672ae5c9b",
@@ -581,12 +587,12 @@
       "local_sha256": "23e01a2f857205e89dbf1de1ed46e43d6c2ff08df10b79b12e83f97d3d299036"
     },
     "styles/hud_minimap.css": {
-      "blob": "cfeb11404b44cae16fc73156332f50afe7672843",
+      "blob": "463ff293364e3edb652df117f1a8fbc5be58a34b",
       "destination": "panorama/styles/base/hud_minimap.css",
       "kind": "css",
       "auto_sync": true,
-      "local_sha256": "a8f8ecd55aa553183d39ea7e9abefa9a4980a7b2527aeaa0f583c6013b4405c1",
-      "base_commit": "d251cf9d9a796061c90f58724230b7e17b97121b"
+      "local_sha256": "7cc84fa37c8323bfcbebac9177e6be32804ffc4ae736ea383eb471b1f6372a8c",
+      "base_commit": "888e0166782181cd7e282ebec9ee8b5ab1b09c28"
     },
     "styles/hud_modifiers.css": {
       "blob": "2eb94f53a78f107b941c6fff78d918333fdb4337",
@@ -596,11 +602,12 @@
       "local_sha256": "ba988dbad7cf5e7b848ffdd36f4a0b1915e93a9fb2f1b56a74ef231ace11277a"
     },
     "styles/hud_modifiers_center.css": {
-      "blob": "ced9aa5abea1da8eec21086e34bcc09c57e546a3",
+      "blob": "4b38e6f791f7394dab8518faace65be98c50cc44",
       "destination": "panorama/styles/base/hud_modifiers_center.css",
       "kind": "css",
       "auto_sync": true,
-      "local_sha256": "de6698774317d290d01caa38ac6b0a8d180c5bcc4a756ccf43713b973d589bf2"
+      "local_sha256": "961a0a06f344ab033c0f642ced45e9f3cc4febd434429eb02eff296f48190967",
+      "base_commit": "888e0166782181cd7e282ebec9ee8b5ab1b09c28"
     },
     "styles/hud_paused.css": {
       "blob": "6e46614aee2ee610bab768d197e72eee5ab737ee",
@@ -610,12 +617,12 @@
       "local_sha256": "64cef7fc0cdca637b2850f94a74826cd5219722bd8054ede91317e6c2015b980"
     },
     "styles/hud_quickbuy.css": {
-      "blob": "322b13670f254e80297f0c3d83f7c35645f3193b",
+      "blob": "240524f4819af41526c3165998114369f0364477",
       "destination": "panorama/styles/base/hud_quickbuy.css",
       "kind": "css",
       "auto_sync": true,
-      "local_sha256": "ed1e9f163f4cdf8b6cb02125d42810f991220da42a45fecd7888075465de671e",
-      "base_commit": "0ba033e3eea00d658d63e03719295cf5039e8057"
+      "local_sha256": "3ecb0887b07b61d847aa4ad334137d9f08dbcbb048c8fc2ab331f4761d750131",
+      "base_commit": "888e0166782181cd7e282ebec9ee8b5ab1b09c28"
     },
     "styles/hud_quickbuy_entry.css": {
       "blob": "d15a03442aa8687a90aa794eadd19f9c07111724",
@@ -640,12 +647,12 @@
       "local_sha256": "d23ecea92d6583696fe817f490ee271d9d1875951c3d9ffc80707df0c712b0ec"
     },
     "styles/unit_status_icons.css": {
-      "blob": "52525ae737c0c7ebaabe09064a565c1f79ca7ee4",
+      "blob": "24c2b35c8da541aee916fd759ffe2adb23d481bc",
       "destination": "panorama/styles/base/unit_status_icons.css",
       "kind": "css",
       "auto_sync": true,
-      "local_sha256": "59776a1ebd59d7df55b92514d55247819dff7eca9263362084cb880867f54f3a",
-      "base_commit": "d251cf9d9a796061c90f58724230b7e17b97121b"
+      "local_sha256": "5c95849d3c7df40a1d9ba889b254c19dc6e6888dff890338756295d7748724d1",
+      "base_commit": "888e0166782181cd7e282ebec9ee8b5ab1b09c28"
     },
     "styles/unit_status_v2.css": {
       "blob": "94cf9a44c68c58e0150f0a039d3f776ba605ac0e",
@@ -656,5 +663,5 @@
       "base_commit": "d251cf9d9a796061c90f58724230b7e17b97121b"
     }
   },
-  "fingerprint": "c977874ebe6fb86242c7902b6fd724dfe3088f48366186a8b7de4d4323ed9a62"
+  "fingerprint": "eeb46b7e4752b6e0a56f9df46df210870dfd301ba18fa86c58d058e54994449c"
 }
