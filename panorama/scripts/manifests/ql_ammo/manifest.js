@@ -83,7 +83,8 @@
                 if (currentFont === 2) Object.assign(currentStyles, { fontFamily: "Radiance", fontWeight: "bold" });
                 if (totalFont === 1) Object.assign(totalStyles, { fontFamily: numericFont, textShadow: "0px 0px 0px 5.0 #10130d", color: color || "rgba(255, 255, 255, 0.1)" });
                 if (totalFont === 2) Object.assign(totalStyles, { fontWeight: "bold", textShadow: "0px 0px 0px 2.0 #aaaaaa", color: color || "#10130d", opacity: "0.95" });
-                if (totalFont === 3) Object.assign(totalStyles, { fontFamily: "Radiance", fontWeight: "normal", color: color || "rgba(255, 255, 255, 0.1)" });
+                if (totalFont === 3) Object.assign(totalStyles, { fontFamily: "Radiance", fontWeight: "bold", color: color || "rgba(255, 255, 255, 0.1)" });
+                if (totalFont === 4) Object.assign(totalStyles, { fontFamily: "Radiance", fontWeight: "bold", textShadow: "0px 0px 0px 2.0 #aaaaaa", color: color || "#10130d", opacity: "0.95" });
                 const infiniteStyles = { color: color || null };
                 if (current !== 100) {
                     currentStyles.fontSize = Math.max(8, Math.round(16 * current / 100)) + "px";
