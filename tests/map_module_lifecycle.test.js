@@ -149,6 +149,29 @@ test("minimalist opacity follows native background images without fading their c
     assert.equal(replacement.style.opacity, undefined);
 });
 
+test("minimalist backgrounds preserve native map-layer classes on an ancestor", () => {
+    const e = fixture();
+    const background = e.add(e.renderer, "MinimapBackgroundTest");
+    const images = [1, 2, 3].map(index => {
+        const image = e.add(background, "", "Image");
+        image.AddClass("backgroundImage" + index);
+        return image;
+    });
+    const core = e.gameplay.GetParent();
+    core.AddClass("dl_midtown");
+    core.AddClass("is_underground");
+    e.configure({ MINIMAL_MINIMAP: 1, MINIMAL_MINIMAP_OPACITY: 0.4 });
+    assert.deepEqual(images.map(image => image.style.opacity), ["0", "0.4", "0"]);
+    core.RemoveClass("is_underground");
+    core.AddClass("in_tunnels");
+    e.clock.advance(700);
+    assert.deepEqual(images.map(image => image.style.opacity), ["0", "0", "0.4"]);
+    core.RemoveClass("in_tunnels");
+    e.clock.advance(700);
+    assert.deepEqual(images.map(image => image.style.opacity), ["0.4", "0", "0"]);
+    e.clean();
+});
+
 test("minimap partial native writes retry without another settings change", () => {
     const e = fixture();
     const mapFailures = onceFailStyle(e.render, "opacity");
@@ -572,6 +595,27 @@ test("compass reconciles its tick siblings in one snapshot and repairs a moved t
     assert.equal(siblingSearches, 0, "tick reconciliation must not scan the same sibling list once per tick");
     feature.onDisable(); e.clock.advance(150); e.clean();
 });
+
+for (const id of ["QOLCompassDegree", "QOLCompassNeedle", "QOLSpeedLabel"]) {
+    test("compass restores one missing overlay child: " + id, () => {
+        const e = fixture();
+        const source = localPlayer(e, e.renderer, 40);
+        const { feature } = directCompass(e);
+        feature.onEnable();
+        const previous = e.gameplay.FindChildTraverse(id);
+        assert.ok(previous);
+        previous.DeleteAsync(0);
+        source.image.style.preTransformRotate2d = "90deg";
+        e.clock.advance(150);
+        const replacement = e.gameplay.FindChildTraverse(id);
+        assert.ok(replacement, "the remaining overlay roots must not conceal a missing child");
+        assert.notEqual(replacement, previous);
+        assert.equal(e.gameplay.FindChildTraverse("QOLCompassDegree").text, "90°");
+        feature.onDisable();
+        e.clock.advance(20);
+        e.clean();
+    });
+}
 
 test("compass rapid re-enable waits for both queued trees without reviving their former panels", () => {
     const e = fixture(); localPlayer(e, e.renderer, 45); const { feature, create } = directCompass(e);

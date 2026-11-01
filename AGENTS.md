@@ -58,6 +58,26 @@ offline operation counts do not measure native frame time or FPS.
 These requirements apply to every change; the linked documentation supplies
 subsystem contracts and examples, not additional permission to bypass them.
 
+### Readability and proportionate design
+
+- Treat readability as an acceptance requirement. Make the normal runtime path,
+  state transitions and resource ownership easy to follow. Prefer explicit
+  control flow and clear names over dense expressions and nested conditionals.
+- Use the simplest design that meets the current requirements. Reuse suitable
+  helpers and native capabilities; introduce new layers, wrappers or abstractions
+  only when they solve a concrete present need. Do not build speculative
+  infrastructure or duplicate an existing mechanism.
+- Keep manifests focused on registration, settings and lifecycle coordination.
+  Small features may remain self-contained. Substantial diagnostic collection,
+  experiment controls or reporting belong behind a narrow feature-local boundary
+  so they do not obscure ordinary rendering and updates. Avoid replacing a long
+  function with a generic framework or a large bag of callbacks.
+- Before finishing, review the normal call path as a maintainer would: remove
+  redundant indirection and obsolete scaffolding, and split mixed responsibilities
+  where doing so improves understanding. A refactor must reduce conceptual
+  complexity, not merely move lines between files. Preserve required validation,
+  cleanup, failure visibility and regression coverage when simplifying.
+
 ### JavaScript and module boundaries
 
 - Use modern JavaScript in new and rewritten code: `const` by default, `let`

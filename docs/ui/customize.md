@@ -506,6 +506,10 @@ root-class readers; the app commits its ACK only after bucket loading and owner
 reconciliation. Rejected delivery or ACK writes remain retryable without stopping
 the config poll. This ACK establishes configuration delivery, not native layout or rendering;
 unavailable selections show a separate status.
+Successful HUD commits and preview resets emit the context-local
+`presentation:preview_changed` event after updating sample state. Reactive owners
+can refresh selection-only content without a feature polling loop. Staged,
+rejected and failed ACK deliveries do not emit it.
 Benchmark stress configuration blocks the preview layer; ending that block forces
 delivery again even if the leased draft payload is unchanged.
 

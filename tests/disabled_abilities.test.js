@@ -5,83 +5,66 @@ const fs = require("node:fs");
 const path = require("node:path");
 const { createHud } = require("../scripts/simulator");
 
-function setup() {
+const read = file => fs.readFileSync(path.join(__dirname, "../panorama", file), "utf8");
+const gate = "better_disabled_abilities_active";
+
+test("disabled presentation follows settings and registry exclusion without observing native icons", () => {
     const env = createHud({ inHideout: false }); env.assertLoaded();
-    const { QOL: Q, $ } = env.sandbox.global;
-    Q.core.App.shutdown();
-    const manifest = Q.core.FeatureRegistry.getManifest("ql_disabled_abilities");
-    assert.ok(manifest, "disabled presentation has an independent registered owner");
-    Q.core.ConfigAdapter.loadFromFlat({ ...Q.buildDefaultConfig(), ENABLE_BETTER_DISABLED_ABILITIES: 1 });
-    const feature = manifest.create({ id: manifest.id, events: Q.core.EventBus,
-        config: { view: () => Q.core.ConfigStore.view(manifest.id) } });
-    const add = (parent, id, type = "Panel", cls = "") => {
-        const panel = $.CreatePanel(type, parent, id); if (cls) panel.AddClass(cls); return panel;
-    };
-    const core = add(env.root, "", "Panel", "HudCore"), abilities = add(core, "AbilitiesContainer");
-    const signature = add(add(add(abilities, "hud_signature"), "", "Panel", "hud_abilities"), "abilities");
-    const items = add(add(abilities, "ActiveAbilitiesMenu"), "abilitiesContainer");
-    const icon = (owner, type = "CitadelAbilityIcon") => {
-        const panel = add(owner, "", type), button = add(panel, "button_container");
-        const images = add(button, "", "Panel", "image_container");
-        const host = type === "DraggableAbilityIcon" ? add(images, "", "Panel", "iconContainer") : images;
-        const image = add(host, "ability_image", "Image", "ability_image");
-        const mask = add(images, "cooldown_mask"); mask.style.clip = "radial(50% 50%, 120deg, 0deg)";
-        return { panel, host, image, mask };
-    };
-    return { ...env, Q, $, feature, add, core, signature, items, icon };
-}
+    const Q = env.sandbox.global.QOL, registry = Q.core.FeatureRegistry;
+    Q.core.ConfigAdapter.loadFromFlat({ ...Q.buildDefaultConfig(), ENABLE_BETTER_DISABLED_ABILITIES: 1,
+        ENABLE_HIDE_MAGAZINE: 1 });
+    assert.equal(registry.isEnabled("ql_disabled_abilities"), true);
+    assert.equal(env.root.BHasClass(gate), true);
+    assert.equal(env.root.BHasClass("hide_magazine_active"), true, "project the complete config");
+    assert.equal(Q.core.Scheduler.getWorkSnapshot().some(owner => owner.id === "ql_disabled_abilities"), false);
+    registry.disable("ql_disabled_abilities");
+    assert.equal(env.root.BHasClass(gate), false, "diagnostic exclusion releases CSS presentation");
+    assert.equal(Q.core.ConfigStore.get("ql_disabled_abilities", "ENABLE_BETTER_DISABLED_ABILITIES"), true);
+    registry.enable("ql_disabled_abilities");
+    assert.equal(env.root.BHasClass(gate), true);
+    Q.core.ConfigStore.set("ql_disabled_abilities", "ENABLE_BETTER_DISABLED_ABILITIES", false);
+    assert.equal(env.root.BHasClass(gate), false);
+    Q.core.ConfigStore.set("ql_disabled_abilities", "ENABLE_BETTER_DISABLED_ABILITIES", true);
+    assert.equal(env.root.BHasClass(gate), true);
+    const nextRoot = env.sandbox.global.$.CreatePanel("CitadelHud", null, "Hud");
+    env.doc.root = nextRoot;
+    Q.core.hud.refreshRootClasses(nextRoot);
+    assert.equal(nextRoot.BHasClass(gate), true, "a new HUD inherits the accepted setting before icons exist");
+    assert.equal(env.root.BHasClass(gate), false, "a still-live old HUD releases the presentation gate");
+    env.clock.advance(1500);
+    assert.equal(Q.core.Scheduler.getWorkSnapshot().some(owner => owner.id === "ql_disabled_abilities"), false);
+    assert.deepEqual(env.clock.errors, []);
+});
 
-test("disabled abilities decorate only verified owners, recover live replacements and clean up every owned child", () => {
-    const e = setup();
-    const decoy = e.icon(e.root), signature = e.icon(e.signature), item = e.icon(e.items, "DraggableAbilityIcon");
-    const find = source => source.host.FindChild("QOLDisabledXOverlay");
-    e.core.SetParent(e.add(null, "LateNativeAbilities")); e.feature.onEnable(); e.clock.advance(600);
-    assert.equal(find(signature), null); assert.equal(find(item), null);
-    e.core.SetParent(e.root); e.clock.advance(600);
-    assert.equal(find(decoy), null);
-    for (const source of [signature, item]) {
-        assert.ok(find(source)); assert.equal(find(source).GetChildCount(), 2);
-        assert.equal(find(source).hittest, false);
-        assert.equal(source.panel.BHasClass("qol-better-disabled"), true);
-        assert.equal(source.mask.style.clip, "radial(50% 50%, 120deg, 0deg)");
+test("native templates carry a noninteractive cross beside their image and preserve native masks and bindings", () => {
+    for (const [file, host] of [["hud_ability_icon.xml", "image_container"], ["hud_ability_icon_active.xml", "iconContainer"]]) {
+        assert.ok(fs.existsSync(path.join(__dirname, "../panorama/layout", file)), "native template override exists");
+        const xml = read("layout/" + file);
+        const imageHost = xml.match(new RegExp(`<Panel class="${host}">((?:(?!</Panel>)[\\s\\S])*?)</Panel>`));
+        assert.ok(imageHost, "image host exists");
+        assert.match(imageHost[1], /<Image id="ability_image"[^>]+\/>/);
+        assert.match(imageHost[1], /<!-- ==== QOLLOCK disabled ability cross ==== -->\s*<Panel id="QOLDisabledXOverlay" hittest="false" hittestchildren="false">\s*<Panel id="QOLDisabledXBar0" hittest="false"\s*\/>\s*<Panel id="QOLDisabledXBar1" hittest="false"\s*\/>/);
+        assert.equal((xml.match(/id="QOLDisabledXOverlay"/g) || []).length, 1);
+        assert.match(xml, /<Panel id="cooldown_mask"\s*\/>/);
+        assert.match(xml, /<CitadelBinding id="ability_binding_component" show_single_bind="true" compact="true"\s*\/>/);
+        assert.match(xml, new RegExp(`panorama/styles/${file.replace(".xml", "")}\\.vcss`));
     }
-    const old = find(signature), moved = old.GetChild(0), detached = e.add(null, "RetiredAbility");
-    moved.SetParent(detached); e.clock.advance(600);
-    assert.equal(moved.IsValid(), false); assert.equal(find(signature).GetChildCount(), 2);
-    signature.panel.SetParent(detached); const next = e.icon(e.signature); e.clock.advance(600);
-    assert.equal(old.IsValid(), false); assert.ok(find(next));
-    assert.equal(signature.panel.BHasClass("qol-better-disabled"), false);
-    e.core.SetParent(detached); e.clock.advance(600);
-    assert.equal(find(next), null); assert.equal(find(item), null);
-    assert.equal(item.panel.BHasClass("qol-better-disabled"), false);
-    e.feature.onDisable(); e.feature.onSettingsChanged(); e.clock.advance(600);
-    assert.deepEqual(e.clock.errors, []);
 });
 
-test("disabled abilities retry partial construction without claiming native presentation early", () => {
-    const e = setup(), source = e.icon(e.signature), create = e.$.CreatePanel;
-    let reject = true;
-    e.$.CreatePanel = (type, parent, id, properties) => {
-        if (reject && id === "QOLDisabledXBar1") throw Error("modeled construction failure");
-        return create(type, parent, id, properties);
-    };
-    e.feature.onEnable(); assert.equal(source.panel.BHasClass("qol-better-disabled"), false);
-    reject = false; e.clock.advance(600); assert.equal(source.panel.BHasClass("qol-better-disabled"), true);
-    e.feature.onDisable(); e.feature.onEnable(); e.clock.advance(600);
-    assert.equal(source.panel.BHasClass("qol-better-disabled"), true);
-    e.feature.onDisable(); e.clock.advance(600);
-    assert.equal(source.host.FindChild("QOLDisabledXOverlay"), null);
-    assert.equal(source.panel.BHasClass("qol-better-disabled"), false);
-    assert.deepEqual(e.clock.errors, []);
-});
-
-test("disabled visuals live in both native component style chains and leave cooldown masks native", () => {
-    const read = file => fs.readFileSync(path.join(__dirname, "../panorama/styles", file), "utf8");
+test("disabled CSS stays in component chains and scopes native disabled effects to HUD signature and active-item owners", () => {
     for (const file of ["hud_ability_icon.css", "hud_ability_icon_active.css"]) {
-        assert.match(read(file), /@import url\("s2r:\/\/panorama\/styles\/features\/ql_feat_disabled_abilities\.vcss_c"\)/);
+        assert.match(read("styles/" + file), /@import url\("s2r:\/\/panorama\/styles\/features\/ql_feat_disabled_abilities\.vcss_c"\)/);
     }
-    const css = read("features/ql_feat_disabled_abilities.css");
-    assert.match(css, /CitadelAbilityIcon\.qol-better-disabled\.disabled/);
-    assert.match(css, /DraggableAbilityIcon\.qol-better-disabled\.disabled/);
-    assert.doesNotMatch(css, /cooldown_mask|!important/);
+    const css = read("styles/features/ql_feat_disabled_abilities.css");
+    const effects = [...css.matchAll(/([^{}]+)\{([^{}]+)\}/g)].filter(([, , body]) => /wash-color|visibility:\s*visible/.test(body));
+    assert.equal(effects.length, 3);
+    for (const [, selectors] of effects) {
+        for (const selector of selectors.trim().split(",")) {
+            assert.match(selector, /\.better_disabled_abilities_active #AbilitiesContainer (?:#hud_signature #abilities > CitadelAbilityIcon|#ActiveAbilitiesMenu #abilitiesContainer > DraggableAbilityIcon)\.disabled/);
+        }
+    }
+    assert.doesNotMatch(css, /cooldown_mask|!important|qol-better-disabled/);
+    assert.match(css, /box-shadow:\s*0px 0px 6px 2px black/);
+    assert.match(css, /height:\s*14px/);
+    assert.match(css, /height:\s*12px/);
 });

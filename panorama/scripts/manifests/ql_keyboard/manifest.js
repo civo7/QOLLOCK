@@ -3,6 +3,11 @@
 // SOURCE: Native hud.xml gameplay_hud; retained CitadelBinding actions/layouts.
 (() => {
     "use strict";
+    let nextGeneration = 0;
+    let ownerLoaded = null;
+    // Invoked by the static gameplay_hud XML owner after construction. This is
+    // not an unhandled engine event or a promise of arbitrary child mutation.
+    QOL.features.keyboardOwnerLoaded = () => { if (ownerLoaded) ownerLoaded(); };
     const createKeyboardOverlayKey = (createOwned, parent, spec) => {
         if (!parent || !spec) return null;
         if (spec.emptyClass) {
@@ -92,6 +97,7 @@
             { action: "ExtraInfo", glyphstyle: "light", keyClass: "AltKey" },
             { action: "Mantle", glyphstyle: "light", keyClass: "SpaceKey" }
         ]);
+        return { base: baseLayout, full: fullLayout };
     };
 
     // Adapted compact/grid geometry; native CitadelBinding still owns the glyph
@@ -146,33 +152,27 @@
         ],
         create(ctx) {
             const P = QOL.core.panel, U = QOL.utils;
-            // Native hud.xml: Hud > .HudCore > gameplay_hud. Never create in a menu root.
-            const gameplay = QOL.panelCache.createIdResolver("gameplay_hud", { retryMs: 500,
-                ownerPath: [{ id: "Hud", optional: true }, { className: "HudCore" }] });
             const styles = P.createNativeStyleOwner();
             const tree = P.createOwnedTree();
-            let generation = null, model = null, loop = null, enabled = false, root = null;
+            let generation = null, model = null, retry = null, enabled = false, root = null, lastParent = null;
+            const diagnostics = QOL.features.keyboardDiagnostics.create({
+                readState: () => ({ enabled, root, generation, lastParent, full: model?.full || false }),
+                update, styles, tree
+            });
 
             function readModel() {
                 const cfg = QOL.presentation.captureVisibility(ctx, ctx.config.view());
                 const full = U.IsCfgEnabled(cfg, "ENABLE_FULL_KEYBOARD_LAYOUT");
                 const layout = QOL.settings.readNumber("KEYBOARD_OVERLAY_LAYOUT", cfg.KEYBOARD_OVERLAY_LAYOUT);
                 const theme = QOL.settings.readNumber("KEYBOARD_OVERLAY_THEME", cfg.KEYBOARD_OVERLAY_THEME);
-                const scale = QOL.settings.readNumber("KEYBOARD_OVERLAY_SCALE", cfg.KEYBOARD_OVERLAY_SCALE) / 100;
+                const scale = QOL.settings.readNumber("KEYBOARD_OVERLAY_SCALE", cfg.KEYBOARD_OVERLAY_SCALE);
                 const x = Math.round(Number(cfg.KEYBOARD_OVERLAY_X_OFFSET)) || 0;
                 const y = Math.round(Number(cfg.KEYBOARD_OVERLAY_Y_OFFSET)) || 0;
-                const size = value => Math.max(1, Math.round(value * scale)) + "px";
-                const mouseSize = Math.max(1, Math.round(20 * scale)) + "px";
-                return { full, layout, layoutKey: layout ? layout + ":" + full : "0", unit: 40 * scale,
+                return { full, layout, layoutKey: layout ? layout + ":" + full : "0",
+                    scale: scale + "%",
                     themeClasses: Object.fromEntries(Array.from({ length: 8 }, (_, i) => ["QOLKeyboardTheme" + i, i === theme])),
                     wash: P.resolvePaletteColor(cfg.KEYBOARD_OVERLAY_WASH_COLOR),
-                    box: { uiScale: "100%", marginLeft: (full ? 70 : 150) + "px", marginBottom: "300px",
-                        x: x + "px", y: -y + "px", width: "fit-children" },
-                    widths: { TabKey: size(53), SpaceKey: size(full ? 133 : 192), ShiftKey: size(80),
-                        AltKey: size(60), CtrlKey: size(60), EmptyKeyWide: size(full ? 60 : 80) },
-                    key: { width: size(40), height: size(40), margin: "2px" },
-                    label: { fontSize: Math.max(1, Math.round(16 * scale)) + "px", lineHeight: "0px" },
-                    mouse: { width: mouseSize, height: mouseSize, backgroundTextureSize: mouseSize + " " + mouseSize }
+                    box: { marginLeft: (full ? 70 : 150) + "px", x: x + "px", y: -y + "px" }
                 };
             }
 
@@ -184,7 +184,8 @@
 
             function ensure(parent) {
                 const stable = tree.sweep();
-                if (stable && generation && generation.parent === parent && generation.layoutKey === model.layoutKey) return true;
+                if (stable && generation && generation.parent === parent && generation.layoutKey === model.layoutKey &&
+                    generation.composition === diagnostics.controls.composition) return true;
                 retire();
                 if (!P.isAlive(parent)) return false;
                 // Retire foreign previous generations too. Merely waiting for
@@ -193,20 +194,19 @@
                     tree.child(parent, "Panel", "QOLKeyboardOverlayRoot");
                     return false;
                 }
-                generation = { parent, overlay: null, box: null, keys: [], alternate: null, layoutKey: model.layoutKey };
-                const created = [];
+                lastParent = parent;
+                generation = { serial: ++nextGeneration, parent, overlay: null, box: null, alternate: null,
+                    layoutKey: model.layoutKey, composition: diagnostics.controls.composition };
                 let childIndex = 0;
                 const createOwned = (type, owner, id, properties) => {
-                    // Rows/keys/layouts are fresh private handles. Validate their
-                    // parents without indexing every sibling again before the
-                    // native glyph discovery pass. Named roots still reconcile IDs.
+                    // Private rows and bindings are tracked by handle; named
+                    // roots also reject a previous generation awaiting deletion.
                     const panel = id ? tree.child(owner, type, id, properties) :
                         tree.create(type, owner, "QOLKeyboardOverlayChild" + childIndex++, {
                             hittest: "false", hittestchildren: "false", ...properties
                         });
                     if (!P.isAlive(panel)) throw new Error("Keyboard overlay panel creation failed");
                     if (!id) { panel.hittest = false; panel.hittestchildren = false; }
-                    created.push(panel);
                     return panel;
                 };
                 try {
@@ -214,15 +214,12 @@
                         hittest: "false", hittestchildren: "false" });
                     P.setVisible(generation.overlay, false);
                     generation.box = createOwned("Panel", generation.overlay, "AllBindingsBox", {
-                        "class": "AllBindingsScope", hittest: "false", hittestchildren: "false" });
+                        "class": "AllBindingsScope", hittest: "false", hittestchildren: "false",
+                        ...(generation.composition === "cache" ? {
+                            "require-composition-layer": "true", "always-cache-composition-layer": "true"
+                        } : {}) });
                     if (model.layout) generation.alternate = buildAlternateLayout(createOwned, generation.box, model.layout, model.full);
-                    else buildKeyboardOverlayLayouts(createOwned, generation.box);
-                    // Sizing roles belong to our constructed key layout; native
-                    // glyph roles and style readback are still checked each tick.
-                    generation.keys = created.filter(panel => panel.BHasClass("Key")).map(panel => ({
-                        panel, widthClass: Object.keys(model.widths).find(name => panel.BHasClass(name))
-                    }));
-                    refreshAlternateGeometry();
+                    else generation.layouts = buildKeyboardOverlayLayouts(createOwned, generation.box);
                     return true;
                 } catch (error) {
                     retire();
@@ -230,74 +227,82 @@
                 }
             }
 
-            function refreshAlternateGeometry() {
-                const alternate = generation?.alternate;
-                if (!alternate || alternate.geometry?.unit === model.unit) return;
-                const px = value => Math.round(value * model.unit) + "px";
-                alternate.geometry = {
-                    unit: model.unit,
-                    layout: { width: px(alternate.width), height: px(alternate.height), flowChildren: "none" },
-                    keys: alternate.keys.map(({ x, y, w, h }) => ({
-                        x: px(x + 0.05), y: px(y + 0.05), width: px(w - 0.1), height: px(h - 0.1), margin: "0px"
-                    }))
-                };
-            }
-
             function render() {
-                let ready = true;
                 const desired = new Map();
-                desired.set(generation.overlay, QOL.presentation.visibilityStyles("keyboard", QOL.presentation.visibilityConfig(ctx), root, model.wash ? { washColor: model.wash } : {}));
+                desired.set(generation.overlay, QOL.presentation.visibilityStyles("keyboard", QOL.presentation.visibilityConfig(ctx), root,
+                    model.wash ? { washColor: model.wash } : {}));
                 desired.set(generation.box, model.box);
-                for (const { panel, widthClass } of generation.keys) {
-                    desired.set(panel, widthClass ? { ...model.key, width: model.widths[widthClass] } : model.key);
-                }
+                const layouts = generation.alternate ? [generation.alternate.panel] : [generation.layouts.base, generation.layouts.full];
+                for (const layout of layouts) desired.set(layout, { uiScale: model.scale });
                 if (generation.alternate) {
                     const alternate = generation.alternate;
-                    desired.set(alternate.panel, alternate.geometry.layout);
-                    alternate.keys.forEach(({ panel }, index) => desired.set(panel, alternate.geometry.keys[index]));
+                    const px = value => Math.round(value * 40) + "px";
+                    Object.assign(desired.get(alternate.panel), { width: px(alternate.width), height: px(alternate.height), flowChildren: "none" });
+                    for (const { panel, x, y, w, h } of alternate.keys) desired.set(panel, {
+                        x: px(x + 0.05), y: px(y + 0.05), width: px(w - 0.1), height: px(h - 0.1), margin: "0px"
+                    });
                 }
-                // Native KeyboardLetter/ModifierCombinerLabel are Label types, not a "Label" class.
-                // CitadelBinding creates/replaces their glyph tree after our own construction.
-                const stack = generation.box.Children().map(panel => ({ panel, depth: 0 }));
-                while (stack.length) {
-                    const { panel, depth } = stack.pop();
-                    if (!P.isAlive(panel)) continue;
-                    if (panel.paneltype === "Label") desired.set(panel, model.label);
-                    if (panel.BHasClass("MouseButtonGlyph")) desired.set(panel, { ...desired.get(panel), ...model.mouse });
-                    if (depth < 64) for (const child of panel.Children()) stack.push({ panel: child, depth: depth + 1 });
-                }
-                styles.retain(desired.keys());
-                for (const [panel, next] of desired) ready = styles.apply(panel, next, panel === generation.box ? model.themeClasses : undefined) && ready;
-                if (generation.overlay.visible !== ready) P.setVisible(generation.overlay, ready);
+                // Native components own all glyph descendants. Their stylesheet
+                // chain supplies typography, mouse sizes, themes and press states.
+                let ready = styles.retain(desired.keys());
+                for (const [panel, next] of desired) ready = styles.apply(panel, next,
+                    panel === generation.box ? model.themeClasses : undefined) && ready;
+                const visible = ready && !diagnostics.controls.hideRoot;
+                if (generation.overlay.visible !== visible) P.setVisible(generation.overlay, visible);
+                return ready && generation.overlay.visible === visible;
+            }
+
+            function retryPending() {
+                if (retry || !enabled) return;
+                const task = QOL.core.Scheduler.scheduleOnce(() => {
+                    if (retry !== task) return;
+                    retry = null;
+                    update();
+                }, 0.25, ctx.id);
+                retry = task;
             }
 
             function update() {
+                diagnostics.recordUpdate();
                 if (!enabled) return;
                 const current = P.findHud($.GetContextPanel());
-                if (root !== current) { retire(); gameplay.reset(); root = current; }
+                if (root !== current) { diagnostics.reset(); retire(); root = current; }
                 if (!P.isAlive(root) || (root.id !== "Hud" && root.paneltype !== "CitadelHud")) { retire(); return; }
-                const parent = gameplay.resolve(root);
+                // Native hud.xml owns this static path and invokes our load hook.
+                const parent = P.findChild(P.findChildByClass(root, "HudCore"), "gameplay_hud");
+                diagnostics.reconcileParent(parent);
                 if (ensure(parent)) {
                     P.setClass(generation.box, "QOLCustomizeKeyboardSample", QOL.presentation.preview.selected(root, "keyboard"));
-                    render();
-                }
+                    if (!render()) retryPending();
+                    else if (retry) { retry.stop(); retry = null; }
+                } else if (P.isAlive(parent)) retryPending();
             }
 
             function refresh() {
                 model = readModel();
-                if (enabled) {
-                    if (generation?.layoutKey === model.layoutKey) refreshAlternateGeometry();
-                    update();
-                }
+                if (enabled) update();
+            }
+
+            function disable() {
+                enabled = false;
+                if (ownerLoaded === update) ownerLoaded = null;
+                ctx.events.off("presentation:preview_changed", update);
+                if (retry) retry.stop();
+                retry = null;
+                diagnostics.reset();
+                retire(); tree.dispose(); model = root = null;
             }
             return QOL.presentation.bindVisibility(ctx, {
-                onEnable() { enabled = true; refresh(); loop = QOL.core.Scheduler.createPollLoop(update, 0.2, ctx.id); },
+                diagnostics: diagnostics.api,
+                onEnable() {
+                    enabled = true;
+                    ownerLoaded = update;
+                    ctx.events.on("presentation:preview_changed", update);
+                    try { refresh(); }
+                    catch (error) { disable(); throw error; }
+                },
                 onSettingsChanged: refresh,
-                onDisable() {
-                    enabled = false;
-                    if (loop) loop.stop(); loop = null;
-                    retire(); tree.dispose(); gameplay.reset(); model = root = null;
-                }
+                onDisable: disable
             }, update);
         },
         test() {

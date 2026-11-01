@@ -3,6 +3,29 @@ const test = require("node:test");
 const assert = require("node:assert/strict");
 const load = require("./load_settings_environment");
 
+test("preview notifies reactive owners only after commit and after reset", () => {
+    const env = load(), q = env.hud.sandbox.global.QOL;
+    q.core.App.shutdown();
+    const root = env.hud.root, preview = q.presentation.preview, canonical = q.buildDefaultConfig();
+    const stamp = q.core.persistence.getConfigChangeStamp(q.getUIRoot());
+    const selected = [];
+    q.core.EventBus.on("presentation:preview_changed", () => selected.push(preview.selected(root, "reload")));
+    root.AddClass("QOLCustomizeActive");
+    preview.write(root, {}, "notify", stamp, "reload");
+    const rejected = preview.consume(root, canonical);
+    assert.deepEqual(selected, [], "staged delivery must not notify owners");
+    preview.reject(rejected);
+    assert.deepEqual(selected, [], "rejected delivery must not notify owners");
+    const accepted = preview.consume(root, canonical);
+    assert.equal(preview.commit(accepted), true);
+    assert.deepEqual(selected, [true], "notification observes the accepted sample");
+    assert.equal(preview.commit(accepted), false);
+    assert.deepEqual(selected, [true], "duplicate commits do not notify again");
+    preview.reset(root);
+    assert.deepEqual(selected, [true, false], "reset notification observes cleared sample state");
+    assert.deepEqual(env.clock.errors, []);
+});
+
 test("sample selection is leased metadata and stays stable only across matching pending geometry edits", () => {
     const env = load(), q = env.hud.sandbox.global.QOL;
     q.core.App.shutdown();

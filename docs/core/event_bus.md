@@ -25,6 +25,11 @@ the engine bridges listed in [app.md](app.md). The bus itself does not subscribe
 to native game events. There is no current app-provided `engine:quickbuy_changed`
 bridge. Do not invent one based on an old document.
 
+`presentation:preview_changed` is a mod-owned HUD event emitted after a successful
+preview commit or reset. It lets reactive owners observe accepted sample selection
+changes; it is not a native game event or a settings-context notification. See
+[Customize delivery](../ui/customize.md).
+
 The optional shop-close compatibility listener is not a verified native event
 contract; see [VALIDATION.md](../VALIDATION.md). Event names in this bus do not
 prove corresponding engine events or shared-memory visibility from settings.

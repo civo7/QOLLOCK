@@ -1,12 +1,12 @@
-/* Native .disabled changes immediately; JS only owns icon lifetime discovery. */
-CitadelAbilityIcon.qol-better-disabled.disabled,
-DraggableAbilityIcon.qol-better-disabled.disabled
+/* Native templates own icon lifetime; native .disabled drives presentation. */
+.better_disabled_abilities_active #AbilitiesContainer #hud_signature #abilities > CitadelAbilityIcon.disabled,
+.better_disabled_abilities_active #AbilitiesContainer #ActiveAbilitiesMenu #abilitiesContainer > DraggableAbilityIcon.disabled
 {
     wash-color: none;
 }
 
-CitadelAbilityIcon.qol-better-disabled.disabled .ability_image,
-DraggableAbilityIcon.qol-better-disabled.disabled .ability_image
+.better_disabled_abilities_active #AbilitiesContainer #hud_signature #abilities > CitadelAbilityIcon.disabled .ability_image,
+.better_disabled_abilities_active #AbilitiesContainer #ActiveAbilitiesMenu #abilitiesContainer > DraggableAbilityIcon.disabled .ability_image
 {
     wash-color: offBlack&aa;
 }
@@ -22,8 +22,8 @@ DraggableAbilityIcon.qol-better-disabled.disabled .ability_image
     z-index: 500;
 }
 
-CitadelAbilityIcon.qol-better-disabled.disabled #QOLDisabledXOverlay,
-DraggableAbilityIcon.qol-better-disabled.disabled #QOLDisabledXOverlay
+.better_disabled_abilities_active #AbilitiesContainer #hud_signature #abilities > CitadelAbilityIcon.disabled #QOLDisabledXOverlay,
+.better_disabled_abilities_active #AbilitiesContainer #ActiveAbilitiesMenu #abilitiesContainer > DraggableAbilityIcon.disabled #QOLDisabledXOverlay
 {
     visibility: visible;
 }

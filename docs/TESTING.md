@@ -75,6 +75,12 @@ temporary GitHub outage does not block offline verification.
 
 ## Focused release regressions
 
+`disabled_abilities.test.js` checks settings and registry exclusion through the
+production root projector, absence of a feature observer, native template
+decoration and scoped component imports/selectors. Native silence/curse visuals,
+hit testing, late/replaced icon instances and exclusion of cosmetic, held, shop,
+top-bar and tooltip instances still require a compiled client check.
+
 `settings_save_queue.test.js` loads the actual settings/HUD isolates and verifies
 Flush followed by a new edit, one pending callback during repeated changes,
 direct-save supersession, zero schedule handles, failed cancellation and living
@@ -558,6 +564,55 @@ normalized registered differences are reported, not mistaken for enabled paths.
 Settings without a canonical value are explicitly listed as not intervened.
 These generic proofs do **not** establish native panel construction, cleanup,
 feature-specific render completeness, or that event-driven/gameplay work ran.
+When the selected plan includes a keyboard enable/disable contrast, keyboard
+root/generation/style evidence is additionally recorded before and after every
+window. The enabled side requires an attached visible private root and settled
+style readback. The disabled side requires the retired instance's complete
+tracked-tree deletion and style release, plus no root in its old gameplay owner.
+Missing/partial evidence refuses that window; generation replacement also
+invalidates it. The report prints the observed A/B evidence. This applies to
+newly instrumented captures, not retroactively to earlier recordings, and does
+not establish native glyph rendering or input correctness.
+
+After keyboard owner cost is established, enter `keyboard` in the same condition
+ID field for the targeted mechanism investigation (about three minutes). This
+requires the compiled keyboard probe implementation; it is not an alias available
+in older builds. The ordinary and full configuration plans are unchanged. The
+alias uses the existing A/A control alongside the targeted contrasts below.
+
+New captures record the owner's baseline composition policy in their context.
+Polling, visibility and hidden-binding contrasts retain that policy; the
+composition contrast always explicitly compares `none` with `cache`. Historical
+contexts without this field retain their original uncached plan when analyzed.
+
+- Historical captures can include `keyboard-polling`: normal versus paused
+  recurring keyboard updates, retaining visible native bindings. The event-driven
+  owner has no recurring updates, so current plans omit this contrast and reject
+  its ID. Context metadata preserves the historical four-probe reconstruction;
+  the current alias has three probes plus the A/A control.
+- `keyboard-visibility`: both sides pause updates; collapse only the owned root.
+  This measures visibility-dependent native work, including any binding updates
+  that the engine stops when hidden, rather than isolating painting alone.
+- `keyboard-composition`: both sides pause updates; request an uncached versus
+  cached composition layer on the bounded binding box. A creation request does
+  not prove a hardware cache hit.
+- `keyboard-hidden-bindings`: paused, collapsed bindings versus complete owner
+  retirement, including when the canonical configuration enables the keyboard.
+
+Historical warm-up runs normal polling before each sample; the current owner
+reacts only to its lifecycle and presentation hooks. Before/after receipts
+verify scheduler suspension, unchanged generations and idle update counters, native
+visibility, settled style readback and requested composition policy. A bounded
+outside-window census reports selected/hidden bindings, unbound glyphs, hold
+actions and pressed keys. Visible probes wait for styled native glyph payloads
+matching the initial visible workload before pausing. Native-handle epochs and
+workload fingerprints must remain unchanged inside each window. Collapsed native
+bindings may release their glyphs; hidden probes permit this settled state while
+still requiring live bindings and a stable census. Late construction or replacement
+cannot count as a cache improvement. Unbound glyphs can carry the native repeating animation;
+their presence alone does not attribute frame cost. The report retains these
+receipts and managed callback timing. Transient controls and pauses are restored
+on completion, cancellation and owner replacement without saving settings.
 Missing sources, quiet gameplay paths and features in other contexts can hide
 costs. A negative or inconclusive result never clears a feature. A speedup can
 reflect the intended visual workload and does not prove redundant code.
@@ -567,6 +622,9 @@ coverage, within/between-block drift and three valid repetitions before labeling
 an effect. Exploratory bounds use block-level t95 dispersion plus worst sham
 noise, not independent-frame statistics or familywise confidence. Effects can
 overlap and must not be summed. Missing/invalid blocks remain in the report.
+Per-block output includes each side's paired-mean drift percentage, so a rejected
+comparison is distinguishable from a lost packet or unexecuted condition without
+loosening the existing drift gate.
 The self-contained report includes tested/canonical settings, source/loaded
 function identity, source paths, normalized readbacks and restoration. Full
 assets/CSS and installed compiled resources are not proven by function hashes.

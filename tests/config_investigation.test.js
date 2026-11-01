@@ -3,6 +3,32 @@ const test = require("node:test");
 const assert = require("node:assert/strict");
 const { createHud } = require("../scripts/simulator");
 
+function modelKeyboardGlyphs(hud, cacheDelay = 0, releaseHiddenGlyphs = false) {
+    const $ = hud.sandbox.global.$, create = $.CreatePanel, cached = new WeakSet(), bindings = [];
+    $.CreatePanel = (type, parent, id, properties) => {
+        const panel = create(type, parent, id, properties);
+        if (id === "QOLKeyboardOverlayRoot" && releaseHiddenGlyphs) {
+            let visible = panel.visible;
+            Object.defineProperty(panel, "visible", { get: () => visible, set: value => {
+                visible = value;
+                for (const binding of bindings.filter(binding => binding.IsValid() && binding.GetParent().GetParent().GetParent().GetParent() === panel)) {
+                    const glyph = binding.FindChild("KeyboardLetter");
+                    if (!value) glyph?.DeleteAsync(0);
+                    else if (!glyph) create("Label", binding, "KeyboardLetter");
+                }
+            } });
+        }
+        if (id === "AllBindingsBox" && properties?.["always-cache-composition-layer"] === "true") cached.add(panel);
+        if (type === "CitadelBinding") {
+            bindings.push(panel);
+            const attach = () => { if (panel.IsValid()) create("Label", panel, "KeyboardLetter"); };
+            if (cached.has(parent.GetParent().GetParent()) && cacheDelay) $.Schedule(cacheDelay, attach);
+            else attach();
+        }
+        return panel;
+    };
+}
+
 test("expanded investigation declares every changed key including shared and CSS-only settings without cadence gating", () => {
     const hud = createHud(); hud.assertLoaded();
     const tool = hud.sandbox.global.QOL.core.ConfigInvestigation;
@@ -16,6 +42,116 @@ test("expanded investigation declares every changed key including shared and CSS
     for (const row of plan.conditions) assert.equal(plan.blocks.filter(block => block.conditionId === row.id).length, 3);
     assert.ok(plan.available.some(row => row.id === "key-b"));
     assert.throws(() => tool.plan({ baseline: { A: 1 }, canonical: { A: 0 }, manifests: [], selectedIds: ["missing"] }), /condition/i);
+});
+
+test("keyboard alias declares bounded orthogonal probes without changing ordinary or legacy plans", () => {
+    const hud = createHud(); hud.assertLoaded();
+    const tool = hud.sandbox.global.QOL.core.ConfigInvestigation;
+    const input = { baseline: { ENABLE_KEYBOARD_OVERLAY: 1 }, canonical: { ENABLE_KEYBOARD_OVERLAY: 1 },
+        manifests: [{ id: "ql_keyboard", keys: ["ENABLE_KEYBOARD_OVERLAY"] }] };
+    const ordinary = tool.plan(input);
+    assert.equal(ordinary.available.some(row => row.id.startsWith("keyboard-")), false);
+    const plan = tool.plan({ ...input, selectedIds: ["keyboard"] });
+    assert.deepEqual(Array.from(plan.conditions, row => row.id), ["sham", "keyboard-polling", "keyboard-visibility", "keyboard-composition", "keyboard-hidden-bindings"]);
+    assert.equal(plan.blocks.length, 15);
+    assert.equal(plan.estimatedMs, 185000);
+    const retired = plan.conditions.find(row => row.id === "keyboard-hidden-bindings");
+    assert.equal(retired.patch.ENABLE_KEYBOARD_OVERLAY, 0, "temporary retirement also works when canonical keyboard is enabled");
+    assert.equal(plan.conditions.find(row => row.id === "keyboard-visibility").keyboard.A.pausePolling, true);
+    assert.equal(plan.conditions.find(row => row.id === "keyboard-visibility").keyboard.B.hideRoot, true);
+    assert.equal(plan.conditions.find(row => row.id === "keyboard-polling").keyboard.A.composition, "none", "old contexts keep their exact uncached plan");
+    const cached = tool.plan({ ...input, selectedIds: ["keyboard"], keyboardComposition: "cache" });
+    for (const row of cached.conditions.filter(row => row.keyboard && row.id !== "keyboard-composition")) {
+        assert.equal(row.keyboard.A.composition, "cache"); assert.equal(row.keyboard.B.composition, "cache");
+    }
+    const comparison = cached.conditions.find(row => row.id === "keyboard-composition").keyboard;
+    assert.equal(comparison.A.composition, "none"); assert.equal(comparison.B.composition, "cache");
+    assert.throws(() => tool.plan({ ...input, selectedIds: ["keyboard"], keyboardComposition: "broken" }), /composition/i);
+    assert.throws(() => tool.plan({ ...input, baseline: { ENABLE_KEYBOARD_OVERLAY: 0 }, selectedIds: ["keyboard"] }), /enabled keyboard/i);
+    const reactive = tool.plan({ ...input, selectedIds: ["keyboard"], keyboardEventDriven: true });
+    assert.deepEqual(Array.from(reactive.conditions, row => row.id),
+        ["sham", "keyboard-visibility", "keyboard-composition", "keyboard-hidden-bindings"]);
+    assert.equal(reactive.blocks.length, 12);
+    assert.throws(() => tool.plan({ ...input, selectedIds: ["keyboard-polling"], keyboardEventDriven: true }), /condition/i,
+        "current builds must not run an A/A comparison labeled as polling isolation");
+});
+
+test("keyboard mechanism probes retain live generations, verify paused updates and restore their leases", () => {
+    const hud = createHud({ inHideout: false }); hud.assertLoaded();
+    const Q = hud.sandbox.global.QOL;
+    modelKeyboardGlyphs(hud);
+    const canonical = Q.core.ConfigAdapter.exportToFlat();
+    const core = hud.root.addChild(hud.doc.create("Panel", { classes: ["HudCore"] }));
+    core.addChild(hud.doc.create("Panel", { id: "gameplay_hud" }));
+    hud.root.SetAttributeString("QOL_DiagRequest", "fps_config_108_keyboard");
+    Q.core.App.syncDiagnosticState(hud.root, hud.clock.now()); hud.clock.advanceBy(210000, 1000);
+    const diag = JSON.parse(hud.root.GetAttributeString("QOL_Diag", ""));
+    assert.equal(diag.benchmark.stats.reason, "complete");
+    assert.equal(diag.benchmark.stats.completedBlocks, 12);
+    const markers = hud.sandbox.messages.filter(line => line.startsWith("[QOLLOCK:NativeFPS] ")).map(line => JSON.parse(line.slice(20)));
+    const { packets } = require("../scripts/analyze_minimap_frames").decodePackets(markers.filter(item => item.type === "packet"), markers[0].session);
+    const windows = markers.filter(item => item.type === "window");
+    assert.equal(packets.get("context").keyboardComposition, "cache");
+    assert.equal(packets.get("context").keyboardEventDriven, true);
+    assert.equal(windows.length, 48);
+    assert.equal(windows.some(window => window.conditionId === "keyboard-polling"), false);
+    for (const window of windows.filter(window => window.conditionId.startsWith("keyboard-"))) {
+        const condition = packets.get("context").plan.conditions.find(row => row.id === window.conditionId);
+        const expected = condition.keyboard[window.side];
+        const before = packets.get(window.beforeProof).keyboard, after = packets.get(window.afterProof).keyboard;
+        assert.equal(before.pollingPaused, expected.pausePolling);
+        if (before.expectedEnabled) {
+            assert.equal(before.observed.rootVisible, !expected.hideRoot);
+            assert.equal(before.observed.composition, expected.composition);
+            if (expected.pausePolling) assert.equal(after.observed.updates, before.observed.updates);
+        } else assert.equal(after.observed.rootPresent, false);
+    }
+    assert.deepEqual(Q.core.ConfigAdapter.exportToFlat(), canonical);
+    assert.equal(Q.core.FeatureRegistry.getInstance("ql_keyboard"), null);
+    assert.deepEqual(hud.clock.errors, []);
+});
+
+test("keyboard composition waits for delayed native glyph workload before pausing sampling", () => {
+    const hud = createHud({ inHideout: false }); hud.assertLoaded();
+    const Q = hud.sandbox.global.QOL;
+    modelKeyboardGlyphs(hud, 1.2);
+    const core = hud.root.addChild(hud.doc.create("Panel", { classes: ["HudCore"] }));
+    core.addChild(hud.doc.create("Panel", { id: "gameplay_hud" }));
+    hud.root.SetAttributeString("QOL_DiagRequest", "fps_config_109_keyboard-composition");
+    Q.core.App.syncDiagnosticState(hud.root, hud.clock.now()); hud.clock.advanceBy(110000, 1000);
+    const diag = JSON.parse(hud.root.GetAttributeString("QOL_Diag", ""));
+    assert.equal(diag.benchmark.stats.reason, "complete");
+    const markers = hud.sandbox.messages.filter(line => line.startsWith("[QOLLOCK:NativeFPS] ")).map(line => JSON.parse(line.slice(20)));
+    const { packets } = require("../scripts/analyze_minimap_frames").decodePackets(markers.filter(item => item.type === "packet"), markers[0].session);
+    for (const window of markers.filter(row => row.type === "window" && row.conditionId === "keyboard-composition")) {
+        const before = packets.get(window.beforeProof).keyboard.observed, after = packets.get(window.afterProof).keyboard.observed;
+        assert.equal(before.glyphsReady, true);
+        assert.equal(before.census.selected.payloads, 23);
+        assert.equal(before.glyphEpoch, after.glyphEpoch);
+        assert.equal(before.glyphWorkload, after.glyphWorkload);
+    }
+    assert.deepEqual(hud.clock.errors, []);
+});
+
+test("keyboard visibility permits native payload retirement while preserving hidden bindings", () => {
+    const hud = createHud({ inHideout: false }); hud.assertLoaded();
+    const Q = hud.sandbox.global.QOL;
+    modelKeyboardGlyphs(hud, 0, true);
+    const core = hud.root.addChild(hud.doc.create("Panel", { classes: ["HudCore"] }));
+    core.addChild(hud.doc.create("Panel", { id: "gameplay_hud" }));
+    hud.root.SetAttributeString("QOL_DiagRequest", "fps_config_110_keyboard-visibility");
+    Q.core.App.syncDiagnosticState(hud.root, hud.clock.now()); hud.clock.advanceBy(110000, 1000);
+    const diag = JSON.parse(hud.root.GetAttributeString("QOL_Diag", ""));
+    assert.equal(diag.benchmark.stats.reason, "complete");
+    const markers = hud.sandbox.messages.filter(line => line.startsWith("[QOLLOCK:NativeFPS] ")).map(line => JSON.parse(line.slice(20)));
+    const { packets } = require("../scripts/analyze_minimap_frames").decodePackets(markers.filter(item => item.type === "packet"), markers[0].session);
+    for (const window of markers.filter(row => row.type === "window" && row.conditionId === "keyboard-visibility" && row.side === "B")) {
+        const observed = packets.get(window.beforeProof).keyboard.observed;
+        assert.equal(observed.rootPresent, true);
+        assert.equal(observed.census.selected.bindings, 23);
+        assert.equal(observed.census.selected.payloads, 0);
+        assert.equal(observed.stylesReady, true);
+    }
 });
 
 for (const selected of ["benchmark-instrumentation", "whole-config"]) test(`configuration investigation ${selected} uses real App leases and restores config with a frozen UI clock`, () => {
@@ -100,4 +236,56 @@ test("a settings error followed by a successful hook between guards still invali
     const markers = hud.sandbox.messages.filter(line => line.startsWith("[QOLLOCK:NativeFPS] ")).map(line => JSON.parse(line.slice(20)));
     const { packets } = require("../scripts/analyze_minimap_frames").decodePackets(markers.filter(item => item.type === "packet"), markers[0].session);
     assert.deepEqual(packets.get("runner-restoration").failedOwners, ["ql_compass"]);
+});
+
+for (const rejectDeletion of [false, true]) test(`keyboard contrasts carry physical evidence, deletion rejected=${rejectDeletion}`, () => {
+    const hud = createHud({ inHideout: false }); hud.assertLoaded();
+    const { QOL: Q, $ } = hud.sandbox.global;
+    const core = hud.root.addChild(hud.doc.create("Panel", { classes: ["HudCore"] }));
+    core.addChild(hud.doc.create("Panel", { id: "gameplay_hud" }));
+    if (rejectDeletion) {
+        const create = $.CreatePanel;
+        $.CreatePanel = (...args) => {
+            const panel = create(...args);
+            if (args[2] === "QOLKeyboardOverlayRoot") panel.DeleteAsync = () => {};
+            return panel;
+        };
+    }
+    hud.root.SetAttributeString("QOL_DiagRequest", "fps_config_106_group-029");
+    Q.core.App.syncDiagnosticState(hud.root, hud.clock.now()); hud.clock.advanceBy(100000, 1000);
+    const diag = JSON.parse(hud.root.GetAttributeString("QOL_Diag", ""));
+    if (rejectDeletion) {
+        assert.match(diag.benchmark.stats.reason, /keyboard.*retirement/);
+        assert.ok(diag.benchmark.stats.completedBlocks < 6);
+    } else {
+        assert.equal(diag.benchmark.stats.reason, "complete");
+        const markers = hud.sandbox.messages.filter(line => line.startsWith("[QOLLOCK:NativeFPS] ")).map(line => JSON.parse(line.slice(20)));
+        const { packets } = require("../scripts/analyze_minimap_frames").decodePackets(markers.filter(item => item.type === "packet"), markers[0].session);
+        assert.equal(packets.get("context").keyboardEvidence, true);
+        for (const window of markers.filter(item => item.type === "window" && item.conditionId === "group-029")) {
+            const evidence = packets.get(window.beforeProof).keyboard;
+            assert.equal(evidence.expectedEnabled, window.side === "A");
+            if (window.side === "A") assert.equal(evidence.observed.ready, true);
+            else { assert.equal(evidence.observed.tree, true); assert.equal(evidence.observed.rootPresent, false); }
+        }
+    }
+    assert.deepEqual(hud.clock.errors, []);
+});
+
+test("keyboard investigation refuses a ready receipt without a generation", () => {
+    const hud = createHud({ inHideout: false }); hud.assertLoaded();
+    const Q = hud.sandbox.global.QOL;
+    const core = hud.root.addChild(hud.doc.create("Panel", { classes: ["HudCore"] }));
+    core.addChild(hud.doc.create("Panel", { id: "gameplay_hud" }));
+    const manifest = Q.core.FeatureRegistry.getManifest("ql_keyboard"), create = manifest.create;
+    manifest.create = ctx => {
+        const owner = create(ctx), inspect = owner.diagnostics.inspect;
+        owner.diagnostics.inspect = () => ({ ...inspect(), generation: undefined });
+        return owner;
+    };
+    hud.root.SetAttributeString("QOL_DiagRequest", "fps_config_107_group-029");
+    Q.core.App.syncDiagnosticState(hud.root, hud.clock.now()); hud.clock.advanceBy(100000, 1000);
+    const diag = JSON.parse(hud.root.GetAttributeString("QOL_Diag", ""));
+    assert.match(diag.benchmark.stats.reason, /keyboard.*not ready/);
+    assert.equal(diag.benchmark.stats.completedBlocks, 0);
 });

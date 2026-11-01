@@ -23,10 +23,14 @@ function analyzeConfig(meta, frames, focus, summarizeWindow) {
     const registeredKeys = [...new Set(context.manifests.flatMap(owner => owner.keys))].filter(key => Object.prototype.hasOwnProperty.call(context.baseline, key)).sort();
     if (stable(registeredKeys) !== stable(context.registeredKeys)) throw Error("Configuration registered-key coverage does not match the manifest inventory");
     const { plan } = context;
+    if (plan.conditions.some(row => row.keyboard) && context.keyboardEvidence !== true) throw Error("Keyboard mechanism evidence is required by this plan");
     const windows = (meta.windows || []).filter(window => window.session === meta.session);
     if (windows.some(window => !plan.blocks.some(block => block.trial === window.trial))) throw Error("Native window outside configuration coverage ledger");
     const ordered = windows.slice().sort((a, b) => a.startAt - b.startAt);
     if (ordered.some((window, i) => i && window.startAt < ordered[i - 1].endAt)) throw Error("Overlapping native configuration windows");
+    const glyphReference = ordered.filter(window => plan.conditions.find(row => row.id === window.conditionId)?.keyboard)
+        .map(window => packets.get(window.beforeProof)?.keyboard?.observed)
+        .find(state => state?.glyphsReady === true && /^[0-9a-f]{8}$/.test(state.glyphWorkload || ""))?.glyphWorkload;
     const blocks = plan.blocks.map(block => {
         const condition = plan.conditions.find(row => row.id === block.conditionId), errors = [];
         const observed = windows.filter(window => window.trial === block.trial);
@@ -51,21 +55,52 @@ function analyzeConfig(meta, frames, focus, summarizeWindow) {
                     !Array.isArray(proof.scene) || proof.scene.length !== 4 || proof.scene.some(Boolean) || !proof.errorTotals || !context.initialErrors ||
                     Object.entries(proof.errorTotals || {}).some(([id, count]) => count > (context.initialErrors?.[id] || 0)) ||
                     Object.keys(overrides).some(key => !context.registeredKeys.includes(key))) errors.push("configuration/registry/instrumentation proof failed: " + key);
+                if (context.keyboardEvidence) {
+                    const expected = Number(config.ENABLE_KEYBOARD_OVERLAY) === 1;
+                    const keyboard = proof.keyboard, state = keyboard?.observed;
+                    const controls = condition.keyboard?.[window.side], hidden = controls?.hideRoot || false;
+                    if (keyboard?.expectedEnabled !== expected || (expected ? state?.active !== true || state.rootPresent !== true || state.rootVisible !== !hidden ||
+                        state.attached !== true || state.ready !== !hidden || !Number.isSafeInteger(state.generation) || state.generation <= 0 ||
+                        state.full !== (Number(config.ENABLE_FULL_KEYBOARD_LAYOUT) === 1) :
+                        state?.inactive !== true || state.tree !== true || state.styles !== true || state.rootPresent !== false)) errors.push("keyboard native presence/retirement proof failed: " + key);
+                    if (controls && (keyboard?.pollingPaused !== controls.pausePolling || expected && (state?.stylesReady !== true ||
+                        state.controls?.hideRoot !== hidden || state.controls?.composition !== controls.composition || state.composition !== controls.composition ||
+                        !Number.isSafeInteger(state.updates) || state.updates < 0 || !hidden && (state.glyphsReady !== true ||
+                        !/^[0-9a-f]{8}$/.test(glyphReference || "") || keyboard.glyphReference !== glyphReference || state.glyphWorkload !== glyphReference) ||
+                        !/^[0-9a-f]{8}$/.test(state.glyphWorkload || "") ||
+                        !/^[0-9a-f]{8}$/.test(state.glyphEpoch || "") || state.census?.complete !== true ||
+                        !["selected", "hidden"].every(side => ["bindings", "payloads", "unbound", "holdActions", "pressed"].every(key =>
+                            Number.isSafeInteger(state.census[side]?.[key]) && state.census[side][key] >= 0)) || state.census.selected.bindings <= 0 ||
+                        !hidden && state.census.selected.payloads <= 0))) errors.push("keyboard diagnostic controls proof failed: " + key);
+                }
                 if (!Number.isFinite(proof.at) || (index ? proof.at < window.endAt || proof.at - window.endAt > 1500 : proof.at > window.startAt || window.startAt - proof.at > 1500)) errors.push("state proof outside window boundary");
             }
             if (proofs.every(Boolean) && (stable(proofs[0].enabledIds) !== stable(proofs[1].enabledIds) || proofs[0].ownerConfigHash !== proofs[1].ownerConfigHash)) errors.push("owner coverage/config changed inside sampling window");
+            if (context.keyboardEvidence && proofs.every(Boolean) && proofs[0].keyboard?.expectedEnabled &&
+                proofs[0].keyboard?.observed?.generation !== proofs[1].keyboard?.observed?.generation) errors.push("keyboard generation changed inside sampling window");
+            if (condition.keyboard && proofs.every(Boolean) && proofs[0].keyboard?.expectedEnabled) {
+                const start = proofs[0].keyboard?.observed, end = proofs[1].keyboard?.observed;
+                if (!start || !end || start.glyphEpoch !== end.glyphEpoch || start.glyphWorkload !== end.glyphWorkload ||
+                    (condition.keyboard[window.side].pausePolling ? start.updates !== end.updates : end.updates <= start.updates)) {
+                    errors.push("keyboard update counter proof failed inside sampling window");
+                }
+            }
             const summary = { ...summarizeWindow(frames, focus, window, meta.processId), side: window.side,
                 beforeProof: window.beforeProof, afterProof: window.afterProof,
-                enabledIds: proofs[0]?.enabledIds, registeredOverrides: proofs[0]?.registeredOverrides };
+                enabledIds: proofs[0]?.enabledIds, registeredOverrides: proofs[0]?.registeredOverrides, work: proofs[1]?.work,
+                ...(context.keyboardEvidence ? { keyboard: { before: proofs[0]?.keyboard, after: proofs[1]?.keyboard } } : {}) };
             if (summary.quality !== "comparable") errors.push(summary.quality);
             return summary;
         }).filter(Boolean).sort((a, b) => a.phase - b.phase);
         const a = summaries.filter(window => window.side === "A"), b = summaries.filter(window => window.side === "B");
         const referenceMs = mean(a.map(window => window.meanMs)), excludedMs = mean(b.map(window => window.meanMs));
+        const pairDrift = (windows, average) => ({ meansMs: windows.map(window => window.meanMs),
+            percent: windows.length === 2 && average > 0 ? Math.abs(windows[0].meanMs - windows[1].meanMs) / average * 100 : null });
+        const withinBlockDrift = { A: pairDrift(a, referenceMs), B: pairDrift(b, excludedMs) };
         if (a.length === 2 && b.length === 2 && [referenceMs, excludedMs].every(value => value > 0) &&
             (Math.abs(a[0].meanMs - a[1].meanMs) / referenceMs > 0.1 || Math.abs(b[0].meanMs - b[1].meanMs) / excludedMs > 0.1)) errors.push("within-block drift exceeds 10%");
         return { ...block, status: errors.length ? observed.length ? "invalid" : "not_run" : "valid", errors: [...new Set(errors)],
-            windows: summaries, referenceMs, excludedMs, effectMs: errors.length ? null : referenceMs - excludedMs };
+            windows: summaries, referenceMs, excludedMs, withinBlockDrift, effectMs: errors.length ? null : referenceMs - excludedMs };
     });
     const shams = blocks.filter(block => block.conditionId === "sham" && block.status === "valid");
     const noiseMs = shams.length >= 2 ? Math.max(...shams.map(block => Math.abs(block.effectMs))) : null;
@@ -102,11 +137,17 @@ function formatConfig(result) {
     const lines = ["=== QOLLOCK native Expanded Config investigation ===", "Result=" + result.reason,
         `Process=${result.processId}; swap chain=${result.swapChain}; native frames=${result.nativeFrames}; clock drift=${f(result.clockDriftMs)}ms`,
         "PresentMon graphics Present events, not UI dispatch cadence. Display FPS and CPU/GPU busy are context, not code attribution.",
-        "A: Expanded settings with quiet benchmark accounting. B: only the listed canonical settings, or accounting disabled for benchmark-instrumentation.",
+        "A/B: Expanded settings with quiet benchmark accounting; only the listed settings, accounting or explicit keyboard diagnostic controls change.",
         "Every selected condition has three separated ABBA/BAAB blocks; positive ms means B is faster. Bounds: exploratory t95 across blocks + worst sham A/A effect; not familywise confidence.",
         "Conditional effects overlap and must not be summed. Changed visual workload is part of each intervention.",
         "An inactive gameplay path or inconclusive effect never clears a feature. Canonical config is not vanilla.",
         "Proof scope: " + context.proofScope,
+        "Keyboard native root/retirement evidence=" + !!context.keyboardEvidence,
+        ...(context.plan.conditions.some(row => row.keyboard) ? [
+            "Keyboard visibility measures visible-dependent native work; collapse can affect native binding updates as well as rendering.",
+            "Keyboard composition is a creation request on the bounded box, not proof of a hardware cache hit.",
+            "Keyboard census is sampled outside windows; unbound glyphs may carry the native infinite animation. Counts alone do not attribute frame cost."
+        ] : []),
         "Coverage=" + JSON.stringify(result.coverage) + "; sham noise=" + f(result.noiseMs) + "ms",
         "Source=" + JSON.stringify(result.sourceIdentity ? { git: result.sourceIdentity.git, sha256: result.sourceIdentity.sha256 } : null),
         "Loaded selected function matches=" + JSON.stringify(result.sourceMatches), "Game=" + JSON.stringify(result.gameIdentity || null),
@@ -120,6 +161,7 @@ function formatConfig(result) {
         lines.push(`${row.status.toUpperCase()} ${row.id}: ${f(row.effectMs)}ms [${f(row.lowerMs)},${f(row.upperMs)}]; Present FPS ${f(row.referenceFps)} -> ${f(row.excludedFps)}; valid=${row.validBlocks}/3; drift=${row.drift}`,
             "  " + row.question, "  Keys=" + JSON.stringify(row.patch) + "; Expanded values=" + JSON.stringify(Object.fromEntries(row.keys.map(key => [key, context.baseline[key]]))),
             "  Consumers=" + (row.owners.join(",") || "unregistered/shared whole-configuration control") + "; source=" + row.sources.join(","));
+        if (row.keyboard) lines.push("  Keyboard intervention=" + JSON.stringify(row.keyboard));
         const observed = row.blocks.find(block => block.status === "valid");
         if (observed) {
             const a = observed.windows.find(window => window.side === "A").enabledIds;
@@ -128,8 +170,10 @@ function formatConfig(result) {
                 "; enabled in B=" + b.filter(id => !a.includes(id)).join(","));
         }
         for (const block of row.blocks) {
-            lines.push(`  repeat=${block.repeat + 1} ${block.order.join("")} ${block.status} effect=${f(block.effectMs)}ms; ${block.errors.join("; ")}`);
-            for (const window of block.windows) lines.push(`    ${window.side} n=${window.samples} Present=${f(window.fps)}fps mean=${f(window.meanMs)}ms p95=${f(window.p95Ms)}ms displayed=${f(window.displayFps)}fps CPU busy=${f(window.cpuBusyMs)}ms GPU busy=${f(window.gpuBusyMs)}ms; ${window.quality}; normalized registered overrides=${JSON.stringify(window.registeredOverrides || {})}`);
+            lines.push(`  repeat=${block.repeat + 1} ${block.order.join("")} ${block.status} effect=${f(block.effectMs)}ms; ${block.errors.join("; ")}; A drift=${f(block.withinBlockDrift?.A.percent)}% B drift=${f(block.withinBlockDrift?.B.percent)}%`);
+            for (const window of block.windows) lines.push(`    ${window.side} n=${window.samples} Present=${f(window.fps)}fps mean=${f(window.meanMs)}ms p95=${f(window.p95Ms)}ms displayed=${f(window.displayFps)}fps CPU busy=${f(window.cpuBusyMs)}ms GPU busy=${f(window.gpuBusyMs)}ms; ${window.quality}; normalized registered overrides=${JSON.stringify(window.registeredOverrides || {})}` +
+                (context.keyboardEvidence ? "; keyboard=" + JSON.stringify(window.keyboard) : "") +
+                (row.keyboard ? "; managed JS=" + JSON.stringify(window.work || null) : ""));
         }
     }
     lines.push("Available refinements (already compiled; no repack):");

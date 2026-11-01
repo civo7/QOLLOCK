@@ -292,7 +292,7 @@ test("shop layout follows replacement MainPanel with unchanged settings", () => 
     assert.deepEqual(hud.clock.errors, []);
 });
 
-test("keyboard overlay keeps its wash on a recreated overlay", () => {
+test("keyboard overlay keeps its wash after the XML owner reloads", () => {
     const hud = createHud({ inHideout: true });
     hud.assertLoaded();
     const Q = hud.sandbox.global.QOL;
@@ -305,6 +305,7 @@ test("keyboard overlay keeps its wash on a recreated overlay", () => {
     assert.ok(first);
     assert.equal(first.style.washColor, Q.core.panel.resolvePaletteColor(3));
     first.DeleteAsync(0);
+    hud.clock.advance(1); Q.features.keyboardOwnerLoaded();
     hud.clock.advance(500);
     const replacement = hud.root.FindChildTraverse("QOLKeyboardOverlayRoot");
     assert.ok(replacement);
