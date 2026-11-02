@@ -276,7 +276,11 @@
         const density = scale(host, axis);
         const divisor = positionUnitPixels(field, parent);
         if (!(divisor > 0)) return null;
-        const endpoints = [view[axis] - bounds[axis], view[axis] + view[size] - bounds[axis] - bounds[size]]
+        // Full containment collapses travel for screen-sized content. Include
+        // center travel, oversized edge alignments and the accepted position.
+        const center = points(bounds, axis)[1];
+        const endpoints = [0, view[axis] - center, view[axis] + view[size] - center,
+            view[axis] - bounds[axis], view[axis] + view[size] - bounds[axis] - bounds[size]]
             .map(delta => Number(values[field.key]) + delta * density / divisor * (field.direction || 1));
         const limits = Q.settings.get(field.key);
         const min = Math.max(limits.min, Math.min(...endpoints)), max = Math.min(limits.max, Math.max(...endpoints));

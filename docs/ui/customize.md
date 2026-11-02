@@ -431,7 +431,13 @@ settings catalog. Gameplay consumers read that catalog instead of repeating
 per-feature limits. Legacy aliases retain their compatibility conversions.
 
 Position-slider travel is derived from measured viewport/content geometry in
-the moving owner parent's units. Exact input may remain outside that travel.
+the moving owner parent's units. It lets the content center cross the full
+viewport and includes both edge alignments for oversized content. Screen-sized
+surfaces therefore retain useful travel rather than being limited to their few
+remaining pixels of fully contained space. The observed accepted position also
+extends the interval, so moving back from a distant drag position does not jump
+to a viewport boundary. Exact input may remain outside that travel until native
+layout acknowledges it.
 Resize/density changes update the thumb range without creating an edit or
 rewriting the accepted input. Missing or pending measurements disable position
 sliders while exact editing remains available. Reset restores existing defaults,
