@@ -130,6 +130,7 @@ test("fine native/geometry controls release only their declared targets and rest
     assert.equal(lease.snapshot().root.identity, before.root.identity);
     lease.apply({ releasePlacement: true });
     assert.equal(host.style.margin || "", "");
+    assert.equal(host.FindChild("minimap_container").style.opacity, undefined);
     assert.equal(host.style.uiScale, "100%");
     lease.apply({ releaseViewport: true });
     assert.equal(renderer.BHasClass("QOLFixedMinimapIcons"), false);
@@ -140,5 +141,7 @@ test("fine native/geometry controls release only their declared targets and rest
     lease.restore();
     assert.equal(renderer.BHasClass("QOLFixedMinimapIcons"), true);
     assert.equal(renderer.BHasClass("minimalist_minimap_active"), true);
+    assert.equal(host.style.opacity, "1");
+    assert.notEqual(host.FindChild("minimap_container").style.opacity, undefined);
     assert.deepEqual(hud.clock.errors, []);
 });

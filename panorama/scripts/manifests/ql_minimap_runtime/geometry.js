@@ -55,7 +55,7 @@
                         align: zoomed ? "center center" : "right bottom",
                         margin: `${marginTop}px ${marginRight}px ${marginBottom}px ${marginLeft}px`,
                         marginTop: marginTop + "px", marginRight: marginRight + "px",
-                        marginBottom: marginBottom + "px", marginLeft: marginLeft + "px", opacity: String(opacity)
+                        marginBottom: marginBottom + "px", marginLeft: marginLeft + "px", opacity: "1"
                     };
                     // Scale only the square viewport. Magnifying this native
                     // 440x520 host lets screen-height squishing distort the map.
@@ -71,6 +71,9 @@
                         align: zoomed ? "center center" : "right bottom",
                         margin: "0px", marginTop: "0px", marginRight: "0px", marginBottom: "0px", marginLeft: "0px"
                     });
+                    // Native alpha composition clips to its owner's bounds even
+                    // with noclip. Fade the resized square, not the 440x520 host.
+                    if (!diagnosticControls?.releasePlacement) styles.opacity = String(opacity);
                 }
                 if (panel === host) hostStyles = styles;
                 if (panel === host && diagnosticControls?.releasePlacement) {

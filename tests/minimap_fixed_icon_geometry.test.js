@@ -95,6 +95,62 @@ test("both icon modes size the square viewport without scaling its non-square na
     }
 });
 
+test("Base/Alt/Tab opacity belongs to the resized viewport rather than the smaller native host", () => {
+    for (const mode of ["base", "alt", "tab"]) for (const fixed of [0, 1]) {
+        const env = setup({ mode, fixed });
+        const sizeKey = mode === "base" ? "MINIMAP_SMALL_SIZE" : "MINIMAP_LARGE_SIZE_" + mode.toUpperCase();
+        const opacityKey = mode === "base" ? "MINIMAP_BASE_OPACITY" : mode.toUpperCase() + "_ZOOM_OPACITY";
+        env.store.set("ql_minimap_runtime", opacityKey, 0.65);
+        for (const size of [400, 590, 600, 750, 1000]) {
+            env.store.set("ql_minimap_runtime", sizeKey, size);
+            assert.equal(env.host.style.opacity, "1", "translucent 440x520 host clips an overflowing map in the client");
+            assert.equal(env.viewport.style.opacity, "0.65", "fade the complete map, including overlays, at its own bounds");
+            assert.equal(env.viewport.style.align, mode === "base" ? "right bottom" : "center center");
+        }
+        env.hud.sandbox.global.QOL.core.FeatureRegistry.disable("ql_minimap_runtime");
+        assert.equal(env.host.style.opacity, undefined);
+        assert.equal(env.viewport.style.opacity, undefined);
+        env.hud.sandbox.global.QOL.core.FeatureRegistry.enable("ql_minimap_runtime");
+        env.clock.advance(600);
+        assert.equal(env.host.style.opacity, "1");
+        assert.equal(env.viewport.style.opacity, "0.65");
+        env.clean();
+    }
+});
+
+test("Alt and Tab resize about the center and restore independent Base/Alt/Tab presentation", () => {
+    for (const fixed of [0, 1]) {
+        const env = setup({ fixed });
+        const update = values => { Object.assign(env.global.MOD_CONFIG, values); env.global.SaveAndSync(); env.clock.advance(600); };
+        update({ MINIMAP_BASE_OPACITY: 0.8, ALT_ZOOM_OPACITY: 0.65, TAB_ZOOM_OPACITY: 0.45 });
+        const expectView = (size, scale, opacity, align) => {
+            assert.equal(env.viewport.style.width, fixed ? size : undefined);
+            assert.equal(env.viewport.style.height, fixed ? size : undefined);
+            assert.equal(env.viewport.style.uiScale, fixed ? "100%" : scale);
+            assert.equal(env.viewport.style.opacity, opacity);
+            assert.equal(env.viewport.style.align, align);
+            assert.equal(env.host.style.align, align);
+            assert.equal(env.host.style.opacity, "1");
+            assert.equal(env.renderer.BHasClass(fixedClass), !!fixed);
+        };
+        env.hud.root.AddClass("gDetailView"); env.clock.advance(600);
+        expectView("800px", "200%", "0.65", "center center");
+        update({ MINIMAP_LARGE_SIZE_ALT: 600 });
+        expectView("600px", "150%", "0.65", "center center");
+        env.hud.root.AddClass("gScoreboardOpen"); env.clock.advance(600);
+        expectView("600px", "150%", "0.65", "center center");
+        env.hud.root.RemoveClass("gDetailView"); env.clock.advance(600);
+        expectView("1000px", "250%", "0.45", "center center");
+        update({ MINIMAP_LARGE_SIZE_TAB: 590 });
+        expectView("590px", "147.5%", "0.45", "center center");
+        env.hud.root.RemoveClass("gScoreboardOpen"); env.clock.advance(600);
+        expectView("650px", "162.5%", "0.8", "right bottom");
+        env.hud.root.AddClass("gDetailView"); env.clock.advance(600);
+        expectView("600px", "150%", "0.65", "center center");
+        env.clean();
+    }
+});
+
 test("Customize previews Flip while the retained native minimap is in hideout and releases it on cancel", () => {
     for (const hideoutClass of ["InHideout", "connectedToHideout"]) {
         const env = setup();

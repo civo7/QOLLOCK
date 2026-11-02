@@ -167,5 +167,10 @@ Both paths neutralize the viewport's native scale and insets, align its bottom
 right corner in Base, and center it in Alt/Tab. Switching icon modes therefore
 keeps the same map size and anchor. The viewport retains native clipping, and
 disable releases the owned geometry without changing saved sizes or offsets.
+Configured Base/Alt/Tab opacity applies to the square viewport, including its map
+overlays. The smaller native host remains opaque: native alpha composition clips
+an enlarged viewport to that host's bounds even with `noclip`. Location labels
+and hints outside the viewport retain their native opacity. Check translucent
+views as well as fully opaque views after repacking.
 Check markers, click targets, range circles, Alt/Tab switching and reset in the
 repacked client.

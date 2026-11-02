@@ -189,17 +189,17 @@ test("minimap partial native writes retry without another settings change", () =
 test("minimap native alpha feedback and rejected disable cleanup share the native owner contract", () => {
     const e = fixture();
     e.configure({ MINIMAL_MINIMAP: 1, MINIMAL_MINIMAP_OPACITY: 0.25, MINIMAP_BASE_OPACITY: 0.5 });
-    e.host.style.opacity = "0.9"; e.render.style.opacity = "0.9";
+    e.viewport.style.opacity = "0.9"; e.render.style.opacity = "0.9";
     e.clock.advance(700);
-    assert.equal(e.host.style.opacity, "0.5"); assert.equal(e.render.style.opacity, "0.25");
-    const clearHost = e.host.ClearPropertyFromCode.bind(e.host), clearRender = e.render.ClearPropertyFromCode.bind(e.render);
+    assert.equal(e.viewport.style.opacity, "0.5"); assert.equal(e.render.style.opacity, "0.25");
+    const clearViewport = e.viewport.ClearPropertyFromCode.bind(e.viewport), clearRender = e.render.ClearPropertyFromCode.bind(e.render);
     let reject = true;
-    e.host.ClearPropertyFromCode = property => reject && property === "opacity" ? false : clearHost(property);
+    e.viewport.ClearPropertyFromCode = property => reject && property === "opacity" ? false : clearViewport(property);
     e.render.ClearPropertyFromCode = property => reject && property === "opacity" ? false : clearRender(property);
     e.Q.core.FeatureRegistry.disable("ql_minimap_runtime");
-    assert.equal(e.host.style.opacity, "0.5"); assert.equal(e.render.style.opacity, "0.25");
+    assert.equal(e.viewport.style.opacity, "0.5"); assert.equal(e.render.style.opacity, "0.25");
     reject = false; e.clock.advance(700);
-    assert.equal(e.host.style.opacity, undefined); assert.equal(e.render.style.opacity, undefined);
+    assert.equal(e.viewport.style.opacity, undefined); assert.equal(e.render.style.opacity, undefined);
     e.clean();
 });
 
