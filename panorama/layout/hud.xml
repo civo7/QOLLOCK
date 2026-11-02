@@ -57,7 +57,6 @@
 		<include src="s2r://panorama/scripts/customize/other_contexts.vjs_c" />
 		<include src="s2r://panorama/scripts/core/ql_customize_preview.vjs_c" />
 		<include src="s2r://panorama/scripts/ql_recent_purchases_data.vjs_c" />
-		<include src="s2r://panorama/scripts/ql_minimap_crate_data.vjs_c" />
 		<include src="s2r://panorama/scripts/ql_minimap_loot_data.vjs_c" />
 		<include src="s2r://panorama/scripts/manifests/ql_minimap_loot/manifest.vjs_c" />
 		<include src="s2r://panorama/scripts/tools/qol_dump_tree.vjs_c" />

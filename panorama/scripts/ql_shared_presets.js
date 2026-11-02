@@ -1060,7 +1060,7 @@ var QOL_SETTINGS_FIELDS = [
     {"key":"ENABLE_MINIMAP_STATUES","kind":"toggle","role":"toggle","unit":"","displayFactor":1,"min":0,"max":1,"step":1,"owners":["ql_minimap_loot"]},
     {"key":"ENABLE_MINIMAP_CRATE_ROUTES","kind":"toggle","role":"toggle","unit":"","displayFactor":1,"min":0,"max":1,"step":1,"owners":["ql_minimap_loot"]},
     {"key":"MINIMAP_CAMP_NAMES","kind":"number","role":"enum","unit":"","displayFactor":1,"min":0,"max":2,"step":1,"owners":["ql_minimap_loot"]},
-    {"key":"MINIMAP_LOOT_MARKER_SCALE","kind":"number","role":"size","unit":"%","displayFactor":1,"min":50,"max":200,"step":1,"owners":["ql_minimap_loot","ql_minimap_runtime"]},
+    {"key":"MINIMAP_LOOT_MARKER_SCALE","kind":"number","role":"size","unit":"%","displayFactor":1,"min":50,"max":150,"step":25,"owners":["ql_minimap_loot","ql_minimap_runtime"]},
     {"key":"MINIMAP_LOOT_OPACITY","kind":"number","role":"opacity","unit":"%","displayFactor":100,"min":0,"max":1,"step":0.01,"owners":["ql_minimap_loot","ql_minimap_runtime"]},
     {"key":"MINIMAP_ROUTE_SCALE","kind":"number","role":"size","unit":"%","displayFactor":1,"min":50,"max":200,"step":1,"owners":["ql_minimap_loot"]},
     {"key":"STATS_LIST_X_OFFSET","kind":"number","role":"position","unit":"px","displayFactor":1,"min":-QOL_SETTING_LIMITS.coordinate,"max":QOL_SETTING_LIMITS.coordinate,"step":1,"owners":["ql_presentation_scale"]},

@@ -228,12 +228,11 @@ test("minimap releases range overrides on default size, source removal and disab
 
 test("crate and tunnel overlays follow a living replaced viewport and retry marker writes", () => {
     const e = fixture();
-    e.Q.minimapCrateData = { dl_midtown: { crates: [{ u: 0.25, v: 0.75 }, { u: 0.8, v: 0.2 }] } };
     const create = e.$.CreatePanel;
     let markerFailures;
     e.$.CreatePanel = (...args) => {
         const panel = create(...args);
-        if (args[3]?.class === "minimap_marker" && !markerFailures) markerFailures = onceFailStyle(panel, "position");
+        if (args[2] === "QOLMinimapCrateImage" && !markerFailures) markerFailures = onceFailStyle(panel, "backgroundImage");
         return panel;
     };
     e.configure({ ENABLE_MINIMAP_CRATE_OVERLAY: 1, ENABLE_MINIMAP_REM_TUNNELS: 1, MINIMAP_REM_TUNNELS_OPACITY: 0.5 });
@@ -241,7 +240,7 @@ test("crate and tunnel overlays follow a living replaced viewport and retry mark
     assert.ok(markerFailures() >= 2);
     const oldTunnel = e.viewport.FindChild("tunnel_overlay"), oldCrates = e.renderer.FindChild("minimap_overlay_root");
     assert.equal(oldTunnel.style.opacity, "0.50");
-    assert.equal(oldCrates.FindChild("minimap_markers").GetChild(0).style.position, "25% 75% 0");
+    assert.match(oldCrates.FindChild("minimap_markers").GetChild(0).style.backgroundImage, /minimap_references_crates\.vsvg/);
     e.viewport.SetParent(e.orphan);
     const viewport = e.add(e.host, "minimap_container");
     const inner = e.add(viewport, "HudMinimapContainer"); e.add(inner, "hud_minimap");
@@ -249,7 +248,7 @@ test("crate and tunnel overlays follow a living replaced viewport and retry mark
     assert.equal(oldTunnel.IsValid(), false);
     assert.equal(oldCrates.IsValid(), false);
     assert.equal(viewport.FindChild("tunnel_overlay").style.opacity, "0.50");
-    assert.equal(viewport.FindChildTraverse("minimap_overlay_root").FindChild("minimap_markers").GetChildCount(), 2);
+    assert.equal(viewport.FindChildTraverse("minimap_overlay_root").FindChild("minimap_markers").GetChildCount(), 1);
     e.$.CreatePanel = create;
     e.clean();
 });
@@ -257,7 +256,6 @@ test("crate and tunnel overlays follow a living replaced viewport and retry mark
 function directMinimap(e) {
     e.Q.core.App.shutdown(); e.sandbox.eval("Math.random = () => 0;");
     e.configure({ ENABLE_MINIMAP_CRATE_OVERLAY: 1, ENABLE_MINIMAP_REM_TUNNELS: 1, MINIMAP_SMALL_SIZE: 600 });
-    e.Q.minimapCrateData = { dl_midtown: { crates: [[0.25, 0.75], [0.8, 0.2], [0.5, 0.5]] } };
     const cfg = e.Q.core.ConfigStore.view("ql_minimap_runtime"), callbacks = new Map();
     let reads = 0;
     const create = () => e.Q.core.FeatureRegistry.getManifest("ql_minimap_runtime").create({
@@ -267,17 +265,15 @@ function directMinimap(e) {
     return { feature: create(), create, cfg, callbacks, reads: () => reads };
 }
 
-test("crate ownership retires moved markers and shrinking data without rebuilding unaffected children", () => {
+test("crate ownership retires a moved image and rebuilds it without replacing the tunnel", () => {
     const e = fixture(), { feature } = directMinimap(e); feature.onEnable();
     const crates = e.renderer.FindChild("minimap_overlay_root"), markers = crates.FindChild("minimap_markers");
-    const moved = markers.GetChild(0), retained = markers.GetChild(1), removed = markers.GetChild(2);
-    moved.SetParent(e.orphan); removed.SetParent(e.orphan); e.clock.advance(150);
-    assert.equal(moved.IsValid(), false); assert.equal(removed.IsValid(), false);
-    assert.equal(markers.GetChildCount(), 3); assert.equal(markers.FindChild("QOLMinimapCrateMarker1"), retained);
-    const nextRemoved = markers.FindChild("QOLMinimapCrateMarker2"); nextRemoved.SetParent(e.orphan);
-    e.Q.minimapCrateData = { dl_midtown: { crates: [[0.3, 0.4]] } }; e.clock.advance(150);
-    assert.equal(retained.IsValid(), false); assert.equal(nextRemoved.IsValid(), false);
-    assert.equal(markers.GetChildCount(), 1); assert.equal(markers.GetChild(0).style.position, "30% 40% 0");
+    const moved = markers.GetChild(0), tunnel = e.viewport.FindChild("tunnel_overlay");
+    moved.SetParent(e.orphan); e.clock.advance(150);
+    assert.equal(moved.IsValid(), false);
+    assert.equal(markers.GetChildCount(), 1);
+    assert.match(markers.GetChild(0).style.backgroundImage, /minimap_references_crates\.vsvg/);
+    assert.equal(e.viewport.FindChild("tunnel_overlay"), tunnel);
     const last = markers.GetChild(0); last.SetParent(e.orphan); feature.onDisable(); e.clock.advance(20);
     assert.equal(last.IsValid(), false); assert.equal(crates.IsValid(), false); assert.equal(e.renderer.IsValid(), true); e.clean();
 });
@@ -293,68 +289,42 @@ test("stable crate markers are enumerated only by the ownership sweep and moved 
     const old = markers.GetChild(0); old.SetParent(e.orphan);
     e.clock.advance(150);
     assert.equal(old.IsValid(), false);
-    assert.equal(markers.GetChildCount(), 3);
-    assert.equal(markers.FindChild("QOLMinimapCrateMarker0").style.position, "25% 75% 0");
+    assert.equal(markers.GetChildCount(), 1);
+    assert.match(markers.FindChild("QOLMinimapCrateImage").style.backgroundImage, /minimap_references_crates\.vsvg/);
     feature.onDisable(); e.clock.advance(20); assert.equal(markers.IsValid(), false); e.clean();
 });
 
-test("crate descriptors are reused across polls and rebuilt for changed coordinate data", () => {
-    const e = fixture();
-    const P = e.Q.core.panel, createTree = P.createOwnedTree;
-    const descriptors = new Set();
-    let copiedResults = 0;
-    // Observe real helper inputs; its own result arrays and panel reconciliation
-    // remain in the production path. This counts descriptor identity, not native cost.
-    P.createOwnedTree = () => {
-        const tree = createTree(), children = tree.children;
-        tree.children = (parent, type, entries) => {
-            for (const entry of entries) if (entry.id.startsWith("QOLMinimapCrateMarker")) descriptors.add(entry);
-            const result = children(parent, type, entries), map = result.map;
-            result.map = function (...args) { copiedResults++; return map.apply(this, args); };
-            return result;
-        };
-        return tree;
-    };
-    const { feature } = directMinimap(e);
-    P.createOwnedTree = createTree;
+test("crate size selects baked images without recreating panels or moving their map anchors", () => {
+    const e = fixture(), { feature } = directMinimap(e);
     feature.onEnable(); e.clock.advance(500);
     const crates = e.renderer.FindChild("minimap_overlay_root"), markers = crates.FindChild("minimap_markers");
-    assert.equal(markers.GetChildCount(), 3);
-    assert.equal(markers.GetChild(0).style.position, "25% 75% 0");
-    assert.equal(descriptors.size, 3, "unchanged coordinates construct one descriptor per marker, not per poll");
-    assert.equal(copiedResults, 0, "the helper's panel array needs no second mapped copy");
-
-    const retained = markers.GetChild(1);
-    descriptors.clear();
-    e.Q.minimapCrateData = { dl_midtown: { crates: [[0.1, 0.2], [0.7, 0.8], [0.9, 0.3]] } };
-    e.clock.advance(500);
-    assert.equal(markers.GetChild(1), retained);
-    assert.equal(retained.style.position, "70% 80% 0", "same-length data replacement updates retained markers");
-    assert.equal(descriptors.size, 3);
-    e.Q.minimapCrateData = { dl_midtown: { crates: [[NaN, 0.2], [0.4, Infinity]] } };
-    e.clock.advance(150);
-    assert.equal(markers.GetChildCount(), 0, "invalid coordinates retire former markers");
-    e.Q.minimapCrateData = { dl_midtown: { crates: [] } };
-    e.clock.advance(150); assert.equal(markers.GetChildCount(), 0);
-    feature.onDisable(); e.clock.advance(20);
-    e.Q.minimapCrateData = { dl_midtown: { crates: [[0.6, 0.4]] } };
-    descriptors.clear(); feature.onEnable(); e.clock.advance(250);
-    const rebuilt = e.renderer.FindChild("minimap_overlay_root").FindChild("minimap_markers");
-    assert.equal(rebuilt.GetChildCount(), 1);
-    assert.equal(rebuilt.GetChild(0).style.position, "60% 40% 0");
-    assert.equal(descriptors.size, 1, "re-enable builds a fresh descriptor set");
+    const image = markers.GetChild(0), create = e.$.CreatePanel;
+    let creates = 0;
+    e.$.CreatePanel = (...args) => { creates++; return create(...args); };
+    for (const scale of [50, 75, 100, 125, 150]) {
+        e.configure({ MINIMAP_LOOT_MARKER_SCALE: scale }); feature.onSettingsChanged(); e.clock.advance(150);
+        assert.equal(markers.GetChildCount(), 1);
+        assert.equal(markers.GetChild(0), image);
+        const suffix = scale === 100 ? "" : "_" + scale;
+        assert.equal(image.style.backgroundImage, 'url("s2r://panorama/images/qollock/minimap_references_crates' + suffix + '.vsvg")');
+        assert.equal(image.style.width, "100%"); assert.equal(image.style.height, "100%");
+    }
+    assert.equal(creates, 0);
+    assert.equal(e.Q.settings.normalize("MINIMAP_LOOT_MARKER_SCALE", 119), 125);
+    assert.equal(e.Q.settings.normalize("MINIMAP_LOOT_MARKER_SCALE", 200), 150);
+    e.$.CreatePanel = create;
     feature.onDisable(); e.clock.advance(20); e.clean();
 });
 
 test("minimap hides partial crate and tunnel trees until construction and styles recover", () => {
     const e = fixture(), { feature } = directMinimap(e), create = e.$.CreatePanel;
-    let reject = true;
+    let rejectCreation = true, rejectStyle = true;
     e.$.CreatePanel = (type, parent, id, properties) => {
-        if (id === "QOLMinimapCrateMarker1" && reject) throw Error("modeled missing marker");
+        if (id === "QOLMinimapCrateImage" && rejectCreation) throw Error("modeled missing image");
         const panel = create(type, parent, id, properties);
-        if (id === "tunnel_overlay" || id === "QOLMinimapCrateMarker0") panel.style = new Proxy(panel.style, {
+        if (id === "tunnel_overlay" || id === "QOLMinimapCrateImage") panel.style = new Proxy(panel.style, {
             set(target, key, value) {
-                if (reject && (key === "opacity" || key === "position")) throw Error("modeled partial minimap style");
+                if (rejectStyle && (key === "opacity" || key === "backgroundImage")) throw Error("modeled partial minimap style");
                 target[key] = value; return true;
             }
         });
@@ -364,10 +334,12 @@ test("minimap hides partial crate and tunnel trees until construction and styles
     const crates = e.renderer.FindChild("minimap_overlay_root"), tunnel = e.viewport.FindChild("tunnel_overlay");
     assert.equal(crates.BHasClass("qol-hidden"), true); assert.equal(tunnel.BHasClass("qol-hidden"), true);
     assert.equal(tunnel.BHasClass("tunnel_locked_on"), false);
-    reject = false; e.clock.advance(150);
+    rejectCreation = false; e.clock.advance(150);
+    assert.equal(crates.BHasClass("qol-hidden"), true, "a created image with rejected styling remains hidden");
+    rejectStyle = false; e.clock.advance(150);
     assert.equal(crates.BHasClass("qol-hidden"), false); assert.equal(tunnel.BHasClass("qol-hidden"), false);
-    assert.equal(crates.FindChild("minimap_markers").GetChildCount(), 3);
-    assert.equal(crates.FindChild("minimap_markers").GetChild(0).style.position, "25% 75% 0");
+    assert.equal(crates.FindChild("minimap_markers").GetChildCount(), 1);
+    assert.match(crates.FindChild("minimap_markers").GetChild(0).style.backgroundImage, /minimap_references_crates\.vsvg/);
     feature.onDisable(); e.clock.advance(20); e.$.CreatePanel = create; e.clean();
 });
 
@@ -385,7 +357,7 @@ test("minimap derives settings through active hooks and stopped callbacks cannot
 
 test("minimap rapid replacement waits for queued previous trees and leaves one current overlay", () => {
     const e = fixture(), { feature, create } = directMinimap(e); feature.onEnable();
-    const old = e.renderer.FindChild("minimap_overlay_root"), moved = old.FindChildTraverse("QOLMinimapCrateMarker1");
+    const old = e.renderer.FindChild("minimap_overlay_root"), moved = old.FindChildTraverse("QOLMinimapCrateImage");
     moved.SetParent(e.orphan); feature.onDisable();
     const replacement = create(); replacement.onEnable();
     assert.equal(e.renderer.FindChild("minimap_overlay_root"), old); assert.equal(old.visible, false);
@@ -398,7 +370,7 @@ test("minimap rapid replacement waits for queued previous trees and leaves one c
 
 test("minimap releases a still living old HUD while waiting for the current native scene", () => {
     const e = fixture(), { feature } = directMinimap(e); e.host.style.transform = "native host transform"; feature.onEnable();
-    const old = e.renderer.FindChild("minimap_overlay_root"), moved = old.FindChildTraverse("QOLMinimapCrateMarker0"); moved.SetParent(e.orphan);
+    const old = e.renderer.FindChild("minimap_overlay_root"), moved = old.FindChildTraverse("QOLMinimapCrateImage"); moved.SetParent(e.orphan);
     e.doc.root = e.add(null, "LoadingRoot"); e.clock.advance(150);
     assert.equal(old.IsValid(), false); assert.equal(moved.IsValid(), false); assert.equal(e.root.IsValid(), true);
     assert.equal(e.host.style.uiScale, undefined); assert.equal(e.host.style.transform, "native host transform");

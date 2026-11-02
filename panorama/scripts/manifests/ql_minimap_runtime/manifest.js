@@ -66,11 +66,8 @@
             let anchor = null, renderer = null, canvas = null, mapRender = null;
             let backgroundImages = [];
             let tunnel = null, crates = null, markers = null;
-            let crateData = null;
-            let crateCoordinates = [];
-            let crateEntries = [];
             let crateReady = false;
-            let markerPanels = [];
+            let crateImage = null;
             let rangePanels = [];
             let createdComposition = "cache";
             const released = { geometry: true, decoration: true };
@@ -92,7 +89,7 @@
                 snapshot: () => ({ owner: id, native: probe.panelState(renderer), root: probe.panelState(crates),
                     tunnel: probe.panelState(tunnel), markers: probe.panelState(markers), composition: createdComposition, released: { ...released },
                     reconciled: { geometry: geometry.verify(), decoration: nativeStyles.verify() },
-                    counts: { total: markerPanels.filter(P.isAlive).length, expected: crateEntries.length },
+                    counts: { total: P.isAlive(crateImage) ? 1 : 0, expected: 1 },
                     geometry: { anchor: probe.panelState(anchor), fixedIcons: renderer?.BHasClass("QOLFixedMinimapIcons") || false, ...geometry.inspect() },
                     decoration: { canvas: probe.panelState(canvas), mapRender: probe.panelState(mapRender), backgrounds: backgroundImages.map(probe.panelState),
                         releaseResults: { ...nativeReleaseResults }, activeTargets: {
@@ -124,7 +121,7 @@
                 };
                 return { alt: enabled("ENABLE_ALT_ZOOM"), tab: enabled("ENABLE_TAB_ZOOM"), fixedIcons: enabled("MINIMAP_FIXED_ICON_SIZE"),
                     minimalist: enabled("MINIMAL_MINIMAP"), minimalOpacity: U.NormalizeOpacityNumber(number("MINIMAL_MINIMAP_OPACITY", 0.9), 0.9),
-                    crateMarkerScale: number("MINIMAP_LOOT_MARKER_SCALE", 100) / 100, crateOpacity: number("MINIMAP_LOOT_OPACITY", 1),
+                    crateMarkerScale: number("MINIMAP_LOOT_MARKER_SCALE", 100), crateOpacity: number("MINIMAP_LOOT_OPACITY", 1),
                     crates: enabled("ENABLE_MINIMAP_CRATE_OVERLAY"), iconColor: P.resolvePaletteColor(cfg.MINIMAP_ICON_COLOR),
                     base: view(""), altView: view("ALT"), tabView: view("TAB") };
             }
@@ -154,12 +151,9 @@
 
             function releaseOverlays() {
                 tree.clear();
-                for (const panel of [tunnel, crates, markers, ...markerPanels]) owned.delete(panel);
+                for (const panel of [tunnel, crates, markers, crateImage]) owned.delete(panel);
                 tunnel = crates = markers = null;
-                markerPanels = [];
-                crateData = null;
-                crateCoordinates = [];
-                crateEntries = [];
+                crateImage = null;
                 crateReady = false;
             }
 
@@ -216,52 +210,25 @@
                 });
                 if (next !== crates) {
                     createdComposition = diagnostic.controls?.composition || "cache";
-                    for (const panel of [crates, markers, ...markerPanels]) owned.delete(panel);
-                    crates = next; markers = null; markerPanels = []; crateData = null; crateReady = false;
+                    for (const panel of [crates, markers, crateImage]) owned.delete(panel);
+                    crates = next; markers = crateImage = null; crateReady = false;
                 }
                 const nextMarkers = ensure(crates, "minimap_markers", markers);
                 if (nextMarkers !== markers) {
-                    for (const panel of [markers, ...markerPanels]) owned.delete(panel);
-                    markers = nextMarkers; markerPanels = []; crateData = null; crateReady = false;
+                    for (const panel of [markers, crateImage]) owned.delete(panel);
+                    markers = nextMarkers; crateImage = null; crateReady = false;
                 }
                 if (!P.isAlive(markers)) { show(crates, false); return; }
                 // MapHunter fractions refer to the native render surface. Its
                 // zoom/rotation must move ordinary crates with the other loot.
                 if (!style(crates, { zIndex: "1", opacity: String(model.crateOpacity) })) { show(crates, false); return; }
-                // Map API remains unverified; retain the shipped Midtown table.
-                const data = Q.minimapCrateData || (typeof CRATE_DATA === "object" ? CRATE_DATA : null);
-                const points = data?.dl_midtown?.crates || (Array.isArray(data?.dl_midtown) ? data.dl_midtown : []);
-                if (crateData !== points) {
-                    crateCoordinates = points.map(point => [Number(Array.isArray(point) ? point[0] : point.u), Number(Array.isArray(point) ? point[1] : point.v)])
-                        .filter(point => point.every(Number.isFinite));
-                    crateEntries = crateCoordinates.map((_, index) => ({
-                        id: "QOLMinimapCrateMarker" + index, properties: { class: "minimap_marker" }
-                    }));
-                    crateReady = false;
-                }
-                const coordinates = crateCoordinates;
-                crateData = points;
-                for (let index = coordinates.length; index < markerPanels.length; index++) {
-                    owned.delete(markerPanels[index]); tree.remove("QOLMinimapCrateMarker" + index);
-                }
                 if (!crateReady) {
                     if (diagnostic.controls) diagnostic.stages.builds++;
-                    // update's ownership sweep already validates stable markers.
-                    // Reconcile only after a retired node, new data or failed render.
-                    const nextPanels = tree.children(markers, "Panel", crateEntries);
-                    nextPanels.forEach((panel, index) => {
-                        if (markerPanels[index] !== panel) owned.delete(markerPanels[index]);
-                    });
-                    markerPanels = nextPanels;
-                    if (markerPanels.some(panel => !P.isAlive(panel))) { show(crates, false); return; }
-                    crateReady = true;
-                    coordinates.forEach(([x, y], index) => {
-                        crateReady = style(markerPanels[index], {
-                            position: x * 100 + "% " + y * 100 + "% 0", width: 2 * model.crateMarkerScale + "px", height: 2 * model.crateMarkerScale + "px",
-                            transform: "translateX(" + -model.crateMarkerScale + "px) translateY(" + -model.crateMarkerScale + "px)",
-                            opacity: "1.0", backgroundColor: "rgba(255, 213, 74, 0.75)", border: "1px solid rgba(42, 33, 0, 0.45)"
-                        }) && crateReady;
-                    });
+                    crateImage = ensure(markers, "QOLMinimapCrateImage", crateImage);
+                    if (!P.isAlive(crateImage)) { show(crates, false); return; }
+                    const suffix = model.crateMarkerScale === 100 ? "" : "_" + model.crateMarkerScale;
+                    crateReady = style(crateImage, { width: "100%", height: "100%", backgroundSize: "100% 100%",
+                        backgroundRepeat: "no-repeat", backgroundImage: 'url("s2r://panorama/images/qollock/minimap_references_crates' + suffix + '.vsvg")' });
                 }
                 show(crates, crateReady && !diagnostic.controls?.hideRoot);
             }
