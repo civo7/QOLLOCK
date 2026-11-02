@@ -34,6 +34,46 @@
     var _saveBuffers = Object.create(null);
     var _sendSeq = 0;
 
+    // Requests arrive in the URL fragment, and any page opened in the same
+    // Steam/CEF browser profile can navigate here with its own fragment. It
+    // cannot read the replies (they only reach this page's title), but without
+    // a check it could delete or replace saved data. This page keeps a random
+    // per-install token in its own storage and shows it only in its own title,
+    // which other sites cannot read. Once QOLLOCK has sent that token, changes
+    // must carry it. A client from before the token sends none; it is accepted
+    // until a token-aware client has used this storage. Keys starting with
+    // "__qol_" belong to this page and are never reachable through requests.
+    var TOKEN_KEY = '__qol_bridge_token__';
+    var LOCK_KEY = '__qol_bridge_locked__';
+    var _token = '';
+    try {
+        _token = localStorage.getItem(TOKEN_KEY) || '';
+        if (!/^[0-9a-f]{32}$/.test(_token)) {
+            var bytes = new Uint8Array(16);
+            crypto.getRandomValues(bytes);
+            _token = Array.prototype.map.call(bytes, function(b) {
+                return ('0' + b.toString(16)).slice(-2);
+            }).join('');
+            localStorage.setItem(TOKEN_KEY, _token);
+        }
+    } catch (eToken) {
+        document.title = 'QOL_BRIDGE_ERROR:' + (eToken && eToken.message ? eToken.message : eToken);
+        return;
+    }
+
+    function isReservedKey(key) {
+        return String(key).indexOf('__qol_') === 0;
+    }
+
+    // Checks the token of a change and locks this storage to tokens on first use.
+    function authorized(token) {
+        if (token === _token) {
+            if (localStorage.getItem(LOCK_KEY) !== '1') localStorage.setItem(LOCK_KEY, '1');
+            return true;
+        }
+        return token === undefined && localStorage.getItem(LOCK_KEY) !== '1';
+    }
+
     function isValidId(id) {
         return typeof id === 'string' && /^qol_\d+_\d+$/.test(id);
     }
@@ -65,10 +105,18 @@
         document.title = 'QOL_RES:' + JSON.stringify(resp);
     }
 
-    window.__qolSave = function(key, val, id, isB64) {
+    window.__qolSave = function(key, val, id, isB64, token) {
         if (!isValidId(id)) return;
         try {
+            if (!authorized(token)) {
+                send(id, false, undefined, 'Unauthorized bridge request');
+                return;
+            }
             var decodedKey = decodeText(key, isB64);
+            if (isReservedKey(decodedKey)) {
+                send(id, false, undefined, 'Reserved bridge key');
+                return;
+            }
             var decodedVal = decodeText(val, isB64);
             localStorage.setItem(decodedKey, decodedVal);
             send(id, true);
@@ -77,8 +125,23 @@
         }
     };
 
-    window.__qolSaveChunk = function(key, part, total, chunk, id, isB64) {
+    window.__qolSaveChunk = function(key, part, total, chunk, id, isB64, token) {
         if (!isValidId(id)) return;
+        // Checked before touching the buffers: a refused request must not
+        // disturb a save in progress that happens to use the same id.
+        try {
+            if (!authorized(token)) {
+                send(id, false, undefined, 'Unauthorized bridge request');
+                return;
+            }
+            if (isReservedKey(decodeText(key, isB64))) {
+                send(id, false, undefined, 'Reserved bridge key');
+                return;
+            }
+        } catch (eAuth) {
+            send(id, false, undefined, eAuth && eAuth.message ? eAuth.message : eAuth);
+            return;
+        }
         try {
             if (!Number.isInteger(part) || !Number.isInteger(total) || part < 0 || part >= total || total > 5000) {
                 send(id, false, undefined, 'Invalid save chunk boundaries');
@@ -108,10 +171,20 @@
         }
     };
 
-    window.__qolLoad = function(key, id, isB64) {
+    window.__qolLoad = function(key, id, isB64, token) {
         if (!isValidId(id)) return;
         try {
+            // Reading needs no token (other sites cannot see the reply), but a
+            // token-aware client's load locks this storage to tokens.
+            if (token !== undefined && !authorized(token)) {
+                send(id, false, undefined, 'Unauthorized bridge request');
+                return;
+            }
             var decodedKey = decodeText(key, isB64);
+            if (isReservedKey(decodedKey)) {
+                send(id, false, undefined, 'Reserved bridge key');
+                return;
+            }
             var val = localStorage.getItem(decodedKey);
             if (val === null || val === undefined || val.length <= CHUNK_SIZE) {
                 send(id, true, val);
@@ -152,10 +225,18 @@
         }
     };
 
-    window.__qolRemove = function(key, id, isB64) {
+    window.__qolRemove = function(key, id, isB64, token) {
         if (!isValidId(id)) return;
         try {
+            if (!authorized(token)) {
+                send(id, false, undefined, 'Unauthorized bridge request');
+                return;
+            }
             var decodedKey = decodeText(key, isB64);
+            if (isReservedKey(decodedKey)) {
+                send(id, false, undefined, 'Reserved bridge key');
+                return;
+            }
             localStorage.removeItem(decodedKey);
             send(id, true);
         } catch (e) {
@@ -196,8 +277,9 @@
 
     window.addEventListener('hashchange', onFragment);
 
-    // ":frag1" tells QOLLOCK this page accepts fragment requests.
-    document.title = 'QOL_BRIDGE_READY:frag1';
+    // ":frag1" tells QOLLOCK this page accepts fragment requests; ":tok=" passes
+    // the write token. Clients from before the token accept any ":"-suffix.
+    document.title = 'QOL_BRIDGE_READY:frag1:tok=' + _token;
 })();
 </script>
 </body>

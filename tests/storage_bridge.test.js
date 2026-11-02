@@ -17,8 +17,14 @@ const { URL } = require("node:url");
 
 const BRIDGE_URL = "https://predi-i.github.io/qollock-updates/bridge.html";
 // Verbatim mirror of the hosted qollock-updates/bridge.html, not a test protocol.
-const PAGE_SCRIPT = fs.readFileSync(path.join(__dirname, "fixtures/qollock_bridge.html"), "utf8")
+const pageScript = file => fs.readFileSync(path.join(__dirname, "fixtures", file), "utf8")
     .match(/<script>([\s\S]*?)<\/script>/)[1];
+const PAGE_SCRIPT = pageScript("qollock_bridge.html");
+// The previously hosted page (fragment protocol v1 without the write token), kept verbatim
+// so a current client is checked against pages players may still have cached.
+const UNTOKENED_PAGE_SCRIPT = pageScript("qollock_bridge_untokened.html");
+const TOKEN_KEY = "__qol_bridge_token__";
+const LOCK_KEY = "__qol_bridge_locked__";
 
 function fragmentMessage(url) {
     assert.ok(url.startsWith(BRIDGE_URL + "#"), "Commands use the HTTPS page fragment");
@@ -190,6 +196,7 @@ function connectEmbeddedPage(env, storage = new Map(), options = {}) {
                 if (currentPage === browser) fn();
             }),
             navigator: {},
+            crypto: require("node:crypto").webcrypto,
             location: { hash: parsed.hash },
             document: {},
             addEventListener: (name, handler) => {
@@ -214,7 +221,7 @@ function connectEmbeddedPage(env, storage = new Map(), options = {}) {
         const script = loads <= (options.oldPageLoads || 0)
             ? PAGE_SCRIPT.slice(0, PAGE_SCRIPT.indexOf("    // Deadlock's")) +
                 "document.title = 'QOL_BRIDGE_READY'; })();"
-            : PAGE_SCRIPT;
+            : options.pageScript || PAGE_SCRIPT;
         vm.runInContext(script, browser, { filename: "qollock_bridge.html" });
     };
     env.cef = {
@@ -428,6 +435,119 @@ test("storage_bridge: hosted page save/load/remove round trip uses Base64 fragme
     assert.equal(await missing, null);
     assert.equal(env.cef.loads, 1, "Commands must not reload the page");
     assert.ok(env.urls.every(url => !url.startsWith("javascript:")));
+});
+
+// The bridge page runs whatever request is in its URL fragment, and any page the player opens in Steam's
+// browser or overlay shares the game's CEF storage, so another site can navigate to it with its own request.
+// It cannot read the replies (they only reach this page's title), but it could delete or replace saved data.
+// Ways the write token can fail: a token-less, wrong-token or reserved-key request still changes storage after
+// QOLLOCK has used the page; the token or lock keys can be planted or cleared before that; the token is not
+// stable across a restart, so the player's own saves stop working; a client from before the token, or the
+// current client against a cached older page, can no longer save.
+function sendForeign(env, f, a) {
+    const panel = env.sandbox.QOL.core.storageBridge.getPanel();
+    sendForeign.serial = (sendForeign.serial || 0) + 1;
+    panel.SetURL(BRIDGE_URL + "#" + encodeURIComponent(JSON.stringify({ q: "foreign" + sendForeign.serial, f, a })));
+    env.clock.advance(0);
+}
+const b64 = text => Buffer.from(text).toString("base64");
+
+test("storage_bridge: once QOLLOCK has used the page, other pages cannot change or delete saved data", async () => {
+    const env = createTestEnvironment();
+    const storage = new Map();
+    connectEmbeddedPage(env, storage);
+    const bridge = env.sandbox.QOL.core.storageBridge;
+    const saving = bridge.save("qollock_settings", "mine");
+    const token = storage.get(TOKEN_KEY);
+    assert.match(token, /^[0-9a-f]{32}$/, "the page keeps a random per-install token");
+    assert.equal(fragmentMessage(env.getLastSetUrl()).a.at(-1), token, "QOLLOCK's writes carry the token");
+    env.clock.advance(0);
+    assert.equal(await saving, true);
+    const big = "x".repeat(4000);
+    for (const [f, a] of [
+        ["remove", [b64("qollock_settings"), "qol_9_1", true]],
+        ["save", [b64("qollock_settings"), b64("theirs"), "qol_9_2", true]],
+        ["saveChunk", [b64("qollock_settings"), 0, 1, b64("theirs"), "qol_9_3", true]],
+        ["save", [b64("qollock_settings"), b64("theirs"), "qol_9_4", true, "f".repeat(32)]],
+        ["remove", [b64("qollock_settings"), "qol_9_5", true, null]],
+        ["saveChunk", [b64("qollock_settings"), 0, 2, b64(big.slice(0, 1500)), "qol_9_6", true]],
+        ["saveChunk", [b64("qollock_settings"), 1, 2, b64(big.slice(1500)), "qol_9_6", true]],
+        ["remove", [b64(LOCK_KEY), "qol_9_7", true]],
+        ["save", [b64(TOKEN_KEY), b64("0".repeat(32)), "qol_9_8", true]],
+    ]) sendForeign(env, f, a);
+    assert.equal(storage.get("qollock_settings"), "mine");
+    assert.equal(storage.get(TOKEN_KEY), token);
+    assert.equal(storage.get(LOCK_KEY), "1");
+    const again = bridge.save("qollock_settings", "mine again");
+    env.clock.advance(0);
+    assert.equal(await again, true, "QOLLOCK keeps saving");
+    assert.equal(storage.get("qollock_settings"), "mine again");
+});
+
+test("storage_bridge: the token and lock keys cannot be planted, read or cleared through requests", async () => {
+    const env = createTestEnvironment();
+    const storage = new Map();
+    connectEmbeddedPage(env, storage);
+    const token = storage.get(TOKEN_KEY);
+    assert.match(token, /^[0-9a-f]{32}$/);
+    sendForeign(env, "save", [b64(TOKEN_KEY), b64("0".repeat(32)), "qol_9_1", true]);
+    sendForeign(env, "saveChunk", [b64(TOKEN_KEY), 0, 1, b64("0".repeat(32)), "qol_9_2", true]);
+    sendForeign(env, "save", [b64(LOCK_KEY), b64("0"), "qol_9_3", true]);
+    sendForeign(env, "remove", [b64(TOKEN_KEY), "qol_9_4", true]);
+    assert.equal(storage.get(TOKEN_KEY), token, "before any lock, the token still cannot be replaced");
+    assert.equal(storage.has(LOCK_KEY), false);
+    const bridge = env.sandbox.QOL.core.storageBridge;
+    for (const key of [TOKEN_KEY, LOCK_KEY]) {
+        const reading = bridge.load(key);
+        env.clock.advance(0);
+        await assert.rejects(reading, /reserved/i, key);
+    }
+});
+
+test("storage_bridge: the token survives a restart, so saved data stays writable by QOLLOCK only", async t => {
+    const disk = diskStorage(t)();
+    const first = createTestEnvironment();
+    connectEmbeddedPage(first, disk);
+    const saving = first.sandbox.QOL.core.storageBridge.save("qollock_settings", "before restart");
+    first.clock.advance(0);
+    assert.equal(await saving, true);
+    const token = disk.get(TOKEN_KEY);
+    const second = createTestEnvironment();
+    connectEmbeddedPage(second, disk);
+    assert.equal(disk.get(TOKEN_KEY), token, "a reload reuses the stored token");
+    const bridge = second.sandbox.QOL.core.storageBridge;
+    const loading = bridge.load("qollock_settings");
+    second.clock.advance(0);
+    assert.equal(await loading, "before restart");
+    const after = bridge.save("qollock_settings", "after restart");
+    second.clock.advance(0);
+    assert.equal(await after, true);
+    sendForeign(second, "remove", [b64("qollock_settings"), "qol_9_1", true]);
+    assert.equal(disk.get("qollock_settings"), "after restart");
+});
+
+test("storage_bridge: older clients and older cached pages keep working until the token is in use", async () => {
+    // A client from before the token sends no token: accepted while no token-aware client has used the page.
+    const legacy = createTestEnvironment();
+    const storage = new Map();
+    connectEmbeddedPage(legacy, storage);
+    sendForeign(legacy, "save", [b64("qollock_settings"), b64("legacy"), "qol_9_1", true]);
+    assert.equal(storage.get("qollock_settings"), "legacy");
+    sendForeign(legacy, "remove", [b64("qollock_settings"), "qol_9_2", true]);
+    assert.equal(storage.has("qollock_settings"), false);
+    // The current client against the previously hosted page: no token in the ready title, none sent.
+    const env = createTestEnvironment();
+    const old = new Map();
+    connectEmbeddedPage(env, old, { pageScript: UNTOKENED_PAGE_SCRIPT });
+    const bridge = env.sandbox.QOL.core.storageBridge;
+    assert.equal(bridge.isReady(), true);
+    const saving = bridge.save("qollock_settings", "on the old page");
+    assert.equal(fragmentMessage(env.getLastSetUrl()).a.length, 4, "no token without a token-aware page");
+    env.clock.advance(0);
+    assert.equal(await saving, true);
+    const loading = bridge.load("qollock_settings");
+    env.clock.advance(0);
+    assert.equal(await loading, "on the old page");
 });
 
 test("storage_bridge: settings save publishes attributes and clear removes disk data", async () => {
