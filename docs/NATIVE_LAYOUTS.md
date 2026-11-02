@@ -28,6 +28,17 @@ applies the same friends-count placement. The XML override and separate
 `qollock_party.css` are removed; native party members, invites, context-menu
 callbacks and animations continue to belong to the game layout/base stylesheet.
 
+The signature and active-item ability icon layouts also remain supplied by the
+game. Disabled-ability crosses are SVG backgrounds on the existing native
+`active_toggle` panels, loaded through both component stylesheet extensions.
+The feature's root gate and native `disabled`/`toggled_on` classes drive the
+decoration without discovery or repair schedules. The native toggle scale is
+preserved; only the cross background geometry compensates for it. An enabled
+toggle retains its native border/glow, and cooldown masks and corrupted-item
+borders are untouched. After maintainer compile/repack, check disabled abilities
+and active items, including toggled items, cooldowns, Minecraft/Simplify and
+pointer/tooltip behavior. Source removal alone does not retire a packed override.
+
 The unit-target XML formerly added `qol_hint_target` to both native hint
 containers. No stylesheet used that class; its only runtime consumer was target
 geometry discovery. That owner now resolves the native `UnitTarget` snippet's

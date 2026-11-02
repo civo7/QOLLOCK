@@ -80,22 +80,6 @@
       "local_sha256": "9668a2bf181b08f1952b8cce5dd11fc3e783e8458d9d1a80ec53ccba3d17da83",
       "base_commit": "0c38f9d31c4905e0fe1a292afe91aa3d01044baf"
     },
-    "layout/hud_ability_icon.xml": {
-      "blob": "1da3ef8c7f06dbcbd86e600692bc6d3c8473394e",
-      "destination": "panorama/layout/hud_ability_icon.xml",
-      "kind": "xml",
-      "auto_sync": false,
-      "local_sha256": "a7bba0bb5e22a3f97255e72808fa2b2cf4578450cb1c0160b863bf621b4f9557",
-      "base_commit": "1406578696351e07044176c98ffcf2ddce1c795d"
-    },
-    "layout/hud_ability_icon_active.xml": {
-      "blob": "fc957ba28e29235165a205b200e5a440d25ae9eb",
-      "destination": "panorama/layout/hud_ability_icon_active.xml",
-      "kind": "xml",
-      "auto_sync": false,
-      "local_sha256": "914e6374abe48d2816fe2b3ec12d92a402cd674223027fe430d76170b89398f3",
-      "base_commit": "1406578696351e07044176c98ffcf2ddce1c795d"
-    },
     "layout/hud_escape_menu.xml": {
       "blob": "504b76d61d2ea5329be2b1c6d0b1c74fc59fad9d",
       "destination": "panorama/layout/hud_escape_menu.xml",
@@ -672,5 +656,5 @@
       "base_commit": "d251cf9d9a796061c90f58724230b7e17b97121b"
     }
   },
-  "fingerprint": "c977874ebe6fb86242c7902b6fd724dfe3088f48366186a8b7de4d4323ed9a62"
+  "fingerprint": "8382f7c2715493f6fb6467bde1affaaf3de7aa4f8d09abdd25e608e24bc57075"
 }

@@ -1,4 +1,4 @@
-/* Native templates own icon lifetime; native .disabled drives presentation. */
+/* The game owns icon lifetime and .disabled/.toggled_on; no layout override is needed. */
 .better_disabled_abilities_active #AbilitiesContainer #hud_signature #abilities > CitadelAbilityIcon.disabled,
 .better_disabled_abilities_active #AbilitiesContainer #ActiveAbilitiesMenu #abilitiesContainer > DraggableAbilityIcon.disabled
 {
@@ -11,41 +11,40 @@
     wash-color: offBlack&aa;
 }
 
-#QOLDisabledXOverlay
+.better_disabled_abilities_active #AbilitiesContainer #hud_signature #abilities > CitadelAbilityIcon.disabled #active_toggle,
+.better_disabled_abilities_active #AbilitiesContainer #ActiveAbilitiesMenu #abilitiesContainer > DraggableAbilityIcon.disabled #active_toggle
 {
-    visibility: collapse;
-    width: 100%;
-    height: 100%;
-    ignore-parent-flow: true;
-    horizontal-align: center;
-    vertical-align: center;
+    opacity: 1;
+    background-repeat: no-repeat;
     z-index: 500;
 }
 
-.better_disabled_abilities_active #AbilitiesContainer #hud_signature #abilities > CitadelAbilityIcon.disabled #QOLDisabledXOverlay,
-.better_disabled_abilities_active #AbilitiesContainer #ActiveAbilitiesMenu #abilitiesContainer > DraggableAbilityIcon.disabled #QOLDisabledXOverlay
+/* Keep the native toggle frame and its 1.3 scale. Compensate only the cross background. */
+.better_disabled_abilities_active #AbilitiesContainer #hud_signature #abilities > CitadelAbilityIcon.disabled #active_toggle
 {
-    visibility: visible;
+    background-image: url("s2r://panorama/images/qollock/disabled_ability_cross.vsvg");
+    background-size: 76.923% 76.923%;
+    background-position: center;
 }
 
-#QOLDisabledXBar0,
-#QOLDisabledXBar1
+.better_disabled_abilities_active #AbilitiesContainer #ActiveAbilitiesMenu #abilitiesContainer > DraggableAbilityIcon.disabled #active_toggle
 {
-    width: 145%;
-    height: 14px;
-    background-color: #ff1a1a;
-    horizontal-align: center;
-    vertical-align: center;
-    ignore-parent-flow: true;
-    box-shadow: 0px 0px 6px 2px black;
-    border-radius: 3px;
+    background-image: url("s2r://panorama/images/qollock/disabled_item_cross.vsvg");
+    /* Native image: 48px at y=6, inside the 80px toggle canvas. */
+    background-size: 36.923px 36.923px;
+    background-position: center 13.846px;
 }
 
-DraggableAbilityIcon #QOLDisabledXBar0,
-DraggableAbilityIcon #QOLDisabledXBar1
+.better_disabled_abilities_active.minecraft_healthbar_active #AbilitiesContainer #ActiveAbilitiesMenu #abilitiesContainer > DraggableAbilityIcon.disabled #active_toggle
 {
-    height: 12px;
+    /* Minecraft's existing component CSS uses a 36px canvas and image, still at y=6. */
+    background-size: 27.692px 27.692px;
+    background-position: center 8.769px;
 }
 
-#QOLDisabledXBar0 { transform: rotateZ(45deg); }
-#QOLDisabledXBar1 { transform: rotateZ(-45deg); }
+.better_disabled_abilities_active #AbilitiesContainer #hud_signature #abilities > CitadelAbilityIcon.disabled:not(.toggled_on) #active_toggle,
+.better_disabled_abilities_active #AbilitiesContainer #ActiveAbilitiesMenu #abilitiesContainer > DraggableAbilityIcon.disabled:not(.toggled_on) #active_toggle
+{
+    border-color: transparent;
+    box-shadow: none;
+}

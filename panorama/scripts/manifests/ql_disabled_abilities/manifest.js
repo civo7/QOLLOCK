@@ -1,6 +1,6 @@
 // OWNS: Disabled-ability presentation setting and reactive root-class refresh.
 // DOES NOT OWN: Native disabled state, icon lifetime, cooldown masks or ability input.
-// The native ability templates carry the decoration; component CSS gates its HUD scope.
+// Component CSS decorates the native active_toggle; the game supplies both icon layouts.
 (() => {
     "use strict";
     QOL.core.FeatureRegistry.register({

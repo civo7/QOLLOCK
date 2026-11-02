@@ -36,18 +36,11 @@ test("disabled presentation follows settings and registry exclusion without obse
     assert.deepEqual(env.clock.errors, []);
 });
 
-test("native templates carry a noninteractive cross beside their image and preserve native masks and bindings", () => {
-    for (const [file, host] of [["hud_ability_icon.xml", "image_container"], ["hud_ability_icon_active.xml", "iconContainer"]]) {
-        assert.ok(fs.existsSync(path.join(__dirname, "../panorama/layout", file)), "native template override exists");
-        const xml = read("layout/" + file);
-        const imageHost = xml.match(new RegExp(`<Panel class="${host}">((?:(?!</Panel>)[\\s\\S])*?)</Panel>`));
-        assert.ok(imageHost, "image host exists");
-        assert.match(imageHost[1], /<Image id="ability_image"[^>]+\/>/);
-        assert.match(imageHost[1], /<!-- ==== QOLLOCK disabled ability cross ==== -->\s*<Panel id="QOLDisabledXOverlay" hittest="false" hittestchildren="false">\s*<Panel id="QOLDisabledXBar0" hittest="false"\s*\/>\s*<Panel id="QOLDisabledXBar1" hittest="false"\s*\/>/);
-        assert.equal((xml.match(/id="QOLDisabledXOverlay"/g) || []).length, 1);
-        assert.match(xml, /<Panel id="cooldown_mask"\s*\/>/);
-        assert.match(xml, /<CitadelBinding id="ability_binding_component" show_single_bind="true" compact="true"\s*\/>/);
-        assert.match(xml, new RegExp(`panorama/styles/${file.replace(".xml", "")}\\.vcss`));
+test("disabled decoration leaves native ability layouts supplied by the game", () => {
+    const upstream = JSON.parse(fs.readFileSync(path.join(__dirname, "../upstream.json"), "utf8"));
+    for (const file of ["hud_ability_icon.xml", "hud_ability_icon_active.xml"]) {
+        assert.equal(fs.existsSync(path.join(__dirname, "../panorama/layout", file)), false);
+        assert.equal(upstream.files["layout/" + file], undefined, "sync must not restore the retired override");
     }
 });
 
@@ -55,16 +48,41 @@ test("disabled CSS stays in component chains and scopes native disabled effects 
     for (const file of ["hud_ability_icon.css", "hud_ability_icon_active.css"]) {
         assert.match(read("styles/" + file), /@import url\("s2r:\/\/panorama\/styles\/features\/ql_feat_disabled_abilities\.vcss_c"\)/);
     }
-    const css = read("styles/features/ql_feat_disabled_abilities.css");
-    const effects = [...css.matchAll(/([^{}]+)\{([^{}]+)\}/g)].filter(([, , body]) => /wash-color|visibility:\s*visible/.test(body));
-    assert.equal(effects.length, 3);
+    const css = read("styles/features/ql_feat_disabled_abilities.css").replace(/\/\*[\s\S]*?\*\//g, "");
+    const effects = [...css.matchAll(/([^{}]+)\{([^{}]+)\}/g)];
+    assert.ok(effects.length > 0);
     for (const [, selectors] of effects) {
         for (const selector of selectors.trim().split(",")) {
-            assert.match(selector, /\.better_disabled_abilities_active #AbilitiesContainer (?:#hud_signature #abilities > CitadelAbilityIcon|#ActiveAbilitiesMenu #abilitiesContainer > DraggableAbilityIcon)\.disabled/);
+            assert.match(selector, /\.better_disabled_abilities_active(?:\.minecraft_healthbar_active)? #AbilitiesContainer (?:#hud_signature #abilities > CitadelAbilityIcon|#ActiveAbilitiesMenu #abilitiesContainer > DraggableAbilityIcon)\.disabled/);
         }
     }
-    assert.doesNotMatch(css, /cooldown_mask|!important|qol-better-disabled/);
-    assert.match(css, /box-shadow:\s*0px 0px 6px 2px black/);
-    assert.match(css, /height:\s*14px/);
-    assert.match(css, /height:\s*12px/);
+    assert.doesNotMatch(css, /cooldown_mask|corruptedBorder|!important|QOLDisabledX|pre-transform-scale2d\s*:/,
+        "cooldown, corruption and the native toggle scale stay with their owners");
+    for (const [, , body] of effects) for (const [, resource] of body.matchAll(/url\("s2r:\/\/panorama\/([^" ]+)\.vsvg"\)/g)) {
+        assert.ok(fs.existsSync(path.join(__dirname, "../panorama", resource + ".svg")), "cross resource exists");
+    }
+});
+
+test("disabled crosses share the native toggle surface without hiding an enabled toggle border", () => {
+    // Exercise the emitted state selectors only; this does not model Panorama rendering/cascade.
+    const css = read("styles/features/ql_feat_disabled_abilities.css").replace(/\/\*[\s\S]*?\*\//g, "");
+    const rules = [...css.matchAll(/([^{}]+)\{([^{}]+)\}/g)]
+        .flatMap(([, selectors, body]) => selectors.split(",").map(selector => ({ selector: selector.trim(), body })))
+        .filter(rule => rule.selector.endsWith(" #active_toggle"));
+    for (const type of ["CitadelAbilityIcon", "DraggableAbilityIcon"]) {
+        for (const toggled of [false, true]) {
+            const applicable = rules.filter(({ selector }) => selector.includes(type + ".disabled") &&
+                !selector.includes(".minecraft_healthbar_active") && (toggled ? !selector.includes(":not(.toggled_on)") : true));
+            const body = applicable.map(rule => rule.body).join("\n");
+            assert.match(body, /opacity:\s*1;/);
+            assert.match(body, /background-image:\s*url\(/);
+            assert.match(body, /z-index:\s*500;/, "cross paints above the native ability image");
+            if (toggled) assert.doesNotMatch(body, /\bborder(?:-color)?:|\bbox-shadow:/,
+                "disabled+toggled preserves the native yellow border and glow");
+            else {
+                assert.match(body, /border-color:\s*transparent;/);
+                assert.match(body, /box-shadow:\s*none;/);
+            }
+        }
+    }
 });
