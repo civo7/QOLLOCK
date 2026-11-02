@@ -98,7 +98,7 @@
 			<!-- ============================================================= -->
 			<!-- QOLLOCK CUSTOM: Ranked Info & Global Leaderboard Cards -->
 			<!-- ============================================================= -->
-			<Panel id="RankedInfo" class="playOptionContainer playOptionContainerXS" onactivate="CitadelShowRankedInfo()">
+			<Panel id="RankedInfo" class="playOptionContainer playOptionContainerXS" onactivate="CitadelShowCurrentRankedSeasonPage(k_eCitadelRankedType_Normal)">
 				<Panel class="cardBorder" />
 				<Panel class="playOptionTop">
 					<Panel class="buttonImage" />
