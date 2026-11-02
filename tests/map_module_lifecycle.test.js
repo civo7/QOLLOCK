@@ -457,7 +457,10 @@ test("objective timer hooks cannot construct UI outside their active lifetime an
     const e = fixture(), { feature } = directTimer(e);
     feature.onSettingsChanged(); assert.equal(e.viewport.FindChild("QOLMinimapTimersRoot"), null);
     feature.onEnable(); const overlay = e.viewport.FindChild("QOLMinimapTimersRoot");
-    const children = createdTimerChildren(overlay); assert.equal(children.length, 12);
+    const children = createdTimerChildren(overlay); assert.equal(children.length, 13);
+    const docked = overlay.FindChild("QOLMinimapDockedTimers");
+    assert.ok(docked.FindChild("QOLMinimapBuffTimer"));
+    assert.ok(docked.FindChild("QOLMinimapRejuvTimer"));
     for (const panel of children) panel.SetParent(e.orphan);
     e.clock.advance(650); for (const panel of children) assert.equal(panel.IsValid(), false, panel.id);
     assert.match(e.viewport.FindChildTraverse("QOLMinimapBuffBridgeLeftTime").text, /^\d+:\d{2}$/);

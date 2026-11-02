@@ -74,9 +74,12 @@ opacity and the Minimalist switch; its background opacity appears only while
 that draft mode is enabled, including after history changes.
 
 Minimap objective timers are available in ordinary settings and Base Minimap's
-Content section. Their producer owns
-plate placement, size, content and visibility; text plates have no separate
-Customize entries. Map References exposes marker size, route size and layer
+Content section. Mid Boss, the ordinary buff plate and each bridge plate also
+have independent Customize selections for offsets, scale and opacity. Their
+geometry remains relative to the minimap viewport; positive vertical offsets
+move plates upward. The timer owner applies drafts through its ordinary settings
+hook and retains ownership of content, mode-dependent placement and visibility.
+Map References exposes marker size, route size and layer
 opacity while map-relative coordinates stay attached to the native renderer.
 Camp name controls are absent from the ordinary Minimap tab. Crates and routes
 follow their toggles throughout the match; retired minute-window values in older

@@ -158,8 +158,10 @@
     transform: scaleY(-1) scaleX(-1);
 }
 
-.qol_minimap_flip_active #QOLMinimapTimersRoot .QOLMinimapTimer,
-.localPlayerTeam2 #QOLMinimapTimersRoot .QOLMinimapTimer
+.qol_minimap_flip_active #QOLMinimapDockedTimers,
+.localPlayerTeam2 #QOLMinimapDockedTimers,
+.qol_minimap_flip_active #QOLMinimapTimersRoot > .QOLMinimapTimer,
+.localPlayerTeam2 #QOLMinimapTimersRoot > .QOLMinimapTimer
 {
     transform: scaleY(-1) scaleX(-1);
 }
@@ -170,7 +172,8 @@
     transform: scaleY(1) scaleX(1);
 }
 
-.localPlayerTeam2 .qol_minimap_flip_active #QOLMinimapTimersRoot .QOLMinimapTimer
+.localPlayerTeam2 .qol_minimap_flip_active #QOLMinimapDockedTimers,
+.localPlayerTeam2 .qol_minimap_flip_active #QOLMinimapTimersRoot > .QOLMinimapTimer
 {
     transform: scaleY(1) scaleX(1);
 }

@@ -355,7 +355,7 @@ test("ql_minimap_timers hides bridge buff timer when powerup rune is spawned on 
     instance.onDisable();
 });
 
-test("ql_minimap_timers standard mode positioning respects 40px bottom offset and single slot offsets", () => {
+test("ql_minimap_timers ordinary plates retain Peer insets when either timer is disabled", () => {
     const hud = sim.createHud({ inHideout: false });
     hud.assertLoaded();
     const Q = hud.sandbox.global.QOL;
@@ -392,23 +392,28 @@ test("ql_minimap_timers standard mode positioning respects 40px bottom offset an
     assert.ok(buffTimer, "Buff timer must exist");
     assert.ok(rejuvTimer, "Rejuv timer must exist");
 
-    // Both timers active: overlay bottom margin must be 40px, timer margin 0px 40px, overlay marginLeft 0px
-    assert.strictEqual(overlay.style.marginBottom, "40px", "Bottom offset must be 40px at 400px minimap");
-    assert.strictEqual(buffTimer.style.margin, "0px 40px", "Buff timer gap margin must be 40px");
-    assert.strictEqual(rejuvTimer.style.margin, "0px 40px", "Rejuv timer gap margin must be 40px");
-    assert.strictEqual(overlay.style.marginLeft, "0px", "Centered when both timers active");
+    assert.strictEqual(overlay.style.marginBottom, "0px", "The canvas follows the minimap viewport");
+    assert.strictEqual(buffTimer.style.horizontalAlign, "left");
+    assert.strictEqual(buffTimer.style.marginLeft, "60px");
+    assert.strictEqual(buffTimer.style.marginBottom, "58px");
+    assert.strictEqual(rejuvTimer.style.horizontalAlign, "right");
+    assert.strictEqual(rejuvTimer.style.marginRight, "103px");
+    assert.strictEqual(rejuvTimer.style.marginBottom, "58px");
 
-    // Only buff timer active: single slot offset applied to the right (+152px)
+    // An absent partner must not move the surviving plate to the other slot.
     cfg = { ...cfg, ENABLE_MINIMAP_REJUV_TIMER: 0 };
     instance.onSettingsChanged();
     hud.clock.advance(500);
-    assert.strictEqual(overlay.style.marginLeft, "152px", "Single buff timer shifted right to preserve slot");
+    assert.strictEqual(buffTimer.style.marginLeft, "60px");
+    assert.strictEqual(buffTimer.BHasClass("qol-hidden"), false);
+    assert.strictEqual(rejuvTimer.BHasClass("qol-hidden"), true);
 
-    // Only rejuv timer active: single slot offset applied to the left (-152px)
     cfg = { ...cfg, ENABLE_MINIMAP_BUFF_TIMER: 0, ENABLE_MINIMAP_REJUV_TIMER: 1 };
     instance.onSettingsChanged();
     hud.clock.advance(500);
-    assert.strictEqual(overlay.style.marginLeft, "-152px", "Single rejuv timer shifted left to preserve slot");
+    assert.strictEqual(rejuvTimer.style.marginRight, "103px");
+    assert.strictEqual(rejuvTimer.BHasClass("qol-hidden"), false);
+    assert.strictEqual(buffTimer.BHasClass("qol-hidden"), true);
 
     instance.onDisable();
 });
@@ -552,7 +557,7 @@ test("ql_minimap_timers maintains calibrated base coordinates across minimap sca
     instance.onSettingsChanged();
     hud.clock.advance(500);
     assert.strictEqual(rejuvTimer.style.verticalAlign, "bottom", "Mid boss timer when not in pit must dock at bottom");
-    assert.strictEqual(rejuvTimer.style.marginBottom, "40px", "Mid boss timer bottom offset must remain 40px base");
+    assert.strictEqual(rejuvTimer.style.marginBottom, "58px", "Ordinary Mid Boss keeps the Peer bottom inset in base coordinates");
 
     instance.onDisable();
 });
