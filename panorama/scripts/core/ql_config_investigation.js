@@ -30,6 +30,23 @@
         for (const key of changedKeys) all.push(row("key-" + key.toLowerCase().replace(/_/g, "-"), [key],
             manifests.filter(owner => owner.keys.includes(key)).map(owner => owner.id).sort(),
             "Single setting refinement; an effect can depend on the other expanded settings", { optional: true }));
+        if (selectedIds.some(id => id === "revert-minimap-keyboard" || id === "revert-other-settings")) {
+            const selectedOwners = new Set(["ql_minimap_runtime", "ql_minimap_loot", "ql_minimap_timers", "ql_keyboard"]);
+            const consumerGroups = all.filter(item => item.id.startsWith("group-")).map(({ id, keys, owners }) => ({ id, keys, owners }));
+            const selectedGroups = consumerGroups.filter(group => group.owners.some(owner => selectedOwners.has(owner)));
+            const otherGroups = consumerGroups.filter(group => !selectedGroups.includes(group));
+            if (!selectedGroups.length || !otherGroups.length) throw Error("combined settings partition requires changed keys on both sides");
+            // Keep shared-consumer groups intact; never absorb unrelated groups
+            // merely because they also declare a compass/rejuvenator consumer.
+            for (const [id, groups, question] of [
+                ["revert-minimap-keyboard", selectedGroups, "Revert complete minimap/keyboard consumer groups inside Expanded; shared consumers are included"],
+                ["revert-other-settings", otherGroups, "Revert the exact remaining changed settings inside Expanded; minimap/keyboard groups stay expanded"]
+            ]) {
+                const keys = groups.flatMap(group => group.keys).sort();
+                const owners = [...new Set(groups.flatMap(group => group.owners))].sort();
+                all.push(row(id, keys, owners, question, { optional: true, consumerGroups: groups }));
+            }
+        }
         // Opt-in only: old captures retain exactly their original coverage ledger.
         if (selectedIds.some(id => id === "keyboard" || id.startsWith("keyboard-"))) {
             if (Number(baseline.ENABLE_KEYBOARD_OVERLAY) !== 1 || !manifests.some(owner => owner.id === "ql_keyboard")) throw Error("keyboard probes require an enabled keyboard baseline");

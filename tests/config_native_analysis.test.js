@@ -21,10 +21,11 @@ function capture(noise = 0, drift = false, keyboard = false, selected = "group-0
         }
     }
     hud.root.SetAttributeString("QOL_DiagRequest", "fps_config_103_" + (keyboard ? selected : "key-enable-compass"));
-    Q.core.App.syncDiagnosticState(hud.root, hud.clock.now()); hud.clock.advanceBy(selected === "keyboard" ? 210000 : 100000, 1000);
+    const combined = selected.includes("revert-minimap-keyboard") && selected.includes("revert-other-settings");
+    Q.core.App.syncDiagnosticState(hud.root, hud.clock.now()); hud.clock.advanceBy(selected === "keyboard" ? 210000 : combined ? 170000 : 100000, 1000);
     const markers = hud.sandbox.messages.filter(line => line.startsWith("[QOLLOCK:NativeFPS] ")).map(line => JSON.parse(line.slice(20)));
     const windows = markers.filter(row => row.type === "window");
-    assert.equal(windows.length, selected === "keyboard" ? 48 : 24);
+    assert.equal(windows.length, selected === "keyboard" || combined ? 48 : 24);
     const first = windows[0].startAt - 1000, last = windows.at(-1).endAt + 1000;
     const meta = { kind: markers[0].kind, session: markers[0].session, reason: markers.at(-1).reason, processId: 100, completed: true,
         windows, packets: markers.filter(row => row.type === "packet"),
@@ -64,6 +65,59 @@ test("native config analysis attributes repeated effects to exact settings and i
     assert.ok(Object.values(result.sourceMatches).every(value => value === true));
     const report = formatReport(result);
     for (const text of ["ENABLE_COMPASS", "ql_compass/manifest.js", "canonical", "not vanilla", "inactive", "not be summed"]) assert.ok(report.includes(text), text);
+});
+
+test("combined native analysis reports the actual complementary consumer groups and four conditional states", () => {
+    const selected = "whole-config,revert-minimap-keyboard,revert-other-settings";
+    const { csv, meta } = capture(0, false, true, selected);
+    const result = analyzeCapture(csv, meta);
+    assert.deepEqual(result.context.selectedIds, selected.split(","));
+    assert.deepEqual(result.rows.map(row => row.id), ["sham", "whole-config", "revert-minimap-keyboard", "revert-other-settings"]);
+    assert.equal(result.coverage.validBlocks, 12);
+    assert.equal(result.coverage.invalidBlocks, 0);
+    const s = result.rows.find(row => row.id === "revert-minimap-keyboard");
+    const t = result.rows.find(row => row.id === "revert-other-settings");
+    assert.deepEqual([...s.keys, ...t.keys].sort(), result.context.plan.changedKeys);
+    assert.equal(s.keys.some(key => t.keys.includes(key)), false);
+    for (const row of [s, t]) {
+        assert.equal(row.status, "effect_detected");
+        assert.ok(row.consumerGroups.length > 0);
+        assert.deepEqual(row.consumerGroups.flatMap(group => group.keys).sort(), row.keys);
+    }
+    const report = formatReport(result);
+    assert.match(report, /Consumer groups=.*group-\d+/);
+    assert.match(report, /Mean Present interval: Expanded=.*B=/);
+    for (const group of [...s.consumerGroups, ...t.consumerGroups]) {
+        assert.ok(report.includes(JSON.stringify(group)), group.id);
+    }
+    assert.match(report, /must not be summed/);
+
+    const incomplete = JSON.parse(JSON.stringify(meta));
+    const first = incomplete.windows.findIndex(window => window.conditionId === s.id);
+    incomplete.windows.splice(first, 1);
+    const rejected = analyzeCapture(csv, incomplete).rows.find(row => row.id === s.id);
+    assert.equal(rejected.validBlocks, 2);
+    assert.notEqual(rejected.status, "effect_detected");
+});
+
+test("combined captures reject forged partition metadata and partial selection preserves its exact ledger", () => {
+    const { csv, meta } = capture(0, false, true, "revert-minimap-keyboard");
+    const result = analyzeCapture(csv, meta);
+    assert.deepEqual(result.rows.map(row => row.id), ["sham", "revert-minimap-keyboard"]);
+    assert.ok(result.context.plan.available.some(row => row.id === "revert-other-settings"));
+    for (const corrupt of [
+        context => { context.plan.conditions[1].consumerGroups[0].keys.push("FORGED_KEY"); },
+        context => { context.selectedIds = ["revert-other-settings"]; }
+    ]) {
+        const broken = JSON.parse(JSON.stringify(meta));
+        rewriteProofs(broken, new Set(["context"]), corrupt);
+        assert.throws(() => analyzeCapture(csv, broken), /ledger|contract/i);
+    }
+    const legacy = capture();
+    const historical = analyzeCapture(legacy.csv, legacy.meta);
+    assert.equal(historical.context.plan.available.some(row => row.id.startsWith("revert-")), false);
+    assert.equal(historical.rows.some(row => Object.hasOwn(row, "consumerGroups")), false);
+    assert.equal(historical.rows.find(row => row.id === "key-enable-compass").status, "effect_detected");
 });
 
 test("config source evidence follows extracted keyboard diagnostics and retains older capture contexts", () => {

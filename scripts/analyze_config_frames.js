@@ -161,6 +161,8 @@ function formatConfig(result) {
         lines.push(`${row.status.toUpperCase()} ${row.id}: ${f(row.effectMs)}ms [${f(row.lowerMs)},${f(row.upperMs)}]; Present FPS ${f(row.referenceFps)} -> ${f(row.excludedFps)}; valid=${row.validBlocks}/3; drift=${row.drift}`,
             "  " + row.question, "  Keys=" + JSON.stringify(row.patch) + "; Expanded values=" + JSON.stringify(Object.fromEntries(row.keys.map(key => [key, context.baseline[key]]))),
             "  Consumers=" + (row.owners.join(",") || "unregistered/shared whole-configuration control") + "; source=" + row.sources.join(","));
+        if (row.consumerGroups) lines.push("  Consumer groups=" + JSON.stringify(row.consumerGroups),
+            "  Mean Present interval: Expanded=" + f(row.referenceMs) + "ms; B=" + f(row.excludedMs) + "ms");
         if (row.keyboard) lines.push("  Keyboard intervention=" + JSON.stringify(row.keyboard));
         const observed = row.blocks.find(block => block.status === "valid");
         if (observed) {

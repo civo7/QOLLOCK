@@ -532,6 +532,37 @@ selected-ID follow-up nor the full plan requires another repack when using the
 same compiled controls. The collector remains one-way: this is an explicit
 short first capture, not online native-quality feedback to the HUD.
 
+For a short combined-group capture, start the same collector and replace the
+condition IDs in Dev's **Expanded configuration investigation** with:
+
+```text
+whole-config,revert-minimap-keyboard,revert-other-settings
+```
+
+Click **Investigate**, close Esc within five seconds and keep the scene and game
+focus unchanged. This selects four comparisons, including the automatic sham:
+Expanded versus itself, canonical, Expanded with S restored to canonical, and
+Expanded with T restored to canonical. Three repetitions take about 2.5 minutes;
+the existing native frame collector writes `captures/native-fps-*/report.txt` and
+`native-analysis.json` alongside the raw capture. The new controls require a
+maintainer compile/repack once; selecting them afterward needs no file edits.
+
+S contains whole changed-key consumer groups touching `ql_minimap_runtime`,
+`ql_minimap_loot`, `ql_minimap_timers` or `ql_keyboard`. A shared group is included
+in full, including its other consumers; an unrelated compass/speed-only group
+stays in T. T is the exact remaining changed-key complement. The captured plan
+and report list the actual keys and original consumer groups, so this partition
+does not depend on historical group numbers. Both subsets must contain changed
+keys; otherwise the request fails visibly instead of measuring a mislabeled
+no-op. Either new ID may also be selected alone for a partial follow-up.
+
+These are conditional comparisons in the same Expanded configuration, not
+additive cost shares. A large whole-config effect with inconclusive halves does
+not clear either half. Old captures and requests without either new ID retain
+their original conditions, order and available refinements; analysis reconstructs
+the plan from the saved settings, manifest inventory and selected IDs and rejects
+a mismatched ledger.
+
 The declared plan compares Expanded against the canonical settings, then
 benchmark accounting on/off, then every changed settings group. Groups have the
 same declaring manifest consumers; shared keys list all consumers and keys with
