@@ -2,8 +2,34 @@
 
 ## Publish a Prepared Release
 
-The maintainer compiles, repacks and verifies QOLLOCK in Deadlock. CI publishes
-the prepared VPKs inside a ZIP; it never builds or changes the VPKs.
+The maintainer compiles, repacks and verifies QOLLOCK in Deadlock. The local
+builder can prepare one ZIP for GitHub Releases, Discord and GameBanana.
+
+1. Complete the [client checklist](TEST_CHECKLIST.md) for the intended sources.
+2. Choose the public update marker and set `QOL_UPDATE_MARKER` before building,
+   with maintainer authorization for any version or marker change.
+3. Choose **[3] Local VPK + release ZIP** in `build_mod`. It saves the local VPK
+   and a versioned ZIP under `build_mod/builds/`. The ZIP contains only this
+   build's VPK bundle and `LICENSE`, `NOTICE`, `THIRD_PARTY_NOTICES.md`.
+   Preserve any additional applicable third-party notices with the distribution.
+4. Install and test that VPK in Deadlock. Commit and push the matching sources.
+5. On GitHub, open **Releases > Draft a new release**. Choose or create the version
+   tag for the exact source commit, write release notes, attach the prepared ZIP
+   and click **Publish release**. Do not run the VPK-packaging workflow for this path.
+6. Upload the same ZIP to Discord and GameBanana. Publish the matching update
+   marker only after the downloads are available, using **Publish QOLLOCK update
+   marker** in [qollock-updates](https://github.com/Predi-i/qollock-updates)
+   with `Dry run` off.
+
+ZIP packaging does not prove that a VPK matches the current sources or package
+version. The maintainer verifies that pairing and tests the matching build.
+The marker remains independent of the package and settings versions.
+
+### Alternative: Package Prepared VPKs in Actions
+
+The existing workflow remains available for releases prepared from raw VPKs.
+It never compiles or changes the VPKs. This is an alternative to uploading the
+local ZIP, not an additional step after it.
 
 1. Complete the [client checklist](TEST_CHECKLIST.md) for the intended source commit.
 2. Choose the next public marker in [qollock-updates](https://github.com/Predi-i/qollock-updates)

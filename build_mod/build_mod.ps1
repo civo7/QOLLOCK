@@ -501,11 +501,12 @@ while ($true) {
             Write-Host "`nSelect build destination:" -ForegroundColor Cyan
             Write-Host "[1] Local ($(Split-Path $ScriptDir -Leaf)/builds/$SelectedMod.vpk)"
             Write-Host "[2] Game Addons Folder ($AddonsDir)"
+            Write-Host "[3] Local VPK + release ZIP (with license and notices)"
             Write-Host "[0] Settings"
             Write-Host "[S] Start Deadlock"
             Write-Host "[R] Restart Deadlock"
-            while ($BuildMode -notin @(1, 2)) {
-                $parsedRun = Parse-RunFlags -InputText (Read-Host "Enter 1, 2, 0, S, or R")
+            while ($BuildMode -notin @(1, 2, 3)) {
+                $parsedRun = Parse-RunFlags -InputText (Read-Host "Enter 1, 2, 3, 0, S, or R")
                 $selection = $parsedRun.Command.ToUpperInvariant()
                 switch ($selection) {
                     '0' {
@@ -525,6 +526,10 @@ while ($true) {
                         $Force = $Force -or $parsedRun.Force
                         $BuildMode = 2
                     }
+                    '3' {
+                        $Force = $Force -or $parsedRun.Force
+                        $BuildMode = 3
+                    }
                 }
             }
         }
@@ -537,7 +542,7 @@ while ($true) {
         if (-not (Test-Path -LiteralPath $outputDirectory)) {
             New-Item -ItemType Directory -Path $outputDirectory -Force | Out-Null
         }
-    } elseif ($BuildMode -eq 1) {
+    } elseif ($BuildMode -in @(1, 3)) {
         if (Test-Path $BuildsDir -PathType Leaf) { Remove-Item $BuildsDir -Force }
         if (-not (Test-Path $BuildsDir)) { New-Item -ItemType Directory -Force -Path $BuildsDir | Out-Null }
         $OutputVpk = Join-Path $BuildsDir "$SelectedMod.vpk"
@@ -893,6 +898,11 @@ while ($true) {
             if (-not (Test-Path -LiteralPath (Join-Path $packStage 'previous'))) {
                 Remove-Item -LiteralPath $packStage -Recurse -Force -ErrorAction Stop
             }
+        }
+
+        if ($BuildMode -eq 3) {
+            $releaseArchive = New-ReleaseArchive -SourceRoot $ModSourcePath -OutputVpk $OutputVpk
+            Write-Host "Release ZIP saved to: $releaseArchive" -ForegroundColor White
         }
 
         Write-Host "`n=== BUILD SUCCESSFUL ===" -ForegroundColor Green
