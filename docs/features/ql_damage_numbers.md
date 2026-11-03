@@ -13,6 +13,11 @@ reactive while that poll is stopped. Active size/opacity still use native code
 styles: removing that path requires client evidence of native style writers and
 stylesheet priority on live and recycled indicator roles.
 
+Discovery stays inside the current HudCore event-indicator owner. If that
+optional source is absent, only the verified sibling gameplay_hud is inspected;
+missing owners never expand discovery to the whole HUD. Late/replaced sources
+release previous living labels before applying the current presentation.
+
 Size and opacity are edited directly beside the damage modes in the Crosshair
 tab. These indicators follow world/combat events and have no HUD-canvas entry
 or screen position controls.

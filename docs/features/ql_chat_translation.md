@@ -7,6 +7,8 @@ unresolved account evidence remains pending, with slower retries after the
 startup window. Only a confirmed non-owner stops managed polling. The repaired
 latch from main ignores obsolete timeout-based denials. Disable releases owned
 images and discovery state while preserving the current latch.
+The shared account probe selects CitadelPartyContainer directly from the current
+HUD before inspecting its party subtree; it never searches gameplay for that host.
 
 Discovery follows the verified top-bar `Messages` and bottom-chat `ChatMessages`
 containers with bounded fallback scans. Native `MessageText` and `.Text > Label`

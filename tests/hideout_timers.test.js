@@ -32,7 +32,8 @@ test("urn hideout cleanup never searches for an absent owned panel", () => {
 
 test("urn retries missing minimap and restores replaced timer and hideout transitions", () => {
     const { hud, Q, $, tick, instance } = fixture("ql_urn_timer", { ENABLE_URN_TIMER: 1 });
-    const top = $.CreatePanel("Panel", hud.root, "TopBar");
+    const core = $.CreatePanel("Panel", hud.root, ""); core.AddClass("HudCore");
+    const top = $.CreatePanel("Panel", core, "TopBar");
     $.CreatePanel("Label", top, "GameTime").text = "12:00";
     const find = hud.root.FindChildTraverse.bind(hud.root);
     let searches = 0;
@@ -43,7 +44,6 @@ test("urn retries missing minimap and restores replaced timer and hideout transi
     const text = find("RiftTimerLabel").text;
     tick();
     assert.equal(searches, 0, "missing sources wait on their local breadcrumbs");
-    const core = $.CreatePanel("Panel", hud.root, ""); core.AddClass("HudCore");
     const gameplay = $.CreatePanel("Panel", core, "gameplay_hud");
     let owner = $.CreatePanel("Panel", gameplay, ""); owner.AddClass("clamp_width");
     for (const id of ["minimap_persp", "minimap_container", "HudMinimapContainer"]) owner = $.CreatePanel("Panel", owner, id);
@@ -129,6 +129,7 @@ test("urn discovers the native minimap through its owner and follows a living re
 
 test("urn retries a missing timer parent without requiring a clock text change", () => {
     const { hud, $, tick } = fixture("ql_urn_timer", { ENABLE_URN_TIMER: 1 });
+    const core = $.CreatePanel("Panel", hud.root, ""); core.AddClass("HudCore");
     $.CreatePanel("Label", hud.root, "GameTime").text = "12:00";
     const find = hud.root.FindChildTraverse.bind(hud.root);
     let searches = 0;
@@ -139,7 +140,7 @@ test("urn retries a missing timer parent without requiring a clock text change",
     tick();
     assert.equal(searches, firstSearches, "missing native parent is not rescanned on the next callback");
     assert.equal(find("RiftTimer"), null);
-    $.CreatePanel("Panel", hud.root, "TopBar");
+    $.CreatePanel("Panel", core, "TopBar");
     hud.clock.advance(2100);
     tick();
     assert.ok(find("RiftTimer"));

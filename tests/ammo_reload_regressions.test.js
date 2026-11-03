@@ -5,13 +5,7 @@ const test = require("node:test");
 const assert = require("node:assert/strict");
 const { createHud } = require("../scripts/simulator");
 const loadSettings = require("./load_settings_environment");
-
-function addGunData($, root) {
-    const core = $.CreatePanel("Panel", root, ""); core.AddClass("HudCore");
-    let owner = core;
-    for (const id of ["gameplay_hud", "gameplay_hud_alive", "crosshair", "gun", "gun_data"]) owner = $.CreatePanel("Panel", owner, id);
-    return owner;
-}
+const addGunData = require("./helpers/native_gun");
 
 function addClipHalf($, root, id) {
     const half = $.CreatePanel("Panel", root, id);
@@ -124,7 +118,7 @@ test("reload countdown keeps one decimal when radial progress freezes then jumps
     const hud = createHud({ inHideout: false });
     hud.assertLoaded();
     const { $, QOL: Q } = hud.sandbox.global;
-    const reticle = $.CreatePanel("Panel", hud.root, "reticle_status");
+    const reticle = $.CreatePanel("Panel", addGunData($, hud.root), "reticle_status");
     const radial = $.CreatePanel("CircularProgressBar", reticle, "attack_delayed_progress_bar");
     radial.AddClass("has_active_reload");
     radial.style.clip = "radial( 50% 50%, 40deg, 90deg )";

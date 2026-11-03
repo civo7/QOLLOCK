@@ -19,11 +19,6 @@
             const P = QOL.core.panel;
             const tree = P.createOwnedTree();
             const time = QOL.core.time;
-            const makeResolver = id => QOL.panelCache.createIdResolver(id, {
-                retryMs: 2000, refreshMs: 2000
-            });
-            const topResolver = makeResolver("TopBar");
-            const legacyTopResolver = makeResolver("CitadelHudTopBar");
             let active = false, enabled = false, loop = null, unsubscribe = null;
             let root = null, overlay = null, label = null, parent = null;
             let state = resetModel();
@@ -47,7 +42,6 @@
             function release() {
                 retireOverlay();
                 overlay = null; label = null; parent = null;
-                topResolver.reset(); legacyTopResolver.reset();
             }
 
             function readSource(currentRoot) {
@@ -102,9 +96,9 @@
 
             function ensureOverlay(currentRoot) {
                 tree.sweep();
-                const top = topResolver.resolve(currentRoot) || legacyTopResolver.resolve(currentRoot);
-                let currentParent = P.isAlive(top) ? QOL.utils.FindFirstPanelByClass(top, "TeamNetworth") : null;
-                if (!currentParent) currentParent = QOL.utils.FindFirstPanelByClass(currentRoot, "TeamNetworth") || top;
+                const core = P.findChildByClass(currentRoot, "HudCore");
+                const top = P.findChild(core, "TopBar") || P.findChild(core, "CitadelHudTopBar");
+                const currentParent = P.findChildByClass(top, "TeamNetworth") || top;
                 if (parent !== currentParent || (overlay && (!P.isAlive(overlay) || overlay.GetParent() !== currentParent))) {
                     retireOverlay(); overlay = null; label = null; parent = currentParent;
                 }

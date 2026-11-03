@@ -503,8 +503,7 @@
 
     const tryReadAccountIdFromKnownPartyPath = (root) => {
         if (!root) return "";
-        let partyContainer = null;
-        try { partyContainer = root.FindChildTraverse ? root.FindChildTraverse("CitadelPartyContainer") : null; } catch (_) {}
+        const partyContainer = _panelHelpers.findChild(findHud(root), "CitadelPartyContainer");
         if (!partyContainer) return "";
         let party = null;
         try { party = partyContainer.FindChildTraverse ? partyContainer.FindChildTraverse("CitadelParty") : null; } catch (_) {}

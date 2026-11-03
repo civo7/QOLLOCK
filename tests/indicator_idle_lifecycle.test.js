@@ -31,7 +31,7 @@ for (const [id, setting, customized, neutral, property, expected] of [
     if (id === "ql_target_shapes") {
         scope = env.add(scope, "", ["HudCore"]);
         for (const name of ["gameplay_hud", "gameplay_hud_alive", "crosshair", "unit_target_container"]) scope = env.add(scope, name);
-    }
+    } else scope = env.add(env.add(scope, "", ["HudCore"]), "HudEventIndicatorsPanel");
     const classes = id === "ql_target_shapes" ? ["target_shape"] : ["HudIndicatorText"];
     const first = env.add(scope, "Value", classes);
     first.style.opacity = "0.73";

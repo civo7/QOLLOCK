@@ -3,6 +3,7 @@
 const test = require("node:test");
 const assert = require("node:assert/strict");
 const { createHud } = require("../scripts/simulator");
+const gunData = require("./helpers/native_gun");
 
 test("healthbar accent and native position react in hideout and reset", () => {
     const hud = createHud({ inHideout: true });
@@ -332,7 +333,7 @@ test("reload label gets its configured style after replacement", () => {
     const hud = createHud({ inHideout: false });
     hud.assertLoaded();
     const { $, QOL: Q } = hud.sandbox.global;
-    const reticle = $.CreatePanel("Panel", hud.root, "reticle_status");
+    const reticle = $.CreatePanel("Panel", gunData($, hud.root), "reticle_status");
     $.CreatePanel("Panel", reticle, "attack_delayed_progress_bar");
     Q.core.ConfigStore.set("ql_reload_cooldown", "ENABLE_RELOAD_COOLDOWN", true);
     Q.core.ConfigStore.set("ql_reload_cooldown", "RELOAD_COOLDOWN_X_OFFSET", 20);

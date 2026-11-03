@@ -66,7 +66,8 @@
                 if (!preferredRoot) _cachedHud = ctx;
                 return ctx;
             }
-            let hud = ctx.FindChildTraverse ? ctx.FindChildTraverse("Hud") : null;
+            let hud = ctx.FindChild ? ctx.FindChild("Hud") : null;
+            if (!isPanelAlive(hud)) hud = ctx.FindChildTraverse ? ctx.FindChildTraverse("Hud") : null;
             if (isPanelAlive(hud)) {
                 if (!preferredRoot) _cachedHud = hud;
                 return hud;
