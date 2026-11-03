@@ -389,6 +389,7 @@
                     const key = model.rows.values().next().value || STAT_DEFS[0].key;
                     content.set(key, { text: "--", negative: false, neutral: true });
                 }
+                if (!content.size && !_isAlive(overlay)) return;
                 if (!ensureOverlay(core, content)) { hideOverlay(); return; }
                 render(content);
             }

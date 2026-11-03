@@ -87,8 +87,9 @@ function value(root, key) {
 test("crosshair skips static decoration of inactive rows and repairs them before reveal", () => {
     const hud = createCrosshairHud(), { $, QOL: Q } = hud.sandbox.global;
     const source = $.CreatePanel("Panel", hud.core, "hudActivePlayerStats");
-    const fire = addModifier($, source, "fireRateContainer", { number: "+10", postfix: "%", classes: ["isPositive"] });
+    const fire = addModifier($, source, "fireRateContainer", { number: "+10", postfix: "%", classes: ["shouldShow", "isPositive"] });
     enableActiveStats(Q); hud.clock.advance(300);
+    fire.RemoveClass("shouldShow"); hud.clock.advance(100);
     const icon = row(hud.root, "fireRate").FindChild("QOLCrosshairStatRow_fireRate_icon");
     const hasClass = icon.BHasClass;
     let decorationReads = 0;
@@ -104,6 +105,22 @@ test("crosshair skips static decoration of inactive rows and repairs them before
     assert.equal(hud.root.FindChildTraverse("QOLCrosshairStatsOverlay").style.visibility, "visible");
     Q.core.FeatureRegistry.disable("ql_crosshair_stats"); hud.clock.advance(20);
     assert.equal(hud.root.FindChildTraverse("QOLCrosshairStatsOverlay"), null);
+    assert.deepEqual(hud.clock.errors, []);
+});
+
+test("crosshair defers its entire overlay tree until a visible modifier needs it", () => {
+    const hud = createCrosshairHud(), { $, QOL: Q } = hud.sandbox.global;
+    const source = $.CreatePanel("Panel", hud.core, "hudActivePlayerStats");
+    const fire = addModifier($, source, "fireRateContainer", { number: "+10", postfix: "%", classes: ["isPositive"] });
+    enableActiveStats(Q); hud.clock.advance(1200);
+    assert.equal(hud.root.FindChildTraverse("QOLCrosshairStatsOverlay"), null, "idle stats must not allocate or reconcile an invisible tree");
+    fire.AddClass("shouldShow"); hud.clock.advance(100);
+    assert.equal(value(hud.root, "fireRate").text, "+10%");
+    assert.equal(hud.root.FindChildTraverse("QOLCrosshairStatsOverlay").style.visibility, "visible");
+    Q.core.FeatureRegistry.disable("ql_crosshair_stats"); hud.clock.advance(20);
+    assert.equal(hud.root.FindChildTraverse("QOLCrosshairStatsOverlay"), null);
+    Q.core.FeatureRegistry.enable("ql_crosshair_stats"); hud.clock.advance(100);
+    assert.equal(value(hud.root, "fireRate").text, "+10%");
     assert.deepEqual(hud.clock.errors, []);
 });
 
@@ -459,7 +476,7 @@ test("crosshair discovers late rows in narrow owners and recovers from row/owner
     const { $, QOL: Q } = hud.sandbox.global;
     enableActiveStats(Q);
     hud.clock.advance(300);
-    assert.strictEqual(row(hud.root, "fireRate").BHasClass("qol-hidden"), true);
+    assert.strictEqual(row(hud.root, "fireRate"), null, "missing native stats allocate no overlay tree");
 
     // The entire native source can appear after the feature is enabled.
     const source = $.CreatePanel("Panel", hud.core, "hudActivePlayerStats");
@@ -665,7 +682,7 @@ test("crosshair waits at verified owners and follows a living HudCore replacemen
         return traverse.call(this, id);
     };
     feature.onEnable(); hud.clock.advance(1200);
-    assert.equal(row(hud.root, "fireRate").BHasClass("qol-hidden"), true);
+    assert.equal(row(hud.root, "fireRate"), null, "unrelated native sources cannot create a mirror");
     const source = $.CreatePanel("Panel", hud.core, "hudActivePlayerStats");
     addModifier($, source, "fireRateContainer", { number: "+12", postfix: "%", classes: ["shouldShow", "isPositive"] });
     hud.clock.advance(200); assert.equal(value(hud.root, "fireRate").text, "+12%");

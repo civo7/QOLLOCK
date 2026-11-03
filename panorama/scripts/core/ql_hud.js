@@ -74,15 +74,18 @@
                 if (hasBrawlClass(hud)) {
                     result = true;
                 } else {
-                    const sb = resolveCachedPanel(hud, "streetBrawlContainer", "StretBrawlContainer");
+                    // hud.xml owns TopBar/gameplay_hud directly under HudCore;
+                    // citadel_hud_top_bar.xml owns the round counter directly.
+                    const core = _panelHelpers.findChildByClass(hud, "HudCore");
+                    const topBar = _panelHelpers.findChild(core, "TopBar");
+                    const sb = _panelHelpers.findChild(topBar, "StretBrawlContainer");
                     if (isAlive(sb) && (sb.visible || sb.BHasClass("visible") || sb.style?.visibility === "visible")) {
                         result = true;
                     } else {
-                        const gpHud = resolveCachedPanel(hud, "gameplayHud", "gameplay_hud");
+                        const gpHud = _panelHelpers.findChild(core, "gameplay_hud");
                         if (hasBrawlClass(gpHud)) {
                             result = true;
                         } else {
-                            const topBar = resolveCachedPanel(hud, "topBar", "TopBar");
                             if (hasBrawlClass(topBar)) {
                                 result = true;
                             }

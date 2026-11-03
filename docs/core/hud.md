@@ -12,7 +12,7 @@ Provides Deadlock-specific HUD element discovery, match mode detection (Hideout,
 - `findHud(preferredRoot)`: Resolves and returns the main `#Hud` panel (delegates to `QOL.core.panel.findHud`).
 - `isInHideout(root)`: Checks if player is in sandbox/testing/hideout mode (`connectedToHideout` / `InHideout` classes).
 - `isGameplayHudShown(root)`: Reports native combat-HUD presentation evidence; requires a real Hud, joined-team state and a visible native `gameplay_hud` ancestry.
-- `isStreetBrawl(root)`: Checks if active match is in Street Brawl mode (`gamemode_streetbrawl`).
+- `isStreetBrawl(root)`: Checks current HUD/ancestor mode classes and the native HudCore gameplay/TopBar evidence. The round counter stays scoped to TopBar; missing or replaced owners never trigger whole-HUD discovery.
 - `isClassActive(className)`: Checks the HUD root, native `gameplay_hud` and abilities container for a class token.
 - `applyRootClasses(root, config, timestamp, hideoutConnected)`: Synchronizes feature CSS classes onto the root container based on the complete active configuration and live HUD evidence.
 - `refreshRootClasses(root)`: Projects the complete current flat config from ConfigAdapter. Feature hooks use this entry point; passing a local settings slice to `applyRootClasses` would reset unrelated classes.
