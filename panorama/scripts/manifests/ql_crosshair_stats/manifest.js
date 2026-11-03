@@ -289,7 +289,7 @@
                 overlay = null; overlayParent = null; rows.clear(); layoutSignature = null;
             }
 
-            function ensureOverlay(core) {
+            function ensureOverlay(core, content) {
                 // The sweep validates every owned ID and its current parent.
                 // Reuse complete child handles until that topology changes.
                 if (!tree.sweep()) rows.clear();
@@ -304,13 +304,16 @@
                 if (previous !== overlay) { rows.clear(); layoutSignature = null; }
                 if (!_isAlive(overlay)) return false;
                 let complete = true;
-                const rowPanels = tree.children(overlay, "Panel", rowEntries);
+                const rowPanels = rows.size === STAT_DEFS.length ? null : tree.children(overlay, "Panel", rowEntries);
                 for (let index = 0; index < STAT_DEFS.length; index++) {
                     const def = STAT_DEFS[index], id = rowEntries[index].id;
-                    const row = rowPanels[index];
-                    if (!_isAlive(row)) { complete = false; continue; }
-                    P.setClass(row, "QOLCrosshairStatRow", true);
                     const cached = rows.get(def.key);
+                    const row = rowPanels ? rowPanels[index] : cached.row;
+                    if (!_isAlive(row)) { complete = false; continue; }
+                    // The ownership sweep still retires lost hidden children.
+                    // Reconcile their presentation only when it can be shown.
+                    if (cached?.row === row && !content.has(def.key)) continue;
+                    P.setClass(row, "QOLCrosshairStatRow", true);
                     const icon = cached?.row === row && cached.icon.hittest === false && cached.icon.hittestchildren === false
                         ? cached.icon : tree.child(row, "Panel", id + "_icon");
                     const value = cached?.row === row && cached.value.hittest === false && cached.value.hittestchildren === false
@@ -379,7 +382,6 @@
                     return;
                 }
                 const core = P.findChildByClass(root, "HudCore");
-                if (!ensureOverlay(core)) { hideOverlay(); return; }
                 const content = readContent(readSource(core));
                 if (preview && !content.size) {
                     // Keep the real owned row tree editable when the hero has
@@ -387,6 +389,7 @@
                     const key = model.rows.values().next().value || STAT_DEFS[0].key;
                     content.set(key, { text: "--", negative: false, neutral: true });
                 }
+                if (!ensureOverlay(core, content)) { hideOverlay(); return; }
                 render(content);
             }
 

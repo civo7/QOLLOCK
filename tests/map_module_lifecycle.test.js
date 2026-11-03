@@ -48,6 +48,23 @@ function onceFailStyle(panel, property) {
     return () => failures;
 }
 
+test("minimap reconciles its host once per update while retaining native overwrite recovery", () => {
+    const e = fixture();
+    e.configure({ ENABLE_ALT_ZOOM: 1, MINIMAP_SMALL_SIZE: 600 });
+    const style = e.host.style;
+    let reads = 0;
+    e.host.style = new Proxy(style, { get(target, key) {
+        if (key === "overflow") reads++;
+        return target[key];
+    } });
+    e.Q.core.FeatureRegistry.getInstance("ql_minimap_runtime").onSettingsChanged();
+    assert.equal(reads, 1, "one update must not validate the same host style twice");
+    style.overflow = "clip";
+    e.clock.advance(100);
+    assert.equal(style.overflow, "noclip", "native feedback still reasserts the owned geometry");
+    e.clean();
+});
+
 test("minimap decoration rebinds canvas and map_render without a viewport change", () => {
     const e = fixture();
     e.canvas.style.transform = "native icon positioning";

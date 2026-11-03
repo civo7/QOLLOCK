@@ -252,7 +252,6 @@
                 lastView = view;
                 if (diagnostic.controls?.releaseGeometry) released.geometry = geometry.release(true);
                 else {
-                    geometry.setDrawOverUi(Boolean(view.drawOverUi));
                     released.geometry = geometry.apply({ ...view, fixedIcons: model.fixedIcons,
                         hidden: Q.presentation.shouldHide("minimap", Q.presentation.visibilityConfig(ctx), rootOwner), diagnosticControls: diagnostic.controls });
                 }

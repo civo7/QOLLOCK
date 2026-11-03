@@ -84,6 +84,29 @@ function value(root, key) {
     return root.FindChildTraverse(`QOLCrosshairStatRow_${key}_value`);
 }
 
+test("crosshair skips static decoration of inactive rows and repairs them before reveal", () => {
+    const hud = createCrosshairHud(), { $, QOL: Q } = hud.sandbox.global;
+    const source = $.CreatePanel("Panel", hud.core, "hudActivePlayerStats");
+    const fire = addModifier($, source, "fireRateContainer", { number: "+10", postfix: "%", classes: ["isPositive"] });
+    enableActiveStats(Q); hud.clock.advance(300);
+    const icon = row(hud.root, "fireRate").FindChild("QOLCrosshairStatRow_fireRate_icon");
+    const hasClass = icon.BHasClass;
+    let decorationReads = 0;
+    icon.BHasClass = function (name) { decorationReads++; return hasClass.call(this, name); };
+    icon.RemoveClass("FireRate"); icon.hittest = true;
+    hud.clock.advance(500);
+    assert.equal(decorationReads, 0, "hidden stat icons need no repeated presentation reconciliation");
+    assert.equal(hud.root.FindChildTraverse("QOLCrosshairStatsOverlay").style.visibility, "collapse");
+    fire.AddClass("shouldShow"); hud.clock.advance(100);
+    assert.equal(value(hud.root, "fireRate").text, "+10%");
+    assert.equal(icon.BHasClass("FireRate"), true, "static classes are repaired before the row is shown");
+    assert.equal(icon.hittest, false);
+    assert.equal(hud.root.FindChildTraverse("QOLCrosshairStatsOverlay").style.visibility, "visible");
+    Q.core.FeatureRegistry.disable("ql_crosshair_stats"); hud.clock.advance(20);
+    assert.equal(hud.root.FindChildTraverse("QOLCrosshairStatsOverlay"), null);
+    assert.deepEqual(hud.clock.errors, []);
+});
+
 test("Active Stats scoreboard visibility is controlled by Customize", () => {
     const hud = createCrosshairHud(), { $, QOL: Q } = hud.sandbox.global;
     const source = $.CreatePanel("Panel", hud.core, "hudActivePlayerStats");

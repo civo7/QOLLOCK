@@ -48,7 +48,10 @@
             const update = () => {
                 if (!model?.enabled) { release(); return; }
                 const root = $.GetContextPanel();
-                const current = selectorResolver.resolve(root);
+                // hud.xml owns PopupManager directly; the party selector belongs
+                // to popup_join_or_create_party.xml, never to gameplay content.
+                const popups = P.findChild(root, "PopupManager");
+                const current = selectorResolver.resolve(popups);
                 // A live replacement must bypass the old selector's long retry deadline.
                 if (selector !== current) {
                     selector = current;
@@ -66,7 +69,7 @@
                     nextApplyMs = now + intervals.selected;
                     return;
                 }
-                const hasOption = applySelection(root);
+                const hasOption = applySelection(popups);
                 nextApplyMs = now + (isSelected(selector) ? intervals.selected : hasOption ? intervals.apply : intervals.hidden);
             };
             return {
@@ -88,7 +91,7 @@
             };
         },
         test() {
-            const selector = P.findTraverse($.GetContextPanel(), "LanePreferenceSelector");
+            const selector = P.findTraverse(P.findChild($.GetContextPanel(), "PopupManager"), "LanePreferenceSelector");
             if (!selector) return null;
             return { passed: true, name: "Lane preference selector exists", message: "",
                 assertions: [{ passed: true, name: "LanePreferenceSelector exists" }] };

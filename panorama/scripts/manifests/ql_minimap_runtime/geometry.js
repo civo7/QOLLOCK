@@ -11,9 +11,7 @@
         });
         let host = null;
         let panels = [];
-        let drawOverUi = false;
         const owned = P.createNativeStyleOwner();
-        let hostStyles = {};
         let diagnosticPlans = [];
         let diagnosticTargets = null;
         const roles = { minimap_persp: "host", minimap_container: "viewport", minimap_frame: "frame", HudMinimapContainer: "nativeContainer", hud_minimap: "renderer" };
@@ -21,7 +19,6 @@
 
         function resolve(root) {
             const nextHost = resolver.resolve(root);
-            if (host !== nextHost) hostStyles = {};
             host = nextHost;
             const container = P.findChild(host, "minimap_container");
             const nativeContainer = P.findChild(container, "HudMinimapContainer");
@@ -36,7 +33,7 @@
             return { host, panels, renderer, changed };
         }
 
-        function apply({ size, fixedIcons, zoomed, x, y, opacity, hidden, diagnosticControls = null }) {
+        function apply({ size, fixedIcons, zoomed, x, y, opacity, hidden, drawOverUi = false, diagnosticControls = null }) {
             const sizeText = Math.round(size) + "px";
             diagnosticTargets = diagnosticControls ? panels : null;
             if (diagnosticControls || diagnosticPlans.length) diagnosticPlans = [];
@@ -75,7 +72,6 @@
                     // with noclip. Fade the resized square, not the 440x520 host.
                     if (!diagnosticControls?.releasePlacement) styles.opacity = String(opacity);
                 }
-                if (panel === host) hostStyles = styles;
                 if (panel === host && diagnosticControls?.releasePlacement) {
                     for (const key of ["align", "horizontalAlign", "verticalAlign", "margin", "marginTop", "marginRight", "marginBottom", "marginLeft", "opacity", "transformOrigin", "zIndex"]) delete styles[key];
                 }
@@ -89,23 +85,11 @@
             return complete;
         }
 
-        function setDrawOverUi(active) {
-            drawOverUi = active;
-            if (!P.isAlive(host)) return;
-            const styles = { ...hostStyles };
-            if (active) styles.zIndex = "2147483647";
-            else delete styles.zIndex;
-            hostStyles = styles;
-            owned.apply(host, styles);
-        }
-
         function release(retainDiagnosticTargets = false) {
             diagnosticTargets = retainDiagnosticTargets ? panels : null;
             const complete = owned.clear();
-            hostStyles = {};
             panels = [];
             host = null;
-            drawOverUi = false;
             resolver.reset();
             diagnosticPlans = [];
             return complete;
@@ -114,7 +98,7 @@
             ...Q.core.minimapProbe.panelState(panel), code: Object.fromEntries(["width", "height", "uiScale", "overflow", "preTransformScale2d", "transformOrigin", "align", "horizontalAlign", "verticalAlign", "margin", "opacity", "zIndex", "visibility"].map(key => [key, P.isAlive(panel) ? panel.style[key] || "" : ""]))
         }])),
             plans: diagnosticPlans.map(plan => ({ ...plan, desired: { ...plan.desired }, classes: { ...plan.classes } })) });
-        return { resolve, apply, setDrawOverUi, release, inspect, verify: owned.verify, isReleased: owned.isReleased, resetDiscovery: () => resolver.reset() };
+        return { resolve, apply, release, inspect, verify: owned.verify, isReleased: owned.isReleased, resetDiscovery: () => resolver.reset() };
     }
     Q.features.minimapGeometry = { create };
 })();
