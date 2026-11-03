@@ -264,7 +264,11 @@ for (const [key, id, expected] of [["TOP_BAR_SCALE", "TopBar", "150%"], ["BOTTOM
     test(`${key}: row reset restores another HUD element's CSS scale`, () => {
         const { global: g, list, clock, hud, doc } = loadSettingsEnvironment();
         const panel = hud.root.FindChildTraverse(id) || doc.create("Panel", { id });
-        if (!panel.GetParent()) hud.root.addChild(panel);
+        if (key === "BOTTOM_BAR_SCALE") {
+            const core = doc.create("Panel", { classes: ["HudCore"] });
+            const abilities = doc.create("Panel", { id: "AbilitiesContainer" });
+            hud.root.addChild(core); core.addChild(abilities); abilities.addChild(panel);
+        } else if (!panel.GetParent()) hud.root.addChild(panel);
         const row = g.CreateSliderRow(list, "Size", key, "scale_0_5_1_5");
         const input = row.FindChildrenWithClassTraverse("ValueInput")[0];
         input.text = "150";

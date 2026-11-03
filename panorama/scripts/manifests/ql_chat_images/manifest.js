@@ -10,27 +10,17 @@
         settings: [{ key: "ENABLE_IMAGES_IN_CHAT", type: "toggle" }],
         create(ctx) {
             const P = QOL.core.panel, U = QOL.utils, findLabel = QOL.core.chatMessages.findLabel;
-            const corePath = [{ id: "Hud", optional: true }, { className: "HudCore" }];
-            const channel = (id, bottom, ownerPath) => ({ bottom,
-                resolver: QOL.panelCache.createIdResolver(id, { retryMs: 500, ownerPath }),
-                container: null, records: new Map(), nextScan: 0, watermark: null, idle: 0 });
+            const channel = (team, bottom = false) => ({ team, bottom,
+                container: null, records: new Map(), nextScan: 0, idle: 0 });
             const channels = [
-                channel("Messages", false, [...corePath, "TopBar", { className: "ChatContainer" }, "Team1Chat"]),
-                channel("Messages", false, [...corePath, "TopBar", { className: "ChatContainer" }, "Team2Chat"]),
-                channel("ChatMessages", true, [...corePath, "Chat", "ChatLinesArea", { className: "ChatLinesWrapper" }])
+                channel("Team1Chat"), channel("Team2Chat"), channel(null, true)
             ];
             let running = false, model = null, root = null, loop = null, imageSerial = 0;
-            let panelIds = new WeakMap(), panelSerial = 0;
             function parent(panel) { return P.isAlive(panel) ? panel.GetParent() : null; }
             function belongs(panel, owner) {
                 if (!P.isAlive(owner)) return false;
                 for (let depth = 0; depth < 64 && P.isAlive(panel); depth++, panel = parent(panel)) if (panel === owner) return true;
                 return false;
-            }
-            function identity(panel) {
-                if (!P.isAlive(panel)) return "-";
-                if (!panelIds.has(panel)) panelIds.set(panel, ++panelSerial);
-                return String(panelIds.get(panel));
             }
             function imageModel(text, bottom) {
                 if (!URL_PATTERN.test(text)) return null;
@@ -45,12 +35,11 @@
             }
             function releaseChannel(source) {
                 for (const record of source.records.values()) retireImage(record);
-                source.records.clear(); source.container = null; source.nextScan = 0; source.watermark = null; source.idle = 0;
-                source.resolver.reset();
+                source.records.clear(); source.container = null; source.nextScan = 0; source.idle = 0;
             }
             function release() {
                 for (const source of channels) releaseChannel(source);
-                root = null; panelIds = new WeakMap(); panelSerial = 0;
+                root = null;
             }
             function render(record) {
                 const host = parent(record.label);
@@ -73,18 +62,11 @@
                 // source text stays readable while the engine requests the image.
                 return true;
             }
-            function watermark(container) {
-                const count = container.GetChildCount(), parts = [String(count)];
-                for (let i = Math.max(0, count - 3); i < count; i++) {
-                    const message = container.GetChild(i), label = P.isAlive(message) && message.BHasClass("ChatMessage") ? findLabel(message) : null;
-                    parts.push(identity(message), identity(label), P.isAlive(label) ? String(label.text || "").trim().slice(0, 160) : "");
-                }
-                return parts.join("|");
-            }
             function process(source) {
                 const messages = U.FindPanelsByClass(source.container, "ChatMessage").slice(-MAX_MESSAGES), current = new Set(messages);
+                let changed = false;
                 for (const [message, record] of source.records) if (!current.has(message)) {
-                    retireImage(record); source.records.delete(message);
+                    retireImage(record); source.records.delete(message); changed = true;
                 }
                 let succeeded = true;
                 for (const message of messages) {
@@ -96,10 +78,12 @@
                         source.records.set(message, record);
                     }
                     if (label !== record.label || text !== record.text) {
+                        changed = true;
                         retireImage(record); record.label = label; record.text = text; record.model = imageModel(text, source.bottom);
                     }
                     if (!render(record)) succeeded = false;
                 }
+                source.idle = changed ? 0 : Math.min(8, source.idle + 1);
                 return succeeded;
             }
             function prune(source) {
@@ -117,20 +101,17 @@
                 if (!running) return;
                 const currentRoot = P.findHud($.GetContextPanel());
                 if (currentRoot !== root) { release(); root = currentRoot; }
-                if (!P.isAlive(root) || !model) { release(); return; }
-                const now = U.PerfNowMs(), selected = new Set();
+                if (!P.isAlive(root) || (root.id !== "Hud" && root.paneltype !== "CitadelHud") || !model) { release(); return; }
+                const core = P.findChildByClass(root, "HudCore");
+                const top = P.findChildByClass(P.findChild(core, "TopBar"), "ChatContainer");
+                const lines = P.findChild(P.findChild(core, "Chat"), "ChatLinesArea");
+                const bottom = P.findChild(P.findChildByClass(lines, "ChatLinesWrapper"), "ChatMessages");
+                const now = U.PerfNowMs();
                 for (const source of channels) {
-                    let current = source.resolver.resolve(root);
-                    // The bounded compatibility fallback can find the first
-                    // Messages host for either team. Each host has one owner.
-                    if (selected.has(current)) current = null;
-                    if (P.isAlive(current)) selected.add(current);
+                    const current = source.bottom ? bottom : P.findChild(P.findChild(top, source.team), "Messages");
                     if (current !== source.container) { releaseChannel(source); source.container = current; }
                     prune(source);
                     if (!P.isAlive(current) || now < source.nextScan) continue;
-                    const next = watermark(current);
-                    source.idle = next === source.watermark ? Math.min(8, source.idle + 1) : 0;
-                    source.watermark = next;
                     if (process(source)) source.nextScan = now + Math.min(2500, 200 + source.idle * 250);
                 }
             }
@@ -140,6 +121,7 @@
                 if (running) update();
             }
             return {
+                // Native message/text replacement has no verified delivery event.
                 onEnable() { running = true; refresh(); loop = QOL.core.Scheduler.createPollLoop(update, 0.2, ctx.id); },
                 onSettingsChanged: refresh,
                 onDisable() { running = false; if (loop) loop.stop(); loop = null; release(); model = null; }

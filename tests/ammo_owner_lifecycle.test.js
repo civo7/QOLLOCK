@@ -80,6 +80,25 @@ test("missing ammo breadcrumbs ignore unrelated templates and recover through th
     assert.deepEqual(env.clock.errors, []);
 });
 
+test("ammo ignores a living HudCore nested outside the direct HUD owner", () => {
+    const env = setup();
+    const retired = env.native(env.root);
+    const core = retired.weapon.GetParent().GetParent().GetParent().GetParent();
+    core.SetParent(env.add(env.root, "RetiredHud"));
+    let wideSearches = 0;
+    const find = env.root.FindChildrenWithClassTraverse.bind(env.root);
+    env.root.FindChildrenWithClassTraverse = className => { wideSearches++; return find(className); };
+    env.feature.onEnable(); env.clock.advance(1100);
+    assert.equal(retired.current.style.fontSize, undefined);
+    assert.equal(wideSearches, 0, "missing direct HudCore does not trigger descendant discovery");
+    const current = env.native(env.root);
+    env.clock.advance(600);
+    assert.equal(current.current.style.fontSize, "24px");
+    assert.equal(retired.current.style.fontSize, undefined);
+    env.feature.onDisable();
+    assert.deepEqual(env.clock.errors, []);
+});
+
 test("magazine toggle drives native updates only on settings changes and restores the vanilla gate", () => {
     const env = setup(), source = env.native(env.root), clip = env.add(source.gun, "clip_status");
     const progress = env.add(clip, "clip_progress_bar", "CircularProgressBar");

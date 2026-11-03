@@ -82,7 +82,9 @@ test("applying a preset updates native visibility and feature enablement", () =>
     const FR = QOL.core.FeatureRegistry;
     const defaultCfg = hud.sandbox.global.QOL_DEFAULT_CONFIG;
 
-    const bottomBar = hud.sandbox.global.$.CreatePanel("Panel", hud.root, "hud_signature");
+    const core = hud.sandbox.global.$.CreatePanel("Panel", hud.root, ""); core.AddClass("HudCore");
+    const abilities = hud.sandbox.global.$.CreatePanel("Panel", core, "AbilitiesContainer");
+    const bottomBar = hud.sandbox.global.$.CreatePanel("Panel", abilities, "hud_signature");
     // The bottom-bar visibility controller remains active while the bar is hidden.
     assert.strictEqual(FR.isEnabled("ql_bottom_bar"), true, "ql_bottom_bar should initially be enabled");
     // ql_ammo defaults to enabled: false

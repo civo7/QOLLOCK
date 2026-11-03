@@ -38,14 +38,16 @@ test("bottom bar reapplies unchanged settings to a replacement panel", () => {
     const hud = createHud({ inHideout: true });
     hud.assertLoaded();
     const { $, QOL: Q } = hud.sandbox.global;
-    const first = $.CreatePanel("Panel", hud.root, "hud_signature");
+    const core = $.CreatePanel("Panel", hud.root, ""); core.AddClass("HudCore");
+    const parent = $.CreatePanel("Panel", core, "AbilitiesContainer");
+    const first = $.CreatePanel("Panel", parent, "hud_signature");
     Q.core.ConfigStore.set("ql_bottom_bar", "BOTTOM_BAR_X_OFFSET", 100);
     hud.clock.advance(600);
     assert.equal(first.style.x, "100px");
 
     first.DeleteAsync(0);
     hud.clock.advance(1);
-    const replacement = $.CreatePanel("Panel", hud.root, "hud_signature");
+    const replacement = $.CreatePanel("Panel", parent, "hud_signature");
     hud.clock.advance(600);
     assert.equal(replacement.style.x, "100px");
 
@@ -59,7 +61,8 @@ test("active item slots scale and move precisely across panel replacement and re
     const hud = createHud({ inHideout: true });
     hud.assertLoaded();
     const { $, QOL: Q } = hud.sandbox.global;
-    const parent = $.CreatePanel("Panel", hud.root, "AbilitiesContainer");
+    const core = $.CreatePanel("Panel", hud.root, ""); core.AddClass("HudCore");
+    const parent = $.CreatePanel("Panel", core, "AbilitiesContainer");
     const first = $.CreatePanel("Panel", parent, "ActiveAbilitiesMenu");
     hud.clock.advance(600);
     assert.equal(first.style.uiScale, undefined, "native scale remains CSS-owned at the default");
@@ -90,12 +93,13 @@ test("active item slots scale and move precisely across panel replacement and re
     assert.deepEqual(hud.clock.errors, []);
 });
 
-test("bottom bar checks its known parent between periodic full-HUD searches", () => {
+test("bottom bar follows direct native owners without full-HUD searches", () => {
     const hud = createHud({ inHideout: true });
     hud.assertLoaded();
     const { $, QOL: Q } = hud.sandbox.global;
     Q.core.App.shutdown();
-    const parent = $.CreatePanel("Panel", hud.root, "AbilitiesContainer");
+    const core = $.CreatePanel("Panel", hud.root, ""); core.AddClass("HudCore");
+    const parent = $.CreatePanel("Panel", core, "AbilitiesContainer");
     const first = $.CreatePanel("Panel", parent, "hud_signature");
     let fullSearches = 0;
     const original = hud.root.FindChildTraverse;
@@ -109,18 +113,24 @@ test("bottom bar checks its known parent between periodic full-HUD searches", ()
     });
     feature.onEnable();
     assert.equal(first.style.x, "100px");
-    assert.equal(fullSearches, 1);
+    assert.equal(fullSearches, 0);
     hud.clock.advance(2000);
-    assert.equal(fullSearches, 1, "steady polls should use the direct parent");
+    assert.equal(fullSearches, 0, "steady polls use the direct parent");
 
     first.DeleteAsync(0);
     hud.clock.advance(1);
     const replacement = $.CreatePanel("Panel", parent, "hud_signature");
     hud.clock.advance(600);
     assert.equal(replacement.style.x, "100px");
-    assert.equal(fullSearches, 1, "same-parent replacement should not need a full HUD walk");
+    assert.equal(fullSearches, 0, "same-parent replacement needs no full HUD walk");
+    parent.SetParent($.CreatePanel("Panel", core, "RetiredAbilities"));
     hud.clock.advance(5000);
-    assert.ok(fullSearches >= 2, "periodic full search should detect an unexpected reparent");
+    assert.equal(replacement.style.x, undefined, "a living moved owner releases its overrides");
+    const currentParent = $.CreatePanel("Panel", core, "AbilitiesContainer");
+    const current = $.CreatePanel("Panel", currentParent, "hud_signature");
+    hud.clock.advance(600);
+    assert.equal(current.style.x, "100px");
+    assert.equal(fullSearches, 0, "missing and late owners never trigger a full HUD walk");
     feature.onDisable();
     assert.deepEqual(hud.clock.errors, []);
 });
@@ -239,6 +249,10 @@ for (const scenario of [
             const core = $.CreatePanel("Panel", hud.root, ""); core.AddClass("HudCore");
             const stats = $.CreatePanel("Panel", core, "StatsAndModsContainer");
             parent = $.CreatePanel("Panel", stats, "LowerLeft");
+        }
+        if (scenario.feature === "ql_bottom_bar") {
+            const core = $.CreatePanel("Panel", hud.root, ""); core.AddClass("HudCore");
+            parent = $.CreatePanel("Panel", core, "AbilitiesContainer");
         }
         const first = $.CreatePanel("Panel", parent, scenario.id);
         if (scenario.panelClass) first.AddClass(scenario.panelClass);

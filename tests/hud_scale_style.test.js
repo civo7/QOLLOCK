@@ -161,23 +161,14 @@ function runBottomBar(cfg) {
     const h = boot();
     const QOL = h.sandbox.global.QOL;
 
-    const panel = recordingPanel({
-        id: "hud_signature",
-        IsValid: () => true,
-        GetParent: () => h.doc.root,
-        SetHasClass: () => {},
-        FindChildTraverse: () => null,
-        FindChildrenWithClassTraverse: () => [],
-    });
+    const core = h.sandbox.global.$.CreatePanel("Panel", h.root, ""); core.AddClass("HudCore");
+    const abilities = h.sandbox.global.$.CreatePanel("Panel", core, "AbilitiesContainer");
+    const panel = h.sandbox.global.$.CreatePanel("Panel", abilities, "hud_signature");
+    Object.assign(panel, recordingPanel());
 
     const FR = QOL.core && QOL.core.FeatureRegistry;
     const manifest = FR && FR.getManifest && FR.getManifest("ql_bottom_bar");
     if (manifest) {
-        const origFindChild = h.doc.root.FindChildTraverse;
-        h.doc.root.FindChildTraverse = (id) => {
-            if (id === "hud_signature") return panel;
-            return origFindChild ? origFindChild.call(h.doc.root, id) : null;
-        };
         const fullCfg = Object.assign({}, BB_DEFAULTS, cfg);
         const ctx = {
             id: "ql_bottom_bar",

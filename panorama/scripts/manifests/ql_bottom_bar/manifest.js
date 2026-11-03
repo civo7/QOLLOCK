@@ -20,9 +20,6 @@
         ],
         create(ctx) {
             const panelAPI = QOL.core.panel;
-            const abilityPath = [{ id: "Hud", optional: true }, { className: "HudCore" }, "AbilitiesContainer"];
-            const barResolver = QOL.panelCache.createIdResolver("hud_signature", { ownerPath: abilityPath });
-            const activeResolver = QOL.panelCache.createIdResolver("ActiveAbilitiesMenu", { ownerPath: abilityPath });
             const styles = panelAPI.createNativeStyleOwner({ resetValues: { x: "0px", y: "0px" } });
             let model = null;
             let loop = null;
@@ -61,7 +58,12 @@
                 if (!active) return;
                 const root = panelAPI.findHud($.GetContextPanel());
                 if (!panelAPI.isAlive(root) || (root.id !== "Hud" && root.paneltype !== "CitadelHud")) { styles.clear(); return; }
-                const bar = barResolver.resolve(root), activeItems = activeResolver.resolve(root);
+                // Both native menus are direct children in current hud.xml.
+                // A missing owner must not borrow a menu from a retired subtree.
+                const core = panelAPI.findChildByClass(root, "HudCore");
+                const abilities = panelAPI.findChild(core, "AbilitiesContainer");
+                const bar = panelAPI.findChild(abilities, "hud_signature");
+                const activeItems = panelAPI.findChild(abilities, "ActiveAbilitiesMenu");
                 styles.retain([bar, activeItems]);
                 if (bar) styles.apply(bar, QOL.presentation.visibilityStyles("bottomBar", QOL.presentation.visibilityConfig(ctx), root, model.barStyles), { "qol-hidden": !model.enabled });
                 // Active-slot geometry remains independently configurable even
@@ -69,15 +71,9 @@
                 if (activeItems) styles.apply(activeItems, QOL.presentation.visibilityStyles("activeItems", QOL.presentation.visibilityConfig(ctx), root, model.itemStyles));
             }
 
-            function resetDiscovery() {
-                barResolver.reset();
-                activeResolver.reset();
-            }
-
             function refreshSettings() {
                 if (!active) return;
                 model = readModel();
-                resetDiscovery();
                 update();
             }
 
@@ -94,7 +90,6 @@
                     QOL.core.Scheduler.cancelAllForFeature(ctx.id);
                     styles.clear();
                     model = null;
-                    resetDiscovery();
                 }
             }, update);
         },

@@ -224,3 +224,38 @@ test("chat geometry ignores a loading root and releases the previous living HUD"
     assert.equal(e.native.chat.style.x, undefined);
     e.stop(); assert.deepEqual(e.clock.errors, []);
 });
+
+test("chat owners ignore retired branches and unrelated duplicate IDs while native owners are missing", () => {
+    const e = fixture();
+    e.native.chat.SetParent(e.retired);
+    e.native.messages[0].SetParent(e.retired);
+    e.native.messages[1].SetParent(e.retired);
+    const unrelated = e.add(e.root, "UnrelatedComponent");
+    const chat = e.add(unrelated, "Chat");
+    const messages = e.add(unrelated, "Messages");
+    const decoy = e.message(messages, "https://example.com/decoy.png");
+    e.start(); e.clock.advance(3000);
+    assert.equal(chat.style.x, undefined);
+    assert.equal(e.imageFor(decoy), undefined);
+    assert.equal(e.requests.length, 0);
+    e.native.chat.SetParent(e.native.core);
+    const current = e.add(e.native.team1, "Messages");
+    const late = e.message(current, "https://example.com/late.png");
+    e.clock.advance(600);
+    assert.equal(e.native.chat.style.x, "30px");
+    assert.ok(e.imageFor(late));
+    e.stop(); assert.deepEqual(e.clock.errors, []);
+});
+
+test("image observation detects a middle label replacement with unchanged count and tail", () => {
+    const e = fixture();
+    const rows = Array.from({ length: 6 }, (_, i) => e.message(e.native.bottom, "https://example.com/" + i + ".png", true));
+    e.start(); e.clock.advance(6000);
+    const row = rows[1], oldImage = e.imageFor(row);
+    row.label.SetParent(e.retired);
+    row.label = e.add(row.host, "", [], "Label"); row.label.text = "https://example.com/middle.png";
+    e.clock.advance(2700);
+    assert.equal(oldImage.IsValid(), false);
+    assert.ok(e.imageFor(row).requestedUrl.includes("middle.png"));
+    e.stop(); assert.deepEqual(e.clock.errors, []);
+});
