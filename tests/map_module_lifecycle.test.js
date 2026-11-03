@@ -3,6 +3,7 @@
 const test = require("node:test");
 const assert = require("node:assert/strict");
 const { createHud } = require("../scripts/simulator");
+const { readStyleSource } = require("./helpers/style_source");
 
 function fixture({ boot = true } = {}) {
     const env = createHud({ inHideout: false });
@@ -220,25 +221,46 @@ test("minimap native alpha feedback and rejected disable cleanup share the nativ
     e.clean();
 });
 
-test("minimap releases range overrides on default size, source removal and disable", () => {
+test("minimap range styling needs no runtime searches and reaches late native ranges through CSS", () => {
+    const e = fixture();
+    const traverse = e.renderer.FindChildrenWithClassTraverse;
+    let searches = 0;
+    e.renderer.FindChildrenWithClassTraverse = function (name) {
+        if (name === "doorman_doorway" || name === "ability_castrange") searches++;
+        return traverse.call(this, name);
+    };
+    e.configure({ MINIMAP_SMALL_SIZE: 600, ENABLE_ALT_ZOOM: 1 });
+    e.clock.advance(500);
+    assert.equal(searches, 0, "range geometry must not search the native map on every view tick");
+    assert.equal(e.renderer.BHasClass("QOLScaledMinimapRanges"), true);
+    const doorway = e.add(e.renderer, "door"); doorway.AddClass("map_button"); doorway.AddClass("doorman_doorway");
+    const range = e.add(doorway, "CastRange");
+    e.clock.advance(100);
+    assert.equal(range.style.uiScale, undefined, "CSS owns constant range normalization");
+    const css = readStyleSource("panorama/styles/hud_minimap.css");
+    assert.match(css, /#hud_minimap\.QOLScaledMinimapRanges \.map_button\.doorman_doorway #CastRange,/);
+    assert.match(css, /#hud_minimap\.QOLScaledMinimapRanges \.map_button\.ability_castrange #CastRange\s*\{\s*ui-scale:\s*100%;\s*pre-transform-scale2d:\s*1(?:\.0+)?;/);
+    assert.equal(searches, 0, "late range creation requires no JS discovery either");
+    e.clean();
+});
+
+test("minimap releases range styling on default size, native renderer replacement and disable", () => {
     const e = fixture();
     const doorway = e.add(e.renderer, "door"); doorway.AddClass("doorman_doorway");
     const range = e.add(doorway, "CastRange");
     range.style.transform = "native range placement";
-    e.configure({ MINIMAP_SMALL_SIZE: 600 });
-    assert.equal(range.style.uiScale, "100%");
+    e.configure({ MINIMAP_SMALL_SIZE: 600, ENABLE_ALT_ZOOM: 1 });
+    assert.equal(e.renderer.BHasClass("QOLScaledMinimapRanges"), true);
     e.configure({ MINIMAP_SMALL_SIZE: 400 });
-    assert.equal(range.style.uiScale, undefined);
-    assert.equal(range.style.preTransformScale2d, undefined);
+    assert.equal(e.renderer.BHasClass("QOLScaledMinimapRanges"), false);
     e.configure({ MINIMAP_SMALL_SIZE: 600 });
-    range.SetParent(e.orphan);
+    e.renderer.SetParent(e.orphan);
+    const renderer = e.add(e.inner, "hud_minimap");
     e.clock.advance(150);
-    assert.equal(range.style.uiScale, undefined);
-    const replacement = e.add(doorway, "CastRange");
-    e.clock.advance(150);
-    assert.equal(replacement.style.preTransformScale2d, "1.00, 1.00");
+    assert.equal(e.renderer.BHasClass("QOLScaledMinimapRanges"), false, "old living maps release their CSS gate");
+    assert.equal(renderer.BHasClass("QOLScaledMinimapRanges"), true);
     e.Q.core.FeatureRegistry.disable("ql_minimap_runtime");
-    assert.equal(replacement.style.uiScale, undefined);
+    assert.equal(renderer.BHasClass("QOLScaledMinimapRanges"), false);
     assert.equal(range.style.transform, "native range placement");
     e.clean();
 });

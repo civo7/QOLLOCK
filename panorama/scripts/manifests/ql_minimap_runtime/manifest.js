@@ -7,6 +7,7 @@
     const P = Q.core.panel;
     const U = Q.utils;
     const id = "ql_minimap_runtime";
+    const rangeClass = "QOLScaledMinimapRanges";
     function hasClass(panel, className) {
         for (let depth = 0; depth < 32 && P.isAlive(panel); depth++) {
             if (panel.BHasClass(className)) return true;
@@ -68,7 +69,6 @@
             let tunnel = null, crates = null, markers = null;
             let crateReady = false;
             let crateImage = null;
-            let rangePanels = [];
             let createdComposition = "cache";
             const released = { geometry: true, decoration: true };
             let lastView = null;
@@ -97,7 +97,7 @@
                             mapRender: P.isAlive(mapRender) && !!model?.minimalist && !lastView?.zoomed,
                             backgrounds: backgroundImages.some(P.isAlive) && !!model?.minimalist && !lastView?.zoomed,
                             canvas: P.isAlive(canvas) && !!model?.iconColor,
-                            ranges: rangePanels.some(P.isAlive)
+                            ranges: hasNativeRanges()
                         } } })
             });
 
@@ -163,8 +163,6 @@
                 if (anchor !== nextAnchor) releaseOverlays();
                 if (renderer !== found.renderer) {
                     releasePanel(renderer);
-                    for (const panel of rangePanels) releasePanel(panel);
-                    rangePanels = [];
                 }
                 anchor = nextAnchor;
                 renderer = found.renderer;
@@ -232,20 +230,12 @@
                 show(crates, crateReady && !diagnostic.controls?.hideRoot);
             }
 
-            function renderRange(size) {
-                const active = Math.abs(size - 400) >= 0.5;
-                let next = [];
-                if (active && P.isAlive(renderer)) {
-                    const doors = renderer.FindChildrenWithClassTraverse?.("doorman_doorway") || [];
-                    const sources = doors.length ? doors : renderer.FindChildrenWithClassTraverse?.("ability_castrange") || [];
-                    next = sources.map(panel => P.findTraverse(panel, "CastRange")).filter(P.isAlive);
-                }
-                for (const panel of rangePanels) if (!next.includes(panel)) releasePanel(panel);
-                rangePanels = next;
-                for (const panel of next) {
-                    const styles = { uiScale: "100%", preTransformScale2d: "1.00, 1.00" };
-                    nativeStyles.apply(panel, styles);
-                }
+            // Diagnostic snapshots need target presence; ordinary rendering
+            // lets the native stylesheet select late/replaced range children.
+            function hasNativeRanges() {
+                if (!P.isAlive(renderer) || !renderer.BHasClass(rangeClass)) return false;
+                return ["doorman_doorway", "ability_castrange"].some(className =>
+                    renderer.FindChildrenWithClassTraverse(className).some(panel => P.isAlive(P.findChild(panel, "CastRange"))));
             }
 
             function render(model, view) {
@@ -266,7 +256,8 @@
                 if (diagnostic.controls) nativeReleaseResults = {};
                 const minimalist = !view.zoomed && model.minimalist;
                 const rendererResult = nativeStyles.apply(renderer, !targets?.includes("renderer") && minimalist ? { backgroundColor: "rgba(0, 0, 0, 0)" } : {},
-                    targets?.includes("renderer") ? {} : { minimalist_minimap_active: minimalist });
+                    { ...(targets?.includes("renderer") ? {} : { minimalist_minimap_active: minimalist }),
+                        [rangeClass]: Math.abs(view.size - 400) >= 0.5 && !targets?.includes("ranges") });
                 const mapResult = nativeStyles.apply(mapRender, !targets?.includes("mapRender") && minimalist ? { opacity: String(model.minimalOpacity), brightness: "1.0", washColor: "none" } : {});
                 if (diagnostic.controls) { nativeReleaseResults.renderer = rendererResult; nativeReleaseResults.mapRender = mapResult; nativeReleaseResults.backgrounds = true; }
                 // hud_minimap.css selects the surface/underground/tunnel layer
@@ -281,10 +272,7 @@
                 }
                 const canvasResult = nativeStyles.apply(canvas, !targets?.includes("canvas") && model.iconColor ? { washColor: model.iconColor } : {});
                 if (diagnostic.controls) nativeReleaseResults.canvas = canvasResult;
-                if (targets?.includes("ranges")) {
-                    nativeReleaseResults.ranges = true;
-                    for (const panel of rangePanels) nativeReleaseResults.ranges = nativeStyles.apply(panel, {}) && nativeReleaseResults.ranges;
-                } else renderRange(view.size);
+                if (targets?.includes("ranges")) nativeReleaseResults.ranges = rendererResult && !renderer.BHasClass(rangeClass);
             }
 
             function update() {
@@ -305,7 +293,7 @@
 
             function syncLoop() {
                 if (!active) return;
-                // rate-exempt: native doorway ranges and Alt view require smooth refresh.
+                // rate-exempt: preserve native view/source refresh for enlarged maps.
                 const rate = model.alt || Math.abs(model.base.size - 400) >= 0.5 ? 0.05 : 0.5;
                 if (loop && currentRate !== rate) { loop.stop(); loop = null; }
                 if (!loop) { currentRate = rate; loop = Q.core.Scheduler.createPollLoop(update, rate, id); }
@@ -328,7 +316,6 @@
                 nativeStyles.clear();
                 for (const panel of owned.keys()) releasePanel(panel);
                 releaseOverlays();
-                rangePanels = [];
                 anchor = renderer = canvas = mapRender = null;
                 backgroundImages = [];
                 canvasResolver.reset(); renderResolver.reset();

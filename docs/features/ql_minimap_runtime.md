@@ -120,9 +120,18 @@ and the background images inside `MinimapBackgroundTest` in an unchanged
 viewport. Minimalist opacity fades those images individually, preserving the
 native surface/underground/tunnel opacity gates and the sibling canvas/effects.
 Previous living native targets release their
-owned tint/opacity/range overrides; tunnel and crate panels belong to the
+owned tint/opacity overrides and range class; tunnel and crate panels belong to the
 current anchor generation. Missing native sources are retried without treating
 a live cached handle as evidence that the current map still contains it.
+
+Range normalization is scoped by a renderer-owned class in the native minimap
+stylesheet. Doorway and ability-range descendants, including late or replaced
+snippets, inherit the rule without runtime range discovery or per-circle code
+styles. Default map size, decoration release, renderer replacement and disable
+remove that gate. Diagnostic snapshots alone query range presence so the
+native-ranges contrast still requires an actual target; its release control
+removes the same class. After compile/repack, verify range circles with enlarged
+Base/Alt/Tab maps and doorway recasts; offline checks do not compute native CSS.
 
 Settings are derived in lifecycle hooks; the active poll samples native view
 state without rebuilding the configuration model. Stopped settings/event hooks

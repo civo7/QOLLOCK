@@ -467,7 +467,7 @@ test("ql_minimap_runtime handles zero opacity, offsets, and zoom modes on the vi
     Q.core.FeatureRegistry.disable("ql_minimap_runtime");
 });
 
-test("ql_minimap_runtime normalizes Doorman doorway cast range across casts without cache lock", () => {
+test("ql_minimap_runtime retains its CSS range gate across doorway recasts without discovering them", () => {
     const hud = sim.createHud({ inHideout: false });
     hud.assertLoaded();
     const Q = hud.sandbox.global.QOL;
@@ -489,8 +489,8 @@ test("ql_minimap_runtime normalizes Doorman doorway cast range across casts with
     const castRange1 = $.CreatePanel("Panel", door1, "CastRange");
 
     hud.clock.advance(100);
-    assert.strictEqual(castRange1.style.uiScale, "100%", "Initial CastRange must receive uiScale: 100%");
-    assert.strictEqual(castRange1.style.preTransformScale2d, "1.00, 1.00", "Initial CastRange preTransformScale2d must be reset to 1.00, 1.00");
+    assert.strictEqual(hudMinimap.BHasClass("QOLScaledMinimapRanges"), true);
+    assert.strictEqual(castRange1.style.uiScale, undefined, "range normalization belongs to the native stylesheet");
 
     // 2. Door 1 destroyed and Door 2 placed while minimap size is still 550 (door count stays 1)
     door1.DeleteAsync(0);
@@ -501,10 +501,11 @@ test("ql_minimap_runtime normalizes Doorman doorway cast range across casts with
     const castRange2 = $.CreatePanel("Panel", door2, "CastRange");
 
     hud.clock.advance(100);
-    assert.strictEqual(castRange2.style.uiScale, "100%", "Recast doorway CastRange must receive uiScale: 100% without getting blocked by cacheKey");
-    assert.strictEqual(castRange2.style.preTransformScale2d, "1.00, 1.00", "Recast doorway CastRange preTransformScale2d must be reset to 1.00, 1.00");
+    assert.strictEqual(hudMinimap.BHasClass("QOLScaledMinimapRanges"), true, "new native descendants inherit the current rule immediately");
+    assert.strictEqual(castRange2.style.preTransformScale2d, undefined, "recasts need no inline override");
 
     Q.core.FeatureRegistry.disable("ql_minimap_runtime");
+    assert.strictEqual(hudMinimap.BHasClass("QOLScaledMinimapRanges"), false);
 });
 
 test("ql_minimap_timers maintains calibrated base coordinates across minimap scaling", () => {

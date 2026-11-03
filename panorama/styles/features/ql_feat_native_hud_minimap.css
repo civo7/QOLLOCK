@@ -121,6 +121,14 @@
 	border-radius: 9999px;
 }
 
+/* Range snippets inherit the active map size without a JS discovery pass. */
+#hud_minimap.QOLScaledMinimapRanges .map_button.doorman_doorway #CastRange,
+#hud_minimap.QOLScaledMinimapRanges .map_button.ability_castrange #CastRange
+{
+	ui-scale: 100%;
+	pre-transform-scale2d: 1;
+}
+
 .qol_minimap_elevation_markers_active .map_button.player.enemy.arrowUp,
 .qol_minimap_elevation_markers_active .map_button.player.enemy.arrowDown,
 .qol_minimap_elevation_markers_active .map_button.player.friend.arrowUp,
