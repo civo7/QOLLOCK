@@ -40,6 +40,7 @@
             const hostResolver = Q.panelCache.createIdResolver("minimap_persp", { ownerPath });
             const fallbackResolver = Q.panelCache.createIdResolver("minimap_container");
             const tree = P.createOwnedTree();
+            const nativePlacement = P.createNativeStyleOwner();
             const signatures = new Map();
             let active = false, model = null, rootOwner = null;
             let host = null, anchor = null, renderer = null, panels = null;
@@ -54,15 +55,18 @@
                     const value = Number(cfg[key] ?? cfg.MINIMAP_LARGE_SIZE ?? baseSize);
                     return Number.isFinite(value) && value > 0 ? value : baseSize;
                 };
+                const geometry = Object.fromEntries(Object.entries(geometryPrefixes).map(([role, prefix]) => [role, {
+                    x: Q.settings.readNumber(prefix + "X_OFFSET", cfg[prefix + "X_OFFSET"]),
+                    y: Q.settings.readNumber(prefix + "Y_OFFSET", cfg[prefix + "Y_OFFSET"]),
+                    scale: Q.settings.readNumber(prefix + "SCALE", cfg[prefix + "SCALE"]),
+                    opacity: Q.settings.readNumber(prefix + "OPACITY", cfg[prefix + "OPACITY"])
+                }]));
+                const bridge = buff && U.IsCfgEnabled(cfg, "ENABLE_MINIMAP_BUFF_TIMER_ON_BRIDGE");
+                const customized = role => geometry[role].x !== 0 || geometry[role].y !== 0 || geometry[role].scale !== 100;
                 return {
-                    geometry: Object.fromEntries(Object.entries(geometryPrefixes).map(([role, prefix]) => [role, {
-                        x: Q.settings.readNumber(prefix + "X_OFFSET", cfg[prefix + "X_OFFSET"]),
-                        y: Q.settings.readNumber(prefix + "Y_OFFSET", cfg[prefix + "Y_OFFSET"]),
-                        scale: Q.settings.readNumber(prefix + "SCALE", cfg[prefix + "SCALE"]),
-                        opacity: Q.settings.readNumber(prefix + "OPACITY", cfg[prefix + "OPACITY"])
-                    }])),
-                    buff, rejuv,
-                    bridge: buff && U.IsCfgEnabled(cfg, "ENABLE_MINIMAP_BUFF_TIMER_ON_BRIDGE"),
+                    geometry, buff, rejuv, bridge,
+                    freePlacement: rejuv && customized("rejuv") || buff &&
+                        (bridge ? customized("left") || customized("right") : customized("buff")),
                     midboss: rejuv && U.IsCfgEnabled(cfg, "ENABLE_MINIMAP_ALWAYS_ON_MID_BOSS"),
                     alt: U.IsCfgEnabled(cfg, "ENABLE_ALT_ZOOM"), tab: U.IsCfgEnabled(cfg, "ENABLE_TAB_ZOOM"),
                     fixedIcons: U.IsCfgEnabled(cfg, "MINIMAP_FIXED_ICON_SIZE"),
@@ -71,6 +75,7 @@
             }
 
             function releaseOverlay() {
+                nativePlacement.clear();
                 tree.clear();
                 panels = null;
                 signatures.clear();
@@ -130,6 +135,7 @@
             }
 
             function hide() {
+                nativePlacement.clear();
                 show(panels?.root, false);
                 for (const role of ["buff", "left", "right", "rejuv"]) {
                     P.setClass(panels?.[role], "red", false);
@@ -186,6 +192,8 @@
             function render(model, observed) {
                 const overlay = ensureOverlay();
                 if (!overlay) return;
+                nativePlacement.retain([host, anchor]);
+                for (const panel of [host, anchor]) if (P.isAlive(panel)) nativePlacement.apply(panel, {}, { QOLFreeMinimapTimers: model.freePlacement });
                 // A stable map-sized canvas lets each plate own its position.
                 // Peer's Mid Boss and Rift plates supply the ordinary pair's
                 // right/left bottom insets. On Bridge keeps its map coordinates.
@@ -201,14 +209,15 @@
                     const rejuv = role === "rejuv";
                     const placement = {
                         width: "100px", height: "35px", horizontalAlign: rejuv ? "right" : "left", verticalAlign: "bottom",
-                        marginLeft: (rejuv ? 0 : 60 + geometry.x) + "px", marginRight: (rejuv ? 103 - geometry.x : 0) + "px",
-                        marginTop: "0px", marginBottom: (58 + geometry.y) + "px"
+                        marginLeft: (rejuv ? 0 : 60) + "px", marginRight: (rejuv ? 103 : 0) + "px",
+                        marginTop: "0px", marginBottom: "58px"
                     };
                     if (midboss) Object.assign(placement, {
                         width: "72px", height: "28px", horizontalAlign: "center", verticalAlign: "center",
-                        marginLeft: 2 * geometry.x + "px", marginRight: "0px", marginTop: -2 * geometry.y + "px", marginBottom: "0px"
+                        marginLeft: "0px", marginRight: "0px", marginTop: "0px", marginBottom: "0px"
                     });
                     style(panels[role], { ...plate, ...placement,
+                        x: geometry.x + "px", y: -geometry.y + "px",
                         uiScale: geometry.scale + "%", opacity: String(geometry.opacity) });
                     style(overlay[role + "Icon"], { width: midboss ? "16px" : "20px", height: midboss ? "16px" : "20px" });
                     style(overlay[role + "Time"], { fontSize: midboss ? "14px" : "15px" });
@@ -216,8 +225,9 @@
                 for (const [role, direction] of [["left", -1], ["right", 1]]) {
                     const geometry = model.geometry[role];
                     style(panels[role], { width: "48px", height: "18px", margin: "0px", padding: "0px 3px", borderRadius: "4px",
-                        horizontalAlign: "center", verticalAlign: "center", marginLeft: (direction * 144 * observed.size / 400 + 2 * geometry.x) + "px",
-                        ignoreParentFlow: "true", marginTop: -2 * geometry.y + "px", marginBottom: "0px", marginRight: "0px",
+                        horizontalAlign: "center", verticalAlign: "center", marginLeft: (direction * 144 * observed.size / 400) + "px",
+                        ignoreParentFlow: "true", marginTop: "0px", marginBottom: "0px", marginRight: "0px",
+                        x: geometry.x + "px", y: -geometry.y + "px",
                         uiScale: geometry.scale + "%", opacity: String(geometry.opacity) });
                     style(overlay[role + "Time"], { fontSize: "11px" });
                     show(overlay[role + "Icon"], false);

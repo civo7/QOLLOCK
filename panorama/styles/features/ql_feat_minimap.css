@@ -114,8 +114,24 @@
 
 /* ── Minimap Timers ── */
 
+/* Timer offsets must not be clipped by the minimap's layout viewport.
+ * Keep the map renderer clipped inside its existing native container.
+ */
+#minimap_persp.QOLFreeMinimapTimers,
+#minimap_container.QOLFreeMinimapTimers,
+#QOLMinimapDockedTimers
+{
+    overflow: noclip;
+}
+
+#minimap_container.QOLFreeMinimapTimers > #HudMinimapContainer
+{
+    overflow: clip;
+}
+
 #QOLMinimapTimersRoot
 {
+    overflow: noclip;
     flow-children: right;
     horizontal-align: center;
     vertical-align: bottom;

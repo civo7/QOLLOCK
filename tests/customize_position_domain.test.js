@@ -113,7 +113,7 @@ test("Tab minimap slider retains screen-wide travel and accepted off-screen posi
     assert.deepEqual(env.doc.eventErrors, []); assert.deepEqual(env.clock.errors, []);
 });
 
-test("range refresh never overwrites off-screen exact input or creates edits; absent measurements disable only slider", () => {
+test("range refresh preserves exact input and usable slider travel after measurements disappear", () => {
     const env = load(), g = env.global, Q = g.QOL;
     Q.ui.window.setOpen(true); env.clock.advance(500);
     const element = Q.presentation.elements.find(e => e.id === "souls");
@@ -136,12 +136,41 @@ test("range refresh never overwrites off-screen exact input or creates edits; ab
     assert.equal(slider.max, 3640); assert.equal(input.text, "9000");
     assert.equal(JSON.stringify(session.snapshot()), before);
     geometry = null; inspector.refreshRanges();
-    assert.equal(slider.enabled, false);
+    assert.equal(slider.enabled, true, "losing native layout must not disable a capturing slider");
+    assert.equal(slider.min, -200); assert.equal(slider.max, 3640);
+    slider.value = 100; slider._fire("onvaluechanged");
+    assert.equal(session.value("SOULS_X_OFFSET"), 100, "the retained numeric range still permits recovery");
     input.text = "12000"; input._fire("oninputsubmit");
     assert.equal(session.value("SOULS_X_OFFSET"), 12000);
+    assert.equal(session.undo(), true); assert.equal(session.value("SOULS_X_OFFSET"), 100);
     assert.equal(session.undo(), true); assert.equal(session.value("SOULS_X_OFFSET"), 9000);
     assert.equal(session.undo(), true); assert.equal(session.value("SOULS_X_OFFSET"), 0);
     assert.equal(session.canUndo(), false);
+    inspector.dispose(); session.close();
+    assert.deepEqual(env.doc.eventErrors, []); assert.deepEqual(env.clock.errors, []);
+});
+
+test("position sliders do not rewrite native range or enabled state during unchanged refreshes", () => {
+    const env = load(), Q = env.global.QOL;
+    Q.ui.window.setOpen(true); env.clock.advance(500);
+    const element = Q.presentation.elements.find(item => item.id === "souls");
+    const session = Q.ui.customizeSession.create(env.doc.root, env.hud.root, env.em.FindChildTraverse("SettingsWindow"), element);
+    const host = env.em.addChild(env.doc.create("Panel", { id: "StableRangeInspector" }));
+    const parent = env.doc.create("Panel", { id: "StableRangeParent" });
+    const target = parent.addChild(env.doc.create("Panel", { id: "StableRangeTarget" }));
+    const geometry = { host, target, values: { SOULS_X_OFFSET: 0, SOULS_Y_OFFSET: 0 },
+        bounds: { x: 200, y: 100, width: 100, height: 60 }, view: { x: 0, y: 0, width: 1920, height: 1080 } };
+    const inspector = Q.ui.customizeInspector.build(host, element, session, options => inspector.sync(options), host, () => geometry);
+    const slider = host.FindChildTraverse("QOLCustomizeSlider_SOULS_X_OFFSET");
+    const writes = [];
+    for (const key of ["min", "max", "enabled"]) {
+        let value = slider[key];
+        Object.defineProperty(slider, key, { configurable: true, get: () => value, set(next) { writes.push([key, next]); value = next; } });
+    }
+    slider.value = -150; slider._fire("onvaluechanged");
+    for (let index = 0; index < 5; index++) inspector.refreshRanges();
+    assert.deepEqual(writes, [], "native input state must not be reconfigured by its own preview refresh");
+    assert.equal(session.value("SOULS_X_OFFSET"), -150);
     inspector.dispose(); session.close();
     assert.deepEqual(env.doc.eventErrors, []); assert.deepEqual(env.clock.errors, []);
 });
