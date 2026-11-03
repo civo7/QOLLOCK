@@ -28,7 +28,7 @@ presentation event; re-enable restores it from the accepted mode. Basic remains
 independent. Stored mode settings are unchanged.
 
 Mode switches and disable must remove owned classes and inline overrides so
-native CSS can take over. Native styles and reserved mode/shop classes use the
+native CSS can take over. Native styles and reserved mode/preview classes use the
 shared native-style owner: feedback invalidates cached presentation, and rejected
 retirement continues through cleanup-only retries after disable. Basic keeps its
 existing pixel placement and percentage margins; native axis overrides release
@@ -37,3 +37,5 @@ presentation. Basic cooldown labels are visible only while their
 native item ancestor has `cooling_down`; retained dialog text alone is not
 evidence of an active cooldown. Native death and respawn class timing needs
 client verification.
+
+Shop suppression follows the existing native `gShopOpen` listener in CSS; it does not read shop ancestry or write inline visibility on every tick. Customize preview supplies an owned exception class and refreshes through the accepted preview event. Independent normal/TAB hiding retains its existing visibility policy.

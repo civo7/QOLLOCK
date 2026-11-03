@@ -45,6 +45,9 @@ without mutating native score labels. This is separate from the rift timer.
 Target/hint geometry belongs solely to `ql_target_shapes`. Core projects its CSS
 gates but does not mutate that instance's discovery/signature caches. The target
 owner derives settings in hooks and reconciles moved/replaced native children.
+Its discovery poll stops when both shape and hint settings produce no overrides,
+and restarts from the settings hook. Native target/hint code-style ownership has
+not been replaced by stylesheet projection.
 
 Native chat visibility/geometry belongs to the independent `ql_chat_geometry`
 manifest. Core does not apply/reset chat transforms; image and translation

@@ -86,13 +86,10 @@
                 }
                 if (!panel) return;
                 const preview = basic && QOL.presentation.preview.selected(root, "cooldowns");
-                // Native shop listeners live on AbilitiesContainer. Read the
-                // current ancestry so replacements do not inherit a stale gate.
-                const shopHidden = basic && !preview && QOL.utils.HasClassInHierarchy(panel, "gShopOpen");
                 const desired = basic ? { ...model.styles } : {};
-                if (shopHidden) desired.visibility = "collapse";
                 if (preview) desired.visibility = "visible";
-                styles.apply(panel, basic ? QOL.presentation.visibilityStyles("cooldowns", QOL.presentation.visibilityConfig(ctx), root, desired) : desired, { passive_cooldown_basic_active: basic, "qol-hidden": shopHidden });
+                styles.apply(panel, basic ? QOL.presentation.visibilityStyles("cooldowns", QOL.presentation.visibilityConfig(ctx), root, desired) : desired,
+                    { passive_cooldown_basic_active: basic, QOLCustomizeBasicCooldownPreview: preview });
                 if (preview) {
                     const sample = sampleTree.child(panel, "Panel", "QOLCustomizeBasicCooldownSample", { hittest: "false", hittestchildren: "false" });
                     if (!panelAPI.isAlive(sample)) return;
@@ -129,6 +126,7 @@
                 onEnable() {
                     active = true;
                     ctx.events?.on("feature:presentation_changed", presentationChanged);
+                    ctx.events?.on("presentation:preview_changed", update);
                     refreshSettings();
                     loop = QOL.core.Scheduler.createPollLoop(update, 0.5, ctx.id);
                 },
@@ -136,6 +134,7 @@
                 onDisable() {
                     active = false;
                     ctx.events?.off("feature:presentation_changed", presentationChanged);
+                    ctx.events?.off("presentation:preview_changed", update);
                     if (loop) { loop.stop(); loop = null; }
                     QOL.core.Scheduler.cancelAllForFeature(ctx.id);
                     styles.clear();

@@ -5,9 +5,6 @@
 (() => {
     "use strict";
     const ID = "ql_show_build_id";
-    const panelStyles = { marginLeft: "26px", verticalAlign: "bottom", height: "24px", flowChildren: "right", zIndex: "5" };
-    const labelStyles = { whiteSpace: "nowrap", fontSize: "16px", fontWeight: "bold", fontFamily: "oracle, blocky, sans-serif",
-        color: "#FFEFD7", textShadow: "0px 1px 3px 3.0 #000000cc" };
 
     function parse(rawText) {
         const raw = String(rawText || "").trim();
@@ -40,7 +37,6 @@
             };
             const tree = P.createOwnedTree();
             let active = false, model = null, loop = null, rootOwner = null, parent = null, panel = null, label = null;
-            let panelSignature = null, labelSignature = null;
 
             function readModel() {
                 const cfg = ctx.config.view();
@@ -51,7 +47,7 @@
             }
             function releaseTree() {
                 hide(); tree.clear();
-                parent = panel = label = null; panelSignature = labelSignature = null;
+                parent = panel = label = null;
             }
             function readName(core) {
                 const builds = directPath(core, ["CitadelHudHeroShop", "Shop", "MainPanel", "ShopModsContainer",
@@ -73,16 +69,13 @@
                 if (!P.isAlive(nextParent)) { releaseTree(); return false; }
                 if (parent !== nextParent) releaseTree();
                 parent = nextParent;
-                const previousPanel = panel, previousLabel = label;
+                const previousPanel = panel;
                 panel = tree.child(parent, "Panel", "selected_build_info");
-                if (panel !== previousPanel) { panelSignature = null; hide(); }
+                if (panel !== previousPanel) hide();
                 label = tree.child(panel, "Label", "build_info");
-                if (label !== previousLabel) labelSignature = null;
                 return P.isAlive(panel) && P.isAlive(label);
             }
             function render(content) {
-                panelSignature = P.syncStyles(panel, panelStyles, panelSignature).sig;
-                labelSignature = P.syncStyles(label, labelStyles, labelSignature).sig;
                 if (label.html !== true) label.html = true;
                 if (label.text !== content) label.text = content;
                 U.SetStyleIfChanged(panel, "visibility", "visible");

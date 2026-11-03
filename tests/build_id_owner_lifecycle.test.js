@@ -66,19 +66,19 @@ test("build ID follows fallback-name replacement and keeps native binding text u
     assert.equal(native.source.text, "123 - Unknown - 1"); assert.equal(native.name.text, "Native Name"); stop(e);
 });
 
-test("build ID retries partial construction, styles and text without committing failed signatures", () => {
-    const e = setup(), native = e.mount(), create = e.$.CreatePanel; let rejectCreation = true, rejectStyle = true, styleWrites = 0;
+test("build ID retries partial construction and text without inline typography", () => {
+    const e = setup(), native = e.mount(), create = e.$.CreatePanel; let rejectCreation = true, styleWrites = 0;
     e.$.CreatePanel = (...args) => {
         if (args[2] === "build_info" && rejectCreation) throw Error("modeled late label");
         const panel = create(...args);
         if (panel.id === "build_info") panel.style = new Proxy(panel.style, { set(target, key, value) {
-            styleWrites++; if (key === "fontSize" && rejectStyle) throw Error("modeled style rejection"); target[key] = value; return true;
+            styleWrites++; throw Error("typography belongs to CSS: " + key + value);
         } });
         return panel;
     };
     e.feature.onEnable(); assert.equal(e.label(), null); assert.equal(e.overlay().style.visibility, "collapse");
     rejectCreation = false; e.clock.advance(1100); assert.equal(e.label().text, "Public Build: 123 - Example"); assert.equal(e.label().style.fontSize, undefined);
-    rejectStyle = false; e.clock.advance(1100); assert.equal(e.label().style.fontSize, "16px");
+    e.clock.advance(1100); assert.equal(e.label().style.fontSize, undefined);
     const stableWrites = styleWrites; e.clock.advance(2200); assert.equal(styleWrites, stableWrites);
     let text = e.label().text, rejectText = true;
     Object.defineProperty(e.label(), "text", { configurable: true, get: () => text, set(value) { if (rejectText) throw Error("modeled text rejection"); text = value; } });

@@ -6,6 +6,13 @@ without waiting for JavaScript label discovery. The shared HUD projector owns
 the Fountain, clean, cumulative and trooper gates; retiring the manifest releases
 those gates without changing persisted choices.
 
+The native-label presentation poll runs only while size or opacity differs from
+its neutral value. Returning both to neutral releases owned code styles and stops
+discovery; a settings change restarts it. CSS visibility/Fountain modes remain
+reactive while that poll is stopped. Active size/opacity still use native code
+styles: removing that path requires client evidence of native style writers and
+stylesheet priority on live and recycled indicator roles.
+
 Size and opacity are edited directly beside the damage modes in the Crosshair
 tab. These indicators follow world/combat events and have no HUD-canvas entry
 or screen position controls.

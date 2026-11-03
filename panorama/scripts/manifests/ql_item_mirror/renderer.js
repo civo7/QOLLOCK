@@ -197,11 +197,9 @@
                     cdSlopeEma: null,
                     cdDirection: 0,
                     cdDisplayLock: null,
-                    lastSizeSig: "",
                     staticSyncSig: "",
                     lastCooldownClassSig: "",
                     lastMirrorImagePanel: null,
-                    cooldownTextStyled: false,
                     nextCooldownTextProbeMs: 0,
                     lastProbeCooldownText: "",
                     wasCooldownTextVisible: false,
@@ -219,10 +217,8 @@
                 slotObj.renderedSourceKey = source.key;
                 slotState.staticSyncSig = "";
                 slotState.lastCooldownClassSig = "";
-                slotState.lastSizeSig = "";
                 slotState.lastMaskScaleSig = "";
                 slotState.lastMirrorImagePanel = null;
-                slotState.cooldownTextStyled = false;
             }
             // Acquisition identity can survive a rebuilt inventory, but radial
             // velocity and text samples cannot cross a native panel generation.
@@ -253,45 +249,9 @@
             if (!sourceImage && sourceMod && sourceMod.FindChildTraverse) sourceImage = sourceMod.FindChildTraverse("ModIconImage");
             if (!sourceImage && sourceIcon.FindChildTraverse) sourceImage = sourceIcon.FindChildTraverse("ModIconImage");
             source.sourceImage = sourceImage || null;
-            const size = _resolveMirrorItemSize(sourceIcon, sourceMod);
-            const sizeSig = size.width + "|" + size.height;
-            if (mirrorIcon.style.margin !== "2px 6px 2px 6px") {
-                mirrorIcon.style.margin = "2px 6px 2px 6px";
-            }
-            if (mirrorCooldownText) {
-                if (!slotState.cooldownTextStyled) {
-                    mirrorCooldownText.style.width = "fit-children";
-                    mirrorCooldownText.style.height = "fit-children";
-                    mirrorCooldownText.style.fontSize = "20px";
-                    mirrorCooldownText.style.fontWeight = "bold";
-                    mirrorCooldownText.style.margin = "0px";
-                    mirrorCooldownText.style.padding = "0px";
-                    mirrorCooldownText.style.horizontalAlign = "center";
-                    mirrorCooldownText.style.verticalAlign = "center";
-                    mirrorCooldownText.style.textAlign = "center";
-                    mirrorCooldownText.style.textOverflow = "clip";
-                    mirrorCooldownText.style.y = "0px";
-                    slotState.cooldownTextStyled = true;
-                }
-            }
-
             _syncItemMirrorStaticSlotState(slotObj, source, sourceIcon, sourceMod, slotState);
 
-            // Keep mirror icon sizing deterministic regardless of source panel classes/style.
-            if (slotState.lastSizeSig !== sizeSig ||
-            mirrorIcon.style.width !== size.width ||
-            mirrorIcon.style.height !== size.height ||
-            mirrorSlot.style.width !== size.width ||
-            mirrorSlot.style.height !== size.height) {
-                mirrorIcon.style.width = size.width;
-                mirrorIcon.style.height = size.height;
-                mirrorSlot.style.width = size.width;
-                mirrorSlot.style.height = size.height;
-                slotState.lastSizeSig = sizeSig;
-            }
-
             if (mirrorSlot.style.visibility !== "visible") mirrorSlot.style.visibility = "visible";
-            if (mirrorSlot.style.backgroundColor !== "none") mirrorSlot.style.backgroundColor = "none";
 
             let hasImageSrc = false;
             if (mirrorImage && sourceImage) {
@@ -331,12 +291,10 @@
             if (mirrorImage) {
                 const imageVisibility = hasImageSrc ? "visible" : "collapse";
                 if (mirrorImage.style.visibility !== imageVisibility) mirrorImage.style.visibility = imageVisibility;
-                if (mirrorImage.style.zIndex !== "5") mirrorImage.style.zIndex = "5";
             }
             if (mirrorIconInner) {
                 const iconInnerVisibility = hasImageSrc ? "collapse" : "visible";
                 if (mirrorIconInner.style.visibility !== iconInnerVisibility) mirrorIconInner.style.visibility = iconInnerVisibility;
-                if (mirrorIconInner.style.zIndex !== "4") mirrorIconInner.style.zIndex = "4";
             }
 
             if (!mirrorMask) return;
@@ -594,12 +552,6 @@
             _itemMirrorCooldownDebugLog(msg);
         }
 
-        function _resolveMirrorItemSize(sourceIcon, sourceMod) {
-            let sizePx = Math.round(Number(ITEM_MIRROR_ICON_BASE_SIZE_PX));
-            if (!isFinite(sizePx) || sizePx <= 0) sizePx = 45;
-            const sizeText = String(sizePx) + "px";
-            return { width: sizeText, height: sizeText };
-        }
 
 
         function createSlot(row, slotIndex) {
@@ -728,8 +680,6 @@
                 });
                 cdText.AddClass("QOLItemMirrorCooldownText");
                 cdText.style.visibility = "collapse";
-                cdText.style.width = "100%";
-                cdText.style.height = "100%";
                 cdText.style.horizontalAlign = "center";
                 cdText.style.verticalAlign = "center";
                 cdText.style.zIndex = "20";

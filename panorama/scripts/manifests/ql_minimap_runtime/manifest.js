@@ -193,8 +193,7 @@
             function renderTunnel(view) {
                 if (!view.tunnels) { P.setClass(tunnel, "tunnel_locked_on", false); show(tunnel, false); return; }
                 tunnel = ensure(anchor, "tunnel_overlay", tunnel);
-                const ready = style(tunnel, { backgroundImage: 'url("s2r://panorama/images/minimap/base/mm_tunnel_overlay_png_png.vtex")',
-                    backgroundSize: "100% 100%", backgroundRepeat: "no-repeat", backgroundPosition: "center", opacity: view.tunnelOpacity.toFixed(2) });
+                const ready = style(tunnel, { opacity: view.tunnelOpacity.toFixed(2) });
                 P.setClass(tunnel, "tunnel_locked_on", ready);
                 show(tunnel, ready && !diagnostic.controls?.hideTunnel);
             }

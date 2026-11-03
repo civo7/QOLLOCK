@@ -2,7 +2,7 @@
 
 `ql_perf` coordinates collection enablement, periodic console reports and its
 private display lifetime. `model.js` owns rolling report snapshots/alert throttles;
-`overlay.js` owns the created panel tree and successful style signatures. The HUD
+`overlay.js` owns the created panel tree and the dynamic opacity signature. Fixed layout and typography belong to `ql_feat_perf.css`, loaded through HUD CSS. The HUD
 loads those two modules immediately before the manifest. No global singleton
 renderer or duplicate settings snapshot remains.
 

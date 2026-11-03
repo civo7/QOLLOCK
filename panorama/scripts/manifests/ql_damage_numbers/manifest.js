@@ -110,13 +110,16 @@
                 model = readModel(); nextDiscovery = 0; resetDiscovery();
                 QOL.core.hud.refreshRootClasses($.GetContextPanel());
                 update();
+                // Native events cannot turn a neutral settings-only plan into
+                // an override. The next settings hook restarts discovery.
+                if (model.active && !loop) loop = QOL.core.Scheduler.createPollLoop(update, 0.5, ctx.id);
+                else if (!model.active && loop) { loop.stop(); loop = null; }
             }
 
             return {
                 onEnable() {
                     active = true;
                     refreshSettings();
-                    loop = QOL.core.Scheduler.createPollLoop(update, 0.5, ctx.id);
                 },
                 onSettingsChanged: refreshSettings,
                 onDisable() {

@@ -378,6 +378,6 @@ test("build ID reapplies text and layout to a recreated label", () => {
     assert.ok(replacement);
     assert.notEqual(replacement, first);
     assert.match(replacement.text, /123/);
-    assert.equal(replacement.style.fontSize, "16px");
+    assert.equal(replacement.style.fontSize, undefined, "replacement typography comes from the HUD stylesheet");
     assert.deepEqual(hud.clock.errors, []);
 });
