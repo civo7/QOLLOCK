@@ -118,6 +118,24 @@ function setup(overrides = {}) {
         box: () => gameplay.FindChildTraverse("AllBindingsBox") };
 }
 
+test("keyboard owns only the selected native action set and retires it when Full Keys changes", () => {
+    const env = setup(); env.feature.onEnable();
+    for (const [full, count] of [[false, 11], [true, 23], [false, 11]]) {
+        const previous = env.box().FindChildrenWithClassTraverse("Key").filter(panel => panel.paneltype === "CitadelBinding");
+        env.cfg.ENABLE_FULL_KEYBOARD_LAYOUT = full;
+        env.feature.onSettingsChanged(); env.clock.advance(350);
+        const box = env.box();
+        const bindings = box.FindChildrenWithClassTraverse("Key").filter(panel => panel.paneltype === "CitadelBinding");
+        assert.equal(bindings.length, count, "unused native action sets must not exist behind CSS visibility");
+        assert.equal(box.FindChildrenWithClassTraverse(full ? "KeyboardLayoutBase" : "KeyboardLayoutFull").length, 0);
+        assert.equal(env.feature.diagnostics.inspect().census.hidden.bindings, 0);
+        if (previous[0] !== bindings[0]) assert.ok(previous.every(panel => !panel.IsValid()), "old native input subscriptions belong to the retired layout");
+    }
+    env.feature.onDisable(); env.clock.advance(350);
+    assert.ok([...env.bindingActions.keys()].every(panel => !panel.IsValid()));
+    assert.deepEqual(env.clock.errors, []);
+});
+
 test("keyboard diagnostic hiding preserves bindings across settings and restores full replacement controls", () => {
     const env = setup(); env.feature.onEnable();
     const original = env.overlay(), evidence = env.feature.diagnostics.inspect();
@@ -181,7 +199,7 @@ test("keyboard composition requests recreate only its bounded binding box and re
     assert.equal(env.creationProperties.get(box)["always-cache-composition-layer"], "true");
     assert.equal(env.creationProperties.get(cached)["require-composition-layer"], undefined);
     assert.equal(env.creationProperties.get(cached)["always-cache-composition-layer"], undefined);
-    assert.equal(box.FindChildrenWithClassTraverse("Key").filter(panel => panel.paneltype === "CitadelBinding").length, 34);
+    assert.equal(box.FindChildrenWithClassTraverse("Key").filter(panel => panel.paneltype === "CitadelBinding").length, 11);
     const next = env.feature.diagnostics.begin(); next.apply({ composition: "cache" }); next.restore();
     assert.equal(env.overlay(), cached, "restoring the ordinary policy must retain an already cached generation");
     assert.equal(env.gameplay.Children().filter(panel => panel.id === "QOLKeyboardOverlayRoot").length, 1);
@@ -228,25 +246,25 @@ test("keyboard diagnostic controls retire on living gameplay and HUD replacement
     env.feature.onDisable(); env.clock.advance(350); assert.deepEqual(env.clock.errors, []);
 });
 
-test("keyboard diagnostic census follows late glyphs in both layouts without rendering or changing native classes", () => {
+test("keyboard diagnostic census follows late selected glyphs without rendering or changing native classes", () => {
     const env = setup(); env.feature.onEnable();
     const base = env.box().FindChildrenWithClassTraverse("KeyboardLayoutBase")[0];
-    const full = env.box().FindChildrenWithClassTraverse("KeyboardLayoutFull")[0];
-    const selected = base.FindChildrenWithClassTraverse("Key").find(panel => panel.paneltype === "CitadelBinding");
-    const hidden = full.FindChildrenWithClassTraverse("Key").find(panel => panel.paneltype === "CitadelBinding");
-    selected.AddClass("HasHoldAction"); hidden.AddClass("IsPressed");
-    const late = env.add(hidden, "UnboundImage", ["UnboundKeyboardGlyph"]);
+    const [selected, pressed] = base.FindChildrenWithClassTraverse("Key").filter(panel => panel.paneltype === "CitadelBinding");
+    selected.AddClass("HasHoldAction"); pressed.AddClass("IsPressed");
+    const late = env.add(pressed, "UnboundImage", ["UnboundKeyboardGlyph"]);
     const evidence = env.feature.diagnostics.inspect();
-    assert.equal(evidence.census.selected.bindings, 11); assert.equal(evidence.census.hidden.bindings, 23);
-    assert.equal(evidence.census.selected.holdActions, 1); assert.equal(evidence.census.hidden.pressed, 1);
-    assert.equal(evidence.census.selected.unbound, 0); assert.equal(evidence.census.hidden.unbound, 1);
+    assert.equal(evidence.census.selected.bindings, 11); assert.equal(evidence.census.hidden.bindings, 0);
+    assert.equal(evidence.census.selected.holdActions, 1); assert.equal(evidence.census.selected.pressed, 1);
+    assert.equal(evidence.census.selected.unbound, 1); assert.equal(evidence.census.hidden.unbound, 0);
     assert.equal(evidence.census.complete, true); assert.equal(late.style.width, undefined);
-    assert.equal(hidden.BHasClass("IsPressed"), true);
+    assert.equal(pressed.BHasClass("IsPressed"), true);
+    late.SetParent(env.gameplay);
+    assert.equal(env.feature.diagnostics.inspect().census.selected.unbound, 0);
     late.SetParent(selected);
     const moved = env.feature.diagnostics.inspect();
     assert.equal(moved.census.selected.unbound, 1); assert.equal(moved.census.hidden.unbound, 0);
     assert.equal(moved.updates, evidence.updates);
-    let deep = hidden;
+    let deep = pressed;
     for (let i = 0; i < 70; i++) deep = env.add(deep, "DeepGlyph" + i);
     assert.equal(env.feature.diagnostics.inspect().census.complete, false, "an incomplete bounded census cannot claim completeness");
     env.feature.onDisable(); env.clock.advance(350); assert.deepEqual(env.clock.errors, []);
@@ -290,15 +308,14 @@ test("keyboard glyph fingerprints distinguish payload replacement from an equiva
     const cached = env.feature.diagnostics.inspect();
     assert.equal(cached.glyphsReady, true); assert.equal(cached.glyphWorkload, original.glyphWorkload);
     assert.notEqual(cached.glyphEpoch, beforePoll.glyphEpoch);
-    const full = env.box().FindChildrenWithClassTraverse("KeyboardLayoutFull")[0];
-    const hiddenKey = full.FindChildrenWithClassTraverse("Key").find(panel => panel.paneltype === "CitadelBinding");
-    env.add(hiddenKey, "KeyboardButtonImage", ["KeyboardButtonGlyph"]);
-    const hiddenChanged = env.feature.diagnostics.inspect();
-    assert.equal(hiddenChanged.glyphsReady, true, "hidden native imagery is counted without requiring hidden styling");
-    assert.equal(hiddenChanged.census.hidden.payloads, 1);
-    assert.notEqual(hiddenChanged.glyphWorkload, cached.glyphWorkload);
-    assert.notEqual(hiddenChanged.glyphEpoch, cached.glyphEpoch);
-    let deep = hiddenKey;
+    const secondKey = layout().FindChildrenWithClassTraverse("Key").filter(panel => panel.paneltype === "CitadelBinding")[1];
+    env.add(secondKey, "KeyboardButtonImage", ["KeyboardButtonGlyph"]);
+    const changed = env.feature.diagnostics.inspect();
+    assert.equal(changed.glyphsReady, true, "new native imagery is counted without inline styling");
+    assert.equal(changed.census.selected.payloads, 2); assert.equal(changed.census.hidden.payloads, 0);
+    assert.notEqual(changed.glyphWorkload, cached.glyphWorkload);
+    assert.notEqual(changed.glyphEpoch, cached.glyphEpoch);
+    let deep = secondKey;
     for (let i = 0; i < 70; i++) deep = env.add(deep, "DeepPayload" + i);
     const incomplete = env.feature.diagnostics.inspect();
     assert.equal(incomplete.census.complete, false); assert.equal(incomplete.glyphsReady, false);
@@ -325,20 +342,23 @@ test("keyboard evidence rejects a living retired gameplay owner before the next 
     assert.deepEqual(env.clock.errors, []);
 });
 
-test("keyboard keeps both native binding layouts and reacts to geometry/palette/RGB settings without idle config reads", () => {
+test("keyboard preserves each selected action list and reacts to geometry/palette/RGB settings without idle config reads", () => {
     const env = setup({ KEYBOARD_OVERLAY_SCALE: 150, KEYBOARD_OVERLAY_X_OFFSET: -1999, KEYBOARD_OVERLAY_Y_OFFSET: -1999, KEYBOARD_OVERLAY_WASH_COLOR: 4 });
     env.feature.onEnable();
-    const box = env.box(), base = box.FindChildrenWithClassTraverse("KeyboardLayoutBase")[0], full = box.FindChildrenWithClassTraverse("KeyboardLayoutFull")[0];
+    const box = env.box(), base = box.FindChildrenWithClassTraverse("KeyboardLayoutBase")[0];
     const actions = layout => layout.FindChildrenWithClassTraverse("Key").filter(panel => panel.paneltype === "CitadelBinding").map(panel => env.bindingActions.get(panel));
     assert.deepEqual(actions(base), ["AbilityMelee", "MoveForward", "Attack", "ADS", "Roll", "MoveLeft", "MoveBackwards", "MoveRight", "HeldItem", "Crouch", "Mantle"]);
-    assert.deepEqual(actions(full), ["Ability1", "Ability2", "Ability3", "Ability4", "Attack", "ADS", "Scoreboard", "AbilityMelee", "MoveForward", "Cosmetic1", "Reload", "MoveLeft", "MoveBackwards", "MoveRight", "HeldItem", "Roll", "Item1", "Item2", "Item3", "Item4", "Crouch", "ExtraInfo", "Mantle"]);
-    assert.equal(base.Children().length, 3); assert.equal(full.Children().length, 5);
+    assert.equal(base.Children().length, 3);
     assert.equal(box.style.marginLeft, "150px"); assert.equal(box.style.x, "-1999px"); assert.equal(box.style.y, "1999px");
     assert.equal(base.style.uiScale, "150%");
     assert.equal(env.overlay().style.washColor, "#ff3b47");
     Object.assign(env.cfg, { ENABLE_FULL_KEYBOARD_LAYOUT: true, KEYBOARD_OVERLAY_SCALE: 70, KEYBOARD_OVERLAY_WASH_COLOR: env.Q.utils.EncodeHexColor("#010203") });
-    env.feature.onSettingsChanged();
-    assert.equal(box.style.marginLeft, "70px"); assert.equal(full.style.uiScale, "70%");
+    env.feature.onSettingsChanged(); env.clock.advance(350);
+    const full = env.box().FindChildrenWithClassTraverse("KeyboardLayoutFull")[0];
+    assert.equal(base.IsValid(), false);
+    assert.deepEqual(actions(full), ["Ability1", "Ability2", "Ability3", "Ability4", "Attack", "ADS", "Scoreboard", "AbilityMelee", "MoveForward", "Cosmetic1", "Reload", "MoveLeft", "MoveBackwards", "MoveRight", "HeldItem", "Roll", "Item1", "Item2", "Item3", "Item4", "Crouch", "ExtraInfo", "Mantle"]);
+    assert.equal(full.Children().length, 5);
+    assert.equal(env.box().style.marginLeft, "70px"); assert.equal(full.style.uiScale, "70%");
     assert.equal(env.overlay().style.washColor, "#010203");
     env.cfg.KEYBOARD_OVERLAY_WASH_COLOR = 0; env.feature.onSettingsChanged();
     assert.equal(env.overlay().style.washColor, undefined);
@@ -360,30 +380,28 @@ test("keyboard leaves key geometry to CSS and scales only the owned layout on se
     env.feature.onDisable(); env.clock.advance(20); assert.deepEqual(env.clock.errors, []);
 });
 
-test("inactive keyboard glyphs stay native when their layout is selected", () => {
+test("keyboard leaves native glyphs untouched during idle and action-set replacement", () => {
     const env = setup(); env.feature.onEnable();
     const base = env.box().FindChildrenWithClassTraverse("KeyboardLayoutBase")[0];
-    const full = env.box().FindChildrenWithClassTraverse("KeyboardLayoutFull")[0];
-    const hiddenKey = full.FindChildrenWithClassTraverse("Key").find(panel => panel.paneltype === "CitadelBinding");
-    const glyph = env.add(hiddenKey, "KeyboardLetter", [], "Label");
-    let reject = true, glyphWrites = 0, hiddenEnumerations = 0;
-    glyph.style = new Proxy({}, { set(target, key, value) {
-        glyphWrites++; if (reject && key === "fontSize") throw Error("hidden glyph not ready");
-        target[key] = value; return true;
-    } });
-    const children = full.Children.bind(full);
-    full.Children = () => { hiddenEnumerations++; return children(); };
+    const key = base.FindChildrenWithClassTraverse("Key").find(panel => panel.paneltype === "CitadelBinding");
+    const glyph = env.add(key, "KeyboardLetter", [], "Label");
+    let glyphWrites = 0, enumerations = 0;
+    glyph.style = new Proxy({}, { set() { glyphWrites++; throw Error("glyph styling must remain native"); } });
+    const children = base.Children.bind(base);
+    base.Children = () => { enumerations++; return children(); };
     env.clock.advance(1000);
-    assert.equal(hiddenEnumerations, 0, "hidden native glyph trees need no recurring enumeration");
+    assert.equal(enumerations, 0, "native glyph trees need no recurring enumeration");
     assert.equal(glyphWrites, 0);
-    assert.equal(env.overlay().visible, true, "an unready hidden glyph must not suppress the active layout");
-    assert.equal(base.IsValid(), true); assert.equal(full.IsValid(), true);
-    env.cfg.ENABLE_FULL_KEYBOARD_LAYOUT = true; env.feature.onSettingsChanged();
     assert.equal(env.overlay().visible, true);
-    reject = false; env.clock.advance(250);
+    glyph.SetParent(env.gameplay);
+    env.cfg.ENABLE_FULL_KEYBOARD_LAYOUT = true; env.feature.onSettingsChanged(); env.clock.advance(350);
+    assert.equal(env.overlay().visible, true);
     assert.equal(glyph.style.fontSize, undefined); assert.equal(glyphWrites, 0);
-    assert.equal(env.box().FindChildrenWithClassTraverse("KeyboardLayoutBase")[0], base);
-    assert.equal(env.box().FindChildrenWithClassTraverse("KeyboardLayoutFull")[0], full);
+    assert.equal(glyph.IsValid(), true, "retiring a layout must not claim moved native content");
+    assert.equal(base.IsValid(), false);
+    const full = env.box().FindChildrenWithClassTraverse("KeyboardLayoutFull")[0];
+    const nextGlyph = env.add(full.FindChildrenWithClassTraverse("Key")[0], "KeyboardLetter", [], "Label");
+    env.clock.advance(1000); assert.equal(nextGlyph.style.fontSize, undefined);
     env.feature.onDisable(); env.clock.advance(20);
     assert.deepEqual(env.clock.errors, []);
 });
@@ -596,7 +614,7 @@ test("keyboard retires a foreign previous root and waits for queued deletion dur
     env.clock.advance(350); assert.equal(current.IsValid(), false);
     assert.equal(env.gameplay.Children().filter(panel => panel.id === "QOLKeyboardOverlayRoot").length, 1);
     assert.equal(env.box().FindChildrenWithClassTraverse("KeyboardLayoutBase").length, 1);
-    assert.equal(env.box().FindChildrenWithClassTraverse("KeyboardLayoutFull").length, 1);
+    assert.equal(env.box().FindChildrenWithClassTraverse("KeyboardLayoutFull").length, 0);
     env.feature.onDisable(); env.clock.advance(20); env.feature.onSettingsChanged(); env.clock.advance(600);
     assert.equal(env.overlay(), null); assert.deepEqual(env.clock.errors, []);
 });

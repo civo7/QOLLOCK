@@ -36,29 +36,32 @@
         return row;
     };
 
-    const buildKeyboardOverlayLayouts = (createOwned, allBindingsBox) => {
-        const baseLayout = createOwned("Panel", allBindingsBox, "");
-        baseLayout.AddClass("KeyboardLayout");
-        baseLayout.AddClass("KeyboardLayoutBase");
-        createKeyboardOverlayRow(createOwned, baseLayout, [
-            { emptyClass: "EmptyKeyWide" },
-            { action: "AbilityMelee", glyphstyle: "light", keyClass: "QWERTYKey" },
-            { action: "MoveForward", glyphstyle: "light", keyClass: "QWERTYKey" },
-            { action: "Attack", glyphstyle: "dark", keyClass: "MouseKey" },
-            { action: "ADS", glyphstyle: "dark", keyClass: "MouseKey" }
-        ]);
-        createKeyboardOverlayRow(createOwned, baseLayout, [
-            { action: "Roll", glyphstyle: "light", keyClass: "ShiftKey" },
-            { action: "MoveLeft", glyphstyle: "light", keyClass: "ASDFKey" },
-            { action: "MoveBackwards", glyphstyle: "light", keyClass: "ASDFKey" },
-            { action: "MoveRight", glyphstyle: "light", keyClass: "ASDFKey" },
-            { action: "HeldItem", glyphstyle: "light", keyClass: "ASDFKey" }
-        ]);
-        createKeyboardOverlayRow(createOwned, baseLayout, [
-            { action: "Crouch", glyphstyle: "light", keyClass: "CtrlKey" },
-            { action: "Mantle", glyphstyle: "light", keyClass: "SpaceKey" }
-        ]);
+    const buildKeyboardOverlayLayout = (createOwned, allBindingsBox, full) => {
+        if (!full) {
+            const baseLayout = createOwned("Panel", allBindingsBox, "");
+            baseLayout.AddClass("KeyboardLayout");
+            baseLayout.AddClass("KeyboardLayoutBase");
+            createKeyboardOverlayRow(createOwned, baseLayout, [
+                { emptyClass: "EmptyKeyWide" },
+                { action: "AbilityMelee", glyphstyle: "light", keyClass: "QWERTYKey" },
+                { action: "MoveForward", glyphstyle: "light", keyClass: "QWERTYKey" },
+                { action: "Attack", glyphstyle: "dark", keyClass: "MouseKey" },
+                { action: "ADS", glyphstyle: "dark", keyClass: "MouseKey" }
+            ]);
+            createKeyboardOverlayRow(createOwned, baseLayout, [
+                { action: "Roll", glyphstyle: "light", keyClass: "ShiftKey" },
+                { action: "MoveLeft", glyphstyle: "light", keyClass: "ASDFKey" },
+                { action: "MoveBackwards", glyphstyle: "light", keyClass: "ASDFKey" },
+                { action: "MoveRight", glyphstyle: "light", keyClass: "ASDFKey" },
+                { action: "HeldItem", glyphstyle: "light", keyClass: "ASDFKey" }
+            ]);
+            createKeyboardOverlayRow(createOwned, baseLayout, [
+                { action: "Crouch", glyphstyle: "light", keyClass: "CtrlKey" },
+                { action: "Mantle", glyphstyle: "light", keyClass: "SpaceKey" }
+            ]);
 
+            return baseLayout;
+        }
         const fullLayout = createOwned("Panel", allBindingsBox, "");
         fullLayout.AddClass("KeyboardLayout");
         fullLayout.AddClass("KeyboardLayoutFull");
@@ -97,7 +100,7 @@
             { action: "ExtraInfo", glyphstyle: "light", keyClass: "AltKey" },
             { action: "Mantle", glyphstyle: "light", keyClass: "SpaceKey" }
         ]);
-        return { base: baseLayout, full: fullLayout };
+        return fullLayout;
     };
 
     // Adapted compact/grid geometry; native CitadelBinding still owns the glyph
@@ -168,7 +171,7 @@
                 const scale = QOL.settings.readNumber("KEYBOARD_OVERLAY_SCALE", cfg.KEYBOARD_OVERLAY_SCALE);
                 const x = Math.round(Number(cfg.KEYBOARD_OVERLAY_X_OFFSET)) || 0;
                 const y = Math.round(Number(cfg.KEYBOARD_OVERLAY_Y_OFFSET)) || 0;
-                return { full, layout, layoutKey: layout ? layout + ":" + full : "0",
+                return { full, layout, layoutKey: layout + ":" + full,
                     scale: scale + "%",
                     themeClasses: Object.fromEntries(Array.from({ length: 8 }, (_, i) => ["QOLKeyboardTheme" + i, i === theme])),
                     wash: P.resolvePaletteColor(cfg.KEYBOARD_OVERLAY_WASH_COLOR),
@@ -219,7 +222,7 @@
                             "require-composition-layer": "true", "always-cache-composition-layer": "true"
                         } : {}) });
                     if (model.layout) generation.alternate = buildAlternateLayout(createOwned, generation.box, model.layout, model.full);
-                    else generation.layouts = buildKeyboardOverlayLayouts(createOwned, generation.box);
+                    else generation.layout = buildKeyboardOverlayLayout(createOwned, generation.box, model.full);
                     return true;
                 } catch (error) {
                     retire();
@@ -232,8 +235,8 @@
                 desired.set(generation.overlay, QOL.presentation.visibilityStyles("keyboard", QOL.presentation.visibilityConfig(ctx), root,
                     model.wash ? { washColor: model.wash } : {}));
                 desired.set(generation.box, model.box);
-                const layouts = generation.alternate ? [generation.alternate.panel] : [generation.layouts.base, generation.layouts.full];
-                for (const layout of layouts) desired.set(layout, { uiScale: model.scale });
+                const layout = generation.alternate?.panel || generation.layout;
+                desired.set(layout, { uiScale: model.scale });
                 if (generation.alternate) {
                     const alternate = generation.alternate;
                     const px = value => Math.round(value * 40) + "px";

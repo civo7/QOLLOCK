@@ -30,7 +30,8 @@ to release when a glyph appears late, is replaced or moves outside the overlay.
 Settings apply `uiScale` to the created layout, retaining base geometry in CSS
 and native units. This uniformly scales keys, glyphs, spacing and borders while
 the outer box retains its configured positioning offsets. Theme, wash and scale
-changes retain bindings; alternate action/layout changes retire their generation.
+changes retain bindings. Only the selected action set is instantiated; Full Keys
+and layout changes retire the previous generation, including its native bindings.
 Only owned layout geometry, outer wash, visibility and theme classes use the
 shared native-style owner. Rejected writes keep the overlay hidden and schedule
 an owned retry; queued previous-generation deletion also schedules a retry.
@@ -63,7 +64,8 @@ does not render or add recurring work.
 
 `inspect()` reports activity, generation, attachment, local visibility, owned
 style readiness, update count, composition policy and selected/hidden binding and
-payload counts. `glyphsReady` requires complete census, a selected native payload
+payload counts. Hidden counts remain zero because inactive action sets are not
+created. `glyphsReady` requires complete census, a selected native payload
 and successful owned presentation. Glyph styles now come from component CSS, so
 a late or replacement payload does not wait for a JavaScript render pass.
 An empty modifier-combiner label alone is not a payload. `glyphWorkload` records

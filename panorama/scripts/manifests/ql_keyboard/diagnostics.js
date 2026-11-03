@@ -17,15 +17,13 @@
                 return { root: current, parent: validHud ? P.findChild(P.findChildByClass(current, "HudCore"), "gameplay_hud") : null };
             };
             // A bounded census is an outside-window receipt, never another poll.
-            function census(generation, full) {
+            function census(generation) {
                 const counts = () => ({ bindings: 0, payloads: 0, unbound: 0, holdActions: 0, pressed: 0 });
                 const result = { selected: counts(), hidden: counts(), complete: true,
                     glyphWorkload: null, glyphEpoch: null };
                 if (!generation) return result;
-                const selected = generation.alternate?.panel || generation.layouts[full ? "full" : "base"];
-                const layouts = generation.alternate ? [selected] : [generation.layouts.base, generation.layouts.full];
-                const stack = layouts.map((panel, index) => ({ panel, path: String(index), depth: 0,
-                    counts: panel === selected ? result.selected : result.hidden }));
+                const selected = generation.alternate?.panel || generation.layout;
+                const stack = [{ panel: selected, path: "0", depth: 0, counts: result.selected }];
                 const workload = [], epoch = [];
                 let remaining = 2048;
                 try {
@@ -67,7 +65,7 @@
                     generation.overlay.GetParent() === source.parent && P.findChild(source.parent, "QOLKeyboardOverlayRoot") === generation.overlay;
                 const rootVisible = present && generation.overlay.visible === true;
                 const stylesReady = enabled && attached && styles.verify();
-                const { glyphWorkload, glyphEpoch, ...counts } = census(generation, full);
+                const { glyphWorkload, glyphEpoch, ...counts } = census(generation);
                 return { active: enabled, generation: generation?.serial || null, rootPresent: present, rootVisible, attached,
                     full, ready: stylesReady && rootVisible, stylesReady,
                     glyphsReady: stylesReady && counts.complete && counts.selected.payloads > 0, glyphWorkload, glyphEpoch,
