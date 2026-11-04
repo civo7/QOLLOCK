@@ -41,6 +41,72 @@ function fixture(id) {
     return { ...env, g, Q, add, parent, element, make, find, activate, edit };
 }
 
+function recordShopCommands(env) {
+    const commands = [], dispatch = env.g.$.DispatchEvent;
+    env.g.$.DispatchEvent = (name, ...args) => {
+        if (name === "CitadelConCommand") {
+            commands.push(args[0]);
+            if (args[0] === "citadel_open_hero_sheet") env.hud.root.SetHasClass("gShopOpen", !env.hud.root.BHasClass("gShopOpen"));
+        }
+        return dispatch(name, ...args);
+    };
+    return commands;
+}
+
+for (const entry of ["section", "shortcut", "catalog", "frame", "drag", "resize"]) {
+    test(`Quick Buy ${entry} keeps the shop closed while selecting and moving compact HUD content`, () => {
+        const e = fixture("quickbuy"), { Q, clock } = e;
+        const { targets } = e.make(), commands = recordShopCommands(e);
+        const souls = e.add(e.parent, "gold_and_ap_container");
+        Object.assign(souls, { actuallayoutwidth: 160, actuallayoutheight: 60, actualxoffset: 200, actualyoffset: 900 });
+        if (entry === "section") {
+            Q.ui.window.setActiveTabAndRefresh("Shop"); clock.advance(300);
+            e.activate("QOLCustomizeEntry_quickbuy");
+        } else if (entry === "shortcut") {
+            Q.ui.window.setActiveTabAndRefresh("Customize"); clock.advance(300);
+            e.activate("QOLCustomizeLaunch_quickbuy");
+        } else {
+            assert.equal(Q.ui.customize.start(), true);
+            assert.ok(e.find("QOLCustomize_SOULS_X_OFFSET"), "another surface is initially selected");
+            if (entry === "catalog" || entry === "resize") e.activate("QOLCustomizeSelect_quickbuy");
+            else if (entry === "frame") e.activate("QOLCustomizeFrame_quickbuy");
+        }
+        const source = e.find(entry === "resize" ? "QOLCustomizeResize_quickbuy" : "QOLCustomizeFrame_quickbuy");
+        const proxy = startDrag(e, source);
+        assert.ok(proxy, "native frame capture succeeds");
+        proxy.actualxoffset += 40; proxy.actualyoffset += 15;
+        clock.advance(40); startDrag.end(e, source, proxy); clock.advance(1200);
+        assert.deepEqual(commands, [], "selection and capture must not dispatch a shop toggle");
+        assert.equal(e.hud.root.BHasClass("gShopOpen"), false);
+        if (entry === "resize") assert.notEqual(targets[1].style.uiScale, undefined);
+        else assert.equal(targets[1].style.x, "40px");
+        e.activate("QOLCustomizeCancel"); clock.advance(300);
+        assert.deepEqual(commands, [], "cleanup has no shop command to balance");
+        assert.deepEqual(clock.errors, []); assert.deepEqual(e.doc.eventErrors, []);
+    });
+}
+
+test("Quick Buy preserves an already-open shop and closes only a shop opened by another editor selection", () => {
+    const e = fixture("quickbuy"), { Q, clock } = e;
+    e.make();
+    const commands = recordShopCommands(e);
+    e.hud.root.AddClass("gShopOpen");
+    assert.equal(Q.ui.customize.start(null, { elementId: "quickbuy" }), true);
+    e.activate("QOLCustomizeCancel"); clock.advance(300);
+    assert.deepEqual(commands, []); assert.equal(e.hud.root.BHasClass("gShopOpen"), true);
+    e.hud.root.RemoveClass("gShopOpen");
+    assert.equal(Q.ui.customize.start(), true);
+    e.activate("QOLCustomizeAllElements");
+    e.activate("QOLCustomizeSelect_shop");
+    assert.deepEqual(commands, ["citadel_open_hero_sheet"]);
+    e.activate("QOLCustomizeSelect_quickbuy");
+    assert.deepEqual(commands, ["citadel_open_hero_sheet", "citadel_open_hero_sheet"]);
+    assert.equal(e.hud.root.BHasClass("gShopOpen"), false);
+    e.activate("QOLCustomizeCancel"); clock.advance(300);
+    assert.equal(commands.length, 2, "exit cannot reopen the retired shop");
+    assert.deepEqual(clock.errors, []); assert.deepEqual(e.doc.eventErrors, []);
+});
+
 for (const [id, prefix, feature] of [["minimapLocation", "MINIMAP_LOCATION_", "ql_minimap_location"], ["quickbuy", "QUICKBUY_", "ql_presentation_scale"]]) {
     test(`${id}: native drag, reset/history, cancel, save and settings exchange use production paths`, () => {
         const e = fixture(id), { Q, g, clock } = e;
