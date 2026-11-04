@@ -202,6 +202,7 @@
         const defaultIcons = {
             Support: "s2r://panorama/images/icons/icon_thumbsup.vsvg",
             Config: "s2r://panorama/images/icons/icon_gear.vsvg",
+            Customize: "s2r://panorama/images/qollock/customize_nav_icon.vsvg",
             Presets: "s2r://panorama/images/icons/icon_player.vsvg",
             Console: "s2r://panorama/images/icons/icon_feedback.vsvg",
             Arcade: "s2r://panorama/images/icons/properties/condition_burn.vsvg",

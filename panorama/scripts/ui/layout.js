@@ -44,7 +44,7 @@
                 }
             ]
         },
-        { id: "Customize", name: "Customize", icon: "s2r://panorama/images/icons/icon_gear.vsvg", custom: true },
+        { id: "Customize", name: "Customize", icon: "s2r://panorama/images/qollock/customize_nav_icon.vsvg", custom: true },
         {
             id: "Presets",
             name: "Presets",
