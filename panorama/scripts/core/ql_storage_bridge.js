@@ -41,6 +41,11 @@
 
     let _bridgePanel = null;
     let _bridgeReady = false;
+    // Write token from the page's ready title (":tok=<hex>"). Other sites can drive
+    // the page through its URL fragment but cannot read its title, so changes that
+    // carry this token come from QOLLOCK. Empty against an older page without it.
+    let _bridgeToken = "";
+    const TOKEN_OPERATIONS = new Set(["save", "saveChunk", "load", "remove"]);
     let _reqCounter = 0;
     let _fragmentCounter = 0;
     let _pendingRequests = {};
@@ -170,7 +175,9 @@
     };
 
     const _sendFragment = (f, a) => {
-        const message = { q: String(++_fragmentCounter), f, a };
+        // Older pages ignore the extra trailing argument.
+        const args = _bridgeToken && TOKEN_OPERATIONS.has(f) ? [...a, _bridgeToken] : a;
+        const message = { q: String(++_fragmentCounter), f, a: args };
         _bridgePanel.SetURL(BRIDGE_URL + "#" + encodeURIComponent(JSON.stringify(message)));
     };
 
@@ -370,6 +377,8 @@
         if (panel !== _bridgePanel) return;
 
         if (/^QOL_BRIDGE_READY:frag1(?:$|:)/.test(title)) {
+            const token = /:tok=([0-9a-f]{32})(?::|$)/.exec(title);
+            _bridgeToken = token ? token[1] : "";
             if (_bridgeReady) return;
             _bridgeReady = true;
             _log("Bridge connected and ready.");
@@ -553,6 +562,7 @@
         }
 
         _bridgeReady = false;
+        _bridgeToken = "";
         _initAttempts = 0;
         _oldPageLogged = false;
 

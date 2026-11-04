@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'unsafe-inline'; worker-src 'self';">
+    <title>QOL_BRIDGE_INIT</title>
+</head>
+<body>
+<script>
+(function() {
+    'use strict';
+
+    if (window.top !== window.self) {
+        try { window.top.location = window.self.location; } catch (_) {}
+        return;
+    }
+
+    // Verify localStorage availability before declaring bridge ready
+    try {
+        var _probeKey = '__qol_probe__';
+        localStorage.setItem(_probeKey, '1');
+        localStorage.removeItem(_probeKey);
+    } catch (eStorage) {
+        document.title = 'QOL_BRIDGE_ERROR:' + (eStorage && eStorage.message ? eStorage.message : eStorage);
+        return;
+    }
+
+    if ('serviceWorker' in navigator) {
+        try { navigator.serviceWorker.register('./sw.js').catch(function() {}); } catch (_) {}
+    }
+
+    var CHUNK_SIZE = 1500;
+    var _loadBuffers = Object.create(null);
+    var _saveBuffers = Object.create(null);
+    var _sendSeq = 0;
+
+    function isValidId(id) {
+        return typeof id === 'string' && /^qol_\d+_\d+$/.test(id);
+    }
+
+    function decodeText(text, isB64) {
+        if (!isB64 || typeof text !== 'string') return String(text);
+        try {
+            return decodeURIComponent(escape(atob(text)));
+        } catch (_) {
+            try {
+                return atob(text);
+            } catch (__) {
+                return String(text);
+            }
+        }
+    }
+
+    function send(id, ok, data, err, extra) {
+        var resp = { id: id, ok: !!ok, _seq: ++_sendSeq };
+        if (data !== undefined) resp.data = data;
+        if (err) resp.error = String(err);
+        if (extra) {
+            for (var k in extra) {
+                if (Object.prototype.hasOwnProperty.call(extra, k)) {
+                    resp[k] = extra[k];
+                }
+            }
+        }
+        document.title = 'QOL_RES:' + JSON.stringify(resp);
+    }
+
+    window.__qolSave = function(key, val, id, isB64) {
+        if (!isValidId(id)) return;
+        try {
+            var decodedKey = decodeText(key, isB64);
+            var decodedVal = decodeText(val, isB64);
+            localStorage.setItem(decodedKey, decodedVal);
+            send(id, true);
+        } catch (e) {
+            send(id, false, undefined, e && e.message ? e.message : e);
+        }
+    };
+
+    window.__qolSaveChunk = function(key, part, total, chunk, id, isB64) {
+        if (!isValidId(id)) return;
+        try {
+            if (!Number.isInteger(part) || !Number.isInteger(total) || part < 0 || part >= total || total > 5000) {
+                send(id, false, undefined, 'Invalid save chunk boundaries');
+                return;
+            }
+            if (!_saveBuffers[id]) {
+                _saveBuffers[id] = new Array(total);
+                setTimeout(function() {
+                    if (_saveBuffers[id]) delete _saveBuffers[id];
+                }, 30000);
+            }
+            var decodedKey = decodeText(key, isB64);
+            var decodedChunk = decodeText(chunk, isB64);
+            _saveBuffers[id][part] = decodedChunk;
+
+            if (part + 1 === total) {
+                var full = _saveBuffers[id].join('');
+                delete _saveBuffers[id];
+                localStorage.setItem(decodedKey, full);
+                send(id, true);
+            } else {
+                send(id, true, undefined, null, { savePartAck: part });
+            }
+        } catch (e) {
+            if (_saveBuffers[id]) delete _saveBuffers[id];
+            send(id, false, undefined, e && e.message ? e.message : e);
+        }
+    };
+
+    window.__qolLoad = function(key, id, isB64) {
+        if (!isValidId(id)) return;
+        try {
+            var decodedKey = decodeText(key, isB64);
+            var val = localStorage.getItem(decodedKey);
+            if (val === null || val === undefined || val.length <= CHUNK_SIZE) {
+                send(id, true, val);
+                return;
+            }
+            var chunks = [];
+            for (var i = 0; i < val.length; i += CHUNK_SIZE) {
+                chunks.push(val.slice(i, i + CHUNK_SIZE));
+            }
+            _loadBuffers[id] = chunks;
+            setTimeout(function() {
+                if (_loadBuffers[id]) delete _loadBuffers[id];
+            }, 30000);
+            send(id, true, chunks[0], null, { chunked: true, part: 0, total: chunks.length });
+        } catch (e) {
+            send(id, false, undefined, e && e.message ? e.message : e);
+        }
+    };
+
+    window.__qolNextChunk = function(id, part) {
+        if (!isValidId(id)) return;
+        try {
+            var chunks = _loadBuffers[id];
+            if (!chunks || !Number.isInteger(part) || part < 0 || part >= chunks.length) {
+                if (_loadBuffers[id]) delete _loadBuffers[id];
+                send(id, false, undefined, 'Invalid chunk index');
+                return;
+            }
+            var chunkData = chunks[part];
+            var isLast = (part + 1 === chunks.length);
+            if (isLast) {
+                delete _loadBuffers[id];
+            }
+            send(id, true, chunkData, null, { chunked: true, part: part, total: chunks.length });
+        } catch (e) {
+            if (_loadBuffers[id]) delete _loadBuffers[id];
+            send(id, false, undefined, e && e.message ? e.message : e);
+        }
+    };
+
+    window.__qolRemove = function(key, id, isB64) {
+        if (!isValidId(id)) return;
+        try {
+            var decodedKey = decodeText(key, isB64);
+            localStorage.removeItem(decodedKey);
+            send(id, true);
+        } catch (e) {
+            send(id, false, undefined, e && e.message ? e.message : e);
+        }
+    };
+
+    // Deadlock's 2026-10-01 update lets CitadelHTMLPanel.SetURL load only
+    // https:// URLs, so `javascript:` calls no longer reach this page.
+    // QOLLOCK now sends each call as
+    //   #<encodeURIComponent(JSON.stringify({ q: uniqueId, f: name, a: args }))>
+    // The fragment is never sent to the server, and changing it fires
+    // `hashchange` without reloading the page. A fragment present when the
+    // page first loads is ignored so a reload never replays an old request.
+    var FRAGMENT_HANDLERS = {
+        save: window.__qolSave,
+        saveChunk: window.__qolSaveChunk,
+        load: window.__qolLoad,
+        next: window.__qolNextChunk,
+        remove: window.__qolRemove
+    };
+    var _lastFragmentId = '';
+
+    function onFragment() {
+        var hash = location.hash;
+        if (!hash || hash.length < 2) return;
+        var msg;
+        try {
+            msg = JSON.parse(decodeURIComponent(hash.slice(1)));
+        } catch (_) {
+            return;
+        }
+        if (!msg || typeof msg.q !== 'string' || msg.q === _lastFragmentId) return;
+        if (!Object.prototype.hasOwnProperty.call(FRAGMENT_HANDLERS, msg.f) || !Array.isArray(msg.a)) return;
+        _lastFragmentId = msg.q;
+        FRAGMENT_HANDLERS[msg.f].apply(null, msg.a);
+    }
+
+    window.addEventListener('hashchange', onFragment);
+
+    // ":frag1" tells QOLLOCK this page accepts fragment requests.
+    document.title = 'QOL_BRIDGE_READY:frag1';
+})();
+</script>
+</body>
+</html>

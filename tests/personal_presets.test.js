@@ -507,7 +507,7 @@ function connectSavePage(e, disk, failKey = "") {
     const panel = bridge.getPanel();
     const page = {
         atob: value => Buffer.from(value, "base64").toString("binary"),
-        navigator: {}, location: { hash: "" }, document: {},
+        navigator: {}, crypto: require("node:crypto").webcrypto, location: { hash: "" }, document: {},
         localStorage: {
             getItem: key => disk.get(key) ?? null,
             setItem: (key, value) => { if (key === failKey) throw Error("quota"); disk.set(key, String(value)); },
