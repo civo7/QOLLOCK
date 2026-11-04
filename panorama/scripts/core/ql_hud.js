@@ -288,7 +288,8 @@
     const coreClassState = {
         rootClassCache: { panel: null, values: {} },
         abilitiesClassCache: { panel: null, values: {} },
-        coreRootStaticSig: ""
+        coreRootStaticSig: "",
+        lastFountainClass: null
     };
     let abilitiesClassSig = null;
     const retiredClassOwners = new Map();
@@ -647,7 +648,10 @@
         if (!root) return false;
         cfg = presentationConfig(cfg);
         const state = coreClassState;
-        if (state.rootClassCache.panel !== root) state.coreRootStaticSig = "";
+        if (state.rootClassCache.panel !== root) {
+            state.coreRootStaticSig = "";
+            state.lastFountainClass = null;
+        }
         bindClassOwner(state.rootClassCache, root);
         releaseRetiredClasses();
 
@@ -863,13 +867,24 @@
                 setPanelClassCached(root, rc, cls, active);
             }
 
-            // CSS scales each native event wrapper immediately, including newly
-            // spawned indicators; inner distance scales and keyframes stay intact.
+            // Retry rejected removals even across further setting changes.
+            for (const name of rc.pending) {
+                if (name.startsWith("damage_fountain_scale_") && rc.values[name] === false) {
+                    setPanelClassCached(root, rc, name, false);
+                }
+            }
+            // Change only the previous/current tokens instead of the full range.
             const fountainPercent = cfg?.ENABLE_DAMAGE_FOUNTAIN === 1
                 ? Math.round(QOL.settings.readNumber("DAMAGE_FOUNTAIN_SIZE", cfg?.DAMAGE_FOUNTAIN_SIZE) * 100) : 100;
-            for (let percent = 50; percent <= 300; percent++) {
-                if (percent !== 100) setPanelClassCached(root, rc, "damage_fountain_scale_" + percent, fountainPercent === percent);
+            const targetFountainClass = (fountainPercent !== 100) ? "damage_fountain_scale_" + fountainPercent : null;
+
+            if (state.lastFountainClass && state.lastFountainClass !== targetFountainClass) {
+                setPanelClassCached(root, rc, state.lastFountainClass, false);
             }
+            if (targetFountainClass) {
+                setPanelClassCached(root, rc, targetFountainClass, true);
+            }
+            state.lastFountainClass = targetFountainClass;
 
             state.coreRootStaticSig = rc.pending.size ? "" : staticSig;
         }

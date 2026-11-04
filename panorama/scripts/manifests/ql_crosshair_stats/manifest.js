@@ -203,14 +203,18 @@
                 return c;
             }
 
+            const _HTML_ENTITY_MAP = { "&nbsp;": " ", "&amp;": "&", "&lt;": "<", "&gt;": ">" };
+            const _ENTITY_REGEX = /&(?:nbsp|amp|lt|gt);/g;
+            const _TAG_REGEX = /<[^>]*>/g;
+            const _SPACE_REGEX = /\s+/g;
+
             function _stripHtml(s) {
                 if (!s) return "";
-                let out = "", inTag = false;
-                for (let i = 0; i < s.length; i++) { let ch = s.charAt(i); if (ch === "<") { inTag = true; continue; } if (ch === ">") { inTag = false; continue; } if (!inTag) out += ch; }
-                out = out.split("&nbsp;").join(" ").split("&amp;").join("&").split("&lt;").join("<").split("&gt;").join(">");
-                let parts = out.split(/\s+/), clean = [];
-                for (let p = 0; p < parts.length; p++) { if (parts[p]) clean.push(parts[p]); }
-                return clean.join(" ");
+                if (s.indexOf("<") === -1 && s.indexOf("&") === -1) return s.replace(_SPACE_REGEX, " ").trim();
+                return s.replace(_TAG_REGEX, "")
+                        .replace(_ENTITY_REGEX, match => _HTML_ENTITY_MAP[match] || match)
+                        .replace(_SPACE_REGEX, " ")
+                        .trim();
             }
             function _readBfs(root) {
                 let queue = []; try { if (root.Children) queue = (root.Children() || []).slice(); } catch(e) { return ""; }
@@ -238,16 +242,28 @@
             function _getSourceValueRefs(st, container, def) {
                 let refs = st.sourceValueRefs[def.key];
                 let current = refs && refs.container === container && _isAlive(refs.core) && refs.core.BHasClass("miniModifierCore");
-                if (current && def.deltaSelector) current = _isAlive(refs.statNumberDelta) && refs.statNumberDelta.BHasClass("statNumberDelta");
-                else if (current) {
+                if (current && def.deltaSelector) {
+                    current = _isAlive(refs.statNumberDelta) && refs.statNumberDelta.BHasClass("statNumberDelta");
+                } else if (current) {
                     current = _isAlive(refs.statNumber) && refs.statNumber.BHasClass("statNumber");
                     if (current && def.expectsPostfix) current = _isAlive(refs.statPostfix) && refs.statPostfix.BHasClass("statPostfix");
                     else if (current && refs.statPostfix) current = _isAlive(refs.statPostfix) && refs.statPostfix.BHasClass("statPostfix");
                 }
-                if (current && _belongsToSource(refs.core, container) && (!refs.statNumber || _belongsToSource(refs.statNumber, refs.core)) && (!refs.statPostfix || _belongsToSource(refs.statPostfix, refs.core)) && (!refs.statNumberDelta || _belongsToSource(refs.statNumberDelta, refs.core)) && Date.now() < refs.nextRefresh) return refs;
+
+                // Validate the common direct/nested value owners without walking
+                // their full ancestry; other layouts use discovery below.
+                if (current && Date.now() < refs.nextRefresh) {
+                    const validParents = (refs.core.GetParent?.() === container) &&
+                        (!refs.statNumber || refs.statNumber.GetParent?.() === refs.core || refs.statNumber.GetParent?.()?.GetParent?.() === refs.core) &&
+                        (!refs.statPostfix || refs.statPostfix.GetParent?.() === refs.core || refs.statPostfix.GetParent?.()?.GetParent?.() === refs.core) &&
+                        (!refs.statNumberDelta || refs.statNumberDelta.GetParent?.() === refs.core || refs.statNumberDelta.GetParent?.()?.GetParent?.() === refs.core);
+                    if (validParents) return refs;
+                }
+
                 let core = _firstByClass(container, "miniModifierCore");
                 refs = {
-                    container: container, nextRefresh: Date.now() + DISCOVERY_RETRY_MS,
+                    container: container,
+                    nextRefresh: Date.now() + DISCOVERY_RETRY_MS,
                     core: core,
                     statNumber: core ? _firstByClass(core, "statNumber") : null,
                     statPostfix: core ? _firstByClass(core, "statPostfix") : null,

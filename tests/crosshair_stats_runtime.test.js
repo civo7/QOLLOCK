@@ -84,6 +84,14 @@ function value(root, key) {
     return root.FindChildTraverse(`QOLCrosshairStatRow_${key}_value`);
 }
 
+test("crosshair plain labels normalize internal whitespace like formatted labels", () => {
+    const hud = createCrosshairHud(), { $, QOL: Q } = hud.sandbox.global;
+    const source = $.CreatePanel("Panel", hud.core, "hudActivePlayerStats");
+    addModifier($, source, "fireRateContainer", { number: " +10   20 ", postfix: "%", classes: ["shouldShow", "isPositive"] });
+    enableActiveStats(Q); hud.clock.advance(300);
+    assert.equal(value(hud.root, "fireRate").text, "+10 20%");
+});
+
 test("crosshair skips static decoration of inactive rows and repairs them before reveal", () => {
     const hud = createCrosshairHud(), { $, QOL: Q } = hud.sandbox.global;
     const source = $.CreatePanel("Panel", hud.core, "hudActivePlayerStats");

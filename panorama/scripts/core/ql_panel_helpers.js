@@ -338,32 +338,64 @@
         };
         const apply = (panel, styles, classes = {}) => {
             if (!isPanelAlive(panel)) { release(panel); return false; }
-            const properties = Object.keys(styles), names = Object.keys(classes);
             let record = records.get(panel);
             let validatedStyles = false, previous;
-            // A settled presentation still validates native feedback and leases,
-            // but needs no new ownership sets, baseline claims or signatures.
-            if (record?.settled && record.properties.size === properties.length && record.classes.size === names.length) {
+
+            // Settled maps validate ownership/native feedback without key arrays.
+            if (record?.settled) {
                 try {
-                    const unchangedStyles = properties.every(property =>
-                        Object.prototype.hasOwnProperty.call(record.styles, property) && record.styles[property] === styles[property] &&
-                        (property === "position" ? positionKeys.every(key => held(panel, key)) : held(panel, styleKey(property))) &&
-                        panel.style[property] === record.readback.get(property));
-                    previous = unchangedStyles ? record.signature : null;
+                    let match = true;
+                    let sCount = 0;
+                    for (const prop in styles) {
+                        if (!Object.prototype.hasOwnProperty.call(styles, prop)) continue;
+                        if (!Object.prototype.hasOwnProperty.call(record.styles, prop) || record.styles[prop] !== styles[prop] ||
+                            (prop === "position" ? !positionKeys.every(k => held(panel, k)) : !held(panel, styleKey(prop))) ||
+                            panel.style[prop] !== record.readback.get(prop)) {
+                            match = false;
+                            break;
+                        }
+                        sCount++;
+                    }
+                    if (match && sCount === record.properties.size) {
+                        previous = record.signature;
+                        validatedStyles = true;
+                        let cCount = 0;
+                        for (const cls in classes) {
+                            if (!Object.prototype.hasOwnProperty.call(classes, cls)) continue;
+                            const val = !!classes[cls];
+                            if (!Object.prototype.hasOwnProperty.call(record.classValues, cls) || record.classValues[cls] !== val || !held(panel, "class:" + cls) ||
+                                panel.BHasClass(cls) !== (record.classBaselines.get(cls) || val)) {
+                                match = false;
+                                break;
+                            }
+                            cCount++;
+                        }
+                        if (match && cCount === record.classes.size) {
+                            return true;
+                        }
+                    } else {
+                        previous = null;
+                        validatedStyles = true;
+                    }
+                } catch (_) {
+                    // A retiring native panel may reject feedback temporarily.
+                    previous = null;
                     validatedStyles = true;
-                    const unchangedClasses = unchangedStyles && names.every(name =>
-                        Object.prototype.hasOwnProperty.call(record.classValues, name) && record.classValues[name] === !!classes[name] &&
-                        held(panel, "class:" + name) && panel.BHasClass(name) === (record.classBaselines.get(name) || !!classes[name]));
-                    if (unchangedClasses) return true;
-                } catch (_) { /* Retry through the ordinary partial-write path. */ }
+                }
             }
+
+            const properties = Object.keys(styles);
+            const names = Object.keys(classes);
             if (!record && !properties.length && !names.length) return true;
             if (!record) {
                 record = { properties: new Set(), classes: new Set(), classBaselines: new Map(), wantedProperties: new Set(), wantedClasses: new Set(), signature: null, readback: new Map() };
                 records.set(panel, record);
             }
             record.settled = false;
-            record.wantedProperties = new Set(properties); record.wantedClasses = new Set(names);
+            record.wantedProperties.clear();
+            for (let i = 0; i < properties.length; i++) record.wantedProperties.add(properties[i]);
+            record.wantedClasses.clear();
+            for (let i = 0; i < names.length; i++) record.wantedClasses.add(names[i]);
             let complete = cleanup(panel);
             if (!complete) retryCleanup();
             records.set(panel, record);

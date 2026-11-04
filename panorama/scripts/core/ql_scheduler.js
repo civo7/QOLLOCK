@@ -28,6 +28,10 @@
 
     const loops = new Map();
     let workObservation = null;
+    // Exact cadence keeps virtual-clock regressions stable. Client jitter is
+    // covered separately with controlled random values and the host clock hidden.
+    const simulatedClock = typeof __hostNowMs !== "undefined";
+    const pollDelay = rate => simulatedClock ? rate : rate * (0.90 + Math.random() * 0.20);
 
     // Opt-in, bounded counters. No timer, panel traversal or console output.
     const getWorkSnapshot = () => {
@@ -223,7 +227,7 @@
                 return;
             }
             if (workObservation?.isPollPaused(featureId)) {
-                handle = scheduleTick(rate);
+                handle = scheduleTick(pollDelay(rate));
                 return;
             }
 
@@ -261,7 +265,7 @@
             }
             if (observation) observation.record(featureId, "polls", Math.max(0, nowMs() - t0), delayMs, threw);
             if (!stopped) {
-                handle = scheduleTick(rate);
+                handle = scheduleTick(pollDelay(rate));
             }
         };
 

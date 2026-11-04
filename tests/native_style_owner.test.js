@@ -14,6 +14,30 @@ function setup() {
     return { ...env, Q, $, add, P: Q.core.panel, baselinePending };
 }
 
+test("settled native style owners tolerate temporary readback failure and recover", () => {
+    const env = setup(), panel = env.add("ReadbackFailure"), owner = env.P.createNativeStyleOwner();
+    assert.equal(owner.apply(panel, { opacity: "0.8" }), true);
+    let reject = true;
+    panel.style = new Proxy(panel.style, { get(target, key) {
+        if (reject && key === "opacity") throw Error("native readback unavailable");
+        return target[key];
+    } });
+    assert.equal(owner.apply(panel, { opacity: "0.8" }), false);
+    reject = false;
+    assert.equal(owner.apply(panel, { opacity: "0.8" }), true);
+    owner.clear();
+    assert.equal(panel.style.opacity, undefined);
+});
+
+test("settled native style owners ignore inherited presentation keys", () => {
+    const env = setup(), panel = env.add("OwnKeys"), owner = env.P.createNativeStyleOwner();
+    owner.apply(panel, { opacity: "0.8" });
+    const inherited = Object.defineProperty({}, "width", { enumerable: true, get() { throw Error("inherited style read"); } });
+    const styles = Object.assign(Object.create(inherited), { opacity: "0.8" });
+    assert.equal(owner.apply(panel, styles), true);
+    owner.clear();
+});
+
 test("read-only native ownership evidence detects overwritten values/leases and waits for actual tree retirement", () => {
     const env = setup(), panel = env.add("DiagnosticNative"), owner = env.P.createNativeStyleOwner();
     assert.equal(owner.isReleased(), true);

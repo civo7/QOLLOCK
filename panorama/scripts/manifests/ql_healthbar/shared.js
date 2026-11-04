@@ -29,9 +29,10 @@
 
     H.getPlayerScalePanel = panel => P.findChild(panel, "QOLHealthbarGeometry");
     H.playerScaleGeometry = function(panel) {
+        if (!P.isAlive(panel)) return { target: null, width: 0, height: 0 };
         const logicalSize = (axis, dimension) => {
-            const actual = Number(panel && panel["actuallayout" + dimension]);
-            const scale = Number(panel && panel["actualuiscale_" + axis]);
+            const actual = Number(panel["actuallayout" + dimension]);
+            const scale = Number(panel["actualuiscale_" + axis]);
             return actual > 0 && scale > 0 ? Number((actual / scale).toFixed(2)) : 0;
         };
         return { target: H.getPlayerScalePanel(panel), width: logicalSize("x", "width"), height: logicalSize("y", "height") };
@@ -100,7 +101,7 @@
                 owners.delete(target);
             }
         }
-        function apply(panel, model, includeOffsets = true, geometry = H.playerScaleGeometry(panel)) {
+        function apply(panel, model, includeOffsets = true, geometry = null) {
             if (!P.isAlive(panel) || !model) return false;
             for (const owner of owners.keys()) if (!P.isAlive(owner)) release(owner);
             const record = entry(panel), offsets = {}, appearance = {}, canvas = {};
@@ -110,12 +111,15 @@
             }
             if (model.opacityActive) appearance.opacity = model.opacityText;
             if (model.hidden) appearance.visibility = "collapse";
-            const target = P.isAlive(geometry.target) ? geometry.target : null;
+
+            // Default scale releases geometry overrides without layout reads.
+            const target = model.scaleActive ? (P.isAlive(geometry?.target) ? geometry.target : H.getPlayerScalePanel(panel)) : null;
             const retired = record.canvas.retain(target ? [target] : []);
             if (target) {
-                if (model.scaleActive && geometry.width > 0 && geometry.height > 0) {
-                    canvas.width = geometry.width + "px";
-                    canvas.height = geometry.height + "px";
+                const geo = geometry || H.playerScaleGeometry(panel);
+                if (geo.width > 0 && geo.height > 0) {
+                    canvas.width = geo.width + "px";
+                    canvas.height = geo.height + "px";
                     canvas.uiScale = Math.round(model.finalScale * 100) + "%";
                 }
             } else if (model.scaleActive) appearance.uiScale = model.scaleText;

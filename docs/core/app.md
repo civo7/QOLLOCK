@@ -22,6 +22,12 @@ for enablement but which have no active instance, as well as retained legacy
 disable evidence. Ordinary off settings are excluded. This preserves failure
 visibility after the registry clears a retired owner's consecutive-error count.
 
+Idle gameplay does not publish periodic diagnostic JSON. Explicit requests still
+publish immediately, diagnostic completion callbacks publish their results, and
+active benchmark requests retain the five-second periodic snapshot interval.
+Configuration bridge hosts are reused only while their context/ancestor identities
+remain current, so a still-living HUD can follow a changed publication ancestor.
+
 ## Native Engine Event Bridging
 Deadlock C++ engine events are captured using `$.RegisterForUnhandledEvent` and forwarded to `EventBus`:
 - `CitadelScoreboardToggle` → `engine:scoreboard_toggle` (refresh notification; no visibility payload)
