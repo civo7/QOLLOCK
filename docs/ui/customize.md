@@ -74,9 +74,16 @@ opacity and the Minimalist switch; its background opacity appears only while
 that draft mode is enabled, including after history changes.
 
 Minimap objective timers are available in ordinary settings and Base Minimap's
-Content section. Their producer owns
-plate placement, size, content and visibility; text plates have no separate
-Customize entries. Map References exposes marker size, route size and layer
+Content section. Mid Boss, the ordinary buff plate and each bridge plate also
+have independent Customize selections for offsets, scale and opacity. Their
+geometry remains relative to the minimap viewport; positive vertical offsets
+move plates upward. Offsets use x/y over fixed docking insets, so distant
+placement cannot consume the plates' layout space. Customized timers can extend
+beyond the minimap through scoped overflow classes; the native map renderer
+retains its clip. Reset, disable and owner replacement release those classes.
+The timer owner applies drafts through its ordinary settings
+hook and retains ownership of content, mode-dependent placement and visibility.
+Map References exposes marker size, route size and layer
 opacity while map-relative coordinates stay attached to the native renderer.
 Camp name controls are absent from the ordinary Minimap tab. Crates and routes
 follow their toggles throughout the match; retired minute-window values in older
@@ -431,10 +438,20 @@ settings catalog. Gameplay consumers read that catalog instead of repeating
 per-feature limits. Legacy aliases retain their compatibility conversions.
 
 Position-slider travel is derived from measured viewport/content geometry in
-the moving owner parent's units. Exact input may remain outside that travel.
+the moving owner parent's units. It lets the content center cross the full
+viewport and includes both edge alignments for oversized content. Screen-sized
+surfaces therefore retain useful travel rather than being limited to their few
+remaining pixels of fully contained space. The observed accepted position also
+extends the interval, so moving back from a distant drag position does not jump
+to a viewport boundary. Exact input may remain outside that travel until native
+layout acknowledges it.
 Resize/density changes update the thumb range without creating an edit or
-rewriting the accepted input. Missing or pending measurements disable position
-sliders while exact editing remains available. Reset restores existing defaults,
+rewriting the accepted input. Until the first usable measurement, position
+sliders remain disabled while exact editing and Reset are available. Afterward,
+missing or pending measurements retain the inspector's last numeric travel
+range, keeping the native slider active for recovery. This does not retain or
+reuse missing native geometry for frames or gestures. Unchanged range and
+enabled values are not reapplied during preview refresh. Reset restores existing defaults,
 participates in Undo, and never changes canonical settings until Save.
 
 Dragging requires declared offsets. Cooldown offsets retain their percentage
@@ -506,6 +523,10 @@ root-class readers; the app commits its ACK only after bucket loading and owner
 reconciliation. Rejected delivery or ACK writes remain retryable without stopping
 the config poll. This ACK establishes configuration delivery, not native layout or rendering;
 unavailable selections show a separate status.
+Successful HUD commits and preview resets emit the context-local
+`presentation:preview_changed` event after updating sample state. Reactive owners
+can refresh selection-only content without a feature polling loop. Staged,
+rejected and failed ACK deliveries do not emit it.
 Benchmark stress configuration blocks the preview layer; ending that block forces
 delivery again even if the leased draft payload is unchanged.
 

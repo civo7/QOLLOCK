@@ -268,22 +268,22 @@ test("HUD Statlocker follows native rows and resolves canonical account at click
     assert.deepEqual(env.hud.clock.errors, []);
 });
 
-test("HUD Statlocker retries partial label creation and style writes", () => {
+test("HUD Statlocker retries partial label creation with CSS-owned geometry", () => {
     const env = fixture(), page = profile(env, "123"), row = heroRow(env, page.panel);
     const create = env.$.CreatePanel;
-    let failLabel = true, failStyle = true;
+    let failLabel = true;
     env.$.CreatePanel = (type, parent, id, props) => {
         if (type === "Label" && parent.BHasClass("QOLStatlockerButton") && failLabel) { failLabel = false; throw Error("temporary label failure"); }
         const panel = create(type, parent, id, props);
         if (type === "Button" && parent === row.core) panel.style = new Proxy(panel.style, { set(target, key, value) {
-            if (key === "height" && failStyle) { failStyle = false; throw Error("temporary style failure"); }
+            if (key === "height") throw Error("button geometry belongs to CSS");
             target[key] = value; return true;
         } });
         return panel;
     };
     env.config({ ENABLE_STATLOCKER: 1 }); env.hud.clock.advance(2500);
     const button = row.core.FindChildrenWithClassTraverse("QOLStatlockerButton")[0];
-    assert.equal(button.style.height, "22px");
+    assert.equal(button.style.height, undefined);
     assert.equal(button.FindChildrenWithClassTraverse("QOLStatlockerLabel")[0].text, "STAT");
     button._fire("onactivate"); assert.equal(env.urls.at(-1), "https://statlocker.gg/profile/123");
 });

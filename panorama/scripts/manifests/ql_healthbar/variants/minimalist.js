@@ -32,7 +32,7 @@
             if (!P.isAlive(panel)) return;
             const classActive = root && root.BHasClass("minimalist_healthbar_active");
             const model = H.buildPlayerHealthbarStyleState(cfg, enabled, classActive, root);
-            styles.apply(panel, model, true, H.playerScaleGeometry(panel));
+            styles.apply(panel, model);
             accent.update(root, cfg, panel);
         }
         return { update, release, isActive: () => styles.isActive() || accent.isActive() };

@@ -34,8 +34,6 @@
             const respawnResolver = QOL.panelCache.createIdResolver("respawn_timer", {
                 retryMs: 1000, ownerPath: [{ id: "Hud", optional: true }, { className: "HudCore" }, "gameplay_hud_dead"]
             });
-            const escapeResolver = QOL.panelCache.createIdResolver("EscapeMenu", { retryMs: 1000 });
-            const hudResolver = QOL.panelCache.createIdResolver("Hud", { retryMs: 1000 });
             let root = null, bridgeTargets = [], loop = null, pool = [], wasDead = false, lastTrigger = null, request = null;
             let fallbackTimer = null, nextFallbackScan = 0;
             const ownedEscape = new Set();
@@ -68,20 +66,20 @@
                 request = null; wasDead = false;
             }
 
-            function discover(force) {
+            function discover() {
                 const currentRoot = P.findRoot($.GetContextPanel());
                 if (root !== currentRoot) {
                     releasePresentation();
                     root = currentRoot; bridgeTargets = [];
-                    respawnResolver.reset(); escapeResolver.reset(); hudResolver.reset();
+                    respawnResolver.reset();
                     fallbackTimer = null; nextFallbackScan = 0;
                 }
                 if (!P.isAlive(root)) return [];
-                const hud = root.id === "Hud" ? root : hudResolver.resolve(root, force);
+                const hud = P.findHud($.GetContextPanel());
                 const next = [...new Set([root, hud].filter(P.isAlive))];
                 for (const target of bridgeTargets) if (!next.includes(target)) clearBridge(target);
                 bridgeTargets = next;
-                const escape = escapeResolver.resolve(root, force);
+                const escape = P.findChild(hud, "EscapeMenu");
                 const targets = [...new Set([root, hud, escape, P.isAlive(escape) ? escape.GetParent() : null].filter(P.isAlive))];
                 for (const target of ownedEscape) if (!targets.includes(target)) closeOwnedEscape(target);
                 return targets;
@@ -142,7 +140,7 @@
             }
 
             function update(force = false) {
-                const targets = discover(force);
+                const targets = discover();
                 if (!P.isAlive(root)) return;
                 if (!pool.length || QOL.core.hud.isInHideout(root)) { clearSession(); return; }
                 const life = readLife(force);
@@ -177,7 +175,7 @@
                     if (loop) { loop.stop(); loop = null; }
                     clearSession(); root = null; bridgeTargets = []; pool = []; lastTrigger = null;
                     fallbackTimer = null; nextFallbackScan = 0;
-                    respawnResolver.reset(); escapeResolver.reset(); hudResolver.reset();
+                    respawnResolver.reset();
                 }
             };
         },

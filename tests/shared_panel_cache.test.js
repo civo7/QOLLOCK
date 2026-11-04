@@ -8,6 +8,31 @@ function setup() {
     return { ...env, $, Q, add: (parent, id, type = "Panel") => $.CreatePanel(type, parent, id) };
 }
 
+test("owned ID resolvers follow a replaced breadcrumb owner while the retired subtree stays alive", () => {
+    const env = setup(), root = env.add(null, "ResolverRoot");
+    const owner = env.add(root, "Owner"), first = env.add(owner, "Target");
+    const resolver = env.Q.panelCache.createIdResolver("Target", { ownerPath: ["Owner"] });
+    assert.equal(resolver.resolve(root), first);
+    owner.id = "RetiredOwner";
+    const current = env.add(env.add(root, "Owner"), "Target");
+    assert.equal(resolver.resolve(root), current);
+    assert.equal(first.IsValid(), true);
+});
+
+test("owned ID resolvers refresh first-match priority and honor refreshMs zero", () => {
+    const env = setup(), root = env.add(null, "ResolverRoot");
+    const earlier = env.add(root, "Earlier"), later = env.add(root, "Later");
+    const first = env.add(later, "Target");
+    for (const refreshMs of [0, 50]) {
+        const resolver = env.Q.panelCache.createIdResolver("Target", { refreshMs });
+        assert.equal(resolver.resolve(root), first);
+        const current = env.add(earlier, "Target");
+        env.clock.advance(refreshMs);
+        assert.equal(resolver.resolve(root), current);
+        current.SetParent(env.add(null, "Retired"));
+    }
+});
+
 test("typed and compatibility cache names share one validated storage without a State mirror", () => {
     const env = setup(), { Q } = env;
     const first = env.add(env.root, "First"), second = env.add(env.root, "Second");

@@ -93,6 +93,7 @@
         appliedPayload = layer.raw;
         appliedHud = layer.hud;
         pendingLayer = null;
+        Q.core.EventBus.emit("presentation:preview_changed");
         return true;
     }
     function reject(layer) {
@@ -110,6 +111,7 @@
         pendingLayer = null;
         QOL_UTILS.SafeSetAttribute(hud, ackAttr, "");
         QOL_UTILS.SafeSetAttribute(hud, ackPayloadAttr, "");
+        Q.core.EventBus.emit("presentation:preview_changed");
     }
     function settled(hud) {
         const raw = QOL_UTILS.SafeGetAttribute(hud, payloadAttr, "");

@@ -162,7 +162,10 @@
             function _getSourceContainer(st, source, def, owners, nowMs) {
                 let c = st.sourceContainers[def.key];
                 const preferred = sourceScopes[SOURCE_OWNER[def.key]];
-                if (_isDirectChild(c, sourceParents[def.key]) && _belongsToSource(c, source)) {
+                const parent = sourceParents[def.key];
+                // Owner paths were validated once for this observation. Unknown
+                // compatibility parents still require the complete ancestry check.
+                if (_isDirectChild(c, parent) && (parent === source || owners.includes(parent) || _belongsToSource(c, source))) {
                     // A compatibility result must not mask a row later created
                     // at its verified path (old native generations may stay alive).
                     let current = null;
@@ -200,14 +203,18 @@
                 return c;
             }
 
+            const _HTML_ENTITY_MAP = { "&nbsp;": " ", "&amp;": "&", "&lt;": "<", "&gt;": ">" };
+            const _ENTITY_REGEX = /&(?:nbsp|amp|lt|gt);/g;
+            const _TAG_REGEX = /<[^>]*>/g;
+            const _SPACE_REGEX = /\s+/g;
+
             function _stripHtml(s) {
                 if (!s) return "";
-                let out = "", inTag = false;
-                for (let i = 0; i < s.length; i++) { let ch = s.charAt(i); if (ch === "<") { inTag = true; continue; } if (ch === ">") { inTag = false; continue; } if (!inTag) out += ch; }
-                out = out.split("&nbsp;").join(" ").split("&amp;").join("&").split("&lt;").join("<").split("&gt;").join(">");
-                let parts = out.split(/\s+/), clean = [];
-                for (let p = 0; p < parts.length; p++) { if (parts[p]) clean.push(parts[p]); }
-                return clean.join(" ");
+                if (s.indexOf("<") === -1 && s.indexOf("&") === -1) return s.replace(_SPACE_REGEX, " ").trim();
+                return s.replace(_TAG_REGEX, "")
+                        .replace(_ENTITY_REGEX, match => _HTML_ENTITY_MAP[match] || match)
+                        .replace(_SPACE_REGEX, " ")
+                        .trim();
             }
             function _readBfs(root) {
                 let queue = []; try { if (root.Children) queue = (root.Children() || []).slice(); } catch(e) { return ""; }
@@ -235,16 +242,28 @@
             function _getSourceValueRefs(st, container, def) {
                 let refs = st.sourceValueRefs[def.key];
                 let current = refs && refs.container === container && _isAlive(refs.core) && refs.core.BHasClass("miniModifierCore");
-                if (current && def.deltaSelector) current = _isAlive(refs.statNumberDelta) && refs.statNumberDelta.BHasClass("statNumberDelta");
-                else if (current) {
+                if (current && def.deltaSelector) {
+                    current = _isAlive(refs.statNumberDelta) && refs.statNumberDelta.BHasClass("statNumberDelta");
+                } else if (current) {
                     current = _isAlive(refs.statNumber) && refs.statNumber.BHasClass("statNumber");
                     if (current && def.expectsPostfix) current = _isAlive(refs.statPostfix) && refs.statPostfix.BHasClass("statPostfix");
                     else if (current && refs.statPostfix) current = _isAlive(refs.statPostfix) && refs.statPostfix.BHasClass("statPostfix");
                 }
-                if (current && _belongsToSource(refs.core, container) && (!refs.statNumber || _belongsToSource(refs.statNumber, refs.core)) && (!refs.statPostfix || _belongsToSource(refs.statPostfix, refs.core)) && (!refs.statNumberDelta || _belongsToSource(refs.statNumberDelta, refs.core)) && Date.now() < refs.nextRefresh) return refs;
+
+                // Validate the common direct/nested value owners without walking
+                // their full ancestry; other layouts use discovery below.
+                if (current && Date.now() < refs.nextRefresh) {
+                    const validParents = (refs.core.GetParent?.() === container) &&
+                        (!refs.statNumber || refs.statNumber.GetParent?.() === refs.core || refs.statNumber.GetParent?.()?.GetParent?.() === refs.core) &&
+                        (!refs.statPostfix || refs.statPostfix.GetParent?.() === refs.core || refs.statPostfix.GetParent?.()?.GetParent?.() === refs.core) &&
+                        (!refs.statNumberDelta || refs.statNumberDelta.GetParent?.() === refs.core || refs.statNumberDelta.GetParent?.()?.GetParent?.() === refs.core);
+                    if (validParents) return refs;
+                }
+
                 let core = _firstByClass(container, "miniModifierCore");
                 refs = {
-                    container: container, nextRefresh: Date.now() + DISCOVERY_RETRY_MS,
+                    container: container,
+                    nextRefresh: Date.now() + DISCOVERY_RETRY_MS,
                     core: core,
                     statNumber: core ? _firstByClass(core, "statNumber") : null,
                     statPostfix: core ? _firstByClass(core, "statPostfix") : null,
@@ -289,7 +308,7 @@
                 overlay = null; overlayParent = null; rows.clear(); layoutSignature = null;
             }
 
-            function ensureOverlay(core) {
+            function ensureOverlay(core, content) {
                 // The sweep validates every owned ID and its current parent.
                 // Reuse complete child handles until that topology changes.
                 if (!tree.sweep()) rows.clear();
@@ -304,13 +323,16 @@
                 if (previous !== overlay) { rows.clear(); layoutSignature = null; }
                 if (!_isAlive(overlay)) return false;
                 let complete = true;
-                const rowPanels = tree.children(overlay, "Panel", rowEntries);
+                const rowPanels = rows.size === STAT_DEFS.length ? null : tree.children(overlay, "Panel", rowEntries);
                 for (let index = 0; index < STAT_DEFS.length; index++) {
                     const def = STAT_DEFS[index], id = rowEntries[index].id;
-                    const row = rowPanels[index];
-                    if (!_isAlive(row)) { complete = false; continue; }
-                    P.setClass(row, "QOLCrosshairStatRow", true);
                     const cached = rows.get(def.key);
+                    const row = rowPanels ? rowPanels[index] : cached.row;
+                    if (!_isAlive(row)) { complete = false; continue; }
+                    // The ownership sweep still retires lost hidden children.
+                    // Reconcile their presentation only when it can be shown.
+                    if (cached?.row === row && !content.has(def.key)) continue;
+                    P.setClass(row, "QOLCrosshairStatRow", true);
                     const icon = cached?.row === row && cached.icon.hittest === false && cached.icon.hittestchildren === false
                         ? cached.icon : tree.child(row, "Panel", id + "_icon");
                     const value = cached?.row === row && cached.value.hittest === false && cached.value.hittestchildren === false
@@ -379,7 +401,6 @@
                     return;
                 }
                 const core = P.findChildByClass(root, "HudCore");
-                if (!ensureOverlay(core)) { hideOverlay(); return; }
                 const content = readContent(readSource(core));
                 if (preview && !content.size) {
                     // Keep the real owned row tree editable when the hero has
@@ -387,6 +408,8 @@
                     const key = model.rows.values().next().value || STAT_DEFS[0].key;
                     content.set(key, { text: "--", negative: false, neutral: true });
                 }
+                if (!content.size && !_isAlive(overlay)) return;
+                if (!ensureOverlay(core, content)) { hideOverlay(); return; }
                 render(content);
             }
 

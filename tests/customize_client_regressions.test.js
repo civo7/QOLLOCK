@@ -169,8 +169,8 @@ for (const mode of ["base", "alt", "tab"]) test(`${mode} minimap drag keeps nati
     const sliderBounds = G.positionSliderBounds(field, { target: host, host: frame.GetParent(),
         values: { [xKey]: 0 }, bounds: { x: 400, y: 300, width: 400, height: 400 },
         view: { x: 0, y: 0, width: 1920, height: 1080 } });
-    assert.equal(sliderBounds.min, zoomed ? -800 : -400);
-    assert.equal(sliderBounds.max, zoomed ? 2240 : 1120);
+    assert.equal(sliderBounds.min, zoomed ? -1200 : -600);
+    assert.equal(sliderBounds.max, zoomed ? 2640 : 1320);
     startDrag.end(env, frame, proxy);
     container.actualxoffset = 500; container.actualyoffset = 360;
     env.clock.advance(500);

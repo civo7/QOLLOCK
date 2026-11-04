@@ -1,0 +1,26 @@
+.QOLStatlockerButton
+{
+    flow-children: none;
+    horizontal-align: right;
+    vertical-align: center;
+    height: 22px;
+    min-width: 44px;
+    margin-left: 6px;
+    padding: 0px 8px;
+    background-color: gradient( linear, 0% 0%, 0% 100%, from( #171717 ), to( #111111 ) );
+    border: 1px solid #66cc9930;
+    border-radius: 4px;
+    box-shadow: fill #66cc9920 0px 0px 4px 0px;
+}
+
+.QOLStatlockerLabel
+{
+    horizontal-align: center;
+    vertical-align: center;
+    text-align: center;
+    font-size: 14px;
+    font-weight: bold;
+    color: #66cc99;
+    letter-spacing: 1px;
+    text-shadow: 0px 0px 4px #66cc9930;
+}

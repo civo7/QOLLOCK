@@ -74,15 +74,18 @@
                 if (hasBrawlClass(hud)) {
                     result = true;
                 } else {
-                    const sb = resolveCachedPanel(hud, "streetBrawlContainer", "StretBrawlContainer");
+                    // hud.xml owns TopBar/gameplay_hud directly under HudCore;
+                    // citadel_hud_top_bar.xml owns the round counter directly.
+                    const core = _panelHelpers.findChildByClass(hud, "HudCore");
+                    const topBar = _panelHelpers.findChild(core, "TopBar");
+                    const sb = _panelHelpers.findChild(topBar, "StretBrawlContainer");
                     if (isAlive(sb) && (sb.visible || sb.BHasClass("visible") || sb.style?.visibility === "visible")) {
                         result = true;
                     } else {
-                        const gpHud = resolveCachedPanel(hud, "gameplayHud", "gameplay_hud");
+                        const gpHud = _panelHelpers.findChild(core, "gameplay_hud");
                         if (hasBrawlClass(gpHud)) {
                             result = true;
                         } else {
-                            const topBar = resolveCachedPanel(hud, "topBar", "TopBar");
                             if (hasBrawlClass(topBar)) {
                                 result = true;
                             }
@@ -285,7 +288,8 @@
     const coreClassState = {
         rootClassCache: { panel: null, values: {} },
         abilitiesClassCache: { panel: null, values: {} },
-        coreRootStaticSig: ""
+        coreRootStaticSig: "",
+        lastFountainClass: null
     };
     let abilitiesClassSig = null;
     const retiredClassOwners = new Map();
@@ -500,8 +504,7 @@
 
     const tryReadAccountIdFromKnownPartyPath = (root) => {
         if (!root) return "";
-        let partyContainer = null;
-        try { partyContainer = root.FindChildTraverse ? root.FindChildTraverse("CitadelPartyContainer") : null; } catch (_) {}
+        const partyContainer = _panelHelpers.findChild(findHud(root), "CitadelPartyContainer");
         if (!partyContainer) return "";
         let party = null;
         try { party = partyContainer.FindChildTraverse ? partyContainer.FindChildTraverse("CitadelParty") : null; } catch (_) {}
@@ -620,6 +623,7 @@
         ["ql_damage_numbers", { ENABLE_CLEAN_DAMAGE_INDICATORS: 0, ENABLE_HIDE_SMALL_NUMBERS: 0,
             ENABLE_HIDE_TROOPER_DAMAGE: 0, ENABLE_DAMAGE_FOUNTAIN: 0, ENABLE_CUMULATIVE_DMG: 1 }],
         ["ql_ability_icons", { ENABLE_CLEAN_STACKS: 0, ENABLE_HIDE_ABILITY_SUGGESTION: 0, ENABLE_HIDE_COSMETIC_ABILITY: 0, ENABLE_SIMPLIFY_ABILITY_ICONS: 0 }],
+        ["ql_disabled_abilities", { ENABLE_BETTER_DISABLED_ABILITIES: 0 }],
         ["ql_cast_failed_hint", { ENABLE_HIDE_FAILED_HINT: 0 }],
         ["ql_nicknames", { ENABLE_NICKNAMES: 0 }],
         ["ql_minimap_runtime", { MINIMAL_MINIMAP: 0, ENABLE_MINIMAP_ELEVATION_MARKERS: 0 }],
@@ -644,7 +648,10 @@
         if (!root) return false;
         cfg = presentationConfig(cfg);
         const state = coreClassState;
-        if (state.rootClassCache.panel !== root) state.coreRootStaticSig = "";
+        if (state.rootClassCache.panel !== root) {
+            state.coreRootStaticSig = "";
+            state.lastFountainClass = null;
+        }
         bindClassOwner(state.rootClassCache, root);
         releaseRetiredClasses();
 
@@ -704,6 +711,7 @@
             cfg?.ENABLE_HIDE_ABILITY_SUGGESTION,
             cfg?.ENABLE_HIDE_COSMETIC_ABILITY,
             cfg?.ENABLE_SIMPLIFY_ABILITY_ICONS,
+            cfg?.ENABLE_BETTER_DISABLED_ABILITIES,
             cfg?.ENABLE_HIDE_BEHAVIOR_SUMMARY,
             cfg?.ENABLE_BUFF_HUD,
             cfg?.ENABLE_REJUV_HUD,
@@ -798,6 +806,7 @@
                 ["hide_ability_suggestion_active", cfg?.ENABLE_HIDE_ABILITY_SUGGESTION === 1],
                 ["hide_cosmetic_ability_active", notDevTestMode && cfg?.ENABLE_HIDE_COSMETIC_ABILITY === 1],
                 ["simplify_ability_icons_active", notDevTestMode && cfg?.ENABLE_SIMPLIFY_ABILITY_ICONS === 1],
+                ["better_disabled_abilities_active", Number(cfg?.ENABLE_BETTER_DISABLED_ABILITIES) === 1],
                 ["hide_behavior_summary_active", cfg?.ENABLE_HIDE_BEHAVIOR_SUMMARY === 1],
                 ["buff_hud_disabled", Number(cfg?.ENABLE_BUFF_HUD) !== 1],
                 ["rejuv_hud_disabled", Number(cfg?.ENABLE_REJUV_HUD) !== 1],
@@ -858,13 +867,24 @@
                 setPanelClassCached(root, rc, cls, active);
             }
 
-            // CSS scales each native event wrapper immediately, including newly
-            // spawned indicators; inner distance scales and keyframes stay intact.
+            // Retry rejected removals even across further setting changes.
+            for (const name of rc.pending) {
+                if (name.startsWith("damage_fountain_scale_") && rc.values[name] === false) {
+                    setPanelClassCached(root, rc, name, false);
+                }
+            }
+            // Change only the previous/current tokens instead of the full range.
             const fountainPercent = cfg?.ENABLE_DAMAGE_FOUNTAIN === 1
                 ? Math.round(QOL.settings.readNumber("DAMAGE_FOUNTAIN_SIZE", cfg?.DAMAGE_FOUNTAIN_SIZE) * 100) : 100;
-            for (let percent = 50; percent <= 300; percent++) {
-                if (percent !== 100) setPanelClassCached(root, rc, "damage_fountain_scale_" + percent, fountainPercent === percent);
+            const targetFountainClass = (fountainPercent !== 100) ? "damage_fountain_scale_" + fountainPercent : null;
+
+            if (state.lastFountainClass && state.lastFountainClass !== targetFountainClass) {
+                setPanelClassCached(root, rc, state.lastFountainClass, false);
             }
+            if (targetFountainClass) {
+                setPanelClassCached(root, rc, targetFountainClass, true);
+            }
+            state.lastFountainClass = targetFountainClass;
 
             state.coreRootStaticSig = rc.pending.size ? "" : staticSig;
         }

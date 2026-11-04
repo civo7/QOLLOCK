@@ -104,6 +104,26 @@ for (const owner of owners) {
     });
 }
 
+test("owned tree reuses creation attributes without native attribute writes on every child lookup", () => {
+    const env = fixture(owners[0]);
+    const tree = env.Q.core.panel.createOwnedTree();
+    const parent = env.add(env.root, "CreationOnlyParent");
+    const properties = { "require-composition-layer": "true" };
+    const child = tree.child(parent, "Panel", "QOLCreationOnlyChild", properties);
+    assert.equal(child.GetAttributeString("require-composition-layer", ""), "true");
+    const setAttribute = child.SetAttributeString.bind(child);
+    let writes = 0;
+    child.SetAttributeString = (key, value) => { writes++; setAttribute(key, value); };
+    for (let iteration = 0; iteration < 20; iteration++) {
+        assert.equal(tree.child(parent, "Panel", "QOLCreationOnlyChild", properties), child);
+    }
+    assert.equal(writes, 0, "creation properties must not be reapplied as arbitrary native attributes");
+    assert.equal(child.GetAttributeString("require-composition-layer", ""), "true");
+    tree.dispose();
+    env.clock.advance(20);
+    assert.deepEqual(env.clock.errors, []);
+});
+
 test("owned tree retries failed deletion and retires moved descendants after partial construction", () => {
     const env = fixture(owners[0]), P = env.Q.core.panel, tree = P.createOwnedTree();
     const native = env.add(env.root, "NativeParent"), overlay = tree.child(native, "Panel", "QOLHelperOverlay");

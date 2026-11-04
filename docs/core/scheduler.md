@@ -16,7 +16,13 @@ performance records live in the existing State.
 | `getWorkSnapshot()` | Read-only array of `{id, polls, once}` outstanding managed tasks, without panel handles. |
 | `startWorkObservation()` | Opt-in bounded observation; returns `{sample(), stop(), pausePolling(ids), isPollPaused(id), isActive()}`. Replacement retires the previous observer and releases its diagnostic poll pause. |
 
-The first tick has jitter up to half the interval. `reschedule` changes the rate
+The first tick has jitter up to half the interval. Subsequent client poll delays
+vary randomly by up to ten percent around the requested rate, including while
+diagnostically paused, to spread recurring work after late deliveries. Virtual-clock
+regressions retain exact recurring intervals; separate controlled-random tests
+exercise the client path, rate changes and cancellation. This spreads scheduling
+requests, not guaranteed native frame delivery or measured FPS.
+`reschedule` changes the rate
 for subsequent scheduling; it does not cancel and immediately restart a pending
 tick. `stop` is idempotent. Nonpositive/invalid rates fall back to the implementation's
 rate; callers should pass deliberate valid intervals instead of relying on it.

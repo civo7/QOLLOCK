@@ -3,6 +3,7 @@
 const test = require("node:test");
 const assert = require("node:assert/strict");
 const { createHud } = require("../scripts/simulator");
+const { readStyleSource } = require("./helpers/style_source");
 
 function fixture({ boot = true } = {}) {
     const env = createHud({ inHideout: false });
@@ -47,6 +48,23 @@ function onceFailStyle(panel, property) {
     });
     return () => failures;
 }
+
+test("minimap reconciles its host once per update while retaining native overwrite recovery", () => {
+    const e = fixture();
+    e.configure({ ENABLE_ALT_ZOOM: 1, MINIMAP_SMALL_SIZE: 600 });
+    const style = e.host.style;
+    let reads = 0;
+    e.host.style = new Proxy(style, { get(target, key) {
+        if (key === "overflow") reads++;
+        return target[key];
+    } });
+    e.Q.core.FeatureRegistry.getInstance("ql_minimap_runtime").onSettingsChanged();
+    assert.equal(reads, 1, "one update must not validate the same host style twice");
+    style.overflow = "clip";
+    e.clock.advance(100);
+    assert.equal(style.overflow, "noclip", "native feedback still reasserts the owned geometry");
+    e.clean();
+});
 
 test("minimap decoration rebinds canvas and map_render without a viewport change", () => {
     const e = fixture();
@@ -149,6 +167,29 @@ test("minimalist opacity follows native background images without fading their c
     assert.equal(replacement.style.opacity, undefined);
 });
 
+test("minimalist backgrounds preserve native map-layer classes on an ancestor", () => {
+    const e = fixture();
+    const background = e.add(e.renderer, "MinimapBackgroundTest");
+    const images = [1, 2, 3].map(index => {
+        const image = e.add(background, "", "Image");
+        image.AddClass("backgroundImage" + index);
+        return image;
+    });
+    const core = e.gameplay.GetParent();
+    core.AddClass("dl_midtown");
+    core.AddClass("is_underground");
+    e.configure({ MINIMAL_MINIMAP: 1, MINIMAL_MINIMAP_OPACITY: 0.4 });
+    assert.deepEqual(images.map(image => image.style.opacity), ["0", "0.4", "0"]);
+    core.RemoveClass("is_underground");
+    core.AddClass("in_tunnels");
+    e.clock.advance(700);
+    assert.deepEqual(images.map(image => image.style.opacity), ["0", "0", "0.4"]);
+    core.RemoveClass("in_tunnels");
+    e.clock.advance(700);
+    assert.deepEqual(images.map(image => image.style.opacity), ["0.4", "0", "0"]);
+    e.clean();
+});
+
 test("minimap partial native writes retry without another settings change", () => {
     const e = fixture();
     const mapFailures = onceFailStyle(e.render, "opacity");
@@ -166,51 +207,71 @@ test("minimap partial native writes retry without another settings change", () =
 test("minimap native alpha feedback and rejected disable cleanup share the native owner contract", () => {
     const e = fixture();
     e.configure({ MINIMAL_MINIMAP: 1, MINIMAL_MINIMAP_OPACITY: 0.25, MINIMAP_BASE_OPACITY: 0.5 });
-    e.host.style.opacity = "0.9"; e.render.style.opacity = "0.9";
+    e.viewport.style.opacity = "0.9"; e.render.style.opacity = "0.9";
     e.clock.advance(700);
-    assert.equal(e.host.style.opacity, "0.5"); assert.equal(e.render.style.opacity, "0.25");
-    const clearHost = e.host.ClearPropertyFromCode.bind(e.host), clearRender = e.render.ClearPropertyFromCode.bind(e.render);
+    assert.equal(e.viewport.style.opacity, "0.5"); assert.equal(e.render.style.opacity, "0.25");
+    const clearViewport = e.viewport.ClearPropertyFromCode.bind(e.viewport), clearRender = e.render.ClearPropertyFromCode.bind(e.render);
     let reject = true;
-    e.host.ClearPropertyFromCode = property => reject && property === "opacity" ? false : clearHost(property);
+    e.viewport.ClearPropertyFromCode = property => reject && property === "opacity" ? false : clearViewport(property);
     e.render.ClearPropertyFromCode = property => reject && property === "opacity" ? false : clearRender(property);
     e.Q.core.FeatureRegistry.disable("ql_minimap_runtime");
-    assert.equal(e.host.style.opacity, "0.5"); assert.equal(e.render.style.opacity, "0.25");
+    assert.equal(e.viewport.style.opacity, "0.5"); assert.equal(e.render.style.opacity, "0.25");
     reject = false; e.clock.advance(700);
-    assert.equal(e.host.style.opacity, undefined); assert.equal(e.render.style.opacity, undefined);
+    assert.equal(e.viewport.style.opacity, undefined); assert.equal(e.render.style.opacity, undefined);
     e.clean();
 });
 
-test("minimap releases range overrides on default size, source removal and disable", () => {
+test("minimap range styling needs no runtime searches and reaches late native ranges through CSS", () => {
+    const e = fixture();
+    const traverse = e.renderer.FindChildrenWithClassTraverse;
+    let searches = 0;
+    e.renderer.FindChildrenWithClassTraverse = function (name) {
+        if (name === "doorman_doorway" || name === "ability_castrange") searches++;
+        return traverse.call(this, name);
+    };
+    e.configure({ MINIMAP_SMALL_SIZE: 600, ENABLE_ALT_ZOOM: 1 });
+    e.clock.advance(500);
+    assert.equal(searches, 0, "range geometry must not search the native map on every view tick");
+    assert.equal(e.renderer.BHasClass("QOLScaledMinimapRanges"), true);
+    const doorway = e.add(e.renderer, "door"); doorway.AddClass("map_button"); doorway.AddClass("doorman_doorway");
+    const range = e.add(doorway, "CastRange");
+    e.clock.advance(100);
+    assert.equal(range.style.uiScale, undefined, "CSS owns constant range normalization");
+    const css = readStyleSource("panorama/styles/hud_minimap.css");
+    assert.match(css, /#hud_minimap\.QOLScaledMinimapRanges \.map_button\.doorman_doorway #CastRange,/);
+    assert.match(css, /#hud_minimap\.QOLScaledMinimapRanges \.map_button\.ability_castrange #CastRange\s*\{\s*ui-scale:\s*100%;\s*pre-transform-scale2d:\s*1(?:\.0+)?;/);
+    assert.equal(searches, 0, "late range creation requires no JS discovery either");
+    e.clean();
+});
+
+test("minimap releases range styling on default size, native renderer replacement and disable", () => {
     const e = fixture();
     const doorway = e.add(e.renderer, "door"); doorway.AddClass("doorman_doorway");
     const range = e.add(doorway, "CastRange");
     range.style.transform = "native range placement";
-    e.configure({ MINIMAP_SMALL_SIZE: 600 });
-    assert.equal(range.style.uiScale, "100%");
+    e.configure({ MINIMAP_SMALL_SIZE: 600, ENABLE_ALT_ZOOM: 1 });
+    assert.equal(e.renderer.BHasClass("QOLScaledMinimapRanges"), true);
     e.configure({ MINIMAP_SMALL_SIZE: 400 });
-    assert.equal(range.style.uiScale, undefined);
-    assert.equal(range.style.preTransformScale2d, undefined);
+    assert.equal(e.renderer.BHasClass("QOLScaledMinimapRanges"), false);
     e.configure({ MINIMAP_SMALL_SIZE: 600 });
-    range.SetParent(e.orphan);
+    e.renderer.SetParent(e.orphan);
+    const renderer = e.add(e.inner, "hud_minimap");
     e.clock.advance(150);
-    assert.equal(range.style.uiScale, undefined);
-    const replacement = e.add(doorway, "CastRange");
-    e.clock.advance(150);
-    assert.equal(replacement.style.preTransformScale2d, "1.00, 1.00");
+    assert.equal(e.renderer.BHasClass("QOLScaledMinimapRanges"), false, "old living maps release their CSS gate");
+    assert.equal(renderer.BHasClass("QOLScaledMinimapRanges"), true);
     e.Q.core.FeatureRegistry.disable("ql_minimap_runtime");
-    assert.equal(replacement.style.uiScale, undefined);
+    assert.equal(renderer.BHasClass("QOLScaledMinimapRanges"), false);
     assert.equal(range.style.transform, "native range placement");
     e.clean();
 });
 
 test("crate and tunnel overlays follow a living replaced viewport and retry marker writes", () => {
     const e = fixture();
-    e.Q.minimapCrateData = { dl_midtown: { crates: [{ u: 0.25, v: 0.75 }, { u: 0.8, v: 0.2 }] } };
     const create = e.$.CreatePanel;
     let markerFailures;
     e.$.CreatePanel = (...args) => {
         const panel = create(...args);
-        if (args[3]?.class === "minimap_marker" && !markerFailures) markerFailures = onceFailStyle(panel, "position");
+        if (args[2] === "QOLMinimapCrateImage" && !markerFailures) markerFailures = onceFailStyle(panel, "backgroundImage");
         return panel;
     };
     e.configure({ ENABLE_MINIMAP_CRATE_OVERLAY: 1, ENABLE_MINIMAP_REM_TUNNELS: 1, MINIMAP_REM_TUNNELS_OPACITY: 0.5 });
@@ -218,7 +279,7 @@ test("crate and tunnel overlays follow a living replaced viewport and retry mark
     assert.ok(markerFailures() >= 2);
     const oldTunnel = e.viewport.FindChild("tunnel_overlay"), oldCrates = e.renderer.FindChild("minimap_overlay_root");
     assert.equal(oldTunnel.style.opacity, "0.50");
-    assert.equal(oldCrates.FindChild("minimap_markers").GetChild(0).style.position, "25% 75% 0");
+    assert.match(oldCrates.FindChild("minimap_markers").GetChild(0).style.backgroundImage, /minimap_references_crates\.vsvg/);
     e.viewport.SetParent(e.orphan);
     const viewport = e.add(e.host, "minimap_container");
     const inner = e.add(viewport, "HudMinimapContainer"); e.add(inner, "hud_minimap");
@@ -226,7 +287,7 @@ test("crate and tunnel overlays follow a living replaced viewport and retry mark
     assert.equal(oldTunnel.IsValid(), false);
     assert.equal(oldCrates.IsValid(), false);
     assert.equal(viewport.FindChild("tunnel_overlay").style.opacity, "0.50");
-    assert.equal(viewport.FindChildTraverse("minimap_overlay_root").FindChild("minimap_markers").GetChildCount(), 2);
+    assert.equal(viewport.FindChildTraverse("minimap_overlay_root").FindChild("minimap_markers").GetChildCount(), 1);
     e.$.CreatePanel = create;
     e.clean();
 });
@@ -234,7 +295,6 @@ test("crate and tunnel overlays follow a living replaced viewport and retry mark
 function directMinimap(e) {
     e.Q.core.App.shutdown(); e.sandbox.eval("Math.random = () => 0;");
     e.configure({ ENABLE_MINIMAP_CRATE_OVERLAY: 1, ENABLE_MINIMAP_REM_TUNNELS: 1, MINIMAP_SMALL_SIZE: 600 });
-    e.Q.minimapCrateData = { dl_midtown: { crates: [[0.25, 0.75], [0.8, 0.2], [0.5, 0.5]] } };
     const cfg = e.Q.core.ConfigStore.view("ql_minimap_runtime"), callbacks = new Map();
     let reads = 0;
     const create = () => e.Q.core.FeatureRegistry.getManifest("ql_minimap_runtime").create({
@@ -244,17 +304,15 @@ function directMinimap(e) {
     return { feature: create(), create, cfg, callbacks, reads: () => reads };
 }
 
-test("crate ownership retires moved markers and shrinking data without rebuilding unaffected children", () => {
+test("crate ownership retires a moved image and rebuilds it without replacing the tunnel", () => {
     const e = fixture(), { feature } = directMinimap(e); feature.onEnable();
     const crates = e.renderer.FindChild("minimap_overlay_root"), markers = crates.FindChild("minimap_markers");
-    const moved = markers.GetChild(0), retained = markers.GetChild(1), removed = markers.GetChild(2);
-    moved.SetParent(e.orphan); removed.SetParent(e.orphan); e.clock.advance(150);
-    assert.equal(moved.IsValid(), false); assert.equal(removed.IsValid(), false);
-    assert.equal(markers.GetChildCount(), 3); assert.equal(markers.FindChild("QOLMinimapCrateMarker1"), retained);
-    const nextRemoved = markers.FindChild("QOLMinimapCrateMarker2"); nextRemoved.SetParent(e.orphan);
-    e.Q.minimapCrateData = { dl_midtown: { crates: [[0.3, 0.4]] } }; e.clock.advance(150);
-    assert.equal(retained.IsValid(), false); assert.equal(nextRemoved.IsValid(), false);
-    assert.equal(markers.GetChildCount(), 1); assert.equal(markers.GetChild(0).style.position, "30% 40% 0");
+    const moved = markers.GetChild(0), tunnel = e.viewport.FindChild("tunnel_overlay");
+    moved.SetParent(e.orphan); e.clock.advance(150);
+    assert.equal(moved.IsValid(), false);
+    assert.equal(markers.GetChildCount(), 1);
+    assert.match(markers.GetChild(0).style.backgroundImage, /minimap_references_crates\.vsvg/);
+    assert.equal(e.viewport.FindChild("tunnel_overlay"), tunnel);
     const last = markers.GetChild(0); last.SetParent(e.orphan); feature.onDisable(); e.clock.advance(20);
     assert.equal(last.IsValid(), false); assert.equal(crates.IsValid(), false); assert.equal(e.renderer.IsValid(), true); e.clean();
 });
@@ -270,68 +328,42 @@ test("stable crate markers are enumerated only by the ownership sweep and moved 
     const old = markers.GetChild(0); old.SetParent(e.orphan);
     e.clock.advance(150);
     assert.equal(old.IsValid(), false);
-    assert.equal(markers.GetChildCount(), 3);
-    assert.equal(markers.FindChild("QOLMinimapCrateMarker0").style.position, "25% 75% 0");
+    assert.equal(markers.GetChildCount(), 1);
+    assert.match(markers.FindChild("QOLMinimapCrateImage").style.backgroundImage, /minimap_references_crates\.vsvg/);
     feature.onDisable(); e.clock.advance(20); assert.equal(markers.IsValid(), false); e.clean();
 });
 
-test("crate descriptors are reused across polls and rebuilt for changed coordinate data", () => {
-    const e = fixture();
-    const P = e.Q.core.panel, createTree = P.createOwnedTree;
-    const descriptors = new Set();
-    let copiedResults = 0;
-    // Observe real helper inputs; its own result arrays and panel reconciliation
-    // remain in the production path. This counts descriptor identity, not native cost.
-    P.createOwnedTree = () => {
-        const tree = createTree(), children = tree.children;
-        tree.children = (parent, type, entries) => {
-            for (const entry of entries) if (entry.id.startsWith("QOLMinimapCrateMarker")) descriptors.add(entry);
-            const result = children(parent, type, entries), map = result.map;
-            result.map = function (...args) { copiedResults++; return map.apply(this, args); };
-            return result;
-        };
-        return tree;
-    };
-    const { feature } = directMinimap(e);
-    P.createOwnedTree = createTree;
+test("crate size selects baked images without recreating panels or moving their map anchors", () => {
+    const e = fixture(), { feature } = directMinimap(e);
     feature.onEnable(); e.clock.advance(500);
     const crates = e.renderer.FindChild("minimap_overlay_root"), markers = crates.FindChild("minimap_markers");
-    assert.equal(markers.GetChildCount(), 3);
-    assert.equal(markers.GetChild(0).style.position, "25% 75% 0");
-    assert.equal(descriptors.size, 3, "unchanged coordinates construct one descriptor per marker, not per poll");
-    assert.equal(copiedResults, 0, "the helper's panel array needs no second mapped copy");
-
-    const retained = markers.GetChild(1);
-    descriptors.clear();
-    e.Q.minimapCrateData = { dl_midtown: { crates: [[0.1, 0.2], [0.7, 0.8], [0.9, 0.3]] } };
-    e.clock.advance(500);
-    assert.equal(markers.GetChild(1), retained);
-    assert.equal(retained.style.position, "70% 80% 0", "same-length data replacement updates retained markers");
-    assert.equal(descriptors.size, 3);
-    e.Q.minimapCrateData = { dl_midtown: { crates: [[NaN, 0.2], [0.4, Infinity]] } };
-    e.clock.advance(150);
-    assert.equal(markers.GetChildCount(), 0, "invalid coordinates retire former markers");
-    e.Q.minimapCrateData = { dl_midtown: { crates: [] } };
-    e.clock.advance(150); assert.equal(markers.GetChildCount(), 0);
-    feature.onDisable(); e.clock.advance(20);
-    e.Q.minimapCrateData = { dl_midtown: { crates: [[0.6, 0.4]] } };
-    descriptors.clear(); feature.onEnable(); e.clock.advance(250);
-    const rebuilt = e.renderer.FindChild("minimap_overlay_root").FindChild("minimap_markers");
-    assert.equal(rebuilt.GetChildCount(), 1);
-    assert.equal(rebuilt.GetChild(0).style.position, "60% 40% 0");
-    assert.equal(descriptors.size, 1, "re-enable builds a fresh descriptor set");
+    const image = markers.GetChild(0), create = e.$.CreatePanel;
+    let creates = 0;
+    e.$.CreatePanel = (...args) => { creates++; return create(...args); };
+    for (const scale of [50, 75, 100, 125, 150]) {
+        e.configure({ MINIMAP_LOOT_MARKER_SCALE: scale }); feature.onSettingsChanged(); e.clock.advance(150);
+        assert.equal(markers.GetChildCount(), 1);
+        assert.equal(markers.GetChild(0), image);
+        const suffix = scale === 100 ? "" : "_" + scale;
+        assert.equal(image.style.backgroundImage, 'url("s2r://panorama/images/qollock/minimap_references_crates' + suffix + '.vsvg")');
+        assert.equal(image.style.width, "100%"); assert.equal(image.style.height, "100%");
+    }
+    assert.equal(creates, 0);
+    assert.equal(e.Q.settings.normalize("MINIMAP_LOOT_MARKER_SCALE", 119), 125);
+    assert.equal(e.Q.settings.normalize("MINIMAP_LOOT_MARKER_SCALE", 200), 150);
+    e.$.CreatePanel = create;
     feature.onDisable(); e.clock.advance(20); e.clean();
 });
 
 test("minimap hides partial crate and tunnel trees until construction and styles recover", () => {
     const e = fixture(), { feature } = directMinimap(e), create = e.$.CreatePanel;
-    let reject = true;
+    let rejectCreation = true, rejectStyle = true;
     e.$.CreatePanel = (type, parent, id, properties) => {
-        if (id === "QOLMinimapCrateMarker1" && reject) throw Error("modeled missing marker");
+        if (id === "QOLMinimapCrateImage" && rejectCreation) throw Error("modeled missing image");
         const panel = create(type, parent, id, properties);
-        if (id === "tunnel_overlay" || id === "QOLMinimapCrateMarker0") panel.style = new Proxy(panel.style, {
+        if (id === "tunnel_overlay" || id === "QOLMinimapCrateImage") panel.style = new Proxy(panel.style, {
             set(target, key, value) {
-                if (reject && (key === "opacity" || key === "position")) throw Error("modeled partial minimap style");
+                if (rejectStyle && (key === "opacity" || key === "backgroundImage")) throw Error("modeled partial minimap style");
                 target[key] = value; return true;
             }
         });
@@ -341,10 +373,12 @@ test("minimap hides partial crate and tunnel trees until construction and styles
     const crates = e.renderer.FindChild("minimap_overlay_root"), tunnel = e.viewport.FindChild("tunnel_overlay");
     assert.equal(crates.BHasClass("qol-hidden"), true); assert.equal(tunnel.BHasClass("qol-hidden"), true);
     assert.equal(tunnel.BHasClass("tunnel_locked_on"), false);
-    reject = false; e.clock.advance(150);
+    rejectCreation = false; e.clock.advance(150);
+    assert.equal(crates.BHasClass("qol-hidden"), true, "a created image with rejected styling remains hidden");
+    rejectStyle = false; e.clock.advance(150);
     assert.equal(crates.BHasClass("qol-hidden"), false); assert.equal(tunnel.BHasClass("qol-hidden"), false);
-    assert.equal(crates.FindChild("minimap_markers").GetChildCount(), 3);
-    assert.equal(crates.FindChild("minimap_markers").GetChild(0).style.position, "25% 75% 0");
+    assert.equal(crates.FindChild("minimap_markers").GetChildCount(), 1);
+    assert.match(crates.FindChild("minimap_markers").GetChild(0).style.backgroundImage, /minimap_references_crates\.vsvg/);
     feature.onDisable(); e.clock.advance(20); e.$.CreatePanel = create; e.clean();
 });
 
@@ -362,7 +396,7 @@ test("minimap derives settings through active hooks and stopped callbacks cannot
 
 test("minimap rapid replacement waits for queued previous trees and leaves one current overlay", () => {
     const e = fixture(), { feature, create } = directMinimap(e); feature.onEnable();
-    const old = e.renderer.FindChild("minimap_overlay_root"), moved = old.FindChildTraverse("QOLMinimapCrateMarker1");
+    const old = e.renderer.FindChild("minimap_overlay_root"), moved = old.FindChildTraverse("QOLMinimapCrateImage");
     moved.SetParent(e.orphan); feature.onDisable();
     const replacement = create(); replacement.onEnable();
     assert.equal(e.renderer.FindChild("minimap_overlay_root"), old); assert.equal(old.visible, false);
@@ -375,7 +409,7 @@ test("minimap rapid replacement waits for queued previous trees and leaves one c
 
 test("minimap releases a still living old HUD while waiting for the current native scene", () => {
     const e = fixture(), { feature } = directMinimap(e); e.host.style.transform = "native host transform"; feature.onEnable();
-    const old = e.renderer.FindChild("minimap_overlay_root"), moved = old.FindChildTraverse("QOLMinimapCrateMarker0"); moved.SetParent(e.orphan);
+    const old = e.renderer.FindChild("minimap_overlay_root"), moved = old.FindChildTraverse("QOLMinimapCrateImage"); moved.SetParent(e.orphan);
     e.doc.root = e.add(null, "LoadingRoot"); e.clock.advance(150);
     assert.equal(old.IsValid(), false); assert.equal(moved.IsValid(), false); assert.equal(e.root.IsValid(), true);
     assert.equal(e.host.style.uiScale, undefined); assert.equal(e.host.style.transform, "native host transform");
@@ -462,7 +496,10 @@ test("objective timer hooks cannot construct UI outside their active lifetime an
     const e = fixture(), { feature } = directTimer(e);
     feature.onSettingsChanged(); assert.equal(e.viewport.FindChild("QOLMinimapTimersRoot"), null);
     feature.onEnable(); const overlay = e.viewport.FindChild("QOLMinimapTimersRoot");
-    const children = createdTimerChildren(overlay); assert.equal(children.length, 12);
+    const children = createdTimerChildren(overlay); assert.equal(children.length, 13);
+    const docked = overlay.FindChild("QOLMinimapDockedTimers");
+    assert.ok(docked.FindChild("QOLMinimapBuffTimer"));
+    assert.ok(docked.FindChild("QOLMinimapRejuvTimer"));
     for (const panel of children) panel.SetParent(e.orphan);
     e.clock.advance(650); for (const panel of children) assert.equal(panel.IsValid(), false, panel.id);
     assert.match(e.viewport.FindChildTraverse("QOLMinimapBuffBridgeLeftTime").text, /^\d+:\d{2}$/);
@@ -533,6 +570,94 @@ function directCompass(e, settings = {}) {
     return { feature: create(), create, reads: () => reads };
 }
 
+test("compass translates one tape between graduations and retains heading geometry through wrap and resize", () => {
+    const e = fixture(), source = localPlayer(e, e.renderer, 40);
+    const { feature } = directCompass(e, { ENABLE_COMPASS_SPEED: 0 });
+    feature.onEnable();
+    const root = e.gameplay.FindChild("QOLCompassRoot"), tape = root.FindChildTraverse("QOLCompassTicks");
+    let tickWrites = 0, translations = 0, lookups = 0;
+    for (const tick of tape.Children()) {
+        tick.style = new Proxy(tick.style, { set(target, key, value) { tickWrites++; target[key] = value; return true; } });
+    }
+    tape.style = new Proxy(tape.style, { set(target, key, value) {
+        if (key === "transform") translations++;
+        target[key] = value; return true;
+    } });
+    for (const panel of [e.gameplay, root, ...createdTimerChildren(root)]) {
+        const find = panel.FindChild;
+        panel.FindChild = function (id) { if (id.startsWith("QOLCompass")) lookups++; return find.call(this, id); };
+    }
+    source.image.style.preTransformRotate2d = "41deg"; e.clock.advance(150);
+    assert.equal(tickWrites, 0, "fractional heading movement must not update 17 tick layouts");
+    assert.equal(translations, 1, "one tape transform moves every tick");
+    assert.equal(lookups, 0, "the ownership sweep already validated the complete tree");
+    const checkGeometry = (heading, stretchX = 100, stretchY = 100) => {
+        source.image.style.preTransformRotate2d = heading + "deg"; e.clock.advance(150);
+        const shift = /^translateX\(([-\d.]+)px\)$/.exec(tape.style.transform);
+        assert.ok(shift, "the tape owns the common fractional shift");
+        const unit = heading / 22.5, base = Math.floor(unit), fraction = unit - base;
+        tape.Children().forEach((tick, i) => {
+            const step = ((base + i - 8) % 16 + 16) % 16, cardinal = step % 4 === 0, major = step % 2 === 0;
+            const expected = Math.round(200 * stretchX / 100) / 2 - (cardinal ? 3 : 2) / 2 + (i - 8 - fraction) * 12.5 * stretchX / 100;
+            assert.ok(Math.abs(parseFloat(tick.style.x) + Number(shift[1]) - expected) < 0.006, `tick ${i} at ${heading}°`);
+            assert.equal(tick.BHasClass("Major"), major); assert.equal(tick.BHasClass("Cardinal"), cardinal);
+            assert.equal(tick.style.height, Math.max(4, Math.round((cardinal ? 34 : major ? 24 : 16) * stretchY / 100)) + "px");
+        });
+    };
+    for (const heading of [44, 45, 90, 359, 0, 1, 22.5]) checkGeometry(heading);
+    e.Q.core.ConfigStore.set("ql_compass", "COMPASS_STRETCH_X", 133);
+    e.Q.core.ConfigStore.set("ql_compass", "COMPASS_STRETCH_Y", 175);
+    feature.onSettingsChanged(); checkGeometry(22.5, 133, 175);
+    assert.match(readStyleSource("panorama/styles/features/ql_feat_compass.css"), /#QOLCompassTicks\s*\{[^}]*overflow:\s*noclip;/,
+        "the stationary compass box must clip the translated tape, not the moving tape itself");
+    feature.onDisable(); e.clean();
+});
+
+test("compass retries a rejected tape transform before caching the heading", () => {
+    const e = fixture(), source = localPlayer(e, e.renderer, 40), { feature } = directCompass(e);
+    feature.onEnable();
+    const tape = e.gameplay.FindChild("QOLCompassRoot").FindChildTraverse("QOLCompassTicks");
+    const failed = onceFailStyle(tape, "transform");
+    source.image.style.preTransformRotate2d = "41deg"; e.clock.advance(150);
+    assert.ok(failed() >= 2, "an incomplete tape shift must retry at the same heading");
+    assert.match(tape.style.transform, /^translateX\(/);
+    feature.onDisable(); e.clean();
+});
+
+test("compass rebuilds partially changed graduations when heading returns to its last successful value", () => {
+    const e = fixture(), source = localPlayer(e, e.renderer, 40), { feature } = directCompass(e);
+    feature.onEnable();
+    const tape = e.gameplay.FindChild("QOLCompassRoot").FindChildTraverse("QOLCompassTicks");
+    const center = tape.FindChild("QOLCompassTick8"), failed = onceFailStyle(tape, "transform");
+    assert.equal(center.BHasClass("Major"), false);
+    source.image.style.preTransformRotate2d = "46deg"; e.clock.advance(50);
+    assert.equal(failed(), 1); assert.equal(center.BHasClass("Major"), true);
+    source.image.style.preTransformRotate2d = "40deg"; e.clock.advance(50);
+    assert.equal(center.BHasClass("Major"), false, "failed movement cannot leave new graduations under the previous heading");
+    const shift = /^translateX\(([-\d.]+)px\)$/.exec(tape.style.transform);
+    assert.ok(Math.abs(parseFloat(center.style.x) + Number(shift[1]) - (99 - (40 / 22.5 - 1) * 12.5)) < 0.006);
+    feature.onDisable(); e.clean();
+});
+
+for (const className of ["QOLCompassTick", "Major", "Cardinal"]) test(`compass retries rejected ${className} before retaining the tape layout`, () => {
+    const e = fixture(); localPlayer(e, e.renderer, 0);
+    const { feature } = directCompass(e), create = e.$.CreatePanel;
+    let attempts = 0;
+    e.$.CreatePanel = (...args) => {
+        const panel = create(...args), set = panel.SetHasClass;
+        if (panel.id === "QOLCompassTick0") panel.SetHasClass = function (name, active) {
+            if (name === className && active && attempts++ === 0) return;
+            return set.call(this, name, active);
+        };
+        return panel;
+    };
+    feature.onEnable(); e.clock.advance(200);
+    assert.ok(attempts >= 2);
+    const tick = e.gameplay.FindChild("QOLCompassRoot").FindChildTraverse("QOLCompassTick0");
+    assert.equal(tick.BHasClass(className), true);
+    feature.onDisable(); e.clean();
+});
+
 test("compass owns every moved tick/readout child and contains inactive settings hooks", () => {
     const e = fixture(), source = localPlayer(e, e.renderer, 40), { feature, reads } = directCompass(e);
     feature.onSettingsChanged(); assert.equal(e.gameplay.FindChild("QOLCompassRoot"), null);
@@ -572,6 +697,27 @@ test("compass reconciles its tick siblings in one snapshot and repairs a moved t
     assert.equal(siblingSearches, 0, "tick reconciliation must not scan the same sibling list once per tick");
     feature.onDisable(); e.clock.advance(150); e.clean();
 });
+
+for (const id of ["QOLCompassDegree", "QOLCompassNeedle", "QOLSpeedLabel"]) {
+    test("compass restores one missing overlay child: " + id, () => {
+        const e = fixture();
+        const source = localPlayer(e, e.renderer, 40);
+        const { feature } = directCompass(e);
+        feature.onEnable();
+        const previous = e.gameplay.FindChildTraverse(id);
+        assert.ok(previous);
+        previous.DeleteAsync(0);
+        source.image.style.preTransformRotate2d = "90deg";
+        e.clock.advance(150);
+        const replacement = e.gameplay.FindChildTraverse(id);
+        assert.ok(replacement, "the remaining overlay roots must not conceal a missing child");
+        assert.notEqual(replacement, previous);
+        assert.equal(e.gameplay.FindChildTraverse("QOLCompassDegree").text, "90°");
+        feature.onDisable();
+        e.clock.advance(20);
+        e.clean();
+    });
+}
 
 test("compass rapid re-enable waits for both queued trees without reviving their former panels", () => {
     const e = fixture(); localPlayer(e, e.renderer, 45); const { feature, create } = directCompass(e);

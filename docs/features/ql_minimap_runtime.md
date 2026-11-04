@@ -5,13 +5,25 @@ owns Base, Alt and Tab minimap geometry, opacity, crates and tunnels.
 [ql_compass](ql_compass.md) owns rotation and flip; objective overlays and
 Rejuvenator phase state have separate owners. Crate positions come from
 `ql_minimap_crate_data.js`, refreshed from the supplied MapHunter static table.
+It is an authoring input rather than a loaded HUD script.
 Crates belong to the native `hud_minimap` render surface so native zoom,
 rotation and flip apply to their reference coordinates. Tunnels retain their
-viewport anchor. Crates and tough crates share the configured match-time window;
-its end is exclusive, and the maximum endpoint means no end limit.
+viewport anchor. Crates and tough crates follow their toggles throughout the match.
 Crate container and marker rules load through the native minimap stylesheet.
 Both reference owners suppress their overlays in hideout and Street Brawl in
 their runtime paths, so inline visibility cannot defeat the mode gate.
+
+Ordinary crates, tough crates, healing snacks and statues each render as one
+full-map image panel. Their generated `.vsvg` resources preserve the source
+coordinates, colors, outlines and underground opacity. Run
+`node scripts/generate_minimap_reference_images.js` after changing the reference
+tables; regression checks reject stale generated resources. Marker size selects
+a prepared image through the existing setting. Positions stay fixed while the
+selected point sizes change; the images and their points scale with the native
+map in Base, Alt, Tab and native zoom, including Fixed Icon Size mode. This is an
+agreed change from independently pixel-sized point panels. Numeric bounds and
+steps remain owned by the current settings catalog; default and codec IDs are
+unchanged. No per-point panel implementation remains active.
 
 The separate `ql_minimap_loot` owner adds static tough-crate, healing-snack,
 statue, localized district-name and numbered route layers. Their source is
@@ -19,9 +31,11 @@ statue, localized district-name and numbered route layers. Their source is
 tracking. Discovery follows direct native owner breadcrumbs and waits when they
 are absent. A positive native Midtown class is required for these new layers.
 Native district tokens supply HUD translations, independently of the settings
-language. Routes have a separate match-time window; appearance settings never
+language. Routes follow their toggle throughout the match; appearance settings never
 move the map-relative coordinates. Opacity and visibility changes reuse the
-created groups and markers. Marker and route scale changes refresh only their
+created groups and images. Marker size switches images without recreating panels;
+names and routes retain their existing individual text/stroke panels.
+Marker and route scale changes refresh only their
 affected geometry, including hidden groups before reveal; district-name selection
 retires only the name group. Disable/replacement retires all owned children.
 
@@ -47,7 +61,8 @@ component does not establish a layer for an otherwise opaque reference root.
 Only the two static reference trees request this composition. Native moving map
 content and tunnels are not included in either tree; individual markers do not
 request their own composition layers.
-The original children still own their geometry, localization and setting gates.
+Images own the point coordinates; remaining text and route children still own
+their geometry and localization. Each category keeps its original setting gate.
 
 Both feature instances expose a diagnostic-only `diagnostics.begin()` lease to
 the minimap investigation runner. The lease has `apply(controls)`, `snapshot()`
@@ -105,9 +120,18 @@ and the background images inside `MinimapBackgroundTest` in an unchanged
 viewport. Minimalist opacity fades those images individually, preserving the
 native surface/underground/tunnel opacity gates and the sibling canvas/effects.
 Previous living native targets release their
-owned tint/opacity/range overrides; tunnel and crate panels belong to the
+owned tint/opacity overrides and range class; tunnel and crate panels belong to the
 current anchor generation. Missing native sources are retried without treating
 a live cached handle as evidence that the current map still contains it.
+
+Range normalization is scoped by a renderer-owned class in the native minimap
+stylesheet. Doorway and ability-range descendants, including late or replaced
+snippets, inherit the rule without runtime range discovery or per-circle code
+styles. Default map size, decoration release, renderer replacement and disable
+remove that gate. Diagnostic snapshots alone query range presence so the
+native-ranges contrast still requires an actual target; its release control
+removes the same class. After compile/repack, verify range circles with enlarged
+Base/Alt/Tab maps and doorway recasts; offline checks do not compute native CSS.
 
 Settings are derived in lifecycle hooks; the active poll samples native view
 state without rebuilding the configuration model. Stopped settings/event hooks
@@ -117,14 +141,15 @@ Alt/Tab offsets retain their existing one-sided margin units: center alignment
 moves the viewport by half the margin change. Customize accounts for that ratio
 in dragging, frame previews, alignment, resize anchoring and slider travel;
 saved offsets and the Base minimap's edge-aligned units remain unchanged.
-Crate and tunnel trees use complete created-child ownership, including markers
-moved outside their container. Crate data replacement reuses unchanged indices
-and retires removed branches. Partial construction or style writes stay hidden
+Crate and tunnel trees use complete created-child ownership, including images
+moved outside their container. Reference data changes require regenerating the
+source images rather than changing live JavaScript coordinate arrays.
+Partial construction or style writes stay hidden
 until a later active poll succeeds; rapid re-enable waits for previous queued
 trees to retire rather than adopting them.
-Sibling crate markers reconcile as one owned-tree batch. Their complete
-ownership checks still run at the active cadence, using one immediate-child
-snapshot per parent instead of one sibling search per marker.
+The single crate image uses the existing owned-tree batch and complete ownership
+checks. Source replacement and rejected creation/style writes still recover at
+the active cadence without reconstructing per-point children.
 
 Objective overlays consume the separate [phase producer](ql_objective_timers.md).
 Their fixed-icon bridge surface and placement use the same Base/Alt/Tab size
@@ -151,5 +176,10 @@ Both paths neutralize the viewport's native scale and insets, align its bottom
 right corner in Base, and center it in Alt/Tab. Switching icon modes therefore
 keeps the same map size and anchor. The viewport retains native clipping, and
 disable releases the owned geometry without changing saved sizes or offsets.
+Configured Base/Alt/Tab opacity applies to the square viewport, including its map
+overlays. The smaller native host remains opaque: native alpha composition clips
+an enlarged viewport to that host's bounds even with `noclip`. Location labels
+and hints outside the viewport retain their native opacity. Check translucent
+views as well as fully opaque views after repacking.
 Check markers, click targets, range circles, Alt/Tab switching and reset in the
 repacked client.

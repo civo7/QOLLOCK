@@ -24,6 +24,29 @@ function fixture() {
     return { ...env, Q, $, add, left, gameplay, mountQuickbuy, mountHealth, retired, refresh };
 }
 
+test("Fountain scale retirement retries after native class removal is rejected", () => {
+    const e = fixture(), set = e.root.SetHasClass.bind(e.root);
+    const cfg = { ...e.Q.core.ConfigAdapter.exportToFlat(), ENABLE_DAMAGE_FOUNTAIN: 1, DAMAGE_FOUNTAIN_SIZE: 1.5 };
+    const apply = () => e.Q.core.hud.applyRootClasses(e.root, cfg, 0, false);
+    apply();
+    assert.equal(e.root.BHasClass("damage_fountain_scale_150"), true);
+    let reject = true;
+    e.root.SetHasClass = (name, value) => {
+        if (reject && name === "damage_fountain_scale_150" && !value) return false;
+        return set(name, value);
+    };
+    cfg.DAMAGE_FOUNTAIN_SIZE = 2;
+    apply();
+    assert.equal(e.root.BHasClass("damage_fountain_scale_150"), true);
+    cfg.DAMAGE_FOUNTAIN_SIZE = 2.5;
+    apply();
+    reject = false;
+    apply();
+    assert.equal(e.root.BHasClass("damage_fountain_scale_150"), false);
+    assert.equal(e.root.BHasClass("damage_fountain_scale_200"), false);
+    assert.equal(e.root.BHasClass("damage_fountain_scale_250"), true);
+});
+
 test("HUD bridge projection releases living retired hosts and applies unchanged settings to replacements", () => {
     const e = fixture(), quickbuy = e.mountQuickbuy(), health = e.mountHealth();
     const content = e.add(quickbuy, "NativeQueueEntry");

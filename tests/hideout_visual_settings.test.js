@@ -3,6 +3,7 @@
 const test = require("node:test");
 const assert = require("node:assert/strict");
 const { createHud } = require("../scripts/simulator");
+const gunData = require("./helpers/native_gun");
 
 test("healthbar accent and native position react in hideout and reset", () => {
     const hud = createHud({ inHideout: true });
@@ -38,14 +39,16 @@ test("bottom bar reapplies unchanged settings to a replacement panel", () => {
     const hud = createHud({ inHideout: true });
     hud.assertLoaded();
     const { $, QOL: Q } = hud.sandbox.global;
-    const first = $.CreatePanel("Panel", hud.root, "hud_signature");
+    const core = $.CreatePanel("Panel", hud.root, ""); core.AddClass("HudCore");
+    const parent = $.CreatePanel("Panel", core, "AbilitiesContainer");
+    const first = $.CreatePanel("Panel", parent, "hud_signature");
     Q.core.ConfigStore.set("ql_bottom_bar", "BOTTOM_BAR_X_OFFSET", 100);
     hud.clock.advance(600);
     assert.equal(first.style.x, "100px");
 
     first.DeleteAsync(0);
     hud.clock.advance(1);
-    const replacement = $.CreatePanel("Panel", hud.root, "hud_signature");
+    const replacement = $.CreatePanel("Panel", parent, "hud_signature");
     hud.clock.advance(600);
     assert.equal(replacement.style.x, "100px");
 
@@ -59,7 +62,8 @@ test("active item slots scale and move precisely across panel replacement and re
     const hud = createHud({ inHideout: true });
     hud.assertLoaded();
     const { $, QOL: Q } = hud.sandbox.global;
-    const parent = $.CreatePanel("Panel", hud.root, "AbilitiesContainer");
+    const core = $.CreatePanel("Panel", hud.root, ""); core.AddClass("HudCore");
+    const parent = $.CreatePanel("Panel", core, "AbilitiesContainer");
     const first = $.CreatePanel("Panel", parent, "ActiveAbilitiesMenu");
     hud.clock.advance(600);
     assert.equal(first.style.uiScale, undefined, "native scale remains CSS-owned at the default");
@@ -90,12 +94,13 @@ test("active item slots scale and move precisely across panel replacement and re
     assert.deepEqual(hud.clock.errors, []);
 });
 
-test("bottom bar checks its known parent between periodic full-HUD searches", () => {
+test("bottom bar follows direct native owners without full-HUD searches", () => {
     const hud = createHud({ inHideout: true });
     hud.assertLoaded();
     const { $, QOL: Q } = hud.sandbox.global;
     Q.core.App.shutdown();
-    const parent = $.CreatePanel("Panel", hud.root, "AbilitiesContainer");
+    const core = $.CreatePanel("Panel", hud.root, ""); core.AddClass("HudCore");
+    const parent = $.CreatePanel("Panel", core, "AbilitiesContainer");
     const first = $.CreatePanel("Panel", parent, "hud_signature");
     let fullSearches = 0;
     const original = hud.root.FindChildTraverse;
@@ -109,18 +114,24 @@ test("bottom bar checks its known parent between periodic full-HUD searches", ()
     });
     feature.onEnable();
     assert.equal(first.style.x, "100px");
-    assert.equal(fullSearches, 1);
+    assert.equal(fullSearches, 0);
     hud.clock.advance(2000);
-    assert.equal(fullSearches, 1, "steady polls should use the direct parent");
+    assert.equal(fullSearches, 0, "steady polls use the direct parent");
 
     first.DeleteAsync(0);
     hud.clock.advance(1);
     const replacement = $.CreatePanel("Panel", parent, "hud_signature");
     hud.clock.advance(600);
     assert.equal(replacement.style.x, "100px");
-    assert.equal(fullSearches, 1, "same-parent replacement should not need a full HUD walk");
+    assert.equal(fullSearches, 0, "same-parent replacement needs no full HUD walk");
+    parent.SetParent($.CreatePanel("Panel", core, "RetiredAbilities"));
     hud.clock.advance(5000);
-    assert.ok(fullSearches >= 2, "periodic full search should detect an unexpected reparent");
+    assert.equal(replacement.style.x, undefined, "a living moved owner releases its overrides");
+    const currentParent = $.CreatePanel("Panel", core, "AbilitiesContainer");
+    const current = $.CreatePanel("Panel", currentParent, "hud_signature");
+    hud.clock.advance(600);
+    assert.equal(current.style.x, "100px");
+    assert.equal(fullSearches, 0, "missing and late owners never trigger a full HUD walk");
     feature.onDisable();
     assert.deepEqual(hud.clock.errors, []);
 });
@@ -240,6 +251,10 @@ for (const scenario of [
             const stats = $.CreatePanel("Panel", core, "StatsAndModsContainer");
             parent = $.CreatePanel("Panel", stats, "LowerLeft");
         }
+        if (scenario.feature === "ql_bottom_bar") {
+            const core = $.CreatePanel("Panel", hud.root, ""); core.AddClass("HudCore");
+            parent = $.CreatePanel("Panel", core, "AbilitiesContainer");
+        }
         const first = $.CreatePanel("Panel", parent, scenario.id);
         if (scenario.panelClass) first.AddClass(scenario.panelClass);
         if (scenario.offsetKey) Q.core.ConfigStore.set(scenario.feature, scenario.offsetKey, 100);
@@ -292,7 +307,7 @@ test("shop layout follows replacement MainPanel with unchanged settings", () => 
     assert.deepEqual(hud.clock.errors, []);
 });
 
-test("keyboard overlay keeps its wash on a recreated overlay", () => {
+test("keyboard overlay keeps its wash after the XML owner reloads", () => {
     const hud = createHud({ inHideout: true });
     hud.assertLoaded();
     const Q = hud.sandbox.global.QOL;
@@ -305,6 +320,7 @@ test("keyboard overlay keeps its wash on a recreated overlay", () => {
     assert.ok(first);
     assert.equal(first.style.washColor, Q.core.panel.resolvePaletteColor(3));
     first.DeleteAsync(0);
+    hud.clock.advance(1); Q.features.keyboardOwnerLoaded();
     hud.clock.advance(500);
     const replacement = hud.root.FindChildTraverse("QOLKeyboardOverlayRoot");
     assert.ok(replacement);
@@ -317,7 +333,7 @@ test("reload label gets its configured style after replacement", () => {
     const hud = createHud({ inHideout: false });
     hud.assertLoaded();
     const { $, QOL: Q } = hud.sandbox.global;
-    const reticle = $.CreatePanel("Panel", hud.root, "reticle_status");
+    const reticle = $.CreatePanel("Panel", gunData($, hud.root), "reticle_status");
     $.CreatePanel("Panel", reticle, "attack_delayed_progress_bar");
     Q.core.ConfigStore.set("ql_reload_cooldown", "ENABLE_RELOAD_COOLDOWN", true);
     Q.core.ConfigStore.set("ql_reload_cooldown", "RELOAD_COOLDOWN_X_OFFSET", 20);
@@ -377,6 +393,6 @@ test("build ID reapplies text and layout to a recreated label", () => {
     assert.ok(replacement);
     assert.notEqual(replacement, first);
     assert.match(replacement.text, /123/);
-    assert.equal(replacement.style.fontSize, "16px");
+    assert.equal(replacement.style.fontSize, undefined, "replacement typography comes from the HUD stylesheet");
     assert.deepEqual(hud.clock.errors, []);
 });

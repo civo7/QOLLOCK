@@ -70,11 +70,15 @@ for (const basic of [false, true]) test(`selected ${basic ? "Basic" : "Advanced"
     const sample = env.root.FindChildrenWithClassTraverse("QOLCustomizeSample")[0]; assert.ok(sample);
     const host = basic ? env.root.FindChildTraverse("hud_passive_items") : env.overlay();
     assert.equal(host.style.visibility, "visible");
+    if (basic) assert.equal(host.BHasClass("QOLCustomizeBasicCooldownPreview"), true);
     preview.write(env.root, { PASSIVE_COOLDOWN_SIZE: 50 }, "cooldown-sample", env.Q.core.persistence.getConfigChangeStamp(env.Q.getUIRoot()), "cooldowns");
     env.clock.advance(550); assert.equal(sample.IsValid(), true);
     preview.clear(env.root, "cooldown-sample"); env.clock.advance(550);
     assert.equal(sample.IsValid(), false);
-    if (basic) assert.equal(host.style.visibility, "collapse");
+    if (basic) {
+        assert.equal(host.style.visibility, undefined, "shop visibility returns to native listener CSS");
+        assert.equal(host.BHasClass("QOLCustomizeBasicCooldownPreview"), false);
+    }
     else assert.equal(env.overlay(), null);
     assert.deepEqual(env.Q.core.ConfigAdapter.exportToFlat(), canonical);
     feature.onDisable(); env.clock.advance(0); assert.deepEqual(env.clock.errors, []);

@@ -121,6 +121,14 @@
 	border-radius: 9999px;
 }
 
+/* Range snippets inherit the active map size without a JS discovery pass. */
+#hud_minimap.QOLScaledMinimapRanges .map_button.doorman_doorway #CastRange,
+#hud_minimap.QOLScaledMinimapRanges .map_button.ability_castrange #CastRange
+{
+	ui-scale: 100%;
+	pre-transform-scale2d: 1;
+}
+
 .qol_minimap_elevation_markers_active .map_button.player.enemy.arrowUp,
 .qol_minimap_elevation_markers_active .map_button.player.enemy.arrowDown,
 .qol_minimap_elevation_markers_active .map_button.player.friend.arrowUp,
@@ -336,15 +344,6 @@
     height: 100%;
     ignore-parent-flow: true;
     hittest: false;
-}
-
-#hud_minimap .minimap_marker
-{
-    width: 2px;
-    height: 2px;
-    transform: translateX(-1px) translateY(-1px);
-    background-color: rgba(255, 213, 74, 0.75);
-    box-shadow: fill rgba(42, 33, 0, 0.45) 0px 0px 0px 1px;
 }
 
 .connectedToHideout #hud_minimap #minimap_overlay_root,

@@ -270,20 +270,28 @@
                 sliderContainer.AddClass("SliderContainer");
                 slider = P.create("Slider", sliderContainer, "QOLCustomizeSlider_" + field.key, { direction: "horizontal" });
                 slider.AddClass("HorizontalSlider");
+                let acceptedRange = null;
                 const refreshRange = () => {
                     if (!valid()) return;
                     const range = field.axis && geometrySource
                         ? Q.ui.customizeGeometry.positionSliderBounds(field, geometrySource()) : contract;
-                    slider.enabled = !!range;
                     if (range) {
                         const bounds = Q.presentation.displayBounds(field.key, range.min, range.max);
                         const first = Math.ceil(bounds.min * mult), last = Math.floor(bounds.max * mult);
-                        slider.min = first;
-                        slider.max = Math.max(first, last);
-                        slider.enabled = last > first;
+                        acceptedRange = { min: first, max: Math.max(first, last) };
                     }
+                    // Native layout can disappear while Slider owns the mouse.
+                    // Retain numeric travel, never the missing panel's geometry.
+                    // Disabling/reconfiguring native input on every preview can
+                    // interrupt capture before it receives the button release.
+                    const enabled = !!acceptedRange && acceptedRange.max > acceptedRange.min;
+                    if (acceptedRange) {
+                        if (slider.min !== acceptedRange.min) slider.min = acceptedRange.min;
+                        if (slider.max !== acceptedRange.max) slider.max = acceptedRange.max;
+                    }
+                    if (slider.enabled !== enabled) slider.enabled = enabled;
                     const value = Math.round(displayValue(field, session.value(field.key)) * mult);
-                    const thumb = range ? Math.max(slider.min, Math.min(slider.max, value)) : value;
+                    const thumb = acceptedRange ? Math.max(slider.min, Math.min(slider.max, value)) : value;
                     if (Number(slider.value) !== thumb) slider.value = thumb;
                 };
                 rangeSyncs.push(refreshRange);

@@ -16,6 +16,14 @@ function fixture() {
     return { env, add, health, canvas, q: env.hud.sandbox.global.QOL };
 }
 
+test("default healthbar scale skips native layout reads through the production controller", () => {
+    const { env, health, q } = fixture();
+    for (const key of ["actuallayoutwidth", "actuallayoutheight", "actualuiscale_x", "actualuiscale_y"]) {
+        Object.defineProperty(health, key, { get() { throw Error("unnecessary layout read: " + key); }, configurable: true });
+    }
+    q.healthbar.minimalist.update(env.hud.root, { PLAYER_HEALTHBAR_SCALE: 100 }, false);
+});
+
 for (const type of [0, 1, 2, 3, 4, 5]) {
     test(`healthbar ${type}: scoped scale, Reset, history and Cancel share one canvas`, () => {
         const { env, health, canvas } = fixture();

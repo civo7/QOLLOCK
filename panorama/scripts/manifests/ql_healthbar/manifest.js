@@ -49,7 +49,11 @@
                 const preview = QOL.presentation.preview.selected(P.findHud(root), "healthbar");
                 const mcGameplay = !hideout || QOL.core.hud.isGameplayHudShown(root);
                 shared.update(root, model.cfg, model.type === 1);
-                fg.update(root, model.cfg);
+                if (model.type === 2 || preview) {
+                    fg.update(root, model.cfg);
+                } else if (fg.isActive()) {
+                    fg.release();
+                }
                 if (hideout && !preview) {
                     if (budhud.isActive()) budhud.release();
                 } else {

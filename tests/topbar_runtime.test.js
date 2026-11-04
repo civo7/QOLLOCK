@@ -15,7 +15,8 @@ function setup() {
     const top = env.doc.create("CitadelHudTopBar", { id: "TopBar" });
     core.addChild(top);
     const bottom = env.doc.create("Panel", { id: "hud_signature" });
-    core.addChild(bottom);
+    const abilities = env.doc.create("Panel", { id: "AbilitiesContainer" });
+    core.addChild(abilities); abilities.addChild(bottom);
     Q.setCachedPanel?.("gameplayHud", gameplay);
     env.global.QOL.ui.window.setOpen(true);
     env.clock.advance(600);

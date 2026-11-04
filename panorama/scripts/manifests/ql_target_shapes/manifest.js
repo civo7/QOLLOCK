@@ -142,13 +142,16 @@
                 nextDiscovery = 0;
                 QOL.core.hud.refreshRootClasses($.GetContextPanel());
                 update();
+                // Native targets cannot make neutral settings produce an
+                // override. Settings changes own restarting discovery.
+                if (model.active && !loop) loop = QOL.core.Scheduler.createPollLoop(update, 0.2, ctx.id);
+                else if (!model.active && loop) { loop.stop(); loop = null; }
             }
 
             return {
                 onEnable() {
                     active = true;
                     refreshSettings();
-                    loop = QOL.core.Scheduler.createPollLoop(update, model.active ? 0.2 : 1.0, ctx.id);
                 },
                 onSettingsChanged: refreshSettings,
                 onDisable() {

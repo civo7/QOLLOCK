@@ -90,6 +90,33 @@ test("reload exception and HUD mode observations reject a retired living source"
     assert.equal(env.Q.core.hud.isInHideout(env.doc.root), false); assert.equal(env.Q.core.hud.isStreetBrawl(), false); assert.deepEqual(env.clock.errors, []);
 });
 
+test("Street Brawl evidence stays in its native owners and follows late or living replacements", () => {
+    const env = setup(), native = env.tree();
+    const decoy = env.add(env.root, "StretBrawlContainer"); decoy.visible = true;
+    const traverse = env.root.FindChildTraverse;
+    let globalSearches = 0;
+    env.root.FindChildTraverse = function (id) {
+        if (["StretBrawlContainer", "gameplay_hud", "TopBar"].includes(id)) globalSearches++;
+        return traverse.call(this, id);
+    };
+    assert.equal(env.Q.core.hud.isStreetBrawl(env.root), false, "an unrelated subtree is not native mode evidence");
+    const top = env.add(native.core, "TopBar");
+    assert.equal(env.Q.core.hud.isStreetBrawl(env.root), false);
+    const street = env.add(top, "StretBrawlContainer"); street.visible = true;
+    assert.equal(env.Q.core.hud.isStreetBrawl(env.root), true, "late current native evidence is read immediately");
+    top.SetParent(env.add(null, "RetiredTopBar"));
+    const current = env.add(native.core, "TopBar");
+    assert.equal(env.Q.core.hud.isStreetBrawl(env.root), false, "the old live source cannot supply current mode");
+    current.AddClass("gamemode_streetbrawl");
+    assert.equal(env.Q.core.hud.isStreetBrawl(env.root), true);
+    current.RemoveClass("gamemode_streetbrawl"); native.gameplay.AddClass("gamemode_streetbrawl");
+    assert.equal(env.Q.core.hud.isStreetBrawl(env.root), true);
+    native.gameplay.RemoveClass("gamemode_streetbrawl");
+    assert.equal(env.Q.core.hud.isStreetBrawl(env.root), false);
+    assert.equal(globalSearches, 0, "mode reads must never traverse the whole HUD");
+    assert.deepEqual(env.clock.errors, []);
+});
+
 for (const rejection of ["false", "silent"]) {
     test(`core retries rejected root and ability class writes (${rejection}) at an unchanged config`, () => {
         const env = setup({ ENABLE_CENTER_ESC: 1, ENABLE_CLEAN_STACKS: 1 });

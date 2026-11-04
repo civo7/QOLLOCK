@@ -9,6 +9,14 @@
     const IDLE_SECONDS = 0.5;
     const LABEL_ID = "QOLReloadCooldownText";
 
+    function findReticle(hud) {
+        const P = QOL.core.panel;
+        // element_gun.xml plus the native capture verify this complete owner path.
+        let panel = P.findChildByClass(hud, "HudCore");
+        for (const id of ["gameplay_hud", "gameplay_hud_alive", "crosshair", "gun", "gun_data", "reticle_status"]) panel = P.findChild(panel, id);
+        return panel;
+    }
+
     function readAngle(panel) {
         let clip = "";
         try { clip = String(panel.style.clip || ""); } catch (_) {}
@@ -80,10 +88,6 @@
         ],
         create(ctx) {
             const P = QOL.core.panel;
-            const resolver = id => QOL.panelCache.createIdResolver(id, { retryMs: 500 });
-            const reticleResolver = resolver("reticle_status");
-            const localProgressResolver = resolver("attack_delayed_progress_bar");
-            const fallbackProgressResolver = resolver("attack_delayed_progress_bar");
             const estimate = createEstimate();
             const tree = P.createOwnedTree();
             let running = false, rootOwner = null;
@@ -119,7 +123,6 @@
                 retireLabel();
                 estimate.reset();
                 reticle = null; progress = null;
-                reticleResolver.reset(); localProgressResolver.reset(); fallbackProgressResolver.reset();
             }
 
             function ensureLabel() {
@@ -131,7 +134,7 @@
                 return true;
             }
 
-            function update(force = false) {
+            function update() {
                 if (!running) return;
                 const hud = P.findHud($.GetContextPanel());
                 if (hud !== rootOwner) { releaseSources(); rootOwner = hud; }
@@ -141,13 +144,12 @@
                     loop?.reschedule(IDLE_SECONDS);
                     return;
                 }
-                const currentReticle = reticleResolver.resolve(hud, force);
+                const currentReticle = findReticle(hud);
                 if (reticle !== currentReticle) {
                     retireLabel(); estimate.reset();
                     reticle = currentReticle; progress = null;
-                    localProgressResolver.reset(); fallbackProgressResolver.reset();
                 }
-                const currentProgress = localProgressResolver.resolve(reticle, force) || fallbackProgressResolver.resolve(hud, force);
+                const currentProgress = P.findChild(reticle, "attack_delayed_progress_bar");
                 if (progress !== currentProgress) {
                     estimate.reset(); renderText(""); progress = currentProgress;
                 }
@@ -182,7 +184,7 @@
             function refreshSettings() {
                 if (!running) return;
                 model = readModel();
-                update(true);
+                update();
                 QOL.core.hud.refreshRootClasses(P.findHud($.GetContextPanel()));
             }
 

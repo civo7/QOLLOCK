@@ -274,17 +274,18 @@ test("ql_minimap_runtime scales the square viewport via uiScale and preserves ba
     assert.strictEqual(container.style.uiScale, "150%", "the square viewport receives the configured scale");
     assert.ok(!persp.style.width, "minimap_persp width must remain under native control");
     assert.ok(!persp.style.height, "minimap_persp height must remain under native control");
-    assert.strictEqual(persp.style.opacity, "0.5", "minimap_persp must receive configured opacity");
+    assert.strictEqual(persp.style.opacity, "1", "the smaller host must not alpha-clip the enlarged viewport");
     assert.strictEqual(persp.style.marginRight, "-20px", "minimap_persp marginRight must be 30 - 50 = -20px");
     assert.strictEqual(persp.style.marginBottom, "50px", "minimap_persp marginBottom must be 30 + 20 = 50px");
     assert.ok(!container.style.width, "child container must not receive hardcoded width");
     assert.ok(!container.style.height, "child container must not receive hardcoded height");
-    assert.ok(!container.style.opacity, "child container must not receive cascaded opacity");
+    assert.strictEqual(container.style.opacity, "0.5", "the square viewport owns configured map opacity");
 
     Q.core.FeatureRegistry.disable("ql_minimap_runtime");
     assert.ok(!persp.style.uiScale, "disable must clear uiScale");
     assert.ok(!container.style.uiScale, "disable must release viewport scale");
     assert.ok(!persp.style.opacity, "disable must clear opacity");
+    assert.ok(!container.style.opacity, "disable must release viewport opacity");
     assert.ok(!persp.style.margin, "disable must clear margin");
 });
 
@@ -354,7 +355,7 @@ test("ql_minimap_timers hides bridge buff timer when powerup rune is spawned on 
     instance.onDisable();
 });
 
-test("ql_minimap_timers standard mode positioning respects 40px bottom offset and single slot offsets", () => {
+test("ql_minimap_timers ordinary plates retain Peer insets when either timer is disabled", () => {
     const hud = sim.createHud({ inHideout: false });
     hud.assertLoaded();
     const Q = hud.sandbox.global.QOL;
@@ -391,28 +392,33 @@ test("ql_minimap_timers standard mode positioning respects 40px bottom offset an
     assert.ok(buffTimer, "Buff timer must exist");
     assert.ok(rejuvTimer, "Rejuv timer must exist");
 
-    // Both timers active: overlay bottom margin must be 40px, timer margin 0px 40px, overlay marginLeft 0px
-    assert.strictEqual(overlay.style.marginBottom, "40px", "Bottom offset must be 40px at 400px minimap");
-    assert.strictEqual(buffTimer.style.margin, "0px 40px", "Buff timer gap margin must be 40px");
-    assert.strictEqual(rejuvTimer.style.margin, "0px 40px", "Rejuv timer gap margin must be 40px");
-    assert.strictEqual(overlay.style.marginLeft, "0px", "Centered when both timers active");
+    assert.strictEqual(overlay.style.marginBottom, "0px", "The canvas follows the minimap viewport");
+    assert.strictEqual(buffTimer.style.horizontalAlign, "left");
+    assert.strictEqual(buffTimer.style.marginLeft, "60px");
+    assert.strictEqual(buffTimer.style.marginBottom, "58px");
+    assert.strictEqual(rejuvTimer.style.horizontalAlign, "right");
+    assert.strictEqual(rejuvTimer.style.marginRight, "103px");
+    assert.strictEqual(rejuvTimer.style.marginBottom, "58px");
 
-    // Only buff timer active: single slot offset applied to the right (+152px)
+    // An absent partner must not move the surviving plate to the other slot.
     cfg = { ...cfg, ENABLE_MINIMAP_REJUV_TIMER: 0 };
     instance.onSettingsChanged();
     hud.clock.advance(500);
-    assert.strictEqual(overlay.style.marginLeft, "152px", "Single buff timer shifted right to preserve slot");
+    assert.strictEqual(buffTimer.style.marginLeft, "60px");
+    assert.strictEqual(buffTimer.BHasClass("qol-hidden"), false);
+    assert.strictEqual(rejuvTimer.BHasClass("qol-hidden"), true);
 
-    // Only rejuv timer active: single slot offset applied to the left (-152px)
     cfg = { ...cfg, ENABLE_MINIMAP_BUFF_TIMER: 0, ENABLE_MINIMAP_REJUV_TIMER: 1 };
     instance.onSettingsChanged();
     hud.clock.advance(500);
-    assert.strictEqual(overlay.style.marginLeft, "-152px", "Single rejuv timer shifted left to preserve slot");
+    assert.strictEqual(rejuvTimer.style.marginRight, "103px");
+    assert.strictEqual(rejuvTimer.BHasClass("qol-hidden"), false);
+    assert.strictEqual(buffTimer.BHasClass("qol-hidden"), true);
 
     instance.onDisable();
 });
 
-test("ql_minimap_runtime handles zero opacity, offsets, and zoom modes without child pollution", () => {
+test("ql_minimap_runtime handles zero opacity, offsets, and zoom modes on the viewport", () => {
     const hud = sim.createHud({ inHideout: false });
     hud.assertLoaded();
     const Q = hud.sandbox.global.QOL;
@@ -421,14 +427,14 @@ test("ql_minimap_runtime handles zero opacity, offsets, and zoom modes without c
     const root = hud.root;
     const persp = $.CreatePanel("Panel", root, "minimap_persp");
     const container = $.CreatePanel("Panel", persp, "minimap_container");
-    const frame = $.CreatePanel("Panel", persp, "minimap_frame");
+    const frame = $.CreatePanel("Panel", container, "minimap_frame");
     $.CreatePanel("Panel", container, "hud_minimap");
 
     // 1. Zero opacity
     Q.core.ConfigStore.set("ql_minimap_runtime", "MINIMAP_BASE_OPACITY", 0);
     hud.clock.advance(100);
-    assert.strictEqual(persp.style.opacity, "0", "zero opacity must apply as string 0 without falling back to 1.0");
-    assert.ok(!container.style.opacity, "child container must not receive cascaded opacity");
+    assert.strictEqual(container.style.opacity, "0", "zero opacity must apply as string 0 without falling back to 1.0");
+    assert.strictEqual(persp.style.opacity, "1", "the smaller native host stays opaque");
     assert.ok(!frame.style.opacity, "frame panel must not receive cascaded opacity");
 
     // 2. Custom offsets
@@ -450,7 +456,7 @@ test("ql_minimap_runtime handles zero opacity, offsets, and zoom modes without c
     assert.strictEqual(persp.style.uiScale, "100%", "Alt zoom must not scale the tall host");
     assert.strictEqual(container.style.uiScale, "200%", "Alt zoom must scale the viewport to 200%");
     assert.strictEqual(persp.style.align, "center center", "Alt zoom must center minimap");
-    assert.strictEqual(persp.style.opacity, "0.9", "Alt zoom opacity must apply");
+    assert.strictEqual(container.style.opacity, "0.9", "Alt zoom opacity must apply to the complete viewport");
     assert.strictEqual(persp.style.marginLeft, "10px", "Alt zoom X offset must apply to marginLeft");
     assert.strictEqual(persp.style.marginTop, "-20px", "Alt zoom Y offset must apply to marginTop");
 
@@ -461,7 +467,7 @@ test("ql_minimap_runtime handles zero opacity, offsets, and zoom modes without c
     Q.core.FeatureRegistry.disable("ql_minimap_runtime");
 });
 
-test("ql_minimap_runtime normalizes Doorman doorway cast range across casts without cache lock", () => {
+test("ql_minimap_runtime retains its CSS range gate across doorway recasts without discovering them", () => {
     const hud = sim.createHud({ inHideout: false });
     hud.assertLoaded();
     const Q = hud.sandbox.global.QOL;
@@ -483,8 +489,8 @@ test("ql_minimap_runtime normalizes Doorman doorway cast range across casts with
     const castRange1 = $.CreatePanel("Panel", door1, "CastRange");
 
     hud.clock.advance(100);
-    assert.strictEqual(castRange1.style.uiScale, "100%", "Initial CastRange must receive uiScale: 100%");
-    assert.strictEqual(castRange1.style.preTransformScale2d, "1.00, 1.00", "Initial CastRange preTransformScale2d must be reset to 1.00, 1.00");
+    assert.strictEqual(hudMinimap.BHasClass("QOLScaledMinimapRanges"), true);
+    assert.strictEqual(castRange1.style.uiScale, undefined, "range normalization belongs to the native stylesheet");
 
     // 2. Door 1 destroyed and Door 2 placed while minimap size is still 550 (door count stays 1)
     door1.DeleteAsync(0);
@@ -495,10 +501,11 @@ test("ql_minimap_runtime normalizes Doorman doorway cast range across casts with
     const castRange2 = $.CreatePanel("Panel", door2, "CastRange");
 
     hud.clock.advance(100);
-    assert.strictEqual(castRange2.style.uiScale, "100%", "Recast doorway CastRange must receive uiScale: 100% without getting blocked by cacheKey");
-    assert.strictEqual(castRange2.style.preTransformScale2d, "1.00, 1.00", "Recast doorway CastRange preTransformScale2d must be reset to 1.00, 1.00");
+    assert.strictEqual(hudMinimap.BHasClass("QOLScaledMinimapRanges"), true, "new native descendants inherit the current rule immediately");
+    assert.strictEqual(castRange2.style.preTransformScale2d, undefined, "recasts need no inline override");
 
     Q.core.FeatureRegistry.disable("ql_minimap_runtime");
+    assert.strictEqual(hudMinimap.BHasClass("QOLScaledMinimapRanges"), false);
 });
 
 test("ql_minimap_timers maintains calibrated base coordinates across minimap scaling", () => {
@@ -551,7 +558,7 @@ test("ql_minimap_timers maintains calibrated base coordinates across minimap sca
     instance.onSettingsChanged();
     hud.clock.advance(500);
     assert.strictEqual(rejuvTimer.style.verticalAlign, "bottom", "Mid boss timer when not in pit must dock at bottom");
-    assert.strictEqual(rejuvTimer.style.marginBottom, "40px", "Mid boss timer bottom offset must remain 40px base");
+    assert.strictEqual(rejuvTimer.style.marginBottom, "58px", "Ordinary Mid Boss keeps the Peer bottom inset in base coordinates");
 
     instance.onDisable();
 });

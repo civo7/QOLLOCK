@@ -23,10 +23,10 @@
             const panels = QOL.core.panel;
             const utils = QOL.utils;
             const state = QOL.state;
-            const sourceResolvers = [
+            const sourceIds = [
                 "HudEventIndicatorsPanel", "CitadelDamageFeedbackDisplay",
                 "CitadelHudEventIndicatorsPanel", "CitadelHudDamageIndicators"
-            ].map(id => QOL.panelCache.createIdResolver(id, { retryMs: 2500 }));
+            ];
             const owners = new Set();
             const styles = panels.createNativeStyleOwner();
             let root = null;
@@ -36,13 +36,10 @@
             let nextDiscovery = 0;
             let loop = null, active = false;
 
-            function resetDiscovery() {
-                for (const resolver of sourceResolvers) resolver.reset();
-            }
-
-            function resolveSource(currentRoot) {
-                for (const resolver of sourceResolvers) {
-                    const current = resolver.resolve(currentRoot);
+            function resolveSource(core) {
+                // hud.xml and the native capture place the event owner under HudCore.
+                for (const id of sourceIds) {
+                    const current = panels.findChild(core, id);
                     if (current) return current;
                 }
                 return null;
@@ -85,13 +82,15 @@
                 if (!active) return;
                 const current = panels.findHud($.GetContextPanel());
                 if (current !== root) {
-                    releaseAll(); resetDiscovery(); root = current; source = null;
+                    releaseAll(); root = current; source = null;
                 }
                 if (!panels.isAlive(root) || (root.id !== "Hud" && root.paneltype !== "CitadelHud") || (!model.active && !state.accountPresetTestActive)) { releaseAll(); return; }
-                const nextSource = resolveSource(root);
+                const core = panels.findChildByClass(root, "HudCore");
+                const nextSource = resolveSource(core);
                 if (nextSource !== source) { releaseAll(); source = nextSource; }
-                const nextScope = source || root.FindChildTraverse("gameplay_hud") || root;
+                const nextScope = source || panels.findChild(core, "gameplay_hud");
                 if (nextScope !== scope) { releaseAll(); scope = nextScope; }
+                if (!panels.isAlive(scope)) return;
                 const now = utils.PerfNowMs();
                 if (now >= nextDiscovery) discover();
                 for (const target of owners) {
@@ -107,23 +106,26 @@
 
             function refreshSettings() {
                 if (!active) return;
-                model = readModel(); nextDiscovery = 0; resetDiscovery();
+                model = readModel(); nextDiscovery = 0;
                 QOL.core.hud.refreshRootClasses($.GetContextPanel());
                 update();
+                // Native events cannot turn a neutral settings-only plan into
+                // an override. The next settings hook restarts discovery.
+                if (model.active && !loop) loop = QOL.core.Scheduler.createPollLoop(update, 0.5, ctx.id);
+                else if (!model.active && loop) { loop.stop(); loop = null; }
             }
 
             return {
                 onEnable() {
                     active = true;
                     refreshSettings();
-                    loop = QOL.core.Scheduler.createPollLoop(update, 0.5, ctx.id);
                 },
                 onSettingsChanged: refreshSettings,
                 onDisable() {
                     active = false;
                     if (loop) { loop.stop(); loop = null; }
                     QOL.core.Scheduler.cancelAllForFeature(ctx.id);
-                    releaseAll(); resetDiscovery(); root = source = scope = model = null;
+                    releaseAll(); root = source = scope = model = null;
                 }
             };
         },

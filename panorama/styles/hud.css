@@ -31,3 +31,7 @@
 @import url("s2r://panorama/styles/features/ql_feat_healthbar.vcss_c");
 @import url("s2r://panorama/styles/features/ql_feat_cursor.vcss_c");
 @import url("s2r://panorama/styles/features/ql_feat_signatures.vcss_c");
+
+@import url("s2r://panorama/styles/features/ql_feat_perf.vcss_c");
+@import url("s2r://panorama/styles/features/ql_feat_build_id.vcss_c");
+@import url("s2r://panorama/styles/features/ql_feat_statlocker.vcss_c");

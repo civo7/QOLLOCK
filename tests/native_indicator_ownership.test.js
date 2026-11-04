@@ -19,7 +19,11 @@ function setup(id, overrides = {}) {
         return panel;
     };
     const result = { ...env, Q, $, cfg, feature, add, reads: () => reads };
-    result.sourceRoot = id === "ql_target_shapes" ? targetScope(result) : env.root;
+    if (id === "ql_target_shapes") result.sourceRoot = targetScope(result);
+    else {
+        result.core = add(env.root, "", ["HudCore"]);
+        result.sourceRoot = add(result.core, "gameplay_hud");
+    }
     return result;
 }
 
@@ -62,7 +66,7 @@ test("target geometry discovers only the customized channel and releases it inde
 
 test("small-number filtering leaves cumulative opacity to its own setting instead of a label poll", () => {
     const env = setup("ql_damage_numbers", { ENABLE_HIDE_SMALL_NUMBERS: 1, DAMAGE_NUMBER_OPACITY: 0.5 });
-    const source = env.add(env.root, "HudEventIndicatorsPanel");
+    const source = env.add(env.core, "HudEventIndicatorsPanel");
     const event = env.add(source, "Total", ["cumulative", "damage_type_gun"]);
     const label = env.add(event, "Value", ["HudIndicatorText"], "Label");
     env.feature.onEnable();
@@ -204,7 +208,7 @@ test("target styling waits for a real HUD and stopped settings hooks cannot rest
 
 test("damage styling preserves cumulative typography and native fades while cleaning every owned property on disable", () => {
     const env = setup("ql_damage_numbers", { HUD_INDICATOR_SIZE: 45, DAMAGE_NUMBER_OPACITY: 0.4, ENABLE_HIDE_SMALL_NUMBERS: 1 });
-    const source = env.add(env.root, "HudEventIndicatorsPanel");
+    const source = env.add(env.core, "HudEventIndicatorsPanel");
     const smallParent = env.add(source, "SmallFixture", ["bullet_damage_new", "HudIndicatorContainer"]);
     smallParent.style.opacity = "0";
     const small = env.add(smallParent, "Amount", ["HudIndicatorText"], "Label");
@@ -226,7 +230,7 @@ test("damage styling preserves cumulative typography and native fades while clea
 
 test("damage live class reuse changes hide/font roles and returns to native defaults immediately", () => {
     const env = setup("ql_damage_numbers", { HUD_INDICATOR_SIZE: 32, ENABLE_HIDE_SMALL_NUMBERS: 1 });
-    const source = env.add(env.root, "HudEventIndicatorsPanel");
+    const source = env.add(env.core, "HudEventIndicatorsPanel");
     const panel = env.add(source, "PooledIndicatorFixture", ["HudIndicatorText", "bullet_damage_new"], "Label");
     env.feature.onEnable(); assert.equal(panel.style.opacity, undefined); assert.equal(panel.style.fontSize, "32px");
     panel.RemoveClass("bullet_damage_new"); panel.AddClass("cumulative");
@@ -241,7 +245,7 @@ test("damage live class reuse changes hide/font roles and returns to native defa
 
 test("damage opacity and typography release independently at their defaults while other presentation remains active", () => {
     const env = setup("ql_damage_numbers", { HUD_INDICATOR_SIZE: 30, DAMAGE_NUMBER_OPACITY: 0.4, ENABLE_CLEAN_DAMAGE_INDICATORS: 1 });
-    const source = env.add(env.root, "HudEventIndicatorsPanel"), label = env.add(source, "Amount", ["HudIndicatorText"], "Label");
+    const source = env.add(env.core, "HudEventIndicatorsPanel"), label = env.add(source, "Amount", ["HudIndicatorText"], "Label");
     env.feature.onEnable(); assert.equal(label.style.fontSize, "30px"); assert.equal(label.style.opacity, "0.40");
     env.cfg.DAMAGE_NUMBER_OPACITY = 1; env.feature.onSettingsChanged();
     assert.equal(label.style.opacity, undefined); assert.equal(label.style.fontSize, "30px");
@@ -258,11 +262,11 @@ test("damage opacity and typography release independently at their defaults whil
 
 test("damage observes a replaced living source and releases labels that leave its source", () => {
     const env = setup("ql_damage_numbers", { HUD_INDICATOR_SIZE: 30, DAMAGE_NUMBER_OPACITY: 0.5 });
-    const source = env.add(env.root, "HudEventIndicatorsPanel");
+    const source = env.add(env.core, "HudEventIndicatorsPanel");
     const old = env.add(source, "AmountFixture", ["HudIndicatorText"], "Label");
     env.feature.onEnable(); assert.equal(old.style.fontSize, "30px");
     const detached = env.add(env.root, "DetachedSourceFixture"); source.SetParent(detached);
-    const replacement = env.add(env.root, "HudEventIndicatorsPanel");
+    const replacement = env.add(env.core, "HudEventIndicatorsPanel");
     const current = env.add(replacement, "AmountFixture", ["HudIndicatorText"], "Label");
     env.clock.advance(600);
     assert.equal(old.style.fontSize, undefined); assert.equal(old.style.opacity, undefined);
@@ -274,7 +278,7 @@ test("damage observes a replaced living source and releases labels that leave it
 
 test("damage styling immediately releases a living label moved outside the current source", () => {
     const env = setup("ql_damage_numbers", { HUD_INDICATOR_SIZE: 30, DAMAGE_NUMBER_OPACITY: 0.5 });
-    const source = env.add(env.root, "HudEventIndicatorsPanel");
+    const source = env.add(env.core, "HudEventIndicatorsPanel");
     const label = env.add(source, "Amount", ["HudIndicatorText"], "Label");
     env.feature.onEnable(); assert.equal(label.style.fontSize, "30px");
     const retired = env.add(null, "RetiredDamageLabels"); label.SetParent(retired); env.clock.advance(600);
@@ -288,12 +292,29 @@ test("damage styling immediately releases a living label moved outside the curre
 
 test("damage styling binds a new living gameplay scope when the optional event source is absent", () => {
     const env = setup("ql_damage_numbers", { HUD_INDICATOR_SIZE: 30, DAMAGE_NUMBER_OPACITY: 0.5 });
-    const gameplay = env.add(env.root, "gameplay_hud"), label = env.add(gameplay, "Amount", ["HudIndicatorText"], "Label");
+    const gameplay = env.sourceRoot, label = env.add(gameplay, "Amount", ["HudIndicatorText"], "Label");
     env.feature.onEnable(); assert.equal(label.style.fontSize, "30px");
     gameplay.SetParent(env.add(null, "RetiredGameplay"));
-    const next = env.add(env.root, "gameplay_hud"), current = env.add(next, "Amount", ["HudIndicatorText"], "Label");
+    const next = env.add(env.core, "gameplay_hud"), current = env.add(next, "Amount", ["HudIndicatorText"], "Label");
     env.clock.advance(600);
     assert.equal(label.style.fontSize, undefined); assert.equal(label.style.opacity, undefined);
     assert.equal(current.style.fontSize, "30px");
     env.feature.onDisable(); assert.deepEqual(env.clock.errors, []);
+});
+
+test("damage discovery ignores an unrelated source while waiting for its current native owner", () => {
+    const env = setup("ql_damage_numbers", { HUD_INDICATOR_SIZE: 30, DAMAGE_NUMBER_OPACITY: 0.5 });
+    const decoy = env.add(env.root, "HudEventIndicatorsPanel"), foreign = env.add(decoy, "Amount", ["HudIndicatorText"], "Label");
+    env.feature.onEnable(); env.clock.advance(3000);
+    assert.equal(foreign.style.fontSize, undefined);
+    assert.equal(foreign.style.opacity, undefined);
+    const native = env.add(env.core, "HudEventIndicatorsPanel"), current = env.add(native, "Amount", ["HudIndicatorText"], "Label");
+    env.clock.advance(600);
+    assert.equal(current.style.fontSize, "30px");
+    assert.equal(current.style.opacity, "0.50");
+    env.core.SetParent(env.add(null, "RetiredHudCore")); env.clock.advance(600);
+    assert.equal(current.style.fontSize, undefined, "loss of the native owner releases a living old label");
+    assert.equal(current.style.opacity, undefined);
+    env.feature.onDisable();
+    assert.deepEqual(env.clock.errors, []);
 });

@@ -147,25 +147,20 @@ test("same controllers reclaim rejected retirement on immediate re-enable", () =
     assert.equal(frame.style.washColor, undefined); assert.equal(env.root.BHasClass(cursorClass), false);
     assert.deepEqual(env.clock.errors, []);
 });
-for (const mode of ["false", "throw"]) {
-    test(`keyboard retries moved native glyph retirement after disable (${mode})`, () => {
-        const env = setup(), core = env.add(env.root, ""); core.AddClass("HudCore");
-        const gameplay = env.add(core, "gameplay_hud"), cfg = { ENABLE_KEYBOARD_OVERLAY: 1, KEYBOARD_OVERLAY_SCALE: 150 };
-        const feature = env.feature("ql_keyboard", cfg); feature.onEnable();
-        const binding = gameplay.FindChildTraverse("AllBindingsBox").FindChildrenWithClassTraverse("Key").find(panel => panel.paneltype === "CitadelBinding");
-        const glyph = env.add(binding, "KeyboardLetter", "Label"); glyph.style.fontWeight = "bold";
-        env.clock.advance(250); assert.equal(glyph.style.fontSize, "24px");
-        const foreign = env.add(env.root, "ReusedNativeGlyph"); glyph.SetParent(foreign);
-        const clear = glyph.ClearPropertyFromCode.bind(glyph); let reject = true, attempts = 0;
-        glyph.ClearPropertyFromCode = property => {
-            if (property === "font") { attempts++; if (reject) { if (mode === "throw") throw Error("native clear unavailable"); return false; } }
-            return clear(property);
-        };
-        feature.onDisable(); assert.equal(glyph.style.fontSize, "24px");
-        reject = false; env.clock.advance(700);
-        assert.equal(glyph.style.fontSize, undefined);
-        assert.equal(glyph.style.fontWeight, "bold"); assert.equal(glyph.IsValid(), true);
-        const completed = attempts; env.clock.advance(1000); assert.equal(attempts, completed);
-        assert.deepEqual(env.clock.errors, []);
-    });
-}
+test("keyboard component styling leaves moved native glyph overrides untouched on disable", () => {
+    const env = setup(), core = env.add(env.root, ""); core.AddClass("HudCore");
+    const gameplay = env.add(core, "gameplay_hud");
+    const feature = env.feature("ql_keyboard", { ENABLE_KEYBOARD_OVERLAY: 1, KEYBOARD_OVERLAY_SCALE: 150 });
+    feature.onEnable();
+    const binding = gameplay.FindChildTraverse("AllBindingsBox").FindChildrenWithClassTraverse("Key").find(panel => panel.paneltype === "CitadelBinding");
+    const glyph = env.add(binding, "KeyboardLetter", "Label");
+    glyph.style.fontWeight = "bold"; glyph.style.fontSize = "19px";
+    let clears = 0;
+    glyph.ClearPropertyFromCode = () => { clears++; throw Error("foreign font must not be cleared"); };
+    env.clock.advance(600);
+    const foreign = env.add(env.root, "ReusedNativeGlyph"); glyph.SetParent(foreign);
+    feature.onDisable(); env.clock.advance(1000);
+    assert.equal(clears, 0); assert.equal(glyph.style.fontSize, "19px");
+    assert.equal(glyph.style.fontWeight, "bold"); assert.equal(glyph.IsValid(), true);
+    assert.deepEqual(env.clock.errors, []);
+});

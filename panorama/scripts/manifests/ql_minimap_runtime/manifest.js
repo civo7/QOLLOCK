@@ -7,6 +7,7 @@
     const P = Q.core.panel;
     const U = Q.utils;
     const id = "ql_minimap_runtime";
+    const rangeClass = "QOLScaledMinimapRanges";
     function hasClass(panel, className) {
         for (let depth = 0; depth < 32 && P.isAlive(panel); depth++) {
             if (panel.BHasClass(className)) return true;
@@ -66,12 +67,8 @@
             let anchor = null, renderer = null, canvas = null, mapRender = null;
             let backgroundImages = [];
             let tunnel = null, crates = null, markers = null;
-            let crateData = null;
-            let crateCoordinates = [];
-            let crateEntries = [];
             let crateReady = false;
-            let markerPanels = [];
-            let rangePanels = [];
+            let crateImage = null;
             let createdComposition = "cache";
             const released = { geometry: true, decoration: true };
             let lastView = null;
@@ -92,7 +89,7 @@
                 snapshot: () => ({ owner: id, native: probe.panelState(renderer), root: probe.panelState(crates),
                     tunnel: probe.panelState(tunnel), markers: probe.panelState(markers), composition: createdComposition, released: { ...released },
                     reconciled: { geometry: geometry.verify(), decoration: nativeStyles.verify() },
-                    counts: { total: markerPanels.filter(P.isAlive).length, expected: crateEntries.length },
+                    counts: { total: P.isAlive(crateImage) ? 1 : 0, expected: 1 },
                     geometry: { anchor: probe.panelState(anchor), fixedIcons: renderer?.BHasClass("QOLFixedMinimapIcons") || false, ...geometry.inspect() },
                     decoration: { canvas: probe.panelState(canvas), mapRender: probe.panelState(mapRender), backgrounds: backgroundImages.map(probe.panelState),
                         releaseResults: { ...nativeReleaseResults }, activeTargets: {
@@ -100,7 +97,7 @@
                             mapRender: P.isAlive(mapRender) && !!model?.minimalist && !lastView?.zoomed,
                             backgrounds: backgroundImages.some(P.isAlive) && !!model?.minimalist && !lastView?.zoomed,
                             canvas: P.isAlive(canvas) && !!model?.iconColor,
-                            ranges: rangePanels.some(P.isAlive)
+                            ranges: hasNativeRanges()
                         } } })
             });
 
@@ -124,7 +121,7 @@
                 };
                 return { alt: enabled("ENABLE_ALT_ZOOM"), tab: enabled("ENABLE_TAB_ZOOM"), fixedIcons: enabled("MINIMAP_FIXED_ICON_SIZE"),
                     minimalist: enabled("MINIMAL_MINIMAP"), minimalOpacity: U.NormalizeOpacityNumber(number("MINIMAL_MINIMAP_OPACITY", 0.9), 0.9),
-                    crateMarkerScale: number("MINIMAP_LOOT_MARKER_SCALE", 100) / 100, crateOpacity: number("MINIMAP_LOOT_OPACITY", 1),
+                    crateMarkerScale: number("MINIMAP_LOOT_MARKER_SCALE", 100), crateOpacity: number("MINIMAP_LOOT_OPACITY", 1),
                     crates: enabled("ENABLE_MINIMAP_CRATE_OVERLAY"), iconColor: P.resolvePaletteColor(cfg.MINIMAP_ICON_COLOR),
                     base: view(""), altView: view("ALT"), tabView: view("TAB") };
             }
@@ -154,12 +151,9 @@
 
             function releaseOverlays() {
                 tree.clear();
-                for (const panel of [tunnel, crates, markers, ...markerPanels]) owned.delete(panel);
+                for (const panel of [tunnel, crates, markers, crateImage]) owned.delete(panel);
                 tunnel = crates = markers = null;
-                markerPanels = [];
-                crateData = null;
-                crateCoordinates = [];
-                crateEntries = [];
+                crateImage = null;
                 crateReady = false;
             }
 
@@ -169,8 +163,6 @@
                 if (anchor !== nextAnchor) releaseOverlays();
                 if (renderer !== found.renderer) {
                     releasePanel(renderer);
-                    for (const panel of rangePanels) releasePanel(panel);
-                    rangePanels = [];
                 }
                 anchor = nextAnchor;
                 renderer = found.renderer;
@@ -199,8 +191,7 @@
             function renderTunnel(view) {
                 if (!view.tunnels) { P.setClass(tunnel, "tunnel_locked_on", false); show(tunnel, false); return; }
                 tunnel = ensure(anchor, "tunnel_overlay", tunnel);
-                const ready = style(tunnel, { backgroundImage: 'url("s2r://panorama/images/minimap/base/mm_tunnel_overlay_png_png.vtex")',
-                    backgroundSize: "100% 100%", backgroundRepeat: "no-repeat", backgroundPosition: "center", opacity: view.tunnelOpacity.toFixed(2) });
+                const ready = style(tunnel, { opacity: view.tunnelOpacity.toFixed(2) });
                 P.setClass(tunnel, "tunnel_locked_on", ready);
                 show(tunnel, ready && !diagnostic.controls?.hideTunnel);
             }
@@ -216,77 +207,41 @@
                 });
                 if (next !== crates) {
                     createdComposition = diagnostic.controls?.composition || "cache";
-                    for (const panel of [crates, markers, ...markerPanels]) owned.delete(panel);
-                    crates = next; markers = null; markerPanels = []; crateData = null; crateReady = false;
+                    for (const panel of [crates, markers, crateImage]) owned.delete(panel);
+                    crates = next; markers = crateImage = null; crateReady = false;
                 }
                 const nextMarkers = ensure(crates, "minimap_markers", markers);
                 if (nextMarkers !== markers) {
-                    for (const panel of [markers, ...markerPanels]) owned.delete(panel);
-                    markers = nextMarkers; markerPanels = []; crateData = null; crateReady = false;
+                    for (const panel of [markers, crateImage]) owned.delete(panel);
+                    markers = nextMarkers; crateImage = null; crateReady = false;
                 }
                 if (!P.isAlive(markers)) { show(crates, false); return; }
                 // MapHunter fractions refer to the native render surface. Its
                 // zoom/rotation must move ordinary crates with the other loot.
                 if (!style(crates, { zIndex: "1", opacity: String(model.crateOpacity) })) { show(crates, false); return; }
-                // Map API remains unverified; retain the shipped Midtown table.
-                const data = Q.minimapCrateData || (typeof CRATE_DATA === "object" ? CRATE_DATA : null);
-                const points = data?.dl_midtown?.crates || (Array.isArray(data?.dl_midtown) ? data.dl_midtown : []);
-                if (crateData !== points) {
-                    crateCoordinates = points.map(point => [Number(Array.isArray(point) ? point[0] : point.u), Number(Array.isArray(point) ? point[1] : point.v)])
-                        .filter(point => point.every(Number.isFinite));
-                    crateEntries = crateCoordinates.map((_, index) => ({
-                        id: "QOLMinimapCrateMarker" + index, properties: { class: "minimap_marker" }
-                    }));
-                    crateReady = false;
-                }
-                const coordinates = crateCoordinates;
-                crateData = points;
-                for (let index = coordinates.length; index < markerPanels.length; index++) {
-                    owned.delete(markerPanels[index]); tree.remove("QOLMinimapCrateMarker" + index);
-                }
                 if (!crateReady) {
                     if (diagnostic.controls) diagnostic.stages.builds++;
-                    // update's ownership sweep already validates stable markers.
-                    // Reconcile only after a retired node, new data or failed render.
-                    const nextPanels = tree.children(markers, "Panel", crateEntries);
-                    nextPanels.forEach((panel, index) => {
-                        if (markerPanels[index] !== panel) owned.delete(markerPanels[index]);
-                    });
-                    markerPanels = nextPanels;
-                    if (markerPanels.some(panel => !P.isAlive(panel))) { show(crates, false); return; }
-                    crateReady = true;
-                    coordinates.forEach(([x, y], index) => {
-                        crateReady = style(markerPanels[index], {
-                            position: x * 100 + "% " + y * 100 + "% 0", width: 2 * model.crateMarkerScale + "px", height: 2 * model.crateMarkerScale + "px",
-                            transform: "translateX(" + -model.crateMarkerScale + "px) translateY(" + -model.crateMarkerScale + "px)",
-                            opacity: "1.0", backgroundColor: "rgba(255, 213, 74, 0.75)", border: "1px solid rgba(42, 33, 0, 0.45)"
-                        }) && crateReady;
-                    });
+                    crateImage = ensure(markers, "QOLMinimapCrateImage", crateImage);
+                    if (!P.isAlive(crateImage)) { show(crates, false); return; }
+                    const suffix = model.crateMarkerScale === 100 ? "" : "_" + model.crateMarkerScale;
+                    crateReady = style(crateImage, { width: "100%", height: "100%", backgroundSize: "100% 100%",
+                        backgroundRepeat: "no-repeat", backgroundImage: 'url("s2r://panorama/images/qollock/minimap_references_crates' + suffix + '.vsvg")' });
                 }
                 show(crates, crateReady && !diagnostic.controls?.hideRoot);
             }
 
-            function renderRange(size) {
-                const active = Math.abs(size - 400) >= 0.5;
-                let next = [];
-                if (active && P.isAlive(renderer)) {
-                    const doors = renderer.FindChildrenWithClassTraverse?.("doorman_doorway") || [];
-                    const sources = doors.length ? doors : renderer.FindChildrenWithClassTraverse?.("ability_castrange") || [];
-                    next = sources.map(panel => P.findTraverse(panel, "CastRange")).filter(P.isAlive);
-                }
-                for (const panel of rangePanels) if (!next.includes(panel)) releasePanel(panel);
-                rangePanels = next;
-                for (const panel of next) {
-                    const styles = { uiScale: "100%", preTransformScale2d: "1.00, 1.00" };
-                    nativeStyles.apply(panel, styles);
-                }
+            // Diagnostic snapshots need target presence; ordinary rendering
+            // lets the native stylesheet select late/replaced range children.
+            function hasNativeRanges() {
+                if (!P.isAlive(renderer) || !renderer.BHasClass(rangeClass)) return false;
+                return ["doorman_doorway", "ability_castrange"].some(className =>
+                    renderer.FindChildrenWithClassTraverse(className).some(panel => P.isAlive(P.findChild(panel, "CastRange"))));
             }
 
             function render(model, view) {
                 lastView = view;
                 if (diagnostic.controls?.releaseGeometry) released.geometry = geometry.release(true);
                 else {
-                    geometry.setDrawOverUi(Boolean(view.drawOverUi));
                     released.geometry = geometry.apply({ ...view, fixedIcons: model.fixedIcons,
                         hidden: Q.presentation.shouldHide("minimap", Q.presentation.visibilityConfig(ctx), rootOwner), diagnosticControls: diagnostic.controls });
                 }
@@ -301,7 +256,8 @@
                 if (diagnostic.controls) nativeReleaseResults = {};
                 const minimalist = !view.zoomed && model.minimalist;
                 const rendererResult = nativeStyles.apply(renderer, !targets?.includes("renderer") && minimalist ? { backgroundColor: "rgba(0, 0, 0, 0)" } : {},
-                    targets?.includes("renderer") ? {} : { minimalist_minimap_active: minimalist });
+                    { ...(targets?.includes("renderer") ? {} : { minimalist_minimap_active: minimalist }),
+                        [rangeClass]: Math.abs(view.size - 400) >= 0.5 && !targets?.includes("ranges") });
                 const mapResult = nativeStyles.apply(mapRender, !targets?.includes("mapRender") && minimalist ? { opacity: String(model.minimalOpacity), brightness: "1.0", washColor: "none" } : {});
                 if (diagnostic.controls) { nativeReleaseResults.renderer = rendererResult; nativeReleaseResults.mapRender = mapResult; nativeReleaseResults.backgrounds = true; }
                 // hud_minimap.css selects the surface/underground/tunnel layer
@@ -316,10 +272,7 @@
                 }
                 const canvasResult = nativeStyles.apply(canvas, !targets?.includes("canvas") && model.iconColor ? { washColor: model.iconColor } : {});
                 if (diagnostic.controls) nativeReleaseResults.canvas = canvasResult;
-                if (targets?.includes("ranges")) {
-                    nativeReleaseResults.ranges = true;
-                    for (const panel of rangePanels) nativeReleaseResults.ranges = nativeStyles.apply(panel, {}) && nativeReleaseResults.ranges;
-                } else renderRange(view.size);
+                if (targets?.includes("ranges")) nativeReleaseResults.ranges = rendererResult && !renderer.BHasClass(rangeClass);
             }
 
             function update() {
@@ -340,7 +293,7 @@
 
             function syncLoop() {
                 if (!active) return;
-                // rate-exempt: native doorway ranges and Alt view require smooth refresh.
+                // rate-exempt: preserve native view/source refresh for enlarged maps.
                 const rate = model.alt || Math.abs(model.base.size - 400) >= 0.5 ? 0.05 : 0.5;
                 if (loop && currentRate !== rate) { loop.stop(); loop = null; }
                 if (!loop) { currentRate = rate; loop = Q.core.Scheduler.createPollLoop(update, rate, id); }
@@ -363,7 +316,6 @@
                 nativeStyles.clear();
                 for (const panel of owned.keys()) releasePanel(panel);
                 releaseOverlays();
-                rangePanels = [];
                 anchor = renderer = canvas = mapRender = null;
                 backgroundImages = [];
                 canvasResolver.reset(); renderResolver.reset();

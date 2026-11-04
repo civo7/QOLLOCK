@@ -1,9 +1,9 @@
 # Selected build readout ownership
 
 The `ql_show_build_id` manifest owns the created `selected_build_info/build_info`
-tree under the current native `LowerLeft`. Its settings model, source selection
-and successful style signatures belong to the feature instance. The selected
-build and shop metadata remain native data; the readout never changes them.
+tree under the current native `LowerLeft`. Its settings model and source selection
+belong to the feature instance. Fixed layout and typography belong to
+`ql_feat_build_id.css` in the HUD stylesheet chain. The selected build and shop metadata remain native data; the readout never changes them.
 
 `citadel_hud_hero_builds.xml` supplies the hidden `SelectedBuildInfoTitle` binding.
 The existing parser preserves public/private status, numeric ID formatting and
@@ -19,7 +19,7 @@ shop's selected-build header. Missing owners stay unavailable until the next pol
 unrelated templates are never searched as a compatibility fallback. Current HUD and
 `LowerLeft` replacements release the former created tree, including moved labels;
 a new instance waits for prior asynchronous deletion. Partial construction stays
-hidden. Rejected text/styles remain retryable instead of freezing a previously
+hidden. Rejected text remains retryable instead of freezing a previously
 committed content signature. Disable removes the tree and poll, and stopped hooks
 cannot recreate UI. Hideout remains supported.
 

@@ -1,0 +1,18 @@
+#selected_build_info
+{
+    margin-left: 26px;
+    vertical-align: bottom;
+    height: 24px;
+    flow-children: right;
+    z-index: 5;
+}
+
+#build_info
+{
+    white-space: nowrap;
+    font-size: 16px;
+    font-weight: bold;
+    font-family: oracle, blocky, sans-serif;
+    color: #FFEFD7;
+    text-shadow: 0px 1px 3px 3.0 #000000cc;
+}

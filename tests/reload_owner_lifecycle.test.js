@@ -2,6 +2,7 @@
 const test = require("node:test");
 const assert = require("node:assert/strict");
 const { createHud } = require("../scripts/simulator");
+const gunData = require("./helpers/native_gun");
 
 function fixture(config = {}) {
     const env = createHud({ inHideout: false });
@@ -13,7 +14,7 @@ function fixture(config = {}) {
     const id = "ql_reload_cooldown";
     const create = () => Q.core.FeatureRegistry.getManifest(id).create({ events: Q.core.EventBus, id, config: { view: () => Q.core.ConfigStore.view(id) } });
     const addSource = () => {
-        const reticle = $.CreatePanel("Panel", env.root, "reticle_status");
+        const reticle = $.CreatePanel("Panel", gunData($, env.doc.root), "reticle_status");
         const bar = $.CreatePanel("Panel", reticle, "attack_delayed_progress_bar");
         bar.AddClass("has_active_reload");
         return { reticle, bar };
@@ -238,9 +239,36 @@ test("reload releases a living HUD and loading scope before starting an independ
     fakeProgress.AddClass("reloading"); env.clip(fakeProgress, 120); env.clock.advance(50);
     assert.equal(previous.IsValid(), false); assert.equal(env.label(fake), null); assert.equal(first.bar.IsValid(), true);
     env.doc.root = env.$.CreatePanel("CitadelHud", null, "Hud");
-    const reticle = env.$.CreatePanel("Panel", env.doc.root, "reticle_status"), bar = env.$.CreatePanel("Panel", reticle, "attack_delayed_progress_bar");
+    const reticle = env.$.CreatePanel("Panel", gunData(env.$, env.doc.root), "reticle_status"), bar = env.$.CreatePanel("Panel", reticle, "attack_delayed_progress_bar");
     bar.AddClass("reloading"); env.clip(bar, 100); feature.onSettingsChanged();
     assert.equal(env.label(reticle).text, ""); env.clock.advance(500);
     assert.equal(env.label(reticle).text, ""); env.sample(bar, 90); assert.equal(env.label(reticle).text, "0.5");
     feature.onDisable(); env.clock.advance(0); assert.equal(env.label(reticle), null); assert.deepEqual(env.clock.errors, []);
+});
+
+test("reload follows the verified gun owner without whole-HUD discovery or unrelated progress", () => {
+    const env = fixture();
+    const decoy = env.$.CreatePanel("Panel", env.root, "reticle_status");
+    const unrelated = env.$.CreatePanel("Panel", decoy, "attack_delayed_progress_bar");
+    unrelated.AddClass("has_active_reload"); env.clip(unrelated, 240);
+    const traverse = env.root.FindChildTraverse;
+    let globalSearches = 0;
+    env.root.FindChildTraverse = function (id) {
+        if (["reticle_status", "attack_delayed_progress_bar"].includes(id)) globalSearches++;
+        return traverse.call(this, id);
+    };
+    const feature = env.create(); feature.onEnable(); env.clock.advance(2000);
+    assert.equal(!!env.label(decoy), false, "a source outside the current gun must never get a countdown");
+    assert.equal(globalSearches, 0, "a missing gun must not fall back to searching the HUD");
+    const first = env.addSource(); env.clip(first.bar, 240); feature.onSettingsChanged();
+    env.clock.advance(500); env.sample(first.bar, 230);
+    assert.equal(env.label(first.reticle).text, "2");
+    first.reticle.GetParent().SetParent(env.retired);
+    const current = env.addSource(); env.clip(current.bar, 120); env.clock.advance(50);
+    assert.equal(env.label(first.reticle), null, "a living old gun loses its owned label");
+    assert.equal(env.label(current.reticle).text, "", "the new gun starts a fresh estimate");
+    env.sample(current.bar, 110); assert.equal(env.label(current.reticle).text, "0.6");
+    assert.equal(globalSearches, 0);
+    feature.onDisable(); env.clock.advance(0);
+    assert.deepEqual(env.clock.errors, []);
 });

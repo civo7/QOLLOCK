@@ -8,9 +8,9 @@
     const toggles = ["ENABLE_MINIMAP_TOUGH_CRATES", "ENABLE_MINIMAP_HEALING_SNACKS", "ENABLE_MINIMAP_STATUES", "ENABLE_MINIMAP_CRATE_ROUTES"];
     const numbers = ["MINIMAP_CAMP_NAMES", "MINIMAP_LOOT_MARKER_SCALE", "MINIMAP_LOOT_OPACITY", "MINIMAP_ROUTE_SCALE"];
     const groups = [
-        ["tough_crates", toggles[0], 5.4, "#3b82f6"],
-        ["snacks", toggles[1], 3.5, "#4ade80"],
-        ["statues", toggles[2], 3, "#facc15"],
+        ["tough_crates", toggles[0], true],
+        ["snacks", toggles[1], true],
+        ["statues", toggles[2], true],
         ["names", "MINIMAP_CAMP_NAMES"], ["runs", toggles[3]]
     ];
     const laneColors = { yellow: "#F1CC30", blue: "#29b1cc", green: "#59b247" };
@@ -71,14 +71,13 @@
             function at(u, v) { return { position: pct(u) + " " + pct(v) + " 0px", horizontalAlign: "left", verticalAlign: "top" }; }
 
             function plans(spec) {
-                const [key, , size, color] = spec;
+                const [key, , image] = spec;
                 const list = [], data = Q.minimapLootData;
                 const scale = model.MINIMAP_LOOT_MARKER_SCALE / 100;
-                if (size) for (const [u, v, underground] of data[key]) {
-                    const side = size * scale + 2;
-                    entry(list, { ...at(u, v), width: px(side), height: px(side), marginLeft: px(-side / 2), marginTop: px(-side / 2),
-                        border: "1px solid #000000", borderRadius: key === "statues" ? "0px" : "50%", backgroundColor: color,
-                        transform: key === "statues" ? "rotateZ(45deg)" : "none", opacity: underground ? "0.5" : "1" });
+                if (image) {
+                    const suffix = model.MINIMAP_LOOT_MARKER_SCALE === 100 ? "" : "_" + model.MINIMAP_LOOT_MARKER_SCALE;
+                    entry(list, { width: "100%", height: "100%", backgroundSize: "100% 100%", backgroundRepeat: "no-repeat",
+                        backgroundImage: 'url("s2r://panorama/images/qollock/minimap_references_' + key + suffix + '.vsvg")' });
                 }
                 if (key === "names") for (const [u, v, token] of data.names) {
                     if (model.MINIMAP_CAMP_NAMES === 2 && !minimalNames.has(token)) continue;

@@ -42,6 +42,24 @@
         ]),
         minimap("minimapAlt", "Minimap: Alt", zoomFields("ALT"), "alt"),
         minimap("minimapTab", "Minimap: Tab", zoomFields("TAB"), "tab"),
+        ...[
+            ["midBossTimer", "Mid Boss Timer", "Rejuv", "MINIMAP_MID_BOSS_", "ENABLE_MINIMAP_REJUV_TIMER"],
+            ["buffTimer", "Buff Timer", "Buff", "MINIMAP_BUFF_", "ENABLE_MINIMAP_BUFF_TIMER"],
+            ["bridgeBuffLeft", "Left Bridge Buff Timer", "BuffBridgeLeft", "MINIMAP_BRIDGE_LEFT_", "ENABLE_MINIMAP_BUFF_TIMER"],
+            ["bridgeBuffRight", "Right Bridge Buff Timer", "BuffBridgeRight", "MINIMAP_BRIDGE_RIGHT_", "ENABLE_MINIMAP_BUFF_TIMER"]
+        ].map(([id, name, suffix, prefix, enable]) => ({ id, name, group: "Minimap",
+            path: [...mapPath, "QOLMinimapTimersRoot", ...(["midBossTimer", "buffTimer"].includes(id) ? ["QOLMinimapDockedTimers"] : []), "QOLMinimap" + suffix + "Timer"],
+            resolve(hud) {
+                const root = C.findPath(hud, [...mapPath, "QOLMinimapTimersRoot"]);
+                const owner = id === "midBossTimer" || id === "buffTimer" ? QOL.core.panel.findChild(root, "QOLMinimapDockedTimers") : root;
+                return QOL.core.panel.findChild(owner, "QOLMinimap" + suffix + "Timer");
+            },
+            available: (_hud, config) => id === "midBossTimer" ||
+                (id === "buffTimer" ? Number(config.ENABLE_MINIMAP_BUFF_TIMER_ON_BRIDGE) !== 1 : Number(config.ENABLE_MINIMAP_BUFF_TIMER_ON_BRIDGE) === 1),
+            fields: [toggle(enable),
+                t(id === "midBossTimer" ? "ENABLE_MINIMAP_ALWAYS_ON_MID_BOSS" : "ENABLE_MINIMAP_BUFF_TIMER_ON_BRIDGE", id === "midBossTimer" ? "On Mid Boss" : "On Bridge"),
+                ...geometry(prefix, true), opacity(prefix)]
+        })),
         { id: "mapLoot", name: "Map References", group: "Minimap",
             path: [...mapPath, "HudMinimapContainer", "hud_minimap", "QOLMinimapLootRoot"],
             resolve(hud) {

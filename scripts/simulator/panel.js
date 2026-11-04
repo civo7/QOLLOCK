@@ -39,7 +39,7 @@ const { descendants } = require("./search.js");
 let _panelSeq = 0;
 
 class Panel {
-    constructor(type, { id = "", classes = [], attributes = {}, text = "", doc = null } = {}) {
+    constructor(type, { id = "", classes = [], attributes = {}, text = "", doc = null, ...rest } = {}) {
         this.type = type || "Panel";
         this.paneltype = this.type;
         this.id = id || "";
@@ -49,6 +49,9 @@ class Panel {
         this._children = [];
         this._classes = new Set(classes);
         this._attrs = new Map(Object.entries(attributes));
+        for (const [k, v] of Object.entries(rest)) {
+            if (!this._attrs.has(k)) this._attrs.set(k, String(v));
+        }
         this._dialogVars = new Map();
         this._events = new Map();
         this._valid = true;

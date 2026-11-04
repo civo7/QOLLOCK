@@ -543,6 +543,7 @@
             createRow(list, "Elevation Markers", "ENABLE_MINIMAP_ELEVATION_MARKERS", "toggle", null, null, null, null, "Shows relative elevation difference between you and players.");
         }
         if (createSecondaryCheckboxRow) {
+            createTitle(list, "Bridge Buff Timer", null, "buffTimer");
             createSecondaryCheckboxRow(
                 list,
                 "Bridge Buff Timer",
@@ -552,6 +553,7 @@
                 "",
                 ""
             );
+            createTitle(list, "Mid Boss Timer", null, "midBossTimer");
             createSecondaryCheckboxRow(
                 list,
                 "Mid Boss Timer",

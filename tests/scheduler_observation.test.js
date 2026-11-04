@@ -5,8 +5,12 @@ const assert = require("node:assert/strict");
 const path = require("node:path");
 const { Sandbox } = require("../scripts/simulator/sandbox");
 
-function setup() {
+function setup({ nativeRandom } = {}) {
     const sandbox = new Sandbox();
+    if (nativeRandom !== undefined) {
+        // Exercise the client branch while retaining the virtual Date closure.
+        sandbox.eval("delete globalThis.__hostNowMs; Math.random = () => " + nativeRandom);
+    }
     let now = 0;
     let nextHandle = 0;
     const pending = new Map();
@@ -33,6 +37,24 @@ function setup() {
             task.cb();
         }
     };
+}
+
+for (const random of [0, 0.5, 0.999]) {
+    test(`client poll jitter stays proportional across ticks and rescheduling, random=${random}`, () => {
+        const env = setup({ nativeRandom: random });
+        let calls = 0;
+        const loop = env.S.createPollLoop(() => { calls++; }, 0.5, "jitter");
+        env.fire(0);
+        const firstDelay = env.pending.get(1).at - random * 250;
+        assert.ok(Math.abs(firstDelay - 500 * (0.9 + random * 0.2)) < 0.00001);
+        loop.reschedule(1);
+        const secondAt = env.pending.get(1).at;
+        env.fire(1);
+        assert.ok(Math.abs(env.pending.get(2).at - secondAt - 1000 * (0.9 + random * 0.2)) < 0.00001);
+        loop.stop();
+        assert.equal(env.pending.size, 0);
+        assert.equal(calls, 2);
+    });
 }
 
 test("work observation separates delivery delay, callback cost, errors and outstanding tasks", () => {

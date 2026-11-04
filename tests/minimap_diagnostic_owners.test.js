@@ -130,6 +130,7 @@ test("fine native/geometry controls release only their declared targets and rest
     assert.equal(lease.snapshot().root.identity, before.root.identity);
     lease.apply({ releasePlacement: true });
     assert.equal(host.style.margin || "", "");
+    assert.equal(host.FindChild("minimap_container").style.opacity, undefined);
     assert.equal(host.style.uiScale, "100%");
     lease.apply({ releaseViewport: true });
     assert.equal(renderer.BHasClass("QOLFixedMinimapIcons"), false);
@@ -140,5 +141,29 @@ test("fine native/geometry controls release only their declared targets and rest
     lease.restore();
     assert.equal(renderer.BHasClass("QOLFixedMinimapIcons"), true);
     assert.equal(renderer.BHasClass("minimalist_minimap_active"), true);
+    assert.equal(host.style.opacity, "1");
+    assert.notEqual(host.FindChild("minimap_container").style.opacity, undefined);
+    assert.deepEqual(hud.clock.errors, []);
+});
+
+test("range diagnostics release the native CSS gate and restore it without owning range children", () => {
+    const { hud, renderer, instance } = setup();
+    const $ = hud.sandbox.global.$;
+    const ability = $.CreatePanel("Panel", renderer, ""); ability.AddClass("map_button"); ability.AddClass("ability_castrange");
+    const range = $.CreatePanel("Panel", ability, "CastRange");
+    const owner = instance("ql_minimap_runtime"), lease = owner.diagnostics.begin();
+    assert.equal(lease.snapshot().decoration.activeTargets.ranges, true);
+    lease.apply({ releaseNativeTargets: ["ranges"] }); hud.clock.advance(600);
+    assert.equal(renderer.BHasClass("QOLScaledMinimapRanges"), false);
+    assert.equal(lease.snapshot().decoration.releaseResults.ranges, true);
+    assert.equal(renderer.BHasClass("minimalist_minimap_active"), true);
+    lease.restore();
+    assert.equal(renderer.BHasClass("QOLScaledMinimapRanges"), true);
+    const decoration = owner.diagnostics.begin(); decoration.apply({ releaseDecoration: true });
+    assert.equal(renderer.BHasClass("QOLScaledMinimapRanges"), false);
+    decoration.restore();
+    assert.equal(renderer.BHasClass("QOLScaledMinimapRanges"), true);
+    assert.equal(range.IsValid(), true);
+    assert.equal(range.style.uiScale, undefined);
     assert.deepEqual(hud.clock.errors, []);
 });

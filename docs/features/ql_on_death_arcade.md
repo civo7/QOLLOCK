@@ -21,6 +21,8 @@ classes. A preexisting manually opened Escape menu survives session cleanup,
 and dismissing an automatically opened menu does not reopen it on every poll.
 Replacing native targets retires their previous ownership and binds the current
 generation. Disable stops HUD schedules and clears owned bridge/menu state.
+Escape-menu selection reads the current HUD's direct native child rather than
+running a recurring descendant search from the absolute window root.
 
 `tests/on_death_arcade_owner.test.js` exercises payload rejection, living/late
 sources, repeated enablement and two production XML-loaded isolates sharing

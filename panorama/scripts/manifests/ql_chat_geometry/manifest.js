@@ -12,9 +12,7 @@
             { key: "CHAT_Y_OFFSET", type: "slider", label: "Vertical Offset", description: "Adjust vertical position of the in-game chat." }
         ],
         create(ctx) {
-            const P = QOL.core.panel, U = QOL.utils;
-            const resolver = QOL.panelCache.createIdResolver("Chat", { retryMs: 500,
-                ownerPath: [{ id: "Hud", optional: true }, { className: "HudCore" }] });
+            const P = QOL.core.panel;
             const styles = P.createNativeStyleOwner({ resetValues: { x: "0px", y: "0px", uiScale: "100%" }, releasePosition: true });
             let model = null, loop = null, enabled = false;
             function readModel() {
@@ -34,22 +32,23 @@
             function update() {
                 if (!enabled) return;
                 const root = P.findHud($.GetContextPanel());
-                const panel = P.isAlive(root) && (root.id === "Hud" || root.paneltype === "CitadelHud") ? resolver.resolve(root) : null;
+                const core = P.isAlive(root) && (root.id === "Hud" || root.paneltype === "CitadelHud") ? P.findChildByClass(root, "HudCore") : null;
+                const panel = P.findChild(core, "Chat");
                 styles.retain(panel ? [panel] : []);
                 if (panel) styles.apply(panel, QOL.presentation.visibilityStyles("chat", QOL.presentation.visibilityConfig(ctx), root, model));
             }
             function refresh() {
                 if (!enabled) return;
                 model = readModel();
-                resolver.reset();
                 update();
             }
             return QOL.presentation.bindVisibility(ctx, {
+                // No native replacement/overwrite notification is verified for Chat.
                 onEnable() { enabled = true; refresh(); loop = QOL.core.Scheduler.createPollLoop(update, 0.5, ctx.id); },
                 onSettingsChanged: refresh,
                 onDisable() {
                     enabled = false; if (loop) loop.stop(); loop = null;
-                    styles.clear(); resolver.reset(); model = null;
+                    styles.clear(); model = null;
                 }
             }, update);
         },

@@ -3,6 +3,7 @@
 const test = require("node:test");
 const assert = require("node:assert/strict");
 const { createHud } = require("../scripts/simulator");
+const gunData = require("./helpers/native_gun");
 
 const scenarios = [
     { id: "ql_healthbar", key: "HEALTHBAR_TYPE", value: 5, ownClass: "minecraft_healthbar_active" },
@@ -84,7 +85,7 @@ for (const scenario of scenarios) {
         for (const name of preserved) assert.equal(env.root.BHasClass(name), true, `${name} survives the local owner hook`);
         if (scenario.ownClass) assert.equal(env.root.BHasClass(scenario.ownClass), true, "the owner's own class reacts immediately");
         if (scenario.id === "ql_reload_cooldown") {
-            const reticle = env.$.CreatePanel("Panel", env.root, "reticle_status");
+            const reticle = env.$.CreatePanel("Panel", gunData(env.$, env.root), "reticle_status");
             const progress = env.$.CreatePanel("Panel", reticle, "attack_delayed_progress_bar");
             progress.AddClass("has_active_reload");
             progress.style.clip = "radial(50% 50%, 120deg, 0deg)";

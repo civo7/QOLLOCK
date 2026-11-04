@@ -32,6 +32,7 @@ function collectSourceIdentity() {
     const functions = [...Q.core.MinimapPlan.owners.map(id => [id, registry.getManifest(id).create]),
         ["geometry", Q.features.minimapGeometry.create], ["plan", Q.core.MinimapPlan.create], ["verify", Q.core.MinimapPlan.verify],
         ["probe", Q.core.minimapProbe.createOwner], ["runner", Q.core.MinimapInvestigation.start], ["styleOwner", Q.core.panel.createNativeStyleOwner],
+        ["keyboardDiagnostics", Q.features.keyboardDiagnostics.create],
         ["configPlan", Q.core.ConfigInvestigation.plan], ["configRunner", Q.core.ConfigInvestigation.start], ["configBenchmark", Q.core.Scheduler.startBenchmark],
         ...registry.getRegisteredIds().map(id => ["owner:" + id, registry.getManifest(id).create])];
     const graph = hudScripts();

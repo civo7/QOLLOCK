@@ -8,7 +8,7 @@
     const digest = value => Q.core.MinimapInvestigation.digest(stable(value));
     let active = null, status = null;
 
-    function plan({ baseline, canonical, manifests, selectedIds = [] }) {
+    function plan({ baseline, canonical, manifests, selectedIds = [], keyboardComposition = "none", keyboardEventDriven = false }) {
         if (!baseline || !canonical) throw Error("canonical configuration unavailable");
         const unavailableKeys = Object.keys(baseline).filter(key => canonical[key] === undefined);
         const changedKeys = Object.keys(baseline).filter(key => canonical[key] !== undefined && stable(baseline[key]) !== stable(canonical[key])).sort();
@@ -30,6 +30,43 @@
         for (const key of changedKeys) all.push(row("key-" + key.toLowerCase().replace(/_/g, "-"), [key],
             manifests.filter(owner => owner.keys.includes(key)).map(owner => owner.id).sort(),
             "Single setting refinement; an effect can depend on the other expanded settings", { optional: true }));
+        if (selectedIds.some(id => id === "revert-minimap-keyboard" || id === "revert-other-settings")) {
+            const selectedOwners = new Set(["ql_minimap_runtime", "ql_minimap_loot", "ql_minimap_timers", "ql_keyboard"]);
+            const consumerGroups = all.filter(item => item.id.startsWith("group-")).map(({ id, keys, owners }) => ({ id, keys, owners }));
+            const selectedGroups = consumerGroups.filter(group => group.owners.some(owner => selectedOwners.has(owner)));
+            const otherGroups = consumerGroups.filter(group => !selectedGroups.includes(group));
+            if (!selectedGroups.length || !otherGroups.length) throw Error("combined settings partition requires changed keys on both sides");
+            // Keep shared-consumer groups intact; never absorb unrelated groups
+            // merely because they also declare a compass/rejuvenator consumer.
+            for (const [id, groups, question] of [
+                ["revert-minimap-keyboard", selectedGroups, "Revert complete minimap/keyboard consumer groups inside Expanded; shared consumers are included"],
+                ["revert-other-settings", otherGroups, "Revert the exact remaining changed settings inside Expanded; minimap/keyboard groups stay expanded"]
+            ]) {
+                const keys = groups.flatMap(group => group.keys).sort();
+                const owners = [...new Set(groups.flatMap(group => group.owners))].sort();
+                all.push(row(id, keys, owners, question, { optional: true, consumerGroups: groups }));
+            }
+        }
+        // Opt-in only: old captures retain exactly their original coverage ledger.
+        if (selectedIds.some(id => id === "keyboard" || id.startsWith("keyboard-"))) {
+            if (Number(baseline.ENABLE_KEYBOARD_OVERLAY) !== 1 || !manifests.some(owner => owner.id === "ql_keyboard")) throw Error("keyboard probes require an enabled keyboard baseline");
+            if (!["none", "cache"].includes(keyboardComposition)) throw Error("invalid keyboard baseline composition");
+            const controls = (pausePolling, hideRoot = false, composition = keyboardComposition) => ({ pausePolling, hideRoot, composition });
+            const probe = (id, question, A, B, keys = [], patch = {}) => row(id, keys, ["ql_keyboard"], question,
+                { optional: true, patch, keyboard: { A, B } });
+            const probes = [
+                probe("keyboard-visibility", "Both sides pause updates; collapse only the created root. Native work can also depend on visibility", controls(true), controls(true, true)),
+                probe("keyboard-composition", "Both sides pause updates; compare uncached versus requested cached composition on the bounded binding box", controls(true, false, "none"), controls(true, false, "cache")),
+                probe("keyboard-hidden-bindings", "Compare paused collapsed native bindings with complete owner retirement", controls(true, true), controls(false),
+                    ["ENABLE_KEYBOARD_OVERLAY"], { ENABLE_KEYBOARD_OVERLAY: 0 })
+            ];
+            if (!keyboardEventDriven) {
+                probes.unshift(probe("keyboard-polling", "Pause only keyboard updates; retain the visible native generation and bindings",
+                    controls(false), controls(true)));
+            }
+            all.push(...probes);
+            if (selectedIds.includes("keyboard")) selectedIds = [...selectedIds.filter(id => id !== "keyboard"), ...probes.map(item => item.id)];
+        }
         if (selectedIds.some(id => !all.some(item => item.id === id))) throw Error("unknown configuration condition ID");
         const conditions = all.filter(item => item.id === "sham" || (selectedIds.length ? selectedIds.includes(item.id) : !item.optional));
         const blocks = [];
@@ -55,7 +92,13 @@
             return { id, keys: [...new Set([manifest.enableKey, ...(manifest.enableKeys || []),
                 ...(manifest.settings || []).flatMap(setting => [setting.key, ...(setting.options || []).map(option => option.key)])].filter(Boolean))] };
         });
-        const declared = plan({ ...configuration, manifests, selectedIds });
+        const keyboardComposition = registry.getInstance("ql_keyboard")?.diagnostics?.inspect?.().controls?.composition || "none";
+        // Missing metadata reconstructs historical captures with their original polling contrast.
+        const keyboardEventDriven = true;
+        const declared = plan({ ...configuration, manifests, selectedIds, keyboardComposition, keyboardEventDriven });
+        const keyboardEvidence = declared.conditions.some(row => row.keyboard || row.id !== "whole-config" && row.keys.includes("ENABLE_KEYBOARD_OVERLAY"));
+        let keyboardOwner = keyboardEvidence ? registry.getInstance("ql_keyboard") : null;
+        let keyboardLease = null, keyboardLeaseOwner = null, expectedKeyboard = null, glyphReference = null;
         const registeredKeys = [...new Set(manifests.flatMap(owner => owner.keys))].filter(key => Object.prototype.hasOwnProperty.call(configuration.baseline, key)).sort();
         const registeredConfig = config => Object.fromEntries(registeredKeys.map(key => [key, config[key]]));
         if (declared.estimatedMs > declared.deadlineMs - 30000) throw Error("configuration plan exceeds deadline; select condition IDs");
@@ -94,6 +137,11 @@
             const failedOwners = Object.entries(failuresBeforeCleanup).filter(([id, count]) => count > (initialErrors[id] || 0)).map(([id]) => id);
             if (timer !== null) { try { $.CancelScheduled(timer); } catch (_) {} timer = null; }
             benchmark?.stop(); benchmark = null;
+            if (sameHud()) {
+                try { keyboardLease?.restore(); }
+                catch (error) { result.restoreErrors.push("keyboard lease: " + String(error)); }
+            }
+            keyboardLease = keyboardLeaseOwner = null;
             observation.stop(); panels.dispose();
             if (sameHud()) {
                 try { configuration.apply({}); }
@@ -122,7 +170,34 @@
             const failures = [current(), digest(actual.flat) !== digest(expectedConfig) ? "configuration lease readback mismatch" : "",
                 digest(registeredConfig(actual.registered)) !== digest(ownerConfig) ? "registered configuration changed after application" : "",
                 work.errors ? "managed callback failure" : ""].filter(Boolean);
+            let keyboard = null;
+            if (keyboardEvidence) {
+                const expectedEnabled = Number(expectedConfig.ENABLE_KEYBOARD_OVERLAY) === 1;
+                const owner = expectedEnabled ? registry.getInstance("ql_keyboard") : keyboardOwner;
+                const observed = expectedEnabled ? owner?.diagnostics?.inspect?.() : owner?.diagnostics?.retirement?.();
+                keyboard = { expectedEnabled, observed: observed || null, pollingPaused: observation.isPollPaused("ql_keyboard"),
+                    ...(expectedKeyboard ? { glyphReference } : {}) };
+                const hidden = expectedKeyboard?.hideRoot || false;
+                if (expectedEnabled ? observed?.active !== true || observed.rootPresent !== true || observed.rootVisible !== !hidden || observed.attached !== true ||
+                    observed.ready !== !hidden || !Number.isSafeInteger(observed.generation) || observed.generation <= 0 ||
+                    observed.full !== (Number(expectedConfig.ENABLE_FULL_KEYBOARD_LAYOUT) === 1) :
+                    observed?.inactive !== true || observed.tree !== true || observed.styles !== true || observed.rootPresent !== false) {
+                    failures.push(expectedEnabled ? "keyboard native root/styles not ready" : "keyboard native retirement not complete");
+                }
+                if (expectedKeyboard && (keyboard.pollingPaused !== expectedKeyboard.pausePolling || expectedEnabled &&
+                    (observed?.stylesReady !== true || observed.controls?.hideRoot !== hidden || observed.controls?.composition !== expectedKeyboard.composition ||
+                    observed.composition !== expectedKeyboard.composition || !Number.isSafeInteger(observed.updates) || observed.updates < 0 ||
+                    !hidden && (observed.glyphsReady !== true || !/^[0-9a-f]{8}$/.test(glyphReference || "") || observed.glyphWorkload !== glyphReference) ||
+                    !/^[0-9a-f]{8}$/.test(observed.glyphWorkload || "") ||
+                    !/^[0-9a-f]{8}$/.test(observed.glyphEpoch || "") || observed.census?.complete !== true ||
+                    !["selected", "hidden"].every(side => ["bindings", "payloads", "unbound", "holdActions", "pressed"].every(key =>
+                        Number.isSafeInteger(observed.census[side]?.[key]) && observed.census[side][key] >= 0)) || observed.census.selected.bindings <= 0 ||
+                    !hidden && observed.census.selected.payloads <= 0))) {
+                    failures.push("keyboard diagnostic controls not applied");
+                }
+            }
             return { verified: !failures.length, failures, configHash: digest(actual.flat), ownerConfigHash: digest(registeredConfig(actual.registered)),
+                ...(keyboardEvidence ? { keyboard } : {}),
                 scene: readScene(), errorTotals: registry.getErrorTotals(),
                 // ConfigAdapter deliberately normalizes some legacy controls.
                 // Retain the observed differences instead of calling them active.
@@ -136,8 +211,22 @@
         };
         const beginWindow = () => {
             const side = block.order[phase];
+            const invalid = current();
+            if (invalid) { finish(invalid); return; }
+            observation.pausePolling([]);
             expectedConfig = { ...configuration.baseline, ...(side === "B" ? condition.patch : {}) };
+            if (keyboardEvidence) keyboardOwner = registry.getInstance("ql_keyboard") || keyboardOwner;
             expectedIds = configuration.apply(side === "B" ? condition.patch : {}).slice().sort();
+            const owner = registry.getInstance("ql_keyboard");
+            if (keyboardLeaseOwner !== owner || !condition.keyboard) {
+                keyboardLease?.restore(); keyboardLease = keyboardLeaseOwner = null;
+            }
+            expectedKeyboard = condition.keyboard?.[side] || null;
+            if (expectedKeyboard && Number(expectedConfig.ENABLE_KEYBOARD_OVERLAY) === 1) {
+                if (!keyboardLease) { keyboardLease = owner?.diagnostics?.begin?.(); keyboardLeaseOwner = owner; }
+                if (!keyboardLease) throw Error("keyboard diagnostic lease unavailable");
+                keyboardLease.apply({ hideRoot: expectedKeyboard.hideRoot, composition: expectedKeyboard.composition });
+            }
             ownerConfig = registeredConfig(configuration.read().registered);
             const nextInstrumentation = !(condition.id === "benchmark-instrumentation" && side === "B");
             if (instrumented !== nextInstrumentation) {
@@ -145,13 +234,24 @@
                 if (nextInstrumentation) benchmark = scheduler.startBenchmark(declared.deadlineMs / 1000 + 60, () => {}, { quiet: true });
                 instrumented = nextInstrumentation;
             }
-            const invalid = current();
-            if (invalid) { finish(invalid); return; }
+            const appliedFailure = current();
+            if (appliedFailure) { finish(appliedFailure); return; }
             status = { running: true, name: condition.id, window: phase + 1, completed: result.completedBlocks,
                 expected: declared.blocks.length, endAt: Date.now() + declared.settleMs + declared.sampleMs };
             if (P.isAlive(progress)) progress.text = "QOLLOCK " + (blockIndex + 1) + "/" + declared.blocks.length + " " + side + " " + condition.id;
             onProgress(status);
-            schedule(declared.settleMs / 1000, () => {
+            const warmupDeadline = Date.now() + 5000;
+            const startSample = () => {
+                if (expectedKeyboard && Number(expectedConfig.ENABLE_KEYBOARD_OVERLAY) === 1) {
+                    const state = registry.getInstance("ql_keyboard")?.diagnostics?.inspect?.();
+                    if (!expectedKeyboard.hideRoot && !glyphReference && state?.glyphsReady === true && /^[0-9a-f]{8}$/.test(state.glyphWorkload || "")) glyphReference = state.glyphWorkload;
+                    if (state?.stylesReady !== true || (expectedKeyboard.hideRoot ? state.census?.complete !== true :
+                        state.glyphsReady !== true || state.glyphWorkload !== glyphReference)) {
+                        if (Date.now() < warmupDeadline) { schedule(0.25, startSample); return; }
+                        finish("keyboard native glyph workload did not settle before pause"); return;
+                    }
+                }
+                observation.pausePolling(expectedKeyboard?.pausePolling ? ["ql_keyboard"] : []);
                 const before = proof();
                 if (!before.verified) { finish(before.failures.join("; ")); return; }
                 const startAt = Date.now(), endAt = startAt + declared.sampleMs;
@@ -160,6 +260,13 @@
                     if (failure) { finish(failure); return; }
                     if (Date.now() < endAt) { schedule(Math.min(0.5, (endAt - Date.now()) / 1000), guard); return; }
                     const stoppedAt = Date.now(), after = proof();
+                    if (expectedKeyboard && before.keyboard.expectedEnabled && after.keyboard?.expectedEnabled) {
+                        const start = before.keyboard.observed, end = after.keyboard.observed;
+                        if (start.generation !== end.generation || start.glyphEpoch !== end.glyphEpoch ||
+                            start.glyphWorkload !== end.glyphWorkload || (expectedKeyboard.pausePolling ? start.updates !== end.updates : end.updates <= start.updates)) {
+                            after.verified = false; after.failures.push("keyboard generation/update proof changed inside sampling window");
+                        }
+                    }
                     const beforeProof = "proof-" + block.trial + "-" + phase + "-before", afterProof = "proof-" + block.trial + "-" + phase + "-after";
                     // Transport and JSON conversion happen after the measured interval.
                     onPacket(beforeProof, before); onPacket(afterProof, after);
@@ -169,18 +276,22 @@
                     else { result.completedBlocks++; nextBlock(); }
                 };
                 schedule(0.5, guard);
-            });
+            };
+            schedule(declared.settleMs / 1000, startSample);
         };
         const session = { stop: (reason = "cancelled") => finish(reason) };
         active = session; status = { running: true, completed: 0, expected: declared.blocks.length, endAt: Date.now() + 5000 };
         try {
-            onPacket("context", { kind: "config-suite", plan: declared, selectedIds, baseline: configuration.baseline, canonical: configuration.canonical, manifests, registeredKeys, initialErrors,
+            onPacket("context", { kind: "config-suite", plan: declared, selectedIds, baseline: configuration.baseline, canonical: configuration.canonical, manifests, registeredKeys, initialErrors, keyboardEvidence, keyboardComposition, keyboardEventDriven,
                 loadedFunctionFingerprints: { configPlan: Q.core.MinimapInvestigation.digest(plan.toString().replace(/\r\n/g, "\n")),
                     configRunner: Q.core.MinimapInvestigation.digest(start.toString().replace(/\r\n/g, "\n")),
                     configBenchmark: Q.core.MinimapInvestigation.digest(scheduler.startBenchmark.toString().replace(/\r\n/g, "\n")),
+                    keyboardDiagnostics: Q.core.MinimapInvestigation.digest(Q.features.keyboardDiagnostics.create.toString().replace(/\r\n/g, "\n")),
                     ...Object.fromEntries(manifests.map(owner => ["owner:" + owner.id,
                         Q.core.MinimapInvestigation.digest(registry.getManifest(owner.id).create.toString().replace(/\r\n/g, "\n"))])) },
-                proofScope: "Configuration delivery, registry coverage, scene flags and benchmark accounting readback only; feature-specific render completeness and native teardown are unverified.",
+                proofScope: "Configuration delivery, registry coverage, scene flags and benchmark accounting readback. " +
+                    (keyboardEvidence ? "Keyboard root/style/retirement receipts are recorded; declared keyboard mechanisms also validate native glyph workload. Other features' render completeness and teardown remain unverified." :
+                        "Feature-specific render completeness and native teardown are unverified."),
                 caveats: ["Conditional effects overlap and must not be summed.", "Inactive gameplay paths can hide costs; a negative finding does not clear a feature.",
                     "Canonical settings retain the mod and its static stylesheets; this is not vanilla.",
                     "Quiet benchmark accounting reproduces Scheduler statistics; the legacy benchmark's console heartbeat and final report are excluded."] });

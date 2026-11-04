@@ -43,7 +43,6 @@
         ],
         create(ctx) {
             const panelAPI = QOL.core.panel;
-            const gunPath = [...QOL.presentation.paths.crosshair, "gun", "gun_data"];
             const geometry = panelAPI.createNativeStyleOwner({ resetValues: { x: "0px", y: "0px" }, releasePosition: true });
             // Native ammo_panel flows right: position is ignored for its digits.
             // Balanced margins move a label without displacing its siblings.
@@ -202,7 +201,11 @@
                 if (!active) return;
                 const candidate = panelAPI.findHud($.GetContextPanel());
                 const root = panelAPI.isAlive(candidate) && (candidate.id === "Hud" || candidate.paneltype === "CitadelHud") ? candidate : null;
-                const gun = QOL.presentation.findPath(root, gunPath);
+                const core = panelAPI.findChildByClass(root, "HudCore");
+                const gameplay = panelAPI.findChild(core, "gameplay_hud");
+                const alive = panelAPI.findChild(gameplay, "gameplay_hud_alive");
+                const crosshair = panelAPI.findChild(alive, "crosshair");
+                const gun = panelAPI.findChild(panelAPI.findChild(crosshair, "gun"), "gun_data");
                 const current = panelAPI.findChild(gun, "ammo_panel");
                 if (current !== panel) {
                     releaseMain();

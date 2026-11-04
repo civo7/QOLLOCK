@@ -37,7 +37,8 @@
                 const color = enabled ? panelAPI.resolvePaletteColor(cfg.ITEMS_WASH_COLOR) : "";
                 if (color) styles.washColor = color;
                 if (!enabled) styles.visibility = "collapse";
-                return { enabled, opacity, styles };
+                return { enabled, opacity, styles, active: Object.keys(styles).length > 0 ||
+                    opacity !== "1.00" || QOL.presentation.hasStateHiding("items", cfg) };
             }
 
             function discoverContainer(root) {
@@ -80,13 +81,14 @@
                 model = readModel();
                 resolver.reset();
                 update();
+                if (model.active && !loop) loop = QOL.core.Scheduler.createPollLoop(update, 1.0, ctx.id);
+                else if (!model.active && loop) { loop.stop(); loop = null; }
             }
 
             return QOL.presentation.bindVisibility(ctx, {
                 onEnable() {
                     active = true;
                     refreshSettings();
-                    loop = QOL.core.Scheduler.createPollLoop(update, 1.0, ctx.id);
                 },
                 onSettingsChanged: refreshSettings,
                 onDisable() {

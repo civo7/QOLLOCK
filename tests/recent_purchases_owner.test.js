@@ -229,8 +229,8 @@ test("purchase discovery stays on direct history rows without traversing native 
     env.stop(); env.clean();
 });
 
-test("notification-only idle observations defer purchase class reads until an event is new", () => {
-    const env = fixture({ ENABLE_SHOP_RECENT_PURCHASES: 0 });
+for (const shop of [0, 1]) test(`idle purchase observations defer class reads until a new event (shop=${shop})`, () => {
+    const env = fixture({ ENABLE_SHOP_RECENT_PURCHASES: shop });
     const first = env.purchase(); env.start();
     const hasClass = first.row.BHasClass.bind(first.row);
     let classReads = 0;
@@ -242,6 +242,20 @@ test("notification-only idle observations defer purchase class reads until an ev
     env.clock.advance(250);
     assert.equal(env.entries().length, 1);
     assert.equal(env.entries()[0].BHasClass("isTier3Purchase"), true, "fresh notifications still copy current classes");
+    assert.equal(classReads, 9, "only the new event snapshots the complete native class set");
+    env.stop(); env.clean();
+});
+
+test("shop filtering reads only excluded purchase classes and observes recycled membership", () => {
+    const env = fixture({ ENABLE_SHOP_ITEM_NOTIFICATIONS: 0 });
+    const first = env.purchase(env.shop.list, { classes: ["isTier2Purchase"] }); env.start();
+    const hasClass = first.row.BHasClass.bind(first.row), reads = new Set();
+    first.row.BHasClass = name => { if (/^is(?:Tier|Team|Weapon|Armor|Tech)/.test(name)) reads.add(name); return hasClass(name); };
+    env.shop.panel.FindChildTraverse("Tier1Toggle").activate(); env.clock.advance(600);
+    assert.deepEqual([...reads], ["isTier1Purchase"]);
+    assert.equal(first.row.BHasClass("filterHidden"), false);
+    first.row.RemoveClass("isTier2Purchase"); first.row.AddClass("isTier1Purchase"); env.clock.advance(250);
+    assert.equal(first.row.BHasClass("filterHidden"), true);
     env.stop(); env.clean();
 });
 
@@ -661,11 +675,16 @@ test("a failed notification creation retries the purchase without retaining an o
         }
         return create(type, parent, id, ...args);
     };
-    const source = env.purchase(); env.clock.advance(250);
+    const source = env.purchase(env.shop.list, { classes: ["isTier3Purchase", "isTechPurchase", "isTeam2Purchase"] }); env.clock.advance(250);
     assert.equal(rejected, true);
     assert.equal(env.entries().length, 0);
+    for (const cls of ["isTier3Purchase", "isTechPurchase", "isTeam2Purchase"]) source.row.RemoveClass(cls);
+    for (const cls of ["isTier1Purchase", "isWeaponPurchase", "isTeam1Purchase"]) source.row.AddClass(cls);
     env.clock.advance(250);
     assert.equal(env.entries().length, 1, "the purchase remains pending after failed creation");
+    for (const cls of ["isTier3Purchase", "isTechPurchase", "isTeam2Purchase"]) assert.equal(env.entries()[0].BHasClass(cls), true);
+    for (const cls of ["isTier1Purchase", "isWeaponPurchase", "isTeam1Purchase"]) assert.equal(env.entries()[0].BHasClass(cls), false,
+        "pending delivery retains the event's observed classes rather than later native row membership");
     assert.equal(source.row.IsValid(), true);
     env.$.CreatePanel = create; env.stop(); assert.deepEqual(env.clock.errors, []);
 });

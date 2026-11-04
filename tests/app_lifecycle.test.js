@@ -12,6 +12,36 @@ function publish(env, panel, patch, revision) {
     return raw;
 }
 
+test("App follows new configuration ancestors of a still-live HUD", () => {
+    const env = createHud({ inHideout: false }); env.assertLoaded();
+    const { QOL: Q, $ } = env.sandbox.global;
+    env.clock.advance(300);
+    const outer = $.CreatePanel("Panel", null, "NewWindowRoot");
+    env.root.SetParent(outer);
+    publish(env, outer, { HEALTHBAR_TYPE: 5 }, 99);
+    env.clock.advance(300);
+    assert.equal(Q.core.ConfigAdapter.exportToFlat().HEALTHBAR_TYPE, 5);
+    assert.deepEqual(env.clock.errors, []);
+});
+
+test("App publishes requested diagnostics without serializing periodic idle snapshots", () => {
+    const env = createHud({ inHideout: false }); env.assertLoaded();
+    const set = env.root.SetAttributeString.bind(env.root);
+    let snapshots = 0;
+    env.root.SetAttributeString = (key, value) => {
+        if (key === "QOL_Diag") snapshots++;
+        return set(key, value);
+    };
+    env.clock.advance(11000);
+    assert.equal(snapshots, 0);
+    env.root.SetAttributeString("QOL_DiagRequest", "review_snapshot");
+    env.clock.advance(300);
+    assert.equal(snapshots, 1);
+    env.clock.advance(6000);
+    assert.equal(snapshots, 1);
+    assert.deepEqual(env.clock.errors, []);
+});
+
 test("App teardown cannot overwrite the replacement HUD's newer configuration", () => {
     const env = createHud({ inHideout: false }); env.assertLoaded();
     const { QOL: Q, $ } = env.sandbox.global;

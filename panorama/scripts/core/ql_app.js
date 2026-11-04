@@ -157,8 +157,23 @@
         return null;
     };
 
+    let _cachedSearchPanels = null;
+    let _cachedSearchHud = null;
+    let _cachedSearchContext = null;
+    let _cachedSearchParents = [];
+
     const _getSearchPanels = (hudPanel) => {
+        const ctx = typeof $.GetContextPanel === "function" ? $.GetContextPanel() : null;
+        if (_cachedSearchPanels && _cachedSearchHud === hudPanel && _cachedSearchContext === ctx) {
+            let current = ctx, unchanged = true;
+            for (const parent of _cachedSearchParents) {
+                if (!current || !current.GetParent || current.GetParent() !== parent) { unchanged = false; break; }
+                current = parent;
+            }
+            if (unchanged) return _cachedSearchPanels;
+        }
         const panels = [];
+        const parents = [];
         const seen = new Set();
         const add = (p) => {
             if (!p || typeof p.GetAttributeString !== "function") return;
@@ -167,17 +182,21 @@
             panels.push(p);
         };
         add(hudPanel);
-        if (typeof $.GetContextPanel === "function") {
-            const ctx = $.GetContextPanel();
+        if (ctx) {
             add(ctx);
             let cur = ctx;
             let depth = 0;
             while (cur && cur.GetParent && depth < 64) {
                 cur = cur.GetParent();
+                parents.push(cur);
                 add(cur);
                 depth++;
             }
         }
+        _cachedSearchPanels = panels;
+        _cachedSearchHud = hudPanel;
+        _cachedSearchContext = ctx;
+        _cachedSearchParents = parents;
         return panels;
     };
 
@@ -692,9 +711,13 @@
             }
         } catch (_) {}
 
-        if (!forceSync && _diagWriteNextMs && _diagWriteNextMs > nowMs) return;
-        _diagWriteNextMs = nowMs + 5000;
-        _writeDiagSnapshot(hudPanel, "");
+        // Explicit requests publish above; idle gameplay needs no periodic JSON.
+        if (!forceSync) {
+            if (!_stressBenchmark && !_benchmarkRequest) return;
+            if (_diagWriteNextMs && _diagWriteNextMs > nowMs) return;
+            _diagWriteNextMs = nowMs + 5000;
+            _writeDiagSnapshot(hudPanel, "");
+        }
     };
 
     const _startConfigPolling = (hud) => {
@@ -957,6 +980,10 @@
                 if (Logger) Logger.logWarn("App", `config save failed: ${e.message || e}`);
             }
         }
+        _cachedSearchPanels = null;
+        _cachedSearchHud = null;
+        _cachedSearchContext = null;
+        _cachedSearchParents = [];
     };
 
     const isBooted = () => _booted;

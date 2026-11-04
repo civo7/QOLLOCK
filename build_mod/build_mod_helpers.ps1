@@ -37,6 +37,42 @@ function Get-VpkBundleFiles {
     }
 }
 
+function New-ReleaseArchive {
+    param([string]$SourceRoot, [string]$OutputVpk)
+    $version = (Get-Content -LiteralPath (Join-Path $SourceRoot 'package.json') -Raw | ConvertFrom-Json).version
+    if ($version -notmatch '^\d+\.\d+\.\d+$') { throw 'Expected a three-part package version.' }
+    if (-not (Test-Path -LiteralPath $OutputVpk -PathType Leaf)) { throw "Missing build output: $OutputVpk" }
+    $directory = Split-Path $OutputVpk
+    $files = @(Get-VpkBundleFiles -Directory $directory -Leaf (Split-Path $OutputVpk -Leaf))
+    foreach ($name in @('LICENSE', 'NOTICE', 'THIRD_PARTY_NOTICES.md')) {
+        $path = Join-Path $SourceRoot $name
+        if (-not (Test-Path -LiteralPath $path -PathType Leaf)) { throw "Missing distribution notice: $path" }
+        $files += Get-Item -LiteralPath $path
+    }
+    Add-Type -AssemblyName System.IO.Compression
+    Add-Type -AssemblyName System.IO.Compression.FileSystem
+    $destination = Join-Path $directory ('QOL-Lock-' + $version.Replace('.', '') + '.zip')
+    $temporary = Join-Path $directory ('.release-' + [guid]::NewGuid().ToString('N') + '.zip')
+    try {
+        $archive = [IO.Compression.ZipFile]::Open($temporary, [IO.Compression.ZipArchiveMode]::Create)
+        try {
+            foreach ($file in $files) {
+                $null = [IO.Compression.ZipFileExtensions]::CreateEntryFromFile(
+                    $archive, $file.FullName, $file.Name, [IO.Compression.CompressionLevel]::Optimal)
+            }
+        } finally { $archive.Dispose() }
+        # Keep the previous ZIP until the new archive is completely written.
+        if (Test-Path -LiteralPath $destination) {
+            [IO.File]::Replace($temporary, $destination, [NullString]::Value)
+        } else {
+            [IO.File]::Move($temporary, $destination)
+        }
+    } finally {
+        if (Test-Path -LiteralPath $temporary) { Remove-Item -LiteralPath $temporary -Force }
+    }
+    return $destination
+}
+
 function Publish-VpkBundle {
     param([string]$Staging, [string]$Output)
     $parent = Split-Path $Output

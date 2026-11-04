@@ -15,6 +15,11 @@ and countdown history. Unknown/inactive progress starts a new estimate; a single
 angle cannot establish velocity. Both increasing and decreasing radial progress
 retain the existing smoothing and monotonically decreasing display policy.
 
+Discovery follows the verified HudCore/gameplay/alive/crosshair/gun/gun_data
+owner chain and reads progress directly from its reticle. A missing gun or
+reticle waits locally; unrelated progress elsewhere in the HUD cannot supply a
+countdown. No whole-HUD reticle/progress fallback remains.
+
 Missing sources use bounded idle retries; active reloads retain their animation
 sampling cadence. Accepted settings apply immediately. Failed label creation and
 partial style writes remain retryable, while disable deletes the owned label and

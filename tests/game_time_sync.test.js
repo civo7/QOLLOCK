@@ -9,11 +9,14 @@ test("buff, minimap and Rift countdowns update on the same observed game second"
     hud.assertLoaded();
     const Q = hud.sandbox.global.QOL;
     const $ = hud.sandbox.global.$;
-    const top = $.CreatePanel("Panel", hud.root, "TopBar");
+    const core = $.CreatePanel("Panel", hud.root, ""); core.AddClass("HudCore");
+    const top = $.CreatePanel("Panel", core, "TopBar");
     const clockLabel = $.CreatePanel("Label", top, "GameTime");
     clockLabel.text = "12:00";
     const buffLabel = $.CreatePanel("Label", $.CreatePanel("Panel", top, "Buff"), "BuffTime");
-    const persp = $.CreatePanel("Panel", hud.root, "minimap_persp");
+    const gameplay = $.CreatePanel("Panel", core, "gameplay_hud");
+    const clamp = $.CreatePanel("Panel", gameplay, ""); clamp.AddClass("clamp_width");
+    const persp = $.CreatePanel("Panel", clamp, "minimap_persp");
     const container = $.CreatePanel("Panel", persp, "minimap_container");
     $.CreatePanel("Panel", container, "hud_minimap");
 

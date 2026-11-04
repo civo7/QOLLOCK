@@ -193,3 +193,5 @@
 {
 	color: #ffffff !important;
 }
+
+@import url("s2r://panorama/styles/features/ql_feat_native_keyboard_overlay.vcss_c");

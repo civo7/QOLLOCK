@@ -37,7 +37,7 @@
         frozen(), frozen({ [owner]: { composition: policy } }), "ql_minimap_" + owner + "/manifest.js", "compositionProperties / update",
         "Requested composition policy for only the " + owner + " root; the other root retains its production cache policy");
     for (const target of ["renderer", "mapRender", "backgrounds", "canvas", "ranges"]) {
-        add("native-" + target.toLowerCase(), frozen(), frozen({ runtime: { releaseNativeTargets: [target] } }), "ql_minimap_runtime/manifest.js", "renderNativeDecoration / renderRange",
+        add("native-" + target.toLowerCase(), frozen(), frozen({ runtime: { releaseNativeTargets: [target] } }), "ql_minimap_runtime/manifest.js", "renderNativeDecoration",
             "Release only the active " + target + " native override group; changes presentation, not proof of redundant code", { requiresTarget: target, presentationConfound: true });
     }
     for (const [id, control] of [["geometry-placement", "releasePlacement"], ["geometry-viewport", "releaseViewport"]]) {

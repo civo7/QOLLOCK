@@ -390,8 +390,8 @@ test("passive cooldown owns Basic layout through late panels, shop gates, mode s
     assert.equal(writes, settledWrites, "idle Basic mode does not reassert styles");
     abilities.AddClass("gShopOpen");
     env.clock.advance(600);
-    assert.equal(panel.BHasClass("qol-hidden"), true);
-    assert.equal(panel.style.visibility, "collapse", "native Basic visibility rules cannot outbid the shop gate");
+    assert.equal(panel.BHasClass("qol-hidden"), false);
+    assert.equal(panel.style.visibility, undefined, "shop suppression belongs to the native listener CSS, with no inline writer");
     abilities.RemoveClass("gShopOpen");
     env.clock.advance(600);
     assert.equal(panel.BHasClass("qol-hidden"), false);

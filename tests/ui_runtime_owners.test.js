@@ -13,13 +13,14 @@ function setup(id, config = {}) {
     const feature = Q.core.FeatureRegistry.getManifest(id).create({ events: Q.core.EventBus,
         id, config: { view: () => Q.core.ConfigStore.view(id) }
     });
-    return { ...env, Q, $, feature };
+    const popups = $.CreatePanel("PopupManager", env.root, "PopupManager");
+    return { ...env, Q, $, feature, popups };
 }
 
 test("party lane selection rebinds a living dropdown before its old selected retry expires", () => {
     const env = setup("ql_lane_with_party", { ENABLE_LANE_WITH_PARTY: 1 });
     const makeSelector = () => {
-        const selector = env.$.CreatePanel("DropDown", env.root, "LanePreferenceSelector");
+        const selector = env.$.CreatePanel("DropDown", env.popups, "LanePreferenceSelector");
         const option = env.$.CreatePanel("Label", selector, "lanepreference_1");
         selector.AddOption(option);
         return { selector, option };
@@ -45,7 +46,7 @@ test("party lane selection rebinds a living dropdown before its old selected ret
 
 test("party lane selection discovers late native options and accepts settings changes immediately", () => {
     const env = setup("ql_lane_with_party", { ENABLE_LANE_WITH_PARTY: 1 });
-    const selector = env.$.CreatePanel("DropDown", env.root, "LanePreferenceSelector");
+    const selector = env.$.CreatePanel("DropDown", env.popups, "LanePreferenceSelector");
     env.feature.onEnable();
     env.clock.advance(600);
     assert.equal(selector.GetSelected(), null);
@@ -62,6 +63,30 @@ test("party lane selection discovers late native options and accepts settings ch
     env.Q.core.ConfigStore.set("ql_lane_with_party", "ENABLE_LANE_WITH_PARTY", true);
     env.feature.onSettingsChanged();
     assert.equal(selector.GetSelected(), option);
+    env.feature.onDisable();
+    assert.deepEqual(env.clock.errors, []);
+});
+
+test("party lane discovery stays in the native popup owner and follows a late replacement", () => {
+    const env = setup("ql_lane_with_party", { ENABLE_LANE_WITH_PARTY: 1 });
+    const traverse = env.root.FindChildTraverse;
+    let globalSearches = 0;
+    env.root.FindChildTraverse = function (id) {
+        if (id === "LanePreferenceSelector" || id === "lanepreference_1") globalSearches++;
+        return traverse.call(this, id);
+    };
+    const decoy = env.$.CreatePanel("DropDown", env.root, "LanePreferenceSelector");
+    const decoyOption = env.$.CreatePanel("Label", decoy, "lanepreference_1");
+    decoy.AddOption(decoyOption);
+    env.feature.onEnable(); env.clock.advance(6000);
+    assert.equal(globalSearches, 0, "a missing popup must never trigger a full-HUD search");
+    assert.equal(decoy.GetSelected(), null, "a selector outside the popup owner is not the party control");
+    env.popups.SetParent(env.$.CreatePanel("Panel", null, "RetiredPopups"));
+    const popups = env.$.CreatePanel("PopupManager", env.root, "PopupManager");
+    const selector = env.$.CreatePanel("DropDown", popups, "LanePreferenceSelector");
+    const option = env.$.CreatePanel("Label", selector, "lanepreference_1"); selector.AddOption(option);
+    env.clock.advance(600);
+    assert.equal(selector.GetSelected(), option, "a new popup owner bypasses the previous missing deadline");
     env.feature.onDisable();
     assert.deepEqual(env.clock.errors, []);
 });

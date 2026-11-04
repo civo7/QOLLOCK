@@ -20,7 +20,6 @@ test("ordinary crate styles load through the native renderer stylesheet", () => 
     const native = read("features/ql_feat_native_hud_minimap.css");
     assert.match(native, /#hud_minimap #minimap_overlay_root\s*\{[^}]*width: 100%;[^}]*height: 100%;/);
     assert.match(native, /#hud_minimap #minimap_markers\s*\{/);
-    assert.match(native, /#hud_minimap \.minimap_marker\s*\{/);
     assert.doesNotMatch(read("features/ql_feat_minimap.css"), /(?:#minimap_overlay_root|#minimap_markers|\.minimap_marker)\s*\{/);
 });
 
@@ -57,7 +56,25 @@ function fixture() {
     return { ...env, Q, $, add, viewport, inner, renderer, map, configure, clean, setSecond: value => { second = value; } };
 }
 
-test("independent static loot groups use supplied points, native renderer ancestry and appearance", () => {
+test("point references use one image per category instead of one panel per point", () => {
+    const e = fixture();
+    e.configure({ ENABLE_MINIMAP_CRATE_OVERLAY: 1, ENABLE_MINIMAP_TOUGH_CRATES: 1,
+        ENABLE_MINIMAP_HEALING_SNACKS: 1, ENABLE_MINIMAP_STATUES: 1, MINIMAP_LOOT_OPACITY: 0.4 });
+    const ordinary = e.renderer.FindChildTraverse("minimap_markers");
+    assert.equal(ordinary.GetChildCount(), 1, "425 ordinary-crate panels become one image");
+    assert.match(ordinary.GetChild(0).style.backgroundImage, /minimap_references_crates\.vsvg/);
+    for (const kind of ["tough_crates", "snacks", "statues"]) {
+        const group = e.renderer.FindChildTraverse("QOLMapLoot_" + kind);
+        assert.equal(group.GetChildCount(), 1, kind + " has one retained image");
+        assert.match(group.GetChild(0).style.backgroundImage, new RegExp("minimap_references_" + kind + "\\.vsvg"));
+        assert.equal(group.GetChild(0).style.width, "100%");
+        assert.equal(group.GetChild(0).style.height, "100%");
+    }
+    assert.equal(e.renderer.FindChild("QOLMinimapLootRoot").style.opacity, "0.4");
+    e.clean();
+});
+
+test("independent loot images use native renderer ancestry, chosen marker size and appearance", () => {
     const e = fixture();
     e.configure({ ENABLE_MINIMAP_TOUGH_CRATES: 1, ENABLE_MINIMAP_HEALING_SNACKS: 1, ENABLE_MINIMAP_STATUES: 1,
         MINIMAP_CAMP_NAMES: 2, MINIMAP_LOOT_MARKER_SCALE: 150, MINIMAP_LOOT_OPACITY: 0.35 });
@@ -66,11 +83,11 @@ test("independent static loot groups use supplied points, native renderer ancest
     for (const key of ["tough_crates", "snacks", "statues"]) {
         const group = layer.FindChild("QOLMapLoot_" + key);
         assert.equal(group.visible, true);
-        assert.equal(group.GetChildCount(), e.Q.minimapLootData[key].length);
-        const first = e.Q.minimapLootData[key][0];
-        assert.equal(group.GetChild(0).style.position, (first[0] * 100).toFixed(3) + "% " + (first[1] * 100).toFixed(3) + "% 0px");
+        assert.equal(group.GetChildCount(), 1);
+        assert.equal(group.GetChild(0).style.backgroundImage,
+            'url("s2r://panorama/images/qollock/minimap_references_' + key + '_150.vsvg")');
     }
-    assert.equal(layer.FindChild("QOLMapLoot_tough_crates").GetChild(0).style.width, "10.10px");
+    assert.equal(layer.FindChild("QOLMapLoot_tough_crates").GetChild(0).style.width, "100%");
     assert.equal(layer.FindChild("QOLMapLoot_names").GetChildCount(), 4);
     e.configure({ MINIMAP_CAMP_NAMES: 1 });
     assert.equal(e.renderer.FindChildTraverse("QOLMapLoot_names").GetChildCount(), 19);
@@ -95,7 +112,7 @@ test("loot opacity and toggles preserve marker trees while geometry refreshes on
     assert.equal(dot.IsValid(), true); assert.equal(segment.IsValid(), true);
     assert.equal(segment.style.height, "2.00px", "marker scale leaves route geometry alone");
     e.configure({ ENABLE_MINIMAP_TOUGH_CRATES: 1 });
-    assert.ok(crates.GetChild(0) === dot); assert.equal(dot.style.width, "10.10px");
+    assert.ok(crates.GetChild(0) === dot); assert.match(dot.style.backgroundImage, /_tough_crates_150\.vsvg/);
     e.configure({ MINIMAP_ROUTE_SCALE: 150 });
     assert.ok(routes.GetChild(0) === segment); assert.equal(segment.style.height, "3.00px");
     assert.ok(crates.GetChild(0) === dot); assert.equal(creates, 0);
@@ -177,10 +194,12 @@ test("Map References marker size and opacity also affect ordinary crates without
     e.configure({ ENABLE_MINIMAP_CRATE_OVERLAY: 1, MINIMAP_LOOT_MARKER_SCALE: 150, MINIMAP_LOOT_OPACITY: 0.4 });
     const crates = e.renderer.FindChild("minimap_overlay_root");
     assert.equal(crates.style.opacity, "0.4");
-    assert.equal(crates.FindChild("minimap_markers").GetChild(0).style.width, "3px");
+    const image = crates.FindChild("minimap_markers").GetChild(0);
+    assert.match(image.style.backgroundImage, /_crates_150\.vsvg/);
     assert.equal(e.Q.core.FeatureRegistry.isEnabled("ql_minimap_loot"), false);
     e.configure({ MINIMAP_LOOT_MARKER_SCALE: 75, MINIMAP_LOOT_OPACITY: 1 });
-    assert.equal(crates.FindChild("minimap_markers").GetChild(0).style.width, "1.5px");
+    assert.ok(crates.FindChild("minimap_markers").GetChild(0) === image);
+    assert.match(image.style.backgroundImage, /_crates_75\.vsvg/);
     assert.equal(crates.style.opacity, "1");
     e.clean();
 });
@@ -209,7 +228,8 @@ test("late native sources, living replacements, reparented children and re-enabl
     const first = layer.FindChild("QOLMapLoot_snacks").GetChild(0);
     first.SetParent(e.root); e.clock.advance(1200);
     assert.equal(first.IsValid(), false);
-    assert.equal(current.FindChildTraverse("QOLMapLoot_snacks").GetChildCount(), 36);
+    assert.equal(current.FindChildTraverse("QOLMapLoot_snacks").GetChildCount(), 1);
+    assert.match(current.FindChildTraverse("QOLMapLoot_snacks").GetChild(0).style.backgroundImage, /_snacks\.vsvg/);
     current.SetParent(e.add(e.root, "RetiredMap"));
     const replacement = e.map(); e.clock.advance(1600);
     assert.equal(layer.IsValid(), false);
