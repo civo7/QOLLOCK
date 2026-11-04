@@ -94,8 +94,8 @@
                 const stats = P.findChild(P.findChildByClass(hud, "HudCore"), "StatsAndModsContainer");
                 return P.findChild(P.findChild(stats, "LowerLeft"), "CitadelHudQuickbuy");
             },
-            // The native root spans the screen height. Only compact HUD content
-            // moves; the open-shop queue and summary keep their native docking.
+            // Measure compact contents rather than the screen-height root.
+            // Runtime moves the root in gameplay and releases it in shop view.
             measurePanels(target) {
                 return QOL.core.panel.isAlive(target) ? target.Children().filter(child =>
                     child.BHasClass("HudQuickbuyElement") || ["QuickbuyNextSoulsNeeded", "QuickbuyUpcomingPreviewContainer", "KeyboardHints"].includes(child.id)) : [];

@@ -56,7 +56,7 @@ function recordShopCommands(env) {
 for (const entry of ["section", "shortcut", "catalog", "frame", "drag", "resize"]) {
     test(`Quick Buy ${entry} keeps the shop closed while selecting and moving compact HUD content`, () => {
         const e = fixture("quickbuy"), { Q, clock } = e;
-        const { targets } = e.make(), commands = recordShopCommands(e);
+        const { owner } = e.make(), commands = recordShopCommands(e);
         const souls = e.add(e.parent, "gold_and_ap_container");
         Object.assign(souls, { actuallayoutwidth: 160, actuallayoutheight: 60, actualxoffset: 200, actualyoffset: 900 });
         if (entry === "section") {
@@ -78,8 +78,8 @@ for (const entry of ["section", "shortcut", "catalog", "frame", "drag", "resize"
         clock.advance(40); startDrag.end(e, source, proxy); clock.advance(1200);
         assert.deepEqual(commands, [], "selection and capture must not dispatch a shop toggle");
         assert.equal(e.hud.root.BHasClass("gShopOpen"), false);
-        if (entry === "resize") assert.notEqual(targets[1].style.uiScale, undefined);
-        else assert.equal(targets[1].style.x, "40px");
+        if (entry === "resize") assert.notEqual(owner.style.uiScale, undefined);
+        else assert.equal(owner.style.x, "40px");
         e.activate("QOLCustomizeCancel"); clock.advance(300);
         assert.deepEqual(commands, [], "cleanup has no shop command to balance");
         assert.deepEqual(clock.errors, []); assert.deepEqual(e.doc.eventErrors, []);
@@ -107,10 +107,47 @@ test("Quick Buy preserves an already-open shop and closes only a shop opened by 
     assert.deepEqual(clock.errors, []); assert.deepEqual(e.doc.eventErrors, []);
 });
 
+test("Quick Buy moves its native bounds with the content and releases them for the open-shop queue", () => {
+    const e = fixture("quickbuy"), { g, clock } = e;
+    const { owner, targets, shop } = e.make();
+    g.MOD_CONFIG.QUICKBUY_X_OFFSET = 1400;
+    g.MOD_CONFIG.QUICKBUY_Y_OFFSET = 450;
+    g.MOD_CONFIG.QUICKBUY_SCALE = 125;
+    g.SaveAndSync(); clock.advance(1200);
+    assert.equal(owner.style.x, "1400px", "the native root and its bounds move together");
+    assert.equal(owner.style.y, "-450px"); assert.equal(owner.style.uiScale, "125%");
+    for (const target of targets) {
+        assert.equal(target.GetParent(), owner);
+        assert.equal(target.style.x, undefined, "cards stay inside their native root rather than receiving individual offsets");
+        assert.equal(target.style.uiScale, undefined);
+    }
+    const Q = e.hud.sandbox.global.QOL;
+    for (let cycle = 0; cycle < 2; cycle++) {
+        e.hud.root.AddClass("gShopOpen");
+        Q.core.EventBus.emit("engine:shop_opened"); clock.advance(1);
+        assert.equal(owner.style.x, undefined, "shop queue inherits no custom HUD position");
+        assert.equal(owner.style.y, undefined); assert.equal(owner.style.uiScale, undefined);
+        assert.equal(shop.style.x, undefined); assert.equal(shop.GetParent(), owner);
+        e.hud.root.RemoveClass("gShopOpen");
+        Q.core.EventBus.emit("engine:shop_closed"); clock.advance(1);
+        assert.equal(owner.style.x, "1400px"); assert.equal(owner.style.uiScale, "125%");
+    }
+    e.hud.root.AddClass("gShopOpen"); clock.advance(600);
+    assert.equal(owner.style.x, undefined, "ordinary observation recovers a missed shop-open event");
+    e.hud.root.RemoveClass("gShopOpen"); clock.advance(600);
+    assert.equal(owner.style.x, "1400px", "ordinary observation recovers a missed shop-close event");
+    Q.core.EventBus.emit("engine:shop_closed");
+    Q.core.FeatureRegistry.disable("ql_presentation_scale");
+    Q.core.EventBus.emit("engine:shop_opened"); clock.advance(1200);
+    assert.equal(owner.style.x, undefined); assert.equal(owner.style.uiScale, undefined);
+    assert.deepEqual(clock.errors, []); assert.deepEqual(e.doc.eventErrors, []);
+});
+
 for (const [id, prefix, feature] of [["minimapLocation", "MINIMAP_LOCATION_", "ql_minimap_location"], ["quickbuy", "QUICKBUY_", "ql_presentation_scale"]]) {
     test(`${id}: native drag, reset/history, cancel, save and settings exchange use production paths`, () => {
         const e = fixture(id), { Q, g, clock } = e;
         const { owner, targets, shop } = e.make();
+        const geometryTargets = id === "quickbuy" ? [owner] : targets;
         assert.equal(Q.presentation.canDrag(e.element), true);
         assert.equal(Q.ui.customize.start(null, { elementId: id }), true);
         const frame = e.find("QOLCustomizeFrame_" + id);
@@ -126,22 +163,25 @@ for (const [id, prefix, feature] of [["minimapLocation", "MINIMAP_LOCATION_", "q
         const store = e.hud.sandbox.global.QOL.core.ConfigStore;
         assert.equal(store.get(feature, prefix + "X_OFFSET"), 40);
         assert.equal(store.get(feature, prefix + "Y_OFFSET"), -15);
-        for (const target of targets) {
+        for (const target of geometryTargets) {
             assert.equal(target.style.x, "40px"); assert.equal(target.style.y, "15px");
         }
         if (id === "quickbuy") assert.equal(e.hud.root.BHasClass("qol_free_quickbuy_placement"), true);
-        if (shop) { assert.equal(shop.style.x, undefined); assert.equal(owner.style.x, undefined); }
+        if (shop) {
+            assert.equal(shop.style.x, undefined);
+            for (const target of targets) assert.equal(target.style.x, undefined, "native children inherit their owner's position");
+        }
         e.edit(prefix + "SCALE", 135); clock.advance(1200);
-        for (const target of targets) assert.equal(target.style.uiScale, "135%");
-        if (shop) { assert.equal(shop.style.uiScale, undefined); assert.equal(owner.style.uiScale, undefined); }
+        for (const target of geometryTargets) assert.equal(target.style.uiScale, "135%");
+        if (shop) assert.equal(shop.style.uiScale, undefined);
         e.activate("QOLCustomizeReset"); clock.advance(1200);
-        for (const target of targets) { assert.equal(target.style.x, undefined); assert.equal(target.style.uiScale, undefined); }
+        for (const target of geometryTargets) { assert.equal(target.style.x, undefined); assert.equal(target.style.uiScale, undefined); }
         if (id === "quickbuy") assert.equal(e.hud.root.BHasClass("qol_free_quickbuy_placement"), false, "Reset restores native clipping");
         e.activate("QOLCustomizeUndo"); clock.advance(1200);
-        assert.equal(targets.at(-1).style.x, "40px");
+        assert.equal(geometryTargets.at(-1).style.x, "40px");
         if (id === "quickbuy") assert.equal(e.hud.root.BHasClass("qol_free_quickbuy_placement"), true);
         e.activate("QOLCustomizeCancel"); clock.advance(1200);
-        for (const target of targets) assert.equal(target.style.x, undefined);
+        for (const target of geometryTargets) assert.equal(target.style.x, undefined);
         if (id === "quickbuy") assert.equal(e.hud.root.BHasClass("qol_free_quickbuy_placement"), false, "Cancel releases draft overflow");
         if (id === "minimapLocation") assert.equal(owner.style.transform, "rotateZ(-30deg)");
         assert.equal(g.MOD_CONFIG[prefix + "X_OFFSET"], 0);
@@ -165,28 +205,31 @@ for (const [id, prefix, feature] of [["minimapLocation", "MINIMAP_LOCATION_", "q
         g.SaveAndSync(); clock.advance(1500);
         assert.equal(decoy.style.x, undefined, "missing native owner cannot adopt a same-ID panel elsewhere in the HUD");
         const old = e.make(); clock.advance(2500);
-        for (const target of old.targets) { assert.equal(target.style.x, "76px"); assert.equal(target.style.y, "-28px"); }
+        const oldGeometry = id === "quickbuy" ? [old.owner] : old.targets;
+        for (const target of oldGeometry) { assert.equal(target.style.x, "76px"); assert.equal(target.style.y, "-28px"); }
         old.owner.SetParent(e.add(e.hud.root, "RetiredOwner"));
         const next = e.make(); clock.advance(3000);
-        for (const target of old.targets) {
+        const nextGeometry = id === "quickbuy" ? [next.owner] : next.targets;
+        for (const target of oldGeometry) {
             assert.equal(target.style.x, undefined, "living retired content releases code position"); assert.equal(target.style.uiScale, undefined);
         }
-        for (const target of next.targets) { assert.equal(target.style.x, "76px"); assert.equal(target.style.uiScale, "125%"); }
+        for (const target of nextGeometry) { assert.equal(target.style.x, "76px"); assert.equal(target.style.uiScale, "125%"); }
         assert.equal(old.owner.IsValid(), true);
         if (id === "quickbuy") {
             const previous = next.targets[3];
             previous.SetParent(e.add(e.hud.root, "RetiredPreview"));
             const replacement = e.add(next.owner, "QuickbuyUpcomingPreviewContainer"); clock.advance(1200);
-            assert.equal(previous.style.x, undefined); assert.equal(replacement.style.x, "76px");
-            next.targets.push(replacement);
+            assert.equal(previous.style.x, undefined); assert.equal(replacement.style.x, undefined);
+            assert.equal(replacement.GetParent(), next.owner);
+            assert.ok(e.element.measurePanels(next.owner).includes(replacement), "late compact content inherits the moved owner and joins its frame");
         }
         const registry = e.hud.sandbox.global.QOL.core.FeatureRegistry;
         registry.disable(feature);
-        for (const target of next.targets) { assert.equal(target.style.x, undefined); assert.equal(target.style.uiScale, undefined); }
+        for (const target of nextGeometry) { assert.equal(target.style.x, undefined); assert.equal(target.style.uiScale, undefined); }
         if (id === "quickbuy") assert.equal(e.hud.root.BHasClass("qol_free_quickbuy_placement"), false);
         registry.enable(feature); clock.advance(1200);
-        assert.equal(next.targets.at(-1).style.x, "76px");
-        assert.equal(next.targets.at(-1).style.uiScale, "125%");
+        assert.equal(nextGeometry.at(-1).style.x, "76px");
+        assert.equal(nextGeometry.at(-1).style.uiScale, "125%");
         if (id === "quickbuy") assert.equal(e.hud.root.BHasClass("qol_free_quickbuy_placement"), true);
         assert.deepEqual(clock.errors, []); assert.deepEqual(e.doc.eventErrors, []);
     });

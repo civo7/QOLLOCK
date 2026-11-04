@@ -60,18 +60,15 @@ test("Quick Buy overflow follows customized geometry and its presentation owner"
 test("Quick Buy overflow opens verified layout owners through their own native stylesheet chains", () => {
     // Source routing and selector scope only; the simulator does not rasterize
     // Panorama overflow. The maintainer must verify clipping after repacking.
-    for (const [layout, file, selectors] of [
-        ["hud", "ql_feat_native_hud", [".qol_free_quickbuy_placement #StatsAndModsContainer", ".qol_free_quickbuy_placement #StatsAndModsContainer #LowerLeft"]],
-        ["hud_quickbuy", "ql_feat_native_hud_quickbuy", [".qol_free_quickbuy_placement #CitadelHudQuickbuy"]]
-    ]) {
-        const report = inspect({ root: path.resolve(__dirname, ".."), token: ".qol_free_quickbuy_placement", property: "overflow",
-            layout: "panorama/layout/" + layout + ".xml" });
-        const matches = report.matches.filter(match => match.file === "panorama/styles/features/" + file + ".css");
-        assert.equal(matches.length, 1);
-        assert.equal(matches[0].selectedLayoutRoute, true, "native component imports the rule through its owning stylesheet");
-        assert.deepEqual(matches[0].selector.split(",").map(selector => selector.trim()), selectors);
-        assert.deepEqual(matches[0].declarations.map(item => [item.property, item.value]), [["overflow", "noclip"]]);
-    }
+    const report = inspect({ root: path.resolve(__dirname, ".."), token: ".qol_free_quickbuy_placement", property: "overflow",
+        layout: "panorama/layout/hud.xml" });
+    assert.equal(report.matches.length, 1, "only the moved root's ancestors need overflow overrides");
+    const match = report.matches[0];
+    assert.equal(match.file, "panorama/styles/features/ql_feat_native_hud.css");
+    assert.equal(match.selectedLayoutRoute, true);
+    assert.deepEqual(match.selector.split(",").map(selector => selector.trim()),
+        [".qol_free_quickbuy_placement #StatsAndModsContainer", ".qol_free_quickbuy_placement #StatsAndModsContainer #LowerLeft"]);
+    assert.deepEqual(match.declarations.map(item => [item.property, item.value]), [["overflow", "noclip"]]);
 });
 
 test("shop overflow projection leaves native scrolling alone and combines geometry owners", () => {

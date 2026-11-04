@@ -21,10 +21,9 @@
     overflow: noclip;
 }
 
-/* Quick Buy remains under the native fit-width LowerLeft owner. Custom
- * offsets/scale may leave it, including the clamped HUD bounds on ultrawide.
- * The independently loaded quickbuy sheet opens its component root separately.
- */
+/* The moved Quick Buy root can leave its native fit-width LowerLeft owner,
+ * including the clamped HUD bounds on ultrawide. Its own bounds move with its
+ * contents; queue scrolling keeps the native component's clipping. */
 .qol_free_quickbuy_placement #StatsAndModsContainer,
 .qol_free_quickbuy_placement #StatsAndModsContainer #LowerLeft
 {

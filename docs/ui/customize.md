@@ -69,12 +69,14 @@ The shop surface uses `Shop/MainPanel`, while recent purchases use the sibling
 `Shop/NavPanel/RecentPurchasesPanel` from the native shop layout. Properties exposes
 the feature's existing content modes, filters and notification lifetime/count
 alongside appearance and visibility. Quick Buy has a scoped action in Shop as well
-as a shortcut in Customize. Its frame measures and moves the compact HUD contents,
-including enhanced prices and upcoming items, with an overall scale control;
-the open-shop queue and summary retain native docking. Customized Quick Buy
-geometry releases overflow clipping on its native root, LowerLeft and
-StatsAndModsContainer through the shared root-class projector. Reset or disabling
-its presentation owner restores native clipping; queue scrolling remains native.
+as a shortcut in Customize. Its frame measures the compact HUD contents, including
+enhanced prices and upcoming items. Runtime moves and scales the native Quick Buy
+root in gameplay so its bounds travel with its contents. Opening the shop releases
+that geometry; closing it reapplies the HUD placement through the verified shop
+events, with ordinary discovery as recovery. The shop queue and summary retain
+native docking and scrolling. Customized geometry releases ancestor clipping on
+LowerLeft and StatsAndModsContainer through the shared root-class projector.
+Reset or disabling its presentation owner restores native ancestor clipping.
 Minimap Location Text has independent offsets, scale and a
 visibility switch. Its native district gate, rotation and content remain intact.
 Base minimap exposes its overall
