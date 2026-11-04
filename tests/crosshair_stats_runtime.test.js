@@ -471,6 +471,23 @@ test("crosshair skips a detached first class candidate and retains the next curr
     assert.deepStrictEqual(hud.clock.errors, []);
 });
 
+test("crosshair checks a verified owner path once for its cached modifier rows", () => {
+    const hud = createCrosshairHud(), { $, QOL: Q } = hud.sandbox.global;
+    const source = $.CreatePanel("Panel", hud.core, "hudActivePlayerStats"), owners = nativeOwners($, source);
+    addModifier($, owners.weapon, "fireRateContainer", { number: "+10", postfix: "%", classes: ["shouldShow", "isPositive"] });
+    addModifier($, owners.weapon, "clipSizeContainer", { number: "+4", postfix: "%", classes: ["shouldShow", "isPositive"] });
+    enableActiveStats(Q); hud.clock.advance(300);
+    const parent = owners.weapon.GetParent.bind(owners.weapon);
+    let reads = 0;
+    owners.weapon.GetParent = () => { reads++; return parent(); };
+    hud.clock.advance(100);
+    assert.strictEqual(reads, 1, "rows must reuse their owner's path validation instead of walking it again");
+    assert.strictEqual(value(hud.root, "fireRate").text, "+10%");
+    assert.strictEqual(value(hud.root, "clipSize").text, "+4%");
+    Q.core.FeatureRegistry.disable("ql_crosshair_stats"); hud.clock.advance(20);
+    assert.deepStrictEqual(hud.clock.errors, []);
+});
+
 test("crosshair discovers late rows in narrow owners and recovers from row/owner replacement", () => {
     const hud = createCrosshairHud();
     const { $, QOL: Q } = hud.sandbox.global;
@@ -549,6 +566,13 @@ test("crosshair compatibility search finds late rows outside verified paths and 
     number.text = "+5";
     hud.clock.advance(100);
     assert.strictEqual(value(hud.root, "clipSize").text, "+5", "fallback discovery must not slow value updates");
+
+    const retired = $.CreatePanel("Panel", null, "RetiredCompatibilityOwner");
+    unexpected.SetParent(retired); hud.clock.advance(100);
+    assert.strictEqual(row(hud.root, "clipSize").BHasClass("qol-hidden"), true,
+        "a living compatibility parent still requires ancestry validation");
+    unexpected.SetParent(source); hud.clock.advance(800);
+    assert.strictEqual(value(hud.root, "clipSize").text, "+5");
 
     Q.core.ConfigAdapter.loadFromFlat({ ENABLE_CROSSHAIR_STATS: 0 });
     hud.clock.advance(200);

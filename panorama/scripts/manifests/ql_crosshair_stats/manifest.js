@@ -162,7 +162,10 @@
             function _getSourceContainer(st, source, def, owners, nowMs) {
                 let c = st.sourceContainers[def.key];
                 const preferred = sourceScopes[SOURCE_OWNER[def.key]];
-                if (_isDirectChild(c, sourceParents[def.key]) && _belongsToSource(c, source)) {
+                const parent = sourceParents[def.key];
+                // Owner paths were validated once for this observation. Unknown
+                // compatibility parents still require the complete ancestry check.
+                if (_isDirectChild(c, parent) && (parent === source || owners.includes(parent) || _belongsToSource(c, source))) {
                     // A compatibility result must not mask a row later created
                     // at its verified path (old native generations may stay alive).
                     let current = null;
