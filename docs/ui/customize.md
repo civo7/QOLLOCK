@@ -71,7 +71,10 @@ the feature's existing content modes, filters and notification lifetime/count
 alongside appearance and visibility. Quick Buy has a scoped action in Shop as well
 as a shortcut in Customize. Its frame measures and moves the compact HUD contents,
 including enhanced prices and upcoming items, with an overall scale control;
-the open-shop queue and summary retain native docking.
+the open-shop queue and summary retain native docking. Customized Quick Buy
+geometry releases overflow clipping on its native root, LowerLeft and
+StatsAndModsContainer through the shared root-class projector. Reset or disabling
+its presentation owner restores native clipping; queue scrolling remains native.
 Minimap Location Text has independent offsets, scale and a
 visibility switch. Its native district gate, rotation and content remain intact.
 Base minimap exposes its overall

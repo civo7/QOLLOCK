@@ -129,16 +129,20 @@ for (const [id, prefix, feature] of [["minimapLocation", "MINIMAP_LOCATION_", "q
         for (const target of targets) {
             assert.equal(target.style.x, "40px"); assert.equal(target.style.y, "15px");
         }
+        if (id === "quickbuy") assert.equal(e.hud.root.BHasClass("qol_free_quickbuy_placement"), true);
         if (shop) { assert.equal(shop.style.x, undefined); assert.equal(owner.style.x, undefined); }
         e.edit(prefix + "SCALE", 135); clock.advance(1200);
         for (const target of targets) assert.equal(target.style.uiScale, "135%");
         if (shop) { assert.equal(shop.style.uiScale, undefined); assert.equal(owner.style.uiScale, undefined); }
         e.activate("QOLCustomizeReset"); clock.advance(1200);
         for (const target of targets) { assert.equal(target.style.x, undefined); assert.equal(target.style.uiScale, undefined); }
+        if (id === "quickbuy") assert.equal(e.hud.root.BHasClass("qol_free_quickbuy_placement"), false, "Reset restores native clipping");
         e.activate("QOLCustomizeUndo"); clock.advance(1200);
         assert.equal(targets.at(-1).style.x, "40px");
+        if (id === "quickbuy") assert.equal(e.hud.root.BHasClass("qol_free_quickbuy_placement"), true);
         e.activate("QOLCustomizeCancel"); clock.advance(1200);
         for (const target of targets) assert.equal(target.style.x, undefined);
+        if (id === "quickbuy") assert.equal(e.hud.root.BHasClass("qol_free_quickbuy_placement"), false, "Cancel releases draft overflow");
         if (id === "minimapLocation") assert.equal(owner.style.transform, "rotateZ(-30deg)");
         assert.equal(g.MOD_CONFIG[prefix + "X_OFFSET"], 0);
         Q.ui.customize.start(null, { elementId: id });
@@ -179,9 +183,11 @@ for (const [id, prefix, feature] of [["minimapLocation", "MINIMAP_LOCATION_", "q
         const registry = e.hud.sandbox.global.QOL.core.FeatureRegistry;
         registry.disable(feature);
         for (const target of next.targets) { assert.equal(target.style.x, undefined); assert.equal(target.style.uiScale, undefined); }
+        if (id === "quickbuy") assert.equal(e.hud.root.BHasClass("qol_free_quickbuy_placement"), false);
         registry.enable(feature); clock.advance(1200);
         assert.equal(next.targets.at(-1).style.x, "76px");
         assert.equal(next.targets.at(-1).style.uiScale, "125%");
+        if (id === "quickbuy") assert.equal(e.hud.root.BHasClass("qol_free_quickbuy_placement"), true);
         assert.deepEqual(clock.errors, []); assert.deepEqual(e.doc.eventErrors, []);
     });
 }

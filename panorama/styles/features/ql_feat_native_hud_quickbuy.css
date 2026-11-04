@@ -1,5 +1,12 @@
 /* QOLLOCK overrides for hud_quickbuy.css; loaded after the native baseline. */
 
+/* Moved/scaled compact HUD children can leave this native fit-width root.
+ * Keep the shop queue's own scrolling clips unchanged. */
+.qol_free_quickbuy_placement #CitadelHudQuickbuy
+{
+	overflow: noclip;
+}
+
 /* The extracted base contains a double-gShopOpen selector. QOLLOCK mirrors
    gShopOpen onto an additional HUD ancestor, so reset that accidental match to
    the current native queue position and let the native global toggle reveal it. */
