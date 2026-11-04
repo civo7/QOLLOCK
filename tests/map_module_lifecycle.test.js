@@ -570,6 +570,94 @@ function directCompass(e, settings = {}) {
     return { feature: create(), create, reads: () => reads };
 }
 
+test("compass translates one tape between graduations and retains heading geometry through wrap and resize", () => {
+    const e = fixture(), source = localPlayer(e, e.renderer, 40);
+    const { feature } = directCompass(e, { ENABLE_COMPASS_SPEED: 0 });
+    feature.onEnable();
+    const root = e.gameplay.FindChild("QOLCompassRoot"), tape = root.FindChildTraverse("QOLCompassTicks");
+    let tickWrites = 0, translations = 0, lookups = 0;
+    for (const tick of tape.Children()) {
+        tick.style = new Proxy(tick.style, { set(target, key, value) { tickWrites++; target[key] = value; return true; } });
+    }
+    tape.style = new Proxy(tape.style, { set(target, key, value) {
+        if (key === "transform") translations++;
+        target[key] = value; return true;
+    } });
+    for (const panel of [e.gameplay, root, ...createdTimerChildren(root)]) {
+        const find = panel.FindChild;
+        panel.FindChild = function (id) { if (id.startsWith("QOLCompass")) lookups++; return find.call(this, id); };
+    }
+    source.image.style.preTransformRotate2d = "41deg"; e.clock.advance(150);
+    assert.equal(tickWrites, 0, "fractional heading movement must not update 17 tick layouts");
+    assert.equal(translations, 1, "one tape transform moves every tick");
+    assert.equal(lookups, 0, "the ownership sweep already validated the complete tree");
+    const checkGeometry = (heading, stretchX = 100, stretchY = 100) => {
+        source.image.style.preTransformRotate2d = heading + "deg"; e.clock.advance(150);
+        const shift = /^translateX\(([-\d.]+)px\)$/.exec(tape.style.transform);
+        assert.ok(shift, "the tape owns the common fractional shift");
+        const unit = heading / 22.5, base = Math.floor(unit), fraction = unit - base;
+        tape.Children().forEach((tick, i) => {
+            const step = ((base + i - 8) % 16 + 16) % 16, cardinal = step % 4 === 0, major = step % 2 === 0;
+            const expected = Math.round(200 * stretchX / 100) / 2 - (cardinal ? 3 : 2) / 2 + (i - 8 - fraction) * 12.5 * stretchX / 100;
+            assert.ok(Math.abs(parseFloat(tick.style.x) + Number(shift[1]) - expected) < 0.006, `tick ${i} at ${heading}°`);
+            assert.equal(tick.BHasClass("Major"), major); assert.equal(tick.BHasClass("Cardinal"), cardinal);
+            assert.equal(tick.style.height, Math.max(4, Math.round((cardinal ? 34 : major ? 24 : 16) * stretchY / 100)) + "px");
+        });
+    };
+    for (const heading of [44, 45, 90, 359, 0, 1, 22.5]) checkGeometry(heading);
+    e.Q.core.ConfigStore.set("ql_compass", "COMPASS_STRETCH_X", 133);
+    e.Q.core.ConfigStore.set("ql_compass", "COMPASS_STRETCH_Y", 175);
+    feature.onSettingsChanged(); checkGeometry(22.5, 133, 175);
+    assert.match(readStyleSource("panorama/styles/features/ql_feat_compass.css"), /#QOLCompassTicks\s*\{[^}]*overflow:\s*noclip;/,
+        "the stationary compass box must clip the translated tape, not the moving tape itself");
+    feature.onDisable(); e.clean();
+});
+
+test("compass retries a rejected tape transform before caching the heading", () => {
+    const e = fixture(), source = localPlayer(e, e.renderer, 40), { feature } = directCompass(e);
+    feature.onEnable();
+    const tape = e.gameplay.FindChild("QOLCompassRoot").FindChildTraverse("QOLCompassTicks");
+    const failed = onceFailStyle(tape, "transform");
+    source.image.style.preTransformRotate2d = "41deg"; e.clock.advance(150);
+    assert.ok(failed() >= 2, "an incomplete tape shift must retry at the same heading");
+    assert.match(tape.style.transform, /^translateX\(/);
+    feature.onDisable(); e.clean();
+});
+
+test("compass rebuilds partially changed graduations when heading returns to its last successful value", () => {
+    const e = fixture(), source = localPlayer(e, e.renderer, 40), { feature } = directCompass(e);
+    feature.onEnable();
+    const tape = e.gameplay.FindChild("QOLCompassRoot").FindChildTraverse("QOLCompassTicks");
+    const center = tape.FindChild("QOLCompassTick8"), failed = onceFailStyle(tape, "transform");
+    assert.equal(center.BHasClass("Major"), false);
+    source.image.style.preTransformRotate2d = "46deg"; e.clock.advance(50);
+    assert.equal(failed(), 1); assert.equal(center.BHasClass("Major"), true);
+    source.image.style.preTransformRotate2d = "40deg"; e.clock.advance(50);
+    assert.equal(center.BHasClass("Major"), false, "failed movement cannot leave new graduations under the previous heading");
+    const shift = /^translateX\(([-\d.]+)px\)$/.exec(tape.style.transform);
+    assert.ok(Math.abs(parseFloat(center.style.x) + Number(shift[1]) - (99 - (40 / 22.5 - 1) * 12.5)) < 0.006);
+    feature.onDisable(); e.clean();
+});
+
+for (const className of ["QOLCompassTick", "Major", "Cardinal"]) test(`compass retries rejected ${className} before retaining the tape layout`, () => {
+    const e = fixture(); localPlayer(e, e.renderer, 0);
+    const { feature } = directCompass(e), create = e.$.CreatePanel;
+    let attempts = 0;
+    e.$.CreatePanel = (...args) => {
+        const panel = create(...args), set = panel.SetHasClass;
+        if (panel.id === "QOLCompassTick0") panel.SetHasClass = function (name, active) {
+            if (name === className && active && attempts++ === 0) return;
+            return set.call(this, name, active);
+        };
+        return panel;
+    };
+    feature.onEnable(); e.clock.advance(200);
+    assert.ok(attempts >= 2);
+    const tick = e.gameplay.FindChild("QOLCompassRoot").FindChildTraverse("QOLCompassTick0");
+    assert.equal(tick.BHasClass(className), true);
+    feature.onDisable(); e.clean();
+});
+
 test("compass owns every moved tick/readout child and contains inactive settings hooks", () => {
     const e = fixture(), source = localPlayer(e, e.renderer, 40), { feature, reads } = directCompass(e);
     feature.onSettingsChanged(); assert.equal(e.gameplay.FindChild("QOLCompassRoot"), null);

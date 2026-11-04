@@ -283,6 +283,7 @@
 
             let _inHideout = false;
             let _overlayHidden = true;
+            let _overlayReady = false;
 
             // Cached DOM references
             let _compassRoot = null;
@@ -337,6 +338,9 @@
                 if (!_isAlive(parent)) { _releaseOverlay(); return null; }
                 if ((_isAlive(_compassRoot) && _compassRoot.GetParent() !== parent) ||
                     (_isAlive(_speedRoot) && _speedRoot.GetParent() !== parent)) _releaseOverlay();
+                // The owned-tree sweep already validates every recorded child.
+                // Reconcile only after construction or an ownership change.
+                if (_overlayReady) return _compassRoot;
                 const ensure = (owner, type, id, previous) => {
                     const current = overlays.child(owner, type, id);
                     if (current !== previous) {
@@ -356,22 +360,26 @@
                 _speedRoot = ensure(parent, "Panel", "QOLSpeedRoot", _speedRoot);
                 _speedLabel = ensure(_speedRoot, "Label", "QOLSpeedLabel", _speedLabel);
                 const ticks = overlays.children(_compassTicksContainer, "Panel", COMPASS_TICK_ENTRIES);
+                let tickClassesReady = true;
                 ticks.forEach((tick, index) => {
                     if (tick !== _compassTicks[index]) {
                         layoutStyles.delete(_compassTicks[index]);
                         _lastRenderedHeadingDeg = null;
                     }
                     P.setClass(tick, "QOLCompassTick", true);
+                    tickClassesReady = _isAlive(tick) && tick.BHasClass("QOLCompassTick") && tickClassesReady;
                 });
                 _compassTicks = ticks;
-                if (![_compassRoot, _compassBox, _compassTicksContainer, _compassNeedle, _compassFadeLeft,
+                if (!tickClassesReady || ![_compassRoot, _compassBox, _compassTicksContainer, _compassNeedle, _compassFadeLeft,
                     _compassFadeRight, _compassReadout, _compassDegree, _speedRoot, _speedLabel, ...ticks].every(_isAlive)) {
                     _hideCompassOverlay(); return null;
                 }
+                _overlayReady = true;
                 return _compassRoot;
             }
 
             function _releaseOverlay() {
+                _overlayReady = false;
                 _hideCompassOverlay(); overlays.clear();
                 _compassRoot = _compassBox = _compassTicksContainer = _compassNeedle = _compassFadeLeft = _compassFadeRight = null;
                 _compassReadout = _compassDegree = _speedRoot = _speedLabel = null;
@@ -595,22 +603,33 @@
                 const unit = heading360 / COMPASS_TICK_STEP_DEG;
                 const base = Math.floor(unit), fraction = unit - base;
                 let complete = true;
-                _compassTicks.forEach((tick, i) => {
-                    const relative = i - center;
-                    const step = ((base + relative) % steps + steps) % steps;
-                    const major = step % 2 === 0, cardinal = step % 4 === 0;
-                    P.setClass(tick, "Major", major);
-                    P.setClass(tick, "Cardinal", cardinal);
-                    const width = cardinal ? 3 : 2;
-                    const height = Math.max(4, Math.round((cardinal ? 34 : major ? 24 : 16) * stretchY));
-                    const x = boxWidth * 0.5 - width * 0.5 + (relative - fraction) * COMPASS_TICK_SPACING_PX * stretchX;
-                    complete = sync(tick, { height: height + "px", x: x.toFixed(2) + "px" }) && complete;
-                });
+                const layoutChanged = _lastRenderedHeadingDeg === null || Math.floor(_lastRenderedHeadingDeg / COMPASS_TICK_STEP_DEG) !== base ||
+                    boxWidth !== _lastRenderedBoxWidth || stretchX !== _lastRenderedStretchX || stretchY !== _lastRenderedStretchY;
+                if (layoutChanged) {
+                    _compassTicks.forEach((tick, i) => {
+                        const relative = i - center;
+                        const step = ((base + relative) % steps + steps) % steps;
+                        const major = step % 2 === 0, cardinal = step % 4 === 0;
+                        P.setClass(tick, "Major", major);
+                        P.setClass(tick, "Cardinal", cardinal);
+                        complete = tick.BHasClass("Major") === major && tick.BHasClass("Cardinal") === cardinal && complete;
+                        const width = cardinal ? 3 : 2;
+                        const height = Math.max(4, Math.round((cardinal ? 34 : major ? 24 : 16) * stretchY));
+                        const x = boxWidth * 0.5 - width * 0.5 + relative * COMPASS_TICK_SPACING_PX * stretchX;
+                        complete = sync(tick, { height: height + "px", x: x.toFixed(4) + "px" }) && complete;
+                    });
+                }
+                const shift = -fraction * COMPASS_TICK_SPACING_PX * stretchX;
+                complete = sync(_compassTicksContainer, { transform: "translateX(" + shift.toFixed(4) + "px)" }) && complete;
                 if (complete) {
                     _lastRenderedHeadingDeg = heading360;
                     _lastRenderedBoxWidth = boxWidth;
                     _lastRenderedStretchX = stretchX;
                     _lastRenderedStretchY = stretchY;
+                } else {
+                    // A partial graduation change may already have moved ticks.
+                    // Returning to the previous heading must rebuild them too.
+                    _lastRenderedHeadingDeg = null;
                 }
             }
 
@@ -787,7 +806,7 @@
                 if (!_isAlive(hud) || (hud.id !== "Hud" && hud.paneltype !== "CitadelHud")) {
                     _releaseOverlay(); _releaseMinimapRuntime(); return;
                 }
-                overlays.sweep();
+                if (!overlays.sweep()) _overlayReady = false;
 
                 const inHideout = _isInHideout(hud);
                 if (inHideout) _hideCompassOverlay();

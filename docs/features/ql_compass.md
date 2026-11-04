@@ -46,9 +46,18 @@ using a loading/HUD-root fallback. A new HUD releases the previous readouts and
 native rotation/flip bindings before sampling current sources.
 
 Both readout trees use complete created-child ownership, including moved ticks
-and labels. Partial construction hides both readouts while native rotation keeps
+and labels. The ownership sweep validates the retained tree before heading work;
+construction is reconciled again only after an incomplete tree or ownership
+change. Between graduations, one tape transform supplies the fractional heading
+shift. Tick geometry and major/cardinal classes update on graduation, geometry
+or panel changes. The stationary compass box clips the translating tape. Partial
+class/style writes remain retryable before the heading is retained. Partial
+construction hides both readouts while native rotation keeps
 its independent lifetime. Immediate re-enable waits for previous asynchronous
 deletion, and inactive settings hooks cannot create panels or resume polling.
 `map_module_lifecycle.test.js` covers these cases alongside the preserved speed,
 rotation, source replacement and Base/Alt/Tab geometry regressions. Native
 composition and timing still require maintainer client verification.
+Check tape clipping, graduation transitions and the 360-degree wrap after
+compile/repack; effective positions preserve the previous geometry within its
+subpixel rounding precision.
