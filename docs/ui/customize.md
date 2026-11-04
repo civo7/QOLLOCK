@@ -69,7 +69,12 @@ The shop surface uses `Shop/MainPanel`, while recent purchases use the sibling
 `Shop/NavPanel/RecentPurchasesPanel` from the native shop layout. Properties exposes
 the feature's existing content modes, filters and notification lifetime/count
 alongside appearance and visibility. Quick Buy has a scoped action in Shop as well
-as a shortcut in Customize; it gains no independent canvas geometry. Base minimap exposes its overall
+as a shortcut in Customize. Its frame measures and moves the compact HUD contents,
+including enhanced prices and upcoming items, with an overall scale control;
+the open-shop queue and summary retain native docking.
+Minimap Location Text has independent offsets, scale and a
+visibility switch. Its native district gate, rotation and content remain intact.
+Base minimap exposes its overall
 opacity and the Minimalist switch; its background opacity appears only while
 that draft mode is enabled, including after history changes.
 
@@ -124,8 +129,8 @@ Native observation retains its separate acknowledgment checks.
 Idle frames are transparent. Hover and selection show an outline without a
 content tint. Frames belong to independent movable/resizable surfaces and
 explicitly measured standalone selections such as stamina/AP. Settings-only
-entries that inherit an owner's geometry (health warnings, top-bar details,
-quickbuy) remain in the catalog without a competing hit-test frame. Their native
+entries that inherit an owner's geometry (health warnings and top-bar details)
+remain in the catalog without a competing hit-test frame. Their native
 owners can still be measured for availability. Hover identifies the element by localized
 tooltip. Actual content and smaller surfaces have priority within larger family bounds;
 editor chrome remains above all frames. Ammo family pointer ownership follows

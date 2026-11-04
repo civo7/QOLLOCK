@@ -7,6 +7,7 @@
     _root.SETTINGS_LOCALE_TEXT["ru"] = {
     "All": "???",
     "Map References": "Подсказки на карте",
+    "Minimap Location Text": "Название локации на миникарте",
     "Marker Size": "Размер маркеров",
     "Route Size": "Размер маршрутов",
     "Show Crates": "Показывать ящики",

@@ -4,13 +4,13 @@
     "use strict";
     const Q = QOL;
     const P = Q.core.panel;
-    const scaled = new Set(["souls", "items", "stamina", "playerStats", "statsList", "speed", "abilityPoints", "damageReport"]);
+    const scaled = new Set(["souls", "items", "stamina", "playerStats", "statsList", "speed", "abilityPoints", "damageReport", "quickbuy"]);
     const opacityOwners = ["activeItems", "abilityPoints", "ammo", "stamina", "playerStats", "statsList", "compass", "speed", "zipBoost",
         "combatStatus", "unsecuredTimer", "unsecuredSouls", "keyboard", "damageReport", "chat"];
-    const elements = [...new Set([...scaled, ...opacityOwners])].map(id => Q.presentation.elements.find(element => element.id === id));
+    const positions = new Set(["abilityPoints", "stamina", "statsList", "quickbuy"]);
+    const elements = [...new Set([...scaled, ...opacityOwners, ...positions])].map(id => Q.presentation.elements.find(element => element.id === id));
     const opacityKeys = new Map(opacityOwners.map(id => [id,
         elements.find(element => element.id === id).fields.find(field => Q.settings.get(field.key).role === "opacity").key]));
-    const positions = new Set(["abilityPoints", "stamina", "statsList"]);
     function basePercent(element, root) {
         const has = name => !!root?.BHasClass(name);
         // base/hud.css and features/ql_feat_aspect_ratio.css own inventory scale.
@@ -79,11 +79,11 @@
                     if (Object.keys(styles).length) {
                         // Native active-player-stats XML keeps particle effects
                         // beside HudStatBlock; scale or hide them with it.
-                        const targets = element.id === "playerStats"
-                            ? [panel, P.findChild(owner, "CoreStatFXLayer")] : [panel];
+                        const targets = element.id === "playerStats" ? [panel, P.findChild(owner, "CoreStatFXLayer")]
+                            : element.id === "quickbuy" ? element.measurePanels(owner) : [panel];
                         for (const target of targets.filter(P.isAlive)) {
                             let targetStyles = styles;
-                            if (target !== panel) {
+                            if (element.id === "playerStats" && target !== panel) {
                                 // Native CSS owns a 300x500 FX viewport, with its
                                 // bottom 60px above the block (30px in shop).
                                 const blockBottom = hud.BHasClass("gShopOpen") ? 250 : 220;

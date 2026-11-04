@@ -7,6 +7,7 @@
     _root.SETTINGS_LOCALE_TEXT["en"] = {
     "All": "All",
     "Map References": "Map References",
+    "Minimap Location Text": "Minimap Location Text",
     "Marker Size": "Marker Size",
     "Route Size": "Route Size",
     "Show Crates": "Show Crates",

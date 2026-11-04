@@ -42,6 +42,14 @@
         ]),
         minimap("minimapAlt", "Minimap: Alt", zoomFields("ALT"), "alt"),
         minimap("minimapTab", "Minimap: Tab", zoomFields("TAB"), "tab"),
+        { id: "minimapLocation", name: "Minimap Location Text", group: "Minimap", path: [...mapHost, "minimap_location"],
+            resolve(hud) {
+                const P = QOL.core.panel;
+                const gameplay = P.findChild(P.findChildByClass(hud, "HudCore"), "gameplay_hud");
+                const host = P.findChild(P.findChildByClass(gameplay, "clamp_width"), "minimap_persp");
+                return P.findChild(host, "minimap_location");
+            },
+            fields: [toggle("ENABLE_MINIMAP_LOCATION"), ...geometry("MINIMAP_LOCATION_", true)] },
         ...[
             ["midBossTimer", "Mid Boss Timer", "Rejuv", "MINIMAP_MID_BOSS_", "ENABLE_MINIMAP_REJUV_TIMER"],
             ["buffTimer", "Buff Timer", "Buff", "MINIMAP_BUFF_", "ENABLE_MINIMAP_BUFF_TIMER"],
@@ -80,8 +88,20 @@
             t("DISABLE_SHOP_BLUE", "Blur", { inverted: true }), t("ENABLE_SHOP_STATS", "Shop Stats"),
             t("ENABLE_SIMPLIFY_SHOP_STATS", "Simplify Shop Stats", { when: session => Number(session.value("ENABLE_SHOP_STATS")) === 1 })
         ] },
-        { id: "quickbuy", name: "Quick Buy", group: "Shop", path: [...lower, "CitadelHudQuickbuy"], fields: [
+        { id: "quickbuy", name: "Quick Buy", group: "Shop", path: [...lower, "CitadelHudQuickbuy"], scaleKey: "QUICKBUY_SCALE",
+            resolve(hud) {
+                const P = QOL.core.panel;
+                const stats = P.findChild(P.findChildByClass(hud, "HudCore"), "StatsAndModsContainer");
+                return P.findChild(P.findChild(stats, "LowerLeft"), "CitadelHudQuickbuy");
+            },
+            // The native root spans the screen height. Only compact HUD content
+            // moves; the open-shop queue and summary keep their native docking.
+            measurePanels(target) {
+                return QOL.core.panel.isAlive(target) ? target.Children().filter(child =>
+                    child.BHasClass("HudQuickbuyElement") || ["QuickbuyNextSoulsNeeded", "QuickbuyUpcomingPreviewContainer", "KeyboardHints"].includes(child.id)) : [];
+            }, fields: [
             t("DISABLE_QUICK_BUY", "Quick Buy", { inverted: true }),
+            ...geometry("QUICKBUY_", true),
             t("ENABLE_ENHANCED_QUICKBUY", "Enhanced", { when: session => Number(session.value("DISABLE_QUICK_BUY")) !== 1 }),
             content("ENHANCED_QUICKBUY_COUNT", "Enhanced Count", null, { when: session => Number(session.value("DISABLE_QUICK_BUY")) !== 1 && Number(session.value("ENABLE_ENHANCED_QUICKBUY")) === 1 }),
             t("ENABLE_QUICKBUY_CLICK_TO_NOTIFY", "Click to Notify")

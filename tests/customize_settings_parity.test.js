@@ -152,7 +152,7 @@ test("Customize launcher pairs shortcuts in catalog order and keeps odd groups h
     assert.deepEqual(env.doc.eventErrors, []); assert.deepEqual(env.clock.errors, []);
 });
 
-test("Customize tab shortcuts open feature scopes, including settings-only Quick Buy", () => {
+test("Customize tab shortcuts open feature scopes, including Quick Buy", () => {
     const env = load(), g = env.global;
     g.QOL.ui.window.setOpen(true); env.clock.advance(500);
     for (const id of ["healthbar", "topBar", "quickbuy", "keyboard", "testingTools"]) {

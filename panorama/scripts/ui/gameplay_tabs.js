@@ -538,6 +538,9 @@
         }
 
         createSep(list);
+        createTitle(list, "Minimap Location Text", null, "minimapLocation");
+        if (createRow) createRow(list, "Minimap Location Text", "ENABLE_MINIMAP_LOCATION", "toggle", null, null, null, null, "");
+        createSep(list);
         createTitle(list, "Addons");
         if (createRow) {
             createRow(list, "Elevation Markers", "ENABLE_MINIMAP_ELEVATION_MARKERS", "toggle", null, null, null, null, "Shows relative elevation difference between you and players.");
