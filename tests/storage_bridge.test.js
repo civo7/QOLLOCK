@@ -235,6 +235,86 @@ function connectEmbeddedPage(env, storage = new Map(), options = {}) {
     return currentPage;
 }
 
+test("storage_bridge: slow progressing saves remain complete beyond thirty seconds", async () => {
+    const env = createTestEnvironment(), bridge = env.sandbox.QOL.core.storageBridge;
+    const storage = new Map();
+    connectEmbeddedPage(env, storage);
+    const fire = env.fireTitleEvent;
+    env.fireTitleEvent = (panel, title) => env.clock.schedule(3, () => fire(panel, title));
+    const value = "x".repeat(18000);
+    const saving = bridge.save("slow", value);
+    env.clock.advance(40000);
+    assert.equal(await saving, true);
+    assert.equal(storage.get("slow"), value);
+    assert.deepEqual(env.clock.errors, []);
+});
+
+test("storage_bridge: page errors retire pending work and reconnect without a new panel", async () => {
+    const env = createTestEnvironment(), bridge = env.sandbox.QOL.core.storageBridge;
+    const storage = new Map();
+    connectEmbeddedPage(env, storage);
+    const first = assert.rejects(bridge.load("settings"), /StorageAccessDenied/);
+    const second = assert.rejects(bridge.save("queued", "stale"), /StorageAccessDenied/);
+    env.fireTitleEvent(bridge.getPanel(), "QOL_BRIDGE_ERROR:StorageAccessDenied");
+    const panel = bridge.getPanel();
+    env.clock.advance(1000);
+    await Promise.all([first, second]);
+    assert.equal(bridge.getPanel(), panel);
+    assert.equal(bridge.isReady(), true);
+    assert.equal(storage.has("queued"), false);
+    const saving = bridge.save("fresh", "value");
+    env.clock.advance(0);
+    assert.equal(await saving, true);
+    assert.equal(storage.get("fresh"), "value");
+});
+
+test("storage_bridge: replacement retires old requests before a fresh handshake", async () => {
+    const env = createTestEnvironment(), bridge = env.sandbox.QOL.core.storageBridge;
+    const old = bridge.getPanel();
+    env.fireTitleEvent(old, "QOL_BRIDGE_READY:frag1");
+    const retired = assert.rejects(bridge.load("old"), /replaced/);
+    old.IsValid = () => false;
+    const replacement = bridge.init(env.hudPanel, { autoload: false });
+    await retired;
+    env.fireTitleEvent(old, "QOL_BRIDGE_READY:frag1");
+    assert.equal(bridge.isReady(), false);
+    env.fireTitleEvent(replacement, "QOL_BRIDGE_READY:frag1");
+    const fresh = bridge.save("new", "value");
+    replyToCurrentRequest(env);
+    assert.equal(await fresh, true);
+});
+
+test("storage_bridge: invalid UTF-8 rejects without overwriting disk or dispatching a request", async () => {
+    const env = createTestEnvironment(), bridge = env.sandbox.QOL.core.storageBridge;
+    const storage = new Map([["text", "previous"]]);
+    connectEmbeddedPage(env, storage);
+    const before = env.urls.length;
+    let callbackError;
+    await assert.rejects(bridge.save("text", "\ud800", error => { callbackError = error; }));
+    await assert.rejects(bridge.save("\ud800", "value"));
+    await assert.rejects(bridge.load("\ud800"));
+    await assert.rejects(bridge.remove("\ud800"));
+    assert.ok(callbackError);
+    assert.equal(env.urls.length, before);
+    assert.equal(storage.get("text"), "previous");
+});
+
+test("storage_bridge: disabled autoload cannot apply its in-flight result or block re-enable", async () => {
+    const env = createTestEnvironment(), bridge = env.sandbox.QOL.core.storageBridge;
+    bridge.enableAutoload(true);
+    env.fireTitleEvent(bridge.getPanel(), "QOL_BRIDGE_READY:frag1");
+    const before = JSON.stringify(env.sandbox.MOD_CONFIG);
+    bridge.enableAutoload(false);
+    replyToCurrentRequest(env, JSON.stringify({ BRIDGE_BUFF_START: 15 }));
+    await flush();
+    assert.equal(JSON.stringify(env.sandbox.MOD_CONFIG), before);
+    bridge.enableAutoload(true);
+    bridge.init(env.hudPanel);
+    replyToCurrentRequest(env, JSON.stringify({ BRIDGE_BUFF_START: 20 }));
+    await flush();
+    assert.equal(env.sandbox.MOD_CONFIG.BRIDGE_BUFF_START, 20);
+});
+
 test("Auto-Save: production settings edits reach the embedded page and restore in a fresh realm", async () => {
     const e = require("./load_settings_environment")(), g = e.global;
     e.hud.sandbox.global.QOL.core.App.shutdown();

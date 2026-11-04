@@ -59,37 +59,7 @@
     let _autoloadState = null;
     let _settingsIntentGeneration = 0;
 
-    const _b64Chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/=";
-
-    const _utf8ToBase64 = (str) => {
-        if (typeof str !== "string") str = String(str);
-        const btoaFn = (typeof globalThis !== "undefined" && typeof globalThis.btoa === "function")
-            ? globalThis.btoa : null;
-        if (btoaFn) {
-            try {
-                return btoaFn(unescape(encodeURIComponent(str)));
-            } catch (_) {}
-        }
-        try {
-            const utf8 = unescape(encodeURIComponent(str));
-            let res = "";
-            for (let i = 0; i < utf8.length; i += 3) {
-                const a = utf8.charCodeAt(i);
-                const b = i + 1 < utf8.length ? utf8.charCodeAt(i + 1) : NaN;
-                const c = i + 2 < utf8.length ? utf8.charCodeAt(i + 2) : NaN;
-                const b1 = (a >> 2) & 0x3F;
-                const b2 = ((a & 0x3) << 4) | ((b >> 4) & 0xF);
-                const b3 = ((b & 0xF) << 2) | ((c >> 6) & 0x3);
-                const b4 = c & 0x3F;
-                res += _b64Chars.charAt(b1) + _b64Chars.charAt(b2) +
-                    (isNaN(b) ? "=" : _b64Chars.charAt(b3)) +
-                    (isNaN(c) ? "=" : _b64Chars.charAt(b4));
-            }
-            return res;
-        } catch (_) {
-            return "";
-        }
-    };
+    const _utf8ToBase64 = str => QOL_CODEC.EncodeBase64Raw(unescape(encodeURIComponent(String(str))));
 
     const _log = (msg) => {
         if (typeof QOL_INFO === "function") {
@@ -122,7 +92,8 @@
 
     const _isRestoreStateCurrent = (state) => {
         const current = _captureRestoreState();
-        return !!state && _isPanelAlive(state.root) && state.root === current.root &&
+        return !!state && (state.autoload === undefined || (_autoloadEnabled && state.autoload === _autoloadState)) &&
+            _isPanelAlive(state.root) && state.root === current.root &&
             state.hud === current.hud && state.generation === current.generation &&
             state.stamp !== null && state.stamp !== undefined && state.stamp === current.stamp;
     };
@@ -135,7 +106,9 @@
     };
 
     const _setAutoloadEnabled = (flag) => {
-        if (flag && !_autoloadEnabled) _autoloadState = _captureRestoreState();
+        if (!!flag === _autoloadEnabled) return;
+        _autoloadState = flag ? _captureRestoreState() : null;
+        _hasAutoloaded = false;
         _autoloadEnabled = !!flag;
     };
 
@@ -153,23 +126,24 @@
         return promise;
     };
 
-    const _runAutoload = (retry = false) => {
-        if (!_autoloadEnabled || _hasAutoloaded || !_bridgeReady) return;
+    const _runAutoload = (retry = false, state = _autoloadState) => {
+        if (!_autoloadEnabled || state !== _autoloadState || _hasAutoloaded || !_bridgeReady) return;
         _hasAutoloaded = true;
         if (!_isRestoreStateCurrent(_autoloadState)) {
             _log("Startup restore skipped: settings changed since initialization.");
             return;
         }
-        _loadSettings(_autoloadState).then(result => {
+        _loadSettings({ ...state, autoload: state }).then(result => {
             if (result.skipped) _log("Startup restore skipped: newer user edits exist.");
             else if (result.notFound) _log("No saved settings found; keeping current settings.");
             else _log("Saved settings restored from CEF storage.");
         }, err => {
             _logWarn(`Startup restore${retry ? " retry" : ""} failed: ${err.message || err}`);
+            if (state !== _autoloadState) return;
             if (!retry && typeof $.Schedule === "function") {
                 _hasAutoloaded = false;
                 // Retain the original startup stamp across retries.
-                $.Schedule(5.0, () => _runAutoload(true));
+                $.Schedule(5.0, () => _runAutoload(true, state));
             }
         });
     };
@@ -369,6 +343,16 @@
         });
     };
 
+    const _retireRequests = (error) => {
+        _bridgeReady = false;
+        _bridgeToken = "";
+        _cancelWatchdog();
+        const ids = Object.keys(_pendingRequests);
+        _requestQueue = [];
+        _activeRequest = null;
+        for (const id of ids) _finishRequest(id, error, null);
+    };
+
     /**
      * Handles HTMLTitle events from the CitadelHTMLPanel.
      */
@@ -381,6 +365,7 @@
             _bridgeToken = token ? token[1] : "";
             if (_bridgeReady) return;
             _bridgeReady = true;
+            _initAttempts = 0;
             _log("Bridge connected and ready.");
             _processQueue();
 
@@ -411,8 +396,9 @@
         }
 
         if (title.indexOf("QOL_BRIDGE_ERROR:") === 0) {
-            _bridgeReady = false;
             _logWarn(`Bridge reported error: ${title.slice(17)}`);
+            _retireRequests(new Error(title.slice(17)));
+            if (_initAttempts < MAX_INIT_ATTEMPTS) _scheduleWatchdog(CACHED_PAGE_RETRY_SEC);
             return;
         }
 
@@ -509,9 +495,12 @@
         }
 
         if (_isPanelAlive(_bridgePanel)) {
+            if (!_bridgeReady && !_watchdog) _scheduleWatchdog(CACHED_PAGE_RETRY_SEC);
             _runAutoload();
             return _bridgePanel;
         }
+
+        if (_bridgePanel) _retireRequests(new Error("Bridge panel replaced"));
 
         const parent = targetParent || (typeof $.GetContextPanel === "function" ? $.GetContextPanel() : null);
         if (!parent) {
@@ -584,51 +573,63 @@
      * Low-level key/value save with automatic Base64 encoding and multi-part chunking.
      */
     const save = (key, val, callback) => {
-        const valStr = typeof val === "string" ? val : JSON.stringify(val);
-        const b64Key = _utf8ToBase64(String(key));
+        try {
+            const valStr = typeof val === "string" ? val : JSON.stringify(val);
+            const b64Key = _utf8ToBase64(String(key));
 
-        if (valStr.length <= CHUNK_SIZE) {
-            const b64Val = _utf8ToBase64(valStr);
+            if (valStr.length <= CHUNK_SIZE) {
+                const b64Val = _utf8ToBase64(valStr);
+                return _sendRequest((id) => {
+                    _sendFragment("save", [b64Key, b64Val, id, true]);
+                }, callback);
+            }
+
+            // Multi-part save for large configs (SEC-02)
+            const chunks = [];
+            for (let i = 0; i < valStr.length;) {
+                let end = Math.min(i + CHUNK_SIZE, valStr.length);
+                const last = valStr.charCodeAt(end - 1);
+                const next = valStr.charCodeAt(end);
+                if (last >= 0xD800 && last <= 0xDBFF && next >= 0xDC00 && next <= 0xDFFF) end--;
+                chunks.push(_utf8ToBase64(valStr.slice(i, end)));
+                i = end;
+            }
+
             return _sendRequest((id) => {
-                _sendFragment("save", [b64Key, b64Val, id, true]);
-            }, callback);
+                const total = chunks.length;
+                _sendFragment("saveChunk", [b64Key, 0, total, chunks[0], id, true]);
+            }, callback, { b64Key, saveChunks: chunks });
+        } catch (error) {
+            return _withCallback(Promise.reject(error), callback);
         }
-
-        // Multi-part save for large configs (SEC-02)
-        const chunks = [];
-        for (let i = 0; i < valStr.length;) {
-            let end = Math.min(i + CHUNK_SIZE, valStr.length);
-            const last = valStr.charCodeAt(end - 1);
-            const next = valStr.charCodeAt(end);
-            if (last >= 0xD800 && last <= 0xDBFF && next >= 0xDC00 && next <= 0xDFFF) end--;
-            chunks.push(_utf8ToBase64(valStr.slice(i, end)));
-            i = end;
-        }
-
-        return _sendRequest((id) => {
-            const total = chunks.length;
-            _sendFragment("saveChunk", [b64Key, 0, total, chunks[0], id, true]);
-        }, callback, { b64Key, saveChunks: chunks });
     };
 
     /**
      * Low-level key/value load.
      */
     const load = (key, callback) => {
-        const b64Key = _utf8ToBase64(String(key));
-        return _sendRequest((id) => {
-            _sendFragment("load", [b64Key, id, true]);
-        }, callback);
+        try {
+            const b64Key = _utf8ToBase64(String(key));
+            return _sendRequest((id) => {
+                _sendFragment("load", [b64Key, id, true]);
+            }, callback);
+        } catch (error) {
+            return _withCallback(Promise.reject(error), callback);
+        }
     };
 
     /**
      * Low-level key removal.
      */
     const remove = (key, callback) => {
-        const b64Key = _utf8ToBase64(String(key));
-        return _sendRequest((id) => {
-            _sendFragment("remove", [b64Key, id, true]);
-        }, callback);
+        try {
+            const b64Key = _utf8ToBase64(String(key));
+            return _sendRequest((id) => {
+                _sendFragment("remove", [b64Key, id, true]);
+            }, callback);
+        } catch (error) {
+            return _withCallback(Promise.reject(error), callback);
+        }
     };
 
     const _parseStoredSettings = (raw) => {
