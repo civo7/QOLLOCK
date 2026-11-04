@@ -203,8 +203,7 @@
                     const parts = purchaseParts(row, model.shop, model.mode);
                     return { row, name: P.readText(parts.recentModPurchaseName).trim(),
                         time: model.mode ? P.readText(parts.recentTimePurchased).trim() : "",
-                        hero: model.mode ? P.readText(parts.recentModPurchaserHero).trim() : "", icon: parts.mod_icon,
-                        classes: model.shop ? PURCHASE_CLASSES.filter(cls => row.BHasClass(cls)) : null };
+                        hero: model.mode ? P.readText(parts.recentModPurchaserHero).trim() : "", icon: parts.mod_icon };
                 });
             }
             function filterContext() {
@@ -214,11 +213,6 @@
                 };
             }
             const showFilter = (filter, context) => filter.spectator === undefined || filter.spectator === context.spectator;
-            function filterHides(filter, purchase, context) {
-                let cls = filter.purchaseClass;
-                if (!cls && context.team) cls = "isTeam" + (filter.localTeam ? context.team : 3 - context.team) + "Purchase";
-                return !filter.active && showFilter(filter, context) && !!cls && purchase.classes.indexOf(cls) >= 0;
-            }
             function createControls() {
                 if (filterControlsReady || !P.isAlive(shop)) return;
                 // Clear partially-created owned roots before retrying creation.
@@ -272,10 +266,18 @@
                     usedStyles.add(shop);
                     createControls();
                     const context = filterContext();
-                    for (const filter of filters) P.setClass(toggles.get(filter.id), "filterButtonHidden", !showFilter(filter, context));
+                    const hiddenClasses = [];
+                    for (const filter of filters) {
+                        const shown = showFilter(filter, context);
+                        P.setClass(toggles.get(filter.id), "filterButtonHidden", !shown);
+                        if (!filter.active && shown) {
+                            const cls = filter.purchaseClass || (context.team ? "isTeam" + (filter.localTeam ? context.team : 3 - context.team) + "Purchase" : null);
+                            if (cls) hiddenClasses.push(cls);
+                        }
+                    }
                     const imageMap = icons();
                     for (const purchase of purchases) {
-                        nativeClass(purchase.row, "filterHidden", filters.some(filter => filterHides(filter, purchase, context)));
+                        nativeClass(purchase.row, "filterHidden", hiddenClasses.some(cls => purchase.row.BHasClass(cls)));
                         usedClasses.add(purchase.row);
                         const icon = purchase.icon;
                         const image = imageMap[purchase.name];
@@ -297,7 +299,7 @@
                     const same = previous && previous.name === purchase.name && previous.time === purchase.time &&
                         (!previous.hero || !purchase.hero || previous.hero === purchase.hero);
                     if (historyReady && !same && !purchase.row.BHasClass("filterHidden")) {
-                        fresh.push({ ...purchase, classes: purchase.classes || PURCHASE_CLASSES.filter(cls => purchase.row.BHasClass(cls)),
+                        fresh.push({ ...purchase, classes: PURCHASE_CLASSES.filter(cls => purchase.row.BHasClass(cls)),
                             observedAt: Q.utils.PerfNowMs() });
                     }
                     next.set(purchase.row, { name: purchase.name, time: purchase.time, hero: purchase.hero || (previous && previous.hero) || "" });

@@ -17,8 +17,11 @@ The current history container holds purchase rows as direct children; row
 discovery does not traverse native hero-image descendants. The purchase snippet's
 labels and icon are direct row children. Each
 observation snapshots those siblings once and reads the values needed by active
-surfaces; shop-only mode omits notification time/hero reads, and notification-only
-mode copies tier/team/type classes when observing a new event. No
+surfaces; shop-only mode omits notification time/hero reads. Shop filtering reads
+only classes excluded by the currently applicable filters. Notification modes
+snapshot the complete tier/team/type class set only when observing a new event,
+including when the shop surface is enabled; pending delivery retains that
+snapshot. No
 leaf handles are retained across polls. Nested compatibility layouts still use
 the existing class traversal fallback. Purchase observation frequency, late
 hero completion, event deduplication and notification deadlines are unchanged.
