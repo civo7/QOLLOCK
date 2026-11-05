@@ -11,7 +11,7 @@
 		pre-transform-scale2d: 1;
 		box-shadow: 0px 0px 10px 3.0 shardColor;
 	}
-
+	
 	50%
 	{
 		brightness: 1.1;
@@ -19,7 +19,7 @@
 		pre-transform-scale2d: 1.05;
 		box-shadow: 0px 0px 30px 3.0 shardColor;
 	}
-
+	
 	100%
 	{
 		brightness: 0.9;
@@ -27,7 +27,7 @@
 		pre-transform-scale2d: 1;
 		box-shadow: 0px 0px 10px 3.0 shardColor;
 	}
-
+	
 }
 
 @keyframes 'quickbuy_blocked_pulse'
@@ -37,19 +37,19 @@
 		brightness: 0.9;
 		box-shadow: 0px 0px 6px 2.0 warningRed&88;
 	}
-
+	
 	50%
 	{
 		brightness: 1.2;
 		box-shadow: 0px 0px 20px 3.0 warningRed;
 	}
-
+	
 	100%
 	{
 		brightness: 0.9;
 		box-shadow: 0px 0px 6px 2.0 warningRed&88;
 	}
-
+	
 }
 
 @keyframes 'quickbuy_blocked_reason_bounce'
@@ -58,27 +58,27 @@
 	{
 		transform: translateY( 0px );
 	}
-
+	
 	30%
 	{
 		transform: translateY( -10px );
 	}
-
+	
 	60%
 	{
 		transform: translateY( 0px );
 	}
-
+	
 	80%
 	{
 		transform: translateY( -3px );
 	}
-
+	
 	100%
 	{
 		transform: translateY( 0px );
 	}
-
+	
 }
 
 @keyframes 'quickbuy_high_souls_bounce'
@@ -87,32 +87,32 @@
 	{
 		transform: translateY( 0px );
 	}
-
+	
 	2%
 	{
 		transform: translateY( -14px );
 	}
-
+	
 	4%
 	{
 		transform: translateY( 0px );
 	}
-
+	
 	5.5%
 	{
 		transform: translateY( -5px );
 	}
-
+	
 	7%
 	{
 		transform: translateY( 0px );
 	}
-
+	
 	100%
 	{
 		transform: translateY( 0px );
 	}
-
+	
 }
 
 #QuickbuyQueue
@@ -220,6 +220,7 @@
 	vertical-align: bottom;
 	flow-children: down;
 	margin-bottom: 15px;
+	visibility: collapse;
 }
 
 .gHighUnspentSouls #HudMini
@@ -229,9 +230,9 @@
 	animation-iteration-count: infinite;
 }
 
-.viewing_as_player.dead #HudMini
+.ShowMiniQuickbuy #HudMini
 {
-	visibility: collapse;
+	visibility: visible;
 }
 
 .gShopOpen #HudMini

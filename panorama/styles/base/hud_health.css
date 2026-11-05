@@ -26,17 +26,17 @@
 	{
 		background-color: #FCFF6D00;
 	}
-
+	
 	50%
 	{
 		background-color: #FCFF6D00;
 	}
-
+	
 	100%
 	{
 		background-color: #FCFF6D00;
 	}
-
+	
 }
 
 @keyframes 'health_pulse'
@@ -45,17 +45,17 @@
 	{
 		background-color: #FF410D00;
 	}
-
+	
 	50%
 	{
 		background-color: #FF410D00;
 	}
-
+	
 	100%
 	{
 		background-color: #FF410D00;
 	}
-
+	
 }
 
 @keyframes 'health_pulse_text'
@@ -64,17 +64,17 @@
 	{
 		pre-transform-scale2d: 1;
 	}
-
+	
 	50%
 	{
 		pre-transform-scale2d: 1.08;
 	}
-
+	
 	100%
 	{
 		pre-transform-scale2d: 1;
 	}
-
+	
 }
 
 @keyframes 'health_pulse_text2'
@@ -83,17 +83,17 @@
 	{
 		pre-transform-scale2d: 1;
 	}
-
+	
 	50%
 	{
 		pre-transform-scale2d: 1.03;
 	}
-
+	
 	100%
 	{
 		pre-transform-scale2d: 1;
 	}
-
+	
 }
 
 @keyframes 'vibrate3'
@@ -102,27 +102,27 @@
 	{
 		pre-transform-scale2d: 1;
 	}
-
+	
 	30%
 	{
 		pre-transform-scale2d: 1.03;
 	}
-
+	
 	45%
 	{
 		pre-transform-scale2d: 1.05;
 	}
-
+	
 	50%
 	{
 		pre-transform-scale2d: 1.03;
 	}
-
+	
 	90%
 	{
 		pre-transform-scale2d: 1;
 	}
-
+	
 }
 
 @keyframes 'vibrate'
@@ -131,33 +131,33 @@
 	{
 		pre-transform-scale2d: 1;
 	}
-
+	
 	30%
 	{
 		pre-transform-scale2d: 1.1;
 	}
-
+	
 	45%
 	{
 		pre-transform-scale2d: 1.05;
 	}
-
+	
 	50%
 	{
 		pre-transform-scale2d: 1.1;
 	}
-
+	
 	90%
 	{
 		pre-transform-scale2d: 1;
 	}
-
+	
 }
 
 #health_bar
 {
 	background-color: #333333ea;
-	width: 66px;
+	width: 64px;
 	height: 212px;
 	margin: 4px 0px 1px 1px;
 	opacity-mask: url("s2r://panorama/images/hud/healthbar/healthbar_backer_mask.vsvg");
@@ -368,17 +368,17 @@
 	{
 		wash-color: none;
 	}
-
+	
 	50%
 	{
 		wash-color: green;
 	}
-
+	
 	100%
 	{
 		wash-color: none;
 	}
-
+	
 }
 
 .health_regen_boosted .regen_container
