@@ -76,11 +76,14 @@ test("settings-only owners cannot cover healthbar, top bar or left-side HUD with
     rect(add(env, left, "CitadelHudQuickbuy"), 365, 1080);
     rect(add(env, core, "TopBar"), 1920, 1080);
     env.global.QOL.ui.customize.start();
-    for (const id of ["healthWarnings", "quickbuy", "objectives", "nicknames", "ranks", "ultimates", "topBarWarnings", "urn", "buffTimers", "abilities"]) {
+    for (const id of ["healthWarnings", "objectives", "nicknames", "ranks", "ultimates", "topBarWarnings", "urn", "buffTimers", "abilities"]) {
         const frame = env.em.FindChildTraverse("QOLCustomizeFrame_" + id);
         assert.equal(frame, null, id + " must not intercept input");
         assert.equal(env.em.FindChildTraverse("QOLCustomizeSelect_" + id), null, id + " belongs in its own settings section");
     }
+    const quickbuyFrame = env.em.FindChildTraverse("QOLCustomizeFrame_quickbuy");
+    assert.ok(quickbuyFrame, "Quick Buy now has independent geometry");
+    assert.equal(quickbuyFrame.visible, false, "a bare full-height root cannot intercept input without compact content");
     assert.equal(env.em.FindChildTraverse("QOLCustomizeFrame_healthbar").visible, true);
     activate(env, "QOLCustomizeCancel"); env.clock.advance(500);
     env.global.QOL.ui.customize.start(null, { elementId: "healthWarnings" });

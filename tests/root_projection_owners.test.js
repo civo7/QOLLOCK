@@ -2,7 +2,9 @@
 
 const test = require("node:test");
 const assert = require("node:assert/strict");
+const path = require("node:path");
 const { createHud } = require("../scripts/simulator");
+const { inspect } = require("../scripts/trace_style_sources");
 const gunData = require("./helpers/native_gun");
 
 const scenarios = [
@@ -33,6 +35,40 @@ test("reticle overflow projection combines owners and releases unavailable prese
     refresh(); assert.equal(unclipped(), false, "native overflow returns without a forced inline style");
     registry.disable("ql_ammo");
     assert.deepEqual(env.clock.errors, []);
+});
+
+test("Quick Buy overflow follows customized geometry and its presentation owner", () => {
+    const env = setup(), registry = env.Q.core.FeatureRegistry;
+    const refresh = () => env.Q.core.hud.refreshRootClasses(env.root);
+    const unclipped = () => env.root.BHasClass("qol_free_quickbuy_placement");
+    registry.enable("ql_presentation_scale"); refresh(); assert.equal(unclipped(), false);
+    env.Q.core.ConfigStore.set("ql_presentation_scale", "QUICKBUY_X_OFFSET", 1500);
+    refresh(); assert.equal(unclipped(), true, "right-side placement escapes narrow native owners");
+    env.Q.core.ConfigStore.set("ql_presentation_scale", "QUICKBUY_X_OFFSET", 0);
+    env.Q.core.ConfigStore.set("ql_presentation_scale", "QUICKBUY_Y_OFFSET", -900);
+    refresh(); assert.equal(unclipped(), true, "vertical placement also releases clipping");
+    env.Q.core.ConfigStore.set("ql_presentation_scale", "QUICKBUY_Y_OFFSET", 0);
+    env.Q.core.ConfigStore.set("ql_presentation_scale", "QUICKBUY_SCALE", 150);
+    refresh(); assert.equal(unclipped(), true, "scale-only customization can leave the original bounds");
+    registry.disable("ql_presentation_scale"); refresh(); assert.equal(unclipped(), false);
+    registry.enable("ql_presentation_scale"); refresh(); assert.equal(unclipped(), true);
+    env.Q.core.ConfigStore.set("ql_presentation_scale", "QUICKBUY_SCALE", 100);
+    refresh(); assert.equal(unclipped(), false, "default geometry restores native overflow");
+    assert.deepEqual(env.clock.errors, []);
+});
+
+test("Quick Buy overflow opens verified layout owners through their own native stylesheet chains", () => {
+    // Source routing and selector scope only; the simulator does not rasterize
+    // Panorama overflow. The maintainer must verify clipping after repacking.
+    const report = inspect({ root: path.resolve(__dirname, ".."), token: ".qol_free_quickbuy_placement", property: "overflow",
+        layout: "panorama/layout/hud.xml" });
+    assert.equal(report.matches.length, 1, "only the moved root's ancestors need overflow overrides");
+    const match = report.matches[0];
+    assert.equal(match.file, "panorama/styles/features/ql_feat_native_hud.css");
+    assert.equal(match.selectedLayoutRoute, true);
+    assert.deepEqual(match.selector.split(",").map(selector => selector.trim()),
+        [".qol_free_quickbuy_placement #StatsAndModsContainer", ".qol_free_quickbuy_placement #StatsAndModsContainer #LowerLeft"]);
+    assert.deepEqual(match.declarations.map(item => [item.property, item.value]), [["overflow", "noclip"]]);
 });
 
 test("shop overflow projection leaves native scrolling alone and combines geometry owners", () => {

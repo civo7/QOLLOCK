@@ -22,7 +22,7 @@
         if (!P.isAlive(owner.hud) || Q.ui.customizeSession.resolveHud(owner.root) !== owner.hud) return;
         const open = owner.hud.BHasClass("gShopOpen");
         if (owner.shopOpened && open) owner.shopObservedOpen = true;
-        if (["shop", "recentPurchases", "quickbuy"].includes(selected?.id)) {
+        if (["shop", "recentPurchases"].includes(selected?.id)) {
             if (!owner.shopOpened && !open) {
                 // Maintainer-verified toggle; never dispatch it again on polls or reselection.
                 owner.shopOpened = Q.ui.consoleTab.runConsoleCommand("citadel_open_hero_sheet");

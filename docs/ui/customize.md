@@ -69,7 +69,17 @@ The shop surface uses `Shop/MainPanel`, while recent purchases use the sibling
 `Shop/NavPanel/RecentPurchasesPanel` from the native shop layout. Properties exposes
 the feature's existing content modes, filters and notification lifetime/count
 alongside appearance and visibility. Quick Buy has a scoped action in Shop as well
-as a shortcut in Customize; it gains no independent canvas geometry. Base minimap exposes its overall
+as a shortcut in Customize. Its frame measures the compact HUD contents, including
+enhanced prices and upcoming items. Runtime moves and scales the native Quick Buy
+root in gameplay so its bounds travel with its contents. Opening the shop releases
+that geometry; closing it reapplies the HUD placement through the verified shop
+events, with ordinary discovery as recovery. The shop queue and summary retain
+native docking and scrolling. Customized geometry releases ancestor clipping on
+LowerLeft and StatsAndModsContainer through the shared root-class projector.
+Reset or disabling its presentation owner restores native ancestor clipping.
+Minimap Location Text has independent offsets, scale and a
+visibility switch. Its native district gate, rotation and content remain intact.
+Base minimap exposes its overall
 opacity and the Minimalist switch; its background opacity appears only while
 that draft mode is enabled, including after history changes.
 
@@ -124,8 +134,8 @@ Native observation retains its separate acknowledgment checks.
 Idle frames are transparent. Hover and selection show an outline without a
 content tint. Frames belong to independent movable/resizable surfaces and
 explicitly measured standalone selections such as stamina/AP. Settings-only
-entries that inherit an owner's geometry (health warnings, top-bar details,
-quickbuy) remain in the catalog without a competing hit-test frame. Their native
+entries that inherit an owner's geometry (health warnings and top-bar details)
+remain in the catalog without a competing hit-test frame. Their native
 owners can still be measured for availability. Hover identifies the element by localized
 tooltip. Actual content and smaller surfaces have priority within larger family bounds;
 editor chrome remains above all frames. Ammo family pointer ownership follows
@@ -477,14 +487,17 @@ dormant coordinates.
 Better Unsecured Souls presents its vertical offset as up-positive relative to
 the configured default; storage and runtime retain the existing raw coordinate.
 
-Shop, Recent Purchases and Quick Buy selections use the maintainer-verified
+Shop and Recent Purchases selections use the maintainer-verified
 `citadel_open_hero_sheet` toggle through the existing settings console dispatcher.
 The shared selection handler covers gameplay-section actions, Customize shortcuts
 and the full editor catalog. Reselection does not toggle again. Leaving these
 selections or ending the session closes a shop opened by that session; an already
 open shop is preserved. A queued open is balanced even before native class delivery,
 and an observed shop that closes natively is not reopened by cleanup. Commands are
-never transferred to a replacement HUD. Native command execution and ESC/shop
+never transferred to a replacement HUD. Quick Buy edits compact gameplay HUD
+content, so selecting, dragging or resizing it does not open the shop. Switching
+from a session-opened Shop selection to Quick Buy closes that owned shop first;
+an already-open shop remains untouched. Native command execution and ESC/shop
 coexistence require client verification after repack.
 
 `core/ql_customize_preview.js` carries a leased draft through HUD attributes.
@@ -642,7 +655,8 @@ The surface audit retains these capability boundaries:
 | Healthbar variants | Shared placement/scale/opacity and state suppression; variant content and animations stay native or variant-owned. |
 | Ammo digits | Independent text geometry; shared group scale, opacity and state suppression. |
 | Basic/Advanced cooldowns | Shared reference-size/percentage-position contract, separate native/custom renderers and common suppression flags. |
-| Inherited HUD details and Quick Buy | Existing feature/content controls; no invented independent geometry or additional state renderer. |
+| Quick Buy | Compact HUD content moves and scales together; the open-shop queue and summary retain native docking. |
+| Inherited HUD details | Existing feature/content controls; no invented independent geometry or additional state renderer. |
 | World-target indicators and damage numbers | Their actual size, formatting and opacity controls; no screen offsets. |
 | Other contexts, fixed visuals and diagnostics | Existing contextual controls and owner lifetimes; no fabricated screen-level capabilities. |
 

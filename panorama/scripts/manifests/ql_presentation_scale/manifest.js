@@ -4,13 +4,13 @@
     "use strict";
     const Q = QOL;
     const P = Q.core.panel;
-    const scaled = new Set(["souls", "items", "stamina", "playerStats", "statsList", "speed", "abilityPoints", "damageReport"]);
+    const scaled = new Set(["souls", "items", "stamina", "playerStats", "statsList", "speed", "abilityPoints", "damageReport", "quickbuy"]);
     const opacityOwners = ["activeItems", "abilityPoints", "ammo", "stamina", "playerStats", "statsList", "compass", "speed", "zipBoost",
         "combatStatus", "unsecuredTimer", "unsecuredSouls", "keyboard", "damageReport", "chat"];
-    const elements = [...new Set([...scaled, ...opacityOwners])].map(id => Q.presentation.elements.find(element => element.id === id));
+    const positions = new Set(["abilityPoints", "stamina", "statsList", "quickbuy"]);
+    const elements = [...new Set([...scaled, ...opacityOwners, ...positions])].map(id => Q.presentation.elements.find(element => element.id === id));
     const opacityKeys = new Map(opacityOwners.map(id => [id,
         elements.find(element => element.id === id).fields.find(field => Q.settings.get(field.key).role === "opacity").key]));
-    const positions = new Set(["abilityPoints", "stamina", "statsList"]);
     function basePercent(element, root) {
         const has = name => !!root?.BHasClass(name);
         // base/hud.css and features/ql_feat_aspect_ratio.css own inventory scale.
@@ -34,6 +34,7 @@
             const geometryStyles = P.createNativeStyleOwner({ resetValues: { x: "0px", y: "0px" }, releasePosition: true });
             const opacityStyles = P.createNativeStyleOwner();
             let loop = null;
+            let shopUpdate = null;
             let active = false;
             function update() {
                 if (!active) return;
@@ -43,6 +44,10 @@
                 const opacityPanels = [];
                 const geometryPanels = [];
                 for (const element of elements) {
+                    // Move Quick Buy's native bounds with its contents in the
+                    // gameplay HUD. Release the root in shop view so its queue
+                    // and summary keep native docking, scale and hit targets.
+                    if (element.id === "quickbuy" && hud?.BHasClass("gShopOpen")) continue;
                     const value = scaled.has(element.id) ? QOL.settings.readNumber(element.scaleKey, cfg[element.scaleKey]) / 100 : 1;
                     const alpha = opacityKeys.has(element.id)
                         ? QOL_UTILS.NormalizeOpacityNumber(cfg[opacityKeys.get(element.id)] ?? 1, 1) : 1;
@@ -79,11 +84,10 @@
                     if (Object.keys(styles).length) {
                         // Native active-player-stats XML keeps particle effects
                         // beside HudStatBlock; scale or hide them with it.
-                        const targets = element.id === "playerStats"
-                            ? [panel, P.findChild(owner, "CoreStatFXLayer")] : [panel];
+                        const targets = element.id === "playerStats" ? [panel, P.findChild(owner, "CoreStatFXLayer")] : [panel];
                         for (const target of targets.filter(P.isAlive)) {
                             let targetStyles = styles;
-                            if (target !== panel) {
+                            if (element.id === "playerStats" && target !== panel) {
                                 // Native CSS owns a 300x500 FX viewport, with its
                                 // bottom 60px above the block (30px in shop).
                                 const blockBottom = hud.BHasClass("gShopOpen") ? 250 : 220;
@@ -103,15 +107,26 @@
                 opacityStyles.retain(opacityPanels);
                 geometryStyles.retain(geometryPanels);
             }
+            function onShopTransition() {
+                if (!active || shopUpdate) return;
+                // Native global classes settle after the shop event, matching
+                // the existing hero-shop owner's transition observer.
+                shopUpdate = Q.core.Scheduler.scheduleOnce(() => { shopUpdate = null; update(); }, 0, ctx.id);
+            }
             return Q.presentation.bindVisibility(ctx, {
                 onEnable() {
                     active = true;
+                    ctx.events.on("engine:shop_opened", onShopTransition);
+                    ctx.events.on("engine:shop_closed", onShopTransition);
                     update();
                     loop = Q.core.Scheduler.createPollLoop(update, 0.5, ctx.id);
                 },
                 onSettingsChanged: update,
                 onDisable() {
                     active = false;
+                    ctx.events.off("engine:shop_opened", onShopTransition);
+                    ctx.events.off("engine:shop_closed", onShopTransition);
+                    if (shopUpdate) { shopUpdate.stop(); shopUpdate = null; }
                     if (loop) loop.stop();
                     loop = null;
                     geometryStyles.clear();
