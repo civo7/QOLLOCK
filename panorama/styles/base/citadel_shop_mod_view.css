@@ -97,19 +97,19 @@ CitadelShopMod.canAffordMod
 		pre-transform-scale2d: 1;
 		brightness: 1;
 	}
-
+	
 	50%
 	{
 		brightness: 1;
 		pre-transform-scale2d: 1.04;
 	}
-
+	
 	100%
 	{
 		pre-transform-scale2d: 1;
 		brightness: 1;
 	}
-
+	
 }
 
 CitadelShopMod.canAffordMod,CitadelShopMod.owned,CitadelShopMod.usedAsComponent,.gEditingBuilds CitadelShopMod
@@ -667,34 +667,34 @@ PopupPickEnhanceItem .owned .modStatusCol
 		transform: rotateZ(0deg) skew(22deg);
 		pre-transform-scale2d: 1;
 	}
-
+	
 	20%
 	{
 		pre-transform-scale2d: 0.9;
 	}
-
+	
 	40%
 	{
 		pre-transform-scale2d: 1.05;
 	}
-
+	
 	60%
 	{
 		pre-transform-scale2d: 0.9;
 		transform: skew(2deg);
 	}
-
+	
 	80%
 	{
 		pre-transform-scale2d: 1.05;
 	}
-
+	
 	100%
 	{
 		transform: rotateZ(0deg) skew(22deg);
 		pre-transform-scale2d: 1;
 	}
-
+	
 }
 
 #ItemCostContainer
@@ -1393,7 +1393,12 @@ CitadelShopMod.recommended:hover #AddToBuild,CitadelShopMod.itemDisabled:hover #
 	z-index: 10;
 }
 
-.gEditingBuilds CitadelShopMod.recommended:hover #AlreadyInBuild
+.gEditingBuilds CitadelShopModsFiltered CitadelShopMod.recommended #AlreadyInBuild,.gEditingBuilds CitadelShopModsRecommended CitadelShopMod.recommended #AlreadyInBuild
+{
+	visibility: visible;
+}
+
+CitadelShopMod.ShowAlreadyInBuild #AlreadyInBuild
 {
 	visibility: visible;
 }
@@ -1429,17 +1434,17 @@ CitadelShopMod.recommended:hover #AddToBuild,CitadelShopMod.itemDisabled:hover #
 	{
 		background-color: #333333ff;
 	}
-
+	
 	50%
 	{
 		background-color: #635D39FF;
 	}
-
+	
 	100%
 	{
 		background-color: #333333ff;
 	}
-
+	
 }
 
 .mod_name_area
@@ -2122,21 +2127,21 @@ CitadelShopMod.owned:hover .componentModIconContainer
 		brightness: 1;
 		wash-color: shardColor&30;
 	}
-
+	
 	50%
 	{
 		brightness: 2;
 		pre-transform-scale2d: 1;
 		wash-color: shardColor;
 	}
-
+	
 	100%
 	{
 		pre-transform-scale2d: 1;
 		brightness: 1;
 		wash-color: shardColor&30;
 	}
-
+	
 }
 
 #Outline

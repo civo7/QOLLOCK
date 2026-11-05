@@ -1910,7 +1910,7 @@ CitadelHudModifierIcons
 {
 	width: 440px;
 	height: 520px;
-	margin-bottom: 15px;
+	padding-bottom: 15px;
 	vertical-align: bottom;
 	horizontal-align: right;
 	perspective: 900;
@@ -1918,6 +1918,27 @@ CitadelHudModifierIcons
 	transform: translateX(0px);
 	transition-property: width,height;
 	transition-duration: 0.15s;
+}
+
+.gMinimapTargeting #minimap_persp
+{
+	horizontal-align: center;
+	vertical-align: center;
+	margin-bottom: 0px;
+	width: 600px;
+	height: 680px;
+}
+
+.gMinimapTargeting #minimap_container,.gMinimapTargeting #minimap_frame
+{
+	width: 560px;
+	height: 560px;
+}
+
+.gMinimapTargeting #hud_minimap
+{
+	width: 504px;
+	height: 504px;
 }
 
 .GameStatePreGame #minimap_persp,.GameStatePreGameWait #minimap_persp
@@ -1960,6 +1981,8 @@ CitadelHudModifierIcons
 	text-transform: lowercase;
 	opacity: 0.5;
 	font-size: 13px;
+	text-overflow: shrink;
+	max-height: 20px;
 }
 
 .in_map_district #minimap_location
@@ -2012,7 +2035,7 @@ CitadelHudModifierIcons
 	transition-property: width,height;
 	transition-duration: 0.15s;
 	transform: rotateX(0deg);
-	overflow: clip;
+	overflow: render;
 	ui-scale: 105%;
 }
 
@@ -2027,6 +2050,7 @@ CitadelHudModifierIcons
 	height: 105%;
 	vertical-align: center;
 	horizontal-align: center;
+	overflow: render;
 }
 
 .useZoomedMinimap #HudMinimapContainer
@@ -2119,14 +2143,15 @@ CitadelHudModifierIcons
 #CosmeticAbilitiesMenu
 {
 	visibility: visible;
+	height: 100px;
+	vertical-align: bottom;
 	horizontal-align: center;
 	margin-right: 430px;
-	opacity: 0.3;
 }
 
-.ExperimentalBranch #CosmeticAbilitiesMenu
+#CosmeticAbilitiesMenu #abilitiesContainer
 {
-	visibility: collapse;
+	height: fit-children;
 }
 
 #HeldAbilitiesMenu
@@ -3813,32 +3838,25 @@ CitadelHudSoulAPContainer.ShowGoldAndAPOnHud
 	background-image: url("s2r://panorama/images/minimap/objective_icon_t1.vsvg");
 }
 
-#TopBar,#AbilitiesContainer,#health_and_abilities_container,#StatsAndModsContainer,#minimap_persp,#crosshair,#CitadelHudDamageReport,#hudActivePlayerStats,#HudEventIndicatorsPanel,#hud_hero_testing,#ability_resource,CitadelHudMovementSpeed
+#TopBar,#AbilitiesContainer,#health_and_abilities_container,#StatsAndModsContainer,#minimap_persp,#crosshair,#CitadelHudDamageReport,#hudActivePlayerStats,#HudEventIndicatorsPanel,#hud_hero_testing,#ability_resource,CitadelHudMovementSpeed,CitadelStatusEffect
 {
 	transition-property: opacity, pre-transform-scale2d, wash-color;
 	transition-duration: .21s;
 	transition-timing-function: ease-in-out;
 }
 
-.InHideout #TopBar,.InHideout #AbilitiesContainer,.InHideout #health_and_abilities_container,.InHideout #StatsAndModsContainer,.InHideout #minimap_persp,.InHideout #crosshair,.InHideout #CitadelHudDamageReport,.InHideout #hudActivePlayerStats,.InHideout #HudEventIndicatorsPanel,.InHideout #hud_hero_testing,.InHideout #ability_resource,.InHideout CitadelHudMovementSpeed
+.InHideout #TopBar,.InHideout #AbilitiesContainer,.InHideout #health_and_abilities_container,.InHideout #StatsAndModsContainer,.InHideout #minimap_persp,.InHideout #crosshair,.InHideout #CitadelHudDamageReport,.InHideout #hudActivePlayerStats,.InHideout #HudEventIndicatorsPanel,.InHideout #hud_hero_testing,.InHideout #ability_resource,.InHideout CitadelHudMovementSpeed,.InHideout CitadelStatusEffect
 {
 	opacity: 0;
 	pre-transform-scale2d: .9;
 	wash-color: dodgerblue;
 }
 
-.InHideout #StatsAndModsContainer.gShopOpen
+#StatsAndModsContainer.gShopOpen,#hudActivePlayerStats.gShopOpen,#AbilitiesContainer.gShopOpen
 {
 	opacity: 1;
 	pre-transform-scale2d: 1.0;
 	wash-color: white;
-}
-
-#AbilitiesContainer.gShopOpen
-{
-	opacity: 1;
-	pre-transform-scale2d: 1;
-	wash-color: none;
 }
 
 #CitadelHudHideout

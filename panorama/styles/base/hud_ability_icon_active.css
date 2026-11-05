@@ -154,19 +154,19 @@ DraggableAbilityIcon.NoAbility
 		pre-transform-scale2d: 1;
 		transform: translateY(0px);
 	}
-
+	
 	50%
 	{
 		pre-transform-scale2d: 1.1;
 		transform: translateY(-10px);
 	}
-
+	
 	100%
 	{
 		pre-transform-scale2d: 1;
 		transform: translateY(0px);
 	}
-
+	
 }
 
 .learning_ability .image_container
@@ -362,21 +362,21 @@ Label.ability_key
 		pre-transform-scale2d: 1;
 		wash-color: offBlack;
 	}
-
+	
 	50%
 	{
 		opacity: 1;
 		pre-transform-scale2d: 1.1;
 		wash-color: offBlack;
 	}
-
+	
 	100%
 	{
 		opacity: 0.6;
 		pre-transform-scale2d: 1;
 		wash-color: offBlack;
 	}
-
+	
 }
 
 @keyframes 'FlashAbilityBG'
@@ -387,21 +387,21 @@ Label.ability_key
 		wash-color: #9d87ff;
 		pre-transform-scale2d: 1;
 	}
-
+	
 	50%
 	{
 		opacity: 1.0;
 		wash-color: #9d87ff;
 		pre-transform-scale2d: 1.1;
 	}
-
+	
 	100%
 	{
 		opacity: 0.3;
 		wash-color: #9d87ff;
 		pre-transform-scale2d: 1;
 	}
-
+	
 }
 
 .AbilityCastFailed .button_container
@@ -419,22 +419,22 @@ Label.ability_key
 		wash-color: colorEnemy;
 		transform: translateX(2px);
 	}
-
+	
 	60%
 	{
 		transform: translateX(2px);
 	}
-
+	
 	61%
 	{
 		transform: translateX(-2px);
 	}
-
+	
 	100%
 	{
 		transform: translateX(-2px);
 	}
-
+	
 }
 
 .AbilityUpgradeFailed .button_container
@@ -452,22 +452,22 @@ Label.ability_key
 		wash-color: apCurrencyColor;
 		transform: translateX(2px);
 	}
-
+	
 	60%
 	{
 		transform: translateX(2px);
 	}
-
+	
 	61%
 	{
 		transform: translateX(-2px);
 	}
-
+	
 	100%
 	{
 		transform: translateX(-2px);
 	}
-
+	
 }
 
 .ability_upgradable .image_container
@@ -597,6 +597,19 @@ Label.ability_key
 	border-radius: 3px 3px 0px 0px;
 }
 
+.item_seasonal .bonusCounter
+{
+	background-color: none;
+	color: offWhite;
+	color: #ffcf7b;
+	border-radius: 0px;
+	text-shadow: 0px 0px 0px 3.0 offBlack;
+	background-color: offBlack&ee;
+	padding: 0px 10px;
+	font-size: 18px;
+	border-radius: 3px;
+}
+
 .hasBonusCounter .bonusCounter
 {
 	opacity: 1;
@@ -608,6 +621,7 @@ Label.ability_key
 	opacity: 0.3;
 	color: rgba(200, 200, 200, 0.95);
 	text-shadow: 0px 0px 0px 5.0 offBlack;
+	transform: rotateZ(0deg);
 }
 
 @keyframes 'FlashBonusCounter'
@@ -616,23 +630,36 @@ Label.ability_key
 	{
 		wash-color: shardColor&20;
 	}
-
+	
 	50%
 	{
 		wash-color: shardColor&90;
 	}
-
+	
 	100%
 	{
 		wash-color: shardColor&20;
 	}
-
+	
 }
 
 .bonusCounterIncreased .bonusCounter
 {
 	animation-name: FlashBonusCounter;
 	animation-duration: 0.8s;
+}
+
+.item_seasonal .bonusCounter,.item_seasonal.bonusCounterIncreased .bonusCounter
+{
+	animation-name: UIGroove1;
+	animation-duration: 1s;
+	animation-iteration-count: infinite;
+	animation-frame-time: 0.5s;
+}
+
+.gShopOpen .item_seasonal .bonusCounter
+{
+	visibility: collapse;
 }
 
 .cooling_down #cooldown_mask,.ability_not_ready #cooldown_mask
