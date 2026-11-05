@@ -125,7 +125,7 @@ function createTestEnvironment() {
     };
 
     sandbox.globalThis = sandbox;
-    for (const name of ["core/ql_namespace.js", "ql_utils.js", "core/ql_panel_helpers.js", "ql_shared_presets.js", "ql_settings_contract.js", "ql_legacy_compact.js", "ql_config.js", "core/ql_persistence.js"]) {
+    for (const name of ["core/ql_namespace.js", "ql_utils.js", "core/ql_panel_helpers.js", "ql_shared_presets.js", "ql_settings_contract.js", "ql_legacy_compact.js", "ql_config.js", "core/ql_persistence.js", "core/ql_storage_transport.js"]) {
         const filename = path.resolve(__dirname, "../panorama/scripts", name);
         vm.runInNewContext(fs.readFileSync(filename, "utf8"), sandbox, { filename });
     }
@@ -284,6 +284,34 @@ test("storage_bridge: replacement retires old requests before a fresh handshake"
     assert.equal(await fresh, true);
 });
 
+test("storage_bridge: a new request recreates a destroyed panel without manual initialization", async () => {
+    const env = createTestEnvironment(), bridge = env.sandbox.QOL.core.storageBridge;
+    connectEmbeddedPage(env, new Map());
+    const previous = bridge.getPanel();
+    previous.IsValid = () => false;
+    assert.equal(bridge.isReady(), false);
+    const saving = bridge.save("recovered", "value");
+    saving.catch(() => {});
+    assert.notEqual(bridge.getPanel(), previous);
+    const storage = new Map();
+    connectEmbeddedPage(env, storage);
+    env.clock.advance(0);
+    assert.equal(await saving, true);
+    assert.equal(storage.get("recovered"), "value");
+});
+
+test("storage_bridge: a living old parent cannot retain a replacement context's connection", () => {
+    const env = createTestEnvironment(), bridge = env.sandbox.QOL.core.storageBridge;
+    const previous = bridge.getPanel();
+    const parent = env.doc.create("Panel", { id: "ReplacementContext" });
+    env.hudPanel.addChild(parent);
+    const replacement = bridge.init(parent, { autoload: false });
+    assert.notEqual(replacement, previous);
+    assert.equal(replacement.GetParent(), parent);
+    env.fireTitleEvent(previous, "QOL_BRIDGE_READY:frag1");
+    assert.equal(bridge.isReady(), false);
+});
+
 test("storage_bridge: invalid UTF-8 rejects without overwriting disk or dispatching a request", async () => {
     const env = createTestEnvironment(), bridge = env.sandbox.QOL.core.storageBridge;
     const storage = new Map([["text", "previous"]]);
@@ -313,6 +341,24 @@ test("storage_bridge: disabled autoload cannot apply its in-flight result or blo
     replyToCurrentRequest(env, JSON.stringify({ BRIDGE_BUFF_START: 20 }));
     await flush();
     assert.equal(env.sandbox.MOD_CONFIG.BRIDGE_BUFF_START, 20);
+});
+
+test("storage_bridge: repeated initialization cannot bypass the single startup retry", async () => {
+    const env = createTestEnvironment(), bridge = env.sandbox.QOL.core.storageBridge;
+    bridge.enableAutoload(true);
+    env.fireTitleEvent(bridge.getPanel(), "QOL_BRIDGE_READY:frag1");
+    replyToCurrentRequest(env, undefined, "first failure");
+    await flush();
+    const before = env.urls.length;
+    bridge.init(env.hudPanel);
+    assert.equal(env.urls.length, before, "initialization must retain the retry delay");
+    env.clock.advance(5000);
+    assert.equal(env.urls.length, before + 1);
+    replyToCurrentRequest(env, undefined, "retry failure");
+    await flush();
+    bridge.init(env.hudPanel);
+    env.clock.advance(10000);
+    assert.equal(env.urls.length, before + 1, "only one retry is allowed for this startup baseline");
 });
 
 test("Auto-Save: production settings edits reach the embedded page and restore in a fresh realm", async () => {
@@ -1062,7 +1108,8 @@ test("storage_bridge: request timeout resets on chunk progress and ignores late 
 });
 
 test("storage_bridge: runtime has no blocked script transport or injection API", () => {
-    const code = fs.readFileSync(path.resolve(__dirname, "../panorama/scripts/core/ql_storage_bridge.js"), "utf8");
+    const code = ["ql_storage_bridge.js", "ql_storage_transport.js"].map(file =>
+        fs.readFileSync(path.resolve(__dirname, "../panorama/scripts/core", file), "utf8")).join("\n");
     assert.equal(code.includes("javascript:"), false);
     assert.equal(createTestEnvironment().sandbox.QOL.core.storageBridge._injectBridgeScript, undefined);
 });
@@ -1092,6 +1139,7 @@ test("storage_bridge: HUD initialization does not adopt a descendant EscapeMenu 
         $: { ...sandbox.$, GetContextPanel: () => escapeMenu }
     };
     em.globalThis = em;
+    vm.runInNewContext(fs.readFileSync(path.resolve(__dirname, "../panorama/scripts/core/ql_storage_transport.js"), "utf8"), em);
     vm.runInNewContext(fs.readFileSync(path.resolve(__dirname, "../panorama/scripts/core/ql_storage_bridge.js"), "utf8"), em);
     const emBridge = em.QOL.core.storageBridge;
     const emPanel = emBridge.getPanel();

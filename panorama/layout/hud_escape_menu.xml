@@ -57,7 +57,10 @@
 		<include src="s2r://panorama/scripts/ql_settings_tooltips.vjs_c" />
 		<include src="s2r://panorama/scripts/ql_settings_persistence.vjs_c" />
 		<include src="s2r://panorama/scripts/core/ql_persistence.vjs_c" />
+		<!-- ==== QOLLOCK CEF storage transport and settings coordination ==== -->
+		<include src="s2r://panorama/scripts/core/ql_storage_transport.vjs_c" />
 		<include src="s2r://panorama/scripts/core/ql_storage_bridge.vjs_c" />
+		<!-- ==== End QOLLOCK storage owners ==== -->
 		<include src="s2r://panorama/scripts/ql_update_checker.vjs_c" />
 		<include src="s2r://panorama/scripts/ui/ql_settings_metadata.vjs_c" />
 		<include src="s2r://panorama/scripts/ui/ql_settings_tabs.vjs_c" />
