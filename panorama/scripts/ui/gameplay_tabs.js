@@ -220,8 +220,8 @@
         }
         if (createRow) {
             createRow(list, "Color", "AMMO_TEXT_COLOR", "palette", null, null, null, palette, "Choose a preset text color for the ammo display.");
-            for (const [label, key] of [["Current Font", "AMMO_CURRENT_FONT_STYLE"], ["Max Font", "AMMO_TOTAL_FONT_STYLE"]]) {
-                createRow(list, label, key, "dropdown", null, null, null, Q.settings.get(key).options.map(([value, label]) => ({ value, label })));
+            for (const [label, key, desc] of [["Current Font", "AMMO_CURRENT_FONT_STYLE", "Use a different font for the current ammo number. By Specty"], ["Max Font", "AMMO_TOTAL_FONT_STYLE", "Use a different font for the max ammo number. By Specty"]]) {
+                createRow(list, label, key, "dropdown", null, null, null, Q.settings.get(key).options.map(([value, label]) => ({ value, label })), desc);
             }
         }
 
@@ -286,7 +286,7 @@
                     createRow(sectionParent, "Ability Suggestion", "ENABLE_HIDE_ABILITY_SUGGESTION", "toggle", null, null, null, [{ invert: true }], "On Ability Upgrade");
                     createRow(sectionParent, "Cosmetic Ability", "ENABLE_HIDE_COSMETIC_ABILITY", "toggle", null, null, null, [{ invert: true }], "Snowball or Poster");
                     createRow(sectionParent, "Minimalist Abilities", "ENABLE_SIMPLIFY_ABILITY_ICONS", "toggle", null, null, null, null);
-                    createRow(sectionParent, "Better Silenced/Cursed Abilities", "ENABLE_BETTER_DISABLED_ABILITIES", "toggle", null, null, null, null, "Mark disabled abilities and active items with a red cross.");
+                    createRow(sectionParent, "Better Silenced/Cursed Abilities", "ENABLE_BETTER_DISABLED_ABILITIES", "toggle", null, null, null, null, "Mark disabled abilities and active items with a red cross. By Specty");
                     createRow(sectionParent, "Clean Stacks", "ENABLE_CLEAN_STACKS", "toggle", null, null, null, null, "Move ability stacks to bottom-center of ability icon");
                     createRow(sectionParent, "Legacy Durations", "ENABLE_LEGACY_COOLDOWNS", "toggle", null, null, null, null, "");
                 }
