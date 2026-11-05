@@ -86,6 +86,7 @@
         switch (raw) {
             case "Support": return "s2r://panorama/images/icons/icon_thumbsup.vsvg";
             case "Config": return "s2r://panorama/images/icons/icon_gear.vsvg";
+            case "Customize": return "s2r://panorama/images/qollock/customize_nav_icon.vsvg";
             case "Presets": return "s2r://panorama/images/icons/icon_player.vsvg";
             case "Console": return "s2r://panorama/images/icons/icon_feedback.vsvg";
             case "MOG": return "s2r://panorama/images/icons/properties/armor_alt.vsvg";

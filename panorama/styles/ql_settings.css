@@ -11597,6 +11597,7 @@ DropDownMenu .QOLCustomizeDropDownItem:active
 .TabItem_Presets .TabIcon_Presets,
 .TabItem_Support .TabIcon_Support,
 .TabItem_Config .TabIcon_Config,
+.TabItem_Customize .TabIcon_Customize,
 .TabItem_Console .TabIcon_Console
 {
 	width: 13px;

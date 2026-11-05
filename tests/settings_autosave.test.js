@@ -122,7 +122,7 @@ test("manual Save supersedes queued Auto-Save and its old acknowledgments", () =
     e.edit({ SOULS_X_OFFSET: 77 });
     const button = e.doc.create("Button", { id: "ManualSave" });
     const label = e.doc.create("Label", { id: "ManualSaveLabel" }); button.addChild(label);
-    e.g.QOL.ui.cloudSync.activateBuildSaveFromUi(button, label);
+    e.g.QOL.ui.cloudSync.activateSaveFromUi(button, label);
     assert.equal(e.requests.length, 2); assert.equal(e.requests[1].config.SOULS_X_OFFSET, 77);
     const before = e.feedback.length;
     e.requests[0].callback(null); e.clock.advance(1000);

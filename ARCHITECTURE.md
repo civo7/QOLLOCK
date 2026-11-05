@@ -137,7 +137,8 @@ are compatibility guards, not evidence that browser APIs are available in HUD.
 | `panorama/scripts/core/ql_codec.js` | Pure JSON storage/lossless sharing writer and compatibility reader adapters; no UI actions, loader queues or runtime State |
 | `panorama/scripts/ql_settings_code.js` | Lossless clipboard writer/reader and append-only ID/reference dictionary; independent of current defaults and historical compact layouts |
 | `panorama/scripts/core/ql_persistence.js` | Live config publication, revisions/edit stamps and root selection |
-| `panorama/scripts/core/ql_storage_bridge.js` | Embedded HTML/localStorage protocol and asynchronous save/load coordination |
+| `panorama/scripts/core/ql_storage_transport.js` | Realm-local CEF connection, authorized FIFO and multipart key/value transfers |
+| `panorama/scripts/core/ql_storage_bridge.js` | Validated settings saves, edit-safe restore and personal-profile coordination |
 | `panorama/scripts/ql_bridge.js` | Named cross-context channel descriptors and panel-attribute access |
 | `panorama/scripts/ql_utils.js` | Leaf utilities: validity, numbers, time, styles, attributes, palette and traversal |
 | `panorama/scripts/core/ql_panel_helpers.js` | Shared panel creation, lookup, styling and cleanup APIs |
@@ -405,7 +406,8 @@ There are two distinct boundaries:
 
 1. **Live settings publication:** `core/ql_persistence.js`, settings `SaveAndSync`,
    `ql_bridge.js` and HUD `core/ql_app.js` exchange serialized config/attributes.
-2. **Durable save/load:** `core/ql_storage_bridge.js` uses a CEF `CitadelHTMLPanel`
+2. **Durable save/load:** `core/ql_storage_bridge.js` coordinates settings through
+   `core/ql_storage_transport.js`, which owns a CEF `CitadelHTMLPanel`
    and origin-scoped browser `localStorage`. Panel attributes are not disk storage.
 
 `QOL.core.persistence` resolves root/HUD panels, reads by revision and publishes
@@ -450,8 +452,9 @@ from passing simulated CEF tests.
 `ql_bridge.js` also owns named channels used by non-storage subsystems; inspect
 its descriptors before adding attributes. Attribute bridges, in-process EventBus
 and CEF title transport solve different problems and are not interchangeable.
-The removed build-storage implementation is not the current persistence path;
-leftover names/comments or hero-signature helpers do not restore that backend.
+Build-storage request/status channels and UI polling are retired. Manual Save
+and Auto-Save in `ui/cloud_sync.js` use the CEF bridge directly; unavailable
+storage reports failure without queueing an obsolete build request.
 See [persistence](docs/core/persistence.md), [storage bridge](docs/core/storage_bridge.md)
 and [configuration parsing](docs/core/config_parsing.md).
 

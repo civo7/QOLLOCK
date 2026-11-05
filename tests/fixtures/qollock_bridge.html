@@ -147,22 +147,31 @@
                 send(id, false, undefined, 'Invalid save chunk boundaries');
                 return;
             }
-            if (!_saveBuffers[id]) {
-                _saveBuffers[id] = new Array(total);
-                setTimeout(function() {
-                    if (_saveBuffers[id]) delete _saveBuffers[id];
-                }, 30000);
+            const decodedKey = decodeText(key, isB64);
+            if (!_saveBuffers[id] && part === 0) {
+                _saveBuffers[id] = { key: decodedKey, total, nextPart: 0, chunks: [] };
             }
-            var decodedKey = decodeText(key, isB64);
-            var decodedChunk = decodeText(chunk, isB64);
-            _saveBuffers[id][part] = decodedChunk;
+            const buffer = _saveBuffers[id];
+            if (!buffer || buffer.key !== decodedKey || buffer.total !== total || buffer.nextPart !== part) {
+                delete _saveBuffers[id];
+                send(id, false, undefined, 'Missing or inconsistent save chunk');
+                return;
+            }
+            buffer.chunks.push(decodeText(chunk, isB64));
+            buffer.nextPart++;
 
             if (part + 1 === total) {
-                var full = _saveBuffers[id].join('');
+                const full = buffer.chunks.join('');
                 delete _saveBuffers[id];
                 localStorage.setItem(decodedKey, full);
                 send(id, true);
             } else {
+                // Only inactivity expires this transfer. Old callbacks cannot
+                // expire later progress or a replacement using the same id.
+                const progress = buffer.nextPart;
+                setTimeout(() => {
+                    if (_saveBuffers[id] === buffer && buffer.nextPart === progress) delete _saveBuffers[id];
+                }, 30000);
                 send(id, true, undefined, null, { savePartAck: part });
             }
         } catch (e) {

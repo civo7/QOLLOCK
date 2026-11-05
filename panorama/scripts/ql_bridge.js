@@ -24,18 +24,6 @@ var STAMINA_CHARGE_COLOR_ATTR = "QOL_STAMINA_CHARGE_COLOR";
 var AMMO_TEXT_COLOR_ATTR = "QOL_AMMO_TEXT_COLOR";
 var MINIMAP_ICON_COLOR_ATTR = "QOL_MINIMAP_ICON_COLOR";
 var USER_EDIT_REV_ATTR = QOL_USER_EDIT_REV_ATTR;
-var BUILD_SAVE_REQUEST_ATTR = "QOL_BUILD_SAVE_REQUEST";
-var BUILD_SAVE_STATE_ATTR = "QOL_BUILD_SAVE_STATE";
-var BUILD_SAVE_MSG_ATTR = "QOL_BUILD_SAVE_MSG";
-var BUILD_SAVE_TOKEN_ATTR = "QOL_BUILD_SAVE_TOKEN";
-// Set to "1" by the settings UI to authorize a save even though this session
-// could not read the stored config. Consumed on use — see
-// IsBuildSaveAllowedByLoadState in features/ql_feat_buildsave.js.
-var BUILD_SAVE_FORCE_ATTR = "QOL_BUILD_SAVE_FORCE";
-var BUILD_CLEAR_REQUEST_ATTR = "QOL_BUILD_CLEAR_REQUEST";
-var BUILD_CLEAR_STATE_ATTR = "QOL_BUILD_CLEAR_STATE";
-var BUILD_CLEAR_MSG_ATTR = "QOL_BUILD_CLEAR_MSG";
-var BUILD_CLEAR_TOKEN_ATTR = "QOL_BUILD_CLEAR_TOKEN";
 var HERO_HINT_ATTR = "QOL_LAST_SELECTED_HERO_HINT";
 
 // ── Channel descriptor map (single source of truth for all cross-context channels) ──
@@ -47,15 +35,6 @@ var QOL_BRIDGE_CHANNELS = {
     "onDeathArcadeEscapeOwned": { attr: "QOL_ON_DEATH_ARCADE_ESCAPE_OWNED",    type: "flag",        desc: "Local panel ShowEscapeMenu ownership; never broadcast" },
     "config":              { attr: STORAGE_KEY,                               type: "json",        desc: "Full config envelope {schema, data}" },
     "configRev":           { attr: USER_EDIT_REV_ATTR,                        type: "int",         desc: "Monotonic revision counter" },
-    "buildSaveRequest":    { attr: BUILD_SAVE_REQUEST_ATTR,                   type: "string",      desc: "Build category payload" },
-    "buildSaveState":      { attr: BUILD_SAVE_STATE_ATTR,                     type: "string",      desc: "Pending or empty" },
-    "buildSaveMsg":        { attr: BUILD_SAVE_MSG_ATTR,                       type: "string",      desc: "Progress message" },
-    "buildSaveToken":      { attr: BUILD_SAVE_TOKEN_ATTR,                     type: "string",      desc: "Correlation token" },
-    "buildSaveForce":      { attr: BUILD_SAVE_FORCE_ATTR,                     type: "flag",        desc: "1 to overwrite an unread config" },
-    "buildClearRequest":   { attr: BUILD_CLEAR_REQUEST_ATTR,                  type: "flag",        desc: "1 to trigger" },
-    "buildClearState":     { attr: BUILD_CLEAR_STATE_ATTR,                    type: "string",      desc: "Pending or empty" },
-    "buildClearMsg":       { attr: BUILD_CLEAR_MSG_ATTR,                      type: "string",      desc: "Progress message" },
-    "buildClearToken":     { attr: BUILD_CLEAR_TOKEN_ATTR,                    type: "string",      desc: "Correlation token" },
     "heroHint":            { attr: HERO_HINT_ATTR,                            type: "string",      desc: "Hero ID" },
     "healthbarAccentColor":{ attr: PLAYER_HEALTHBAR_ACCENT_COLOR_ATTR,        type: "paletteIndex", customRgb: true, desc: "palette index or tagged RGB" },
     "bottomBarWashColor":  { attr: BOTTOM_BAR_WASH_COLOR_ATTR,                type: "paletteIndex", customRgb: true, desc: "palette index or tagged RGB" },
@@ -185,7 +164,6 @@ if (typeof QOL_UTILS === "object" && QOL_UTILS) {
 (function() {
     try {
         if (typeof STORAGE_KEY !== "string" || STORAGE_KEY.length === 0) throw new Error("STORAGE_KEY not defined");
-        if (typeof BUILD_SAVE_REQUEST_ATTR !== "string") throw new Error("BUILD_SAVE_REQUEST_ATTR not defined");
         if (typeof HERO_HINT_ATTR !== "string") throw new Error("HERO_HINT_ATTR not defined");
         if (typeof QOL_BRIDGE_CHANNELS !== "object" || QOL_BRIDGE_CHANNELS === null) throw new Error("QOL_BRIDGE_CHANNELS not defined");
         if (typeof QOLBridgeReadAttr !== "function") throw new Error("QOLBridgeReadAttr not defined");

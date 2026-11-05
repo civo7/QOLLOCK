@@ -202,6 +202,7 @@
         const defaultIcons = {
             Support: "s2r://panorama/images/icons/icon_thumbsup.vsvg",
             Config: "s2r://panorama/images/icons/icon_gear.vsvg",
+            Customize: "s2r://panorama/images/qollock/customize_nav_icon.vsvg",
             Presets: "s2r://panorama/images/icons/icon_player.vsvg",
             Console: "s2r://panorama/images/icons/icon_feedback.vsvg",
             Arcade: "s2r://panorama/images/icons/properties/condition_burn.vsvg",
@@ -376,11 +377,7 @@
 
             saveBtn.SetPanelEvent("onactivate", () => {
                 try { Q.tooltip?.hideRowTooltip?.(); } catch (_) {}
-                if (typeof ActivateBuildSaveFromUi === "function") {
-                    ActivateBuildSaveFromUi(saveBtn, saveLabel);
-                } else if (typeof globalThis.ActivateBuildSaveFromUi === "function") {
-                    globalThis.ActivateBuildSaveFromUi(saveBtn, saveLabel);
-                }
+                Q.ui.cloudSync?.activateSaveFromUi?.(saveBtn, saveLabel);
             });
 
             if (_tabRailFooter.MoveChildBefore && discordBtn) {
@@ -1441,11 +1438,7 @@
                 }
                 saveFooterBtn.SetPanelEvent("onactivate", () => {
                     try { Q.tooltip?.hideRowTooltip?.(); } catch (_) {}
-                    if (typeof ActivateBuildSaveFromUi === "function") {
-                        ActivateBuildSaveFromUi(saveFooterBtn, saveFooterLabel);
-                    } else if (typeof globalThis.ActivateBuildSaveFromUi === "function") {
-                        globalThis.ActivateBuildSaveFromUi(saveFooterBtn, saveFooterLabel);
-                    }
+                    Q.ui.cloudSync?.activateSaveFromUi?.(saveFooterBtn, saveFooterLabel);
                 });
                 if (tabFooter.MoveChildBefore && discordFooterBtn && saveFooterBtn) {
                     try { tabFooter.MoveChildBefore(discordFooterBtn, saveFooterBtn); } catch (_) {}
@@ -2374,7 +2367,6 @@
     globalThis.IsSettingsWindowVisible = isOpen;
     globalThis.EnsureDiscordTextureLogo = ensureDiscordTextureLogo;
     globalThis.EnsureDiscordFooterTextureLogo = ensureDiscordFooterTextureLogo;
-    globalThis.IsInHideoutForBuildSave = isInHideout;
     globalThis.GetNowMs = getNowMs;
     globalThis.HasPanelClassToken = hasPanelClassToken;
     globalThis.IsSettingsInActiveMatchContext = isInActiveMatch;

@@ -46,6 +46,7 @@ test("ui/tabs: exports tab definitions on QOL.ui.tabs and globalThis", () => {
     // Icons
     assert.ok(ctx.QOL.ui.tabs.GetSettingsTabIconSource("Support").includes("icon_thumbsup"));
     assert.ok(ctx.QOL.ui.tabs.GetSettingsTabIconSource("Config").includes("icon_gear"));
+    assert.ok(ctx.QOL.ui.tabs.GetSettingsTabIconSource("Customize").includes("customize_nav_icon"));
     assert.ok(ctx.QOL.ui.tabs.GetSettingsTabIconSource("Shop").includes("icon_cart"));
     assert.strictEqual(ctx.QOL.ui.tabs.GetSettingsTabIconSource("Unknown"), "");
 

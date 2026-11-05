@@ -9,10 +9,10 @@ for (const firstAckBeforeSecondSave of [false, true]) {
         e.hud.sandbox.global.QOL.core.App.shutdown();
         Q.core.storageBridge = { saveSettings(config, callback) { callbacks.push(callback); } };
         const button = g.$.CreatePanel("Button", e.em, "AsyncSave"), label = g.$.CreatePanel("Label", button, "AsyncSaveLabel");
-        Q.ui.cloudSync.activateBuildSaveFromUi(button, label);
+        Q.ui.cloudSync.activateSaveFromUi(button, label);
         if (firstAckBeforeSecondSave) callbacks[0](null);
         e.clock.advance(1100);
-        Q.ui.cloudSync.activateBuildSaveFromUi(button, label);
+        Q.ui.cloudSync.activateSaveFromUi(button, label);
         assert.equal(callbacks.length, 2);
         assert.equal(label.text, "SAVING");
         if (!firstAckBeforeSecondSave) callbacks[0](null);
@@ -30,13 +30,12 @@ test("a retired settings context's Save callback cannot publish success onto a r
     e.hud.sandbox.global.QOL.core.App.shutdown();
     g.QOL.core.storageBridge = { saveSettings(config, callback) { callbacks.push(callback); } };
     const button = g.$.CreatePanel("Button", e.em, "AsyncSave"), label = g.$.CreatePanel("Label", button, "AsyncSaveLabel");
-    g.QOL.ui.cloudSync.activateBuildSaveFromUi(button, label);
+    g.QOL.ui.cloudSync.activateSaveFromUi(button, label);
     const root = e.doc.create("CitadelHud", { id: "Hud" });
     const nextContext = g.$.CreatePanel("Panel", root, "EscapeMenu");
     g.$.GetContextPanel = () => nextContext;
     callbacks[0](null); e.clock.advance(1500);
-    assert.equal(root.GetAttributeString("QOL_BUILD_SAVE_STATE", ""), "");
-    assert.equal(nextContext.GetAttributeString("QOL_BUILD_SAVE_STATE", ""), "");
+    assert.equal(label.text, "SAVING", "a retired context must not display success");
     assert.deepEqual(e.clock.errors, []);
 });
 
