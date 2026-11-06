@@ -1,6 +1,6 @@
 {
   "repository": "SteamTracking/GameTracking-Deadlock",
-  "commit": "3e41d1b1f0e5d618857da005aef1e8aec5a657ca",
+  "commit": "3cfcaf9ed882f2d85cc5d915315f754790b8ffb7",
   "files": {
     "layout/ability_hud_elements/element_progress_bar_text.xml": {
       "blob": "50a5460022136433f1701043d9430aac11798f4b",
@@ -544,11 +544,12 @@
       "local_sha256": "697d360d93d42a8138fb43aa6ff63a81ce1b68ecb6fd6a3c96d45e9531ef91d9"
     },
     "styles/hud_damage_report.css": {
-      "blob": "5d2866932a1829bbc1ddfc6fff428828133fb326",
+      "blob": "f58c73e05dc4a289c6ed3e2f008244f99dc05ba4",
       "destination": "panorama/styles/base/hud_damage_report.css",
       "kind": "css",
       "auto_sync": true,
-      "local_sha256": "9b1b9f09920682e21e441c0a6113745101a59ea5a37f1e45d0a8c49c00c5fe98"
+      "local_sha256": "6fa0950a38f27460052c0c05ea31ca795e0b0acf3d6028c64a70c250e9bcd48d",
+      "base_commit": "3cfcaf9ed882f2d85cc5d915315f754790b8ffb7"
     },
     "styles/hud_escape_menu.css": {
       "blob": "5961116837f548832ede8a21062ce1228ff72adb",
@@ -664,5 +665,5 @@
       "base_commit": "d251cf9d9a796061c90f58724230b7e17b97121b"
     }
   },
-  "fingerprint": "e3cf622f8a04acca74e566cb489431961c08fa183f4a3c359e267600f523f6aa"
+  "fingerprint": "9792db31caf139884ef04653c5a432ccb93e9ee9ab6ae1306641bfb62dc71350"
 }
