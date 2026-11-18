@@ -38,23 +38,24 @@
 		<snippet name="QolBetterBuildsTab">
 			<Panel class="QolBetterBuildsTab">
 				<Panel class="QolBetterBuildsTabBg" />
-				<Panel class="QolBetterBuildsTabIcon" />
+				<Panel class="QolBetterBuildsTabIcon QolBetterBuildsCrown" />
 				<Label id="QolBetterBuildsTabLabel" class="QolBetterBuildsTabLabel" text="" />
 			</Panel>
 		</snippet>
 		<snippet name="QolBetterBuildsStockTab">
-			<Panel class="HeroSelectorTab QolBetterBuildsStockTab">
-				<Panel class="tab_icon" />
-				<Label id="QolBetterBuildsStockTabLabel" class="TabLabel" text="" />
+			<Panel class="QolBetterBuildsStockTab">
+				<Panel class="QolBetterBuildsTabIcon" />
+				<Label id="QolBetterBuildsStockTabLabel" class="QolBetterBuildsTabLabel" text="" />
 			</Panel>
 		</snippet>
 		<snippet name="QolBetterBuildsHost">
 			<Panel class="QolBetterBuildsHost">
 				<Panel class="QolBetterBuildsToolbar">
-					<Panel id="QolBetterBuildsGroups" class="QolBetterBuildsChipRow" />
-					<Panel class="QolBetterBuildsToolbarDivider" />
-					<Panel id="QolBetterBuildsTiers" class="QolBetterBuildsChipRow" />
-					<Panel id="QolBetterBuildsSorts" class="QolBetterBuildsChipRow" />
+					<Panel class="QolBetterBuildsFilters">
+						<Panel id="QolBetterBuildsGroups" class="QolBetterBuildsChipRow" />
+						<Panel id="QolBetterBuildsTiers" class="QolBetterBuildsChipRow" />
+					</Panel>
+					<Panel id="QolBetterBuildsSorts" class="QolBetterBuildsChipRow QolBetterBuildsSorts" />
 				</Panel>
 				<Panel class="QolBetterBuildsColumns">
 					<Label class="QolBetterBuildsColumnsTitle" id="QolBetterBuildsScope" text="" />

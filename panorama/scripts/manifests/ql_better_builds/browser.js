@@ -38,6 +38,9 @@
     function createBrowser(popup, native, language, isCurrent) {
         const text = (key, values) => QOL.ui.theme.FormatSettingsText(key, values, language);
         const owned = [];
+        const stockTabs = [];
+        const stockPanels = [native.myTab, native.publicTab, native.list, native.loadingList];
+        const stockStyles = panel.createNativeStyleOwner({ preserveStyles: ["visibility"] });
         const badges = new Map();
         const favourites = new Set();
         const settling = new Map();
@@ -116,6 +119,7 @@
         }
         function addStockTab(nativeTab, icon) {
             const proxy = ownSnippet(native.tabBar, "StockTab");
+            stockTabs.push(proxy);
             proxy.AddClass(PREFIX + icon);
             const label = panel.findChildByClass(nativeTab, "TabLabel");
             child(proxy, "StockTabLabel").text = label?.text || "";
@@ -205,10 +209,17 @@
 
         function activate() {
             if (active || !isCurrent()) return;
+            // The popup stylesheet does not control panels from the native selector layout.
+            const hidden = { visibility: "collapse" };
+            if (!stockPanels.every(target => stockStyles.apply(target, hidden))) {
+                stockStyles.clear();
+                $.Msg("[QOLLock][Better Builds] Could not collapse the stock build browser controls.");
+                return;
+            }
             selection.enter();
             active = true;
-            panel.setClass(native.selector, PREFIX + "Active", true);
             panel.setClass(tab, PREFIX + "TabOn", true);
+            for (const proxy of stockTabs) show(proxy, true);
             show(host, true);
             remember();
             updateFreshness();
@@ -217,9 +228,10 @@
         function deactivate(keepPublic = false) {
             if (!active) return;
             active = false;
-            panel.setClass(native.selector, PREFIX + "Active", false);
             panel.setClass(tab, PREFIX + "TabOn", false);
+            for (const proxy of stockTabs) show(proxy, false);
             show(host, false);
+            stockStyles.clear();
             selection.leave({ keepPublic });
             selectedId = 0;
             rendered.forEach(decorate);
@@ -395,8 +407,8 @@
         }
         function dispose() {
             relay.cancel();
+            stockStyles.clear();
             if (active) {
-                panel.setClass(native.selector, PREFIX + "Active", false);
                 selection.leave({ refreshSearch: panel.isVisible(popup) && panel.isAlive(native.selector) &&
                     native.selector.GetParent()?.GetParent() === popup });
                 active = false;

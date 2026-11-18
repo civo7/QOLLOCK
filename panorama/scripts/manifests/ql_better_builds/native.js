@@ -16,12 +16,13 @@
         const search = findChildByClass(header, "SearchContainer");
         const main = findChildByClass(selector, "MainContainer");
         const list = findChild(main, "HeroBuildList");
+        const loadingList = findChild(main, "HeroBuildListLoading");
         const details = findChild(main, "BuildDetails");
         const entry = findChild(findChild(search, "SearchBox"), "SearchTextEntry");
         const myTab = findChildByClass(tabBar, "MyBuilds");
         const publicTab = findChildByClass(tabBar, "PublicBuilds");
-        if (!list || !details || !entry || !myTab || !publicTab) return null;
-        return { selector, header, tabBar, search, entry, main, list, details, myTab, publicTab };
+        if (!list || !loadingList || !details || !entry || !myTab || !publicTab) return null;
+        return { selector, header, tabBar, search, entry, main, list, loadingList, details, myTab, publicTab };
     }
 
     function forEachRow(list, visit) {

@@ -154,7 +154,7 @@
       "destination": "panorama/layout/popups/citadel_popup_build_browser.xml",
       "kind": "xml",
       "auto_sync": false,
-      "local_sha256": "cc7fbf4d668e30c2f4b9f8788cc2501878926b67d6aed03189b53906a905d471",
+      "local_sha256": "1dac4f5c453f160f8f0552804134d550159d0f6d05b911e82d8d8984b51ede56",
       "base_commit": "82735ebcc9c89d1b3f6b3262c23c9580798ad362"
     },
     "layout/profile_card.xml": {

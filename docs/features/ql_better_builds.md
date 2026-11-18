@@ -26,10 +26,13 @@ responses for the game session. An expired response is fetched again on the
 next open. The popup displays feed failures and allows a retry.
 
 The popup owns its panels, CEF instance and managed schedules. The native
-input handlers remain installed during High Elo use. The temporary stock tab
-controls leave High Elo and activate the original native tabs. Closing the
-browser, disabling the setting or replacing a selector releases the active
-session. Delayed build selections and relay results check session ownership.
+input handlers remain installed during High Elo use. The popup collapses the
+stock tabs, list and loading panel through native style overrides so its own
+list can fill the space beside the details pane. Its temporary stock tab
+controls restore those styles and activate the original native tabs. Closing
+the browser, disabling the setting or replacing a selector also releases the
+overrides and the active session. Delayed build selections and relay results
+check session ownership.
 
 Run `node --test tests/better_builds.test.js` for the settings-code, popup,
 relay and native action simulator regressions. The tracked HUD capture has no

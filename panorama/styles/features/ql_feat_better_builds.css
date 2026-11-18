@@ -1,7 +1,8 @@
 /* Better Builds surfaces in the native build browser. */
 
 /* ---- tab, matching the stock My Builds / Public tabs ---- */
-.QolBetterBuildsTab
+.QolBetterBuildsTab,
+.QolBetterBuildsStockTab
 {
 	min-width: 150px;
 	height: 100%;
@@ -31,11 +32,15 @@
 	height: 22px;
 	vertical-align: middle;
 	margin-left: 10px;
-	background-image: url("s2r://panorama/images/qollock/better_builds_crown.vsvg");
 	background-size: contain;
 	background-repeat: no-repeat;
 	background-position: center;
 	wash-color: #69e799;
+}
+
+.QolBetterBuildsCrown
+{
+	background-image: url("s2r://panorama/images/qollock/better_builds_crown.vsvg");
 }
 
 .QolBetterBuildsTabLabel
@@ -51,7 +56,8 @@
 	text-align: center;
 }
 
-.QolBetterBuildsTab:hover .QolBetterBuildsTabLabel
+.QolBetterBuildsTab:hover .QolBetterBuildsTabLabel,
+.QolBetterBuildsStockTab:hover .QolBetterBuildsTabLabel
 {
 	color: #A8FFC9;
 }
@@ -82,69 +88,69 @@
 	visibility: visible;
 }
 
-CitadelHeroBuildsSelector.QolBetterBuildsActive #HeroBuildList,
-CitadelHeroBuildsSelector.QolBetterBuildsActive #HeroBuildListLoading,
-CitadelHeroBuildsSelector.QolBetterBuildsActive .HeroSelectorTab.MyBuilds,
-CitadelHeroBuildsSelector.QolBetterBuildsActive .HeroSelectorTab.PublicBuilds
-{
-	visibility: collapse;
-}
-
 .QolBetterBuildsStockTab
 {
 	visibility: collapse;
 }
 
-CitadelHeroBuildsSelector.QolBetterBuildsActive .QolBetterBuildsStockTab
+.QolBetterBuildsStockTab.QolBetterBuildsShown
 {
 	visibility: visible;
 }
 
-.QolBetterBuildsStockTab:hover .TabLabel
+.QolBetterBuildsMyTab
 {
-	color: #A8FFC9;
+	margin-left: 0px;
 }
 
-.QolBetterBuildsMyTab .tab_icon
+.QolBetterBuildsMyTab .QolBetterBuildsTabIcon
 {
 	background-image: url("s2r://panorama/images/icons/icon_star.vsvg");
-	background-size: cover;
-	margin-bottom: 2px;
 }
 
-.QolBetterBuildsPublicTab .tab_icon
+.QolBetterBuildsPublicTab .QolBetterBuildsTabIcon
 {
 	background-image: url("s2r://panorama/images/icons/icon_globe.vsvg");
-	background-size: cover;
 }
 
 .QolBetterBuildsToolbar
 {
 	width: 100%;
-	flow-children: right-wrap;
-	padding: 8px 10px 6px 12px;
+	height: fit-children;
+	flow-children: down;
+	padding: 8px 12px;
 	background-color: #ffffff08;
 }
 
-.QolBetterBuildsToolbarDivider
+.QolBetterBuildsFilters
 {
-	width: 1px;
-	height: 18px;
-	margin: 0px 10px 0px 4px;
-	background-color: #FFEFD733;
-	vertical-align: middle;
+	width: 100%;
+	height: fit-children;
+	flow-children: right;
 }
 
 .QolBetterBuildsChipRow
 {
+	width: fit-children;
+	height: fit-children;
 	flow-children: right;
-	vertical-align: middle;
+}
+
+#QolBetterBuildsTiers
+{
+	margin-left: 12px;
+}
+
+.QolBetterBuildsSorts
+{
+	margin-top: 6px;
 }
 
 .QolBetterBuildsChip
 {
 	margin-right: 4px;
-	padding: 3px 9px;
+	height: 26px;
+	padding: 0px 8px;
 	border: 1px solid #FFEFD726;
 	border-radius: 3px;
 	background-color: #00000000;
@@ -154,6 +160,8 @@ CitadelHeroBuildsSelector.QolBetterBuildsActive .QolBetterBuildsStockTab
 
 .QolBetterBuildsChip Label
 {
+	vertical-align: middle;
+	white-space: nowrap;
 	font-size: 15px;
 	font-weight: semi-bold;
 	color: #FFEFD799;
@@ -202,7 +210,7 @@ CitadelHeroBuildsSelector.QolBetterBuildsActive .QolBetterBuildsStockTab
 
 .QolBetterBuildsColumn
 {
-	width: 62px;
+	width: 56px;
 	font-size: 12px;
 	font-weight: bold;
 	color: #FFEFD780;
@@ -216,12 +224,12 @@ CitadelHeroBuildsSelector.QolBetterBuildsActive .QolBetterBuildsStockTab
 .QolBetterBuildsColumn.QolBetterBuildsWide,
 .QolBetterBuildsStat.QolBetterBuildsWide
 {
-	width: 84px;
+	width: 76px;
 }
 
 .QolBetterBuildsColumnsActions
 {
-	width: 136px;
+	width: 126px;
 	height: 1px;
 }
 
@@ -319,6 +327,7 @@ CitadelHeroBuildsSelector.QolBetterBuildsActive .QolBetterBuildsStockTab
 .QolBetterBuildsMain
 {
 	width: fill-parent-flow(1.0);
+	min-width: 112px;
 	flow-children: down;
 	vertical-align: middle;
 }
@@ -332,6 +341,7 @@ CitadelHeroBuildsSelector.QolBetterBuildsActive .QolBetterBuildsStockTab
 .QolBetterBuildsName
 {
 	width: fill-parent-flow(1.0);
+	min-width: 96px;
 	font-family: VALVEOracle, Reaver, sans-serif;
 	font-size: 21px;
 	font-weight: medium;
@@ -520,7 +530,7 @@ CitadelHeroBuildsSelector.QolBetterBuildsActive .QolBetterBuildsStockTab
 
 .QolBetterBuildsStat
 {
-	width: 62px;
+	width: 56px;
 	font-size: 19px;
 	color: #FFEFD7cc;
 	text-align: center;
@@ -535,14 +545,14 @@ CitadelHeroBuildsSelector.QolBetterBuildsActive .QolBetterBuildsStockTab
 
 .QolBetterBuildsActions
 {
-	width: 136px;
+	width: 126px;
 	flow-children: right;
 	vertical-align: middle;
 }
 
 .QolBetterBuildsUseSlot
 {
-	width: 98px;
+	width: 92px;
 	height: 32px;
 	vertical-align: middle;
 }
@@ -568,7 +578,7 @@ CitadelHeroBuildsSelector.QolBetterBuildsActive .QolBetterBuildsStockTab
 
 .QolBetterBuildsUse
 {
-	width: 98px;
+	width: 100%;
 	height: 32px;
 	border: 2px solid #FFEFD7;
 	border-radius: 16px;
@@ -581,11 +591,14 @@ CitadelHeroBuildsSelector.QolBetterBuildsActive .QolBetterBuildsStockTab
 
 .QolBetterBuildsUse Label
 {
+	width: 100%;
+	padding: 0px 4px;
 	font-size: 15px;
 	font-weight: bold;
 	color: #FFEFD7;
 	horizontal-align: center;
 	vertical-align: middle;
+	text-align: center;
 	text-overflow: shrink;
 }
 
@@ -613,9 +626,9 @@ CitadelHeroBuildsSelector.QolBetterBuildsActive .QolBetterBuildsStockTab
 
 .QolBetterBuildsStar
 {
-	width: 26px;
-	height: 26px;
-	margin-left: 10px;
+	width: 24px;
+	height: 24px;
+	margin-left: 8px;
 	vertical-align: middle;
 	background-image: url("s2r://panorama/images/icons/icon_star_outline.vsvg");
 	background-size: contain;
