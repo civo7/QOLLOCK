@@ -106,6 +106,7 @@ QOLLOCK combines work by its maintainers and the wider Deadlock modding communit
 | [oGeorge](https://gamebanana.com/members/5260464) | Deadlock for Dummies, Rem Tunnels Overlay |
 | [lustie_](https://gamebanana.com/members/4872008) | Clean Damage Indicators |
 | [0xluc4s](https://gamebanana.com/members/5229080) | Show Build ID |
+| paul lock | Better Builds |
 | [BubbleGumXD](https://gamebanana.com/members/5281881) | Save/Load System stuff |
 
 | Announcer contributor | Contributions |

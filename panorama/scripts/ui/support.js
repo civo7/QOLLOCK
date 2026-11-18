@@ -95,6 +95,7 @@
         { label: "oGeorge", role: "Contributor", url: "https://gamebanana.com/members/5260464" },
         { label: "Lustie", role: "Contributor", url: "https://gamebanana.com/mods/655927" },
         { label: "0xluc4s", role: "Contributor", url: "https://gamebanana.com/members/5229080" },
+        { label: "paul lock", role: "Contributor" },
         { label: "BubbleGumXD", role: "Contributor", url: "https://gamebanana.com/members/5281881" },
     ];
 

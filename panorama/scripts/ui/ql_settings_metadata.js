@@ -67,6 +67,7 @@ const SETTING_CREATED_BY_BY_CONFIG = {
     RECENT_PURCHASES_PANEL_OPACITY: "bytenode",
     ENABLE_SHOW_BUILD_ID: "0xluc4s",
     ENABLE_SHOW_BUILD_ID_TITLE: "0xluc4s",
+    ENABLE_BETTER_BUILDS: "paul lock",
     ENABLE_MINIMALISTIC_PAUSE: "Predi",
     ENABLE_DL4D_REMINDERS: "oGeorge",
     DL4D_VOLUME: "oGeorge",
@@ -122,6 +123,7 @@ const SETTING_CREATED_BY_BY_LABEL = {
 };
 const SECTION_CREATED_BY_BY_TITLE = {
     "Active Stats": "Predi",
+    "Better Builds": "paul lock",
     "Player Stats": "Predi"
 };
 const SETTING_DESCRIPTION_OVERRIDE_BY_CONFIG = {
