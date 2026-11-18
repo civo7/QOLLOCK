@@ -134,6 +134,10 @@
 		<include src="s2r://panorama/scripts/manifests/ql_perf/overlay.vjs_c" />
 		<include src="s2r://panorama/scripts/manifests/ql_perf/manifest.vjs_c" />
 		<include src="s2r://panorama/scripts/manifests/ql_show_build_id/manifest.vjs_c" />
+		<!-- ==== QOLLOCK: Better Builds settings publisher ==== -->
+		<include src="s2r://panorama/scripts/manifests/ql_better_builds/channel.vjs_c" />
+		<include src="s2r://panorama/scripts/manifests/ql_better_builds/manifest.vjs_c" />
+		<!-- ==== -->
 		<include src="s2r://panorama/scripts/core/ql_app.vjs_c" />
 	</scripts>
 	<!-- ============================================================= -->

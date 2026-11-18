@@ -1,0 +1,143 @@
+<root>
+	<styles>
+		<include src="s2r://panorama/styles/citadel_base_styles.vcss" />
+		<include src="s2r://panorama/styles/popups/popups_shared.vcss" />
+		<include src="s2r://panorama/styles/popups/citadel_popup_build_browser.vcss" />
+	</styles>
+	<!-- ==== QOLLOCK: Better Builds popup context ==== -->
+	<scripts>
+		<include src="s2r://panorama/scripts/core/ql_namespace.vjs_c" />
+		<include src="s2r://panorama/scripts/ql_utils.vjs_c" />
+		<include src="s2r://panorama/scripts/core/ql_panel_helpers.vjs_c" />
+		<include src="s2r://panorama/scripts/core/ql_scheduler.vjs_c" />
+		<include src="s2r://panorama/scripts/ql_settings_loc/ql_settings_loc_ko.vjs_c" />
+		<include src="s2r://panorama/scripts/ql_settings_loc/ql_settings_loc_it.vjs_c" />
+		<include src="s2r://panorama/scripts/ql_settings_loc/ql_settings_loc_tr.vjs_c" />
+		<include src="s2r://panorama/scripts/ql_settings_loc/ql_settings_loc_ru.vjs_c" />
+		<include src="s2r://panorama/scripts/ql_settings_loc/ql_settings_loc_uk.vjs_c" />
+		<include src="s2r://panorama/scripts/ql_settings_loc/ql_settings_loc_pl.vjs_c" />
+		<include src="s2r://panorama/scripts/ql_settings_loc/ql_settings_loc_bg.vjs_c" />
+		<include src="s2r://panorama/scripts/ql_settings_loc/ql_settings_loc_by.vjs_c" />
+		<include src="s2r://panorama/scripts/ql_settings_loc/ql_settings_loc_ja.vjs_c" />
+		<include src="s2r://panorama/scripts/ql_settings_loc/ql_settings_loc_zh.vjs_c" />
+		<include src="s2r://panorama/scripts/ql_settings_loc/ql_settings_loc_fr.vjs_c" />
+		<include src="s2r://panorama/scripts/ql_settings_loc/ql_settings_loc_pt.vjs_c" />
+		<include src="s2r://panorama/scripts/ql_settings_loc/ql_settings_loc_pt_br.vjs_c" />
+		<include src="s2r://panorama/scripts/ql_settings_loc/ql_settings_loc_es.vjs_c" />
+		<include src="s2r://panorama/scripts/ui/theme.vjs_c" />
+		<include src="s2r://panorama/scripts/manifests/ql_better_builds/channel.vjs_c" />
+		<include src="s2r://panorama/scripts/manifests/ql_better_builds/relay.vjs_c" />
+		<include src="s2r://panorama/scripts/manifests/ql_better_builds/native.vjs_c" />
+		<include src="s2r://panorama/scripts/manifests/ql_better_builds/rows.vjs_c" />
+		<include src="s2r://panorama/scripts/manifests/ql_better_builds/browser.vjs_c" />
+		<include src="s2r://panorama/scripts/manifests/ql_better_builds/popup.vjs_c" />
+	</scripts>
+	<!-- ==== -->
+	<!-- ==== QOLLOCK: Better Builds snippets ==== -->
+	<snippets>
+		<snippet name="QolBetterBuildsTab">
+			<Panel class="QolBetterBuildsTab">
+				<Panel class="QolBetterBuildsTabBg" />
+				<Panel class="QolBetterBuildsTabIcon" />
+				<Label id="QolBetterBuildsTabLabel" class="QolBetterBuildsTabLabel" text="" />
+			</Panel>
+		</snippet>
+		<snippet name="QolBetterBuildsStockTab">
+			<Panel class="HeroSelectorTab QolBetterBuildsStockTab">
+				<Panel class="tab_icon" />
+				<Label id="QolBetterBuildsStockTabLabel" class="TabLabel" text="" />
+			</Panel>
+		</snippet>
+		<snippet name="QolBetterBuildsHost">
+			<Panel class="QolBetterBuildsHost">
+				<Panel class="QolBetterBuildsToolbar">
+					<Panel id="QolBetterBuildsGroups" class="QolBetterBuildsChipRow" />
+					<Panel class="QolBetterBuildsToolbarDivider" />
+					<Panel id="QolBetterBuildsTiers" class="QolBetterBuildsChipRow" />
+					<Panel id="QolBetterBuildsSorts" class="QolBetterBuildsChipRow" />
+				</Panel>
+				<Panel class="QolBetterBuildsColumns">
+					<Label class="QolBetterBuildsColumnsTitle" id="QolBetterBuildsScope" text="" />
+					<Label id="QolBetterBuildsFavouritesHeading" class="QolBetterBuildsColumn QolBetterBuildsWide" text="" />
+					<Label id="QolBetterBuildsUpdatedHeading" class="QolBetterBuildsColumn" text="" />
+					<Panel class="QolBetterBuildsColumnsActions" />
+				</Panel>
+				<Panel id="QolBetterBuildsList" />
+				<Panel class="QolBetterBuildsFooter">
+					<Label id="QolBetterBuildsStatus" class="QolBetterBuildsStatus" text="" />
+					<Label id="QolBetterBuildsFreshness" class="QolBetterBuildsFreshness" text="" />
+				</Panel>
+			</Panel>
+		</snippet>
+		<snippet name="QolBetterBuildsChip">
+			<Panel class="QolBetterBuildsChip">
+				<Label id="QolBetterBuildsChipLabel" text="" />
+			</Panel>
+		</snippet>
+		<snippet name="QolBetterBuildsRow">
+			<Panel class="QolBetterBuildsRow">
+				<Label id="QolBetterBuildsRank" class="QolBetterBuildsRank" text="" />
+				<CitadelAvatarImage id="QolBetterBuildsAvatar" class="QolBetterBuildsAvatar" />
+				<Panel class="QolBetterBuildsMain">
+					<Panel class="QolBetterBuildsNameLine">
+						<Label id="QolBetterBuildsName" class="QolBetterBuildsName" text="" />
+						<Panel id="QolBetterBuildsUsers" class="QolBetterBuildsUsers">
+							<Label id="QolBetterBuildsUsersCaption" class="QolBetterBuildsUsersCaption" text="" />
+							<Panel id="QolBetterBuildsUserAvatars" class="QolBetterBuildsUserAvatars" />
+							<Label id="QolBetterBuildsUsersMore" class="QolBetterBuildsUsersMore" text="" />
+						</Panel>
+					</Panel>
+					<Panel class="QolBetterBuildsByline">
+						<Image id="QolBetterBuildsBadge" class="QolBetterBuildsBadge" scaling="stretch-to-fit-preserve-aspect" />
+						<Label id="QolBetterBuildsAuthor" class="QolBetterBuildsAuthor" text="" />
+						<Label id="QolBetterBuildsRankName" class="QolBetterBuildsRankName" text="" />
+						<Label id="QolBetterBuildsBoard" class="QolBetterBuildsPill QolBetterBuildsPillBoard" text="" />
+						<Label id="QolBetterBuildsDlns" class="QolBetterBuildsPill QolBetterBuildsPillDlns" text="" />
+						<Label id="QolBetterBuildsHeroPill" class="QolBetterBuildsPill QolBetterBuildsPillHero" text="" />
+						<Label id="QolBetterBuildsTagPill" class="QolBetterBuildsPill QolBetterBuildsPillTag" text="" />
+						<Label id="QolBetterBuildsLang" class="QolBetterBuildsPill QolBetterBuildsPillLang" text="" />
+						<Label id="QolBetterBuildsPatch" class="QolBetterBuildsPill QolBetterBuildsPillPatch" text="" />
+					</Panel>
+				</Panel>
+				<Panel class="QolBetterBuildsStats">
+					<Label id="QolBetterBuildsFavs" class="QolBetterBuildsStat QolBetterBuildsWide" text="" />
+					<Label id="QolBetterBuildsUpdated" class="QolBetterBuildsStat QolBetterBuildsStatDim" text="" />
+				</Panel>
+				<Panel class="QolBetterBuildsActions">
+					<Panel class="QolBetterBuildsUseSlot">
+						<Button id="QolBetterBuildsUse" class="QolBetterBuildsUse">
+							<Label id="QolBetterBuildsUseLabel" text="" />
+						</Button>
+						<Label class="QolBetterBuildsActiveTag" text="#Citadel_HeroBuilds_Selected" />
+					</Panel>
+					<Panel id="QolBetterBuildsStar" class="QolBetterBuildsStar" />
+				</Panel>
+			</Panel>
+		</snippet>
+		<snippet name="QolBetterBuildsNativeChip">
+			<Panel class="QolBetterBuildsNativeChip">
+				<Image id="QolBetterBuildsBadge" class="QolBetterBuildsBadge" scaling="stretch-to-fit-preserve-aspect" />
+				<Label id="QolBetterBuildsChipLabel" text="" />
+			</Panel>
+		</snippet>
+	</snippets>
+	<!-- ==== -->
+	<PopupBuildBrowser class="PopupPanel Hidden" popupbackground="dim" oncancel="UIPopupButtonClicked()">
+		<Panel id="Background" />
+		<Panel id="BuildsContent">
+			<Panel id="Header">
+				<Label class="block h3" text="#Citadel_BuildBrowser_Title" />
+				<CitadelButton id="CreateBuildButton" class="Medium Fill" text="#CitadelHeroDetails_Builds_CreateButton" onmouseactivate="CitadelHudHeroBuildsCreateNewBuild(); UIPopupButtonClicked();" />
+			</Panel>
+			<CitadelHeroBuildsSelector id="HeroBuildSelector" user_builds_only="false" />
+		</Panel>
+		<Panel id="BackButton">
+			<Panel id="LeftCommandPanel" class="LeftRightFlow commandPanel" onactivate="UIPopupButtonClicked();">
+				<Panel class="FooterCommand DefaultESC light">
+					<CitadelBinding id="BackBinding" action="MenuBack" />
+					<Label class="FooterCommandLabel" text="#menu_exit_db_page" />
+				</Panel>
+			</Panel>
+		</Panel>
+	</PopupBuildBrowser>
+</root>

@@ -75,6 +75,7 @@ function createTestEnvironment() {
             },
             CreateAnimatedInlineToggleSection: (parent, title, key, desc, fn) => {
                 const sec = mockDollar.CreatePanel("Panel", parent, "");
+                sec.SetAttributeString("setting", key);
                 if (typeof fn === "function") fn(sec);
                 return sec;
             },
@@ -224,4 +225,5 @@ test("ui/gameplay_tabs: renderShopTab builds Shop controls", () => {
     const list = env.sandbox.$.CreatePanel("Panel", env.rootPanel, "ShopList");
     renderShopTab(list);
     assert.ok(list.Children().length > 0, "Shop list should have rendered controls");
+    assert.ok(list.Children().some(row => row.GetAttributeString("setting", "") === "ENABLE_BETTER_BUILDS"));
 });

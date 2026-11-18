@@ -1,0 +1,703 @@
+/* Better Builds surfaces in the native build browser. */
+
+/* ---- tab, matching the stock My Builds / Public tabs ---- */
+.QolBetterBuildsTab
+{
+	min-width: 150px;
+	height: 100%;
+	margin-left: 10px;
+	vertical-align: bottom;
+	flow-children: right;
+}
+
+.QolBetterBuildsTabBg
+{
+	width: 100%;
+	height: 100%;
+	margin: 2px 2px;
+	background-color: #69e799;
+	ignore-parent-flow: true;
+	visibility: collapse;
+}
+
+.QolBetterBuildsTabOn .QolBetterBuildsTabBg
+{
+	visibility: visible;
+}
+
+.QolBetterBuildsTabIcon
+{
+	width: 22px;
+	height: 22px;
+	vertical-align: middle;
+	margin-left: 10px;
+	background-image: url("s2r://panorama/images/qollock/better_builds_crown.vsvg");
+	background-size: contain;
+	background-repeat: no-repeat;
+	background-position: center;
+	wash-color: #69e799;
+}
+
+.QolBetterBuildsTabLabel
+{
+	font-family: VALVEPulp, Noto Sans, sans-serif;
+	font-weight: semi-bold;
+	font-size: 26px;
+	color: #FFEFD7;
+	vertical-align: middle;
+	horizontal-align: middle;
+	padding: 0px 10px 0px 6px;
+	text-transform: uppercase;
+	text-align: center;
+}
+
+.QolBetterBuildsTab:hover .QolBetterBuildsTabLabel
+{
+	color: #A8FFC9;
+}
+
+.QolBetterBuildsTabOn .QolBetterBuildsTabLabel,
+.QolBetterBuildsTabOn:hover .QolBetterBuildsTabLabel
+{
+	color: #10130D;
+}
+
+.QolBetterBuildsTabOn .QolBetterBuildsTabIcon
+{
+	wash-color: #10130D;
+}
+
+/* Curated list occupies the stock list slot while preserving the native details pane. */
+.QolBetterBuildsHost
+{
+	width: fill-parent-flow(1.0);
+	height: 100%;
+	flow-children: down;
+	background-color: #10130D;
+	visibility: collapse;
+}
+
+.QolBetterBuildsHost.QolBetterBuildsShown
+{
+	visibility: visible;
+}
+
+CitadelHeroBuildsSelector.QolBetterBuildsActive #HeroBuildList,
+CitadelHeroBuildsSelector.QolBetterBuildsActive #HeroBuildListLoading,
+CitadelHeroBuildsSelector.QolBetterBuildsActive .HeroSelectorTab.MyBuilds,
+CitadelHeroBuildsSelector.QolBetterBuildsActive .HeroSelectorTab.PublicBuilds
+{
+	visibility: collapse;
+}
+
+.QolBetterBuildsStockTab
+{
+	visibility: collapse;
+}
+
+CitadelHeroBuildsSelector.QolBetterBuildsActive .QolBetterBuildsStockTab
+{
+	visibility: visible;
+}
+
+.QolBetterBuildsStockTab:hover .TabLabel
+{
+	color: #A8FFC9;
+}
+
+.QolBetterBuildsMyTab .tab_icon
+{
+	background-image: url("s2r://panorama/images/icons/icon_star.vsvg");
+	background-size: cover;
+	margin-bottom: 2px;
+}
+
+.QolBetterBuildsPublicTab .tab_icon
+{
+	background-image: url("s2r://panorama/images/icons/icon_globe.vsvg");
+	background-size: cover;
+}
+
+.QolBetterBuildsToolbar
+{
+	width: 100%;
+	flow-children: right-wrap;
+	padding: 8px 10px 6px 12px;
+	background-color: #ffffff08;
+}
+
+.QolBetterBuildsToolbarDivider
+{
+	width: 1px;
+	height: 18px;
+	margin: 0px 10px 0px 4px;
+	background-color: #FFEFD733;
+	vertical-align: middle;
+}
+
+.QolBetterBuildsChipRow
+{
+	flow-children: right;
+	vertical-align: middle;
+}
+
+.QolBetterBuildsChip
+{
+	margin-right: 4px;
+	padding: 3px 9px;
+	border: 1px solid #FFEFD726;
+	border-radius: 3px;
+	background-color: #00000000;
+	transition-property: background-color, border;
+	transition-duration: 0.08s;
+}
+
+.QolBetterBuildsChip Label
+{
+	font-size: 15px;
+	font-weight: semi-bold;
+	color: #FFEFD799;
+	text-transform: uppercase;
+	letter-spacing: 0.5px;
+}
+
+.QolBetterBuildsChip:hover
+{
+	background-color: #FFEFD714;
+}
+
+.QolBetterBuildsChip:hover Label
+{
+	color: #FFEFD7;
+}
+
+.QolBetterBuildsChip.QolBetterBuildsChipOn
+{
+	background-color: #69e799;
+	border: 1px solid #69e799;
+}
+
+.QolBetterBuildsChip.QolBetterBuildsChipOn Label
+{
+	color: #10130D;
+}
+
+.QolBetterBuildsColumns
+{
+	width: 100%;
+	flow-children: right;
+	padding: 4px 16px 4px 12px;
+	border-bottom: 1px solid #FFEFD71a;
+}
+
+.QolBetterBuildsColumnsTitle
+{
+	width: fill-parent-flow(1.0);
+	font-size: 13px;
+	color: #FFEFD780;
+	vertical-align: middle;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
+.QolBetterBuildsColumn
+{
+	width: 62px;
+	font-size: 12px;
+	font-weight: bold;
+	color: #FFEFD780;
+	text-transform: uppercase;
+	letter-spacing: 0.5px;
+	text-align: center;
+	vertical-align: middle;
+	text-overflow: shrink;
+}
+
+.QolBetterBuildsColumn.QolBetterBuildsWide,
+.QolBetterBuildsStat.QolBetterBuildsWide
+{
+	width: 84px;
+}
+
+.QolBetterBuildsColumnsActions
+{
+	width: 136px;
+	height: 1px;
+}
+
+#QolBetterBuildsList
+{
+	width: 100%;
+	height: fill-parent-flow(1.0);
+	flow-children: down;
+	overflow: squish scroll;
+}
+
+.QolBetterBuildsEmpty
+{
+	width: 100%;
+	margin-top: 40px;
+	font-size: 18px;
+	color: #FFEFD780;
+	text-align: center;
+}
+
+.QolBetterBuildsFooter
+{
+	width: 100%;
+	flow-children: right;
+	padding: 5px 12px;
+	background-color: #ffffff08;
+}
+
+.QolBetterBuildsStatus
+{
+	width: fill-parent-flow(1.0);
+	font-size: 14px;
+	color: #A8FFC9;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
+.QolBetterBuildsStatus.QolBetterBuildsError
+{
+	color: #FF8A66;
+}
+
+.QolBetterBuildsFreshness
+{
+	font-size: 13px;
+	color: #FFEFD766;
+}
+
+/* ---- rows ---- */
+.QolBetterBuildsRow
+{
+	width: 100%;
+	min-height: 58px;
+	flow-children: right;
+	padding: 6px 12px 6px 6px;
+	background-color: #00000000;
+	transition-property: background-color;
+	transition-duration: 0.05s;
+}
+
+.QolBetterBuildsRow.QolBetterBuildsAlt
+{
+	background-color: #ffffff05;
+}
+
+.QolBetterBuildsRow:hover
+{
+	background-color: #ffffff12;
+}
+
+.QolBetterBuildsRow.QolBetterBuildsSelected,
+.QolBetterBuildsRow.QolBetterBuildsSelected:hover
+{
+	background-color: #4D7EC84d;
+}
+
+.QolBetterBuildsRank
+{
+	width: 34px;
+	font-family: VALVEPulp, Noto Sans, sans-serif;
+	font-size: 20px;
+	color: #FFEFD74d;
+	text-align: center;
+	vertical-align: middle;
+}
+
+.QolBetterBuildsAvatar
+{
+	width: 40px;
+	height: 40px;
+	margin-right: 10px;
+	vertical-align: middle;
+}
+
+.QolBetterBuildsMain
+{
+	width: fill-parent-flow(1.0);
+	flow-children: down;
+	vertical-align: middle;
+}
+
+.QolBetterBuildsNameLine
+{
+	width: 100%;
+	flow-children: right;
+}
+
+.QolBetterBuildsName
+{
+	width: fill-parent-flow(1.0);
+	font-family: VALVEOracle, Reaver, sans-serif;
+	font-size: 21px;
+	font-weight: medium;
+	color: #FFEFD7;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
+.QolBetterBuildsIsActive .QolBetterBuildsName
+{
+	color: #69e799;
+}
+
+/* Trusted players who ran the build: small avatars at the end of the name line. */
+.QolBetterBuildsUsers
+{
+	flow-children: right;
+	margin-left: 10px;
+	margin-right: 4px;
+	vertical-align: middle;
+	visibility: collapse;
+}
+
+.QolBetterBuildsUsers.QolBetterBuildsShown
+{
+	visibility: visible;
+}
+
+.QolBetterBuildsUsersCaption
+{
+	margin-right: 6px;
+	font-size: 11px;
+	font-weight: bold;
+	color: #FFEFD766;
+	text-transform: uppercase;
+	letter-spacing: 0.5px;
+	vertical-align: middle;
+}
+
+.QolBetterBuildsUserAvatars
+{
+	flow-children: right;
+	vertical-align: middle;
+}
+
+.QolBetterBuildsUserAvatars CitadelAvatarImage
+{
+	width: 22px;
+	height: 22px;
+	margin-right: 3px;
+}
+
+/* A player who also tried the build but mainly runs another one on this hero. */
+.QolBetterBuildsUserAvatars CitadelAvatarImage.QolBetterBuildsUserTried
+{
+	opacity: 0.4;
+}
+
+.QolBetterBuildsUsersMore
+{
+	margin-left: 2px;
+	font-size: 13px;
+	font-weight: bold;
+	color: #A8FFC9;
+	vertical-align: middle;
+}
+
+.QolBetterBuildsByline
+{
+	width: 100%;
+	flow-children: right;
+	margin-top: 1px;
+	overflow: clip;
+}
+
+.QolBetterBuildsBadge
+{
+	width: 22px;
+	height: 22px;
+	margin-right: 5px;
+	vertical-align: middle;
+	visibility: collapse;
+}
+
+.QolBetterBuildsBadge.QolBetterBuildsShown
+{
+	visibility: visible;
+}
+
+.QolBetterBuildsAuthor,
+.QolBetterBuildsRankName
+{
+	font-size: 15px;
+	color: #FFEFD799;
+	vertical-align: middle;
+	white-space: nowrap;
+}
+
+.QolBetterBuildsAuthor
+{
+	max-width: 170px;
+	text-overflow: ellipsis;
+}
+
+.QolBetterBuildsRankName
+{
+	margin-left: 6px;
+}
+
+.QolBetterBuildsPill
+{
+	margin-left: 7px;
+	padding: 0px 5px;
+	border-radius: 3px;
+	font-size: 12px;
+	font-weight: bold;
+	text-transform: uppercase;
+	letter-spacing: 0.5px;
+	white-space: nowrap;
+	vertical-align: middle;
+	visibility: collapse;
+}
+
+.QolBetterBuildsPill.QolBetterBuildsShown
+{
+	visibility: visible;
+}
+
+.QolBetterBuildsPillBoard
+{
+	background-color: #69e79926;
+	color: #A8FFC9;
+}
+
+.QolBetterBuildsPillDlns
+{
+	background-color: #CE90FF33;
+	color: #E3C2FF;
+}
+
+.QolBetterBuildsPillHero
+{
+	background-color: #4D7EC84d;
+	color: #C6DBFF;
+}
+
+.QolBetterBuildsPillLang
+{
+	background-color: #FFEFD71f;
+	color: #FFEFD7b3;
+}
+
+.QolBetterBuildsPillTag
+{
+	background-color: #FFED7926;
+	color: #FFED79;
+}
+
+/* The game changed the build's hero or items since its author last updated it; red when an item is gone. */
+.QolBetterBuildsPillPatch
+{
+	background-color: #FFB45726;
+	color: #FFC97A;
+	text-transform: none;
+	letter-spacing: 0px;
+}
+
+.QolBetterBuildsPillPatch.QolBetterBuildsPillGone
+{
+	background-color: #FF6B6B2e;
+	color: #FF9B9B;
+}
+
+/* A few item tweaks only: worth a glance, not a warning. */
+.QolBetterBuildsPillPatch.QolBetterBuildsPillPatchFew
+{
+	background-color: #FFB45712;
+	color: #FFC97A80;
+}
+
+.QolBetterBuildsStats
+{
+	flow-children: right;
+	vertical-align: middle;
+}
+
+.QolBetterBuildsStat
+{
+	width: 62px;
+	font-size: 19px;
+	color: #FFEFD7cc;
+	text-align: center;
+	vertical-align: middle;
+}
+
+.QolBetterBuildsStatDim
+{
+	font-size: 16px;
+	color: #FFEFD780;
+}
+
+.QolBetterBuildsActions
+{
+	width: 136px;
+	flow-children: right;
+	vertical-align: middle;
+}
+
+.QolBetterBuildsUseSlot
+{
+	width: 98px;
+	height: 32px;
+	vertical-align: middle;
+}
+
+/* Same marker the stock rows show in place of "Use Build" on the build that is in use. */
+.QolBetterBuildsActiveTag
+{
+	horizontal-align: center;
+	vertical-align: middle;
+	padding: 2px 8px;
+	background-color: #69e799;
+	font-family: VALVEPulp, Noto Sans, sans-serif;
+	font-size: 16px;
+	color: #10130D;
+	text-transform: uppercase;
+	visibility: collapse;
+}
+
+.QolBetterBuildsIsActive .QolBetterBuildsActiveTag
+{
+	visibility: visible;
+}
+
+.QolBetterBuildsUse
+{
+	width: 98px;
+	height: 32px;
+	border: 2px solid #FFEFD7;
+	border-radius: 16px;
+	background-color: #00000000;
+	vertical-align: middle;
+	opacity: 0;
+	transition-property: opacity, background-color;
+	transition-duration: 0.08s;
+}
+
+.QolBetterBuildsUse Label
+{
+	font-size: 15px;
+	font-weight: bold;
+	color: #FFEFD7;
+	horizontal-align: center;
+	vertical-align: middle;
+	text-overflow: shrink;
+}
+
+.QolBetterBuildsRow:hover .QolBetterBuildsUse,
+.QolBetterBuildsSelected .QolBetterBuildsUse
+{
+	opacity: 1;
+}
+
+.QolBetterBuildsUse:hover
+{
+	background-color: #FFEFD7;
+}
+
+.QolBetterBuildsUse:hover Label
+{
+	color: #10130D;
+}
+
+.QolBetterBuildsIsActive .QolBetterBuildsUse,
+.QolBetterBuildsIsActive:hover .QolBetterBuildsUse
+{
+	visibility: collapse;
+}
+
+.QolBetterBuildsStar
+{
+	width: 26px;
+	height: 26px;
+	margin-left: 10px;
+	vertical-align: middle;
+	background-image: url("s2r://panorama/images/icons/icon_star_outline.vsvg");
+	background-size: contain;
+	background-repeat: no-repeat;
+	background-position: center;
+	opacity: 0.2;
+	transition-property: pre-transform-scale2d, opacity;
+	transition-duration: 0.1s;
+}
+
+.QolBetterBuildsStar:hover
+{
+	pre-transform-scale2d: 1.2;
+	opacity: 0.6;
+}
+
+.QolBetterBuildsFavourite .QolBetterBuildsStar
+{
+	background-image: url("s2r://panorama/images/icons/icon_star.vsvg");
+	wash-color: #69e799;
+	opacity: 1;
+}
+
+/* ---- badge added to rows of the stock lists ---- */
+.QolBetterBuildsNativeChip
+{
+	flow-children: right;
+	margin-left: 10px;
+	padding: 1px 7px 1px 4px;
+	border-radius: 3px;
+	background-color: #69e7991f;
+	vertical-align: middle;
+}
+
+.QolBetterBuildsNativeChip Label
+{
+	max-width: 160px;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+	font-size: 13px;
+	font-weight: bold;
+	color: #A8FFC9;
+	vertical-align: middle;
+	text-transform: uppercase;
+	letter-spacing: 0.5px;
+}
+
+.QolBetterBuildsNativeChip .QolBetterBuildsBadge
+{
+	width: 20px;
+	height: 20px;
+	margin-right: 4px;
+}
+
+/* A Night Shift appearance or two, not a regular. */
+.QolBetterBuildsPillDlns.QolBetterBuildsPillDlnsFew
+{
+	background-color: #CE90FF14;
+	color: #CE90FF80;
+}
+
+/* Hidden CEF relay surface. */
+.QolBetterBuildsRelay {
+	width: 1px;
+	height: 1px;
+	opacity: 0;
+	position: -4px -4px 0px;
+}
+.QolBetterBuildsFreshness.QolBetterBuildsLive {
+	color: #8fd3a7;
+}
+.QolBetterBuildsFreshness.QolBetterBuildsLiveLoading {
+	color: #b9b39b;
+}
+
+/* Empty-list messages can wrap when the popup is narrow. */
+.QolBetterBuildsEmpty
+{
+	white-space: normal;
+	padding: 0px 30px;
+}
+.QolBetterBuildsFreshness.QolBetterBuildsLiveFailed
+{
+	color: #FFB38A;
+}

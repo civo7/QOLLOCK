@@ -80,6 +80,7 @@ Node/npm are development tools, not the in-game runtime.
 | Profile page | [citadel_db_page_profile.xml](panorama/layout/citadel_db_page_profile.xml) | Profile-specific callbacks and statlocker behavior |
 | Profile card | [profile_card.xml](panorama/layout/profile_card.xml) | Card-specific rank/statlocker scripts and callbacks |
 | Quickbuy | [hud_quickbuy.xml](panorama/layout/hud_quickbuy.xml) | Quickbuy total-summary script and local panel lifecycle |
+| Build browser | [citadel_popup_build_browser.xml](panorama/layout/popups/citadel_popup_build_browser.xml) | Better Builds rendering, native build actions and live relay. The HUD manifest publishes the setting to the popup's Panorama root. |
 | Hero testing | Native game `hud_hero_testing.xml`; [hero_testing_menu.css](panorama/styles/hero_testing_menu.css) | Native sandbox controls; QOLLOCK owns CSS visibility/placement through the HUD settings projector |
 
 The HUD and settings have separate JavaScript contexts. Their `QOL` objects,

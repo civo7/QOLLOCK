@@ -77,6 +77,7 @@ in the client. Inspect the marked blocks and current owner before retiring one.
 | `hud_gold_and_ap_container.xml` | Native `CitadelHeroImage` child inside the level amount; it is not FG's authoritative hero source. |
 | `citadel_hud_hero_shop.xml` | Recent-purchaser hero-name binding and permanent native shop stat children. |
 | `citadel_hud_hero_builds.xml` | Hidden selected-build ID/name/version binding consumed by the build readout. |
+| `popups/citadel_popup_build_browser.xml` | Better Builds scripts and snippets for the native build browser. The extracted popup markup and stylesheet baseline still own the stock browser. |
 | `citadel_hud_top_bar.xml` | Buff/rejuvenator display surfaces and retained compatibility score wrappers. |
 | `citadel_hud_top_bar_player.xml`, `players_list_entry.xml` | Native player/hero evidence, rank badges and topbar nickname/objective/ultimate displays; restricted SPM/unspent markup remains compatibility content. |
 | `hud_quickbuy.xml`, `hud_quickbuy_entry.xml` | Independent quickbuy companion, summary/preview/queue children and native pointer-input changes. |

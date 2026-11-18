@@ -484,7 +484,8 @@
         ["QUICKBUY_X_OFFSET",0],
         ["QUICKBUY_Y_OFFSET",0],
         ["MINIMAP_LOCATION_SCALE",100],
-        ["QUICKBUY_SCALE",100]
+        ["QUICKBUY_SCALE",100],
+        ["ENABLE_BETTER_BUILDS",0]
     ].map(entry => Object.freeze(entry));
     Object.freeze(dictionary);
     const keys = new Set(dictionary.map(entry => entry[0]));

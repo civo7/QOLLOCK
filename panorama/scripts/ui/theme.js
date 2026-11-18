@@ -110,9 +110,8 @@
     // Language Accessors
     // =========================================================================
 
-    function GetSettingsLanguage() {
-        const cfg = getConfig();
-        const raw = Math.round(Number(cfg && cfg.LANGUAGE));
+    function GetSettingsLanguage(language = getConfig()?.LANGUAGE) {
+        const raw = Math.round(Number(language));
         if (raw === SETTINGS_LANGUAGE_RUSSIAN) return SETTINGS_LANGUAGE_RUSSIAN;
         if (raw === SETTINGS_LANGUAGE_UKRAINIAN) return SETTINGS_LANGUAGE_UKRAINIAN;
         if (raw === SETTINGS_LANGUAGE_POLISH) return SETTINGS_LANGUAGE_POLISH;
@@ -142,8 +141,8 @@
     const IsBrazilianPortugueseSettingsLanguage = () => GetSettingsLanguage() === SETTINGS_LANGUAGE_BRAZILIAN_PORTUGUESE;
     const IsSpanishSettingsLanguage = () => GetSettingsLanguage() === SETTINGS_LANGUAGE_SPANISH;
 
-    function GetSettingsLanguageKey() {
-        const lang = GetSettingsLanguage();
+    function GetSettingsLanguageKey(language) {
+        const lang = GetSettingsLanguage(language);
         switch (lang) {
             case SETTINGS_LANGUAGE_RUSSIAN: return "ru";
             case SETTINGS_LANGUAGE_UKRAINIAN: return "uk";
@@ -285,15 +284,15 @@
         return cur !== "Presets";
     }
 
-    function LocalizeSettingsText(text, force) {
+    function LocalizeSettingsText(text, force, language) {
         if (text === undefined || text === null) return "";
         const raw = String(text);
         if (!force && !ShouldLocalizeTabContent()) return raw;
 
-        const lang = GetSettingsLanguage();
+        const lang = GetSettingsLanguage(language);
         if (lang === SETTINGS_LANGUAGE_ENGLISH) return raw;
 
-        const key = GetSettingsLanguageKey();
+        const key = GetSettingsLanguageKey(lang);
         const maps = (typeof globalThis !== "undefined" && globalThis.SETTINGS_LOCALE_TEXT)
             ? globalThis.SETTINGS_LOCALE_TEXT
             : ((typeof window !== "undefined" && window.SETTINGS_LOCALE_TEXT) ? window.SETTINGS_LOCALE_TEXT : {});
@@ -305,8 +304,8 @@
         return raw;
     }
 
-    function FormatSettingsText(text, values) {
-        const translated = (Q.ui.theme?.LocalizeSettingsText || LocalizeSettingsText)(text, true);
+    function FormatSettingsText(text, values, language) {
+        const translated = (Q.ui.theme?.LocalizeSettingsText || LocalizeSettingsText)(text, true, language);
         return translated.replace(/\{([\w.-]+)\}/g, (token, key) =>
             values && Object.prototype.hasOwnProperty.call(values, key) ? String(values[key]) : token);
     }

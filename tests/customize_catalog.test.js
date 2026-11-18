@@ -62,6 +62,8 @@ test("catalog covers current visual manifest controls, with explicit compatibili
     ]);
     // World damage controls live in their own tab instead of a screen canvas.
     // Keep checking every manifest key is reachable through the real renderer.
+    env.global.QOL.ui.window.setActiveTabAndRefresh("Shop"); env.clock.advance(300);
+    assert.ok(env.list.FindChildTraverse("BetterBuildsSectionToggleButton"), "Better Builds should be reachable in Shop settings");
     env.global.QOL.ui.window.setActiveTabAndRefresh("Crosshair"); env.clock.advance(300);
     for (const id of registry.getRegisteredIds()) {
         if (excludedOwners.has(id)) continue;
@@ -71,6 +73,8 @@ test("catalog covers current visual manifest controls, with explicit compatibili
                     `${id}: missing inline setting ${setting.key}`);
                 continue;
             }
+            // The popup owns the High Elo tab; language is a general setting.
+            if (id === "ql_better_builds" && ["ENABLE_BETTER_BUILDS", "LANGUAGE"].includes(setting.key)) continue;
             if (!catalog.settingFields.has(setting.key) || setting.type === "multitoggle" || excludedKeys.has(setting.key)) continue;
             assert.ok(catalog.fieldMap.has(setting.key), `${id}: missing visual setting ${setting.key}`);
         }

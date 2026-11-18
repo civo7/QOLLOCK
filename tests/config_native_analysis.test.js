@@ -5,7 +5,9 @@ const { createHud } = require("../scripts/simulator");
 const { analyzeCapture, formatReport } = require("../scripts/analyze_game_frames");
 const { digest } = require("../scripts/analyze_minimap_frames");
 
-function capture(noise = 0, drift = false, keyboard = false, selected = "group-029") {
+const keyboardToggle = "key-enable-keyboard-overlay";
+
+function capture(noise = 0, drift = false, keyboard = false, selected = keyboardToggle) {
     const hud = createHud({ inHideout: false }); hud.assertLoaded();
     const Q = hud.sandbox.global.QOL;
     if (keyboard) {
@@ -184,12 +186,12 @@ test("rejected drift retains the actual paired means and percentage without weak
 
 test("native keyboard findings require actual before/after presence and retirement evidence", () => {
     const { csv, meta } = capture(0, false, true), result = analyzeCapture(csv, meta);
-    assert.equal(result.rows.find(row => row.id === "group-029").status, "effect_detected");
+    assert.equal(result.rows.find(row => row.id === keyboardToggle).status, "effect_detected");
     assert.match(formatReport(result), /keyboard=.*"rootPresent":false/);
     assert.match(formatReport(result), /A n=.*keyboard=\{"before":.*"after":/);
-    const window = meta.windows.find(window => window.conditionId === "group-029" && window.side === "B");
+    const window = meta.windows.find(window => window.conditionId === keyboardToggle && window.side === "B");
     rewriteProofs(meta, new Set([window.beforeProof]), proof => { proof.keyboard.observed.rootPresent = true; });
-    const broken = analyzeCapture(csv, meta).rows.find(row => row.id === "group-029");
+    const broken = analyzeCapture(csv, meta).rows.find(row => row.id === keyboardToggle);
     assert.equal(broken.validBlocks, 2);
     assert.equal(broken.status, "inconclusive");
     assert.ok(broken.blocks.some(block => block.errors.some(error => /keyboard native/.test(error))));
@@ -198,12 +200,12 @@ test("native keyboard findings require actual before/after presence and retireme
 for (const generation of [undefined, null, 0, 1.5, Number.MAX_SAFE_INTEGER + 1, "1", "changed"]) {
     test(`native keyboard evidence rejects missing, invalid or replaced generations: ${generation}`, () => {
         const { csv, meta } = capture(0, false, true);
-        const ids = new Set(meta.windows.filter(window => window.conditionId === "group-029" && window.side === "A")
+        const ids = new Set(meta.windows.filter(window => window.conditionId === keyboardToggle && window.side === "A")
             .flatMap(window => generation === "changed" ? [window.afterProof] : [window.beforeProof, window.afterProof]));
         rewriteProofs(meta, ids, proof => {
             proof.keyboard.observed.generation = generation === "changed" ? proof.keyboard.observed.generation + 1 : generation;
         });
-        const row = analyzeCapture(csv, meta).rows.find(row => row.id === "group-029");
+        const row = analyzeCapture(csv, meta).rows.find(row => row.id === keyboardToggle);
         assert.equal(row.validBlocks, 0);
         assert.equal(row.status, "invalid");
         assert.ok(row.blocks.every(block => block.errors.some(error => /keyboard/.test(error))));
@@ -213,10 +215,10 @@ for (const generation of [undefined, null, 0, 1.5, Number.MAX_SAFE_INTEGER + 1, 
 for (const [side, field, value] of [["B", "rootPresent", undefined], ["A", "active", "false"]]) {
     test(`required keyboard evidence is explicitly boolean: ${side}.${field}`, () => {
         const { csv, meta } = capture(0, false, true);
-        const ids = new Set(meta.windows.filter(window => window.conditionId === "group-029" && window.side === side)
+        const ids = new Set(meta.windows.filter(window => window.conditionId === keyboardToggle && window.side === side)
             .flatMap(window => [window.beforeProof, window.afterProof]));
         rewriteProofs(meta, ids, proof => { proof.keyboard.observed[field] = value; });
-        const row = analyzeCapture(csv, meta).rows.find(row => row.id === "group-029");
+        const row = analyzeCapture(csv, meta).rows.find(row => row.id === keyboardToggle);
         assert.equal(row.validBlocks, 0);
         assert.equal(row.status, "invalid");
     });

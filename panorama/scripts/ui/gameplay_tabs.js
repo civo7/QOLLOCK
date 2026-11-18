@@ -403,6 +403,11 @@
             createRow(list, "Minimalist", "ENABLE_SIMPLIFY_SHOP", "toggle", null, null, null, null);
             createRow(list, "Blur", "DISABLE_SHOP_BLUE", "toggle", null, null, null, [{ invert: true }]);
         }
+        if (createAnimatedToggle) {
+            createSep(list);
+            createAnimatedToggle(list, "Better Builds", "ENABLE_BETTER_BUILDS",
+                "Adds a High Elo tab and author badges to the build browser using a third-party live feed.", null);
+        }
     }
 
     function renderHealthbarTab(list) {

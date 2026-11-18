@@ -68,6 +68,7 @@ tables, CSS values, test history or general verification caveats into it.
 | [ql_healthbar](../../panorama/scripts/manifests/ql_healthbar/manifest.js) | Numeric healthbar-type dispatcher plus shared/variant modules; PLAYER_HEALTHBAR_* settings. |
 | [ql_perf](ql_perf.md) | Private report/overlay owners observing Scheduler samples; not a measurement of total engine frame time. |
 | [ql_show_build_id](ql_show_build_id.md) | Read current native shop build metadata through a private created-tree owner; unrelated to settings storage. |
+| [ql_better_builds](ql_better_builds.md) | Add the High Elo tab, native author badges and curated builds to the build browser. |
 
 ## Settings-only utility
 

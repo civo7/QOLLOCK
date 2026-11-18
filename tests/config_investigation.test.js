@@ -328,6 +328,8 @@ test("a settings error followed by a successful hook between guards still invali
     assert.deepEqual(packets.get("runner-restoration").failedOwners, ["ql_compass"]);
 });
 
+const keyboardToggle = "key-enable-keyboard-overlay";
+
 for (const rejectDeletion of [false, true]) test(`keyboard contrasts carry physical evidence, deletion rejected=${rejectDeletion}`, () => {
     const hud = createHud({ inHideout: false }); hud.assertLoaded();
     const { QOL: Q, $ } = hud.sandbox.global;
@@ -341,7 +343,7 @@ for (const rejectDeletion of [false, true]) test(`keyboard contrasts carry physi
             return panel;
         };
     }
-    hud.root.SetAttributeString("QOL_DiagRequest", "fps_config_106_group-029");
+    hud.root.SetAttributeString("QOL_DiagRequest", "fps_config_106_" + keyboardToggle);
     Q.core.App.syncDiagnosticState(hud.root, hud.clock.now()); hud.clock.advanceBy(100000, 1000);
     const diag = JSON.parse(hud.root.GetAttributeString("QOL_Diag", ""));
     if (rejectDeletion) {
@@ -352,7 +354,9 @@ for (const rejectDeletion of [false, true]) test(`keyboard contrasts carry physi
         const markers = hud.sandbox.messages.filter(line => line.startsWith("[QOLLOCK:NativeFPS] ")).map(line => JSON.parse(line.slice(20)));
         const { packets } = require("../scripts/analyze_minimap_frames").decodePackets(markers.filter(item => item.type === "packet"), markers[0].session);
         assert.equal(packets.get("context").keyboardEvidence, true);
-        for (const window of markers.filter(item => item.type === "window" && item.conditionId === "group-029")) {
+        const windows = markers.filter(item => item.type === "window" && item.conditionId === keyboardToggle);
+        assert.equal(windows.length, 12);
+        for (const window of windows) {
             const evidence = packets.get(window.beforeProof).keyboard;
             assert.equal(evidence.expectedEnabled, window.side === "A");
             if (window.side === "A") assert.equal(evidence.observed.ready, true);
@@ -373,7 +377,7 @@ test("keyboard investigation refuses a ready receipt without a generation", () =
         owner.diagnostics.inspect = () => ({ ...inspect(), generation: undefined });
         return owner;
     };
-    hud.root.SetAttributeString("QOL_DiagRequest", "fps_config_107_group-029");
+    hud.root.SetAttributeString("QOL_DiagRequest", "fps_config_107_" + keyboardToggle);
     Q.core.App.syncDiagnosticState(hud.root, hud.clock.now()); hud.clock.advanceBy(100000, 1000);
     const diag = JSON.parse(hud.root.GetAttributeString("QOL_Diag", ""));
     assert.match(diag.benchmark.stats.reason, /keyboard.*not ready/);

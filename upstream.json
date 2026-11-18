@@ -149,6 +149,14 @@
       "auto_sync": false,
       "local_sha256": "43f60a0faf7e7356c458dcc4819fa3c5e08baa3bc844cb7569c28c00d36ea0ac"
     },
+    "layout/popups/citadel_popup_build_browser.xml": {
+      "blob": "56079867cd2fa612d8bd92e87a2c08971f600628",
+      "destination": "panorama/layout/popups/citadel_popup_build_browser.xml",
+      "kind": "xml",
+      "auto_sync": false,
+      "local_sha256": "cc7fbf4d668e30c2f4b9f8788cc2501878926b67d6aed03189b53906a905d471",
+      "base_commit": "82735ebcc9c89d1b3f6b3262c23c9580798ad362"
+    },
     "layout/profile_card.xml": {
       "blob": "e45956ed2c1625ddb248793154bc1c0a0083ce99",
       "destination": "panorama/layout/profile_card.xml",
@@ -639,6 +647,14 @@
       "kind": "css",
       "auto_sync": true,
       "local_sha256": "6ae277914ac8171f5355957a8e8e30d01b5677743edf68b4dadab758d100f9d0"
+    },
+    "styles/popups/citadel_popup_build_browser.css": {
+      "blob": "ed2c707fb0c19e55735290b656444b350f8be15c",
+      "destination": "panorama/styles/base/popups/citadel_popup_build_browser.css",
+      "kind": "css",
+      "auto_sync": true,
+      "local_sha256": "4ed839ff4ddc2c3754bbb432c4b113985d7d847a7eb2effbe609d652de50c37e",
+      "base_commit": "82735ebcc9c89d1b3f6b3262c23c9580798ad362"
     },
     "styles/profile_card.css": {
       "blob": "d79c101f2a99eaf383b93f46d8ec28a4065bc3ab",
