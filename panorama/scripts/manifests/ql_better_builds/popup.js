@@ -21,7 +21,6 @@
 
     function ownsNative(native) {
         return panel.isAlive(native.list) && native.list.GetParent() === native.main &&
-            panel.isAlive(native.loadingList) && native.loadingList.GetParent() === native.main &&
             panel.isAlive(native.details) && native.details.GetParent() === native.main &&
             panel.isAlive(native.main) && native.main.GetParent() === native.selector &&
             panel.isAlive(native.tabBar) && native.tabBar.GetParent() === native.header &&

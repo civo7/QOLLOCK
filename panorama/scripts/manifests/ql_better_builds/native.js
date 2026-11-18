@@ -16,13 +16,12 @@
         const search = findChildByClass(header, "SearchContainer");
         const main = findChildByClass(selector, "MainContainer");
         const list = findChild(main, "HeroBuildList");
-        const loadingList = findChild(main, "HeroBuildListLoading");
         const details = findChild(main, "BuildDetails");
         const entry = findChild(findChild(search, "SearchBox"), "SearchTextEntry");
         const myTab = findChildByClass(tabBar, "MyBuilds");
         const publicTab = findChildByClass(tabBar, "PublicBuilds");
-        if (!list || !loadingList || !details || !entry || !myTab || !publicTab) return null;
-        return { selector, header, tabBar, search, entry, main, list, loadingList, details, myTab, publicTab };
+        if (!list || !details || !entry || !myTab || !publicTab) return null;
+        return { selector, header, tabBar, search, entry, main, list, details, myTab, publicTab };
     }
 
     function forEachRow(list, visit) {
@@ -96,12 +95,12 @@
             panel.setClass(selector, "ShowMyBuilds", false);
         }
 
-        function leave({ keepPublic = false, refreshSearch = true } = {}) {
+        function leave({ keepPublic = false, refreshSearch = true, tabFilter } = {}) {
             invalidate();
             preview = null;
             if (originalTab && isAlive(selector) && !keepPublic) {
-                panel.setClass(selector, "ShowPublicBuilds", originalTab.public);
-                panel.setClass(selector, "ShowMyBuilds", originalTab.my);
+                panel.setClass(selector, "ShowPublicBuilds", tabFilter === undefined ? originalTab.public : tabFilter === 2);
+                panel.setClass(selector, "ShowMyBuilds", tabFilter === undefined ? originalTab.my : tabFilter === 1);
             }
             originalTab = null;
             if (!keepPublic && ownedText !== null && isAlive(entry) && isAlive(selector) && entry.text === ownedText) {
@@ -114,6 +113,11 @@
                 }
             }
             previousText = ownedText = initialText = null;
+            // The native tab XML routes this filter to the selector. It does not
+            // depend on a tab becoming visible again before receiving activation.
+            if (tabFilter !== undefined && isAlive(selector)) {
+                $.DispatchEvent("CitadelBuildBrowserSetTabFilter", selector, tabFilter);
+            }
         }
 
         function matchingRows(build, exactOnly) {

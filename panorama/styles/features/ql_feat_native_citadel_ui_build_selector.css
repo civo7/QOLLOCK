@@ -1,0 +1,9 @@
+/* Loaded by the native build selector. Removing the class hands list and
+   loading visibility back to the game's BuildsLoading rules. */
+CitadelHeroBuildsSelector.QolBetterBuildsActive #HeroBuildList,
+CitadelHeroBuildsSelector.QolBetterBuildsActive #HeroBuildListLoading,
+CitadelHeroBuildsSelector.QolBetterBuildsActive .HeroSelectorTab.MyBuilds,
+CitadelHeroBuildsSelector.QolBetterBuildsActive .HeroSelectorTab.PublicBuilds
+{
+	visibility: collapse;
+}

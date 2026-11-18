@@ -10,6 +10,7 @@
     const SORTS = ["best", "recent", "most", "newest"];
     const REGIONS = ["NA", "EU"];
     const MEMORY = "qol_better_builds_view";
+    const STOCK_HIDDEN = PREFIX + "Active";
     const MAX_HERO_SCANS = 10;
 
     const readObject = raw => {
@@ -39,8 +40,6 @@
         const text = (key, values) => QOL.ui.theme.FormatSettingsText(key, values, language);
         const owned = [];
         const stockTabs = [];
-        const stockPanels = [native.myTab, native.publicTab, native.list, native.loadingList];
-        const stockStyles = panel.createNativeStyleOwner({ preserveStyles: ["visibility"] });
         const badges = new Map();
         const favourites = new Set();
         const settling = new Map();
@@ -117,7 +116,7 @@
             ];
             tierChips.forEach((chip, index) => tooltip(chip, [tips[index]]));
         }
-        function addStockTab(nativeTab, icon) {
+        function addStockTab(nativeTab, icon, tabFilter) {
             const proxy = ownSnippet(native.tabBar, "StockTab");
             stockTabs.push(proxy);
             proxy.AddClass(PREFIX + icon);
@@ -126,8 +125,7 @@
             native.tabBar.MoveChildBefore(proxy, nativeTab);
             proxy.SetPanelEvent("onactivate", () => {
                 if (!active || !isCurrent()) return;
-                deactivate();
-                panel.activate(nativeTab);
+                deactivate({ tabFilter });
             });
         }
         function mount() {
@@ -138,8 +136,8 @@
             tab = ownSnippet(native.tabBar, "Tab");
             child(tab, "TabLabel").text = text("High Elo");
             tab.SetPanelEvent("onactivate", activate);
-            addStockTab(native.myTab, "MyTab");
-            addStockTab(native.publicTab, "PublicTab");
+            addStockTab(native.myTab, "MyTab", 1);
+            addStockTab(native.publicTab, "PublicTab", 2);
             host = ownSnippet(native.main, "Host");
             native.main.MoveChildBefore(host, native.details);
             list = child(host, "List");
@@ -209,15 +207,9 @@
 
         function activate() {
             if (active || !isCurrent()) return;
-            // The popup stylesheet does not control panels from the native selector layout.
-            const hidden = { visibility: "collapse" };
-            if (!stockPanels.every(target => stockStyles.apply(target, hidden))) {
-                stockStyles.clear();
-                $.Msg("[QOLLock][Better Builds] Could not collapse the stock build browser controls.");
-                return;
-            }
             selection.enter();
             active = true;
+            panel.setClass(native.selector, STOCK_HIDDEN, true);
             panel.setClass(tab, PREFIX + "TabOn", true);
             for (const proxy of stockTabs) show(proxy, true);
             show(host, true);
@@ -225,14 +217,14 @@
             updateFreshness();
             if (dirty) redraw();
         }
-        function deactivate(keepPublic = false) {
+        function deactivate(options) {
             if (!active) return;
             active = false;
             panel.setClass(tab, PREFIX + "TabOn", false);
             for (const proxy of stockTabs) show(proxy, false);
             show(host, false);
-            stockStyles.clear();
-            selection.leave({ keepPublic });
+            panel.setClass(native.selector, STOCK_HIDDEN, false);
+            selection.leave(options);
             selectedId = 0;
             rendered.forEach(decorate);
             setStatus("");
@@ -397,7 +389,7 @@
         }
 
         function update() {
-            if (active && selection.manualSearch()) deactivate(true);
+            if (active && selection.manualSearch()) deactivate({ keepPublic: true });
             if (phase === "registry") return;
             const now = Date.now();
             if (now >= nextScan && !selection.loading()) {
@@ -407,8 +399,8 @@
         }
         function dispose() {
             relay.cancel();
-            stockStyles.clear();
             if (active) {
+                panel.setClass(native.selector, STOCK_HIDDEN, false);
                 selection.leave({ refreshSearch: panel.isVisible(popup) && panel.isAlive(native.selector) &&
                     native.selector.GetParent()?.GetParent() === popup });
                 active = false;

@@ -66,6 +66,15 @@ function setup() {
     context.onEvent("Activated", target => target.activate());
 
     const content = add(popup, "BuildsContent");
+    const tabFilters = [];
+    context.onEvent("CitadelBuildBrowserSetTabFilter", (selector, filter) => {
+        assert.equal(selector.GetParent(), content);
+        assert.ok(!selector.BHasClass(prefix + "Active"), "stock visibility is restored before the filter event");
+        assert.equal(selector.BHasClass("ShowMyBuilds"), filter === 1);
+        assert.equal(selector.BHasClass("ShowPublicBuilds"), filter === 2);
+        tabFilters.push(filter);
+    });
+
     function mount() {
         const selector = add(content, "HeroBuildSelector", "CitadelHeroBuildsSelector", "ShowMyBuilds");
         const header = add(selector, "", "Panel", "HeroSelectorHeader");
@@ -74,10 +83,6 @@ function setup() {
         const publicTab = add(tabs, "", "Panel", "HeroSelectorTab PublicBuilds");
         add(my, "", "Label", "TabLabel").text = "My Builds";
         add(publicTab, "", "Label", "TabLabel").text = "Public Builds";
-        publicTab.SetPanelEvent("onactivate", () => {
-            selector.AddClass("ShowPublicBuilds");
-            selector.RemoveClass("ShowMyBuilds");
-        });
         const search = add(header, "", "Panel", "SearchContainer");
         const entry = add(add(search, "SearchBox"), "SearchTextEntry", "TextEntry");
         const main = add(selector, "", "Panel", "MainContainer");
@@ -129,12 +134,11 @@ function setup() {
         assert.deepEqual(doc.eventErrors, []);
         assert.deepEqual(context.messages.filter(message => message.includes("[ERROR]")), []);
     }
-    return { doc, clock, context, popup, mount, requests, configure, reply, find, byClass, assertClean };
+    return { doc, clock, context, popup, mount, requests, tabFilters, configure, reply, find, byClass, assertClean };
 }
 
 const stockVisibility = native =>
     [native.my, native.publicTab, native.list, native.loadingList].map(target => target.style.visibility);
-const collapsed = Array(4).fill("collapse");
 const released = Array(4).fill(undefined);
 
 test("Shop setting round-trips through the current clipboard codec with a default of off", () => {
@@ -175,7 +179,8 @@ test("Better Builds waits for its native selector, renders live data and delegat
     assert.ok(e.byClass("StockTab").every(tab => !tab.BHasClass(prefix + "Shown")));
     e.byClass("Tab")[0].activate();
     assert.equal(e.find("Name").text, build.n);
-    assert.deepEqual(stockVisibility(native), collapsed);
+    assert.ok(native.selector.BHasClass(prefix + "Active"));
+    assert.deepEqual(stockVisibility(native), ["visible", undefined, undefined, undefined]);
     assert.equal(native.details.style.visibility, undefined);
     assert.ok(e.byClass("StockTab").every(tab => tab.BHasClass(prefix + "Shown")));
     assert.ok(e.byClass("Host")[0].BHasClass(prefix + "Shown"));
@@ -190,9 +195,16 @@ test("Better Builds waits for its native selector, renders live data and delegat
     assert.ok(row.BHasClass(prefix + "Favourite"));
     e.byClass("PublicTab")[0].activate();
     assert.ok(native.selector.BHasClass("ShowPublicBuilds"));
+    assert.ok(!native.selector.BHasClass(prefix + "Active"));
     assert.deepEqual(stockVisibility(native), ["visible", undefined, undefined, undefined]);
     assert.ok(e.byClass("StockTab").every(tab => !tab.BHasClass(prefix + "Shown")));
     assert.ok(!e.byClass("Host")[0].BHasClass(prefix + "Shown"));
+    e.byClass("Tab")[0].activate();
+    e.byClass("MyTab")[0].activate();
+    assert.ok(native.selector.BHasClass("ShowMyBuilds"));
+    assert.ok(!native.selector.BHasClass("ShowPublicBuilds"));
+    assert.ok(!native.selector.BHasClass(prefix + "Active"));
+    assert.deepEqual(e.tabFilters, [2, 1]);
     e.assertClean();
 });
 
@@ -228,6 +240,7 @@ test("Use Build performs the native ID search, retires on close and reopens usin
     e.clock.advance(1000);
     assert.equal(e.find("TabLabel"), null);
     assert.equal(native.entry.text, "");
+    assert.ok(!native.selector.BHasClass(prefix + "Active"));
     assert.deepEqual(stockVisibility(native), released);
     e.popup.RemoveClass("Hidden");
     e.clock.advance(1500);
@@ -252,14 +265,17 @@ test("disable and a still-live selector replacement retire pending relay results
     assert.equal(oldTab.IsValid(), false);
     assert.equal(oldView.IsValid(), false);
     assert.ok(old.selector.BHasClass("ShowMyBuilds"));
+    assert.ok(!old.selector.BHasClass(prefix + "Active"));
+    assert.ok(replacement.selector.BHasClass(prefix + "Active"));
     assert.deepEqual(stockVisibility(old), released);
-    assert.deepEqual(stockVisibility(replacement), collapsed);
+    assert.deepEqual(stockVisibility(replacement), released);
     e.reply(0, registry);
     assert.equal(e.requests.length, 2, "old reply did not start a hero request");
     e.configure(0);
     e.clock.advance(1400);
     assert.equal(e.find("TabLabel"), null);
     assert.ok(replacement.selector.BHasClass("ShowMyBuilds"));
+    assert.ok(!replacement.selector.BHasClass(prefix + "Active"));
     assert.deepEqual(stockVisibility(replacement), released);
     assert.equal(e.requests[1].p.IsValid(), false);
     e.reply(1, registry);

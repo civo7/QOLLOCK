@@ -447,6 +447,14 @@
       "auto_sync": true,
       "local_sha256": "1b3c6e74f6420f98df36f14a26915ba43608447af431ec5973cc69025b7da029"
     },
+    "styles/citadel_ui_build_selector.css": {
+      "blob": "9ff2fbbe0abc6cba47bc70b62f57ca415ca62bcf",
+      "destination": "panorama/styles/base/citadel_ui_build_selector.css",
+      "kind": "css",
+      "auto_sync": true,
+      "local_sha256": "eb3f438fababfe0688b0ce7201abf9566fb929a6259dba6f52b4c4b6dc48b84d",
+      "base_commit": "82735ebcc9c89d1b3f6b3262c23c9580798ad362"
+    },
     "styles/citadel_ui_build_tag.css": {
       "blob": "fbbd90934e472fa739ad5b4dba80fc6621506c4e",
       "destination": "panorama/styles/base/citadel_ui_build_tag.css",
