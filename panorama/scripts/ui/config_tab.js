@@ -23,13 +23,17 @@
     const localize = Q.ui.renderer.localize;
 
     const format = (text, values) => Q.ui.theme.FormatSettingsText(text, values);
+    const EXPORT_PREFIX = /^(?:\[QOL-\d+-\d+-\d+\])?\[QOL-\d+-\d+-\d+(?:-C)?\]:/i;
 
     const getExportPrefix = payload => {
-        const semver = globalThis.QOL_SCHEMA_SEMVER ||
-            Q.VERSION ||
-            "4.0.0";
-        const formatMarker = Q.settingsCode?.isPayload?.(payload) ? "-C" : "";
-        return `[QOL-${String(semver).replace(/\./g, "-")}${formatMarker}]:`;
+        const release = Q.VERSION || globalThis.QOL_SCHEMA_SEMVER || "4.0.0";
+        const releaseTag = `QOL-${String(release).replace(/\./g, "-")}`;
+        if (Q.settingsCode?.isPayload?.(payload)) return `[${releaseTag}-C]:`;
+
+        // Original readers validate the JSON token's schema against its envelope.
+        const schema = globalThis.QOL_SCHEMA_SEMVER || release;
+        if (schema === release) return `[${releaseTag}]:`;
+        return `[${releaseTag}][QOL-${String(schema).replace(/\./g, "-")}]:`;
     };
 
     const getCurrentExportSettingsString = (config) => {
@@ -44,7 +48,7 @@
     const formatExportSettingsDisplayString = (rawExport) => {
         if (!rawExport) return "";
         const normalized = String(rawExport).replace(/\s+/g, "");
-        const prefixMatch = normalized.match(/^\[QOL-\d+-\d+-\d+(?:-C)?\]:/i);
+        const prefixMatch = normalized.match(EXPORT_PREFIX);
         const prefixLen = prefixMatch ? prefixMatch[0].length : 0;
         const payloadLen = normalized.length - prefixLen;
         if (payloadLen <= 24) return normalized;
@@ -57,7 +61,7 @@
     const formatImportSettingsDisplayString = (rawImport) => {
         if (!rawImport) return "";
         const normalized = String(rawImport).replace(/\s+/g, "");
-        if (!/^\[QOL-\d+-\d+-\d+(?:-C)?\]:/i.test(normalized)) {
+        if (!EXPORT_PREFIX.test(normalized)) {
             return rawImport;
         }
         return formatExportSettingsDisplayString(normalized);

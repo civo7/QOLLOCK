@@ -13,11 +13,13 @@ browser compression API or new dependency.
   `QOL.persistence.serializeSettingsCode` produce binary clipboard payloads.
 - `QOL_CODEC.DeserializeSettings` and both adapters read JSON envelopes, settings
   codes and historical binary payloads.
-- The Config tab shares compact codes as `[QOL-<schema-with-dashes>-C]:<Base64Url>`
+- The Config tab shares compact codes as `[QOL-<release-with-dashes>-C]:<Base64Url>`
   when the shared dictionary can represent the configuration. For settings
   outside that shared prefix, it uses the existing JSON exchange token without
-  `-C`. Each receiver applies the named settings it supports. Historical binary
-  tokens without `-C` continue through their existing reader.
+  `-C`. When the release differs from the JSON schema, the release label precedes
+  the schema token, as in `[QOL-4-1-0][QOL-4-0-5]:<Base64Url>`. Original readers
+  find the schema token and apply the named settings they support. Historical
+  binary tokens without `-C` continue through their existing reader.
 
 ## Permanent dictionary
 

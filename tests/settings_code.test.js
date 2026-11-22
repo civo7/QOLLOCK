@@ -61,7 +61,7 @@ test("production clipboard export is short and decodes the complete supplied con
     const { global: g, hud } = load();
     const config = { ...g.QOL_DEFAULT_CONFIG, ...sampleChanges };
     const code = g.QOL.ui.configTab.getCurrentExportSettingsString(config);
-    assert.ok(code.startsWith("[QOL-4-0-5-C]:"), "old clients must not mistake new codes for legacy binary");
+    assert.ok(code.startsWith("[QOL-4-1-0-C]:"), "compact codes display the release version");
     assert.ok(code.length <= 120, `Expected <=120 characters, received ${code.length}`);
     assert.equal(Buffer.from(code.split(":")[1], "base64url").subarray(2, 8).toString("hex"), "e0039cb144a3",
         "Both original readers recognize the frozen shared prefix");
@@ -122,7 +122,9 @@ test("the two published dictionary branches resolve their overlapping ID and re-
 
     const config = { ...installed.candidateConfig, ENABLE_BETTER_BUILDS: 1 };
     const token = g.QOL.ui.configTab.getCurrentExportSettingsString(config);
-    assert.ok(token.startsWith("[QOL-4-0-5]:"));
+    assert.ok(token.startsWith("[QOL-4-1-0][QOL-4-0-5]:"));
+    assert.match(g.QOL.ui.configTab.formatImportSettingsDisplayString(token),
+        /^\[QOL-4-1-0\]\[QOL-4-0-5\]:[A-Za-z0-9_-]+\n[A-Za-z0-9_-]+$/);
     const result = importer(token);
     assert.equal(result.ok, true);
     assert.equal(result.source, "json");
