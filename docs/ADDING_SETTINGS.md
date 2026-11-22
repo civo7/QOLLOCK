@@ -67,8 +67,9 @@ type as the normalized setting. The reference becomes immutable once published.
 - Retiring a setting leaves its dictionary entry in place. Never regenerate the
   table from current defaults, reorder it or reuse a retired slot.
 - Omitting a new key makes export fail; it does not silently exclude the key.
-- An older client rejects a code from an unknown dictionary even when the new
-  setting has its reference value and no explicit record. This is intentional.
+- An older client rejects compact codes from an unknown dictionary. Config-tab
+  sharing uses the common compact prefix or the existing named JSON exchange
+  for compatibility across the two published branches.
 - Verify both the new default and a changed value through the production
   clipboard writer and the other runtime context's reader. Keep old-code import
   and the frozen fixture in `tests/settings_code.test.js` passing.

@@ -162,8 +162,9 @@ test("presets: community roster is alphabetized without empty placeholders", () 
     const entries = env.sandbox.QOL.ui.presets.buildCommunityPresetEntries();
 
     assert.ok(Array.isArray(entries), "Entries should be an array");
-    assert.strictEqual(entries.length, 84);
+    assert.strictEqual(entries.length, 85);
     assert.ok(entries.some(e => e.preset === "Bread"), "Should contain Bread preset");
+    assert.ok(entries.some(e => e.label === "Wouks" && e.preset === "Wouks" && e.available));
     assert.ok(!entries.some(e => e.label === "Available" || e.preset === "Synthronix"));
     assert.strictEqual(entries.find(e => e.label === "Predi").available, false);
     const labels = Array.from(entries, e => e.label.toLowerCase());

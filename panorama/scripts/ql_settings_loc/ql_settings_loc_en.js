@@ -1098,6 +1098,7 @@
     "Always Show Mid Boss": "Always Show Mid Boss",
     "Disable Shop Blue": "Disable Shop Blue",
     "Shop Stats": "Shop Stats",
+    "Quick Buy in Shop": "Quick Buy in Shop",
     "Simplify Shop Stats": "Simplify Shop Stats",
     "Disable Quick Buy": "Disable Quick Buy",
     "Item Notifications": "Item Notifications",

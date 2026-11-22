@@ -53,11 +53,15 @@ test("ordinary numeric blur, wheel and row refresh preserve exact accepted value
     assert.equal(g.MOD_CONFIG.SOULS_X_OFFSET, 9001); assert.equal(input.text, "9001");
 });
 
-test("all relative scales retain the common upper boundary through current JSON imports", () => {
+test("all relative scales retain the common upper boundary in both exchange formats", () => {
     const { global: g } = load(), cfg = { ...g.MOD_CONFIG };
     const fields = g.QOL.settingsFields.filter(field => ["scale", "axisScale", "fontScale"].includes(field.role));
     for (const field of fields) cfg[field.key] = 300 / field.displayFactor;
     const imported = g.QOL.ui.modal.tryApplyImportStringWithDiagnostics(g.QOL.ui.configTab.getCurrentExportSettingsString(cfg));
-    assert.equal(imported.ok, true); assert.equal(imported.source, "settingsCode");
-    for (const field of fields) assert.equal(imported.candidateConfig[field.key], cfg[field.key], field.key);
+    assert.equal(imported.ok, true); assert.equal(imported.source, "json");
+    const compact = g.QOL.persistence.deserializeSettings(g.QOL.persistence.serializeSettingsCode(cfg));
+    for (const field of fields) {
+        assert.equal(imported.candidateConfig[field.key], cfg[field.key], field.key);
+        assert.equal(compact[field.key], cfg[field.key], field.key);
+    }
 });

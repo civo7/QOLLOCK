@@ -327,11 +327,15 @@ function mutateEncodedWireVersion(encodedBinary, newWireVersion) {
     return String.fromCharCode(normalized) + encodedBinary.slice(1);
 }
 
-function validatePresetValues(presetName, effectiveConfig, schema) {
+function validatePresetValues(presetName, effectiveConfig, settings, legacySchema) {
     const issues = [];
-    const comparableSchema = schemaToComparable(schema);
-    for (const field of comparableSchema) {
-        if (field.key === "DEFAULT_HERO_INDEX") continue;
+    for (const [key, value] of Object.entries(effectiveConfig)) {
+        if (settings.get(key) && settings.normalize(key, value) !== value) {
+            issues.push(`${presetName}: ${key} is not a canonical current value (${JSON.stringify(value)})`);
+        }
+    }
+    for (const field of schemaToComparable(legacySchema)) {
+        if (field.key === "DEFAULT_HERO_INDEX" || settings.get(field.key)) continue;
         const value = effectiveConfig[field.key];
         if (typeof value === "undefined") continue;
         const num = Number(value);
@@ -591,6 +595,7 @@ function main() {
             sharedWireVersion: QOL_SCHEMA_WIRE_VERSION,
             defaultConfig: QOL_DEFAULT_CONFIG,
             presets: QOL_PRESETS,
+            currentSettings: QOL.settings,
             latestSemver: QOL_LATEST_COMPACT_SEMVER,
             registry: QOL_COMPACT_SCHEMA_REGISTRY,
             serialize: (config, version) => QOL.testEncodeLegacySettings(config, version),
@@ -683,7 +688,7 @@ function main() {
     for (const configName of configNames) {
         const override = configName === "__DEFAULT__" ? {} : presets[configName];
         const effectiveConfig = Object.assign({}, defaultConfig, override);
-        const presetIssues = validatePresetValues(configName, effectiveConfig, latestSchema);
+        const presetIssues = validatePresetValues(configName, effectiveConfig, settingsExports.currentSettings, latestSchema);
         if (presetIssues.length > 0) {
             fail(presetIssues[0]);
         }
@@ -696,11 +701,12 @@ function main() {
 
         const settingsDecoded = settingsExports.deserialize(settingsEncoded, sharedSemver);
         const coreDecoded = coreExports.deserialize(coreEncoded, sharedSemver);
-        const settingsDiff = compareDecodedAgainstSchema(settingsDecoded, effectiveConfig, defaultConfig, latestSchema);
+        const legacyConfig = buildSchemaCompatibleConfig(effectiveConfig, latestSchema);
+        const settingsDiff = compareDecodedAgainstSchema(settingsDecoded, legacyConfig, defaultConfig, latestSchema);
         if (settingsDiff.length > 0) {
             fail(`Settings round-trip mismatch for ${configName}: ${settingsDiff[0]}`);
         }
-        const coreDiff = compareDecodedAgainstSchema(coreDecoded, effectiveConfig, defaultConfig, latestSchema);
+        const coreDiff = compareDecodedAgainstSchema(coreDecoded, legacyConfig, defaultConfig, latestSchema);
         if (coreDiff.length > 0) {
             fail(`Core round-trip mismatch for ${configName}: ${coreDiff[0]}`);
         }

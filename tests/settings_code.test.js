@@ -20,6 +20,8 @@ const sampleChanges = {
 };
 const plain = value => JSON.parse(JSON.stringify(value));
 const frozenCode = "[QOL-4-0-5-C]:UQGsA2lm9DIYHLkBkAMBkAMBlAIJhgIEDTVpmAEBHwGEAQEfSREADTIsEOACqQK8AQGG_YcQWAA0BIAB7StP9w";
+const installedWouksCode = "[QOL-4-0-5-C]:UQHoA3TWZug9DQgB1gMGAzAuOAACAzAuMgwEDAm0AQF3rAGUAigAAQecAQgACQkWAzAuOBAcHAAAAAAAcAAEAfwBAU8gBCxMSAAEAAREALkCBQVDBRAFRSgNY2FjASIB5AEBDgU7AWYBlwEBNQXeBAFPAQcJFR_A";
+const gitBreadCode = "[QOL-4-0-5-C]:UQHhA7PxE98wBAAFeAgCAzAuNyQN7gWwAxQtB5gBDAAABQkFJyAIBCwAAAAAAARBAiwFdwgUAgMwLjUALAgAHQ8RYwgEQACkBAkZARMBAgFBKNYVjN8";
 
 test("published Stat Bonuses codes import unrelated settings without reviving retired controls", () => {
     const { global: g } = load();
@@ -61,8 +63,10 @@ test("production clipboard export is short and decodes the complete supplied con
     const code = g.QOL.ui.configTab.getCurrentExportSettingsString(config);
     assert.ok(code.startsWith("[QOL-4-0-5-C]:"), "old clients must not mistake new codes for legacy binary");
     assert.ok(code.length <= 120, `Expected <=120 characters, received ${code.length}`);
+    assert.equal(Buffer.from(code.split(":")[1], "base64url").subarray(2, 8).toString("hex"), "e0039cb144a3",
+        "Both original readers recognize the frozen shared prefix");
     const payload = g.QOL.persistence.fromBase64Url(code.split(":")[1]);
-    assert.deepEqual(plain(hud.sandbox.global.QOL.core.codec.deserializeSettings(payload, "4.0.5")), config);
+    assert.deepEqual({ ...g.QOL_DEFAULT_CONFIG, ...hud.sandbox.global.QOL.core.codec.deserializeSettings(payload, "4.0.5") }, config);
     assert.equal(g.QOL.ui.modal.tryApplyImportStringWithDiagnostics(code).ok, true);
     assert.equal(g.QOL.persistence.serializeSettings(config).charAt(0), "{", "disk storage remains JSON");
     const frozenPayload = g.QOL.persistence.fromBase64Url(frozenCode.split(":")[1]);
@@ -78,7 +82,7 @@ test("new exchange preserves changed fractions, wide coordinates, custom colors 
         STAMINA_CHARGE_COLOR: 0x112abef, ACTIVE_PRESET_NAME: "Тест 🐈 日本語\ud800" };
     const code = g.QOL.ui.configTab.getCurrentExportSettingsString(cfg);
     const raw = g.QOL.persistence.fromBase64Url(code.split(":")[1]);
-    assert.deepEqual(plain(hud.sandbox.global.QOL.core.codec.deserializeSettings(raw)), cfg);
+    assert.deepEqual({ ...g.QOL_DEFAULT_CONFIG, ...hud.sandbox.global.QOL.core.codec.deserializeSettings(raw) }, cfg);
     const imported = g.QOL.ui.modal.tryApplyImportStringWithDiagnostics(code);
     assert.equal(imported.ok, true);
     assert.equal(imported.source, "settingsCode");
@@ -94,8 +98,42 @@ test("every built-in preset round-trips through the production sharing writer an
         const expected = JSON.parse(g.QOL.persistence.serializeSettings(cfg)).data;
         const code = g.QOL.ui.configTab.getCurrentExportSettingsString(cfg);
         const raw = g.QOL.persistence.fromBase64Url(code.split(":")[1]);
-        assert.deepEqual(plain(hud.sandbox.global.QOL.core.codec.deserializeSettings(raw)), expected, name);
+        const reader = hud.sandbox.global.QOL.core.codec;
+        assert.deepEqual({ ...g.QOL_DEFAULT_CONFIG, ...reader.deserializeSettings(raw) }, expected, name);
+        assert.deepEqual(plain(reader.deserializeSettings(g.QOL.persistence.serializeSettingsCode(cfg))), expected, name);
     }
+});
+
+test("the two published dictionary branches resolve their overlapping ID and re-export through the named envelope", () => {
+    const { global: g, hud } = load();
+    const importer = g.QOL.ui.modal.tryApplyImportStringWithDiagnostics;
+    const installed = importer(installedWouksCode);
+    const git = importer(gitBreadCode);
+    assert.equal(installed.ok, true);
+    assert.equal(git.ok, true);
+    const shopValues = {
+        SHOP_STATS_X_OFFSET: 51, SHOP_STATS_Y_OFFSET: -76, SHOP_STATS_SCALE: 73, SHOP_STATS_OPACITY: 1,
+        SHOP_QUICKBUY_X_OFFSET: 303, SHOP_QUICKBUY_Y_OFFSET: -40, SHOP_QUICKBUY_SCALE: 96, SHOP_QUICKBUY_OPACITY: 1
+    };
+    assert.equal(installed.candidateConfig.ENABLE_BETTER_BUILDS, 0);
+    assert.equal(git.candidateConfig.ENABLE_BETTER_BUILDS, 1);
+    assert.equal(git.candidateConfig.SHOP_STATS_X_OFFSET, 0);
+    for (const [key, value] of Object.entries(shopValues)) assert.equal(installed.candidateConfig[key], value, key);
+
+    const config = { ...installed.candidateConfig, ENABLE_BETTER_BUILDS: 1 };
+    const token = g.QOL.ui.configTab.getCurrentExportSettingsString(config);
+    assert.ok(token.startsWith("[QOL-4-0-5]:"));
+    const result = importer(token);
+    assert.equal(result.ok, true);
+    assert.equal(result.source, "json");
+    assert.deepEqual(plain(result.candidateConfig), config);
+    assert.deepEqual(plain(hud.sandbox.global.QOL.core.codec.deserializeSettings(
+        g.QOL.persistence.fromBase64Url(token.split(":")[1]), "4.0.5")), JSON.parse(g.QOL.persistence.serializeSettings(config)).data);
+
+    assert.equal(g.QOL.ui.presets.applyPresetByName("Wouks"), true);
+    // The retired Unspent Souls flag remains off for community presets.
+    const expectedPreset = { ...installed.candidateConfig, ENABLE_UNSPENT_SOULS: 0 };
+    assert.deepEqual(plain(g.MOD_CONFIG), expectedPreset);
 });
 
 test("new-code corruption, truncation and appended data reject before changing live settings", () => {

@@ -4,8 +4,11 @@
     const Q = globalThis.QOL;
     const P = Q.core.panel;
     let nextToken = 0;
-    const scopedElements = element => ["ammo", "playerStats"].includes(element.id)
-        ? [element, ...Q.presentation.elements.filter(item => item.parentId === element.id)] : [element];
+    const scopedElements = element => {
+        if (element.id === "shop") return Q.presentation.elements.filter(item => item.requiresShop);
+        return ["ammo", "playerStats"].includes(element.id)
+            ? [element, ...Q.presentation.elements.filter(item => item.parentId === element.id)] : [element];
+    };
 
     function resolveHud(root) {
         const named = root?.id === "Hud" ? root : P.findTraverse(root, "Hud");

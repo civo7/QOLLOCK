@@ -65,16 +65,17 @@ import-only; new clipboard exports use [lossless settings codes](../core/setting
 while storage keeps the JSON envelope. The catalog includes native
 HUD families, overlays, map/shop states and additions in other script contexts.
 
-The shop surface uses `Shop/MainPanel`, while recent purchases use the sibling
-`Shop/NavPanel/RecentPurchasesPanel` from the native shop layout. Properties exposes
+The shop surface uses `Shop/MainPanel`. Shop Stats and Recent Purchases have
+independent controls on their own containers in `Shop/NavPanel`. Properties exposes
 the feature's existing content modes, filters and notification lifetime/count
 alongside appearance and visibility. Quick Buy has a scoped action in Shop as well
 as a shortcut in Customize. Its frame measures the compact HUD contents, including
 enhanced prices and upcoming items. Runtime moves and scales the native Quick Buy
 root in gameplay so its bounds travel with its contents. Opening the shop releases
 that geometry; closing it reapplies the HUD placement through the verified shop
-events, with ordinary discovery as recovery. The shop queue and summary retain
-native docking and scrolling. Customized geometry releases ancestor clipping on
+events, with ordinary discovery as recovery. Quick Buy in Shop positions and
+scales the queue and summary together and adjusts their opacity. Gameplay
+Quick Buy geometry releases ancestor clipping on
 LowerLeft and StatsAndModsContainer through the shared root-class projector.
 Reset or disabling its presentation owner restores native ancestor clipping.
 Minimap Location Text has independent offsets, scale and a
@@ -487,8 +488,8 @@ dormant coordinates.
 Better Unsecured Souls presents its vertical offset as up-positive relative to
 the configured default; storage and runtime retain the existing raw coordinate.
 
-Shop and Recent Purchases selections use the maintainer-verified
-`citadel_open_hero_sheet` toggle through the existing settings console dispatcher.
+Shop, Shop Stats, Recent Purchases and Quick Buy in Shop selections use the
+maintainer-verified `citadel_open_hero_sheet` toggle through the existing settings console dispatcher.
 The shared selection handler covers gameplay-section actions, Customize shortcuts
 and the full editor catalog. Reselection does not toggle again. Leaving these
 selections or ending the session closes a shop opened by that session; an already
@@ -655,7 +656,7 @@ The surface audit retains these capability boundaries:
 | Healthbar variants | Shared placement/scale/opacity and state suppression; variant content and animations stay native or variant-owned. |
 | Ammo digits | Independent text geometry; shared group scale, opacity and state suppression. |
 | Basic/Advanced cooldowns | Shared reference-size/percentage-position contract, separate native/custom renderers and common suppression flags. |
-| Quick Buy | Compact HUD content moves and scales together; the open-shop queue and summary retain native docking. |
+| Quick Buy | Compact HUD content moves and scales together. A separate shop surface positions, scales and adjusts opacity for the open-shop queue and summary. |
 | Inherited HUD details | Existing feature/content controls; no invented independent geometry or additional state renderer. |
 | World-target indicators and damage numbers | Their actual size, formatting and opacity controls; no screen offsets. |
 | Other contexts, fixed visuals and diagnostics | Existing contextual controls and owner lifetimes; no fabricated screen-level capabilities. |

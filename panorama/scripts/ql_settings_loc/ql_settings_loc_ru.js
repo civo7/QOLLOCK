@@ -1098,6 +1098,7 @@
     "Always Show Mid Boss": "Всегда показывать мид-босса",
     "Disable Shop Blue": "Убрать синий фон магазина",
     "Shop Stats": "Характеристики в магазине",
+    "Quick Buy in Shop": "Быстрая покупка в магазине",
     "Simplify Shop Stats": "Упростить характеристики магазина",
     "Disable Quick Buy": "Отключить быструю покупку",
     "Item Notifications": "Уведомления о предметах",

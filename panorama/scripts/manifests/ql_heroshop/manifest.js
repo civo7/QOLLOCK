@@ -1,4 +1,4 @@
-// OWNS: Shop MainPanel offsets, scale, opacity, visibility and local appearance classes.
+// OWNS: Shop MainPanel and permanent stats geometry, visibility and local appearance classes.
 // DOES NOT OWN: Native shop/build content, recent-purchase data or the quickbuy context.
 // Source: hud.xml > .HudCore > CitadelHudHeroShop; citadel_hud_hero_shop.xml > Shop > MainPanel.
 (() => {
@@ -24,6 +24,10 @@
             { key: "DISABLE_SHOP_BLUE", type: "toggle" },
             { key: "ENABLE_SHOP_STATS", type: "toggle" },
             { key: "ENABLE_SIMPLIFY_SHOP_STATS", type: "toggle" },
+            { key: "SHOP_STATS_X_OFFSET", type: "slider" },
+            { key: "SHOP_STATS_Y_OFFSET", type: "slider" },
+            { key: "SHOP_STATS_SCALE", type: "slider" },
+            { key: "SHOP_STATS_OPACITY", type: "slider" },
             { key: "ENABLE_SHOP_RECENT_PURCHASES", type: "toggle" }
         ],
         create(ctx) {
@@ -37,7 +41,7 @@
                 retryMs: 2000, ownerPath: ["Shop"]
             });
             const owners = P.createNativeStyleOwner();
-            let shop = null, main = null, model = null, loop = null, pending = null, enabled = false;
+            let shop = null, main = null, stats = null, model = null, loop = null, pending = null, enabled = false;
 
             const number = (cfg, key) => QOL.settings.readNumber(key, cfg[key]);
 
@@ -59,8 +63,18 @@
                 if (scale !== 1) styles.uiScale = Math.round(scale * 100) + "%";
                 if (opacity !== 1) styles.opacity = opacity.toFixed(2);
                 if (hidden) styles.visibility = "collapse";
-                return { hidden, styles, classes: {
-                    simplify_shop_stats_active: on(cfg, "ENABLE_SHOP_STATS") && on(cfg, "ENABLE_SIMPLIFY_SHOP_STATS"),
+                const statsEnabled = on(cfg, "ENABLE_SHOP_STATS");
+                const statsStyles = {};
+                if (statsEnabled) {
+                    const statsX = number(cfg, "SHOP_STATS_X_OFFSET"), statsY = number(cfg, "SHOP_STATS_Y_OFFSET");
+                    const statsScale = number(cfg, "SHOP_STATS_SCALE"), statsOpacity = number(cfg, "SHOP_STATS_OPACITY");
+                    if (statsX !== 0) statsStyles.x = statsX + "px";
+                    if (statsY !== 0) statsStyles.y = -statsY + "px";
+                    if (statsScale !== 100) statsStyles.uiScale = statsScale + "%";
+                    if (statsOpacity !== 1) statsStyles.opacity = statsOpacity.toFixed(2);
+                }
+                return { hidden, styles, statsStyles: Object.keys(statsStyles).length ? statsStyles : null, classes: {
+                    simplify_shop_stats_active: statsEnabled && on(cfg, "ENABLE_SIMPLIFY_SHOP_STATS"),
                     simplify_shop_active: on(cfg, "ENABLE_SIMPLIFY_SHOP"),
                     simplify_items_active: on(cfg, "ENABLE_SIMPLIFY_ITEMS"),
                     disable_shop_blue_active: on(cfg, "DISABLE_SHOP_BLUE"),
@@ -76,13 +90,16 @@
                     mainResolver.reset();
                 }
                 main = mainResolver.resolve(shop, force);
-                owners.retain([shop, main].filter(P.isAlive));
+                const nav = model.statsStyles ? P.findChild(P.findChild(shop, "Shop"), "NavPanel") : null;
+                stats = P.findChild(nav, "TestPanel");
+                owners.retain([shop, main, stats].filter(P.isAlive));
                 return root;
             }
 
             function render(root) {
                 if (P.isAlive(shop)) owners.apply(shop, {}, Object.fromEntries(Object.entries(model.classes).filter(([, active]) => active)));
                 if (P.isAlive(main)) owners.apply(main, QOL.presentation.visibilityStyles("shop", QOL.presentation.visibilityConfig(ctx), root, model.styles), { "qol-hidden": model.hidden });
+                if (P.isAlive(stats)) owners.apply(stats, model.statsStyles);
             }
 
             function update(force = false) {
@@ -118,7 +135,7 @@
                     if (pending) { pending.stop(); pending = null; }
                     if (loop) { loop.stop(); loop = null; }
                     owners.clear();
-                    shop = null; main = null; model = null;
+                    shop = null; main = null; stats = null; model = null;
                     shopResolver.reset(); mainResolver.reset();
                 }
             }, update);

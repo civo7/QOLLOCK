@@ -4,10 +4,10 @@
     "use strict";
     const Q = QOL;
     const P = Q.core.panel;
-    const scaled = new Set(["souls", "items", "stamina", "playerStats", "statsList", "speed", "abilityPoints", "damageReport", "quickbuy"]);
+    const scaled = new Set(["souls", "items", "stamina", "playerStats", "statsList", "speed", "abilityPoints", "damageReport", "quickbuy", "shopQuickbuy"]);
     const opacityOwners = ["activeItems", "abilityPoints", "ammo", "stamina", "playerStats", "statsList", "compass", "speed", "zipBoost",
-        "combatStatus", "unsecuredTimer", "unsecuredSouls", "keyboard", "damageReport", "chat"];
-    const positions = new Set(["abilityPoints", "stamina", "statsList", "quickbuy"]);
+        "combatStatus", "unsecuredTimer", "unsecuredSouls", "keyboard", "damageReport", "chat", "shopQuickbuy"];
+    const positions = new Set(["abilityPoints", "stamina", "statsList", "quickbuy", "shopQuickbuy"]);
     const elements = [...new Set([...scaled, ...opacityOwners, ...positions])].map(id => Q.presentation.elements.find(element => element.id === id));
     const opacityKeys = new Map(opacityOwners.map(id => [id,
         elements.find(element => element.id === id).fields.find(field => Q.settings.get(field.key).role === "opacity").key]));
@@ -23,7 +23,7 @@
     Q.core.FeatureRegistry.register({
         id: "ql_presentation_scale",
         enabledByDefault: true,
-        settings: [...Q.presentation.stateSettings("ql_presentation_scale"), ...elements.flatMap(element => [
+        settings: [{ key: "DISABLE_QUICK_BUY", type: "toggle" }, ...Q.presentation.stateSettings("ql_presentation_scale"), ...elements.flatMap(element => [
             ...(scaled.has(element.id) ? [{ key: element.scaleKey, type: "slider" }] : []),
             ...(opacityKeys.has(element.id) ? [{ key: opacityKeys.get(element.id), type: "slider" }] : []),
             ...(positions.has(element.id) ? element.fields.filter(field => field.axis).map(field => ({
@@ -41,13 +41,15 @@
                 const cfg = QOL.presentation.captureVisibility(ctx, ctx.config.view());
                 const candidate = P.findHud($.GetContextPanel());
                 const hud = P.isAlive(candidate) && (candidate.id === "Hud" || candidate.paneltype === "CitadelHud") ? candidate : null;
+                const shopOpen = hud?.BHasClass("gShopOpen");
                 const opacityPanels = [];
                 const geometryPanels = [];
                 for (const element of elements) {
                     // Move Quick Buy's native bounds with its contents in the
-                    // gameplay HUD. Release the root in shop view so its queue
-                    // and summary keep native docking, scale and hit targets.
-                    if (element.id === "quickbuy" && hud?.BHasClass("gShopOpen")) continue;
+                    // gameplay HUD. In the shop, only position its native
+                    // queue and summary with the separate shop settings.
+                    if (element.id === "quickbuy" && shopOpen) continue;
+                    if (element.id === "shopQuickbuy" && (!hud || !element.available(hud, cfg))) continue;
                     const value = scaled.has(element.id) ? QOL.settings.readNumber(element.scaleKey, cfg[element.scaleKey]) / 100 : 1;
                     const alpha = opacityKeys.has(element.id)
                         ? QOL_UTILS.NormalizeOpacityNumber(cfg[opacityKeys.get(element.id)] ?? 1, 1) : 1;
@@ -63,12 +65,13 @@
                     if (!hud || (value === 1 && !moved && alpha === 1 && !hidden)) continue;
                     const owner = Q.presentation.resolve(element, hud, cfg);
                     const panel = Q.presentation.scaleTarget(element, owner);
+                    const presentationPanels = element.presentationPanels?.(owner);
                     if (alpha !== 1 || opacityHidden) {
                         // Stats visibility is owned on the outer wrapper. Apply
                         // custom opacity only to the compact block, never over
                         // the wrapper's conditional opacity=0.
-                        const targets = element.id === "playerStats" ? [P.findChild(owner, "HudStatBlock")]
-                            : element.id === "ammo" && P.isAlive(owner) ? element.measurePanels(owner) : [panel];
+                        const targets = presentationPanels || (element.id === "playerStats" ? [P.findChild(owner, "HudStatBlock")]
+                            : element.id === "ammo" && P.isAlive(owner) ? element.measurePanels(owner) : [panel]);
                         for (const target of targets.filter(P.isAlive)) {
                             opacityStyles.apply(target, { opacity: (opacityHidden ? 0 : alpha).toFixed(2) });
                             opacityPanels.push(target);
@@ -84,7 +87,7 @@
                     if (Object.keys(styles).length) {
                         // Native active-player-stats XML keeps particle effects
                         // beside HudStatBlock; scale or hide them with it.
-                        const targets = element.id === "playerStats" ? [panel, P.findChild(owner, "CoreStatFXLayer")] : [panel];
+                        const targets = presentationPanels || (element.id === "playerStats" ? [panel, P.findChild(owner, "CoreStatFXLayer")] : [panel]);
                         for (const target of targets.filter(P.isAlive)) {
                             let targetStyles = styles;
                             if (element.id === "playerStats" && target !== panel) {

@@ -25,6 +25,9 @@ bursts share one managed deferred refresh, cancelled with the discovery poll on
 disable.
 
 Permanent shop stat children remain declared in `citadel_hud_hero_shop.xml`.
+Their container at `Shop/NavPanel/TestPanel` owns independent position, scale
+and opacity. The shop manifest releases those overrides when stats are disabled,
+the settings return to defaults, or the native container is replaced.
 Their normal appearance follows the shop's existing `gShopOpen` listener through
 `CitadelHudHeroShop.gShopOpen` selectors; armor/tech/weapon component XML copies
 are unnecessary. Native component layouts keep their detail-view listeners and
@@ -39,6 +42,11 @@ that replacement also catches native leaves updated after the event. Nonempty
 enhanced queues refresh live values more often; empty/disabled queues, notify-only
 mode and hideout use the idle cadence. Destroyed context handles stop the loop. Never let an event
 burst create parallel polls.
+
+The HUD presentation owner applies in-shop Quick Buy placement, scale and
+opacity to the queue container and summary while the shop is open. It releases
+them when the shop closes or Quick Buy is disabled. Compact gameplay placement
+continues to apply to the native Quick Buy root in its own view.
 
 The companion has private discovery, settings/queue calculations, presentation
 records and release paths. Verified native host membership, rather than a living

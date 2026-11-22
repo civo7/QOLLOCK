@@ -330,7 +330,7 @@
             "FlintSnow", "Fiizypopdrinkk", "Steqdyy", "Synapses_", "Gerglee", "Dappa",
             "Seyer", "T1FF4NNY", "Joey", "Zyartic", "billyyy", "mituu", "qlt",
             "munchkinman", "Blank2762", "Valerie", "Rosalia", "notah", "Anguish",
-            "_ZODUK_", "nkonin.me", "loony", "leah", "Thorkizzle"
+            "_ZODUK_", "nkonin.me", "loony", "leah", "Thorkizzle", "Wouks"
         ];
 
         const entries = names.map((name) => {

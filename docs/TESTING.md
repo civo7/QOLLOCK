@@ -33,8 +33,9 @@ npm run lint                                      # JavaScript static checks
 
 The HUD smoke uses `scripts/simulator/layout.js`, includes `core/ql_app.js`, and
 fails when an included script is missing. It is not a settings-context smoke or
-a runtime behavior test. The schema validator exercises codec round-trips;
-load checks alone cannot catch gameplay or lifecycle bugs.
+a runtime behavior test. The schema validator checks built-in presets against
+current settings and projects them onto the frozen compact schema for historical
+round-trips. Load checks alone cannot catch gameplay or lifecycle bugs.
 
 ESLint checks Panorama scripts, CommonJS tooling/tests, Node ESM tests and the
 updater Worker with separate script/module contexts. Promise executor, array

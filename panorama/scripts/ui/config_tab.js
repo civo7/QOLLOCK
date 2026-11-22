@@ -24,21 +24,21 @@
 
     const format = (text, values) => Q.ui.theme.FormatSettingsText(text, values);
 
-    const getExportPrefix = () => {
+    const getExportPrefix = payload => {
         const semver = globalThis.QOL_SCHEMA_SEMVER ||
             Q.VERSION ||
             "4.0.0";
-        const formatMarker = Q.persistence?.serializeSettingsCode ? "-C" : "";
+        const formatMarker = Q.settingsCode?.isPayload?.(payload) ? "-C" : "";
         return `[QOL-${String(semver).replace(/\./g, "-")}${formatMarker}]:`;
     };
 
     const getCurrentExportSettingsString = (config) => {
         const conf = config || globalThis.MOD_CONFIG || {};
-        const payload = Q.persistence?.serializeSettingsCode?.(conf) || Q.persistence?.serializeSettings?.(conf) ||
+        const payload = Q.settingsCode?.serializeForSharing?.(conf) || Q.persistence?.serializeSettings?.(conf) ||
             (typeof globalThis.SerializeSettings === "function" ? globalThis.SerializeSettings(conf) : "");
         const encoded = Q.persistence?.toBase64Url?.(payload) ||
             (typeof globalThis.ToBase64Url === "function" ? globalThis.ToBase64Url(payload) : "");
-        return getExportPrefix() + encoded;
+        return getExportPrefix(payload) + encoded;
     };
 
     const formatExportSettingsDisplayString = (rawExport) => {

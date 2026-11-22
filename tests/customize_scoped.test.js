@@ -361,9 +361,10 @@ test("all gameplay entry buttons open their declared element and full Customize 
             activate(env, "QOLCustomizeEntry_" + id);
             assert.equal(Q.ui.customize.isRunning(), true, id);
             const frames = env.em.FindChildrenWithClassTraverse("QOLCustomizeFrame");
-            assert.equal(frames.length, id === "ammo" ? 3 : 1, id);
+            const scopedWithCatalog = id === "ammo" || id === "shop";
+            assert.equal(frames.length, id === "shop" ? 4 : id === "ammo" ? 3 : 1, id);
             assert.ok(frames.some(frame => frame.id === "QOLCustomizeFrame_" + id));
-            assert.equal(env.em.FindChildTraverse("QOLCustomizeCatalog").visible, id === "ammo");
+            assert.equal(env.em.FindChildTraverse("QOLCustomizeCatalog").visible, scopedWithCatalog, id);
             activate(env, "QOLCustomizeCancel"); env.clock.advance(300);
         }
     }

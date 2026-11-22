@@ -8,6 +8,17 @@
     const t = (key, label, extra = {}) => content(key, label, "toggle", extra);
     const mapHost = [...C.paths.gameplay, { className: "clamp_width" }, "minimap_persp"];
     const mapPath = [...mapHost, "minimap_container"];
+    const shopStatsPath = ["CitadelHudHeroShop", "Shop", "NavPanel", "TestPanel"];
+    const quickbuyPath = [...lower, "CitadelHudQuickbuy"];
+    function resolveQuickbuy(hud) {
+        const P = QOL.core.panel;
+        const stats = P.findChild(P.findChildByClass(hud, "HudCore"), "StatsAndModsContainer");
+        return P.findChild(P.findChild(stats, "LowerLeft"), "CitadelHudQuickbuy");
+    }
+    function shopQuickbuyPanels(target) {
+        const P = QOL.core.panel;
+        return [P.findChild(target, "QuickBuyQueueContainer"), P.findChildByClass(target, "QuickbuyShopSummaryContainer")];
+    }
     function activeMapMode(hud, config) {
         const host = C.findPath(hud, mapHost) || QOL.core.panel.findTraverse(hud, "minimap_persp");
         const active = cls => QOL_UTILS.HasClassInHierarchy(host, cls) || hud.BHasClass(cls);
@@ -81,19 +92,25 @@
                 f("MINIMAP_REM_TUNNELS_OPACITY", "Tunnel Opacity", null, { when: session => Number(session.value("ENABLE_MINIMAP_REM_TUNNELS")) === 1 }),
                 f("MINIMAP_CAMP_NAMES", "Camp Names", null, { hidden: true })
             ] },
-        { id: "shop", name: "Shop", group: "Shop", path: [...core, "CitadelHudHeroShop", "Shop", "MainPanel"], fields: [
+        { id: "shop", name: "Shop", group: "Shop", requiresShop: true, path: [...core, "CitadelHudHeroShop", "Shop", "MainPanel"], fields: [
             toggle("HUD_SHOP_ENABLED"), f("SHOP_OFFSET_X", "Horizontal Offset", null, { axis: "x" }),
             f("SHOP_OFFSET_Y", "Vertical Offset", null, { axis: "y", direction: -1 }), f("SHOP_SCALE", "Scale", null, { resize: true }), opacity("SHOP_"),
             t("ENABLE_HERO_SCENE_PANEL", "Hero"), t("ENABLE_SIMPLIFY_SHOP", "Simplify Shop"), t("ENABLE_SIMPLIFY_ITEMS", "Simplify Items"),
             t("DISABLE_SHOP_BLUE", "Blur", { inverted: true }), t("ENABLE_SHOP_STATS", "Shop Stats"),
             t("ENABLE_SIMPLIFY_SHOP_STATS", "Simplify Shop Stats", { when: session => Number(session.value("ENABLE_SHOP_STATS")) === 1 })
         ] },
-        { id: "quickbuy", name: "Quick Buy", group: "Shop", path: [...lower, "CitadelHudQuickbuy"], scaleKey: "QUICKBUY_SCALE",
+        { id: "shopStats", name: "Shop Stats", group: "Shop", requiresShop: true,
+            path: [...core, ...shopStatsPath],
             resolve(hud) {
                 const P = QOL.core.panel;
-                const stats = P.findChild(P.findChildByClass(hud, "HudCore"), "StatsAndModsContainer");
-                return P.findChild(P.findChild(stats, "LowerLeft"), "CitadelHudQuickbuy");
+                return C.findPath(P.findChildByClass(hud, "HudCore"), shopStatsPath);
             },
+            available: hud => hud.BHasClass("gShopOpen"),
+            measurePanels: target => ["HeroStatsWeapon", "HeroStatsArmor", "HeroStatsTech"]
+                .map(id => QOL.core.panel.findChild(target, id)).filter(QOL.core.panel.isAlive),
+            fields: [toggle("ENABLE_SHOP_STATS"), t("ENABLE_SIMPLIFY_SHOP_STATS", "Simplify Shop Stats"),
+                ...geometry("SHOP_STATS_", true), opacity("SHOP_STATS_")] },
+        { id: "quickbuy", name: "Quick Buy", group: "Shop", path: quickbuyPath, scaleKey: "QUICKBUY_SCALE", resolve: resolveQuickbuy,
             // Measure compact contents rather than the screen-height root.
             // Runtime moves the root in gameplay and releases it in shop view.
             measurePanels(target) {
@@ -106,7 +123,17 @@
             content("ENHANCED_QUICKBUY_COUNT", "Enhanced Count", null, { when: session => Number(session.value("DISABLE_QUICK_BUY")) !== 1 && Number(session.value("ENABLE_ENHANCED_QUICKBUY")) === 1 }),
             t("ENABLE_QUICKBUY_CLICK_TO_NOTIFY", "Click to Notify")
         ] },
-        { id: "recentPurchases", name: "Recent Purchases", group: "Shop", path: [...core, "CitadelHudHeroShop", "Shop", "NavPanel", "RecentPurchasesPanel"], fields: [
+        { id: "shopQuickbuy", name: "Quick Buy in Shop", group: "Shop", requiresShop: true, path: quickbuyPath,
+            scaleKey: "SHOP_QUICKBUY_SCALE", resolve: resolveQuickbuy, presentationPanels: shopQuickbuyPanels,
+            available: (hud, config) => hud.BHasClass("gShopOpen") && Number(config.DISABLE_QUICK_BUY) !== 1,
+            measurePanels(target) {
+                const [queue, summary] = shopQuickbuyPanels(target);
+                if (!target.BHasClass("gQuickbuyShopShowQueue")) return [summary];
+                return [QOL.core.panel.findChildByClass(queue, "QuickbuyQueueOuter"), summary];
+            },
+            fields: [...geometry("SHOP_QUICKBUY_", true), opacity("SHOP_QUICKBUY_")] },
+        { id: "recentPurchases", name: "Recent Purchases", group: "Shop", requiresShop: true,
+            path: [...core, "CitadelHudHeroShop", "Shop", "NavPanel", "RecentPurchasesPanel"], fields: [
             toggle("ENABLE_SHOP_RECENT_PURCHASES"), ...geometry("RECENT_PURCHASES_PANEL_", true), opacity("RECENT_PURCHASES_PANEL_")
         ] },
         { id: "purchaseNotifications", name: "Item Notifications", group: "Shop", path: [...core, "TopBar", "QuickPurchasesPanel"], fields: [

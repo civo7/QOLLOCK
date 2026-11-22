@@ -485,9 +485,21 @@
         ["QUICKBUY_Y_OFFSET",0],
         ["MINIMAP_LOCATION_SCALE",100],
         ["QUICKBUY_SCALE",100],
-        ["ENABLE_BETTER_BUILDS",0]
+        ["ENABLE_BETTER_BUILDS",0],
+        ["SHOP_STATS_X_OFFSET",0],
+        ["SHOP_STATS_Y_OFFSET",0],
+        ["SHOP_STATS_SCALE",100],
+        ["SHOP_STATS_OPACITY",1],
+        ["SHOP_QUICKBUY_X_OFFSET",0],
+        ["SHOP_QUICKBUY_Y_OFFSET",0],
+        ["SHOP_QUICKBUY_SCALE",100],
+        ["SHOP_QUICKBUY_OPACITY",1]
     ].map(entry => Object.freeze(entry));
     Object.freeze(dictionary);
+    // The installed Shop customization build and the Better Builds branch both
+    // extended the same prefix. Preserve both published layouts for imports.
+    const sharedPrefixLength = 480;
+    const installedDictionary = Object.freeze(dictionary.slice(0, sharedPrefixLength).concat(dictionary.slice(481, 489)));
     const keys = new Set(dictionary.map(entry => entry[0]));
     const MAX_BYTES = 700000;
     const unsupported = () => {
@@ -508,12 +520,15 @@
     };
     // Prefix identities let newer readers retain every older dictionary without
     // copying entire bases for each release. CRC is integrity, not authentication.
-    const signatures = [];
-    let catalogCrc = -1;
-    for (const entry of dictionary) {
-        for (const char of JSON.stringify(entry) + "\n") catalogCrc = updateCrc(catalogCrc, char.charCodeAt(0));
-        signatures.push((catalogCrc ^ -1) >>> 0);
-    }
+    const prefixSignatures = entries => {
+        let crc = -1;
+        return entries.map(entry => {
+            for (const char of JSON.stringify(entry) + "\n") crc = updateCrc(crc, char.charCodeAt(0));
+            return (crc ^ -1) >>> 0;
+        });
+    };
+    const signatures = prefixSignatures(dictionary);
+    const installedSignatures = prefixSignatures(installedDictionary);
     const writeUint32 = (bytes, value) => {
         for (let shift = 0; shift < 32; shift += 8) bytes.push((value >>> shift) & 255);
     };
@@ -533,14 +548,12 @@
         for (let i = 0; i < value.length; i++) writeVarint(bytes, value.charCodeAt(i));
     };
     const isPayload = raw => String(raw).charAt(0) === "Q";
-    const serialize = config => {
-        for (const key of Object.keys(QOL_DEFAULT_CONFIG)) if (!keys.has(key)) unsupported();
-        const canonical = JSON.parse(QOL_CODEC.SerializeSettings(config)).data;
-        const changes = dictionary.flatMap(([key, reference], id) =>
+    const encode = (canonical, count) => {
+        const changes = dictionary.slice(0, count).flatMap(([key, reference], id) =>
             Object.prototype.hasOwnProperty.call(canonical, key) && canonical[key] !== reference ? [id] : []);
         const bytes = [81, 1]; // Separate from every historical compact wire byte.
-        writeVarint(bytes, dictionary.length);
-        writeUint32(bytes, signatures[dictionary.length - 1]);
+        writeVarint(bytes, count);
+        writeUint32(bytes, signatures[count - 1]);
         writeVarint(bytes, changes.length);
         let previous = -1;
         for (const id of changes) {
@@ -560,6 +573,22 @@
         }
         writeUint32(bytes, checksum(bytes));
         return bytes.map(byte => String.fromCharCode(byte)).join("");
+    };
+    const serializeEnvelope = config => {
+        for (const key of Object.keys(QOL_DEFAULT_CONFIG)) if (!keys.has(key)) unsupported();
+        return QOL_CODEC.SerializeSettings(config);
+    };
+    const serialize = config => encode(JSON.parse(serializeEnvelope(config)).data, dictionary.length);
+    const branchEntries = dictionary.slice(sharedPrefixLength);
+    const serializeForSharing = config => {
+        const envelope = serializeEnvelope(config);
+        const canonical = JSON.parse(envelope).data;
+        // Named envelope fields allow older clients to apply the settings they
+        // support. Compact codes using the common prefix are accepted by both.
+        const needsBranchSettings = branchEntries.some(([key, reference]) =>
+            Object.prototype.hasOwnProperty.call(canonical, key) &&
+            (canonical[key] !== reference || QOL_DEFAULT_CONFIG[key] !== reference));
+        return needsBranchSettings ? envelope : encode(canonical, sharedPrefixLength);
     };
     const deserialize = raw => {
         if (typeof raw !== "string" || raw.length < 12 || raw.length > MAX_BYTES) invalid();
@@ -603,11 +632,16 @@
         const count = readVarint();
         if (!count || count > dictionary.length) unsupported();
         if (position + 4 > end) invalid();
-        if (uint32At(position) !== signatures[count - 1]) unsupported();
+        const signature = uint32At(position);
+        let entries = dictionary;
+        if (signature !== signatures[count - 1]) {
+            if (signature !== installedSignatures[count - 1]) unsupported();
+            entries = installedDictionary;
+        }
         position += 4;
         const changes = readVarint();
         if (changes > count) invalid();
-        const config = Object.fromEntries(dictionary.slice(0, count));
+        const config = Object.fromEntries(entries.slice(0, count));
         let previous = -1;
         for (let i = 0; i < changes; i++) {
             const record = readVarint();
@@ -615,7 +649,7 @@
             const id = previous + 1 + Math.floor(record / 4);
             if (id >= count) invalid();
             previous = id;
-            const [key, reference] = dictionary[id];
+            const [key, reference] = entries[id];
             let value;
             if (tag === 0) {
                 if (reference !== 0 && reference !== 1) invalid();
@@ -636,7 +670,7 @@
         if (position !== end) invalid();
         return config;
     };
-    Q.settingsCode = Object.freeze({ serialize, deserialize, isPayload });
+    Q.settingsCode = Object.freeze({ serialize, serializeForSharing, deserialize, isPayload });
     QOL_CODEC.SerializeSettingsCode = serialize;
     const readSettings = QOL_CODEC.DeserializeSettings;
     QOL_CODEC.DeserializeSettings = (raw, version) => isPayload(raw)
