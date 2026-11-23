@@ -43,6 +43,18 @@
             { key: "ENABLE_DL4D_REMINDERS", type: "toggle" },
             { key: "ENABLE_DL4D_CAPTIONS", type: "toggle" },
             { key: "DL4D_VOLUME", type: "slider" },
+            { key: "MUTE_DL4D", type: "toggle" },
+            { key: "MUTE_DL4D_SMALL_CAMPS_BOXES", type: "toggle" },
+            { key: "MUTE_DL4D_RUNE_MELEE_TROOPERS", type: "toggle" },
+            { key: "MUTE_DL4D_MEDIUM_CAMPS", type: "toggle" },
+            { key: "MUTE_DL4D_BIG_CAMPS_SINNERS", type: "toggle" },
+            { key: "MUTE_DL4D_MIDBOSS_URN_GOLD_RUNE", type: "toggle" },
+            { key: "MUTE_DL4D_LANE_GUARDIAN_WEAK", type: "toggle" },
+            { key: "MUTE_DL4D_RUNE", type: "toggle" },
+            { key: "MUTE_DL4D_WALKER_WEAK", type: "toggle" },
+            { key: "MUTE_DL4D_RUNE_FAST_TROOPERS", type: "toggle" },
+            { key: "MUTE_DL4D_RUNE_GOLD_BUFFS", type: "toggle" },
+            { key: "MUTE_DL4D_RUNE_TROOPERS20_HP", type: "toggle" },
             { key: "ENABLE_DL4D_SMALL_CAMPS_BOXES", type: "toggle" },
             { key: "ENABLE_DL4D_RUNE_MELEE_TROOPERS", type: "toggle" },
             { key: "ENABLE_DL4D_MEDIUM_CAMPS", type: "toggle" },
@@ -115,23 +127,23 @@
                 ]
             };
             const DL4D_REMINDER_EVENTS = [
-                { time: 105, key: "ENABLE_DL4D_SMALL_CAMPS_BOXES", eventBase: "QOL.DL4D.SmallCampsBoxes", caption: "Small camps, boxes, and statues spawning soon.", duration: 2.8 },
-                { time: 285, key: "ENABLE_DL4D_RUNE_MELEE_TROOPERS", eventBase: "QOL.DL4D.RuneMeleeTroopers", caption: "Bridge buffs and melee troopers spawning soon.", duration: 2.3 },
-                { time: 290, key: "ENABLE_DL4D_MEDIUM_CAMPS", eventBase: "QOL.DL4D.MediumCamps", caption: "Medium camps are spawning soon.", duration: 1.7 },
-                { time: 465, key: "ENABLE_DL4D_BIG_CAMPS_SINNERS", eventBase: "QOL.DL4D.BigCampsSinners", caption: "Sinners and large camps spawning soon.", duration: 1.9 },
-                { time: 585, key: "ENABLE_DL4D_MIDBOSS_URN_GOLD_RUNE", eventBase: "QOL.DL4D.MidbossUrnGoldRune", caption: "Soul Urn and Bridge buffs spawning soon. Gold statue buffs have increased.", duration: 4.9 },
-                { time: 720, key: "ENABLE_DL4D_LANE_GUARDIAN_WEAK", eventBase: "QOL.DL4D.LaneGuardianWeak", caption: "Lane Guardian's resistance has decreased.", duration: 2.7 },
-                { time: 885, key: "ENABLE_DL4D_RUNE", eventBase: "QOL.DL4D.Rune", caption: "Bridge buff is spawning soon.", duration: 1.6 },
-                { time: 1080, key: "ENABLE_DL4D_WALKER_WEAK", eventBase: "QOL.DL4D.WalkerWeak", caption: "Walker resistance has decreased.", duration: 2.5 },
-                { time: 1185, key: "ENABLE_DL4D_RUNE_FAST_TROOPERS", eventBase: "QOL.DL4D.RuneFastTroopers", caption: "Bridge buffs spawning soon. Troopers now spawn every 25s.", duration: 4.2 },
-                { time: 1485, key: "ENABLE_DL4D_RUNE", eventBase: "QOL.DL4D.Rune", caption: "Bridge buff is spawning soon.", duration: 1.6 },
-                { time: 1785, key: "ENABLE_DL4D_RUNE_GOLD_BUFFS", eventBase: "QOL.DL4D.RuneGoldBuffs", caption: "Bridge buffs spawning soon. Gold statue buffs have been increased to max.", duration: 4.2 },
-                { time: 2085, key: "ENABLE_DL4D_RUNE_TROOPERS20_HP", eventBase: "QOL.DL4D.RuneTroopers20Hp", caption: "Bridge buffs spawning soon. Troopers now spawn every 20s with 50% more HP.", duration: 5.4 },
-                { time: 2385, key: "ENABLE_DL4D_RUNE", eventBase: "QOL.DL4D.Rune", caption: "Bridge buff is spawning soon.", duration: 1.6 },
-                { time: 2685, key: "ENABLE_DL4D_RUNE", eventBase: "QOL.DL4D.Rune", caption: "Bridge buff is spawning soon.", duration: 1.6 },
-                { time: 2985, key: "ENABLE_DL4D_RUNE", eventBase: "QOL.DL4D.Rune", caption: "Bridge buff is spawning soon.", duration: 1.6 },
-                { time: 3285, key: "ENABLE_DL4D_RUNE", eventBase: "QOL.DL4D.Rune", caption: "Bridge buff is spawning soon.", duration: 1.6 },
-                { time: 3585, key: "ENABLE_DL4D_RUNE", eventBase: "QOL.DL4D.Rune", caption: "Bridge buff is spawning soon.", duration: 1.6 }
+                { time: 105, key: "ENABLE_DL4D_SMALL_CAMPS_BOXES", muteKey: "MUTE_DL4D_SMALL_CAMPS_BOXES", eventBase: "QOL.DL4D.SmallCampsBoxes", caption: "Small camps, boxes, and statues spawning soon.", duration: 2.8 },
+                { time: 285, key: "ENABLE_DL4D_RUNE_MELEE_TROOPERS", muteKey: "MUTE_DL4D_RUNE_MELEE_TROOPERS", eventBase: "QOL.DL4D.RuneMeleeTroopers", caption: "Bridge buffs and melee troopers spawning soon.", duration: 2.3 },
+                { time: 290, key: "ENABLE_DL4D_MEDIUM_CAMPS", muteKey: "MUTE_DL4D_MEDIUM_CAMPS", eventBase: "QOL.DL4D.MediumCamps", caption: "Medium camps are spawning soon.", duration: 1.7 },
+                { time: 465, key: "ENABLE_DL4D_BIG_CAMPS_SINNERS", muteKey: "MUTE_DL4D_BIG_CAMPS_SINNERS", eventBase: "QOL.DL4D.BigCampsSinners", caption: "Sinners and large camps spawning soon.", duration: 1.9 },
+                { time: 585, key: "ENABLE_DL4D_MIDBOSS_URN_GOLD_RUNE", muteKey: "MUTE_DL4D_MIDBOSS_URN_GOLD_RUNE", eventBase: "QOL.DL4D.MidbossUrnGoldRune", caption: "Soul Urn and Bridge buffs spawning soon. Gold statue buffs have increased.", duration: 4.9 },
+                { time: 720, key: "ENABLE_DL4D_LANE_GUARDIAN_WEAK", muteKey: "MUTE_DL4D_LANE_GUARDIAN_WEAK", eventBase: "QOL.DL4D.LaneGuardianWeak", caption: "Lane Guardian's resistance has decreased.", duration: 2.7 },
+                { time: 885, key: "ENABLE_DL4D_RUNE", muteKey: "MUTE_DL4D_RUNE", eventBase: "QOL.DL4D.Rune", caption: "Bridge buff is spawning soon.", duration: 1.6 },
+                { time: 1080, key: "ENABLE_DL4D_WALKER_WEAK", muteKey: "MUTE_DL4D_WALKER_WEAK", eventBase: "QOL.DL4D.WalkerWeak", caption: "Walker resistance has decreased.", duration: 2.5 },
+                { time: 1185, key: "ENABLE_DL4D_RUNE_FAST_TROOPERS", muteKey: "MUTE_DL4D_RUNE_FAST_TROOPERS", eventBase: "QOL.DL4D.RuneFastTroopers", caption: "Bridge buffs spawning soon. Troopers now spawn every 25s.", duration: 4.2 },
+                { time: 1485, key: "ENABLE_DL4D_RUNE", muteKey: "MUTE_DL4D_RUNE", eventBase: "QOL.DL4D.Rune", caption: "Bridge buff is spawning soon.", duration: 1.6 },
+                { time: 1785, key: "ENABLE_DL4D_RUNE_GOLD_BUFFS", muteKey: "MUTE_DL4D_RUNE_GOLD_BUFFS", eventBase: "QOL.DL4D.RuneGoldBuffs", caption: "Bridge buffs spawning soon. Gold statue buffs have been increased to max.", duration: 4.2 },
+                { time: 2085, key: "ENABLE_DL4D_RUNE_TROOPERS20_HP", muteKey: "MUTE_DL4D_RUNE_TROOPERS20_HP", eventBase: "QOL.DL4D.RuneTroopers20Hp", caption: "Bridge buffs spawning soon. Troopers now spawn every 20s with 50% more HP.", duration: 5.4 },
+                { time: 2385, key: "ENABLE_DL4D_RUNE", muteKey: "MUTE_DL4D_RUNE", eventBase: "QOL.DL4D.Rune", caption: "Bridge buff is spawning soon.", duration: 1.6 },
+                { time: 2685, key: "ENABLE_DL4D_RUNE", muteKey: "MUTE_DL4D_RUNE", eventBase: "QOL.DL4D.Rune", caption: "Bridge buff is spawning soon.", duration: 1.6 },
+                { time: 2985, key: "ENABLE_DL4D_RUNE", muteKey: "MUTE_DL4D_RUNE", eventBase: "QOL.DL4D.Rune", caption: "Bridge buff is spawning soon.", duration: 1.6 },
+                { time: 3285, key: "ENABLE_DL4D_RUNE", muteKey: "MUTE_DL4D_RUNE", eventBase: "QOL.DL4D.Rune", caption: "Bridge buff is spawning soon.", duration: 1.6 },
+                { time: 3585, key: "ENABLE_DL4D_RUNE", muteKey: "MUTE_DL4D_RUNE", eventBase: "QOL.DL4D.Rune", caption: "Bridge buff is spawning soon.", duration: 1.6 }
             ];
 
             // ── Private helpers (verbatim from old feature) ──
@@ -272,7 +284,8 @@
                         if (Number(cfg[reminder.key]) !== 1) continue;
                         ShowDl4dCaption(root, cfg, reminder.caption, reminder.duration);
                         const eventName = ResolveDl4dReminderEventForVolume(reminder.eventBase, cfg);
-                        if (eventName) $.DispatchEvent("PlaySoundEffect", eventName);
+                        // A reminder's Mute only silences its sound; the caption above still shows.
+                        if (eventName && !IsCfgEnabled(cfg, reminder.muteKey)) $.DispatchEvent("PlaySoundEffect", eventName);
                     }
                 }
                 history.dl4dLastTime = currentTime;

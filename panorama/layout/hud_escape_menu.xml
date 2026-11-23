@@ -37,6 +37,8 @@
 		<include src="s2r://panorama/scripts/core/ql_customize_preview.vjs_c" />
 		<!-- ==== End QOLLOCK customization preview ==== -->
 		<include src="s2r://panorama/scripts/ql_custom_announcer_pack_meta.vjs_c" />
+		<include src="s2r://panorama/scripts/ql_custom_hit_sound_pack_meta.vjs_c" />
+		<include src="s2r://panorama/scripts/ql_custom_kill_sound_pack_meta.vjs_c" />
 		<!-- Phase 1: Locale modules (must load before ql_settings.js) -->
 		<include src="s2r://panorama/scripts/ql_settings_loc/ql_settings_loc_en.vjs_c" />
 		<include src="s2r://panorama/scripts/ql_settings_loc/ql_settings_loc_ko.vjs_c" />

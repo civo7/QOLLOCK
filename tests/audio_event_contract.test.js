@@ -156,7 +156,7 @@ test("DL4D and minimap HUD dispatches bind shipped WAVs, including real DL4D pre
     const definitions = soundDefinitions();
     const env = audioEnvironment();
     env.global.QOL.ui.audio.render(env.list);
-    const buttons = env.list.FindChildrenWithClassTraverse("DL4DReminderTestBtn");
+    const buttons = env.list.FindChildrenWithClassTraverse("DL4DReminderTestBtn").filter(button => !button.BHasClass("SoundPreviewBtn"));
     assert.equal(buttons.length, DL4D.length);
     for (let volume = 0; volume <= 100; volume++) {
         env.global.MOD_CONFIG.DL4D_VOLUME = volume;
@@ -174,5 +174,58 @@ test("DL4D and minimap HUD dispatches bind shipped WAVs, including real DL4D pre
         assert.equal(minimap.length, 1);
         assertBinding(definitions, minimap[0], `BuffReminder.Minimap_V${volume}`, "sounds/mods/minimap_normal.wav", volume);
     }
+    env.assertClean();
+});
+
+test("Deadlock For Dummies per-reminder mutes silence only that reminder and its preview", () => {
+    const env = audioEnvironment();
+    env.global.QOL.ui.audio.render(env.list);
+    const buttons = env.list.FindChildrenWithClassTraverse("DL4DReminderTestBtn").filter(button => !button.BHasClass("SoundPreviewBtn"));
+    const seconds = DL4D.map(([second]) => second);
+    const cfg = env.global.MOD_CONFIG;
+    const reminders = env.global.QOL.ui.audio.DL4D_REMINDER_OPTIONS;
+    const setMutes = (value, only = reminders) => { for (const reminder of only) cfg[reminder.muteKey] = value; };
+    const mutes = () => Object.fromEntries(reminders.map(reminder => [reminder.muteKey, cfg[reminder.muteKey]]));
+    setMutes(0);
+    assert.equal(env.run({ ENABLE_DL4D_REMINDERS: 1, ...mutes() }, seconds).length, DL4D.length);
+    // Mute one reminder: only its own sound and preview go quiet.
+    cfg[reminders[0].muteKey] = 1;
+    const partial = env.run({ ENABLE_DL4D_REMINDERS: 1, ENABLE_DL4D_CAPTIONS: 1, ...mutes() }, seconds);
+    assert.equal(partial.length, DL4D.length - 1);
+    assert.ok(!partial.some(name => name.startsWith("QOL.DL4D.SmallCampsBoxes_")), "the muted reminder stays silent");
+    assert.deepEqual(env.preview(buttons[0]), [], "its preview is silent");
+    assert.equal(env.preview(buttons[1]).length, 1, "other previews still play");
+    // The main Mute alone does not silence anything; it only sets the per-reminder mutes.
+    setMutes(0); cfg.MUTE_DL4D = 1;
+    assert.equal(env.run({ ENABLE_DL4D_REMINDERS: 1, MUTE_DL4D: 1, ...mutes() }, seconds).length, DL4D.length);
+    cfg.MUTE_DL4D = 0;
+    env.assertClean();
+});
+
+test("the main Deadlock For Dummies Mute mutes every reminder, and each can then be unmuted on its own", () => {
+    const env = audioEnvironment();
+    env.global.QOL.ui.audio.render(env.list);
+    const seconds = DL4D.map(([second]) => second);
+    const cfg = env.global.MOD_CONFIG;
+    const reminders = env.global.QOL.ui.audio.DL4D_REMINDER_OPTIONS;
+    const mutes = () => Object.fromEntries(reminders.map(reminder => [reminder.muteKey, cfg[reminder.muteKey]]));
+    const main = env.list.FindChildTraverse("MUTE_DL4DSectionTitleCheckbox");
+    assert.ok(main, "the main Mute checkbox sits in the volume slider row");
+    cfg.MUTE_DL4D = 0; for (const reminder of reminders) cfg[reminder.muteKey] = 0;
+
+    assert.equal(main._fire("onactivate"), true);
+    assert.equal(cfg.MUTE_DL4D, 1);
+    assert.ok(reminders.every(reminder => cfg[reminder.muteKey] === 1), "turning the main Mute on mutes every reminder");
+    assert.deepEqual(env.run({ ENABLE_DL4D_REMINDERS: 1, ...mutes() }, seconds), [], "everything is silent");
+
+    cfg[reminders[6].muteKey] = 0; // Rune, which fires several times
+    const runeOnly = env.run({ ENABLE_DL4D_REMINDERS: 1, ...mutes() }, seconds);
+    assert.ok(runeOnly.length > 0 && runeOnly.every(name => name.startsWith("QOL.DL4D.Rune_")), "only the unmuted reminder is heard");
+    assert.equal(cfg.MUTE_DL4D, 1, "the main Mute stays on while individual reminders are unmuted");
+
+    assert.equal(main._fire("onactivate"), true);
+    assert.equal(cfg.MUTE_DL4D, 0);
+    assert.ok(reminders.every(reminder => cfg[reminder.muteKey] === 0), "turning the main Mute off unmutes every reminder");
+    assert.equal(env.run({ ENABLE_DL4D_REMINDERS: 1, ...mutes() }, seconds).length, DL4D.length);
     env.assertClean();
 });

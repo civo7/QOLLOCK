@@ -44,7 +44,7 @@ test("catalog covers current visual manifest controls, with explicit compatibili
     const hudCatalog = env.hud.sandbox.global.QOL.presentation;
     assert.deepEqual([...catalog.fieldMap.keys()], [...hudCatalog.fieldMap.keys()]);
     const registry = env.hud.sandbox.global.QOL.core.FeatureRegistry;
-    const excludedOwners = new Set(["ql_lane_with_party", "ql_mouse_cursor", "ql_chat_translate", "ql_unspent", "ql_spm", "ql_sigflash", "ql_legacy_audio_passive"]);
+    const excludedOwners = new Set(["ql_lane_with_party", "ql_mouse_cursor", "ql_chat_translate", "ql_unspent", "ql_spm", "ql_sigflash", "ql_legacy_audio_passive", "ql_hit_kill_sounds"]);
     const excludedKeys = new Set([
         // These masters are derived by the existing threshold normalizers.
         "ENABLE_COLORED_HEALTHBAR", "ENABLE_ENEMY_COLORED_HEALTHBAR", "ENABLE_ALLY_COLORED_HEALTHBAR",
