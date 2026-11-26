@@ -702,12 +702,12 @@
       "local_sha256": "23e01a2f857205e89dbf1de1ed46e43d6c2ff08df10b79b12e83f97d3d299036"
     },
     "styles/hud_minimap.css": {
-      "blob": "463686d9c187efb9833b8c68cc7440601c5df798",
+      "blob": "879403f1db986aeb379e53f37057e00613096eb4",
       "destination": "panorama/styles/base/hud_minimap.css",
       "kind": "css",
       "auto_sync": true,
-      "local_sha256": "75f1f8feeb7cc2ff9068f2e8ec9317a86de9087f3de253d09cc32ac43897f823",
-      "base_commit": "3e41d1b1f0e5d618857da005aef1e8aec5a657ca"
+      "local_sha256": "8ac56db8fb01032de37c5708f3ac28a794816b983700761c05b33454a94f14bf",
+      "base_commit": "77b862290ad3050cafd2e9c3f47e0532e9d6dcfd"
     },
     "styles/hud_modifiers.css": {
       "blob": "2eb94f53a78f107b941c6fff78d918333fdb4337",
@@ -826,5 +826,5 @@
       "base_commit": "77b862290ad3050cafd2e9c3f47e0532e9d6dcfd"
     }
   },
-  "fingerprint": "cdfc9317a7afaa6a044596434348bf7f2086a8988b9ac370d81c621dbbfb9409"
+  "fingerprint": "d0802e5d9af7502e70794be33da4ac41f7be0a7c81545c93da1de3b7c36f5342"
 }
