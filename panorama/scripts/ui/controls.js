@@ -1119,6 +1119,8 @@
             }
             const nextActive = !getIsActive();
             getConfig()[configId] = invertToggle ? (nextActive ? 0 : 1) : (nextActive ? 1 : 0);
+            // Lets a checkbox set related settings in the same save (e.g. a main Mute for sub-mutes).
+            if (toggleOptions && typeof toggleOptions.onToggle === "function") toggleOptions.onToggle(nextActive, getConfig());
             update();
             saveAndSync();
             if (refreshListOnChange) requestSettingsListRefresh(0, true);
@@ -1678,6 +1680,8 @@
             const checkbox = checkboxOptions ? createSectionTitleCheckboxToggle(sliderValueGroup,
                 checkboxOptions.label, checkboxOptions.key, {
                     description: checkboxOptions.description,
+                    refreshListOnChange: checkboxOptions.refreshListOnChange === true,
+                    onToggle: checkboxOptions.onToggle,
                     onChanged: refreshRowChangedState
                 }) : null;
             if (checkbox) {
@@ -2380,6 +2384,20 @@
                             getTooltip().hideTooltipDeferred("voice_dropdown_option_mouseout");
                         });
                     })(optionPanel, optionValue, row);
+                }
+
+                // Options may carry their own hover text: { description, createdBy }.
+                if (opt.description || opt.createdBy) {
+                    ((optionPanelRef, descriptionRef, createdByRef, rowAnchorRef) => {
+                        optionPanelRef.SetPanelEvent("onmouseover", () => {
+                            getTooltip().hideTextTooltip();
+                            getTooltip().cancelHide();
+                            getTooltip().showRowTooltip(rowAnchorRef, "", descriptionRef ? localize(descriptionRef) : "", PERF_IMPACT_TIER_NONE, createdByRef);
+                        });
+                        optionPanelRef.SetPanelEvent("onmouseout", () => {
+                            getTooltip().hideTooltipDeferred("dropdown_option_mouseout");
+                        });
+                    })(optionPanel, String(opt.description || ""), String(opt.createdBy || ""), row);
                 }
 
                 dropdown.AddOption(optionPanel);

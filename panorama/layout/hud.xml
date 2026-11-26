@@ -111,6 +111,7 @@
 		<include src="s2r://panorama/scripts/manifests/ql_legacy_audio_passive/manifest.vjs_c" />
 		<include src="s2r://panorama/scripts/manifests/ql_ammo/manifest.vjs_c" />
 		<include src="s2r://panorama/scripts/manifests/ql_hit_marker/manifest.vjs_c" />
+		<include src="s2r://panorama/scripts/manifests/ql_hit_kill_sounds/manifest.vjs_c" />
 		<include src="s2r://panorama/scripts/manifests/ql_disabled_abilities/manifest.vjs_c" />
 		<include src="s2r://panorama/scripts/manifests/ql_bottom_bar/manifest.vjs_c" />
 		<include src="s2r://panorama/scripts/manifests/ql_items/manifest.vjs_c" />

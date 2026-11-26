@@ -599,6 +599,13 @@ while ($true) {
         if (-not (Test-Path $TempContent)) { New-Item -ItemType Directory -Force -Path $TempContent | Out-Null }
         if (-not (Test-Path $TempGame)) { New-Item -ItemType Directory -Force -Path $TempGame | Out-Null }
 
+        # Hit/kill sound clips only play if the sound events file lists them, so refresh that list from the clip folders first.
+        $HitKillSoundTool = Join-Path $ModSourcePath 'tools\update_hit_kill_soundevents.ps1'
+        if (Test-Path -LiteralPath $HitKillSoundTool) {
+            Write-Host "Updating hit/kill sound events..." -ForegroundColor Cyan
+            & $HitKillSoundTool -RepoRoot $ModSourcePath
+        }
+
         Write-Host "Step 1/3: Checking for modified files (Hashing)..." -ForegroundColor Cyan
         if ($Force) {
             Write-Host "  Force rebuild enabled for this run." -ForegroundColor Yellow

@@ -493,7 +493,25 @@
         ["SHOP_QUICKBUY_X_OFFSET",0],
         ["SHOP_QUICKBUY_Y_OFFSET",0],
         ["SHOP_QUICKBUY_SCALE",100],
-        ["SHOP_QUICKBUY_OPACITY",1]
+        ["SHOP_QUICKBUY_OPACITY",1],
+        ["ENABLE_HITSOUND",0],
+        ["HITSOUND_TYPE",0],
+        ["ENABLE_KILLSOUND",0],
+        ["KILLSOUND_TYPE",0],
+        ["HITSOUND_VOLUME",10],
+        ["KILLSOUND_VOLUME",10],
+        ["MUTE_DL4D",0],
+        ["MUTE_DL4D_SMALL_CAMPS_BOXES",0],
+        ["MUTE_DL4D_RUNE_MELEE_TROOPERS",0],
+        ["MUTE_DL4D_MEDIUM_CAMPS",0],
+        ["MUTE_DL4D_BIG_CAMPS_SINNERS",0],
+        ["MUTE_DL4D_MIDBOSS_URN_GOLD_RUNE",0],
+        ["MUTE_DL4D_LANE_GUARDIAN_WEAK",0],
+        ["MUTE_DL4D_RUNE",0],
+        ["MUTE_DL4D_WALKER_WEAK",0],
+        ["MUTE_DL4D_RUNE_FAST_TROOPERS",0],
+        ["MUTE_DL4D_RUNE_GOLD_BUFFS",0],
+        ["MUTE_DL4D_RUNE_TROOPERS20_HP",0]
     ].map(entry => Object.freeze(entry));
     Object.freeze(dictionary);
     // The installed Shop customization build and the Better Builds branch both
