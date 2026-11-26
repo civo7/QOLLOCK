@@ -178,10 +178,12 @@
 					<ToggleButton class="nav_menu_item CitadelSettingsCheckbox half_width" id="AvoidTargetingCheckbox" text="#HeroTesting_NoTarget" onactivate="CitadelConCommand( &apos;notarget&apos; );" onmouseover="CitadelUIShowTextTooltip( &apos;#HeroTesting_NoTarget_Desc&apos; )" onmouseout="CitadelUIHideTextTooltip()" />
 					<ToggleButton class="nav_menu_item CitadelSettingsCheckbox half_width" id="FastMovespeedCheckbox" text="#HeroTesting_FastMovespeed" onactivate="CitadelConCommand( &apos;fastmovespeed&apos; );" onmouseover="CitadelUIShowTextTooltip( &apos;#HeroTesting_FastMovespeed_Desc&apos; )" onmouseout="CitadelUIHideTextTooltip()" />
 				</Panel>
+				<!-- ==== QOLLOCK: Infinite souls and buy-anywhere sandbox controls ==== -->
 				<Panel class="nav_menu_item_container">
 					<CitadelSettingsCheckbox convar="citadel_hero_testing_infinite_money" text="Infinity Souls" class="nav_menu_item small_text half_width" />
 					<CitadelSettingsCheckbox convar="citadel_allow_purchasing_anywhere" text="Buy Anywhere" class="nav_menu_item small_text half_width" />
 				</Panel>
+				<!-- ==== -->
 				<Panel class="nav_menu_item_container row_gap hide_in_coop">
 					<Button class="small_text nav_menu_item third_width" onactivate="CitadelConCommand( &apos;host_timescale_dec&apos; ); PlaySoundEffect( Stinger.LevelUp )" onmouseover="CitadelUIShowTextTooltip( &apos;#HeroTesting_SpeedDown_Desc&apos; )" onmouseout="CitadelUIHideTextTooltip()">
 						<Label text="#HeroTesting_SpeedDown" />
@@ -215,9 +217,11 @@
 						<Button class="nav_menu_item small_text full_width" onactivate="HeroTestingSpawnBotHero(&apos;friend&apos;)" onmouseover="CitadelUIShowTextTooltip( &apos;#HeroTesting_SpawnFriendly_Desc&apos; )" onmouseout="CitadelUIHideTextTooltip()">
 							<Label text="#HeroTesting_SpawnFriendly" />
 						</Button>
+						<!-- ==== QOLLOCK: Neutral bot spawn ==== -->
 						<Button class="nav_menu_item small_text full_width" onactivate="HeroTestingSpawnBotHero(&apos;neutral&apos;)" >
 							<Label text="+As Neutral" />
 						</Button>
+						<!-- ==== -->
 					</Panel>
 					<CitadelHeroCard id="SpawnBotCard" onactivate="HeroTestingChangeSelectedBot()" onmouseover="CitadelUIShowTextTooltip( &apos;#HeroTesting_SpawnBotCard_Desc&apos; )" onmouseout="CitadelUIHideTextTooltip()" />
 				</Panel>
@@ -230,12 +234,14 @@
 					</Button>
 				</Panel>
 				<Panel class="nav_menu_item_container hide_in_coop">
+					<!-- ==== QOLLOCK: Share the row with the dummy spawn button ==== -->
 					<Button class="nav_menu_item small_text half_width" onactivate="CitadelConCommand( &apos;bot_mimic 0&apos; ); CitadelConCommand( &apos; bot_puppet 0&apos; );" onmouseover="CitadelUIShowTextTooltip( &apos;#HeroTesting_ClearFollow_Desc&apos; )" onmouseout="CitadelUIHideTextTooltip()">
 						<Label text="#HeroTesting_ClearFollow" />
 					</Button>
 					<Button class="nav_menu_item small_text half_width" onactivate="CitadelConCommand( &apos;citadel_create_unit hero_targetdummy enemy&apos; );" >
 						<Label text="Spawn Dummy" />
 					</Button>
+					<!-- ==== -->
 				</Panel>
 			</Panel>
 			<Panel id="bot_control" class="nav_menu_tab_contents">
@@ -261,9 +267,11 @@
 						<Button class="nav_menu_item small_text full_width" onactivate="HeroTestingSpawnBotHero(&apos;friend&apos;)" onmouseover="CitadelUIShowTextTooltip( &apos;#HeroTesting_SpawnFriendly_Desc&apos; )" onmouseout="CitadelUIHideTextTooltip()">
 							<Label text="#HeroTesting_SpawnFriendly" />
 						</Button>
+						<!-- ==== QOLLOCK: Neutral bot spawn ==== -->
 						<Button class="nav_menu_item small_text full_width" onactivate="HeroTestingSpawnBotHero(&apos;neutral&apos;)" >
 							<Label text="+As Neutral" />
 						</Button>
+						<!-- ==== -->
 					</Panel>
 					<CitadelHeroCard id="BotsSpawnBotCard" onactivate="HeroTestingChangeSelectedBot()" onmouseover="CitadelUIShowTextTooltip( &apos;#HeroTesting_SpawnBotCard_Desc&apos; )" onmouseout="CitadelUIHideTextTooltip()" />
 				</Panel>
@@ -276,12 +284,14 @@
 					</Button>
 				</Panel>
 				<Panel class="nav_menu_item_container hide_in_coop">
+					<!-- ==== QOLLOCK: Share the row with the dummy spawn button ==== -->
 					<Button class="nav_menu_item small_text half_width" onactivate="CitadelConCommand( &apos;bot_mimic 0&apos; ); CitadelConCommand( &apos; bot_puppet 0&apos; );" onmouseover="CitadelUIShowTextTooltip( &apos;#HeroTesting_ClearFollow_Desc&apos; )" onmouseout="CitadelUIHideTextTooltip()">
 						<Label text="#HeroTesting_ClearFollow" />
 					</Button>
 					<Button class="nav_menu_item small_text half_width" onactivate="CitadelConCommand( &apos;citadel_create_unit hero_targetdummy enemy&apos; );" >
 						<Label text="Spawn Dummy" />
 					</Button>
+					<!-- ==== -->
 				</Panel>
 				<Panel class="nav_menu_item_container row_gap hide_in_coop">
 					<Button class="nav_menu_item small_text half_width" onactivate="CitadelConCommand( &apos;bot_command_target givelevelupgold 1&apos; ); PlaySoundEffect( Stinger.LevelUp )" onmouseover="CitadelUIShowTextTooltip( &apos;#HeroTesting_ReticleTarget_BotLevelUp_Desc&apos; )" onmouseout="CitadelUIHideTextTooltip()">
@@ -409,6 +419,31 @@
 					<Button class="nav_menu_item small_text half_width" onactivate="CitadelConCommand( &apos;citadel_bot_give_all_abilities&apos; ); PlaySoundEffect( Stinger.LevelUp )" onmouseover="CitadelUIShowTextTooltip( &apos;#HeroTesting_BotGiveAllAbilities_Desc&apos; )" onmouseout="CitadelUIHideTextTooltip()">
 						<Label text="#HeroTesting_BotGiveAllAbilities" />
 					</Button>
+				</Panel>
+				<Panel class="nav_menu_item_header section_gap hide_in_coop">
+					<Label text="#HeroTesting_BotDrillSection" />
+				</Panel>
+				<Panel class="nav_menu_item_container hide_in_coop">
+					<Label class="bot_drill_label" text="#HeroTesting_BotDrillSelect" onmouseover="CitadelUIShowTextTooltip( &apos;#HeroTesting_BotDrill_Desc&apos; )" onmouseout="CitadelUIHideTextTooltip()" />
+					<DropDown id="BotDrillDropDown" class="bot_drill_dropdown" onmouseover="CitadelUIShowTextTooltip( &apos;#HeroTesting_BotDrill_Desc&apos; )" onmouseout="CitadelUIHideTextTooltip()">
+						<Label id="BotDrill0" value="0" text="#HeroTesting_BotDrillNone" />
+						<Label id="BotDrill3" value="3" text="#HeroTesting_BotDrillAbrams" onmouseover="CitadelUIShowTextTooltip( &apos;#HeroTesting_BotDrillAbrams_Desc&apos; )" onmouseout="CitadelUIHideTextTooltip()" />
+						<Label id="BotDrill12" value="12" text="#HeroTesting_BotDrillBabaLongLegs" onmouseover="CitadelUIShowTextTooltip( &apos;#HeroTesting_BotDrillBabaLongLegs_Desc&apos; )" onmouseout="CitadelUIHideTextTooltip()" />
+						<Label id="BotDrill10" value="10" text="#HeroTesting_BotDrillBabaThreadsap" onmouseover="CitadelUIShowTextTooltip( &apos;#HeroTesting_BotDrillBabaThreadsap_Desc&apos; )" onmouseout="CitadelUIHideTextTooltip()" />
+						<Label id="BotDrill8" value="8" text="#HeroTesting_BotDrillBebopHook" onmouseover="CitadelUIShowTextTooltip( &apos;#HeroTesting_BotDrillBebopHook_Desc&apos; )" onmouseout="CitadelUIHideTextTooltip()" />
+						<Label id="BotDrill11" value="11" text="#HeroTesting_BotDrillBilly" onmouseover="CitadelUIShowTextTooltip( &apos;#HeroTesting_BotDrillBilly_Desc&apos; )" onmouseout="CitadelUIHideTextTooltip()" />
+						<Label id="BotDrill1" value="1" text="#HeroTesting_BotDrillDiveDanny" onmouseover="CitadelUIShowTextTooltip( &apos;#HeroTesting_BotDrillDiveDanny_Desc&apos; )" onmouseout="CitadelUIHideTextTooltip()" />
+						<Label id="BotDrill9" value="9" text="#HeroTesting_BotDrillGravesTombstone" onmouseover="CitadelUIShowTextTooltip( &apos;#HeroTesting_BotDrillGravesTombstone_Desc&apos; )" onmouseout="CitadelUIHideTextTooltip()" />
+						<Label id="BotDrill4" value="4" text="#HeroTesting_BotDrillGreyTalon" onmouseover="CitadelUIShowTextTooltip( &apos;#HeroTesting_BotDrillGreyTalon_Desc&apos; )" onmouseout="CitadelUIHideTextTooltip()" />
+						<Label id="BotDrill15" value="15" text="#HeroTesting_BotDrillHolliday" onmouseover="CitadelUIShowTextTooltip( &apos;#HeroTesting_BotDrillHolliday_Desc&apos; )" onmouseout="CitadelUIHideTextTooltip()" />
+						<Label id="BotDrill13" value="13" text="#HeroTesting_BotDrillLashCombo" onmouseover="CitadelUIShowTextTooltip( &apos;#HeroTesting_BotDrillLashCombo_Desc&apos; )" onmouseout="CitadelUIHideTextTooltip()" />
+						<Label id="BotDrill16" value="16" text="#HeroTesting_BotDrillMcGinnis" onmouseover="CitadelUIShowTextTooltip( &apos;#HeroTesting_BotDrillMcGinnis_Desc&apos; )" onmouseout="CitadelUIHideTextTooltip()" />
+						<Label id="BotDrill5" value="5" text="#HeroTesting_BotDrillParadox" onmouseover="CitadelUIShowTextTooltip( &apos;#HeroTesting_BotDrillParadox_Desc&apos; )" onmouseout="CitadelUIHideTextTooltip()" />
+						<Label id="BotDrill14" value="14" text="#HeroTesting_BotDrillSilver" onmouseover="CitadelUIShowTextTooltip( &apos;#HeroTesting_BotDrillSilver_Desc&apos; )" onmouseout="CitadelUIHideTextTooltip()" />
+						<Label id="BotDrill2" value="2" text="#HeroTesting_BotDrillFlyVindicta" onmouseover="CitadelUIShowTextTooltip( &apos;#HeroTesting_BotDrillFlyVindicta_Desc&apos; )" onmouseout="CitadelUIHideTextTooltip()" />
+						<Label id="BotDrill6" value="6" text="#HeroTesting_BotDrillViscousGooBall" onmouseover="CitadelUIShowTextTooltip( &apos;#HeroTesting_BotDrillViscousGooBall_Desc&apos; )" onmouseout="CitadelUIHideTextTooltip()" />
+						<Label id="BotDrill7" value="7" text="#HeroTesting_BotDrillViscousPuddlePunch" onmouseover="CitadelUIShowTextTooltip( &apos;#HeroTesting_BotDrillViscousPuddlePunch_Desc&apos; )" onmouseout="CitadelUIHideTextTooltip()" />
+					</DropDown>
 				</Panel>
 				<Panel class="nav_menu_item_header section_gap">
 					<Label text="#HeroTesting_BotRecording" />
@@ -610,10 +645,12 @@
 					<CitadelSettingsCheckbox convar="citadel_hud_hide_own_health" text="#HeroTesting_HideOwnHealth" class="nav_menu_item small_text half_width" onmouseover="CitadelUIShowTextTooltip( &apos;#HeroTesting_HideOwnHealth_Desc&apos; )" onmouseout="CitadelUIHideTextTooltip()" />
 					<CitadelSettingsCheckbox convar="citadel_unit_status_enabled" invert="true" text="#HeroTesting_HideHealthBars" class="nav_menu_item small_text half_width" onmouseover="CitadelUIShowTextTooltip( &apos;#HeroTesting_HideHealthBars_Desc&apos; )" onmouseout="CitadelUIHideTextTooltip()" />
 				</Panel>
+				<!-- ==== QOLLOCK: Trooper and bot AI toggles ==== -->
 				<Panel class="nav_menu_item_container">
 					<CitadelSettingsCheckbox convar="ai_setenabled" text="Troopers AI" class="nav_menu_item small_text half_width" />
 					<CitadelSettingsCheckbox convar="citadel_solo_bot_match" text="Bots AI" class="nav_menu_item small_text half_width" />
 				</Panel>
+				<!-- ==== -->
 				<Panel class="nav_menu_item_container">
 					<Panel class="input_control">
 						<ToggleButton class="nav_menu_item CitadelSettingsCheckbox" id="NoclipCheckbox" text="#citadel_keybind_noclip" onactivate="CitadelConCommand( &apos;noclip&apos; );" onmouseover="CitadelUIShowTextTooltip( &apos;#HeroTesting_Noclip_Desc&apos; )" onmouseout="CitadelUIHideTextTooltip()" />

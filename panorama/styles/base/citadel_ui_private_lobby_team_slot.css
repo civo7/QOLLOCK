@@ -1,0 +1,287 @@
+/* Prettified by Source 2 Viewer - https://valveresourceformat.github.io */
+
+.TeamSlot
+{
+	width: 100%;
+	height: 56px;
+	flow-children: right;
+	margin-top: 6px;
+	border: 1px solid offWhite&12;
+	border-radius: 3px;
+	background-color: #ffffff06;
+	transition-property: background-color, border, opacity;
+	transition-duration: 0.15s;
+	transition-timing-function: ease-out;
+}
+
+.TeamSlot:hover
+{
+	sound: soundMainMenuHover;
+	background-color: #ffffff12;
+	border: 1px solid offWhite&40;
+}
+
+#UnassignedListing .TeamSlot
+{
+	height: 50px;
+}
+
+.TeamAmber .TeamSlot
+{
+	background-color: gradient( linear, 0% 0%, 100% 0%, from( team1ColorDarker&50 ), to( team1ColorDarker&18 ) );
+	border: 1px solid team1ColorDark&38;
+}
+
+.TeamAmber .TeamSlot:hover
+{
+	background-color: gradient( linear, 0% 0%, 100% 0%, from( team1ColorDarker&90 ), to( team1ColorDarker&40 ) );
+	border: 1px solid team1Color&b0;
+}
+
+.TeamSapphire .TeamSlot
+{
+	background-color: gradient( linear, 0% 0%, 100% 0%, from( team2ColorDarker&70 ), to( team2ColorDarker&28 ) );
+	border: 1px solid team2ColorDark&48;
+}
+
+.TeamSapphire .TeamSlot:hover
+{
+	background-color: gradient( linear, 0% 0%, 100% 0%, from( team2ColorDarker ), to( team2ColorDarker&50 ) );
+	border: 1px solid team2Color&c0;
+}
+
+.Spectators .TeamSlot
+{
+	width: 251px;
+	height: 46px;
+	margin: 6px 3px 0px 3px;
+}
+
+.TeamAmber .IsPlayer.TeamSlot
+{
+	background-color: gradient( linear, 0% 0%, 100% 0%, from( team1ColorDark&e0 ), to( team1ColorDarker&a0 ) );
+	border: 1px solid team1Color&70;
+}
+
+.TeamSapphire .IsPlayer.TeamSlot
+{
+	background-color: gradient( linear, 0% 0%, 100% 0%, from( team2ColorDark&f0 ), to( team2ColorDarker&b0 ) );
+	border: 1px solid team2Color&80;
+}
+
+.IsPlayer.TeamSlot
+{
+	background-color: #ffffff14;
+	border: 1px solid offWhite&28;
+}
+
+.LocalPlayer.TeamSlot,.TeamCtn .LocalPlayer.TeamSlot
+{
+	border: 1px solid offWhite&c0;
+	box-shadow: offWhite&20 0px 0px 8px 0px;
+}
+
+.IsReady.TeamSlot,.TeamCtn .IsReady.TeamSlot
+{
+	border: 1px solid deadlockGreen&d0;
+	box-shadow: deadlockGreen&30 0px 0px 8px 0px;
+}
+
+.IsInvite.TeamSlot
+{
+	opacity: 0.45;
+	saturation: 0;
+}
+
+.LaneColor
+{
+	width: 5px;
+	height: 100%;
+	border-radius: 2px 0px 0px 2px;
+	visibility: collapse;
+}
+
+.HasLane .LaneColor
+{
+	visibility: visible;
+}
+
+.LaneYellow .LaneColor
+{
+	background-color: laneYellowColor;
+}
+
+.LaneBlue .LaneColor
+{
+	background-color: laneBlueColor;
+}
+
+.LanePurple .LaneColor
+{
+	background-color: lanePurpleColor;
+}
+
+.LaneGreen .LaneColor
+{
+	background-color: laneGreenColor;
+}
+
+#HeroImage
+{
+	width: 44px;
+	height: 44px;
+	margin-left: 8px;
+	vertical-align: center;
+	border-radius: 3px;
+	box-shadow: #000000aa 0px 0px 4px 0px;
+	visibility: collapse;
+}
+
+.HasHero #HeroImage
+{
+	visibility: visible;
+}
+
+.Player
+{
+	width: fill-parent-flow( 1.0 );
+	height: 46px;
+	margin-left: 8px;
+	vertical-align: center;
+	visibility: collapse;
+}
+
+.IsPlayer .Player
+{
+	visibility: visible;
+}
+
+.IsReady .Player
+{
+	margin-right: 46px;
+}
+
+.LocalPlayer .Player
+{
+	margin-right: 116px;
+}
+
+.Spectators .TeamSlot .Player
+{
+	height: 40px;
+}
+
+.TeamSlot CitadelFriend.CustomLobbyPlayer #FriendImage
+{
+	width: 40px;
+	height: 40px;
+}
+
+.Spectators .TeamSlot CitadelFriend.CustomLobbyPlayer #FriendImage
+{
+	width: 34px;
+	height: 34px;
+}
+
+.Spectators .LocalPlayer .Player,.Spectators .IsReady .Player
+{
+	margin-right: 0px;
+}
+
+CitadelFriend
+{
+	width: 100%;
+	height: 100%;
+	flow-children: right;
+}
+
+.ReadyCheck
+{
+	width: 22px;
+	height: 22px;
+	margin-right: 16px;
+	horizontal-align: right;
+	vertical-align: center;
+	ignore-parent-flow: true;
+	background-image: url("s2r://panorama/images/icons/icon_checkmark.vsvg");
+	background-size: contain;
+	background-repeat: no-repeat;
+	background-position: center;
+	wash-color: deadlockGreen;
+	visibility: collapse;
+}
+
+.IsReady .ReadyCheck
+{
+	visibility: visible;
+}
+
+.LocalPlayer.IsReady .ReadyCheck
+{
+	visibility: collapse;
+}
+
+.Ready,.Unready
+{
+	visibility: collapse;
+	margin: 0px 12px 0px 0px;
+	horizontal-align: right;
+	vertical-align: center;
+	ignore-parent-flow: true;
+}
+
+.LocalPlayer .Ready
+{
+	visibility: visible;
+}
+
+.LocalPlayer.IsReady .Ready
+{
+	visibility: collapse;
+}
+
+.LocalPlayer.IsReady .Unready
+{
+	visibility: visible;
+}
+
+.IsAccountSlot .Ready,.IsAccountSlot .Unready,.IsAccountSlot .ReadyCheck
+{
+	visibility: collapse;
+}
+
+.EmptySlot
+{
+	width: fill-parent-flow( 1.0 );
+	height: 100%;
+	padding: 0px 14px;
+}
+
+.IsPlayer .EmptySlot
+{
+	visibility: collapse;
+}
+
+.EmptySlot Label
+{
+	vertical-align: center;
+	font-size: 17px;
+	font-weight: semi-bold;
+	font-style: italic;
+	color: offWhite;
+	opacity: 0.3;
+	transition-property: opacity;
+	transition-duration: 0.15s;
+}
+
+.HasBotDifficulty .EmptySlot Label
+{
+	font-style: normal;
+	color: chalkBlue;
+	opacity: 0.6;
+}
+
+.TeamSlot:hover .EmptySlot Label
+{
+	opacity: 0.85;
+}

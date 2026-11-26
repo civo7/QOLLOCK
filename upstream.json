@@ -1,6 +1,6 @@
 {
   "repository": "SteamTracking/GameTracking-Deadlock",
-  "commit": "3e41d1b1f0e5d618857da005aef1e8aec5a657ca",
+  "commit": "77b862290ad3050cafd2e9c3f47e0532e9d6dcfd",
   "files": {
     "layout/ability_hud_elements/element_progress_bar_text.xml": {
       "blob": "50a5460022136433f1701043d9430aac11798f4b",
@@ -52,14 +52,12 @@
       "local_sha256": "271ad23984ebec92139fdfe0d390c135803f1433dbc53eda785445d75a0ffbdc"
     },
     "layout/citadel_hud_top_bar.xml": {
-      "blob": "f441faed14c8b81b492ee33cd18d5e3067524d8b",
+      "blob": "1636200f6216dc6259d44f11b8842f873664dffa",
       "destination": "panorama/layout/citadel_hud_top_bar.xml",
       "kind": "xml",
       "auto_sync": false,
-      "local_sha256": "a1a55e808bceb1c72ea4c647c08db79ca646473b6ebf97dbe184c3c263544a42",
-      "base_commit": "d251cf9d9a796061c90f58724230b7e17b97121b",
-      "pending_blob": "85b4bd0f6bada8406178924aa748fb110bfc9f3a",
-      "pending_local_sha256": "a1a55e808bceb1c72ea4c647c08db79ca646473b6ebf97dbe184c3c263544a42"
+      "local_sha256": "2e579ba707f3033c7f65bdf4e2d2d178e617ce4d49c92e0967cd52b5537bedf0",
+      "base_commit": "77b862290ad3050cafd2e9c3f47e0532e9d6dcfd"
     },
     "layout/citadel_hud_top_bar_player.xml": {
       "blob": "e0b0f1154be7b503aa9ef63190e3dce6963b47ca",
@@ -76,12 +74,12 @@
       "local_sha256": "40b3812628bc821d3bcc89c6768def06501c7d22e30c1a55dcbc43a480c6e24d"
     },
     "layout/hud.xml": {
-      "blob": "fbbcfe1df0a65b1a66c4369b2e3ca0a74fa905e6",
+      "blob": "d667e283293b6f1d7d054638bd5b97936f81540b",
       "destination": "panorama/layout/hud.xml",
       "kind": "xml",
       "auto_sync": false,
-      "local_sha256": "edc37ce81b5beb68cc8da906315a53493fce137dffd195772caadd5127250dbc",
-      "base_commit": "3e41d1b1f0e5d618857da005aef1e8aec5a657ca"
+      "local_sha256": "7cc611890f56fda1e40564bfe02098d107c79c809cd880464a992858390043e3",
+      "base_commit": "77b862290ad3050cafd2e9c3f47e0532e9d6dcfd"
     },
     "layout/hud_escape_menu.xml": {
       "blob": "504b76d61d2ea5329be2b1c6d0b1c74fc59fad9d",
@@ -114,11 +112,12 @@
       "local_sha256": "39f659cf72400d386432243848e8ec2001b4a5ba7673d0940ae5446d34adee25"
     },
     "layout/hud_hero_testing.xml": {
-      "blob": "67d04279d975c45c683241fb95cd082e8078eb81",
+      "blob": "cdddc39767824346b825abf02ae1db67f71a8a73",
       "destination": "panorama/layout/hud_hero_testing.xml",
       "kind": "xml",
       "auto_sync": false,
-      "local_sha256": "531d5d00dc18ad35a8273846e0c32b8952c5679fe11664cbb94e17f14827356f"
+      "local_sha256": "6447e3d1b1663a640f5137dd2cc16a9d5a5331a02f8e24ffed57fffc3db4a50c",
+      "base_commit": "77b862290ad3050cafd2e9c3f47e0532e9d6dcfd"
     },
     "layout/hud_paused.xml": {
       "blob": "fcfbf11eed544b621017d29e1b5ff6f330601670",
@@ -164,12 +163,37 @@
       "auto_sync": false,
       "local_sha256": "f8a39ef0384a451e92c9489c1eabdd3f0af69200128c6471424fa6d3463d6238"
     },
+    "styles/ability_hud_element_lock_on.css": {
+      "blob": "7c35540f34825739ee518435a7f51467a7b7220d",
+      "destination": "panorama/styles/base/ability_hud_element_lock_on.css",
+      "kind": "css",
+      "auto_sync": true,
+      "local_sha256": "a790be0abc79fd92bb0f40ba0a14843b7db14807d3fcbc2ae60cd662149cded8",
+      "base_commit": "77b862290ad3050cafd2e9c3f47e0532e9d6dcfd"
+    },
     "styles/ability_hud_element_unit_target.css": {
-      "blob": "744fc8cd69fc00090e65af4d09f80cbfd43e9fd0",
+      "blob": "8fc24c976f932e49a35ffc46d31248285e0ce0b5",
       "destination": "panorama/styles/base/ability_hud_element_unit_target.css",
       "kind": "css",
       "auto_sync": true,
-      "local_sha256": "febf15ae7c97a979d0a9f7b1794628474696dbcf870b4b84a3d8f5b2f8b3896b"
+      "local_sha256": "f61298d6540f68ca709a1089d5185efe67a5e22711065e93b0feba756e9019f9",
+      "base_commit": "77b862290ad3050cafd2e9c3f47e0532e9d6dcfd"
+    },
+    "styles/ability_hud_elements/abilities_baba.css": {
+      "blob": "e51c696e5198e35e23ed2e12e5c55754639573cb",
+      "destination": "panorama/styles/base/ability_hud_elements/abilities_baba.css",
+      "kind": "css",
+      "auto_sync": true,
+      "local_sha256": "e0b37179217916d5396b21375c8b0e54952983adf13dced11766a2f51d37a25b",
+      "base_commit": "77b862290ad3050cafd2e9c3f47e0532e9d6dcfd"
+    },
+    "styles/ability_hud_elements/element_baba_brew.css": {
+      "blob": "642e29e9f78eebe6fad02d5cdc7bc95792391b6b",
+      "destination": "panorama/styles/base/ability_hud_elements/element_baba_brew.css",
+      "kind": "css",
+      "auto_sync": true,
+      "local_sha256": "51308bb433197791c2ab06672519a2bb277173003858588d0fa2dc6a7b60f41f",
+      "base_commit": "77b862290ad3050cafd2e9c3f47e0532e9d6dcfd"
     },
     "styles/ability_hud_elements/element_button_hint.css": {
       "blob": "a95feee9ff4f16e5e973c313ac41da5b9c4243ec",
@@ -178,13 +202,21 @@
       "auto_sync": true,
       "local_sha256": "bbc73d428c4bcb476dae320ed964d959b31f84e5071d78fbcc55f2cdf9ec7fda"
     },
+    "styles/ability_hud_elements/element_charges.css": {
+      "blob": "6141e846962ceac70943b63784c413fa66166f40",
+      "destination": "panorama/styles/base/ability_hud_elements/element_charges.css",
+      "kind": "css",
+      "auto_sync": true,
+      "local_sha256": "c50686cb582eb004b72d2146c8d52fb8ded1b4b62e5cf98869575b1290c8898a",
+      "base_commit": "77b862290ad3050cafd2e9c3f47e0532e9d6dcfd"
+    },
     "styles/ability_hud_elements/element_gun.css": {
-      "blob": "7c88b2886103142f20f8d6ac55d2cdc8e65b5925",
+      "blob": "90e5f02c9a370270c46545fc8a3dfe94e8651bc8",
       "destination": "panorama/styles/base/ability_hud_elements/element_gun.css",
       "kind": "css",
       "auto_sync": true,
-      "local_sha256": "dafbdc73060cc452748915e35c7274a3e31e8328249cbdcabe2683f0d5c8efe6",
-      "base_commit": "17462b250a0ca80e7f80102f2c83cc3eecff5f12"
+      "local_sha256": "4960052a6bdaaa4f31c962094368a435ee2d998dd7a9b1c07bdd85101f544e51",
+      "base_commit": "77b862290ad3050cafd2e9c3f47e0532e9d6dcfd"
     },
     "styles/ability_hud_elements/element_progress_bar.css": {
       "blob": "b608fb56108f670bdfc55cf61634fb6fcae8849d",
@@ -207,6 +239,14 @@
       "auto_sync": true,
       "local_sha256": "70593c3ff73f1bd0a12b588fafb123453ba2ef1ba913a041b75b5db9589f5efe"
     },
+    "styles/citadel_ability_details_panel.css": {
+      "blob": "72d7b6cb41e33b3f833fb21be65b47afa1fdbcd1",
+      "destination": "panorama/styles/base/citadel_ability_details_panel.css",
+      "kind": "css",
+      "auto_sync": true,
+      "local_sha256": "c6b2182dfe0a9ee849b0cf4bd2169be316c889ca7bb1084f3978452c3d96afff",
+      "base_commit": "77b862290ad3050cafd2e9c3f47e0532e9d6dcfd"
+    },
     "styles/citadel_base_styles.css": {
       "blob": "bdc288490a03272cd85ac5b1adca66b9aff7d050",
       "destination": "panorama/styles/base/citadel_base_styles.css",
@@ -228,6 +268,14 @@
       "kind": "css",
       "auto_sync": true,
       "local_sha256": "a6c9ab95a9dce53d8a763499f6165ac45a00a53fc170ba2031e3c10092d43da5"
+    },
+    "styles/citadel_db_page_private_lobby.css": {
+      "blob": "25773c878fd46ba7050dae545f07f57f32247516",
+      "destination": "panorama/styles/base/citadel_db_page_private_lobby.css",
+      "kind": "css",
+      "auto_sync": true,
+      "local_sha256": "c3b68e40d5891cc77214b8166166f621b0a34a362406bb9d5da634c3ae19e48f",
+      "base_commit": "77b862290ad3050cafd2e9c3f47e0532e9d6dcfd"
     },
     "styles/citadel_db_page_profile.css": {
       "blob": "a12eb5bda6bf9fbb9e1f1d995a3e7b1aaff93a62",
@@ -258,6 +306,14 @@
       "auto_sync": false,
       "local_sha256": "2ec54177d4237f0b449f0712d25dc00292a44d63e610bfc39058bfec0891a2f5"
     },
+    "styles/citadel_disabled_enemy_abilities.css": {
+      "blob": "a1b8de3833e225b554ea8192b03ed6bda44cc5ab",
+      "destination": "panorama/styles/base/citadel_disabled_enemy_abilities.css",
+      "kind": "css",
+      "auto_sync": true,
+      "local_sha256": "6515cc63aa132a4268c9cc369a1ad77eb76f7598e44a958b5be5d72a6eaf24b8",
+      "base_commit": "77b862290ad3050cafd2e9c3f47e0532e9d6dcfd"
+    },
     "styles/citadel_hero_stats_panels_shared.css": {
       "blob": "69ffff035182fdd81e9063fa890e821e50ce32f4",
       "destination": "panorama/styles/base/citadel_hero_stats_panels_shared.css",
@@ -273,11 +329,12 @@
       "local_sha256": "33095d406eff5618632caf5db33c5dee4f80b331ab5b350bcee6f828ac0ec633"
     },
     "styles/citadel_hero_stats_weapon_panel.css": {
-      "blob": "37ae983f1bbbfa49e1c3d167d9d7d7af86e98b5e",
+      "blob": "c3b5c337668491056b177409784912b6f85037b4",
       "destination": "panorama/styles/base/citadel_hero_stats_weapon_panel.css",
       "kind": "css",
       "auto_sync": true,
-      "local_sha256": "f80fafadc4a4da6fb6790710a7beff1a7219da0071ffdac98179711970168992"
+      "local_sha256": "aac9dc08de5b3072c10eb90e411c08412585e609b691295a47b79539991c5779",
+      "base_commit": "77b862290ad3050cafd2e9c3f47e0532e9d6dcfd"
     },
     "styles/citadel_hud_ability_button_hint.css": {
       "blob": "7666e12970ca14d1fde4fccaf3d065cb705cfbdf",
@@ -330,6 +387,14 @@
       "auto_sync": true,
       "local_sha256": "dd848b2a40cd842b8d876e9fd2097c49be2ad159503306096d01e51fa068f40c"
     },
+    "styles/citadel_hud_koth.css": {
+      "blob": "6ca26a0b567fe8f20daad245bfb5c7fcf6019e4f",
+      "destination": "panorama/styles/base/citadel_hud_koth.css",
+      "kind": "css",
+      "auto_sync": true,
+      "local_sha256": "fca1685d2a1e3d56a29f15e6c28aeb4b902459de7acc05923911f6af574d0181",
+      "base_commit": "77b862290ad3050cafd2e9c3f47e0532e9d6dcfd"
+    },
     "styles/citadel_hud_player_level.css": {
       "blob": "cde6f196ad20b9090633a300fa5bcb08123b8e86",
       "destination": "panorama/styles/base/citadel_hud_player_level.css",
@@ -345,12 +410,12 @@
       "local_sha256": "c79239711d0d87880439fe5ba18a82332d26404beb7d144920b7bf2446674584"
     },
     "styles/citadel_hud_top_bar.css": {
-      "blob": "d14a19019016513971994e3fee6ad28b3fcad14f",
+      "blob": "ec91e133e18b1625fef5de2fcc5b16a42af248de",
       "destination": "panorama/styles/base/citadel_hud_top_bar.css",
       "kind": "css",
       "auto_sync": true,
-      "local_sha256": "b3413b7f8f9eb58e09d53f4d9ee9b1e83eea8556270bbedff6cfdca611cf1d4c",
-      "base_commit": "3e41d1b1f0e5d618857da005aef1e8aec5a657ca"
+      "local_sha256": "6bc18464c8d1e05e84e7c0f7e89835acf6637f1699df830febda42d065f6358d",
+      "base_commit": "77b862290ad3050cafd2e9c3f47e0532e9d6dcfd"
     },
     "styles/citadel_hud_top_bar_chat.css": {
       "blob": "5f78381074b00c1408771111ae7b0d2fa07d4134",
@@ -359,6 +424,14 @@
       "auto_sync": true,
       "local_sha256": "c25be030c66a58b088d46121fc57ba61aad07f157ec8f59314689c34d21f4a26",
       "base_commit": "2d87734ca5663301b9cc293131f64d80cee73d38"
+    },
+    "styles/citadel_hud_zipline_boost_icon.css": {
+      "blob": "fb1fa7b872f2821bb5c474a7deb4108795b1a41a",
+      "destination": "panorama/styles/base/citadel_hud_zipline_boost_icon.css",
+      "kind": "css",
+      "auto_sync": true,
+      "local_sha256": "ab981080f0d2e4acb264c17752d797bd087f959cc0ed148dafd069396eaaeca9",
+      "base_commit": "77b862290ad3050cafd2e9c3f47e0532e9d6dcfd"
     },
     "styles/citadel_modified_attribute_label.css": {
       "blob": "205359f17fbb8cbee2b9dec55581e9e81dd6538e",
@@ -373,6 +446,14 @@
       "kind": "css",
       "auto_sync": true,
       "local_sha256": "ea43923772adea087abbed6b5bc3f686ec1e12fe0f9aadd430ace0356bdb5f07"
+    },
+    "styles/citadel_play_box_button.css": {
+      "blob": "8a1499400fee23fe6a60333772af51f369df24e7",
+      "destination": "panorama/styles/base/citadel_play_box_button.css",
+      "kind": "css",
+      "auto_sync": true,
+      "local_sha256": "c20739b76d9f4cb804fbf43a6e7f02ae83e5eb332f424dd0d69337e144df7e3a",
+      "base_commit": "77b862290ad3050cafd2e9c3f47e0532e9d6dcfd"
     },
     "styles/citadel_shop_mod_icon.css": {
       "blob": "7e1d147e709a68c375c9b45d1e2df85c651c1e1e",
@@ -483,6 +564,22 @@
       "auto_sync": true,
       "local_sha256": "86aaeb9d7ec8daf804edd609a92175a145bf4b4039b3bb6fe020072586f20d7d"
     },
+    "styles/citadel_ui_player_level_bonus_display.css": {
+      "blob": "397439ef209dca7a40e1270d9286b6ebc6396a8a",
+      "destination": "panorama/styles/base/citadel_ui_player_level_bonus_display.css",
+      "kind": "css",
+      "auto_sync": true,
+      "local_sha256": "726983c21ee7771e98754c29d5783fccfe08100cb838d2750d368a71600c6287",
+      "base_commit": "77b862290ad3050cafd2e9c3f47e0532e9d6dcfd"
+    },
+    "styles/citadel_ui_private_lobby_team_slot.css": {
+      "blob": "d0f70234c03d5fed5dbcf947e2606ab088011973",
+      "destination": "panorama/styles/base/citadel_ui_private_lobby_team_slot.css",
+      "kind": "css",
+      "auto_sync": true,
+      "local_sha256": "e1a3444113593db73dea709167b435b85bf3e6e8e69b2bb65b46e289b0503fad",
+      "base_commit": "77b862290ad3050cafd2e9c3f47e0532e9d6dcfd"
+    },
     "styles/citadel_ui_shop_filters.css": {
       "blob": "a2a94929cd3807dd727fd13897102aa6a55f9455",
       "destination": "panorama/styles/base/citadel_ui_shop_filters.css",
@@ -499,20 +596,20 @@
       "local_sha256": "46613a154595bfc6ca4276b5856eff52409d08cd5573a2354e75b99267ba845b"
     },
     "styles/hero_testing_menu.css": {
-      "blob": "37ba61d2fe5e4aa61552fa367915f2cb47b9fa86",
+      "blob": "b10af9889eb05debe2bc3853520772e5f43225de",
       "destination": "panorama/styles/base/hero_testing_menu.css",
       "kind": "css",
       "auto_sync": true,
-      "local_sha256": "1abda06be70d5096aa635b1511ed20f2205acec567f438055bbd97224be5c8ca",
-      "base_commit": "d251cf9d9a796061c90f58724230b7e17b97121b"
+      "local_sha256": "6bab6af277d8ea985d7bf51fa10ddee0648cbeedbab0070c3fdb8a53076ce97b",
+      "base_commit": "77b862290ad3050cafd2e9c3f47e0532e9d6dcfd"
     },
     "styles/hud.css": {
-      "blob": "51efbe00541b162d2f7b67dd1fd0a7d0fec91efa",
+      "blob": "cfbd5ffdf1b36a71e90ad98ff230328c4a48c5d7",
       "destination": "panorama/styles/base/hud.css",
       "kind": "css",
       "auto_sync": true,
-      "local_sha256": "2fdeb3765ff47a53209b4082934f45fa9ac6358c0eba0a2f5eb09a23147d9aea",
-      "base_commit": "3e41d1b1f0e5d618857da005aef1e8aec5a657ca"
+      "local_sha256": "4bf2727f24b42ec3373f272ae6b584c3b38b3bf1804161eb4abbada5a9a64f6d",
+      "base_commit": "77b862290ad3050cafd2e9c3f47e0532e9d6dcfd"
     },
     "styles/hud_abilities.css": {
       "blob": "a0a5551225eb0cbd204a0bddee008e942af4b5d3",
@@ -560,11 +657,12 @@
       "local_sha256": "697d360d93d42a8138fb43aa6ff63a81ce1b68ecb6fd6a3c96d45e9531ef91d9"
     },
     "styles/hud_damage_report.css": {
-      "blob": "5d2866932a1829bbc1ddfc6fff428828133fb326",
+      "blob": "f58c73e05dc4a289c6ed3e2f008244f99dc05ba4",
       "destination": "panorama/styles/base/hud_damage_report.css",
       "kind": "css",
       "auto_sync": true,
-      "local_sha256": "9b1b9f09920682e21e441c0a6113745101a59ea5a37f1e45d0a8c49c00c5fe98"
+      "local_sha256": "6fa0950a38f27460052c0c05ea31ca795e0b0acf3d6028c64a70c250e9bcd48d",
+      "base_commit": "77b862290ad3050cafd2e9c3f47e0532e9d6dcfd"
     },
     "styles/hud_escape_menu.css": {
       "blob": "5961116837f548832ede8a21062ce1228ff72adb",
@@ -626,6 +724,14 @@
       "local_sha256": "961a0a06f344ab033c0f642ced45e9f3cc4febd434429eb02eff296f48190967",
       "base_commit": "3e41d1b1f0e5d618857da005aef1e8aec5a657ca"
     },
+    "styles/hud_modifiers_icon.css": {
+      "blob": "fe294f0b5e8828e198825da078f163ea17c09b69",
+      "destination": "panorama/styles/base/hud_modifiers_icon.css",
+      "kind": "css",
+      "auto_sync": true,
+      "local_sha256": "42032cad91eea05e95acf14b754501b382ed30c6ccf4b9f7eecb5deb40925b55",
+      "base_commit": "77b862290ad3050cafd2e9c3f47e0532e9d6dcfd"
+    },
     "styles/hud_paused.css": {
       "blob": "6e46614aee2ee610bab768d197e72eee5ab737ee",
       "destination": "panorama/styles/base/hud_paused.css",
@@ -649,6 +755,22 @@
       "local_sha256": "126d528a667cc7e0de74f7a55c568b3f4d8130a71775be1dfc380bb93dc6d43e",
       "base_commit": "0ba033e3eea00d658d63e03719295cf5039e8057"
     },
+    "styles/in_world_item_panel.css": {
+      "blob": "bc948471f86726bdfae1e7f20af46b37c70628c2",
+      "destination": "panorama/styles/base/in_world_item_panel.css",
+      "kind": "css",
+      "auto_sync": true,
+      "local_sha256": "f7ccb85b12689cc58542e2bf05fbb27393cea7d8fd7d4d73de3ed2f00a07d349",
+      "base_commit": "77b862290ad3050cafd2e9c3f47e0532e9d6dcfd"
+    },
+    "styles/match_details_graphs.css": {
+      "blob": "ad0a28f137bda3ef83550f03e57f4c6946923677",
+      "destination": "panorama/styles/base/match_details_graphs.css",
+      "kind": "css",
+      "auto_sync": true,
+      "local_sha256": "c04ef7befc8ce0845cd127f09e78a7e08db4cfa8dccc82079a396eaebdbf8536",
+      "base_commit": "77b862290ad3050cafd2e9c3f47e0532e9d6dcfd"
+    },
     "styles/npc_icons.css": {
       "blob": "8aa70a89571d1db3e638961ab681a1f0467abc2b",
       "destination": "panorama/styles/base/npc_icons.css",
@@ -664,6 +786,14 @@
       "local_sha256": "4ed839ff4ddc2c3754bbb432c4b113985d7d847a7eb2effbe609d652de50c37e",
       "base_commit": "82735ebcc9c89d1b3f6b3262c23c9580798ad362"
     },
+    "styles/popups/citadel_popup_custom_match.css": {
+      "blob": "39961551b03eb6121e40c453501759a910e44f61",
+      "destination": "panorama/styles/base/popups/citadel_popup_custom_match.css",
+      "kind": "css",
+      "auto_sync": true,
+      "local_sha256": "a18387f4d98f26e66aab9802b72c76343a4437825da8c17762fa54799e286c5f",
+      "base_commit": "77b862290ad3050cafd2e9c3f47e0532e9d6dcfd"
+    },
     "styles/profile_card.css": {
       "blob": "d79c101f2a99eaf383b93f46d8ec28a4065bc3ab",
       "destination": "panorama/styles/base/profile_card.css",
@@ -671,22 +801,30 @@
       "auto_sync": true,
       "local_sha256": "d23ecea92d6583696fe817f490ee271d9d1875951c3d9ffc80707df0c712b0ec"
     },
+    "styles/tooltips/citadel_tooltip_mod_details.css": {
+      "blob": "82b0f354958cd8893d2743cfeba27cc40fe140ce",
+      "destination": "panorama/styles/base/tooltips/citadel_tooltip_mod_details.css",
+      "kind": "css",
+      "auto_sync": true,
+      "local_sha256": "54599948cdbf0b0a7256a1495772e0ed721525d286641cbe5d7832318fed2d77",
+      "base_commit": "77b862290ad3050cafd2e9c3f47e0532e9d6dcfd"
+    },
     "styles/unit_status_icons.css": {
-      "blob": "24c2b35c8da541aee916fd759ffe2adb23d481bc",
+      "blob": "601327e3c21fee76e13bae64efbbffe0707f6c54",
       "destination": "panorama/styles/base/unit_status_icons.css",
       "kind": "css",
       "auto_sync": true,
-      "local_sha256": "5c95849d3c7df40a1d9ba889b254c19dc6e6888dff890338756295d7748724d1",
-      "base_commit": "3e41d1b1f0e5d618857da005aef1e8aec5a657ca"
+      "local_sha256": "c62a757a43acde18f6a9ccb1bdb0a488e222835d0c94d32c2ac14f29ab4cd033",
+      "base_commit": "77b862290ad3050cafd2e9c3f47e0532e9d6dcfd"
     },
     "styles/unit_status_v2.css": {
-      "blob": "94cf9a44c68c58e0150f0a039d3f776ba605ac0e",
+      "blob": "abf0117dcd69611abfba71c90caae212925253d8",
       "destination": "panorama/styles/base/unit_status_v2.css",
       "kind": "css",
       "auto_sync": true,
-      "local_sha256": "6834337faa78af451da697709916cb82d49681bfc68db24e6e71e0f47799ddd7",
-      "base_commit": "d251cf9d9a796061c90f58724230b7e17b97121b"
+      "local_sha256": "e2340184718203521ae8cbc5b4b7f9745ff2be64e5133b8388013d855fc74152",
+      "base_commit": "77b862290ad3050cafd2e9c3f47e0532e9d6dcfd"
     }
   },
-  "fingerprint": "e3cf622f8a04acca74e566cb489431961c08fa183f4a3c359e267600f523f6aa"
+  "fingerprint": "cdfc9317a7afaa6a044596434348bf7f2086a8988b9ac370d81c621dbbfb9409"
 }

@@ -1,0 +1,324 @@
+/* Prettified by Source 2 Viewer - https://valveresourceformat.github.io */
+
+.ability_element_charges
+{
+	vertical-align: center;
+	horizontal-align: center;
+	visibility: collapse;
+	opacity: 1;
+}
+
+.no_stamina_for_dash_jump.ability_element_charges,.no_stamina.ability_element_charges
+{
+	animation-name: Anim_NoStamina;
+	animation-duration: 0.075s;
+	animation-iteration-count: 3;
+	animation-timing-function: ease-in;
+}
+
+@keyframes 'Anim_NoStamina'
+{
+	0%
+	{
+		transform: translateX(2px);
+	}
+
+	60%
+	{
+		transform: translateX(2px);
+	}
+
+	61%
+	{
+		transform: translateX(-2px);
+	}
+
+	100%
+	{
+		transform: translateX(-2px);
+	}
+
+}
+
+.view_is_in_eye .ability_element_charges.active
+{
+	visibility: visible;
+}
+
+.charge
+{
+	width: 200px;
+	height: 200px;
+	vertical-align: center;
+	horizontal-align: center;
+	visibility: collapse;
+	opacity: 0.5;
+}
+
+.charge.has_charge
+{
+	visibility: visible;
+}
+
+.charge_fg
+{
+	width: 125px;
+	height: 125px;
+	border-radius: 50%;
+	vertical-align: center;
+	horizontal-align: center;
+	clip: radial( 50% 50%, 0deg, 360deg );
+	border: 8px solid elementBGColor;
+}
+
+.charge_bg
+{
+	width: 123px;
+	height: 123px;
+	opacity: 1;
+	border-radius: 50%;
+	vertical-align: center;
+	horizontal-align: center;
+	clip: radial( 50% 50%, 0deg, 360deg );
+	border: 4px solid black;
+}
+
+.charge_drained
+{
+	width: 125px;
+	height: 125px;
+	border-radius: 50%;
+	vertical-align: center;
+	horizontal-align: center;
+	clip: radial( 50% 50%, 0deg, 360deg );
+	border: 8px solid red;
+	visibility: collapse;
+}
+
+.charge.charging .charge_fg
+{
+	border: 8px solid rgb(255, 238, 0);
+}
+
+.charge.draining .charge_fg
+{
+	border: 8px solid rgb(235, 89, 44);
+}
+
+.charge.disabled .charge_fg
+{
+	border: 8px solid rgb(169, 28, 206);
+}
+
+#charges_container
+{
+	opacity: 0.8;
+}
+
+.anticipating_dash_jump #charges_container
+{
+	opacity: 1;
+}
+
+@keyframes 'red_flash_bg'
+{
+	0%
+	{
+		border: 5px solid rgba(255, 0, 0, 1 );
+	}
+
+	10%
+	{
+		border: 5px solid rgba(255, 0, 0, 1 );
+	}
+
+	100%
+	{
+		border: 5px solid rgba(0, 0, 0, 1);
+	}
+
+}
+
+.no_stamina_for_dash_jump .charge_bg,.no_stamina .charge_bg
+{
+	animation-name: red_flash_bg;
+	animation-duration: 0.2s;
+	animation-iteration-count: 4;
+}
+
+@keyframes 'red_flash_fg'
+{
+	0%
+	{
+		border: 10px solid rgba(255, 0, 0, 1 );
+	}
+
+	10%
+	{
+		border: 10px solid rgba(255, 0, 0, 1 );
+	}
+
+	100%
+	{
+		border: 10px solid rgba(0, 0, 0, 1);
+	}
+
+}
+
+@keyframes 'anim_anticipate_dash_jump_foreground'
+{
+	0%
+	{
+		border: 0px solid white;
+	}
+
+	100%
+	{
+		border: 10px solid white;
+	}
+
+}
+
+@keyframes 'anim_roll_jump_window_foreground'
+{
+	0%
+	{
+		brightness: 10;
+		border: 10px solid rgba(0, 145, 162, 1 );
+	}
+
+	100%
+	{
+		brightness: 1;
+		border: 10px solid rgba(0, 145, 162, 1 );
+	}
+
+}
+
+.anticipating_dash_jump .charge_fg
+{
+	animation-name: anim_anticipate_dash_jump_foreground;
+	animation-duration: 0.2s;
+	animation-iteration-count: 1;
+	animation-timing-function: ease-out;
+}
+
+.roll_jump_window .charge_fg
+{
+	animation-name: anim_roll_jump_window_foreground;
+	animation-duration: 0.3s;
+	animation-iteration-count: 1;
+	animation-timing-function: ease-out;
+}
+
+@keyframes 'stam_drained'
+{
+	0%
+	{
+		opacity: 1;
+		pre-transform-scale2d: 1;
+	}
+
+	20%
+	{
+		opacity: 1;
+		pre-transform-scale2d: 1.15;
+	}
+
+	50%
+	{
+		opacity: 1;
+		pre-transform-scale2d: 1.2;
+	}
+
+	100%
+	{
+		opacity: 0;
+		pre-transform-scale2d: 1.25;
+	}
+
+}
+
+.drained .charge_drained
+{
+	animation-name: stam_drained;
+	animation-duration: 1s;
+	animation-timing-function: ease-in;
+	opacity: 0;
+	visibility: visible;
+}
+
+#air_moves
+{
+	flow-children: down;
+	vertical-align: center;
+	horizontal-align: center;
+	transform: translateX( 100px );
+}
+
+.air_move_row
+{
+	flow-children: right;
+	margin: 2px 0px;
+	visibility: collapse;
+}
+
+.air_move_row.used
+{
+	visibility: visible;
+}
+
+.air_move_icon
+{
+	width: 16px;
+	height: 16px;
+	vertical-align: center;
+	margin-right: 4px;
+	background-size: contain;
+	background-repeat: no-repeat;
+	background-position: center;
+	wash-color: #FFEFD7;
+}
+
+.air_move_icon--jump
+{
+	background-image: url("s2r://panorama/images/icons/properties/move_double_jump.vsvg");
+}
+
+.air_move_icon--dash
+{
+	background-image: url("s2r://panorama/images/icons/properties/move_dash.vsvg");
+}
+
+.air_move_pips
+{
+	flow-children: right;
+	vertical-align: center;
+}
+
+.air_move_pip
+{
+	width: 8px;
+	height: 8px;
+	margin-right: 4px;
+	vertical-align: center;
+	border-radius: 50%;
+	border: 1px solid #10130D;
+	background-color: #FFEFD7;
+}
+
+.air_move_pip.spent
+{
+	border: 1px solid #FFEFD766;
+	background-color: #10130D99;
+}
+
+.air_move_row.depleted .air_move_icon
+{
+	wash-color: #FF410D;
+}
+
+.air_move_row.depleted .air_move_pip
+{
+	border: 1px solid #FF410D;
+}

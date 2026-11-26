@@ -1,0 +1,430 @@
+/* Prettified by Source 2 Viewer - https://valveresourceformat.github.io */
+
+CitadelPlayerLevelDisplay
+{
+	flow-children: right;
+	width: fit-children;
+	color: offWhite;
+}
+
+CitadelPlayerLevelDisplay Label
+{
+	color: offWhite;
+}
+
+#LevelBarAndProgress
+{
+	width: 100%;
+	height: 200px;
+	margin-top: 20px;
+}
+
+#PlayerLevel
+{
+	vertical-align: middle;
+	horizontal-align: middle;
+	ui-scale: 200%;
+}
+
+.toNext
+{
+	horizontal-align: center;
+	font-weight: bold;
+	color: shardColor;
+}
+
+.maxRewards
+{
+	visibility: collapse;
+	horizontal-align: center;
+	font-weight: bold;
+	color: shardColor;
+}
+
+.atMaxRewards .toNext
+{
+	visibility: collapse;
+}
+
+.atMaxRewards .maxRewards
+{
+	visibility: visible;
+}
+
+#LevelContainer
+{
+	width: 200px;
+	height: 100%;
+	padding-top: 20px;
+	background-color: #111111;
+	flow-children: down;
+	opacity: 0.0;
+	visibility: visible;
+}
+
+.showLocalPlayer #LevelContainer
+{
+	opacity: 1.0;
+}
+
+#TotalGold
+{
+	vertical-align: bottom;
+	width: 100%;
+	background-color: shardColor&20;
+	padding: 10px;
+}
+
+.totalGold
+{
+	font-size: 14px;
+	font-weight: bold;
+	color: offWhite&60;
+	horizontal-align: middle;
+}
+
+#RewardsContainer
+{
+	background-color: black;
+	height: fit-children;
+	width: 500px;
+	flow-children: down;
+}
+
+.RewardsTop
+{
+	background-color: offBlack;
+	flow-children: down;
+	width: 100%;
+	margin-top: 0px;
+	padding: 10px;
+}
+
+.rewardsTitle
+{
+	text-transform: uppercase;
+	text-align: center;
+	horizontal-align: center;
+	font-weight: bold;
+	font-size: 24px;
+}
+
+.rewardsSub
+{
+	text-align: center;
+	horizontal-align: center;
+	font-weight: medium;
+	font-size: 16px;
+	opacity: 0.8;
+}
+
+#AP_Rewards
+{
+	flow-children: right;
+	horizontal-align: middle;
+	vertical-align: middle;
+	padding: 20px;
+}
+
+#AP_Rewards #TextArea
+{
+	flow-children: down;
+}
+
+.rewardName
+{
+	text-align: left;
+	font-style: italic;
+	font-weight: semi-bold;
+}
+
+.unlockNote
+{
+	font-size: 16px;
+	opacity: 0.4;
+	font-style: italic;
+	font-weight: semi-bold;
+}
+
+.APicons
+{
+	vertical-align: middle;
+	font-style: italic;
+	font-weight: semi-bold;
+	color: offWhite&30;
+	font-size: 18px;
+}
+
+.rewardIcon
+{
+	width: 30px;
+	height: 30px;
+	margin-right: 10px;
+	vertical-align: middle;
+	background-size: contain;
+	background-repeat: no-repeat;
+	background-position: center;
+}
+
+.iconAP.rewardIcon
+{
+	wash-color: spiritLightColor;
+	background-image: url("s2r://panorama/images/hud/ap_icon.vsvg");
+	background-size: 80% 80%;
+}
+
+.iconUnlock.rewardIcon
+{
+	background-image: url("s2r://panorama/images/hud/unlock_icon.vsvg");
+	wash-color: spiritLightColor;
+}
+
+.rewardText
+{
+	vertical-align: middle;
+	font-weight: bold;
+	line-height: 20px;
+}
+
+.BonusesContainer
+{
+	background-color: black;
+	height: fit-children;
+	width: 100%;
+}
+
+#PlayerLevelRewards
+{
+	width: 100%;
+	height: 1300px;
+	vertical-align: bottom;
+	overflow: noclip;
+}
+
+#LevelProgressBar
+{
+	width: 38px;
+	height: 100%;
+	vertical-align: center;
+	margin-top: -10px;
+	margin-bottom: 15px;
+	margin-left: 12px;
+	horizontal-align: center;
+	border-radius: 0px;
+	padding-left: 2px;
+	padding-right: 2px;
+	background-color: black;
+}
+
+#LevelProgressBar .ProgressBarLeft
+{
+	height: 100%;
+	width: 100%;
+	background-color: #99FFD644;
+}
+
+#LevelProgressBar .ProgressBarRight
+{
+	height: 100%;
+	width: 100%;
+	background-color: #000000;
+}
+
+#LevelRewardsContainer
+{
+	vertical-align: center;
+	horizontal-align: center;
+	height: fit-children;
+	margin-bottom: 10px;
+	flow-children: up;
+	overflow: noclip;
+	z-index: 5;
+	ui-scale: 60%;
+}
+
+.levelBonusReward
+{
+	width: 100px;
+	height: 32px;
+	margin-top: 4px;
+	margin-bottom: 4px;
+	flow-children: right;
+	margin-left: 7px;
+}
+
+.abilityUnlock .levelRewardImage,.ultimateUnlock .levelRewardImage
+{
+	background-image: url("s2r://panorama/images/hud/unlock_icon.vsvg");
+	wash-color: spiritBrightColor;
+	opacity: 0.5;
+}
+
+.weaponUpgrade .levelRewardImage
+{
+	background-image: url("s2r://panorama/images/shop/icon_powerincrease_png.vtex");
+	background-size: 60% 60%;
+	background-size: 75% 58%;
+}
+
+#HeroScalingImage
+{
+	width: 80px;
+	height: 60px;
+	vertical-align: bottom;
+	margin-bottom: 20px;
+	z-index: 10;
+	margin-left: 20px;
+}
+
+#HeroImage
+{
+	height: 100%;
+	horizontal-align: right;
+}
+
+.levelRewardBolt
+{
+	background-image: url("s2r://panorama/images/shop/keystat_boon_arrow_png.vtex");
+	height: 100%;
+	width: 100%;
+	background-repeat: no-repeat;
+}
+
+.abilityPoint .levelRewardBolt
+{
+	opacity: 0.6;
+}
+
+.hasLevel.abilityPoint .levelRewardBolt,.hasLevel.abilityUnlock .levelRewardImage,.hasLevel.ultimateUnlock .levelRewardImage
+{
+	wash-color: spiritBrightColor;
+	opacity: 0.2;
+}
+
+.hasLevel.weaponUpgrade .levelRewardImage
+{
+	opacity: 0.1;
+	saturation: 0.8;
+}
+
+.levelRewardNumber
+{
+	vertical-align: center;
+	margin-left: 3px;
+	font-weight: semi-bold;
+	font-size: 15px;
+	opacity: 0.6;
+	font-family: "Swear Text Demo";
+	width: 38px;
+	text-align: center;
+	text-shadow: 2px 2px 3px #000000;
+	text-overflow: shrink;
+}
+
+.hasLevel .levelRewardNumber
+{
+	opacity: 0.5;
+	color: shardColor;
+	font-weight: bold;
+}
+
+.boldText
+{
+	font-weight: bold;
+	color: #FFFFFF;
+	font-style: normal;
+}
+
+.HeroBonusContainer
+{
+	padding: 10px;
+	width: 100%;
+}
+
+#StatBonusTitle
+{
+	flow-children: down;
+	horizontal-align: center;
+}
+
+#StatBonuses
+{
+	flow-children: right-wrap;
+	padding: 0px 10px 20px 10px;
+	horizontal-align: middle;
+}
+
+.BonusRow
+{
+	margin: 5px;
+	width: 210px;
+	padding: 10px 0px;
+}
+
+.HeroBonusValue
+{
+	horizontal-align: center;
+	text-align: center;
+	font-weight: bold;
+	font-size: 20px;
+	color: offWhite;
+}
+
+.bonusImage
+{
+	height: 30%;
+	width: 30%;
+	background-repeat: no-repeat;
+	overflow: noclip;
+	z-index: 10;
+	margin-top: 165px;
+	margin-left: 35px;
+}
+
+.HeroBonusText
+{
+	horizontal-align: center;
+	text-align: center;
+	font-weight: semi-bold;
+	font-size: 17px;
+	opacity: 0.4;
+	text-overflow: shrink;
+	max-width: 200px;
+}
+
+.Language_japanese .HeroBonusText
+{
+	text-overflow: shrink;
+	max-height: 30px;
+}
+
+.HeroName
+{
+	font-size: 20px;
+	color: offWhite;
+	font-weight: bold;
+	padding: 5px 0px 3px 0px;
+	horizontal-align: center;
+}
+
+.PowerIncreases
+{
+	font-size: 16px;
+	color: offWhite&80;
+	margin-bottom: 15px;
+}
+
+.BulletResist,.TechResist,.WeaponRange,.AltFire
+{
+	visibility: collapse;
+}
+
+.bulletResistUpgrade .BulletResist,.techResistUpgrade .TechResist,.weaponRangeUpgrade .WeaponRange,.altFireUpgrade .AltFire
+{
+	visibility: visible;
+}
+
+.spirit_color
+{
+	color: spiritBrightColor;
+}

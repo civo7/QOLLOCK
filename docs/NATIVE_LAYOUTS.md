@@ -14,12 +14,10 @@ additions with the contributor separator comments. The current game extract and
 live debugger remain the authority for native structure; a simulator tree cannot
 prove that a removed override is safe.
 
-The hero-testing override was byte-identical to the current extracted native XML
-after CRLF/LF normalization. It contained no scripts block or QOLLOCK changes.
-The removed `ql_hero_testing.js` extension had no active include, no XML callbacks
-and no HTPP panels in the current layouts. Native testing controls continue to use
-the game layout; `hero_testing_menu.css` and HUD settings still extend visibility
-and placement. Removing this inactive script does not establish an FPS gain.
+An earlier byte-identical hero-testing override and its inactive
+`ql_hero_testing.js` extension were retired. The current override preserves
+the native testing controls and adds QOLLOCK sandbox controls using native
+callbacks. `hero_testing_menu.css` and HUD settings extend visibility and placement.
 
 The party XML formerly existed only to append a placement stylesheet. Its native
 hierarchy, bindings and callbacks were unchanged. The game layout already loads
@@ -71,6 +69,7 @@ in the client. Inspect the marked blocks and current owner before retiring one.
 | Layout(s) under `panorama/layout` | QOLLOCK addition / owning boundary |
 | --- | --- |
 | `hud.xml` | HUD script load graph, shared styles and class listeners used by HUD owners. |
+| `hud_hero_testing.xml` | Additional sandbox controls for souls, buying, spawning and AI. |
 | `hud_event_indicator.xml` | Inner Fountain scale canvas; native event root positioning and all bound indicator children are preserved. |
 | `hud_escape_menu.xml` | Independent settings script/style context and settings controls. |
 | `hud_health_container.xml` | Shared healthbar scaling canvas, Minecraft containers, native number bindings and regen/damage presentation. |
@@ -94,15 +93,11 @@ independent context. Prefer native selectors/existing styles where those suffice
 do not replace bound data or menu callbacks with an unverified polling API merely
 to reduce the file count.
 
-Source deletion does not update an already packed mod. The incremental pipeline's
-stale-artifact list removes the old testing XML/script outputs when the maintainer
-runs it, together with the retired party XML/style, unit-target XML and three
-stat XML copies and native bar XML; the full builder already prunes outputs
-without source files. Agents do
-not compile/repack or change installed addons. After a maintainer build, verify
-native testing controls, practice-area visibility and the force/hide settings in
-the client. Offline gates cover source loading, existing CSS contracts and API
-usage, not this native rendering/input check.
+Retiring an override takes effect after the maintainer rebuilds and repacks.
+The full builder prunes outputs without source files. After a maintainer build,
+verify the native bot drills, QOLLOCK sandbox additions, practice-area visibility
+and force/hide settings in the client. Offline gates cover source loading,
+existing CSS contracts and API usage.
 
 Whole-HUD profiling replays an explicit captured hierarchy; it no longer composes
 a HUD from XML or fills missing branches from extracted layouts. A retired XML

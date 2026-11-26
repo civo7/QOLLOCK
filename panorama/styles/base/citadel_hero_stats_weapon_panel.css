@@ -1,4 +1,4 @@
-/* Prettified by Source 2 Viewer 19.2.0.0 - https://valveresourceformat.github.io */
+/* Prettified by Source 2 Viewer - https://valveresourceformat.github.io */
 
 CitadelHeroStatsWeapon
 {
@@ -139,6 +139,20 @@ CitadelHeroStatsWeapon
 .Language_czech #WeaponAttributesContainer #AttributeLabel
 {
 	font-size: 14px;
+}
+
+#SecondaryWeaponDisplayStats
+{
+	background-color: #00000040;
+}
+
+.secondaryWeaponDesc
+{
+	font-size: 17px;
+	font-weight: medium;
+	opacity: 0.9;
+	margin-top: 4px;
+	margin-bottom: 10px;
 }
 
 .NoSecondaryWeaponDesc #SecondaryWeaponDisplayStats

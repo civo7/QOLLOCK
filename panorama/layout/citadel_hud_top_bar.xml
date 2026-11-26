@@ -6,7 +6,6 @@
 		<include src="s2r://panorama/styles/citadel_hud_top_bar.vcss" />
 		<include src="s2r://panorama/styles/unit_status_icons.vcss" />
 	</styles>
-	<scripts />
 	<CitadelHudTopBar hittest="false">
 		<GlobalClassListener classes="gDetailView gShopOpen gScoreboardOpen gStreetBrawl gPVE" />
 		<Panel id="GradientBacker" />
@@ -96,10 +95,11 @@
 		<!-- END QOLLOCK CUSTOM                                                -->
 		<!-- ================================================================= -->
 		<Panel id="RejuvenatorCharges">
-			<Panel id="RejuvenatorFriendly">
+			<Panel id="RejuvenatorFriendly" onmouseout="UIHideTextTooltip()">
 				<Panel class="rejuvIcon" />
+				<Label class="rejuvTimerLabel" text="{s:rejuv_timer}" />
 			</Panel>
-			<Panel id="RejuvenatorTimer">
+			<Panel id="RejuvenatorTimer" onmouseover="CitadelUIShowTextTooltip( &apos;#citadel_rejuvenator_hud_hint&apos; )" onmouseout="CitadelUIHideTextTooltip()">
 				<Panel class="rejuvTimer">
 					<Panel id="StatusEffectsBorder" />
 					<Panel id="StatusEffectCooldownOverlay" />
@@ -109,13 +109,13 @@
 				</Panel>
 				<Label id="MidbossTimerLabel" class="midbossTimerLabel" text="{s:midboss_timer}" />
 			</Panel>
-			<Panel id="RejuvenatorEnemy">
+			<Panel id="RejuvenatorEnemy" onmouseout="UIHideTextTooltip()">
 				<Panel class="rejuvIcon" />
+				<Label class="rejuvTimerLabel" text="{s:rejuv_timer}" />
 			</Panel>
 		</Panel>
 		<Panel class="KillsAndAbilityPointsContainer">
 			<Panel class="ScoreRow TeamKills LeftRightFlow">
-				<Panel class="ScoreTypeIcon" />
 				<Panel class="ScoreNumbers">
 					<Panel class="ScoreNumber">
 						<Label class="FriendlyKills KillsLabel" text="{i:friendly_kills}" />

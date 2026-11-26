@@ -1,0 +1,55 @@
+/* Prettified by Source 2 Viewer - https://valveresourceformat.github.io */
+
+PopupCustomMatch.PopupPanel
+{
+	padding: 0px 0px 0px 0px;
+	border-radius: 0px;
+	border: 0px;
+}
+
+#CreateButton
+{
+	horizontal-align: right;
+	vertical-align: center;
+}
+
+#ButtonSection,#ButtonSection .SectionColumnContainer
+{
+	width: 100%;
+}
+
+#CancelButton
+{
+	horizontal-align: center;
+	min-width: 160px;
+}
+
+#PartyCodeEntry
+{
+	horizontal-align: right;
+	margin-top: 12px;
+	background-color: offBlack;
+	max-width: 200px;
+	border-radius: 5px;
+	font-size: 24px;
+	height: 52px;
+	vertical-align: center;
+}
+
+#PartyCodeEntry #PlaceholderText
+{
+	text-align: left;
+	horizontal-align: center;
+	margin-top: 0px;
+}
+
+#PartyCodeEntry:focus
+{
+	border: 2px solid offWhite&44;
+}
+
+#OKButton
+{
+	horizontal-align: right;
+	margin-top: 14px;
+}
