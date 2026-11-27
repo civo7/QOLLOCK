@@ -1,0 +1,16 @@
+diff --git a/panorama/layout/hud_escape_menu.xml b/panorama/layout/hud_escape_menu.xml
+index 12084ff8..6ce1a839 100644
+--- a/panorama/layout/hud_escape_menu.xml
++++ b/panorama/layout/hud_escape_menu.xml
+@@ -37,6 +37,11 @@
+ 		<include src="s2r://panorama/scripts/core/ql_customize_preview.vjs_c" />
+ 		<!-- ==== End QOLLOCK customization preview ==== -->
+ 		<include src="s2r://panorama/scripts/ql_custom_announcer_pack_meta.vjs_c" />
++		<include src="s2r://panorama/scripts/ql_custom_announcer_slot1_pack_meta.vjs_c" />
++		<include src="s2r://panorama/scripts/ql_custom_announcer_slot2_pack_meta.vjs_c" />
++		<include src="s2r://panorama/scripts/ql_custom_announcer_slot3_pack_meta.vjs_c" />
++		<include src="s2r://panorama/scripts/ql_custom_announcer_slot4_pack_meta.vjs_c" />
++		<include src="s2r://panorama/scripts/ql_custom_announcer_slot5_pack_meta.vjs_c" />
+ 		<!-- Phase 1: Locale modules (must load before ql_settings.js) -->
+ 		<include src="s2r://panorama/scripts/ql_settings_loc/ql_settings_loc_en.vjs_c" />
+ 		<include src="s2r://panorama/scripts/ql_settings_loc/ql_settings_loc_ko.vjs_c" />
